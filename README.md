@@ -195,16 +195,119 @@ change breaks a guardrail, these fail — don't delete them to make CI green.**
 
 ---
 
+## Multiple data sources & cross-checking
+
+The data layer is multi-source. A **primary** serves all metrics; each
+**cross-check** source is pulled independently so the integrity guard can raise
+`SOURCE CONFLICT` when prices diverge beyond `source_conflict_pct`.
+
+| Source | Key needed | Intraday bars | Notes |
+|--------|-----------|---------------|-------|
+| `yahoo_direct` (default) | none | yes | Raw chart endpoint via `requests`; reliable (the `yfinance` library hangs behind some proxies). ~15-min delayed. |
+| `yahoo_yf` | none | yes | Original `yfinance` adapter, kept as fallback. |
+| `stooq` | none | no | Free cross-check; **no TSX coverage** (returns `unavailable` for AC.TO rather than guessing). |
+| `finnhub` | `FINNHUB_API_KEY` | (premium) | Real-time quote; independent cross-check. |
+| `twelvedata` | `TWELVEDATA_API_KEY` | yes | Real-time quote **+ intraday bars + volume**; the recommended paid upgrade for genuine 9:31 data. |
+| `manual` | — | no | Paste broker L1; trusted by user vouch. |
+
+```bash
+# Live AC.TO via the reliable Yahoo-direct endpoint, cross-checked against stooq:
+python dashboard.py --once --source yahoo_direct --cross-check stooq
+
+# Real-time primary once you have a key (export TWELVEDATA_API_KEY=...):
+python dashboard.py --once --source twelvedata --cross-check yahoo_direct
+```
+
+Configure defaults under `data_sources` in `config.yaml`. Missing-key sources
+are skipped silently — never fabricated.
+
+> **Verified:** the default `yahoo_direct` source returns live AC.TO data
+> (e.g. $24.51 CAD, 52-week range 16.45–24.95) through the agent proxy.
+
+## Deep historical patterns (`patterns.py`)
+
+Mines **as much history as the source returns** for base-rate context a casual
+reader wouldn't compute by hand. Every statistic carries its **sample size** and
+a confidence tag (`ok` / `low` / `anecdotal`):
+
+- **Gap base rates** — after a gap up/down, how often AC closes above its open and how often the gap fills.
+- **Analog days** — a nearest-neighbour search for historical sessions whose *setup* (gap %, prior-day move, position in the trailing range) resembles today, then the **distribution** of what those days did open-to-close. This is the "patterns others wouldn't think of" piece — a base rate conditioned on the actual setup, not a blanket average.
+- **Crude-oil correlation regime** — rolling AC↔WTI return correlation, so you know whether you're in a fuel-cost-sensitive or decoupled regime.
+- **Weekday seasonality** & **gap continuation**, both labelled as usually-noise.
+
+These feed the verdict only as **weak, named factors**, only when structure
+already agrees, and **never** past the `[0.35, 0.65]` clamp. Base rates are not
+forecasts — the output says so.
+
+## Claude analysis layer (`analyst.py`)
+
+An **optional** advisory layer (`claude-opus-4-8`, adaptive thinking) reads the
+fully-computed brief and writes pattern/level/risk notes. It is **read-only by
+design**:
+
+- It **cannot set or override** the verdict or probability — those stay
+  deterministic and clamped. Its system prompt forbids emitting its own
+  probability or telling you to override the capped read; the calling code never
+  lets it mutate the decision (enforced by tests).
+- It is **skipped** when the data-integrity guard fails (no analysis on
+  unverified data) and when no key is set.
+
+Enable by exporting a key and using the flag (or `claude.enabled` in config):
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...      # your own key
+python dashboard.py --once --analyst
+```
+
+Without a key, the section prints a clear "set `ANTHROPIC_API_KEY`" stub and the
+rest of the brief is unaffected. (Note: the tool needs *your* Anthropic API key —
+a key is read from the `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` environment,
+never hardcoded.)
+
+## Backtest (`backtest.py`)
+
+Evaluates how the tool would have performed on intraday open-to-close direction,
+with explicit guards against hindsight/lookahead bias:
+
+- **Expanding window** — for day *t*, every statistic uses only days **strictly before** *t*; day *t* is never in its own candidate pool.
+- **Decision-time information only** — the call uses just the open, the first 1–5 minutes of bars, the gap, and prior days. Today's high/low/close are used **only to score**, never to decide.
+- **No tuning on test data**; shipped defaults throughout.
+- **Honest data limits** — free feeds only return ~7 days of 1-minute bars, so the full intraday engine is replayed over a handful of recent sessions (Tier B, flagged anecdotal); long history (Tier A) tests the daily-derivable pattern engine. No intraday history is fabricated to pad the sample. A no-lookahead unit test proves predictions for early days don't change when future data is altered.
+
+```bash
+python backtest.py --ticker AC.TO --days 2000
+```
+
+**Representative AC.TO result (≈2,400 evaluated days):**
+
+| Metric | Value | Reading |
+|--------|-------|---------|
+| Base rate (close > open) | ~48.7% | AC is slightly down-biased open-to-close |
+| Pattern-engine hit rate (on leans) | ~52.8% | a small, statistically-detectable tilt (p≈0.01) … |
+| Brier score | ~0.257 | …but **worse** than always saying 0.50 (0.25) — the confident-looking probabilities don't hold up |
+| Calibration | the `[0.55,0.65]` bin predicted 0.62, realized ~0.51 | the engine is **overconfident** at the extremes |
+
+**Interpretation:** this is the design working, not failing. Single-name
+open-to-close direction is ~random; the marginal pattern tilt does **not**
+justify confident calls, which is exactly why the tool defaults to `WAIT`, caps
+probability at `[0.35, 0.65]`, and treats history as weak context. A high hit
+rate here would more likely indicate a lookahead bug than a real edge. If
+anything, the calibration argues for compressing probabilities even closer to
+0.50 — never inflating them.
+
 ## Files
 
 | File          | Purpose                                                        |
 |---------------|----------------------------------------------------------------|
-| `dashboard.py`| Entry point: guard → metrics → decision → render → schedule    |
-| `adapters.py` | Pluggable data layer (Yahoo, manual, real-time stubs)          |
+| `dashboard.py`| Entry point: guard → metrics → patterns → decision → analyst → render → schedule |
+| `adapters.py` | Pluggable multi-source data layer (Yahoo-direct, Stooq, Finnhub, Twelve Data, manual, real-time stubs) + cross-check aggregator |
 | `metrics.py`  | All real, timestamped measurements + labelled proxies          |
+| `patterns.py` | Deep historical pattern mining (gap base rates, analog days, crude regime) |
+| `analyst.py`  | Optional Claude advisory layer (read-only; never sets the verdict) |
 | `risk.py`     | Risk-first position sizing, margin & gap-risk math             |
+| `backtest.py` | Lookahead-safe backtest (expanding window, decision-time info only) |
 | `config.yaml` | All tunables                                                    |
-| `tests/`      | Guardrail tests                                                |
+| `tests/`      | Guardrail + pattern + adapter + analyst + backtest tests (36)  |
 
 ---
 
