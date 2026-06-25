@@ -1,0 +1,358 @@
+"""
+adapters.py — pluggable data layer.
+
+WHY a pluggable adapter:
+    The decision logic must not care where quotes come from. Today the default
+    is free, delayed Yahoo data; tomorrow it might be a real-time broker feed.
+    Swapping the source must NOT require touching metrics or the brief logic.
+
+HONESTY CONSTRAINTS BAKED IN HERE (do not strip in future edits):
+    * Every quote carries a `source` and an `as_of` timestamp. The freshness
+      guard depends on this. A quote with no timestamp is useless for a 9:31
+      live decision and is treated as stale.
+    * No adapter fabricates fields it cannot source. If a value is missing it
+      stays `None`, never a guessed number.
+    * Order-flow / bid-ask aggressor delta is NOT exposed by these adapters,
+      because none of the supported free/L1 sources actually provide it.
+      Inventing it is forbidden (see metrics.py proxies instead).
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Optional
+
+import pandas as pd
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Data containers
+# ─────────────────────────────────────────────────────────────────────────────
+@dataclass
+class Quote:
+    """A point-in-time Level-1 quote. Missing fields stay None — never faked."""
+
+    ticker: str
+    last: Optional[float]
+    open: Optional[float]
+    high: Optional[float]
+    low: Optional[float]
+    prior_close: Optional[float]
+    volume: Optional[float]
+    source: str
+    as_of: Optional[dt.datetime]          # tz-aware; when this quote was current
+    session_date: Optional[dt.date]       # the trading session this quote belongs to
+    currency: Optional[str] = None
+    notes: list = field(default_factory=list)
+
+    def is_complete_for_direction(self) -> bool:
+        """Minimum fields needed to even attempt a directional read."""
+        return None not in (self.last, self.open, self.prior_close)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Interface
+# ─────────────────────────────────────────────────────────────────────────────
+class DataAdapter(ABC):
+    """Interface every data source must implement."""
+
+    name: str = "abstract"
+
+    @abstractmethod
+    def get_quote(self, ticker: str) -> Quote:
+        """Full Level-1 quote with timestamp + session date."""
+
+    @abstractmethod
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        """Intraday OHLCV bars for today. Index = tz-aware timestamps."""
+
+    @abstractmethod
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        """Daily OHLCV bars for the lookback window."""
+
+    @abstractmethod
+    def get_quote_simple(self, ticker: str) -> Quote:
+        """Lighter quote for correlated tickers (still timestamped)."""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Yahoo (default, free) — DELAYED DATA. Read the caveat.
+# ─────────────────────────────────────────────────────────────────────────────
+class YahooAdapter(DataAdapter):
+    """
+    Default free adapter using yfinance.
+
+    CAVEAT (this is why the freshness guard is mandatory):
+        * TSX quotes via Yahoo are typically ~15 minutes DELAYED.
+        * Yahoo periodically serves CACHED / STALE data — sometimes hours or
+          even months old — with no obvious error. This has produced confident
+          intraday calls on data that was not live.
+        * Therefore: fine for context, but a 9:31 LIVE decision on Yahoo data
+          must pass the freshness guard or be replaced with manual broker L1.
+    """
+
+    name = "yahoo"
+
+    def __init__(self, exchange_tz: str = "America/Toronto"):
+        import yfinance  # imported lazily so stubs don't require it
+        self._yf = yfinance
+        self.exchange_tz = exchange_tz
+
+    # -- helpers --------------------------------------------------------------
+    def _ticker(self, ticker: str):
+        return self._yf.Ticker(ticker)
+
+    def _to_exchange_tz(self, ts) -> Optional[dt.datetime]:
+        if ts is None:
+            return None
+        ts = pd.Timestamp(ts)
+        if ts.tzinfo is None:
+            ts = ts.tz_localize("UTC")
+        return ts.tz_convert(self.exchange_tz).to_pydatetime()
+
+    # -- interface ------------------------------------------------------------
+    def get_quote(self, ticker: str) -> Quote:
+        t = self._ticker(ticker)
+        notes: list = []
+
+        # fast_info is the lightest reliable source for last/open/etc.
+        fi = {}
+        try:
+            fi = dict(t.fast_info)
+        except Exception as e:  # pragma: no cover - network/library variance
+            notes.append(f"fast_info failed: {e}")
+
+        last = fi.get("last_price")
+        open_ = fi.get("open")
+        high = fi.get("day_high")
+        low = fi.get("day_low")
+        prior_close = fi.get("previous_close") or fi.get("regular_market_previous_close")
+        volume = fi.get("last_volume") or fi.get("volume")
+        currency = fi.get("currency")
+
+        # Timestamp: Yahoo's fast_info does not always expose a trade time, so
+        # we read the last 1-min bar's timestamp as the authoritative "as_of".
+        # If we cannot get a real timestamp, as_of stays None -> treated stale.
+        as_of = None
+        session_date = None
+        try:
+            bars = t.history(period="1d", interval="1m", auto_adjust=False)
+            if not bars.empty:
+                last_ts = self._to_exchange_tz(bars.index[-1])
+                as_of = last_ts
+                session_date = last_ts.date() if last_ts else None
+                # Prefer live bar data for OHLC when fast_info is thin.
+                if last is None:
+                    last = float(bars["Close"].iloc[-1])
+                if open_ is None:
+                    open_ = float(bars["Open"].iloc[0])
+                if high is None:
+                    high = float(bars["High"].max())
+                if low is None:
+                    low = float(bars["Low"].min())
+                if volume is None:
+                    volume = float(bars["Volume"].sum())
+        except Exception as e:  # pragma: no cover
+            notes.append(f"intraday history failed: {e}")
+
+        return Quote(
+            ticker=ticker,
+            last=_f(last),
+            open=_f(open_),
+            high=_f(high),
+            low=_f(low),
+            prior_close=_f(prior_close),
+            volume=_f(volume),
+            source=self.name,
+            as_of=as_of,
+            session_date=session_date,
+            currency=currency,
+            notes=notes,
+        )
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        t = self._ticker(ticker)
+        df = t.history(period="1d", interval=interval, auto_adjust=False)
+        if df.empty:
+            return df
+        df = df.copy()
+        df.index = pd.to_datetime(df.index)
+        if df.index.tz is None:
+            df.index = df.index.tz_localize("UTC")
+        df.index = df.index.tz_convert(self.exchange_tz)
+        return df
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        t = self._ticker(ticker)
+        period = f"{max(lookback_days, 5)}d"
+        df = t.history(period=period, interval="1d", auto_adjust=False)
+        if df.empty:
+            return df
+        df = df.copy()
+        df.index = pd.to_datetime(df.index)
+        return df
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        # Reuse the full quote path; correlated tickers still need timestamps so
+        # they can be freshness-checked individually.
+        return self.get_quote(ticker)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Manual override — paste verified broker Level-1 numbers
+# ─────────────────────────────────────────────────────────────────────────────
+class ManualAdapter(DataAdapter):
+    """
+    Lets the user paste broker Level-1 numbers when the API is delayed/stale.
+
+    WHY this exists:
+        At 9:31 the free feed may be 15 min behind. A trader staring at their
+        broker's live L1 can type the real numbers in. Manual input is tagged
+        `source=manual` and BYPASSES the staleness fail (the human vouches for
+        it) — but it is still clearly labelled so nobody mistakes it for an API
+        feed. It does NOT fabricate intraday bars; those degrade gracefully.
+    """
+
+    name = "manual"
+
+    def __init__(
+        self,
+        *,
+        open: float,
+        last: float,
+        high: float,
+        low: float,
+        volume: float,
+        prior_close: Optional[float] = None,
+        exchange_tz: str = "America/Toronto",
+        currency: Optional[str] = None,
+    ):
+        self.exchange_tz = exchange_tz
+        # as_of = now, because the human is reading it live right now.
+        now = pd.Timestamp.now(tz=exchange_tz).to_pydatetime()
+        self._quote = Quote(
+            ticker="(manual)",
+            last=_f(last),
+            open=_f(open),
+            high=_f(high),
+            low=_f(low),
+            prior_close=_f(prior_close),
+            volume=_f(volume),
+            source=self.name,
+            as_of=now,
+            session_date=now.date(),
+            currency=currency,
+            notes=["manual broker L1 — bypasses staleness fail by user vouch"],
+        )
+
+    def get_quote(self, ticker: str) -> Quote:
+        q = self._quote
+        q.ticker = ticker
+        return q
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        # No fabricated bars. Caller must handle an empty frame gracefully.
+        return pd.DataFrame()
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        return pd.DataFrame()
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        # HONESTY: the human pasted Level-1 for ONE ticker only. We must NOT
+        # echo those numbers back as if they were crude/TSX/peer quotes — that
+        # would fabricate correlated data. Return an empty (unavailable) quote
+        # so the brief prints "unavailable" for context in manual mode.
+        return Quote(
+            ticker=ticker, last=None, open=None, high=None, low=None,
+            prior_close=None, volume=None, source=self.name,
+            as_of=None, session_date=None,
+            notes=["manual mode: no correlated data pasted -> unavailable"],
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Real-time upgrade stubs — documented, intentionally not implemented.
+# README explains: for genuine 9:31 live decisions, prefer one of these over
+# free Yahoo data.
+# ─────────────────────────────────────────────────────────────────────────────
+class _UnimplementedAdapter(DataAdapter):
+    name = "stub"
+    install_hint = ""
+
+    def _raise(self):
+        raise NotImplementedError(
+            f"{self.name} adapter is a documented stub. "
+            f"Implement against your real-time feed. {self.install_hint}"
+        )
+
+    def get_quote(self, ticker: str) -> Quote:
+        self._raise()
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        self._raise()
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        self._raise()
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        self._raise()
+
+
+class IBKRAdapter(_UnimplementedAdapter):
+    """Interactive Brokers via `ib_insync`. Real-time L1 (and L2 if subscribed)."""
+    name = "ibkr"
+    install_hint = "pip install ib_insync; needs TWS/IB Gateway running."
+
+
+class QuestradeAdapter(_UnimplementedAdapter):
+    """Questrade REST API. Real-time with market-data package."""
+    name = "questrade"
+    install_hint = "Use Questrade OAuth refresh token; see their API docs."
+
+
+class PolygonAdapter(_UnimplementedAdapter):
+    """Polygon.io paid feed (US-centric; limited TSX coverage)."""
+    name = "polygon"
+    install_hint = "pip install polygon-api-client; set POLYGON_API_KEY."
+
+
+class AlpacaAdapter(_UnimplementedAdapter):
+    """Alpaca market data (US equities)."""
+    name = "alpaca"
+    install_hint = "pip install alpaca-py; set APCA keys."
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+def _f(x) -> Optional[float]:
+    """Coerce to float or None. Never turns a missing value into 0.0."""
+    if x is None:
+        return None
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    if v != v:  # NaN
+        return None
+    return v
+
+
+def build_adapter(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] = None) -> DataAdapter:
+    """Factory used by the CLI."""
+    name = (name or "yahoo").lower()
+    if name == "manual":
+        if not manual_kwargs:
+            raise ValueError("manual adapter requires pasted Level-1 numbers")
+        return ManualAdapter(exchange_tz=exchange_tz, **manual_kwargs)
+    if name == "yahoo":
+        return YahooAdapter(exchange_tz=exchange_tz)
+    if name == "ibkr":
+        return IBKRAdapter()
+    if name == "questrade":
+        return QuestradeAdapter()
+    if name == "polygon":
+        return PolygonAdapter()
+    if name == "alpaca":
+        return AlpacaAdapter()
+    raise ValueError(f"unknown adapter: {name}")

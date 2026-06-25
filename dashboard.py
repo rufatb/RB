@@ -1,0 +1,710 @@
+#!/usr/bin/env python3
+"""
+dashboard.py — Pre-Open Brief entry point.
+
+Runs ~09:31 ET and prints an HONEST, CALIBRATED intraday decision-support brief.
+
+READ THIS FIRST — THE DESIGN PHILOSOPHY IS LOAD-BEARING:
+    This is decision SUPPORT, not a predictor. It was specified by a trader who
+    watched an AI manufacture confident intraday calls that flipped with the
+    price. The constraints below are NON-NEGOTIABLE and are commented in-code so
+    future edits don't "helpfully" remove them:
+
+      1. No fabricated data. Missing -> labelled proxy or "unavailable".
+      2. No confidence inflation. p(close>open) defaults to 0.50 and is CLAMPED
+         to [0.35, 0.65]. Conflicts / mid-range -> "NO EDGE — WAIT".
+      3. Data integrity is checked FIRST. Stale/cached feeds refuse a read.
+      4. Levels over predictions. The deliverable is invalidation + triggers.
+      5. Risk-first. Size from stop distance, never conviction.
+      6. Read-only. Never places orders.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import sys
+from typing import Optional
+from zoneinfo import ZoneInfo
+
+import pandas as pd
+import yaml
+
+import metrics
+import risk
+from adapters import DataAdapter, Quote, build_adapter
+
+try:
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+    _RICH = True
+except Exception:  # pragma: no cover - rich optional at runtime
+    _RICH = False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Probability clamp — HARD GUARDRAIL.
+# WHY: open-to-close direction for a single stock is near a coin flip. Letting a
+# model emit 0.8 "up" is exactly the failure mode this tool exists to prevent.
+# This is asserted AND covered by a test (tests/test_guardrails.py).
+# ─────────────────────────────────────────────────────────────────────────────
+def clamp_probability(p: float, floor: float = 0.35, cap: float = 0.65) -> float:
+    clamped = max(floor, min(cap, p))
+    # Defensive assertion: the contract is that nothing downstream ever sees a
+    # probability outside the band for an intraday open-to-close call.
+    assert floor <= clamped <= cap, "probability clamp violated"
+    return clamped
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Decision engine
+# ─────────────────────────────────────────────────────────────────────────────
+class GuardResult:
+    def __init__(self):
+        self.passed = True
+        self.reasons: list[str] = []
+        self.timestamps: dict = {}
+
+    def fail(self, reason: str):
+        self.passed = False
+        self.reasons.append(reason)
+
+
+def data_integrity_guard(
+    quote: Quote,
+    *,
+    now: dt.datetime,
+    exchange_tz: str,
+    market_open: dt.time,
+    market_close: dt.time,
+    max_stale_minutes: int,
+    second_quote: Optional[Quote] = None,
+    source_conflict_pct: float = 2.0,
+) -> GuardResult:
+    """
+    Runs FIRST. Free feeds (incl. Yahoo) routinely serve cached/stale data —
+    sometimes months old — with no error. A directional read on unverified data
+    is the cardinal sin here, so this gate is mandatory and loud on failure.
+
+    Manual source is trusted (the human vouches for live broker L1) and skips
+    the staleness fail, but is still surfaced as source=manual.
+    """
+    g = GuardResult()
+    g.timestamps["as_of"] = quote.as_of
+    g.timestamps["session_date"] = quote.session_date
+    g.timestamps["source"] = quote.source
+
+    today = now.date()
+    in_session = market_open <= now.time() <= market_close
+
+    if quote.source == "manual":
+        # Trusted by user vouch — but record that staleness was bypassed.
+        g.reasons.append("source=manual — staleness bypassed by user vouch")
+        return g
+
+    # No timestamp at all -> cannot verify -> stale by definition.
+    if quote.as_of is None:
+        g.fail("quote carries no timestamp — cannot verify it is live")
+        return g
+
+    # Session date must be today (in exchange tz).
+    if quote.session_date is not None and quote.session_date != today:
+        g.fail(f"quote session date {quote.session_date} != today {today}")
+
+    # Last-trade age check (only meaningful during market hours).
+    age_min = (now - quote.as_of).total_seconds() / 60.0
+    g.timestamps["age_min"] = age_min
+    if in_session and age_min > max_stale_minutes:
+        g.fail(f"last trade is {age_min:.0f} min old (> {max_stale_minutes} max)")
+
+    if quote.as_of.date() != today:
+        g.fail(f"last trade timestamp dated {quote.as_of.date()} != today {today}")
+
+    # Cross-source conflict check.
+    if second_quote is not None and second_quote.last and quote.last:
+        diff = abs(second_quote.last - quote.last) / quote.last * 100.0
+        g.timestamps["source_conflict_pct"] = diff
+        if diff > source_conflict_pct:
+            g.fail(
+                f"SOURCE CONFLICT: {quote.source}={quote.last} vs "
+                f"{second_quote.source}={second_quote.last} ({diff:.1f}% apart)"
+            )
+    return g
+
+
+def decide(struct, orb, vw, sf, rel, momo) -> dict:
+    """
+    Turn measurements into an HONEST verdict + capped probability.
+
+    The baseline is 0.50 + WAIT. Probability only moves off 0.50 when SPECIFIC,
+    NAMED structural factors line up — and never past the clamp. Conflicting
+    signals or a mid-range price collapse back to WAIT. This intentionally
+    refuses to manufacture an edge.
+    """
+    p = 0.50
+    factors: list[str] = []         # named reasons that moved p off 0.50
+    bull, bear = 0, 0
+
+    last = struct.get("last")
+    open_ = struct.get("open")
+    pos = orb.get("pos_in_orb_pct")
+    vwap_pct = vw.get("price_vs_vwap_pct")
+
+    # --- structural factors (each NAMED so the brief can show its work) -------
+    if open_ is not None and last is not None:
+        if last > open_:
+            bull += 1; factors.append("price holding above open (+)")
+        elif last < open_:
+            bear += 1; factors.append("price below open (−)")
+
+    if vwap_pct is not None:
+        if vwap_pct > 0.1:
+            bull += 1; factors.append("price above session VWAP (+)")
+        elif vwap_pct < -0.1:
+            bear += 1; factors.append("price below session VWAP (−)")
+
+    if pos is not None:
+        if pos >= 70:
+            bull += 1; factors.append("in upper third of opening range (+)")
+        elif pos <= 30:
+            bear += 1; factors.append("in lower third of opening range (−)")
+
+    # --- spike-fade flags VETO continuation. They precede chop, not trend. ---
+    fade_flag = any("FADE" in f or "NEUTRALIZED" in f or "FAILED-BREAKOUT" in f
+                    for f in sf.get("flags", []))
+
+    # Convert tallies to a small, capped nudge. 0.03 per net factor is modest by
+    # design — we never let a couple of intraday reads imply strong conviction.
+    net = bull - bear
+    p = 0.50 + 0.03 * net
+
+    conviction = "None"
+    verdict = "NO EDGE — WAIT"
+
+    mid_range = pos is not None and 30 < pos < 70
+    conflict = bull > 0 and bear > 0
+
+    if fade_flag:
+        factors.append("spike-fade flag present — continuation vetoed")
+        verdict = "NO EDGE — WAIT"
+        p = 0.50
+    elif conflict or mid_range or net == 0:
+        verdict = "NO EDGE — WAIT"
+        p = 0.50
+        if mid_range:
+            factors.append("price mid opening-range — no-trade zone")
+    elif net >= 2:
+        verdict = "BULL LEAN"
+        conviction = "Low" if net == 2 else "Medium"  # Medium needs >=3 confluence
+    elif net <= -2:
+        verdict = "BEAR LEAN"
+        conviction = "Low" if net == -2 else "Medium"
+    else:  # |net| == 1 -> too thin to call
+        verdict = "NO EDGE — WAIT"
+        p = 0.50
+
+    # Medium conviction requires explicit multi-factor confluence; High is
+    # UNAVAILABLE for intraday by design. Enforce that here.
+    if conviction == "Medium" and abs(net) < 3:
+        conviction = "Low"
+    assert conviction in ("None", "Low", "Medium"), "High conviction is forbidden intraday"
+
+    p = clamp_probability(p)
+    if verdict == "NO EDGE — WAIT":
+        p = 0.50  # WAIT is always the honest coin flip
+
+    return {
+        "verdict": verdict,
+        "probability": p,
+        "conviction": conviction,
+        "factors": factors,
+        "bull": bull,
+        "bear": bear,
+    }
+
+
+def build_levels(struct, orb, levels) -> dict:
+    """
+    The actionable output: invalidation + confirmation triggers + no-trade zone.
+    Levels beat predictions — "wait for X to break/hold" is the deliverable.
+    """
+    open_ = struct.get("open")
+    out = {
+        "invalidation": None,
+        "bull_trigger": None, "bull_target": None,
+        "bear_trigger": None, "bear_target": None,
+        "no_trade_zone": None,
+    }
+    if open_ is None:
+        return out
+
+    orb_hi = orb.get("orbN_high")
+    orb_lo = orb.get("orbN_low")
+
+    # Invalidation framed as an event, not a price guess.
+    out["invalidation"] = (
+        "5-min close back below the open after a long trigger "
+        "(or above the open after a short)"
+    )
+    if orb_hi is not None:
+        out["bull_trigger"] = f"break & 5-min hold above opening-range high {orb_hi:.2f}"
+        res = [r for r in levels.get("resistance", []) if r > orb_hi]
+        out["bull_target"] = min(res) if res else levels.get("prior_high")
+    if orb_lo is not None:
+        out["bear_trigger"] = f"break & 5-min hold below opening-range low {orb_lo:.2f}"
+        dem = [s for s in levels.get("demand_shelves", []) if s < orb_lo]
+        out["bear_target"] = max(dem) if dem else levels.get("prior_low")
+    if orb_hi is not None and orb_lo is not None:
+        out["no_trade_zone"] = (orb_lo, orb_hi)
+    return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Holiday / weekday gate (for scheduled runs)
+# ─────────────────────────────────────────────────────────────────────────────
+def is_trading_day(day: dt.date, exchange: str = "TSX") -> bool:
+    """
+    Skip weekends and exchange holidays. Uses pandas_market_calendars when
+    available; falls back to a weekday check (with a loud note) if not.
+    """
+    if day.weekday() >= 5:
+        return False
+    try:
+        import pandas_market_calendars as mcal
+        cal = mcal.get_calendar(exchange)
+        sched = cal.schedule(start_date=day, end_date=day)
+        return not sched.empty
+    except Exception:
+        # Fallback: weekday only. Better to run on a holiday and have the data
+        # guard refuse than to silently skip a real trading day.
+        return True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rendering
+# ─────────────────────────────────────────────────────────────────────────────
+def _fmt(x, nd=2, suffix=""):
+    if x is None:
+        return "unavailable"
+    if isinstance(x, float):
+        return f"{x:.{nd}f}{suffix}"
+    return f"{x}{suffix}"
+
+
+def render(brief: dict, console=None):
+    if _RICH and console is not None:
+        _render_rich(brief, console)
+    else:
+        _render_plain(brief)
+
+
+def _section(title):
+    return f"\n{'═' * 70}\n{title}\n{'═' * 70}"
+
+
+def _render_plain(b):
+    g = b["guard"]
+    print(_section("1. DATA INTEGRITY"))
+    status = "PASS" if g.passed else "FAIL"
+    print(f"  status      : {status}")
+    print(f"  source      : {g.timestamps.get('source')}")
+    print(f"  as-of       : {g.timestamps.get('as_of')}")
+    print(f"  session     : {g.timestamps.get('session_date')}")
+    if "age_min" in g.timestamps:
+        print(f"  trade age   : {g.timestamps['age_min']:.1f} min")
+    for r in g.reasons:
+        print(f"  note        : {r}")
+
+    if not g.passed:
+        print("\n⚠ DATA NOT VERIFIED LIVE — " + "; ".join(g.reasons))
+        print("  No directional read produced. Paste broker Level-1 to proceed")
+        print("  (use --manual). Static reference below only.\n")
+        _render_static(b)
+        return
+
+    d = b["decision"]
+    print(_section("2. VERDICT"))
+    print(f"  {d['verdict']}")
+    print(_section("3. PROBABILITY (capped [0.35, 0.65])"))
+    print(f"  p(close > open) = {d['probability']:.2f}   (default 0.50)")
+    if d["factors"]:
+        for f in d["factors"]:
+            print(f"    • {f}")
+    else:
+        print("    • no named factor moved it off 0.50")
+    print(_section("4. CONVICTION"))
+    print(f"  {d['conviction']}   (High is unavailable intraday by design)")
+
+    _render_static(b)
+
+
+def _render_static(b):
+    s = b["struct"]; orb = b["orb"]; vw = b["vwap"]; sf = b["spike_fade"]
+    print(_section("5. OPENING STRUCTURE"))
+    print(f"  open {_fmt(s['open'])}  last {_fmt(s['last'])}  "
+          f"prior close {_fmt(s['prior_close'])}")
+    print(f"  gap {_fmt(s['gap_pct'],2,'%')}  vs open {_fmt(s['pct_vs_open'],2,'%')}  "
+          f"vs prior close {_fmt(s['pct_vs_prior_close'],2,'%')}")
+    print(f"  ORB(5m) {_fmt(orb['orbN_low'])}–{_fmt(orb['orbN_high'])}  "
+          f"pos {_fmt(orb['pos_in_orb_pct'],0,'%')}")
+    print(f"  VWAP {_fmt(vw['vwap'])}  price vs VWAP {_fmt(vw['price_vs_vwap_pct'],2,'%')}")
+    print(f"  volume pace {_fmt(b['vol_pace'].get('pace'),2,'x')}  "
+          f"(cum {_fmt(b['vol_pace'].get('cumulative'),0)} / ADV {_fmt(b['vol_pace'].get('adv'),0)})")
+    print(f"  net-buy PROXY: {b['proxy']['value']}  [{b['proxy']['_label']}]")
+    if sf["flags"]:
+        for fl in sf["flags"]:
+            print(f"  ⚑ {fl}")
+    else:
+        print("  spike-fade: no flags")
+
+    lv = b["levels_actionable"]
+    print(_section("6. LEVELS (the actionable part)"))
+    print(f"  invalidation : {lv['invalidation']}")
+    print(f"  bull trigger : {lv['bull_trigger']}")
+    print(f"  bull target  : {_fmt(lv['bull_target'])}")
+    print(f"  bear trigger : {lv['bear_trigger']}")
+    print(f"  bear target  : {_fmt(lv['bear_target'])}")
+    if lv["no_trade_zone"]:
+        lo, hi = lv["no_trade_zone"]
+        print(f"  NO-TRADE zone: {lo:.2f}–{hi:.2f} (mid opening range)")
+
+    c = b["context"]
+    print(_section("7. CONTEXT (context only — NOT signals)"))
+    print(f"  crude (WTI)  : {_fmt(c.get('crude'),2,'%')}   <-- dominant fuel lever")
+    print(f"  TSX          : {_fmt(c.get('tsx'),2,'%')}")
+    print(f"  CAD/USD      : {_fmt(c.get('cadusd'),2,'%')}")
+    print(f"  VIX          : {_fmt(c.get('vix'),2,'%')}")
+    print(f"  peer avg     : {_fmt(c.get('peer_avg'),2,'%')}")
+    rel = b["rel_strength"]
+    print(f"  rel strength : vs TSX {rel['vs_tsx']} | vs peers {rel['vs_peers']}")
+
+    rp = b.get("risk_plan")
+    print(_section("8. RISK (hypothetical trigger->stop; read-only)"))
+    if rp is None:
+        print("  no level pair available to size a hypothetical trade")
+    else:
+        print(f"  side {rp.side}  entry {rp.entry:.2f}  stop {rp.stop:.2f}  "
+              f"stop dist {rp.stop_distance:.2f}")
+        print(f"  risk ${rp.risk_dollars:.2f}  -> {rp.shares} shares  "
+              f"(position ${rp.position_value:,.0f})")
+        for name, lvl, r in rp.r_multiples:
+            print(f"    target {name} {lvl:.2f}  =>  {r:.2f}R")
+        print(f"  overnight margin cost/day: {_fmt(rp.overnight_margin_cost,2,' $')}")
+        for g_pct, impact in rp.gap_risk:
+            print(f"    gap {g_pct:.0f}% against -> ${impact:,.0f} on position")
+
+    if b.get("headlines"):
+        print(_section("9. HEADLINES (context, NOT signal)"))
+        for h in b["headlines"][:3]:
+            print(f"  • {h}")
+
+    print(f"\n(brief generated {b['generated_at']}  |  every number is as-of its source time)")
+    print("Read-only tool. It never places orders.\n")
+
+
+def _render_rich(b, console):
+    g = b["guard"]
+    color = "green" if g.passed else "red"
+    head = Text(f"PRE-OPEN BRIEF — {b['ticker']}", style="bold")
+    console.print(Panel(head, style=color))
+
+    t = Table(title="1. DATA INTEGRITY", show_header=False)
+    t.add_row("status", "[green]PASS[/green]" if g.passed else "[red]FAIL[/red]")
+    t.add_row("source", str(g.timestamps.get("source")))
+    t.add_row("as-of", str(g.timestamps.get("as_of")))
+    t.add_row("session", str(g.timestamps.get("session_date")))
+    if "age_min" in g.timestamps:
+        t.add_row("trade age", f"{g.timestamps['age_min']:.1f} min")
+    for r in g.reasons:
+        t.add_row("note", r)
+    console.print(t)
+
+    if not g.passed:
+        console.print(Panel(
+            "⚠ DATA NOT VERIFIED LIVE — " + "; ".join(g.reasons) +
+            "\nNo directional read produced. Paste broker Level-1 (--manual) to proceed.",
+            style="bold red",
+        ))
+        # Fall back to plain static reference (kept DRY).
+        _render_static(b)
+        return
+
+    d = b["decision"]
+    vcolor = {"BULL LEAN": "green", "BEAR LEAN": "red"}.get(d["verdict"], "yellow")
+    console.print(Panel(f"2. VERDICT: [bold]{d['verdict']}[/bold]", style=vcolor))
+    pt = Table(title="3. PROBABILITY (capped [0.35, 0.65])", show_header=False)
+    pt.add_row("p(close > open)", f"{d['probability']:.2f}  (default 0.50)")
+    for f in (d["factors"] or ["no named factor moved it off 0.50"]):
+        pt.add_row("factor", f)
+    console.print(pt)
+    console.print(Panel(
+        f"4. CONVICTION: [bold]{d['conviction']}[/bold]  "
+        f"(High is unavailable intraday by design)", style="cyan"))
+
+    # Static sections reuse the plain renderer for brevity & single source.
+    _render_static(b)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Orchestration
+# ─────────────────────────────────────────────────────────────────────────────
+def load_config(path: str) -> dict:
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+
+def parse_hhmm(s: str) -> dt.time:
+    h, m = s.split(":")
+    return dt.time(int(h), int(m))
+
+
+def safe_pct_change(adapter: DataAdapter, ticker: str, tz: str) -> Optional[float]:
+    """Today's %change for a correlated ticker, freshness-checked individually."""
+    try:
+        q = adapter.get_quote_simple(ticker)
+        if q.last is None or q.prior_close is None:
+            return None
+        # Individual freshness: if the bar is from a prior day, skip it.
+        today = dt.datetime.now(ZoneInfo(tz)).date()
+        if q.session_date is not None and q.session_date != today:
+            return None
+        return metrics.pct(q.last, q.prior_close)
+    except Exception:
+        return None
+
+
+def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
+             show_headlines: bool) -> dict:
+    tz = config["exchange_tz"]
+    now = dt.datetime.now(ZoneInfo(tz))
+    ticker = config["ticker"]
+    mkt_open = parse_hhmm(config["market_open"])
+    mkt_close = parse_hhmm(config["market_close"])
+
+    adapter = build_adapter(adapter_name, exchange_tz=tz, manual_kwargs=manual_kwargs)
+    quote = adapter.get_quote(ticker)
+
+    # ── GUARD RUNS FIRST ──────────────────────────────────────────────────
+    guard = data_integrity_guard(
+        quote, now=now, exchange_tz=tz,
+        market_open=mkt_open, market_close=mkt_close,
+        max_stale_minutes=config["guard"]["max_stale_minutes"],
+        source_conflict_pct=config["guard"]["source_conflict_pct"],
+    )
+
+    # Bars (may be empty for manual mode — everything degrades gracefully).
+    try:
+        intraday = adapter.get_intraday_bars(ticker, "1m")
+    except Exception:
+        intraday = pd.DataFrame()
+    try:
+        daily = adapter.get_daily_bars(ticker, config["levels"]["daily_lookback_days"])
+    except Exception:
+        daily = pd.DataFrame()
+
+    struct = metrics.structure(quote)
+    orb = metrics.opening_range(intraday, quote.last, config["levels"]["orb_minutes"])
+    vw = metrics.vwap(intraday, quote.last)
+    cum_vol = float(intraday["Volume"].sum()) if not intraday.empty else quote.volume
+    adv = metrics.average_daily_volume(daily)
+    vol_pace = metrics.volume_pace(cum_vol, adv, now, mkt_open, mkt_close)
+    momo = metrics.momentum(daily, intraday)
+    levels = metrics.key_levels(daily, config["levels"]["swing_lookback_days"])
+    sf = metrics.spike_fade(intraday, quote.open, config["levels"]["spike_fade_window_min"])
+    proxy = metrics.net_buy_proxy(struct, vw)
+
+    # Context (each correlated ticker freshness-checked individually).
+    corr = config["correlated"]
+    ac_pct = struct.get("pct_vs_prior_close")
+    peers = [safe_pct_change(adapter, p, tz) for p in corr["airline_peers"]]
+    peers_valid = [p for p in peers if p is not None]
+    peer_avg = sum(peers_valid) / len(peers_valid) if peers_valid else None
+    context = {
+        "crude": safe_pct_change(adapter, corr["crude"], tz),
+        "tsx": safe_pct_change(adapter, corr["tsx"], tz),
+        "cadusd": safe_pct_change(adapter, corr["cadusd"], tz),
+        "vix": safe_pct_change(adapter, corr["vix"], tz),
+        "peer_avg": peer_avg,
+    }
+    rel = metrics.relative_strength(ac_pct, context["tsx"], peer_avg)
+
+    decision = decide(struct, orb, vw, sf, rel, momo)
+    levels_actionable = build_levels(struct, orb, levels)
+
+    # Hypothetical risk plan (only if guard passed AND we have a level pair).
+    risk_plan = None
+    if guard.passed:
+        risk_plan = _maybe_risk_plan(config, decision, levels_actionable, struct, orb, levels)
+
+    headlines = _maybe_headlines(ticker) if show_headlines else None
+
+    return {
+        "ticker": ticker,
+        "generated_at": now.isoformat(timespec="seconds"),
+        "guard": guard,
+        "struct": struct,
+        "orb": orb,
+        "vwap": vw,
+        "vol_pace": vol_pace,
+        "momentum": momo,
+        "spike_fade": sf,
+        "proxy": proxy,
+        "levels_actionable": levels_actionable,
+        "context": context,
+        "rel_strength": rel,
+        "decision": decision,
+        "risk_plan": risk_plan,
+        "headlines": headlines,
+    }
+
+
+def _maybe_risk_plan(config, decision, lv, struct, orb, levels):
+    """Size a HYPOTHETICAL trade at the verdict's trigger with stop = invalidation."""
+    rcfg = config["risk"]
+    open_ = struct.get("open")
+    if open_ is None:
+        return None
+
+    if decision["verdict"] == "BULL LEAN" and orb.get("orbN_high"):
+        entry = orb["orbN_high"]
+        stop = open_                 # invalidation: back below open
+        side = "long"
+        targets = [("bull target", lv.get("bull_target")), ("52w high", levels.get("high_52w"))]
+    elif decision["verdict"] == "BEAR LEAN" and orb.get("orbN_low"):
+        entry = orb["orbN_low"]
+        stop = open_
+        side = "short"
+        targets = [("bear target", lv.get("bear_target")), ("52w low", levels.get("low_52w"))]
+    else:
+        # WAIT: still illustrate a long-bias bracket off the opening range so the
+        # user sees the risk math, but only if levels exist.
+        if not orb.get("orbN_high") or not orb.get("orbN_low"):
+            return None
+        entry = orb["orbN_high"]
+        stop = orb["orbN_low"]
+        side = "long"
+        targets = [("bull target", lv.get("bull_target"))]
+
+    if entry is None or stop is None or entry == stop:
+        return None
+    return risk.build_full_plan(
+        account_equity=rcfg["account_equity"],
+        risk_per_trade_pct=rcfg["risk_per_trade_pct"],
+        entry=entry, stop=stop, side=side, targets=targets,
+        is_margin=rcfg["is_margin"], cad_prime=rcfg["cad_prime"],
+        margin_spread=rcfg["margin_spread"],
+    )
+
+
+def _maybe_headlines(ticker):
+    """Top 3 headlines via yfinance.news. Tagged context, not signal. None on fail."""
+    try:
+        import yfinance
+        news = yfinance.Ticker(ticker).news or []
+        titles = []
+        for n in news[:3]:
+            t = n.get("title") or (n.get("content") or {}).get("title")
+            if t:
+                titles.append(t)
+        return titles or None
+    except Exception:
+        return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CLI
+# ─────────────────────────────────────────────────────────────────────────────
+def build_arg_parser():
+    p = argparse.ArgumentParser(description="Pre-Open Brief — intraday decision support (read-only)")
+    p.add_argument("--config", default="config.yaml")
+    p.add_argument("--ticker", default=None, help="override config ticker")
+    p.add_argument("--source", default="yahoo",
+                   choices=["yahoo", "manual", "ibkr", "questrade", "polygon", "alpaca"])
+    p.add_argument("--once", action="store_true", help="run a single brief now and exit")
+    p.add_argument("--schedule", action="store_true",
+                   help="run continuously, firing at 09:31 exchange-tz on trading days")
+    p.add_argument("--headlines", action="store_true", help="include top-3 headlines")
+    p.add_argument("--no-rich", action="store_true", help="force plain text output")
+
+    # Manual broker Level-1 override (bypasses staleness fail; tagged manual).
+    p.add_argument("--manual", action="store_true", help="paste broker Level-1 numbers")
+    p.add_argument("--m-open", type=float)
+    p.add_argument("--m-last", type=float)
+    p.add_argument("--m-high", type=float)
+    p.add_argument("--m-low", type=float)
+    p.add_argument("--m-volume", type=float)
+    p.add_argument("--m-prior-close", type=float)
+    return p
+
+
+def collect_manual(args) -> dict:
+    missing = [k for k in ("m_open", "m_last", "m_high", "m_low", "m_volume")
+               if getattr(args, k) is None]
+    if missing:
+        raise SystemExit(
+            "manual mode needs --m-open --m-last --m-high --m-low --m-volume "
+            f"(missing: {', '.join(missing)})"
+        )
+    return dict(
+        open=args.m_open, last=args.m_last, high=args.m_high,
+        low=args.m_low, volume=args.m_volume, prior_close=args.m_prior_close,
+    )
+
+
+def main(argv=None):
+    args = build_arg_parser().parse_args(argv)
+    config = load_config(args.config)
+    if args.ticker:
+        config["ticker"] = args.ticker
+
+    adapter_name = "manual" if args.manual else args.source
+    manual_kwargs = collect_manual(args) if adapter_name == "manual" else None
+
+    console = None if (args.no_rich or not _RICH) else Console()
+
+    def fire():
+        brief = run_once(config, adapter_name, manual_kwargs, args.headlines)
+        render(brief, console)
+        return brief
+
+    if args.schedule:
+        _run_scheduled(config, fire)
+    else:
+        fire()  # default + --once both produce one brief
+    return 0
+
+
+def _run_scheduled(config, fire):
+    """
+    Continuous mode: fire once at 09:31 exchange-tz on trading days.
+    A system cron is the more robust option (see README); this is the
+    dependency-light fallback using the `schedule` library.
+    """
+    try:
+        import schedule
+    except Exception:
+        raise SystemExit("--schedule needs the `schedule` package (pip install schedule)")
+    import time
+
+    tz = config["exchange_tz"]
+
+    def guarded_fire():
+        today = dt.datetime.now(ZoneInfo(tz)).date()
+        if not is_trading_day(today, "TSX"):
+            print(f"[{today}] market holiday/weekend — skipping brief")
+            return
+        fire()
+
+    # schedule runs in local server time; we fire at 09:31 and let the brief's
+    # own tz handling + the data guard keep it honest about the session.
+    schedule.every().day.at("09:31").do(guarded_fire)
+    print("scheduled: 09:31 (server local time) on trading days. Ctrl-C to stop.")
+    while True:
+        schedule.run_pending()
+        time.sleep(20)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

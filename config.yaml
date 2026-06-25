@@ -1,0 +1,50 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Pre-Open Brief — configuration
+#
+# Everything that tunes behaviour lives here so the code stays declarative.
+# The defaults target AC.TO (Air Canada, TSX). Override per your account.
+# ─────────────────────────────────────────────────────────────────────────────
+
+ticker: AC.TO
+exchange_tz: America/Toronto
+market_open: "09:30"     # exchange local time
+market_close: "16:00"
+
+# Correlated context set. These are CONTEXT, never standalone signals.
+# Crude is listed first deliberately — it is the dominant fuel-cost lever
+# for an airline and is surfaced prominently in the brief.
+correlated:
+  crude: "CL=F"          # WTI front-month
+  tsx: "^GSPTSE"         # S&P/TSX Composite
+  cadusd: "CADUSD=X"     # CAD per USD
+  vix: "^VIX"            # volatility
+  airline_peers: ["UAL", "DAL", "AAL", "LUV"]
+
+# Risk inputs. Position size is derived from THESE plus stop distance —
+# never from conviction. See risk.py for the reasoning.
+risk:
+  account_equity: 100000     # account base currency
+  risk_per_trade_pct: 0.5    # % of equity risked per trade
+  is_margin: true            # is the hypothetical position on margin?
+  cad_prime: 4.45            # broker CAD prime rate (%)
+  margin_spread: 3.25        # broker spread over prime (%)
+
+# Data-integrity guard thresholds.
+guard:
+  max_stale_minutes: 20      # last-trade age that fails freshness in-session
+  source_conflict_pct: 2.0   # cross-source price divergence that flags conflict
+
+# Structure / level detection.
+levels:
+  swing_lookback_days: 60    # window for auto swing-low/high detection
+  daily_lookback_days: 400   # for 52w high/low + indicators
+  orb_minutes: 5             # opening-range window (also computes 1-min ORB)
+  spike_fade_window_min: 15  # K minutes used to locate the opening drive extreme
+
+# Probability clamps. HARD limits on intraday open-to-close direction.
+# These are guardrails against confidence inflation and are asserted in code.
+# Do NOT widen these without understanding why they exist (see README).
+probability:
+  floor: 0.35
+  cap: 0.65       # an intraday open-to-close call may NEVER exceed this
+  default: 0.50   # the honest baseline: it's near a coin flip
