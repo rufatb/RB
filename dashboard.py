@@ -30,9 +30,11 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import yaml
 
+import analyst
 import metrics
+import patterns
 import risk
-from adapters import DataAdapter, Quote, build_adapter
+from adapters import DataAdapter, MultiSourceAdapter, Quote, build_adapter
 
 try:
     from rich.console import Console
@@ -134,7 +136,7 @@ def data_integrity_guard(
     return g
 
 
-def decide(struct, orb, vw, sf, rel, momo) -> dict:
+def decide(struct, orb, vw, sf, rel, momo, pattern_factors=None) -> dict:
     """
     Turn measurements into an HONEST verdict + capped probability.
 
@@ -142,6 +144,11 @@ def decide(struct, orb, vw, sf, rel, momo) -> dict:
     NAMED structural factors line up — and never past the clamp. Conflicting
     signals or a mid-range price collapse back to WAIT. This intentionally
     refuses to manufacture an edge.
+
+    `pattern_factors` (from patterns.py) are historical base-rate leans. They are
+    deliberately WEAK: each counts as at most a fraction of one structural factor,
+    so deep history can tip a coin-flip but never manufacture conviction on its
+    own. They are still subject to the same [0.35, 0.65] clamp.
     """
     p = 0.50
     factors: list[str] = []         # named reasons that moved p off 0.50
@@ -180,6 +187,16 @@ def decide(struct, orb, vw, sf, rel, momo) -> dict:
     net = bull - bear
     p = 0.50 + 0.03 * net
 
+    # Historical base-rate lean: even weaker (0.015 each). Recorded as named
+    # factors but only shown when there is already a structural lean — base rates
+    # alone do not create a tradeable intraday edge.
+    pat_lean = 0
+    pat_names: list[str] = []
+    for pf in (pattern_factors or []):
+        pat_lean += getattr(pf, "direction", 0)
+        pat_names.append(f"{getattr(pf, 'name', 'pattern')} — {getattr(pf, 'detail', '')} [weak/history]")
+    p += 0.015 * pat_lean
+
     conviction = "None"
     verdict = "NO EDGE — WAIT"
 
@@ -211,9 +228,12 @@ def decide(struct, orb, vw, sf, rel, momo) -> dict:
         conviction = "Low"
     assert conviction in ("None", "Low", "Medium"), "High conviction is forbidden intraday"
 
-    p = clamp_probability(p)
     if verdict == "NO EDGE — WAIT":
-        p = 0.50  # WAIT is always the honest coin flip
+        p = 0.50  # WAIT is always the honest coin flip — history doesn't override
+    else:
+        factors.extend(pat_names)  # surface history leans only when structure agrees
+
+    p = clamp_probability(p)  # FINAL clamp — nothing escapes [0.35, 0.65]
 
     return {
         "verdict": verdict,
@@ -314,6 +334,12 @@ def _render_plain(b):
     print(f"  session     : {g.timestamps.get('session_date')}")
     if "age_min" in g.timestamps:
         print(f"  trade age   : {g.timestamps['age_min']:.1f} min")
+    src = b.get("sources", {})
+    if src.get("cross_check"):
+        cq = ", ".join(f"{q['source']}={q['last']}" for q in src.get("cross_quotes", [])) or "none returned"
+        print(f"  cross-check : {', '.join(src['cross_check'])}  ->  {cq}")
+    if "source_conflict_pct" in g.timestamps:
+        print(f"  src divergence: {g.timestamps['source_conflict_pct']:.2f}%")
     for r in g.reasons:
         print(f"  note        : {r}")
 
@@ -338,6 +364,38 @@ def _render_plain(b):
     print(f"  {d['conviction']}   (High is unavailable intraday by design)")
 
     _render_static(b)
+
+
+def _render_patterns(b):
+    p = b.get("patterns") or {}
+    if not p:
+        return
+    print(_section("9. HISTORICAL PATTERNS (base rates — context, not forecasts)"))
+    print(f"  history analysed: {p.get('history_days', 0)} daily bars")
+
+    g = p.get("gap_statistics", {})
+    if g.get("available"):
+        for key, label in [("gap_up", "after gap-up"), ("gap_down", "after gap-down")]:
+            s = g.get(key, {})
+            if s.get("n"):
+                fill = f", fill {s['fill_rate_pct']}%" if s.get("fill_rate_pct") is not None else ""
+                print(f"  {label:<15}: close>open {s['close_above_open_rate_pct']}%  "
+                      f"avg {s['avg_oc_pct']}%{fill}  (n={s['n']}, {s['confidence']})")
+
+    a = p.get("analog_days", {})
+    if a.get("available"):
+        print(f"  analog days    : {a['green_rate_pct']}% closed>open  "
+              f"median {a['median_oc_pct']}%  range[{a['p25_oc_pct']}..{a['p75_oc_pct']}]%  "
+              f"(n={a['n_neighbours']} similar setups; feats={','.join(a['features_used'])})")
+    elif a.get("reason"):
+        print(f"  analog days    : unavailable — {a['reason']}")
+
+    cr = p.get("crude_regime", {})
+    if cr.get("available"):
+        print(f"  crude regime   : {cr['regime']} (rolling corr {cr['rolling_corr']}, "
+              f"{cr['window_days']}d; full {cr['full_sample_corr']})")
+
+    print(f"  caveat         : {p.get('caveat', '')}")
 
 
 def _render_static(b):
@@ -395,8 +453,21 @@ def _render_static(b):
         for g_pct, impact in rp.gap_risk:
             print(f"    gap {g_pct:.0f}% against -> ${impact:,.0f} on position")
 
+    _render_patterns(b)
+
+    if b.get("analyst") is not None:
+        a = b["analyst"]
+        title = "10. CLAUDE ANALYST (advisory context — does NOT set the verdict)"
+        print(_section(title))
+        if getattr(a, "enabled", False):
+            print(f"  [model: {a.model}]")
+            for line in a.text.splitlines():
+                print(f"  {line}" if line.strip() else "")
+        else:
+            print(f"  {a.text}")
+
     if b.get("headlines"):
-        print(_section("9. HEADLINES (context, NOT signal)"))
+        print(_section("11. HEADLINES (context, NOT signal)"))
         for h in b["headlines"][:3]:
             print(f"  • {h}")
 
@@ -476,21 +547,28 @@ def safe_pct_change(adapter: DataAdapter, ticker: str, tz: str) -> Optional[floa
 
 
 def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
-             show_headlines: bool) -> dict:
+             show_headlines: bool, run_analyst: bool = False) -> dict:
     tz = config["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
     ticker = config["ticker"]
     mkt_open = parse_hhmm(config["market_open"])
     mkt_close = parse_hhmm(config["market_close"])
 
-    adapter = build_adapter(adapter_name, exchange_tz=tz, manual_kwargs=manual_kwargs)
+    # Multi-source: primary serves metrics, cross-check sources feed the guard.
+    cross_check = config.get("data_sources", {}).get("cross_check") if adapter_name != "manual" else None
+    adapter = build_adapter(adapter_name, exchange_tz=tz, manual_kwargs=manual_kwargs,
+                            cross_check=cross_check)
     quote = adapter.get_quote(ticker)
+
+    # If a multi-source adapter found an independent quote, hand it to the guard.
+    second_quote = adapter.best_cross_quote() if isinstance(adapter, MultiSourceAdapter) else None
 
     # ── GUARD RUNS FIRST ──────────────────────────────────────────────────
     guard = data_integrity_guard(
         quote, now=now, exchange_tz=tz,
         market_open=mkt_open, market_close=mkt_close,
         max_stale_minutes=config["guard"]["max_stale_minutes"],
+        second_quote=second_quote,
         source_conflict_pct=config["guard"]["source_conflict_pct"],
     )
 
@@ -530,7 +608,30 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
     }
     rel = metrics.relative_strength(ac_pct, context["tsx"], peer_avg)
 
-    decision = decide(struct, orb, vw, sf, rel, momo)
+    # ── DEEP HISTORICAL PATTERNS ──────────────────────────────────────────
+    # Use as much history as the source returns. Crude daily bars power the
+    # fuel-cost correlation regime. Every stat is a sample-sized base rate.
+    pat = {}
+    if config.get("patterns", {}).get("enabled", True):
+        try:
+            crude_daily = adapter.get_daily_bars(corr["crude"], config["levels"]["daily_lookback_days"])
+        except Exception:
+            crude_daily = pd.DataFrame()
+        today_pos = _pos_in_trailing_range(daily, quote.last)
+        prev_oc = None
+        if not daily.empty and len(daily) >= 2 and "Open" in daily:
+            p = daily.iloc[-1]
+            if p["Open"]:
+                prev_oc = (p["Close"] - p["Open"]) / p["Open"] * 100
+        pat = patterns.analyze(
+            daily, crude_daily,
+            today_gap_pct=struct.get("gap_pct"),
+            today_prev_oc_pct=prev_oc,
+            today_pos_in_range_pct=today_pos,
+        )
+
+    decision = decide(struct, orb, vw, sf, rel, momo,
+                      pattern_factors=pat.get("factors") if pat else None)
     levels_actionable = build_levels(struct, orb, levels)
 
     # Hypothetical risk plan (only if guard passed AND we have a level pair).
@@ -540,7 +641,7 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
 
     headlines = _maybe_headlines(ticker) if show_headlines else None
 
-    return {
+    brief = {
         "ticker": ticker,
         "generated_at": now.isoformat(timespec="seconds"),
         "guard": guard,
@@ -555,9 +656,44 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
         "context": context,
         "rel_strength": rel,
         "decision": decision,
+        "patterns": pat,
         "risk_plan": risk_plan,
         "headlines": headlines,
+        "sources": _describe_sources(adapter),
     }
+
+    # ── CLAUDE ANALYST (advisory context only; never overrides the verdict) ──
+    ccfg = config.get("claude", {})
+    if run_analyst and ccfg.get("enabled", True):
+        brief["analyst"] = analyst.analyze(
+            brief, model=ccfg.get("model", "claude-opus-4-8"),
+            max_tokens=ccfg.get("max_tokens", 1500), enabled=True,
+        )
+    return brief
+
+
+def _pos_in_trailing_range(daily: pd.DataFrame, last: Optional[float], window: int = 20):
+    """Where `last` sits within the trailing N-day range (0=low,100=high)."""
+    if daily is None or daily.empty or last is None or "Low" not in daily:
+        return None
+    win = daily.tail(window)
+    lo, hi = float(win["Low"].min()), float(win["High"].max())
+    if hi <= lo:
+        return None
+    return (last - lo) / (hi - lo) * 100.0
+
+
+def _describe_sources(adapter) -> dict:
+    """Human-readable summary of which sources fed this brief."""
+    if isinstance(adapter, MultiSourceAdapter):
+        return {
+            "primary": adapter.primary.name,
+            "cross_check": [a.name for a in adapter.cross_check],
+            "cross_quotes": [
+                {"source": q.source, "last": q.last} for q in adapter.last_cross_quotes
+            ],
+        }
+    return {"primary": adapter.name, "cross_check": [], "cross_quotes": []}
 
 
 def _maybe_risk_plan(config, decision, lv, struct, orb, levels):
@@ -620,8 +756,16 @@ def build_arg_parser():
     p = argparse.ArgumentParser(description="Pre-Open Brief — intraday decision support (read-only)")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--ticker", default=None, help="override config ticker")
-    p.add_argument("--source", default="yahoo",
-                   choices=["yahoo", "manual", "ibkr", "questrade", "polygon", "alpaca"])
+    p.add_argument("--source", default=None,
+                   choices=["yahoo_direct", "yahoo", "yahoo_yf", "stooq", "finnhub",
+                            "twelvedata", "manual", "ibkr", "questrade", "polygon", "alpaca"],
+                   help="primary data source (default: config data_sources.primary)")
+    p.add_argument("--cross-check", default=None,
+                   help="comma-separated cross-check sources (override config)")
+    p.add_argument("--analyst", dest="analyst", action="store_true", default=None,
+                   help="force-enable the Claude analyst layer")
+    p.add_argument("--no-analyst", dest="analyst", action="store_false",
+                   help="disable the Claude analyst layer")
     p.add_argument("--once", action="store_true", help="run a single brief now and exit")
     p.add_argument("--schedule", action="store_true",
                    help="run continuously, firing at 09:31 exchange-tz on trading days")
@@ -659,13 +803,24 @@ def main(argv=None):
     if args.ticker:
         config["ticker"] = args.ticker
 
-    adapter_name = "manual" if args.manual else args.source
+    # Source: CLI --source wins, else config data_sources.primary, else yahoo_direct.
+    source = args.source or config.get("data_sources", {}).get("primary", "yahoo_direct")
+    adapter_name = "manual" if args.manual else source
     manual_kwargs = collect_manual(args) if adapter_name == "manual" else None
+
+    # Cross-check override.
+    if args.cross_check is not None:
+        config.setdefault("data_sources", {})["cross_check"] = [
+            s.strip() for s in args.cross_check.split(",") if s.strip()
+        ]
+
+    # Analyst: CLI flag wins, else config claude.enabled.
+    run_analyst = args.analyst if args.analyst is not None else config.get("claude", {}).get("enabled", False)
 
     console = None if (args.no_rich or not _RICH) else Console()
 
     def fire():
-        brief = run_once(config, adapter_name, manual_kwargs, args.headlines)
+        brief = run_once(config, adapter_name, manual_kwargs, args.headlines, run_analyst)
         render(brief, console)
         return brief
 

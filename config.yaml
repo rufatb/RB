@@ -41,6 +41,31 @@ levels:
   orb_minutes: 5             # opening-range window (also computes 1-min ORB)
   spike_fade_window_min: 15  # K minutes used to locate the opening drive extreme
 
+# Data sources (multi-source). `primary` serves all metrics; each entry in
+# `cross_check` is pulled independently so the integrity guard can flag a SOURCE
+# CONFLICT. Key-based sources (finnhub, twelvedata) activate only when their API
+# key env var is set and are skipped silently otherwise — never fabricated.
+#   primary options:    yahoo_direct (default, free, reliable) | yahoo_yf |
+#                       stooq | finnhub | twelvedata | manual
+#   cross_check:        any of the above (missing-key sources are skipped)
+data_sources:
+  primary: yahoo_direct
+  cross_check: [stooq]          # add finnhub / twelvedata once keys are set
+  # API keys are read from env vars, never stored here:
+  #   FINNHUB_API_KEY, TWELVEDATA_API_KEY
+
+# Deep historical pattern mining (patterns.py). Uses as much history as the
+# source returns; every stat carries its sample size.
+patterns:
+  enabled: true
+
+# Claude analysis layer (analyst.py). Advisory CONTEXT only — it can never
+# override the capped probability/verdict. Requires ANTHROPIC_API_KEY in env.
+claude:
+  enabled: true                 # also needs the --analyst flag or default-on
+  model: claude-opus-4-8
+  max_tokens: 1500
+
 # Probability clamps. HARD limits on intraday open-to-close direction.
 # These are guardrails against confidence inflation and are asserted in code.
 # Do NOT widen these without understanding why they exist (see README).

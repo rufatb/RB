@@ -201,6 +201,365 @@ class YahooAdapter(DataAdapter):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Yahoo DIRECT (default) — raw chart endpoint via requests.
+#
+# WHY this exists alongside YahooAdapter(yfinance):
+#   The yfinance library fetches a cookie + "crumb" before every call and retries
+#   aggressively; behind a proxy that handshake can hang for minutes. The raw
+#   query1.finance.yahoo.com/v8/finance/chart endpoint returns the same data in
+#   one request with a hard timeout — verified live returning AC.TO at 24.51 CAD.
+#   Same delayed-data caveat applies, so the freshness guard is still mandatory.
+# ─────────────────────────────────────────────────────────────────────────────
+_YH_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; PreOpenBrief/1.0)"}
+_YH_HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"]
+
+
+class YahooDirectAdapter(DataAdapter):
+    name = "yahoo_direct"
+
+    def __init__(self, exchange_tz: str = "America/Toronto", timeout: int = 20):
+        import requests
+        self._requests = requests
+        self.exchange_tz = exchange_tz
+        self.timeout = timeout
+
+    def _chart(self, ticker: str, interval: str, rng: str) -> dict:
+        """Fetch a chart payload, failing over query1 -> query2. Hard timeout."""
+        last_err = None
+        for host in _YH_HOSTS:
+            url = f"{host}/v8/finance/chart/{ticker}"
+            try:
+                r = self._requests.get(
+                    url, params={"interval": interval, "range": rng},
+                    headers=_YH_HEADERS, timeout=self.timeout,
+                )
+                r.raise_for_status()
+                j = r.json()
+                if j.get("chart", {}).get("result"):
+                    return j["chart"]["result"][0]
+            except Exception as e:  # pragma: no cover - network variance
+                last_err = e
+        raise RuntimeError(f"yahoo_direct fetch failed for {ticker}: {last_err}")
+
+    def _bars_df(self, result: dict) -> pd.DataFrame:
+        ts = result.get("timestamp") or []
+        q = (result.get("indicators", {}).get("quote") or [{}])[0]
+        if not ts:
+            return pd.DataFrame()
+        idx = pd.to_datetime(ts, unit="s", utc=True).tz_convert(self.exchange_tz)
+        df = pd.DataFrame({
+            "Open": q.get("open"), "High": q.get("high"),
+            "Low": q.get("low"), "Close": q.get("close"),
+            "Volume": q.get("volume"),
+        }, index=idx)
+        return df.dropna(subset=["Close"])
+
+    def get_quote(self, ticker: str) -> Quote:
+        result = self._chart(ticker, "1m", "1d")
+        meta = result.get("meta", {})
+        as_of = None
+        session_date = None
+        rmt = meta.get("regularMarketTime")
+        if rmt:
+            as_of = pd.Timestamp(rmt, unit="s", tz="UTC").tz_convert(self.exchange_tz).to_pydatetime()
+            session_date = as_of.date()
+        bars = self._bars_df(result)
+        return Quote(
+            ticker=ticker,
+            last=_f(meta.get("regularMarketPrice")),
+            open=_f(bars["Open"].iloc[0]) if not bars.empty else None,
+            high=_f(meta.get("regularMarketDayHigh")),
+            low=_f(meta.get("regularMarketDayLow")),
+            prior_close=_f(meta.get("chartPreviousClose") or meta.get("previousClose")),
+            volume=_f(meta.get("regularMarketVolume")),
+            source=self.name,
+            as_of=as_of,
+            session_date=session_date,
+            currency=meta.get("currency"),
+        )
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        return self._bars_df(self._chart(ticker, interval, "1d"))
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        # Pick the smallest standard range that covers the lookback.
+        rng = "1y"
+        for cand, days in [("1mo", 31), ("3mo", 93), ("6mo", 186), ("1y", 366),
+                           ("2y", 732), ("5y", 1830), ("10y", 3660), ("max", 10**9)]:
+            if days >= lookback_days:
+                rng = cand
+                break
+        else:
+            rng = "max"
+        return self._bars_df(self._chart(ticker, "1d", rng))
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        return self.get_quote(ticker)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stooq — free, no API key. Good independent cross-check for many tickers, but
+# TSX coverage is spotty (AC.TO is NOT listed there). Returns `unavailable`
+# rather than guessing when the symbol is absent — never fabricates.
+# ─────────────────────────────────────────────────────────────────────────────
+class StooqAdapter(DataAdapter):
+    name = "stooq"
+
+    def __init__(self, exchange_tz: str = "America/Toronto", timeout: int = 15):
+        import requests
+        self._requests = requests
+        self.exchange_tz = exchange_tz
+        self.timeout = timeout
+
+    def _symbol(self, ticker: str) -> str:
+        # Stooq uses lowercase; US tickers add .us. Pass through exchange suffixes.
+        t = ticker.lower()
+        if "." not in t and "=" not in t and "^" not in t:
+            t = f"{t}.us"
+        return t
+
+    def get_quote(self, ticker: str) -> Quote:
+        url = "https://stooq.com/q/l/"
+        try:
+            r = self._requests.get(
+                url, params={"s": self._symbol(ticker), "f": "sd2t2ohlcv", "h": "", "e": "csv"},
+                headers=_YH_HEADERS, timeout=self.timeout,
+            )
+            r.raise_for_status()
+            lines = r.text.strip().splitlines()
+            if len(lines) < 2 or "N/D" in lines[1] or "<" in r.text[:1]:
+                raise ValueError("stooq returned no data for symbol")
+            cols = lines[0].split(",")
+            vals = lines[1].split(",")
+            row = dict(zip(cols, vals))
+            date_s, time_s = row.get("Date"), row.get("Time")
+            as_of = None
+            session_date = None
+            if date_s and date_s != "N/D":
+                as_of = pd.Timestamp(f"{date_s} {time_s or '00:00:00'}", tz=self.exchange_tz).to_pydatetime()
+                session_date = as_of.date()
+            return Quote(
+                ticker=ticker, last=_f(row.get("Close")), open=_f(row.get("Open")),
+                high=_f(row.get("High")), low=_f(row.get("Low")),
+                prior_close=None, volume=_f(row.get("Volume")),
+                source=self.name, as_of=as_of, session_date=session_date,
+            )
+        except Exception as e:
+            return Quote(ticker=ticker, last=None, open=None, high=None, low=None,
+                         prior_close=None, volume=None, source=self.name,
+                         as_of=None, session_date=None,
+                         notes=[f"stooq unavailable: {e}"])
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        return pd.DataFrame()  # stooq free tier has no reliable intraday — no fabrication
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        url = "https://stooq.com/q/d/l/"
+        try:
+            r = self._requests.get(url, params={"s": self._symbol(ticker), "i": "d"},
+                                   headers=_YH_HEADERS, timeout=self.timeout)
+            r.raise_for_status()
+            from io import StringIO
+            df = pd.read_csv(StringIO(r.text))
+            if "Date" not in df.columns:
+                return pd.DataFrame()
+            df["Date"] = pd.to_datetime(df["Date"])
+            df = df.set_index("Date").tail(lookback_days)
+            return df
+        except Exception:
+            return pd.DataFrame()
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        return self.get_quote(ticker)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Key-based real-time sources. These are the genuinely INDEPENDENT cross-check
+# and the path to real intraday + volume that beats Yahoo's delay. They activate
+# only when an API key is present (env var); otherwise they fail loudly rather
+# than silently degrade. Free tiers exist for all three.
+# ─────────────────────────────────────────────────────────────────────────────
+class FinnhubAdapter(DataAdapter):
+    """finnhub.io — real-time US + many intl; set FINNHUB_API_KEY. Free tier available."""
+    name = "finnhub"
+
+    def __init__(self, exchange_tz: str = "America/Toronto", api_key: Optional[str] = None, timeout: int = 15):
+        import os, requests
+        self._requests = requests
+        self.exchange_tz = exchange_tz
+        self.api_key = api_key or os.environ.get("FINNHUB_API_KEY")
+        self.timeout = timeout
+        if not self.api_key:
+            raise ValueError("FinnhubAdapter requires FINNHUB_API_KEY")
+
+    def get_quote(self, ticker: str) -> Quote:
+        r = self._requests.get("https://finnhub.io/api/v1/quote",
+                               params={"symbol": ticker, "token": self.api_key},
+                               timeout=self.timeout)
+        r.raise_for_status()
+        j = r.json()
+        ts = j.get("t")
+        as_of = pd.Timestamp(ts, unit="s", tz="UTC").tz_convert(self.exchange_tz).to_pydatetime() if ts else None
+        return Quote(
+            ticker=ticker, last=_f(j.get("c")), open=_f(j.get("o")),
+            high=_f(j.get("h")), low=_f(j.get("l")), prior_close=_f(j.get("pc")),
+            volume=None, source=self.name, as_of=as_of,
+            session_date=as_of.date() if as_of else None,
+            notes=["finnhub /quote has no volume field"],
+        )
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        return pd.DataFrame()  # candle endpoint is premium on free tier; no fabrication
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        return pd.DataFrame()
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        return self.get_quote(ticker)
+
+
+class TwelveDataAdapter(DataAdapter):
+    """twelvedata.com — real-time quote + intraday bars + volume; set TWELVEDATA_API_KEY."""
+    name = "twelvedata"
+
+    def __init__(self, exchange_tz: str = "America/Toronto", api_key: Optional[str] = None, timeout: int = 20):
+        import os, requests
+        self._requests = requests
+        self.exchange_tz = exchange_tz
+        self.api_key = api_key or os.environ.get("TWELVEDATA_API_KEY")
+        self.timeout = timeout
+        if not self.api_key:
+            raise ValueError("TwelveDataAdapter requires TWELVEDATA_API_KEY")
+
+    def get_quote(self, ticker: str) -> Quote:
+        r = self._requests.get("https://api.twelvedata.com/quote",
+                               params={"symbol": ticker, "apikey": self.api_key},
+                               timeout=self.timeout)
+        r.raise_for_status()
+        j = r.json()
+        if j.get("status") == "error":
+            raise RuntimeError(f"twelvedata error: {j.get('message')}")
+        ts = j.get("timestamp")
+        as_of = pd.Timestamp(int(ts), unit="s", tz="UTC").tz_convert(self.exchange_tz).to_pydatetime() if ts else None
+        return Quote(
+            ticker=ticker, last=_f(j.get("close")), open=_f(j.get("open")),
+            high=_f(j.get("high")), low=_f(j.get("low")),
+            prior_close=_f(j.get("previous_close")), volume=_f(j.get("volume")),
+            source=self.name, as_of=as_of,
+            session_date=as_of.date() if as_of else None,
+            currency=j.get("currency"),
+        )
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        iv = {"1m": "1min", "5m": "5min"}.get(interval, "1min")
+        r = self._requests.get("https://api.twelvedata.com/time_series",
+                               params={"symbol": ticker, "interval": iv,
+                                       "outputsize": 390, "apikey": self.api_key},
+                               timeout=self.timeout)
+        r.raise_for_status()
+        j = r.json()
+        vals = j.get("values")
+        if not vals:
+            return pd.DataFrame()
+        df = pd.DataFrame(vals)
+        df["datetime"] = pd.to_datetime(df["datetime"])
+        df = df.set_index("datetime").sort_index()
+        for c in ("open", "high", "low", "close", "volume"):
+            if c in df:
+                df[c] = pd.to_numeric(df[c], errors="coerce")
+        df = df.rename(columns={"open": "Open", "high": "High", "low": "Low",
+                                "close": "Close", "volume": "Volume"})
+        if df.index.tz is None:
+            df.index = df.index.tz_localize(self.exchange_tz)
+        return df
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        r = self._requests.get("https://api.twelvedata.com/time_series",
+                               params={"symbol": ticker, "interval": "1day",
+                                       "outputsize": min(lookback_days, 5000),
+                                       "apikey": self.api_key},
+                               timeout=self.timeout)
+        r.raise_for_status()
+        vals = r.json().get("values")
+        if not vals:
+            return pd.DataFrame()
+        df = pd.DataFrame(vals)
+        df["datetime"] = pd.to_datetime(df["datetime"])
+        df = df.set_index("datetime").sort_index()
+        for c in ("open", "high", "low", "close", "volume"):
+            if c in df:
+                df[c] = pd.to_numeric(df[c], errors="coerce")
+        return df.rename(columns={"open": "Open", "high": "High", "low": "Low",
+                                  "close": "Close", "volume": "Volume"})
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        return self.get_quote(ticker)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Multi-source aggregator — the heart of the "use multiple data sources" ask.
+#
+# It serves all metrics from a PRIMARY adapter, but also fetches the same quote
+# from one or more CROSS-CHECK adapters so the data-integrity guard can flag a
+# SOURCE CONFLICT. Cross-check failures are recorded, never fabricated.
+# ─────────────────────────────────────────────────────────────────────────────
+class MultiSourceAdapter(DataAdapter):
+    name = "multi"
+
+    def __init__(self, primary: DataAdapter, cross_check: Optional[list] = None):
+        self.primary = primary
+        self.cross_check = cross_check or []
+        self.name = f"multi[{primary.name}]"
+        self.last_cross_quotes: list = []  # populated on get_quote for the guard
+
+    def get_quote(self, ticker: str) -> Quote:
+        q = self.primary.get_quote(ticker)
+        self.last_cross_quotes = []
+        for adp in self.cross_check:
+            try:
+                cq = adp.get_quote(ticker)
+                if cq.last is not None:
+                    self.last_cross_quotes.append(cq)
+            except Exception as e:  # record, do not fabricate
+                q.notes.append(f"cross-check {adp.name} failed: {e}")
+        return q
+
+    def best_cross_quote(self) -> Optional[Quote]:
+        """The first cross-check quote with a usable last price (for the guard)."""
+        return self.last_cross_quotes[0] if self.last_cross_quotes else None
+
+    def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
+        df = self.primary.get_intraday_bars(ticker, interval)
+        if df is not None and not df.empty:
+            return df
+        # Fall back to the first cross-check source that actually has intraday bars.
+        for adp in self.cross_check:
+            try:
+                alt = adp.get_intraday_bars(ticker, interval)
+                if alt is not None and not alt.empty:
+                    return alt
+            except Exception:
+                continue
+        return df if df is not None else pd.DataFrame()
+
+    def get_daily_bars(self, ticker: str, lookback_days: int) -> pd.DataFrame:
+        df = self.primary.get_daily_bars(ticker, lookback_days)
+        if df is not None and not df.empty:
+            return df
+        for adp in self.cross_check:
+            try:
+                alt = adp.get_daily_bars(ticker, lookback_days)
+                if alt is not None and not alt.empty:
+                    return alt
+            except Exception:
+                continue
+        return df if df is not None else pd.DataFrame()
+
+    def get_quote_simple(self, ticker: str) -> Quote:
+        return self.primary.get_quote_simple(ticker)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Manual override — paste verified broker Level-1 numbers
 # ─────────────────────────────────────────────────────────────────────────────
 class ManualAdapter(DataAdapter):
@@ -338,15 +697,23 @@ def _f(x) -> Optional[float]:
     return v
 
 
-def build_adapter(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] = None) -> DataAdapter:
-    """Factory used by the CLI."""
-    name = (name or "yahoo").lower()
+def _build_single(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] = None) -> DataAdapter:
+    """Build one concrete adapter by name."""
+    name = (name or "yahoo_direct").lower()
     if name == "manual":
         if not manual_kwargs:
             raise ValueError("manual adapter requires pasted Level-1 numbers")
         return ManualAdapter(exchange_tz=exchange_tz, **manual_kwargs)
-    if name == "yahoo":
+    if name in ("yahoo_direct", "yahoo"):   # default + back-compat: 'yahoo' -> reliable direct
+        return YahooDirectAdapter(exchange_tz=exchange_tz)
+    if name in ("yahoo_yf", "yfinance"):
         return YahooAdapter(exchange_tz=exchange_tz)
+    if name == "stooq":
+        return StooqAdapter(exchange_tz=exchange_tz)
+    if name == "finnhub":
+        return FinnhubAdapter(exchange_tz=exchange_tz)
+    if name == "twelvedata":
+        return TwelveDataAdapter(exchange_tz=exchange_tz)
     if name == "ibkr":
         return IBKRAdapter()
     if name == "questrade":
@@ -356,3 +723,28 @@ def build_adapter(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] 
     if name == "alpaca":
         return AlpacaAdapter()
     raise ValueError(f"unknown adapter: {name}")
+
+
+def build_adapter(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] = None,
+                  cross_check: Optional[list] = None) -> DataAdapter:
+    """
+    Factory used by the CLI.
+
+    If `cross_check` (a list of source names) is provided and the primary is not
+    manual, the primary is wrapped in a MultiSourceAdapter so the data-integrity
+    guard gets independent quotes to compare. Cross-check sources that can't be
+    built (e.g. missing API key) are skipped with a note rather than failing.
+    """
+    primary = _build_single(name, exchange_tz=exchange_tz, manual_kwargs=manual_kwargs)
+    if name == "manual" or not cross_check:
+        return primary
+    built = []
+    for cc in cross_check:
+        if cc and cc.lower() != name.lower():
+            try:
+                built.append(_build_single(cc, exchange_tz=exchange_tz))
+            except Exception:
+                pass  # missing key / unavailable source — skip, don't fabricate
+    if not built:
+        return primary
+    return MultiSourceAdapter(primary, built)
