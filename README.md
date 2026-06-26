@@ -264,6 +264,27 @@ rest of the brief is unaffected. (Note: the tool needs *your* Anthropic API key 
 a key is read from the `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` environment,
 never hardcoded.)
 
+## TSX opportunity scanner (`scan.py`)
+
+Don't want to assume AC.TO is the best use of risk? The scanner runs the **same
+honest engine** across a universe of liquid TSX names and ranks them by how
+confident an open-to-close call can be — long or short — then makes an explicit
+call: *"AC.TO is a no-go; better opportunity → TICKER LONG/SHORT"*, or
+**STAND DOWN** when nothing clears `WAIT`.
+
+```bash
+python scan.py --source yahoo_direct          # rank the TSX, recommend the best
+```
+
+It inherits every guardrail: probability stays capped at `[0.35, 0.65]`
+("more confident" only means strongest multi-factor confluence, never a
+manufactured high-conviction call), each candidate must pass the data-integrity
+guard to be ranked, and macro (crude/TSX/CAD/VIX) is shared context, not signal.
+Designed to be re-run on a **5-minute cadence** — the structure (opening range,
+VWAP, spike-fade) only exists *after* the open, so a pre-open scan honestly
+returns mostly `WAIT`/STAND DOWN and sharpens 5–15 min into the session.
+Universe is configurable under `scan.universe`.
+
 ## Backtest (`backtest.py`)
 
 Evaluates how the tool would have performed on intraday open-to-close direction,
