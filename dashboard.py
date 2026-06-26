@@ -387,8 +387,17 @@ def _render_patterns(b):
         print(f"  analog days    : {a['green_rate_pct']}% closed>open  "
               f"median {a['median_oc_pct']}%  range[{a['p25_oc_pct']}..{a['p75_oc_pct']}]%  "
               f"(n={a['n_neighbours']} similar setups; feats={','.join(a['features_used'])})")
+        if a.get("off_sample"):
+            print(f"  ⚠ OFF-SAMPLE   : {a['off_sample_reason']} — base rate UNRELIABLE today")
     elif a.get("reason"):
         print(f"  analog days    : unavailable — {a['reason']}")
+
+    al = b.get("alignment")
+    if al:
+        tag = {"aligned-long": "✅ ALIGNED LONG", "aligned-short": "✅ ALIGNED SHORT",
+               "conflicted": "⛔ CONFLICTED", "neutral": "· neutral",
+               "aligned-but-off-sample": "⚠ ALIGNED BUT OFF-SAMPLE"}.get(al["alignment"], al["alignment"])
+        print(f"  EOD alignment  : {tag} — {al['note']}")
 
     cr = p.get("crude_regime", {})
     if cr.get("available"):
@@ -634,6 +643,12 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
                       pattern_factors=pat.get("factors") if pat else None)
     levels_actionable = build_levels(struct, orb, levels)
 
+    # EOD confluence check across the three lenses (lesson from today's losses).
+    analog = (pat or {}).get("analog_days", {})
+    alignment = metrics.eod_alignment(
+        decision["verdict"], analog.get("green_rate_pct"),
+        off_sample=bool(analog.get("off_sample")))
+
     # Hypothetical risk plan (only if guard passed AND we have a level pair).
     risk_plan = None
     if guard.passed:
@@ -657,6 +672,7 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
         "rel_strength": rel,
         "decision": decision,
         "patterns": pat,
+        "alignment": alignment,
         "risk_plan": risk_plan,
         "headlines": headlines,
         "sources": _describe_sources(adapter),

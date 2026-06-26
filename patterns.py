@@ -203,10 +203,22 @@ def analog_days(
     neigh = sub.head(min(k, len(sub)))
     oc = neigh["oc_pct"]
 
+    # OFF-SAMPLE GUARD (lesson from a live CVE short): if today's setup features
+    # fall OUTSIDE the historical range, we are extrapolating — the base rate is
+    # unreliable and must be flagged, not trusted. This is the tool encoding the
+    # "today isn't behaving like the analogs" failure so it warns next time.
+    off = []
+    for f in feats:
+        lo, hi = float(sub[f].min()), float(sub[f].max())
+        if today[f] < lo or today[f] > hi:
+            off.append(f"{f}={today[f]:.2f} outside historical [{lo:.2f},{hi:.2f}]")
+
     out.update({
         "available": True,
         "features_used": feats,
         "n_neighbours": len(neigh),
+        "off_sample": bool(off),
+        "off_sample_reason": "; ".join(off) if off else None,
         "green_rate_pct": round(float((oc > 0).mean() * 100), 1),
         "avg_oc_pct": round(float(oc.mean()), 3),
         "median_oc_pct": round(float(oc.median()), 3),

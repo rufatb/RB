@@ -71,6 +71,10 @@ claude:
 # can tell whether the anchor ticker is the best use of risk today.
 scan:
   workers: 8
+  # A name is only "actionable" once it has held the SAME verdict for this many
+  # consecutive scans AND its lenses aren't conflicted. Added after a day of
+  # losses from chasing the 5-min rotating leader (see STRATEGY.md).
+  min_persistence: 2
   universe:                       # liquid TSX names; anchor ticker auto-added
     - AC.TO
     - RY.TO

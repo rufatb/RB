@@ -5,4 +5,5 @@ __pycache__/
 .venv/
 venv/
 brief.log
+.scan_state.json
 .DS_Store

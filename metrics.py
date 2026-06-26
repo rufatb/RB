@@ -376,6 +376,50 @@ def spike_fade(bars: pd.DataFrame, open_price: Optional[float], window_min: int 
 # ─────────────────────────────────────────────────────────────────────────────
 # Correlated / relative-strength read — CONTEXT, NOT SIGNAL
 # ─────────────────────────────────────────────────────────────────────────────
+def eod_alignment(intraday_verdict: str, analog_green_pct: Optional[float],
+                  off_sample: bool = False, macro_dir: Optional[int] = None) -> dict:
+    """
+    Confluence check across the THREE lenses, added after a day of trading where
+    losses came from acting when the lenses disagreed (SHOP long fought VWAP/fade;
+    CVE short fought live momentum). For a hold-to-close decision, only act when
+    intraday structure, the day-long analog base rate, and (if known) macro point
+    the SAME way. Conflicts -> WAIT, not a trade.
+
+      intraday_verdict : 'BULL LEAN' / 'BEAR LEAN' / 'NO EDGE — WAIT'
+      analog_green_pct : % of similar historical days that closed > open
+      off_sample       : True if today's setup is outside the analog range
+      macro_dir        : optional +1 bullish / -1 bearish / 0 / None
+    """
+    intr = (1 if intraday_verdict == "BULL LEAN"
+            else -1 if intraday_verdict == "BEAR LEAN" else 0)
+    if analog_green_pct is None:
+        ana = 0
+    else:
+        ana = 1 if analog_green_pct >= 55 else -1 if analog_green_pct <= 45 else 0
+
+    dirs = [d for d in (intr, ana, macro_dir) if d not in (0, None)]
+    out = {"intraday_dir": intr, "analog_dir": ana, "macro_dir": macro_dir,
+           "off_sample": off_sample}
+
+    if not dirs:
+        out["alignment"] = "neutral"
+        out["note"] = "no lens shows a directional lean — WAIT"
+    elif all(d > 0 for d in dirs):
+        out["alignment"] = "aligned-long"
+        out["note"] = f"{len(dirs)} lenses agree LONG"
+    elif all(d < 0 for d in dirs):
+        out["alignment"] = "aligned-short"
+        out["note"] = f"{len(dirs)} lenses agree SHORT"
+    else:
+        out["alignment"] = "conflicted"
+        out["note"] = "lenses disagree — stand down for an EOD hold (this is the "
+        out["note"] += "SHOP/CVE failure mode)"
+    if off_sample and out["alignment"].startswith("aligned"):
+        out["alignment"] = "aligned-but-off-sample"
+        out["note"] += " — but today is OFF-SAMPLE; trust it less"
+    return out
+
+
 def relative_strength(ac_pct: Optional[float], tsx_pct: Optional[float], peer_avg_pct: Optional[float]) -> dict:
     """outperforming / inline / lagging vs TSX and airline-peer average."""
     def verdict(ac, ref):

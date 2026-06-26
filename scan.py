@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from zoneinfo import ZoneInfo
 
@@ -53,6 +55,46 @@ def _confidence_score(c: dict) -> float:
         return -1.0
     p = c.get("probability", 0.5)
     return _CONV_RANK.get(c.get("conviction"), 0) + abs(p - 0.5) * 10
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SIGNAL PERSISTENCE (lesson from today: the top pick rotated 8x in 30 min, and
+# trading a single snapshot caused whipsaw losses). A candidate is only
+# "actionable" once it has held the SAME verdict across N consecutive scans.
+# ─────────────────────────────────────────────────────────────────────────────
+STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".scan_state.json")
+
+
+def load_state(path: str = STATE_PATH) -> dict:
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_state(state: dict, path: str = STATE_PATH) -> None:
+    try:
+        with open(path, "w") as f:
+            json.dump(state, f)
+    except Exception:
+        pass  # state is best-effort; never break a scan over it
+
+
+def apply_persistence(results: list, prev_state: dict, today: str) -> tuple:
+    """Update each candidate's streak (consecutive scans with the same verdict on
+    the same day) and return (results, new_state). Pure + testable."""
+    new_state = {}
+    for r in results:
+        t, v = r["ticker"], r.get("verdict")
+        prev = prev_state.get(t)
+        if prev and prev.get("date") == today and prev.get("verdict") == v:
+            streak = prev.get("streak", 1) + 1
+        else:
+            streak = 1
+        r["streak"] = streak
+        new_state[t] = {"date": today, "verdict": v, "streak": streak}
+    return results, new_state
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -108,7 +150,13 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
         lv = build_levels(struct, orb, levels)
 
         analog = (pat or {}).get("analog_days", {})
+        align = metrics.eod_alignment(
+            decision["verdict"], analog.get("green_rate_pct"),
+            off_sample=bool(analog.get("off_sample")))
         out.update({
+            "alignment": align["alignment"],
+            "analog_green": analog.get("green_rate_pct"),
+            "off_sample": bool(analog.get("off_sample")),
             "verdict": decision["verdict"],
             "probability": decision["probability"],
             "conviction": decision["conviction"],
@@ -169,8 +217,21 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
         for f in as_completed(futs):
             results.append(f.result())
 
+    # Persistence: streak each candidate across consecutive scans, then persist.
+    min_persist = config.get("scan", {}).get("min_persistence", 2)
+    state = load_state()
+    results, new_state = apply_persistence(results, state, now.date().isoformat())
+    save_state(new_state)
+
     ranked = rank(results, config["ticker"])
-    ranked.update({"generated_at": now.isoformat(timespec="seconds"), "macro": macro})
+    # Actionable = top leader that has PERSISTED and is not lens-conflicted. This
+    # is the gate that would have blocked today's snapshot-chasing entries.
+    actionable = next(
+        (r for r in ranked["leaders"]
+         if r.get("streak", 1) >= min_persist and r.get("alignment") != "conflicted"),
+        None)
+    ranked.update({"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
+                   "min_persistence": min_persist, "actionable": actionable})
     return ranked
 
 
@@ -202,59 +263,80 @@ def render(scan: dict):
     print(f"macro (context only): crude {f(m['crude_pct'])}  TSX {f(m['tsx_pct'])}  "
           f"CAD {f(m['cad_pct'])}  VIX {f(m['vix_pct'])}")
 
-    print("\nRanked candidates (probability is CAPPED at [0.35,0.65]):")
-    print(f"  {'ticker':<9}{'verdict':<14}{'side':<6}{'p':>5}  {'conv':<7}{'last':>8}  notes")
+    minp = scan.get("min_persistence", 2)
+    print(f"\nRanked candidates (probability CAPPED [0.35,0.65]; persist≥{minp} = actionable):")
+    print(f"  {'ticker':<9}{'verdict':<13}{'side':<6}{'p':>5} {'conv':<7}{'persist':>8}  align/notes")
     shown = [r for r in scan["results"] if r["verdict"] not in ("ERROR",)][:12]
     for r in shown:
         if not r.get("passed"):
-            print(f"  {r['ticker']:<9}{'NOT VERIFIED':<14}{'—':<6}{'—':>5}  {'—':<7}"
-                  f"{'—':>8}  {(r.get('guard_reasons') or [''])[0][:30]}")
+            print(f"  {r['ticker']:<9}{'NOT VERIFIED':<13}{'—':<6}{'—':>5} {'—':<7}{'—':>8}  "
+                  f"{(r.get('guard_reasons') or [''])[0][:28]}")
             continue
         p = r.get("probability", 0.5)
-        sf = " ⚑fade" if r.get("spike_fade") else ""
-        print(f"  {r['ticker']:<9}{r['verdict']:<14}{_side(r):<6}{p:>5.2f}  "
-              f"{r.get('conviction','None'):<7}{(r.get('last') or 0):>8.2f}  "
-              f"vsVWAP {r.get('vwap_pct') if r.get('vwap_pct') is None else round(r['vwap_pct'],2)}{sf}")
+        flags = []
+        if r.get("spike_fade"):
+            flags.append("⚑fade")
+        if r.get("off_sample"):
+            flags.append("⚠off-sample")
+        al = {"conflicted": "⛔conflict", "aligned-long": "✅long", "aligned-short": "✅short",
+              "aligned-but-off-sample": "⚠off-sample", "neutral": ""}.get(r.get("alignment"), "")
+        note = " ".join([al] + flags).strip()
+        print(f"  {r['ticker']:<9}{r['verdict']:<13}{_side(r):<6}{p:>5.2f} "
+              f"{r.get('conviction','None'):<7}{r.get('streak',1):>6}x  {note}")
 
     print("\n" + "-" * 74)
     print("RECOMMENDATION")
     print("-" * 74)
-    ac, best = scan["ac"], scan["best"]
+    ac, best, act = scan["ac"], scan["best"], scan.get("actionable")
     anchor = scan["anchor"]
 
     if ac:
         if ac.get("passed"):
+            extra = ""
+            if ac.get("alignment") == "conflicted":
+                extra = "  [⛔ lenses conflicted — not an EOD hold]"
             print(f"  {anchor}: {ac['verdict']}  (p={ac.get('probability',0.5):.2f}, "
-                  f"conviction {ac.get('conviction','None')}).")
+                  f"conviction {ac.get('conviction','None')}, persisted {ac.get('streak',1)}x){extra}")
         else:
             print(f"  {anchor}: data not verified live — {(ac.get('guard_reasons') or ['?'])[0]}")
 
-    if not best:
-        print("  No TSX name clears NO-EDGE — WAIT right now. Honest call: STAND DOWN.")
-        print("  Nothing on the board offers a clean intraday open-to-close edge.")
-        print("  (Re-scan after the open / in 5 min — structure sharpens then.)")
+    # The actionable gate (lesson from today): a name must have PERSISTED across
+    # ≥min_persistence scans AND not be lens-conflicted. Raw snapshot leaders that
+    # haven't persisted are shown as "forming", NOT recommended.
+    if not act:
+        print(f"\n  STAND DOWN — no name is ACTIONABLE yet (needs verdict held ≥{minp} "
+              f"consecutive scans AND non-conflicted lenses).")
+        if best:
+            print(f"  (Raw snapshot leader is {best['ticker']} {_side(best)} but it has only "
+                  f"persisted {best.get('streak',1)}x / alignment {best.get('alignment')} — "
+                  f"this is the snapshot-chasing trap from today. Wait for it to hold.)")
+        else:
+            print("  Nothing clears NO-EDGE — WAIT. Re-scan in 5 min.")
+        print("\n  NOTE: capped ~0.6x leans only. Persistence + alignment are the discipline "
+              "filters added after today's losses.")
         return
 
-    side = _side(best)
-    if best["ticker"] == anchor:
-        print(f"  {anchor} IS the best available setup right now: {side}.")
+    side = _side(act)
+    if act["ticker"] == anchor:
+        print(f"\n  {anchor} IS the actionable setup: {side}.")
     else:
         ac_go = ac and ac.get("passed") and ac["verdict"] != "NO EDGE — WAIT"
         verb = "is a NO-GO" if not ac_go else "is tradeable but weaker"
-        print(f"  CALL: {anchor} {verb}. Better opportunity → {best['ticker']} {side}.")
+        print(f"\n  CALL: {anchor} {verb}. Actionable opportunity → {act['ticker']} {side}.")
 
-    print(f"\n  >>> {best['ticker']} — {side}  |  p(close>open)={best.get('probability',0.5):.2f}  "
-          f"|  conviction {best.get('conviction','None')}")
-    trig = best["bull_trigger"] if side == "LONG" else best["bear_trigger"]
-    tgt = best["bull_target"] if side == "LONG" else best["bear_target"]
+    trig = act["bull_trigger"] if side == "LONG" else act["bear_trigger"]
+    tgt = act["bull_target"] if side == "LONG" else act["bear_target"]
+    print(f"\n  >>> {act['ticker']} — {side}  |  p={act.get('probability',0.5):.2f}  "
+          f"|  conviction {act.get('conviction','None')}  |  persisted {act.get('streak',1)}x  "
+          f"|  alignment {act.get('alignment')}")
     print(f"      trigger : {trig}")
     print(f"      target  : {tgt}")
-    print(f"      analog CI (open->close of similar days): {best.get('analog_ci')}")
-    print(f"      why     : {'; '.join(best.get('factors', [])) or 'structural confluence'}")
-    print(f"      context : rel-to-TSX {best.get('rel_vs_tsx')}; "
-          f"history {best.get('history_days')} days")
-    print("\n  NOTE: even the best read is a CAPPED ~0.6x probability — a lean, not a "
-          "sure thing. Size from the stop, honour the invalidation, re-check in 5 min.")
+    print(f"      analog CI (open->close of similar days): {act.get('analog_ci')}")
+    if act.get("off_sample"):
+        print("      ⚠ OFF-SAMPLE — today is outside the analog range; base rate unreliable")
+    print(f"      why     : {'; '.join(act.get('factors', [])) or 'structural confluence'}")
+    print("\n  NOTE: capped ~0.6x lean — a lean, not a sure thing. Size from the stop, "
+          "honour the invalidation, re-check in 5 min.")
 
 
 def main(argv=None):
