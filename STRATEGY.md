@@ -44,6 +44,34 @@ enforce discipline the trader won't always enforce under pressure.
 
 ---
 
+## Strategy pivot: once-at-open selection (replaces the 5-min loop)
+
+The 5-minute babysitting loop was unrealistic and caused snapshot-chasing. The
+**primary strategy is now a single run near the open** that ranks the whole TSX
+for the day's best long/short holds:
+
+```bash
+python scan.py --open --source yahoo_direct    # top longs + shorts for the day
+```
+
+**What changed and why:**
+- **Discipline filter shifts from time-persistence → cross-lens agreement.** With
+  one run there's no streak to build, so precision comes from *lenses agreeing in
+  that single snapshot* instead.
+- **Base-rate-primary.** For a hold-to-close, the day-long **analog base rate**
+  (historical close>open odds for today's setup) is the direct signal, so it sets
+  direction. Opening structure, **sector×crude macro**, and **sentiment** must
+  *confirm* (not net-oppose). This fixes the earlier over-reliance on 1-minute
+  opening structure, which is the wrong lens for a full-day hold.
+- **New lenses:** `macro_dir_for` (crude up → producers up, airlines down) and an
+  optional `sentiment.py` headline lens (off by default — free feeds return
+  non-ticker-relevant news, and fake sentiment is worse than none).
+- **Conflicts and off-sample setups are dropped**, so the shortlist is small by
+  design. On holidays / off-hours the guard rejects stale data → honest STAND DOWN.
+- **The cap is unchanged.** This improves *selection*, not the ceiling —
+  open-to-close is ~coin-flip (see backtest); the picks are best-confluence leans,
+  sized small and spread across the shortlist.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

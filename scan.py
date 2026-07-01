@@ -27,15 +27,34 @@ import datetime as dt
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 
 import metrics
 import patterns
+import sentiment as sentiment_mod
 from adapters import build_adapter
 from dashboard import (build_levels, data_integrity_guard, decide, load_config,
                        parse_hhmm, safe_pct_change, _pos_in_trailing_range)
+
+# Sector→macro map: crude is the dominant lever. Up-crude helps producers and
+# hurts airlines; this encodes that as a per-ticker macro lens (honest, coarse).
+ENERGY_PRODUCERS = {"CNQ.TO", "SU.TO", "CVE.TO", "ENB.TO", "TRP.TO", "IMO.TO",
+                    "TOU.TO", "ARX.TO", "MEG.TO", "CPG.TO"}
+AIRLINES = {"AC.TO"}
+
+
+def macro_dir_for(ticker: str, crude_pct) -> Optional[int]:
+    if crude_pct is None:
+        return None
+    s = 1 if crude_pct > 0 else -1 if crude_pct < 0 else 0
+    if ticker in ENERGY_PRODUCERS:
+        return s
+    if ticker in AIRLINES:
+        return -s
+    return None
 
 # Liquid TSX names used when config has no scan.universe. AC.TO is always added.
 DEFAULT_UNIVERSE = [
@@ -150,13 +169,22 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
         lv = build_levels(struct, orb, levels)
 
         analog = (pat or {}).get("analog_days", {})
+        # Sentiment lens (optional, honest — off by default; see sentiment.py).
+        sdir, slabel = 0, "off"
+        if cfg.get("sentiment", {}).get("enabled"):
+            sent = sentiment_mod.headline_sentiment(ticker)
+            sdir = sentiment_mod.sentiment_dir(sent)
+            slabel = sent.get("label", "unavailable")
+        mdir = macro_dir_for(ticker, macro.get("crude_pct"))
         align = metrics.eod_alignment(
             decision["verdict"], analog.get("green_rate_pct"),
-            off_sample=bool(analog.get("off_sample")))
+            off_sample=bool(analog.get("off_sample")), macro_dir=mdir)
         out.update({
             "alignment": align["alignment"],
             "analog_green": analog.get("green_rate_pct"),
             "off_sample": bool(analog.get("off_sample")),
+            "sentiment_dir": sdir, "sentiment_label": slabel,
+            "macro_dir": mdir,
             "verdict": decision["verdict"],
             "probability": decision["probability"],
             "conviction": decision["conviction"],
@@ -183,7 +211,9 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # Orchestration
 # ─────────────────────────────────────────────────────────────────────────────
-def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> dict:
+def _evaluate_universe(config: dict, source: str, cross_check, max_workers: int = 8):
+    """Fetch macro once and run the full engine across the universe. Shared by the
+    5-min scan and the once-at-open selection. Returns (results, macro, now)."""
     tz = config["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
     mkt_open, mkt_close = parse_hhmm(config["market_open"]), parse_hhmm(config["market_close"])
@@ -216,6 +246,11 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
                 for t in universe}
         for f in as_completed(futs):
             results.append(f.result())
+    return results, macro, now
+
+
+def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> dict:
+    results, macro, now = _evaluate_universe(config, source, cross_check, max_workers)
 
     # Persistence: streak each candidate across consecutive scans, then persist.
     min_persist = config.get("scan", {}).get("min_persistence", 2)
@@ -233,6 +268,123 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
     ranked.update({"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
                    "min_persistence": min_persist, "actionable": actionable})
     return ranked
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ONCE-AT-OPEN SELECTION (the new primary strategy).
+#
+# Instead of babysitting a 5-min loop, run ONCE near the open and rank the whole
+# TSX by CROSS-LENS AGREEMENT for the close-vs-open call. The precision filter
+# is no longer time-persistence (which needed the loop) but AGREEMENT: a name
+# only qualifies when ALL its directional lenses — opening structure, the
+# day-long analog base rate, macro (sector×crude), and sentiment — point the
+# SAME way. Conflicts or off-sample setups are excluded. Probability stays
+# CAPPED; this improves SELECTION, not the ceiling (open-to-close is ~coin flip).
+# ─────────────────────────────────────────────────────────────────────────────
+def score_candidate(c: dict) -> dict:
+    """
+    Pure cross-lens score. BASE-RATE-PRIMARY: the day-long analog green% is the
+    direct close-vs-open signal for a full-day hold, so it sets the direction.
+    Structure / macro / sentiment are CONFIRMATIONS. A name is excluded when the
+    confirming lenses NET oppose the base rate (the CVE/SHOP conflict lesson) or
+    when the setup is off-sample. Testable without any network.
+    """
+    out = {"direction": 0, "agree": 0, "disagree": 0, "tier": "skip",
+           "edge": 0.0, "lenses": [], "reason": "", "green": c.get("analog_green")}
+    if not c.get("passed"):
+        out["reason"] = "not verified"
+        return out
+    green = c.get("analog_green")
+    if green is None:
+        out["reason"] = "no base rate (short history)"
+        return out
+    direction = 1 if green >= 55 else -1 if green <= 45 else 0
+    if direction == 0:
+        out["reason"] = "base rate neutral (no EOD lean)"
+        return out
+    if c.get("off_sample"):
+        out["reason"] = "off-sample (base rate unreliable)"
+        return out
+
+    struct = 1 if c.get("verdict") == "BULL LEAN" else -1 if c.get("verdict") == "BEAR LEAN" else 0
+    confirmers = {"structure": struct, "macro": c.get("macro_dir") or 0,
+                  "sentiment": c.get("sentiment_dir", 0) or 0}
+    agree = [k for k, v in confirmers.items() if v == direction]
+    disagree = [k for k, v in confirmers.items() if v == -direction]
+    out.update(direction=direction, agree=len(agree), disagree=len(disagree),
+               lenses=(["base_rate"] + agree), disagree_lenses=disagree)
+
+    # Conflict gate: confirming lenses must not NET-oppose the base rate.
+    if len(disagree) >= max(1, len(agree)):
+        out["reason"] = f"lens conflict ({','.join(disagree)} vs base rate)"
+        return out
+
+    p = c.get("probability", 0.5)
+    green_dist = abs(green - 50) / 50.0
+    out["tier"] = "Medium" if len(agree) >= 1 else "Low"   # High is unavailable by design
+    out["edge"] = round(green_dist * 2 + len(agree) - len(disagree) + abs(p - 0.5), 3)
+    return out
+
+
+def open_select(config: dict, source: str, cross_check, top_n: int = 3,
+                max_workers: int = 8) -> dict:
+    results, macro, now = _evaluate_universe(config, source, cross_check, max_workers)
+    for r in results:
+        r["cls"] = score_candidate(r)
+    quals = [r for r in results if r["cls"]["tier"] != "skip"]
+    longs = sorted([r for r in quals if r["cls"]["direction"] > 0],
+                   key=lambda r: r["cls"]["edge"], reverse=True)[:top_n]
+    shorts = sorted([r for r in quals if r["cls"]["direction"] < 0],
+                    key=lambda r: r["cls"]["edge"], reverse=True)[:top_n]
+    return {"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
+            "longs": longs, "shorts": shorts, "n_universe": len(results),
+            "n_qualified": len(quals), "top_n": top_n}
+
+
+def render_open(sel: dict):
+    print("=" * 74)
+    print(f"TSX AT-OPEN SELECTION  ({sel['generated_at']})")
+    print("=" * 74)
+    m = sel["macro"]
+    def f(x): return "n/a" if x is None else f"{x:+.2f}%"
+    print(f"macro (context): crude {f(m['crude_pct'])}  TSX {f(m['tsx_pct'])}  "
+          f"CAD {f(m['cad_pct'])}  VIX {f(m['vix_pct'])}")
+    print(f"scanned {sel['n_universe']} names → {sel['n_qualified']} qualified.")
+    print("Method: the day-long base rate (historical close>open odds for today's "
+          "setup) sets\ndirection; opening structure, sector×crude macro, and "
+          "sentiment must CONFIRM (not\nnet-oppose); off-sample setups are dropped. "
+          "Probability CAPPED [0.35,0.65] — open-to-\nclose is ~coin-flip, so these "
+          "are the best-CONFLUENCE leans, not sure things.")
+
+    def block(title, picks, is_long):
+        print("\n" + "-" * 74)
+        print(title)
+        print("-" * 74)
+        if not picks:
+            print("  (none qualified)")
+            return
+        for r in picks:
+            cls = r["cls"]
+            side = "LONG" if is_long else "SHORT"
+            trig = r.get("bull_trigger") if is_long else r.get("bear_trigger")
+            green = cls.get("green")
+            print(f"  {r['ticker']:<9} {side}  tier {cls['tier']}  "
+                  f"p(close>open) {r.get('probability',0.5):.2f}  "
+                  f"base-rate {('n/a' if green is None else str(green)+'% green')}")
+            print(f"      lenses agreeing ({cls['agree']}): {', '.join(cls['lenses'])}")
+            print(f"      last {r.get('last')}  open(=invalidation) {r.get('open')}  "
+                  f"sentiment {r.get('sentiment_label','off')}")
+            print(f"      entry : {trig}")
+            print(f"      analog day-range: {r.get('analog_ci')}")
+
+    block("TOP LONGS (most likely to close ABOVE open)", sel["longs"], True)
+    block("TOP SHORTS (most likely to close BELOW open)", sel["shorts"], False)
+
+    if not sel["longs"] and not sel["shorts"]:
+        print("\n  STAND DOWN — no name cleared the agreement gate at the open today.")
+    print("\n  Use the OPEN as your invalidation (5-min close back through it ends the")
+    print("  thesis). Size from that stop; these are capped leans, so spread small "
+          "risk\n  across the shortlist rather than betting big on one.")
 
 
 def rank(results: list, anchor: str) -> dict:
@@ -345,12 +497,19 @@ def main(argv=None):
     p.add_argument("--source", default=None)
     p.add_argument("--cross-check", default=None)
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--open", dest="open_mode", action="store_true",
+                   help="once-at-open daily selection (recommended): rank top longs/shorts")
+    p.add_argument("--top", type=int, default=None, help="how many longs/shorts to surface")
     args = p.parse_args(argv)
     config = load_config(args.config)
     source = args.source or config.get("data_sources", {}).get("primary", "yahoo_direct")
     cc = ([s.strip() for s in args.cross_check.split(",")] if args.cross_check
           else config.get("data_sources", {}).get("cross_check"))
-    render(scan_once(config, source, cc, max_workers=args.workers))
+    if args.open_mode:
+        top_n = args.top or config.get("scan", {}).get("top_n", 3)
+        render_open(open_select(config, source, cc, top_n=top_n, max_workers=args.workers))
+    else:
+        render(scan_once(config, source, cc, max_workers=args.workers))
 
 
 if __name__ == "__main__":

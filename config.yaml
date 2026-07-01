@@ -71,10 +71,20 @@ claude:
 # can tell whether the anchor ticker is the best use of risk today.
 scan:
   workers: 8
+  top_n: 3                        # how many longs/shorts the at-open scan surfaces
   # A name is only "actionable" once it has held the SAME verdict for this many
   # consecutive scans AND its lenses aren't conflicted. Added after a day of
   # losses from chasing the 5-min rotating leader (see STRATEGY.md).
+  # NOTE: the primary strategy is now the once-at-open scan (`scan.py --open`),
+  # which uses cross-lens AGREEMENT instead of time-persistence. min_persistence
+  # only applies to the legacy 5-min loop mode.
   min_persistence: 2
+
+# Sentiment lens (sentiment.py). OFF by default: free news feeds return
+# non-ticker-relevant headlines here, and a sentiment score from irrelevant news
+# is noise. Enable only with a feed that returns real per-ticker headlines.
+sentiment:
+  enabled: false
   universe:                       # liquid TSX names; anchor ticker auto-added
     - AC.TO
     - RY.TO
