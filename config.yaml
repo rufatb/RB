@@ -79,12 +79,6 @@ scan:
   # which uses cross-lens AGREEMENT instead of time-persistence. min_persistence
   # only applies to the legacy 5-min loop mode.
   min_persistence: 2
-
-# Sentiment lens (sentiment.py). OFF by default: free news feeds return
-# non-ticker-relevant headlines here, and a sentiment score from irrelevant news
-# is noise. Enable only with a feed that returns real per-ticker headlines.
-sentiment:
-  enabled: false
   universe:                       # liquid TSX names; anchor ticker auto-added
     - AC.TO
     - RY.TO
@@ -107,6 +101,12 @@ sentiment:
     - SLF.TO
     - BCE.TO
     - T.TO
+
+# Sentiment lens (sentiment.py). OFF by default: free news feeds return
+# non-ticker-relevant headlines here, and a sentiment score from irrelevant news
+# is noise. Enable only with a feed that returns real per-ticker headlines.
+sentiment:
+  enabled: false
 
 # Probability clamps. HARD limits on intraday open-to-close direction.
 # These are guardrails against confidence inflation and are asserted in code.
