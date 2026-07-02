@@ -164,7 +164,20 @@ def analog_days(
     today_prev_oc_pct: Optional[float],
     today_pos_in_range_pct: Optional[float],
     k: int = 25,
+    smoothing_m: int = 10,
 ) -> dict:
+    """
+    `k` and `smoothing_m` are configurable (config `analogs:`) — no hardcoding.
+
+    ACCURACY NOTES (added after the backtest showed mild overconfidence):
+      * Neighbours are DISTANCE-WEIGHTED (closer analogs count more) instead of
+        equal-weighted — standard k-NN practice that reduces noise from the
+        marginal neighbours at the edge of the window.
+      * The green rate is SHRUNK toward 50% with a Beta/Laplace prior of
+        strength `smoothing_m` pseudo-observations. On n=25 neighbours a raw
+        80% green becomes ~71% — small samples can no longer masquerade as
+        strong edges. This is a principled prior, not a fitted parameter.
+    """
     out = {
         "_label": "nearest-neighbour base rate on similar setups — context, not a forecast",
         "available": False,
@@ -213,13 +226,23 @@ def analog_days(
         if today[f] < lo or today[f] > hi:
             off.append(f"{f}={today[f]:.2f} outside historical [{lo:.2f},{hi:.2f}]")
 
+    # Distance-weighted green rate, then Beta(m/2, m/2) shrinkage toward 50%.
+    n = len(neigh)
+    w = 1.0 / (1.0 + neigh["_d"].to_numpy())
+    green_w = float(np.average((oc > 0).to_numpy().astype(float), weights=w))
+    green_raw = float((oc > 0).mean())
+    m = max(0, int(smoothing_m))
+    green_smoothed = (green_w * n + 0.5 * m) / (n + m) if (n + m) else 0.5
+
     out.update({
         "available": True,
         "features_used": feats,
-        "n_neighbours": len(neigh),
+        "n_neighbours": n,
         "off_sample": bool(off),
         "off_sample_reason": "; ".join(off) if off else None,
-        "green_rate_pct": round(float((oc > 0).mean() * 100), 1),
+        "green_rate_pct": round(green_smoothed * 100, 1),   # smoothed = headline number
+        "green_rate_raw_pct": round(green_raw * 100, 1),
+        "smoothing_m": m,
         "avg_oc_pct": round(float(oc.mean()), 3),
         "median_oc_pct": round(float(oc.median()), 3),
         "p25_oc_pct": round(float(oc.quantile(0.25)), 3),
@@ -228,6 +251,32 @@ def analog_days(
         "best_oc_pct": round(float(oc.max()), 3),
     })
     return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Calibrated EOD probability.
+# WHY: the lookahead-safe backtest measured the raw analog-derived probability
+# as OVERCONFIDENT (Brier 0.257 vs the 0.25 always-say-0.50 baseline; the 0.62
+# bin realized ~0.51). Shrinkage compresses the stated probability toward 0.50
+# so the number printed is closer to the frequency that actually happens.
+# Shrinkage may only ever COMPRESS (0 < shrinkage <= 1); it can never widen a
+# probability, and the hard [0.35, 0.65] clamp still applies on top.
+# ─────────────────────────────────────────────────────────────────────────────
+HARD_FLOOR, HARD_CAP = 0.35, 0.65
+
+
+def eod_probability(green_rate_pct: Optional[float], *, shrinkage: float = 0.5,
+                    floor: float = HARD_FLOOR, cap: float = HARD_CAP) -> Optional[float]:
+    """Map a (smoothed) analog green% to a calibrated, clamped P(close > open)."""
+    if green_rate_pct is None:
+        return None
+    s = min(max(float(shrinkage), 0.0), 1.0)          # compress-only, never amplify
+    lo = max(HARD_FLOOR, floor)                        # config may narrow, never widen
+    hi = min(HARD_CAP, cap)
+    p = 0.5 + s * (green_rate_pct / 100.0 - 0.5)
+    p = max(lo, min(hi, p))
+    assert HARD_FLOOR <= p <= HARD_CAP, "EOD probability escaped the hard clamp"
+    return round(p, 3)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -286,15 +335,19 @@ def analyze(
     today_gap_pct: Optional[float],
     today_prev_oc_pct: Optional[float],
     today_pos_in_range_pct: Optional[float],
+    analog_cfg: Optional[dict] = None,
 ) -> dict:
     gaps = gap_statistics(ac_daily)
     week = weekday_seasonality(ac_daily)
     cont = gap_continuation(ac_daily)
+    acfg = analog_cfg or {}
     analogs = analog_days(
         ac_daily,
         today_gap_pct=today_gap_pct,
         today_prev_oc_pct=today_prev_oc_pct,
         today_pos_in_range_pct=today_pos_in_range_pct,
+        k=acfg.get("k", 25),
+        smoothing_m=acfg.get("smoothing_m", 10),
     )
     crude = crude_correlation_regime(ac_daily, crude_daily)
 

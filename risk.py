@@ -36,10 +36,16 @@ def position_size(
     entry: float,
     stop: float,
     side: str = "long",
+    max_position_pct: float = 100.0,
 ) -> RiskPlan:
     """
     Shares = (equity × risk%/100) / per-share stop distance.
     The position size FALLS OUT of the stop — that is the whole point.
+
+    max_position_pct caps position VALUE as a % of equity. WHY: a very tight
+    stop makes the risk formula balloon the share count (seen live: a $0.12
+    stop implied a $102k position on $100k equity). Tight stop ≠ license to
+    lever up; the cap binds first and is noted on the plan.
     """
     risk_dollars = account_equity * (risk_per_trade_pct / 100.0)
     stop_distance = abs(entry - stop)
@@ -51,6 +57,14 @@ def position_size(
             notes=["stop distance is zero — cannot size a position"],
         )
     shares = int(risk_dollars // stop_distance)
+    max_value = account_equity * (max_position_pct / 100.0)
+    if entry > 0 and shares * entry > max_value:
+        shares = int(max_value // entry)
+        actual_risk = shares * stop_distance
+        notes.append(
+            f"position capped at {max_position_pct:.0f}% of equity "
+            f"(risk-formula size exceeded it; actual $ at stop ≈ {actual_risk:.0f})"
+        )
     position_value = shares * entry
     return RiskPlan(
         entry=entry, stop=stop, side=side, risk_dollars=risk_dollars,
@@ -122,12 +136,14 @@ def build_full_plan(
     is_margin: bool,
     cad_prime: float,
     margin_spread: float,
+    max_position_pct: float = 100.0,
 ) -> RiskPlan:
     """Convenience: full risk picture for a hypothetical trigger->stop trade."""
     plan = position_size(
         account_equity=account_equity,
         risk_per_trade_pct=risk_per_trade_pct,
         entry=entry, stop=stop, side=side,
+        max_position_pct=max_position_pct,
     )
     plan = add_r_multiples(plan, targets)
     plan = overnight_margin_cost(

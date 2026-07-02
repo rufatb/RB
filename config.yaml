@@ -25,6 +25,9 @@ correlated:
 risk:
   account_equity: 100000     # account base currency
   risk_per_trade_pct: 0.5    # % of equity risked per trade
+  max_position_pct: 50       # cap position VALUE at this % of equity — a tight
+                             # stop must not balloon size (seen live: $102k
+                             # position on $100k equity from a $0.12 stop)
   is_margin: true            # is the hypothetical position on margin?
   cad_prime: 4.45            # broker CAD prime rate (%)
   margin_spread: 3.25        # broker spread over prime (%)
@@ -110,8 +113,29 @@ sentiment:
 
 # Probability clamps. HARD limits on intraday open-to-close direction.
 # These are guardrails against confidence inflation and are asserted in code.
-# Do NOT widen these without understanding why they exist (see README).
+# Config can only NARROW the band — the hard [0.35, 0.65] limits are enforced
+# in code regardless of what is written here (see README).
 probability:
   floor: 0.35
   cap: 0.65       # an intraday open-to-close call may NEVER exceed this
   default: 0.50   # the honest baseline: it's near a coin flip
+  # Calibration shrinkage applied when mapping the analog base rate to the
+  # stated EOD probability: p = 0.5 + shrinkage*(green% - 50%). The backtest
+  # measured raw analog probabilities as OVERCONFIDENT (Brier 0.257 vs the
+  # 0.25 say-nothing baseline), so the stated number is compressed toward 0.5.
+  # 1.0 = no compression; may only compress, never amplify (asserted in code).
+  shrinkage: 0.5
+
+# Analog-day engine tunables (patterns.analog_days + scan gates). No hardcoding:
+# these were previously fixed constants in code.
+analogs:
+  k: 25                 # nearest neighbours per setup
+  smoothing_m: 10       # Beta-prior pseudo-observations shrinking green% to 50
+  long_threshold: 55    # smoothed green% needed to call an EOD long lean
+  short_threshold: 45   # smoothed green% at/below which an EOD short lean
+
+# Sector→crude macro lens (scan.macro_dir_for). Crude up helps beneficiaries
+# (producers/pipelines) and hurts victims (fuel consumers, e.g. airlines).
+sectors:
+  crude_beneficiaries: [CNQ.TO, SU.TO, CVE.TO, ENB.TO, TRP.TO, IMO.TO]
+  crude_victims: [AC.TO]

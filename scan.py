@@ -40,19 +40,23 @@ from dashboard import (build_levels, data_integrity_guard, decide, load_config,
                        parse_hhmm, safe_pct_change, _pos_in_trailing_range)
 
 # Sector→macro map: crude is the dominant lever. Up-crude helps producers and
-# hurts airlines; this encodes that as a per-ticker macro lens (honest, coarse).
-ENERGY_PRODUCERS = {"CNQ.TO", "SU.TO", "CVE.TO", "ENB.TO", "TRP.TO", "IMO.TO",
-                    "TOU.TO", "ARX.TO", "MEG.TO", "CPG.TO"}
-AIRLINES = {"AC.TO"}
+# hurts fuel consumers (airlines). These are FALLBACK defaults only — the real
+# mapping lives in config `sectors:` so nothing is hardcoded for the user.
+DEFAULT_CRUDE_BENEFICIARIES = {"CNQ.TO", "SU.TO", "CVE.TO", "ENB.TO", "TRP.TO",
+                               "IMO.TO", "TOU.TO", "ARX.TO", "MEG.TO", "CPG.TO"}
+DEFAULT_CRUDE_VICTIMS = {"AC.TO"}
 
 
-def macro_dir_for(ticker: str, crude_pct) -> Optional[int]:
+def macro_dir_for(ticker: str, crude_pct, sectors: Optional[dict] = None) -> Optional[int]:
     if crude_pct is None:
         return None
+    beneficiaries = set((sectors or {}).get("crude_beneficiaries")
+                        or DEFAULT_CRUDE_BENEFICIARIES)
+    victims = set((sectors or {}).get("crude_victims") or DEFAULT_CRUDE_VICTIMS)
     s = 1 if crude_pct > 0 else -1 if crude_pct < 0 else 0
-    if ticker in ENERGY_PRODUCERS:
+    if ticker in beneficiaries:
         return s
-    if ticker in AIRLINES:
+    if ticker in victims:
         return -s
     return None
 
@@ -160,12 +164,14 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
             daily, macro.get("crude_daily", pd.DataFrame()),
             today_gap_pct=struct.get("gap_pct"),
             today_prev_oc_pct=prev_oc, today_pos_in_range_pct=pos,
+            analog_cfg=cfg.get("analogs"),
         ) if cfg.get("patterns", {}).get("enabled", True) else {}
 
         rel = metrics.relative_strength(
             struct.get("pct_vs_prior_close"), macro.get("tsx_pct"), macro.get("peer_avg"))
         decision = decide(struct, orb, vw, sf, rel, {},
-                          pattern_factors=pat.get("factors") if pat else None)
+                          pattern_factors=pat.get("factors") if pat else None,
+                          prob_cfg=cfg.get("probability"))
         lv = build_levels(struct, orb, levels)
 
         analog = (pat or {}).get("analog_days", {})
@@ -175,13 +181,21 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
             sent = sentiment_mod.headline_sentiment(ticker)
             sdir = sentiment_mod.sentiment_dir(sent)
             slabel = sent.get("label", "unavailable")
-        mdir = macro_dir_for(ticker, macro.get("crude_pct"))
+        mdir = macro_dir_for(ticker, macro.get("crude_pct"), cfg.get("sectors"))
         align = metrics.eod_alignment(
             decision["verdict"], analog.get("green_rate_pct"),
             off_sample=bool(analog.get("off_sample")), macro_dir=mdir)
+        prob_cfg = cfg.get("probability") or {}
+        eod_p = patterns.eod_probability(
+            analog.get("green_rate_pct"),
+            shrinkage=prob_cfg.get("shrinkage", 0.5),
+            floor=prob_cfg.get("floor", patterns.HARD_FLOOR),
+            cap=prob_cfg.get("cap", patterns.HARD_CAP))
         out.update({
             "alignment": align["alignment"],
             "analog_green": analog.get("green_rate_pct"),
+            "analog_green_raw": analog.get("green_rate_raw_pct"),
+            "eod_p": eod_p,
             "off_sample": bool(analog.get("off_sample")),
             "sentiment_dir": sdir, "sentiment_label": slabel,
             "macro_dir": mdir,
@@ -196,6 +210,8 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
             "vwap_pct": vw.get("price_vs_vwap_pct"),
             "spike_fade": sf.get("flags", []),
             "bull_trigger": lv.get("bull_trigger"), "bear_trigger": lv.get("bear_trigger"),
+            "bull_trigger_level": lv.get("bull_trigger_level"),
+            "bear_trigger_level": lv.get("bear_trigger_level"),
             "bull_target": lv.get("bull_target"), "bear_target": lv.get("bear_target"),
             "rel_vs_tsx": rel.get("vs_tsx"),
             "analog_ci": (
@@ -281,16 +297,22 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
 # SAME way. Conflicts or off-sample setups are excluded. Probability stays
 # CAPPED; this improves SELECTION, not the ceiling (open-to-close is ~coin flip).
 # ─────────────────────────────────────────────────────────────────────────────
-def score_candidate(c: dict) -> dict:
+def score_candidate(c: dict, cfg: Optional[dict] = None) -> dict:
     """
     Pure cross-lens score. BASE-RATE-PRIMARY: the day-long analog green% is the
     direct close-vs-open signal for a full-day hold, so it sets the direction.
     Structure / macro / sentiment are CONFIRMATIONS. A name is excluded when the
     confirming lenses NET oppose the base rate (the CVE/SHOP conflict lesson) or
-    when the setup is off-sample. Testable without any network.
+    when the setup is off-sample. Thresholds come from config `analogs:` (no
+    hardcoding); the green% arriving here is already smoothed toward 50, so the
+    default 55/45 gates demand a genuinely persistent tilt. Testable offline.
     """
+    acfg = (cfg or {}).get("analogs") or {}
+    long_thr = acfg.get("long_threshold", 55)
+    short_thr = acfg.get("short_threshold", 45)
     out = {"direction": 0, "agree": 0, "disagree": 0, "tier": "skip",
-           "edge": 0.0, "lenses": [], "reason": "", "green": c.get("analog_green")}
+           "edge": 0.0, "lenses": [], "reason": "", "green": c.get("analog_green"),
+           "eod_p": c.get("eod_p")}
     if not c.get("passed"):
         out["reason"] = "not verified"
         return out
@@ -298,7 +320,7 @@ def score_candidate(c: dict) -> dict:
     if green is None:
         out["reason"] = "no base rate (short history)"
         return out
-    direction = 1 if green >= 55 else -1 if green <= 45 else 0
+    direction = 1 if green >= long_thr else -1 if green <= short_thr else 0
     if direction == 0:
         out["reason"] = "base rate neutral (no EOD lean)"
         return out
@@ -330,7 +352,7 @@ def open_select(config: dict, source: str, cross_check, top_n: int = 3,
                 max_workers: int = 8) -> dict:
     results, macro, now = _evaluate_universe(config, source, cross_check, max_workers)
     for r in results:
-        r["cls"] = score_candidate(r)
+        r["cls"] = score_candidate(r, config)
     quals = [r for r in results if r["cls"]["tier"] != "skip"]
     longs = sorted([r for r in quals if r["cls"]["direction"] > 0],
                    key=lambda r: r["cls"]["edge"], reverse=True)[:top_n]
@@ -338,6 +360,7 @@ def open_select(config: dict, source: str, cross_check, top_n: int = 3,
                     key=lambda r: r["cls"]["edge"], reverse=True)[:top_n]
     return {"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
             "longs": longs, "shorts": shorts, "n_universe": len(results),
+            "n_verified": sum(1 for r in results if r.get("passed")),
             "n_qualified": len(quals), "top_n": top_n}
 
 
@@ -368,11 +391,14 @@ def render_open(sel: dict):
             side = "LONG" if is_long else "SHORT"
             trig = r.get("bull_trigger") if is_long else r.get("bear_trigger")
             green = cls.get("green")
+            eod_p = r.get("eod_p")
+            fnum = lambda x: "n/a" if x is None else f"{x:.2f}"
             print(f"  {r['ticker']:<9} {side}  tier {cls['tier']}  "
-                  f"p(close>open) {r.get('probability',0.5):.2f}  "
-                  f"base-rate {('n/a' if green is None else str(green)+'% green')}")
+                  f"EOD p(close>open) {('n/a' if eod_p is None else f'{eod_p:.2f}')}  "
+                  f"base-rate {('n/a' if green is None else str(green)+'% green')}"
+                  f"{' (raw '+str(r.get('analog_green_raw'))+'%)' if r.get('analog_green_raw') is not None else ''}")
             print(f"      lenses agreeing ({cls['agree']}): {', '.join(cls['lenses'])}")
-            print(f"      last {r.get('last')}  open(=invalidation) {r.get('open')}  "
+            print(f"      last {fnum(r.get('last'))}  open(=invalidation) {fnum(r.get('open'))}  "
                   f"sentiment {r.get('sentiment_label','off')}")
             print(f"      entry : {trig}")
             print(f"      analog day-range: {r.get('analog_ci')}")
@@ -482,7 +508,7 @@ def render(scan: dict):
           f"|  conviction {act.get('conviction','None')}  |  persisted {act.get('streak',1)}x  "
           f"|  alignment {act.get('alignment')}")
     print(f"      trigger : {trig}")
-    print(f"      target  : {tgt}")
+    print(f"      target  : {'unavailable' if tgt is None else f'{tgt:.2f}'}")
     print(f"      analog CI (open->close of similar days): {act.get('analog_ci')}")
     if act.get("off_sample"):
         print("      ⚠ OFF-SAMPLE — today is outside the analog range; base rate unreliable")

@@ -52,11 +52,18 @@ except Exception:  # pragma: no cover - rich optional at runtime
 # model emit 0.8 "up" is exactly the failure mode this tool exists to prevent.
 # This is asserted AND covered by a test (tests/test_guardrails.py).
 # ─────────────────────────────────────────────────────────────────────────────
-def clamp_probability(p: float, floor: float = 0.35, cap: float = 0.65) -> float:
+HARD_FLOOR, HARD_CAP = 0.35, 0.65   # absolute limits; config may NARROW, never widen
+
+
+def clamp_probability(p: float, floor: float = HARD_FLOOR, cap: float = HARD_CAP) -> float:
+    # Config-supplied bounds are honoured only inside the hard band — a config
+    # edit can make the tool MORE conservative, never less.
+    floor = max(HARD_FLOOR, floor)
+    cap = min(HARD_CAP, cap)
     clamped = max(floor, min(cap, p))
     # Defensive assertion: the contract is that nothing downstream ever sees a
     # probability outside the band for an intraday open-to-close call.
-    assert floor <= clamped <= cap, "probability clamp violated"
+    assert HARD_FLOOR <= clamped <= HARD_CAP, "probability clamp violated"
     return clamped
 
 
@@ -136,7 +143,7 @@ def data_integrity_guard(
     return g
 
 
-def decide(struct, orb, vw, sf, rel, momo, pattern_factors=None) -> dict:
+def decide(struct, orb, vw, sf, rel, momo, pattern_factors=None, prob_cfg=None) -> dict:
     """
     Turn measurements into an HONEST verdict + capped probability.
 
@@ -233,7 +240,9 @@ def decide(struct, orb, vw, sf, rel, momo, pattern_factors=None) -> dict:
     else:
         factors.extend(pat_names)  # surface history leans only when structure agrees
 
-    p = clamp_probability(p)  # FINAL clamp — nothing escapes [0.35, 0.65]
+    # FINAL clamp — config bounds (prob_cfg) may narrow the band, never widen it.
+    pc = prob_cfg or {}
+    p = clamp_probability(p, floor=pc.get("floor", HARD_FLOOR), cap=pc.get("cap", HARD_CAP))
 
     return {
         "verdict": verdict,
@@ -253,8 +262,8 @@ def build_levels(struct, orb, levels) -> dict:
     open_ = struct.get("open")
     out = {
         "invalidation": None,
-        "bull_trigger": None, "bull_target": None,
-        "bear_trigger": None, "bear_target": None,
+        "bull_trigger": None, "bull_target": None, "bull_trigger_level": None,
+        "bear_trigger": None, "bear_target": None, "bear_trigger_level": None,
         "no_trade_zone": None,
     }
     if open_ is None:
@@ -268,14 +277,31 @@ def build_levels(struct, orb, levels) -> dict:
         "5-min close back below the open after a long trigger "
         "(or above the open after a short)"
     )
+
+    # A target must sit MEANINGFULLY beyond the trigger (>= 0.3%), otherwise the
+    # hypothetical trade has ~0R reward — a bug caught in live use where a
+    # resistance shelf equal to the ORB high produced "target 24.95 => 0.00R".
+    MIN_TARGET_DIST = 0.003
+
+    def _pick(cands, ref, above: bool):
+        good = [c for c in cands if c is not None and
+                ((c > ref * (1 + MIN_TARGET_DIST)) if above else (c < ref * (1 - MIN_TARGET_DIST)))]
+        if not good:
+            return None
+        return min(good) if above else max(good)
+
     if orb_hi is not None:
         out["bull_trigger"] = f"break & 5-min hold above opening-range high {orb_hi:.2f}"
-        res = [r for r in levels.get("resistance", []) if r > orb_hi]
-        out["bull_target"] = min(res) if res else levels.get("prior_high")
+        out["bull_trigger_level"] = round(orb_hi, 4)
+        out["bull_target"] = _pick(
+            [*levels.get("resistance", []), levels.get("prior_high"), levels.get("high_52w")],
+            orb_hi, above=True)
     if orb_lo is not None:
         out["bear_trigger"] = f"break & 5-min hold below opening-range low {orb_lo:.2f}"
-        dem = [s for s in levels.get("demand_shelves", []) if s < orb_lo]
-        out["bear_target"] = max(dem) if dem else levels.get("prior_low")
+        out["bear_trigger_level"] = round(orb_lo, 4)
+        out["bear_target"] = _pick(
+            [*levels.get("demand_shelves", []), levels.get("prior_low"), levels.get("low_52w")],
+            orb_lo, above=False)
     if orb_hi is not None and orb_lo is not None:
         out["no_trade_zone"] = (orb_lo, orb_hi)
     return out
@@ -637,10 +663,12 @@ def run_once(config: dict, adapter_name: str, manual_kwargs: Optional[dict],
             today_gap_pct=struct.get("gap_pct"),
             today_prev_oc_pct=prev_oc,
             today_pos_in_range_pct=today_pos,
+            analog_cfg=config.get("analogs"),
         )
 
     decision = decide(struct, orb, vw, sf, rel, momo,
-                      pattern_factors=pat.get("factors") if pat else None)
+                      pattern_factors=pat.get("factors") if pat else None,
+                      prob_cfg=config.get("probability"))
     levels_actionable = build_levels(struct, orb, levels)
 
     # EOD confluence check across the three lenses (lesson from today's losses).
@@ -747,6 +775,7 @@ def _maybe_risk_plan(config, decision, lv, struct, orb, levels):
         entry=entry, stop=stop, side=side, targets=targets,
         is_margin=rcfg["is_margin"], cad_prime=rcfg["cad_prime"],
         margin_spread=rcfg["margin_spread"],
+        max_position_pct=rcfg.get("max_position_pct", 100.0),
     )
 
 

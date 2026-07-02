@@ -49,8 +49,27 @@ Python 3.11+ required (uses `zoneinfo`).
 
 ## Run
 
+**The one command (9:31 morning report — recommended):**
+
 ```bash
-# Single brief now (default source = Yahoo, free & DELAYED)
+python report.py            # preflight all APIs → scan the TSX → ranked longs/shorts
+python report.py --check    # preflight only: verify every configured API & key
+```
+
+`report.py` is the single entry point that runs the whole pipeline in working
+order: API preflight → data-integrity guard → full-universe evaluation
+(structure + deep-history analogs + sector×crude macro + optional sentiment) →
+cross-lens selection → **calibrated** EOD probabilities → entry/invalidation
+levels → capped position sizing. Schedule it for one minute after the open:
+
+```cron
+31 9 * * 1-5  cd /path/to/repo && TZ=America/Toronto python report.py >> report.log 2>&1
+```
+
+Other entry points:
+
+```bash
+# Single-ticker brief (default source = Yahoo, free & DELAYED)
 python dashboard.py --once
 
 # Plain text instead of rich terminal output
@@ -301,34 +320,47 @@ python backtest.py --ticker AC.TO --days 2000
 
 **Representative AC.TO result (≈2,400 evaluated days):**
 
-| Metric | Value | Reading |
-|--------|-------|---------|
-| Base rate (close > open) | ~48.7% | AC is slightly down-biased open-to-close |
-| Pattern-engine hit rate (on leans) | ~52.8% | a small, statistically-detectable tilt (p≈0.01) … |
-| Brier score | ~0.257 | …but **worse** than always saying 0.50 (0.25) — the confident-looking probabilities don't hold up |
-| Calibration | the `[0.55,0.65]` bin predicted 0.62, realized ~0.51 | the engine is **overconfident** at the extremes |
+| Metric | Raw (pre-calibration) | Shipped (smoothing + shrinkage 0.5) |
+|--------|-----------------------|--------------------------------------|
+| Directional hit rate on leans | ~52.8% (p≈0.01) | ~52.6% (unchanged, as expected) |
+| Brier score (0.25 = say-nothing baseline) | 0.257 — **worse than saying nothing** | **0.2507** — at the baseline |
+| Confident bin (p≈0.6) | predicted 0.62, realized **0.51** | predicted 0.59, realized **0.57** |
+
+The raw analog probabilities measured **overconfident**, so the shipped engine
+now (a) **distance-weights** analog neighbours, (b) **shrinks** the green rate
+toward 50% with a Beta prior (`analogs.smoothing_m`), and (c) **compresses** the
+stated probability via `probability.shrinkage` (compress-only — it can never
+amplify, and the hard clamp still applies). After calibration the stated
+probabilities match realized frequencies far more closely.
+
+*Honest caveat:* the calibration re-run is **in-sample validation** — the
+overconfidence was diagnosed on this same dataset, so treat the improvement as
+"the stated numbers are now consistent with history", not out-of-sample proof.
 
 **Interpretation:** this is the design working, not failing. Single-name
 open-to-close direction is ~random; the marginal pattern tilt does **not**
 justify confident calls, which is exactly why the tool defaults to `WAIT`, caps
-probability at `[0.35, 0.65]`, and treats history as weak context. A high hit
-rate here would more likely indicate a lookahead bug than a real edge. If
-anything, the calibration argues for compressing probabilities even closer to
-0.50 — never inflating them.
+probability at `[0.35, 0.65]` (config can only narrow the band, never widen it),
+and treats history as weak context. A high hit rate here would more likely
+indicate a lookahead bug than a real edge.
 
 ## Files
 
 | File          | Purpose                                                        |
 |---------------|----------------------------------------------------------------|
-| `dashboard.py`| Entry point: guard → metrics → patterns → decision → analyst → render → schedule |
+| `report.py`   | **The 9:31 entry point**: API preflight → scan → calibrated ranked report |
+| `scan.py`     | TSX universe evaluation, cross-lens at-open selection, legacy 5-min mode |
+| `dashboard.py`| Single-ticker brief: guard → metrics → patterns → decision → analyst → render |
 | `adapters.py` | Pluggable multi-source data layer (Yahoo-direct, Stooq, Finnhub, Twelve Data, manual, real-time stubs) + cross-check aggregator |
-| `metrics.py`  | All real, timestamped measurements + labelled proxies          |
-| `patterns.py` | Deep historical pattern mining (gap base rates, analog days, crude regime) |
+| `metrics.py`  | All real, timestamped measurements + labelled proxies + EOD alignment |
+| `patterns.py` | Deep historical mining (analog days w/ smoothing, gap base rates, crude regime) + calibrated EOD probability |
+| `sentiment.py`| Optional relevance-gated headline lens (off by default)        |
 | `analyst.py`  | Optional Claude advisory layer (read-only; never sets the verdict) |
-| `risk.py`     | Risk-first position sizing, margin & gap-risk math             |
+| `risk.py`     | Risk-first position sizing (equity-capped), margin & gap-risk math |
 | `backtest.py` | Lookahead-safe backtest (expanding window, decision-time info only) |
-| `config.yaml` | All tunables                                                    |
-| `tests/`      | Guardrail + pattern + adapter + analyst + backtest tests (36)  |
+| `config.yaml` | ALL tunables — universe, sectors, thresholds, clamps, risk (no hardcoding) |
+| `STRATEGY.md` | Trading post-mortems + the rules encoded from them             |
+| `tests/`      | 78 tests: guardrails, patterns, adapters, analyst, backtest, scan, review |
 
 ---
 

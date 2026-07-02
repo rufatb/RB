@@ -105,9 +105,14 @@ def calibration_table(samples: list[Sample], bins=((0.35, 0.45), (0.45, 0.55), (
 # long history without lookahead: do the deep-history ANALOG base rates predict
 # open-to-close direction out of sample, or are they coin-flips?
 # ─────────────────────────────────────────────────────────────────────────────
-def tier_a_samples(daily: pd.DataFrame, warmup: int = 120):
+def tier_a_samples(daily: pd.DataFrame, warmup: int = 120, shrinkage: float = 1.0):
     """Per-day samples for Tier A. Factored out so a test can prove that a
-    prediction for day t is invariant to any data after t (no lookahead)."""
+    prediction for day t is invariant to any data after t (no lookahead).
+
+    `shrinkage` maps the analog green%% to the stated probability via
+    patterns.eod_probability (1.0 = raw legacy behaviour; the shipped config
+    uses a compressive value because the raw probabilities measured as
+    overconfident — see README)."""
     df = daily.dropna(subset=["Open", "High", "Low", "Close"]).copy()
     samples: list[Sample] = []
     base_up = 0
@@ -134,17 +139,18 @@ def tier_a_samples(daily: pd.DataFrame, warmup: int = 120):
         if not a.get("available"):
             continue
 
-        # Map the analog green-rate to a probability and apply the SAME clamp the
-        # live tool uses. This is the pattern engine's honest, capped opinion.
-        p_up = clamp_probability(a["green_rate_pct"] / 100.0)
+        # Map the analog green-rate to a probability through the SAME calibrated
+        # pipeline the live tool uses (smoothing happened inside analog_days;
+        # shrinkage + hard clamp happen here).
+        p_up = patterns.eod_probability(a["green_rate_pct"], shrinkage=shrinkage)
         direction = +1 if p_up > 0.5 else (-1 if p_up < 0.5 else 0)
         samples.append(Sample(p_up, realized_up, direction != 0, direction))
 
     return samples, base_up, n_days
 
 
-def tier_a(daily: pd.DataFrame, warmup: int = 120) -> dict:
-    samples, base_up, n_days = tier_a_samples(daily, warmup)
+def tier_a(daily: pd.DataFrame, warmup: int = 120, shrinkage: float = 1.0) -> dict:
+    samples, base_up, n_days = tier_a_samples(daily, warmup, shrinkage=shrinkage)
     leans = [s for s in samples if s.leaned]
     hits = sum(1 for s in leans if (s.direction > 0) == s.realized_up)
     return {
@@ -219,10 +225,10 @@ def tier_b(adapter: YahooDirectAdapter, ticker: str, orb_minutes: int = 5) -> di
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-def run(ticker: str, exchange_tz: str, lookback_days: int) -> dict:
+def run(ticker: str, exchange_tz: str, lookback_days: int, shrinkage: float = 1.0) -> dict:
     adapter = YahooDirectAdapter(exchange_tz=exchange_tz)
     daily = adapter.get_daily_bars(ticker, lookback_days)
-    a = tier_a(daily) if not daily.empty else {"error": "no daily data"}
+    a = tier_a(daily, shrinkage=shrinkage) if not daily.empty else {"error": "no daily data"}
     b = tier_b(adapter, ticker)
     return {"ticker": ticker, "daily_bars": int(len(daily)), "tier_a": a, "tier_b": b}
 
@@ -285,8 +291,10 @@ def main(argv=None):
     p.add_argument("--ticker", default="AC.TO")
     p.add_argument("--exchange-tz", default="America/Toronto")
     p.add_argument("--days", type=int, default=2000, help="daily history to request")
+    p.add_argument("--shrinkage", type=float, default=0.5,
+                   help="probability shrinkage toward 0.5 (1.0 = raw legacy)")
     args = p.parse_args(argv)
-    _print(run(args.ticker, args.exchange_tz, args.days))
+    _print(run(args.ticker, args.exchange_tz, args.days, shrinkage=args.shrinkage))
 
 
 if __name__ == "__main__":

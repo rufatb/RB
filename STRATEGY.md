@@ -72,6 +72,29 @@ python scan.py --open --source yahoo_direct    # top longs + shorts for the day
   open-to-close is ~coin-flip (see backtest); the picks are best-confluence leans,
   sized small and spread across the shortlist.
 
+## Full-codebase review (accuracy + workflow hardening)
+
+A top-to-bottom review turned the pieces into one 9:31 workflow and fixed what
+live use exposed:
+
+- **`report.py` is now the single entry point** — preflight every configured
+  API, then produce the ranked open-to-close report. `--check` verifies APIs
+  alone. Cron it at 9:31 America/Toronto.
+- **Calibration (measured, not vibes):** raw analog probabilities backtested
+  overconfident (Brier 0.257 vs 0.25 baseline; the 0.62 bin realized 0.51).
+  Now: distance-weighted neighbours + Beta smoothing toward 50%
+  (`analogs.smoothing_m`) + compress-only probability shrinkage
+  (`probability.shrinkage`). Re-run: Brier 0.2507, confident bin predicts 0.59
+  / realizes 0.57. (In-sample validation — stated numbers now match history.)
+- **Position cap** (`risk.max_position_pct`): a tight stop can no longer balloon
+  size past equity (seen live: $102k position on $100k equity).
+- **Target-beyond-trigger:** hypothetical targets must sit ≥0.3% past the
+  trigger (kills the 0.00R "target = trigger" bug).
+- **No hardcoding:** universe, sector×crude map, analog k/smoothing/thresholds,
+  clamps, shrinkage, and the position cap all live in `config.yaml`. Probability
+  bounds in config can only NARROW the hard [0.35, 0.65] band, never widen it
+  (asserted + tested).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
