@@ -121,6 +121,56 @@ def _risk_line(r: dict, is_long: bool, rcfg: dict) -> str:
             f"(≈${plan.risk_dollars:.0f} at stop){note}")
 
 
+def the_call(sel: dict):
+    """The single most confident pick across both sides (by lens edge, then
+    probability distance). None = stand down. Pure + testable."""
+    picks = [(r, "LONG") for r in sel.get("longs", [])] + \
+            [(r, "SHORT") for r in sel.get("shorts", [])]
+    if not picks:
+        return None
+    def key(item):
+        r, _ = item
+        p = r.get("eod_p") or 0.5
+        return (r.get("cls", {}).get("edge", 0.0), abs(p - 0.5))
+    r, side = max(picks, key=key)
+    return {"pick": r, "side": side}
+
+
+def render_at_a_glance(sel: dict) -> None:
+    """Concise, act-fast block — THE call + top long + top short, one line each.
+    Requested output contract: know what to do in seconds; detail follows below."""
+    def line(r, side):
+        p = r.get("eod_p")
+        p_side = p if side == "LONG" else (None if p is None else round(1 - p, 3))
+        trig = r.get("bull_trigger_level") if side == "LONG" else r.get("bear_trigger_level")
+        stop = r.get("open")
+        lenses = "+".join(r.get("cls", {}).get("lenses", []))
+        arrow = ">" if side == "LONG" else "<"
+        # Sanity: a long trigger must sit above its stop, a short trigger below.
+        # Inconsistent levels = stale/misaligned bars (seen post-close) — flag it.
+        bad = (trig is not None and stop is not None and
+               ((side == "LONG" and trig <= stop) or (side == "SHORT" and trig >= stop)))
+        return (f"{r['ticker']} {side} · P {'n/a' if p_side is None else f'{p_side:.2f}'} · "
+                f"enter {arrow}{'n/a' if trig is None else f'{trig:.2f}'} · "
+                f"stop {'n/a' if stop is None else f'{stop:.2f}'} · {lenses}"
+                f"{'  ⚠ levels inconsistent — re-run live' if bad else ''}")
+
+    print("⚡ AT A GLANCE")
+    call = the_call(sel)
+    if call is None:
+        print("  THE CALL : ⛔ STAND DOWN — nothing cleared the gates. No trade today.")
+    else:
+        print(f"  THE CALL : {line(call['pick'], call['side'])}")
+        top_long = sel["longs"][0] if sel["longs"] else None
+        top_short = sel["shorts"][0] if sel["shorts"] else None
+        print(f"  TOP LONG : {line(top_long, 'LONG') if top_long else '(none qualified)'}")
+        print(f"  TOP SHORT: {line(top_short, 'SHORT') if top_short else '(none qualified)'}")
+    n_macro, total = macro_concentration(sel.get("longs", []) + sel.get("shorts", []))
+    if total >= 2 and n_macro / total >= 0.5:
+        print(f"  ⚠ {n_macro}/{total} picks ride the same crude lens — treat as ONE bet.")
+    print("  RULES    : trigger only · cap size · fired stop = out · flat by 3:55.")
+
+
 def macro_concentration(picks: list) -> tuple:
     """(n_macro_dependent, n_total) across the day's picks. Pure + testable.
 
@@ -213,6 +263,8 @@ def main(argv=None):
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--source", default=None, help="override primary data source")
     p.add_argument("--check", action="store_true", help="preflight only: verify APIs & exit")
+    p.add_argument("--brief", action="store_true",
+                   help="at-a-glance only: THE call + top long/short, nothing else")
     p.add_argument("--top", type=int, default=None)
     p.add_argument("--workers", type=int, default=8)
     args = p.parse_args(argv)
@@ -231,7 +283,10 @@ def main(argv=None):
     top_n = args.top or config.get("scan", {}).get("top_n", 3)
     sel = open_select(config, source, cross, top_n=top_n, max_workers=args.workers)
     print()
-    render_report(sel, config, pf)
+    render_at_a_glance(sel)
+    if not args.brief:
+        print()
+        render_report(sel, config, pf)
     return 0
 
 

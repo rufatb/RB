@@ -105,11 +105,12 @@ scan:
     - BCE.TO
     - T.TO
 
-# Sentiment lens (sentiment.py). OFF by default: free news feeds return
-# non-ticker-relevant headlines here, and a sentiment score from irrelevant news
-# is noise. Enable only with a feed that returns real per-ticker headlines.
+# Sentiment lens (sentiment.py). Enabled as a WEAK confirming lens — the
+# relevance gate keeps it honest: only headlines that actually mention the
+# company are scored; when the free feed returns generic news (common), the
+# lens reports `unavailable` and contributes NOTHING rather than noise.
 sentiment:
-  enabled: false
+  enabled: true
 
 # Probability clamps. HARD limits on intraday open-to-close direction.
 # These are guardrails against confidence inflation and are asserted in code.

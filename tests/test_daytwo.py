@@ -32,3 +32,22 @@ def test_concentration_warning_threshold():
              _pick(["base_rate"]), _pick(["base_rate", "macro"])]
     n, total = report.macro_concentration(picks)
     assert total >= 2 and n / total >= 0.5
+
+
+# ── AT A GLANCE / the_call (concise-output contract) ────────────────────────
+def _cand2(tk, side_dir, edge, eod_p, trig=10.0, open_=9.9):
+    r = {"ticker": tk, "eod_p": eod_p, "open": open_,
+         "bull_trigger_level": trig, "bear_trigger_level": trig,
+         "cls": {"edge": edge, "lenses": ["base_rate", "macro"], "direction": side_dir}}
+    return r
+
+
+def test_the_call_picks_highest_edge_across_sides():
+    sel = {"longs": [_cand2("L1", 1, 2.0, 0.60)],
+           "shorts": [_cand2("S1", -1, 3.1, 0.40), _cand2("S2", -1, 1.0, 0.42)]}
+    call = report.the_call(sel)
+    assert call["pick"]["ticker"] == "S1" and call["side"] == "SHORT"
+
+
+def test_the_call_none_when_empty():
+    assert report.the_call({"longs": [], "shorts": []}) is None
