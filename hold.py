@@ -95,10 +95,31 @@ def run(config: dict, ticker: str, side: str, source: str) -> dict:
     else:
         stats_matched = {"available": False, "n": 0, "reason": "no prior close"}
 
+    # MACRO-DRIFT CHECK (lesson from a 1-of-6 day): the morning report's macro
+    # lens is a 9:31 SNAPSHOT of crude. If the ticker's thesis leaned on crude
+    # and crude has since reversed, the morning confirmation is void — say so.
+    macro = {"relevant": False}
+    sectors = config.get("sectors") or {}
+    linked = (ticker in set(sectors.get("crude_beneficiaries") or []) or
+              ticker in set(sectors.get("crude_victims") or []))
+    if linked:
+        try:
+            cq = adapter.get_quote(config["correlated"]["crude"])
+            if cq.last and cq.prior_close:
+                macro = {"relevant": True,
+                         "crude_pct_now": round((cq.last / cq.prior_close - 1) * 100, 2),
+                         "direction_for_ticker": (
+                             "tailwind" if ((cq.last > cq.prior_close) ==
+                                            (ticker in set(sectors.get("crude_beneficiaries") or [])))
+                             else "headwind")}
+        except Exception:
+            macro = {"relevant": True, "crude_pct_now": None}
+
     return {"ticker": ticker, "side": side, "last": q.last, "open": q.open,
             "vs_open_pct": round(vs_open_pct, 2), "gap_pct": None if gap_t is None else round(gap_t, 2),
             "as_of": str(q.as_of), "session": str(q.session_date),
-            "n_history": len(daily), "all_days": stats, "setup_matched": stats_matched}
+            "n_history": len(daily), "all_days": stats, "setup_matched": stats_matched,
+            "macro": macro}
 
 
 def render(r: dict, side: str):
@@ -125,6 +146,18 @@ def render(r: dict, side: str):
 
     block("ALL days that visited this level vs their open", r["all_days"])
     block("SETUP-MATCHED (similar gap sign/size)", r["setup_matched"])
+
+    mac = r.get("macro") or {}
+    if mac.get("relevant"):
+        cp = mac.get("crude_pct_now")
+        if cp is None:
+            print("\n  MACRO CHECK: crude quote unavailable — re-validate the macro "
+                  "lens manually before trusting the morning read.")
+        else:
+            print(f"\n  MACRO CHECK: crude is {cp:+.2f}% NOW → currently a "
+                  f"{mac['direction_for_ticker']} for this name.")
+            print("  The morning report's macro lens was a 9:31 snapshot — if crude has")
+            print("  reversed since, the morning confirmation is VOID for this position.")
 
     s = r["setup_matched"] if r["setup_matched"].get("available") else r["all_days"]
     if s.get("available"):

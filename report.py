@@ -121,6 +121,18 @@ def _risk_line(r: dict, is_long: bool, rcfg: dict) -> str:
             f"(≈${plan.risk_dollars:.0f} at stop){note}")
 
 
+def macro_concentration(picks: list) -> tuple:
+    """(n_macro_dependent, n_total) across the day's picks. Pure + testable.
+
+    WHY (encoded from a live 1-of-6 day): with crude at -1.5% the board put up
+    an airline long and four energy shorts — five expressions of ONE crude bet.
+    Crude reversed intraday and every one of them died together. Diversification
+    across tickers is fake when qualification hinges on the same macro lens."""
+    total = len(picks)
+    n_macro = sum(1 for r in picks if "macro" in (r.get("cls", {}).get("lenses") or []))
+    return n_macro, total
+
+
 def render_report(sel: dict, config: dict, pf: dict) -> None:
     tz = config["exchange_tz"]
     print("=" * 74)
@@ -173,6 +185,16 @@ def render_report(sel: dict, config: dict, pf: dict) -> None:
         print("\n  ⛔ STAND DOWN — no name cleared the gates today (verified data, "
               "in-sample base\n  rate with a real tilt, and confirming lenses). "
               "No trade IS the honest call.")
+
+    # Correlation-concentration warning (lesson from a live 1-of-6 day).
+    all_picks = sel["longs"] + sel["shorts"]
+    n_macro, total = macro_concentration(all_picks)
+    if total >= 2 and n_macro / total >= 0.5:
+        print("\n  ⚠️  CONCENTRATION WARNING: "
+              f"{n_macro} of {total} picks depend on the SAME crude/macro lens.")
+        print("     These are NOT independent bets — if crude reverses intraday, they")
+        print("     win or lose TOGETHER. Size them as ONE position's worth of risk")
+        print("     total, and re-check crude mid-session (hold.py shows it live).")
 
     print("\n" + "─" * 74)
     print("HOW TO READ THIS (honesty footer)")

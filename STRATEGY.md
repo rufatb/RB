@@ -95,6 +95,35 @@ live use exposed:
   bounds in config can only NARROW the hard [0.35, 0.65] band, never widen it
   (asserted + tested).
 
+## Day-2 post-mortem (the 1-of-6 day — correlated board)
+
+### What happened
+The 9:31 report went 1-for-6 on raw direction (SHOP long won; AC long and four
+energy shorts lost). The user rode an off-plan AC long (7,000 sh @ 24.83,
+pre-trigger, 3.5× the cap, stop declined at −$140) to −$1,890. As-traded per
+plan, the whole six-pick board lost ≈ −$1,150 with every loser stopped small
+and one pick correctly never triggering.
+
+### Root causes
+1. **Hidden correlation.** With crude −1.5% at 9:31, five of six picks (airline
+   long + four energy shorts) were ONE crude bet expressed five ways. Crude
+   reversed to −0.4% intraday and they all died together. Ticker count is not
+   diversification when qualification hinges on one macro lens.
+2. **Macro treated as static.** The macro lens is a 9:31 snapshot; nothing
+   re-validated it as the day evolved. The analog features (gap / prior day /
+   range position) cannot see an intraday macro reversal — today's AC close
+   landed outside the whole analog range.
+3. **Stated odds worked as stated.** 0.62 loses ~38% of the time; the failure
+   wasn't the number, it was concentration amplifying one bad draw — plus
+   execution deviations turning a planned −$500 into −$1,890.
+
+### Encoded fixes
+| Lesson | Where |
+|---|---|
+| Flag when ≥50% of picks share the macro lens — "size as ONE bet" | `report.py` `macro_concentration` + concentration warning block |
+| Re-validate crude live on every mid-session check; declare the morning macro confirmation VOID if reversed | `hold.py` MACRO CHECK section |
+| Post-mortem culture: raw direction and as-traded are both reported after the close | this file + the report-card workflow |
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
