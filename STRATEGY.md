@@ -124,6 +124,31 @@ and one pick correctly never triggering.
 | Re-validate crude live on every mid-session check; declare the morning macro confirmation VOID if reversed | `hold.py` MACRO CHECK section |
 | Post-mortem culture: raw direction and as-traded are both reported after the close | this file + the report-card workflow |
 
+## Day-3 post-mortem (SHOP win / MFC scratch — presentation bias)
+
+### What happened
+Midday (from ~9:57), the from-here engine picked SHOP.TO long (54.3% from-here
++ 71.7% day-shape, move unspent) and — because the user asked for a long AND a
+short — the analysis crowned MFC.TO as "Best SHORT" despite it being 53%
+(dead zone) and lens-conflicted (day-shape 77% bullish). Result: SHOP closed
++0.69% vs entry (WIN); MFC ramped in the last hour and closed a 3-cent scratch.
+
+### The split
+* **Variance:** a 53% short losing is expected 47% of the time — and the
+  engine's medians were nearly exact (SHOP analog median +0.63% vs +0.78%
+  actual; MFC from-here median −0.04% vs +0.03% actual). Calibration held.
+* **Process error (the tool's):** ranking a sub-threshold, conflicted
+  candidate as "Best X" invites the trade regardless of caveats underneath.
+  Action bias by presentation.
+
+### Encoded fix
+`midday.py` — the gated from-here selection. A side qualifies only past the
+strong from-here threshold, or in the soft band WITH day-shape backing; a
+contradicting day-shape disqualifies. Sub-threshold names are NOT ranked —
+the output says "⛔ NO QUALIFIED SHORT right now — don't force one."
+Today's real numbers are the regression tests: SHOP(54.3, 71.7) must qualify,
+MFC(46.8, 77.3) must be rejected. Gates configurable under `midday:`.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

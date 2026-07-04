@@ -140,3 +140,15 @@ analogs:
 sectors:
   crude_beneficiaries: [CNQ.TO, SU.TO, CVE.TO, ENB.TO, TRP.TO, IMO.TO]
   crude_victims: [AC.TO]
+
+# Midday from-here selection gates (midday.py). A side qualifies on the
+# from-here conditional alone only past the strong threshold; inside the soft
+# band it must be BACKED by the day-shape analog; a contradicting day-shape
+# disqualifies (the MFC lesson: a 53% conflicted "best short" is NOT a pick).
+midday:
+  strong_long: 55
+  strong_short: 45
+  soft_long: 52
+  soft_short: 48
+  backed_long: 65
+  backed_short: 35
