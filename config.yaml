@@ -126,6 +126,11 @@ probability:
   # 0.25 say-nothing baseline), so the stated number is compressed toward 0.5.
   # 1.0 = no compression; may only compress, never amplify (asserted in code).
   shrinkage: 0.5
+  # Out-of-sample finding (AC/SHOP/CNQ/RY backtests, ~2,400 days each):
+  # bearish base rates systematically overstate the edge (predicted 0.42
+  # realized ~0.50). Short leans get extra compression — may only compress
+  # MORE than `shrinkage`, never less (enforced in code).
+  short_shrinkage: 0.35
 
 # Analog-day engine tunables (patterns.analog_days + scan gates). No hardcoding:
 # these were previously fixed constants in code.

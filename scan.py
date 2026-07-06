@@ -189,6 +189,7 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
         eod_p = patterns.eod_probability(
             analog.get("green_rate_pct"),
             shrinkage=prob_cfg.get("shrinkage", 0.5),
+            short_shrinkage=prob_cfg.get("short_shrinkage"),
             floor=prob_cfg.get("floor", patterns.HARD_FLOOR),
             cap=prob_cfg.get("cap", patterns.HARD_CAP))
         out.update({
@@ -214,6 +215,9 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
             "bear_trigger_level": lv.get("bear_trigger_level"),
             "bull_target": lv.get("bull_target"), "bear_target": lv.get("bear_target"),
             "rel_vs_tsx": rel.get("vs_tsx"),
+            "room_spent_pct": room_spent(
+                struct.get("pct_vs_open"),
+                analog.get("p25_oc_pct"), analog.get("p75_oc_pct")),
             "analog_ci": (
                 f"{analog['p25_oc_pct']}..{analog['p75_oc_pct']}% (n={analog['n_neighbours']})"
                 if analog.get("available") else "unavailable"),
@@ -297,6 +301,23 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
 # SAME way. Conflicts or off-sample setups are excluded. Probability stays
 # CAPPED; this improves SELECTION, not the ceiling (open-to-close is ~coin flip).
 # ─────────────────────────────────────────────────────────────────────────────
+def room_spent(pct_vs_open, p25, p75) -> Optional[float]:
+    """%% of the analog day-band already consumed by the current move vs open.
+    >100 means price has exceeded the typical (p25/p75) move entirely. WHY: on
+    two separate live days the top pick was +1.9%% over its open at 9:34 with a
+    +1.93%% analog p75 — lens-perfect, but the move was already spent. This was
+    hand-computed both times; now it's a first-class metric. Pure + testable."""
+    if pct_vs_open is None:
+        return None
+    if pct_vs_open >= 0:
+        if p75 is None or p75 <= 0:
+            return None
+        return round(pct_vs_open / p75 * 100, 1)
+    if p25 is None or p25 >= 0:
+        return None
+    return round(pct_vs_open / p25 * 100, 1)
+
+
 def score_candidate(c: dict, cfg: Optional[dict] = None) -> dict:
     """
     Pure cross-lens score. BASE-RATE-PRIMARY: the day-long analog green% is the

@@ -150,10 +150,12 @@ def render_at_a_glance(sel: dict) -> None:
         # Inconsistent levels = stale/misaligned bars (seen post-close) — flag it.
         bad = (trig is not None and stop is not None and
                ((side == "LONG" and trig <= stop) or (side == "SHORT" and trig >= stop)))
+        spent = r.get("room_spent_pct")
+        spent_s = f"  ⚠ {spent:.0f}% of typical move already spent" if (spent is not None and spent >= 70) else ""
         return (f"{r['ticker']} {side} · P {'n/a' if p_side is None else f'{p_side:.2f}'} · "
                 f"enter {arrow}{'n/a' if trig is None else f'{trig:.2f}'} · "
                 f"stop {'n/a' if stop is None else f'{stop:.2f}'} · {lenses}"
-                f"{'  ⚠ levels inconsistent — re-run live' if bad else ''}")
+                f"{'  ⚠ levels inconsistent — re-run live' if bad else ''}{spent_s}")
 
     print("⚡ AT A GLANCE")
     call = the_call(sel)
@@ -227,6 +229,10 @@ def render_report(sel: dict, config: dict, pf: dict) -> None:
             print(f"     exit if   : 5-min close back through the open "
                   f"({_fmt(r.get('open'))}) — the thesis is then wrong; do not hold & hope")
             print(f"     risk      : {_risk_line(r, is_long, rcfg)}")
+            spent = r.get("room_spent_pct")
+            if spent is not None and spent >= 70:
+                print(f"     ⚠ ROOM    : {spent:.0f}% of the typical analog move is already "
+                      "spent — entering here bets on a tail day; prefer a pullback-hold")
 
     block(f"TOP LONGS — most likely to close ABOVE their open", sel["longs"], True)
     block(f"TOP SHORTS — most likely to close BELOW their open", sel["shorts"], False)

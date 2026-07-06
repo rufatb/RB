@@ -266,11 +266,21 @@ HARD_FLOOR, HARD_CAP = 0.35, 0.65
 
 
 def eod_probability(green_rate_pct: Optional[float], *, shrinkage: float = 0.5,
+                    short_shrinkage: Optional[float] = None,
                     floor: float = HARD_FLOOR, cap: float = HARD_CAP) -> Optional[float]:
-    """Map a (smoothed) analog green% to a calibrated, clamped P(close > open)."""
+    """Map a (smoothed) analog green% to a calibrated, clamped P(close > open).
+
+    short_shrinkage: extra compression for BEARISH leans (green < 50). WHY:
+    out-of-sample backtests on four tickers (AC/SHOP/CNQ/RY, ~2,400 days each)
+    all showed short-lean days predicted ~0.42 realizing ~0.49-0.51 — bearish
+    base rates systematically overstate the edge (equities drift up). Long-side
+    bins calibrated fine. So the stated probability for short leans is
+    compressed harder. Must be <= shrinkage (more compression, never less)."""
     if green_rate_pct is None:
         return None
     s = min(max(float(shrinkage), 0.0), 1.0)          # compress-only, never amplify
+    if green_rate_pct < 50 and short_shrinkage is not None:
+        s = min(s, max(float(short_shrinkage), 0.0))  # shorts: at least as compressed
     lo = max(HARD_FLOOR, floor)                        # config may narrow, never widen
     hi = min(HARD_CAP, cap)
     p = 0.5 + s * (green_rate_pct / 100.0 - 0.5)

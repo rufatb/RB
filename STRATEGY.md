@@ -149,6 +149,35 @@ the output says "⛔ NO QUALIFIED SHORT right now — don't force one."
 Today's real numbers are the regression tests: SHOP(54.3, 71.7) must qualify,
 MFC(46.8, 77.3) must be rejected. Gates configurable under `midday:`.
 
+## Day-4: a 6/6 day + the anti-hindsight audit
+
+### Scoreboard
+All six picks closed in the called direction (longs AC +2.9%, BNS +0.8%,
+CP +1.2%; shorts CNQ −0.9%, BCE −2.1%, SU −0.6%); every trigger fired. User
+banked AC +0.64% and CNQ +0.48% with proper exits. NOTE: yesterday was 1/6,
+today 6/6 — the long-run expectation stays ~52-53%. A 6/6 day is variance
+exactly like a 1/6 day; do NOT size up because of it.
+
+### Anti-hindsight audit (requested: "make sure it's not retrospective bias")
+1. **Out-of-name validation.** Calibration was tuned on AC.TO only; backtests
+   on SHOP/CNQ/RY (never used for tuning, ~2,400 days each) show hit rates
+   49–53% and Brier ≈ the 0.25 baseline — the system performs out-of-sample
+   exactly as claimed (honest coin-flip-plus), no hidden overfit edge.
+2. **Real finding: short-side overconfidence.** On ALL four names, days
+   predicted ~0.42 realized ~0.49–0.51. Bearish base rates overstate the edge
+   (equities drift up). Encoded: `probability.short_shrinkage` (0.35) — extra
+   compression for bearish leans; can only compress MORE, never less (tested).
+3. **Structural safety argument.** Every day-derived rule (persistence,
+   conflict gates, off-sample, concentration, midday gates, room) is a
+   RESTRICTIVE filter — it can only remove trades, never add them. Overfit
+   restrictive rules cost opportunity, not capital. Signal-generating logic
+   remains the original, backtested base-rate engine.
+
+### Also encoded
+`room_spent_pct` — %% of the analog day-band already consumed at the current
+price (hand-computed twice before; now first-class). Report flags picks ≥70%%
+spent: "entering here bets on a tail day; prefer a pullback-hold."
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

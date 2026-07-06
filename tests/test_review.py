@@ -159,3 +159,31 @@ def test_preflight_flags_dead_primary(monkeypatch):
            "data_sources": {"primary": "yahoo_direct", "cross_check": []}}
     pf = report.preflight(cfg)
     assert pf["primary_ok"] is False
+
+
+# ── Day-4 audit: asymmetric short-side shrinkage + room-spent ────────────────
+def test_short_shrinkage_compresses_bearish_leans_more():
+    long_p = patterns.eod_probability(70.0, shrinkage=0.5, short_shrinkage=0.35)
+    short_p = patterns.eod_probability(30.0, shrinkage=0.5, short_shrinkage=0.35)
+    assert long_p == 0.60                       # long side: normal shrinkage
+    assert short_p == 0.43                      # short side: extra compression
+    # symmetric-input asymmetric-output: |0.43-0.5| < |0.60-0.5|
+    assert abs(short_p - 0.5) < abs(long_p - 0.5)
+
+
+def test_short_shrinkage_can_only_compress_more():
+    # A short_shrinkage larger than shrinkage must be ignored (min applies)
+    p = patterns.eod_probability(30.0, shrinkage=0.4, short_shrinkage=0.9)
+    assert p == patterns.eod_probability(30.0, shrinkage=0.4)
+
+
+def test_room_spent_long_and_short():
+    # Long side: +1.88% spent of a +1.93% p75 band -> ~97%
+    assert scan.room_spent(1.88, 0.3, 1.93) == 97.4
+    # Short side: -0.74% of a -1.04% p25 band -> ~71%
+    assert scan.room_spent(-0.74, -1.04, 0.5) == 71.2
+    # Unspent move
+    assert scan.room_spent(0.09, -0.3, 2.15) == 4.2
+    # No band -> None
+    assert scan.room_spent(1.0, None, None) is None
+    assert scan.room_spent(None, -1.0, 1.0) is None
