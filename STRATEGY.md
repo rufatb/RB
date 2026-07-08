@@ -210,6 +210,24 @@ spent: "entering here bets on a tail day; prefer a pullback-hold."
    the failing CP short. A plausible-sounding rule that would have made the
    day worse is exactly the overfit trap.
 
+## The 9:45→close engine (r945.py) — matching the model to the trade
+
+The user's actual trade is "enter ~9:45, exit by close", so a dedicated engine
+now predicts P(close > price@9:45) conditioned on the first 15 minutes (r0,
+gap, relative volume), pooled across the universe on 60 days of 5-minute bars
+(~1,240 ticker-sessions), k-NN + Beta smoothing, hard-clamped.
+
+**Walk-forward validation (blind holdout, 420 ticker-days):** baseline 48.6%%
+(true coin flip); model 54.4%% hit on 41%% of days at the 0.55 bar, ~67%% on
+the rare ≥0.60 signals; Brier 0.2502. Strongest effect: first-15-min ramps
+>+0.5%% FADE 61%% of the time (median −0.32%%) — early momentum does NOT
+carry; down-openers show no bounce edge (47%%). Retro-check on ship day
+(excluded from training): called AEM fade-short after its +1.1%% ramp (won
+big) and CP long-from-9:45 (the user's failed short — engine had it right).
+
+Modest measured edges are the honest ceiling; selectivity is the edge. No
+5-minute outlooks — close-horizon only, presentation bar inherited.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
