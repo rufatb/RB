@@ -178,6 +178,38 @@ exactly like a 1/6 day; do NOT size up because of it.
 price (hand-computed twice before; now first-class). Report flags picks ≥70%%
 spent: "entering here bets on a tail day; prefer a pullback-hold."
 
+## Day-5 post-mortem (MFC "loss" that was a WIN / CP the printed coin flip)
+
+### Forensics (minute-bar reconstruction)
+- **MFC.TO long — the PREDICTION WAS RIGHT.** It closed 58.80, +0.12%% ABOVE its
+  open. The user's loss (entry 59.04 → exit 58.80) came entirely from entering
+  BEFORE the trigger: the 5-min hold above 59.10 never occurred all day (one
+  poke at 9:42, never held). The plan's answer was NO TRADE on MFC. 100%%
+  process, 0%% prediction.
+- **CP.TO short — a real miss, but a printed coin flip.** Closed +0.52%% above
+  open. The pick was sided-P 0.52, tier Low, one lens — flagged "skippable" in
+  prose, yet still PRINTED as TOP SHORT. Its trigger did fire and the plan's
+  stop capped the loss at ≈ −$100; the actual exit at 126.10 took ~2.3× the
+  planned stop.
+- Board: 2/4 raw (MFC ✓, SLF ✓, SHOP ✗, CP ✗). Running live record across all
+  morning boards: 9/16 = 56%% — in line with the stated ~52-53%%.
+
+### Systematic causes → encoded fixes
+1. **Presentation bias recurred in the MORNING report** (day-3 fixed it only
+   in midday.py). → `report.presentable()`: a pick is printed only if sided
+   P ≥ `report.min_sided_p` (0.55) AND tier Medium; below the bar the report
+   says "NO QUALIFIED LONG/SHORT — do not force one" and lists the closest
+   candidate explicitly marked NOT tradeable. CP's exact numbers are the
+   regression test.
+2. **Pre-trigger entries recurred (4 of 5 live days).** → `confirm.py`: a
+   5-second live check — CONFIRMED / BROKE BUT NOT HELD / NOT BROKEN — to run
+   BEFORE any fill. MFC's exact pattern (poke without hold) is the regression
+   test.
+3. **Resisted a retrospective fix:** adding railways to crude_victims was
+   checked and REJECTED — with crude +1.6%% at 9:36 it would have CONFIRMED
+   the failing CP short. A plausible-sounding rule that would have made the
+   day worse is exactly the overfit trap.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

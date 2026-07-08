@@ -38,7 +38,8 @@ def test_concentration_warning_threshold():
 def _cand2(tk, side_dir, edge, eod_p, trig=10.0, open_=9.9):
     r = {"ticker": tk, "eod_p": eod_p, "open": open_,
          "bull_trigger_level": trig, "bear_trigger_level": trig,
-         "cls": {"edge": edge, "lenses": ["base_rate", "macro"], "direction": side_dir}}
+         "cls": {"edge": edge, "lenses": ["base_rate", "macro"],
+                 "direction": side_dir, "tier": "Medium"}}
     return r
 
 

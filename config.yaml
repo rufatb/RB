@@ -112,6 +112,13 @@ scan:
 sentiment:
   enabled: true
 
+# Presentation bar (report.py). A pick is PRINTED only if its sided calibrated
+# probability clears this AND it has a confirming lens (tier Medium). Below the
+# bar -> "NO QUALIFIED LONG/SHORT" (day-3 midday + day-5 morning lesson: a
+# printed 0.52 coin flip is a recommendation no matter the caveats).
+report:
+  min_sided_p: 0.55
+
 # Probability clamps. HARD limits on intraday open-to-close direction.
 # These are guardrails against confidence inflation and are asserted in code.
 # Config can only NARROW the band — the hard [0.35, 0.65] limits are enforced

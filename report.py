@@ -121,11 +121,26 @@ def _risk_line(r: dict, is_long: bool, rcfg: dict) -> str:
             f"(≈${plan.risk_dollars:.0f} at stop){note}")
 
 
+def presentable(r: dict, side: str, min_sided_p: float = 0.55) -> bool:
+    """A pick may be PRESENTED only if its sided probability clears a real bar
+    and it has at least one confirming lens (tier Medium). WHY (recurred twice):
+    day-3 crowned a 53%% conflicted 'Best SHORT' (midday) and day-5 printed a
+    0.52/Low/one-lens CP short as TOP SHORT — both invited trades the data
+    called coin flips, both lost. Gate-passing is not presentation-worthy;
+    a printed pick is a recommendation no matter the caveats under it."""
+    p = r.get("eod_p")
+    if p is None:
+        return False
+    sided = p if side == "LONG" else 1 - p
+    return sided >= min_sided_p and r.get("cls", {}).get("tier") == "Medium"
+
+
 def the_call(sel: dict):
     """The single most confident pick across both sides (by lens edge, then
     probability distance). None = stand down. Pure + testable."""
-    picks = [(r, "LONG") for r in sel.get("longs", [])] + \
-            [(r, "SHORT") for r in sel.get("shorts", [])]
+    min_p = sel.get("min_sided_p", 0.55)
+    picks = [(r, "LONG") for r in sel.get("longs", []) if presentable(r, "LONG", min_p)] + \
+            [(r, "SHORT") for r in sel.get("shorts", []) if presentable(r, "SHORT", min_p)]
     if not picks:
         return None
     def key(item):
@@ -163,10 +178,11 @@ def render_at_a_glance(sel: dict) -> None:
         print("  THE CALL : ⛔ STAND DOWN — nothing cleared the gates. No trade today.")
     else:
         print(f"  THE CALL : {line(call['pick'], call['side'])}")
-        top_long = sel["longs"][0] if sel["longs"] else None
-        top_short = sel["shorts"][0] if sel["shorts"] else None
-        print(f"  TOP LONG : {line(top_long, 'LONG') if top_long else '(none qualified)'}")
-        print(f"  TOP SHORT: {line(top_short, 'SHORT') if top_short else '(none qualified)'}")
+        min_p = sel.get("min_sided_p", 0.55)
+        pl = [r for r in sel["longs"] if presentable(r, "LONG", min_p)]
+        ps = [r for r in sel["shorts"] if presentable(r, "SHORT", min_p)]
+        print(f"  TOP LONG : {line(pl[0], 'LONG') if pl else '⛔ NO QUALIFIED LONG — do not force one'}")
+        print(f"  TOP SHORT: {line(ps[0], 'SHORT') if ps else '⛔ NO QUALIFIED SHORT — do not force one'}")
     n_macro, total = macro_concentration(sel.get("longs", []) + sel.get("shorts", []))
     if total >= 2 and n_macro / total >= 0.5:
         print(f"  ⚠ {n_macro}/{total} picks ride the same crude lens — treat as ONE bet.")
@@ -210,9 +226,17 @@ def render_report(sel: dict, config: dict, pf: dict) -> None:
         print("\n" + "─" * 74)
         print(title)
         print("─" * 74)
-        if not picks:
-            print("  (none qualified today)")
+        min_p = sel.get("min_sided_p", 0.55)
+        pres = [r for r in picks if presentable(r, "LONG" if is_long else "SHORT", min_p)]
+        below = [r for r in picks if r not in pres]
+        if not pres:
+            print(f"  ⛔ NO QUALIFIED {'LONG' if is_long else 'SHORT'} today — do not force one.")
+            for r in below:
+                print(f"     (closest, NOT tradeable: {r['ticker']} sided-P "
+                      f"{(r.get('eod_p') if is_long else (1 - r.get('eod_p'))) if r.get('eod_p') is not None else float('nan'):.2f}, "
+                      f"tier {r['cls']['tier']} — below the presentation bar)")
             return
+        picks = pres
         for i, r in enumerate(picks, 1):
             cls = r["cls"]
             eod_p = r.get("eod_p")
@@ -288,6 +312,7 @@ def main(argv=None):
 
     top_n = args.top or config.get("scan", {}).get("top_n", 3)
     sel = open_select(config, source, cross, top_n=top_n, max_workers=args.workers)
+    sel["min_sided_p"] = (config.get("report") or {}).get("min_sided_p", 0.55)
     print()
     render_at_a_glance(sel)
     if not args.brief:
