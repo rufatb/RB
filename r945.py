@@ -126,10 +126,13 @@ def run(cfg, workers=8):
             v15 = float(tb["Volume"].iloc[:3].sum())
             prior = [r for r in rows if r["date"] != today_str]
             med_v = np.median([r["v15"] for r in prior]) if prior else None
-            gap = None
-            hb = [r for r in rows if r["date"] == today_str]
-            if hb:
-                gap = hb[0]["gap"]
+            # Gap directly from the prior session's last close. (BUG FIX found
+            # live: the old path read today's gap from session_rows, which
+            # requires >=10 bars — impossible at 9:47, so every name silently
+            # dropped. Post-close smoke tests couldn't catch this.)
+            prev_bars = bars[[str(d) != today_str for d in bars.index.date]]
+            prior_close = float(prev_bars["Close"].iloc[-1]) if len(prev_bars) else None
+            gap = (o / prior_close - 1) * 100 if prior_close else None
             live.append({"t": t, "o": o, "p945": p945, "last": float(tb["Close"].iloc[-1]),
                          "r0": (p945 / o - 1) * 100, "gap": gap,
                          "vp": (v15 / med_v) if med_v else None})
