@@ -78,6 +78,24 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr)
 
 
+def allocate_book(picks: list, equity: float, max_book_pct: float) -> list:
+    """Equal-weight share counts across ALL qualified picks, total book capped
+    at max_book_pct of equity. WHY: the once-daily workflow enters immediately
+    and holds to close with NO intraday stop — sizing IS the entire risk
+    control, so no single pick may dominate and the whole book stays capped.
+    Pure + testable."""
+    n = len(picks)
+    if n == 0 or equity <= 0:
+        return picks
+    alloc = equity * (max_book_pct / 100.0) / n
+    for r in picks:
+        px = r.get("last") or r.get("p945")
+        r["shares"] = int(alloc // px) if px else 0
+        r["alloc"] = round((r["shares"] * px) if px else 0, 0)
+        r["adverse_2pct"] = round(r["alloc"] * 0.02, 0)
+    return picks
+
+
 def run(cfg, workers=8):
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
@@ -127,14 +145,20 @@ def run(cfg, workers=8):
         out.append(r)
     longs = sorted([r for r in out if r["p_up"] >= min_p], key=lambda r: -r["p_up"])
     shorts = sorted([r for r in out if 1 - r["p_up"] >= min_p], key=lambda r: r["p_up"])
+    # Too-early detection: no live rows because today has <3 completed 5m bars.
+    too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
-            "longs": longs, "shorts": shorts, "min_p": min_p}
+            "longs": longs, "shorts": shorts, "min_p": min_p, "too_early": too_early}
 
 
-def render(res):
+def render(res, book=False):
     print("=" * 74)
     print(f"9:45 → CLOSE ENGINE   ({res['now']})   {res['n_names']} names evaluated")
     print("=" * 74)
+    if res.get("too_early"):
+        print("⏰ TOO EARLY — the engine needs the 9:30–9:45 bars complete.")
+        print("   Run at/after 9:46 ET. Entering before 9:45 is a different (unvalidated) trade.")
+        return
     print("Horizon: from the 9:45 price to the 4:00 close. Validated walk-forward:")
     print("54% hit on 41% of days at this bar; strong first-15-min ramps fade 61%.")
     for side, picks, arrow in (("LONG", res["longs"], ">"), ("SHORT", res["shorts"], "<")):
@@ -147,18 +171,35 @@ def render(res):
             print(f"  {r['t']:<9} P({'up' if side=='LONG' else 'down'} into close) "
                   f"{sided:.2f}  | 9:45 px {r['p945']:.2f} (first-15m {r['r0']:+.2f}%, "
                   f"gap {r['gap']:+.2f}%)  last {r['last']:.2f}")
-            print(f"      entry ~now · stop = today's {'low' if side=='LONG' else 'high'} "
-                  f"side of the 9:30-9:45 range · flat by 3:55")
+            if book and r.get("shares") is not None:
+                print(f"      ➤ {'BUY' if side == 'LONG' else 'SELL SHORT'} {r['shares']} sh "
+                      f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
+            else:
+                print(f"      entry ~now · stop = today's {'low' if side=='LONG' else 'high'} "
+                      f"side of the 9:30-9:45 range · flat by 3:55")
+    if book:
+        print("\n  BOOK MODE: equal-weight, total book capped — sizing IS the risk control")
+        print("  (no intraday stop in this workflow; the validation was measured exactly")
+        print("  this way: enter at 9:45, hold to close). CLOSE EVERYTHING BY 3:55.")
     print("\n  Modest, measured edges (54-60%): selectivity IS the edge. Size small,")
-    print("  honour stops. No 5-minute outlooks live here — this is close-horizon only.")
+    print("  honour the plan. No 5-minute outlooks — this is close-horizon only.")
 
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="9:45-to-close prediction engine")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--book", action="store_true",
+                   help="once-daily workflow: exact share counts, enter at market now, flat by 3:55")
     args = p.parse_args(argv)
-    render(run(load_config(args.config), args.workers))
+    cfg = load_config(args.config)
+    res = run(cfg, args.workers)
+    if args.book:
+        rcfg = cfg.get("risk", {})
+        picks = res["longs"] + res["shorts"]
+        allocate_book(picks, rcfg.get("account_equity", 0),
+                      rcfg.get("max_position_pct", 50))
+    render(res, book=args.book)
 
 
 if __name__ == "__main__":

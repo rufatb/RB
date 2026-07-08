@@ -228,6 +228,29 @@ big) and CP long-from-9:45 (the user's failed short — engine had it right).
 Modest measured edges are the honest ceiling; selectivity is the edge. No
 5-minute outlooks — close-horizon only, presentation bar inherited.
 
+## FINAL WORKFLOW: once daily at 9:46 (decided)
+
+The user runs ONE command per day, enters immediately, closes everything by
+3:55. Decision: **9:46 AM, the r945 engine** (`python r945.py --book`), not the
+9:31 report. Why:
+1. r945's prediction IS this trade — close vs the 9:45 price with immediate
+   entry. The 9:31 report's probabilities assume trigger-confirmed entries;
+   entering instantly at 9:31 is the pre-trigger pattern behind 4 of 5 losing
+   days.
+2. The walk-forward validation (54.4%% @ 41%% coverage, ~67%% on ≥0.60) was
+   measured EXACTLY this way: enter at 9:45, hold to close, no stop.
+3. It conditions on today's first 15 minutes (incl. the 61%% ramp-fade), not
+   only yesterday's setup.
+
+`--book` mode completes it: equal-weight share counts across all qualified
+picks, total book capped at risk.max_position_pct of equity (sizing is the
+ONLY risk control in a no-stop workflow), explicit BUY/SELL-SHORT lines, a
+too-early guard (refuses before 9:46), and CLOSE-BY-3:55 stamped on the
+output. On no-qualified days the honest answer stays: no trades.
+
+The 9:31 report remains available as optional context; it is no longer the
+action layer.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

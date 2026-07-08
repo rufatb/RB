@@ -58,3 +58,18 @@ def test_knn_refuses_thin_history():
                           "r1": [0.2]*50})
     p, _ = r945.knn_probability(train, {"r0": 0.1, "gap": 0.0, "vp": 1.0})
     assert p is None                     # <200 rows: not enough to condition on
+
+
+def test_allocate_book_equal_weight_and_capped():
+    picks = [{"last": 100.0}, {"last": 50.0}, {"last": 25.0}]
+    r945.allocate_book(picks, equity=100_000, max_book_pct=50)
+    total = sum(p["alloc"] for p in picks)
+    assert total <= 50_000                       # book cap holds
+    assert picks[0]["shares"] == 166             # 16,666 / 100
+    assert picks[1]["shares"] == 333
+    # equal allocation intent: each ≈ 16.7k
+    assert all(abs(p["alloc"] - 16_666) < p["last"] + 1 for p in picks)
+
+
+def test_allocate_book_empty_safe():
+    assert r945.allocate_book([], 100_000, 50) == []
