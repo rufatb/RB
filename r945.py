@@ -243,6 +243,19 @@ def main(argv=None):
         picks = res["longs"] + res["shorts"]
         allocate_book(picks, rcfg.get("account_equity", 0),
                       rcfg.get("max_position_pct", 50))
+        # Permanent learning ledger: record picks at PUBLISH time (no hindsight).
+        if picks and not res.get("too_early"):
+            import ledger
+            date = res["now"][:10]
+            lrows = [{"ticker": r["t"],
+                      "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
+                      "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
+                      "confidence": r.get("confidence", "n/a"),
+                      "p945": r["p945"]} for r in picks]
+            n = ledger.append_picks(lrows, date)
+            if n:
+                print(f"\n  [ledger: {n} picks recorded for {date} — score after close "
+                      "with `python ledger.py --score`]")
     render(res, book=args.book)
 
 

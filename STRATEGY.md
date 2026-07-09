@@ -278,6 +278,23 @@ The meta-rule this day encodes: **a pattern is not real until it survives a
 split it wasn't discovered on.** Most "improvements" fail that test; testing
 before encoding IS the edge over intuition-driven tuning.
 
+## Day-7: learning from a winning day + the permanent ledger
+
+Board 8/10 (best live day); user's BMO long +0.70%% and NTR short +1.38%% both
+won. Honest decomposition: the six financial longs won TOGETHER in a tight
++0.14..+0.70%% band — largely ONE sector bet that paid; the concentration flag
+was right in kind even when the outcome was good. SHOP fade-short (−2.69%%
+against, sparse tag) was the day's big loser — bounded to ~$135 by sizing.
+
+**Encoded: `ledger.py` — the daily learning mechanism.** Every published pick
+is recorded at 9:46 (before outcomes are knowable), scored after the close
+(`python ledger.py --score`), and the cumulative report tracks hit rates
+overall, by side, and by confidence tag. First reading (15 picks): ALL 73%%
+(early sample — will regress toward ~54%%; do not size up), dense 6/7,
+sparse 1/2 — consistent with the pre-registered density hypothesis, decision
+still parked at ~20 tagged days. Winning days get the same audit as losing
+days; the ledger makes that automatic and hindsight-proof.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
