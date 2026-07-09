@@ -36,7 +36,7 @@ import numpy as np
 import pandas as pd
 
 from adapters import YahooDirectAdapter
-from dashboard import load_config
+from dashboard import load_config, parse_hhmm
 
 FEATS = ["r0", "gap", "vp"]
 K, M = 60, 20                       # neighbours / Beta-prior strength
@@ -115,6 +115,17 @@ def density_label(nd: float, cutoffs: tuple) -> str:
 def run(cfg, workers=8):
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
+    # HARD too-early guard (bug found live at 9:38): between open+10 and
+    # open+15 the third 5m bar EXISTS but is IN-PROGRESS — its close is the
+    # live price, not the 9:45 print, so features cover ~8 of the validated 15
+    # minutes. Refuse to evaluate until the bar is complete (open + 16 min).
+    open_t = parse_hhmm(cfg.get("market_open", "09:30"))
+    ready = now.replace(hour=open_t.hour, minute=open_t.minute, second=0,
+                        microsecond=0) + dt.timedelta(minutes=16)
+    if now < ready and now.date() == ready.date():
+        return {"now": now.isoformat(timespec="seconds"), "n_names": 0,
+                "longs": [], "shorts": [], "min_p": 0.55, "too_early": True,
+                "ready_at": ready.strftime("%H:%M")}
     a = YahooDirectAdapter(exchange_tz=tz)
     uni = cfg.get("scan", {}).get("universe") or []
     min_p = (cfg.get("report") or {}).get("min_sided_p", 0.55)
@@ -187,8 +198,9 @@ def render(res, book=False):
     print(f"9:45 → CLOSE ENGINE   ({res['now']})   {res['n_names']} names evaluated")
     print("=" * 74)
     if res.get("too_early"):
-        print("⏰ TOO EARLY — the engine needs the 9:30–9:45 bars complete.")
-        print("   Run at/after 9:46 ET. Entering before 9:45 is a different (unvalidated) trade.")
+        print(f"⏰ TOO EARLY — the engine needs the full 9:30–9:45 bars COMPLETE.")
+        print(f"   Ready at {res.get('ready_at', '09:46')} ET. A run before then reads the")
+        print("   in-progress bar as the 9:45 print — an unvalidated trade. REFUSING.")
         return
     print("Horizon: from the 9:45 price to the 4:00 close. Validated walk-forward:")
     print("54% hit on 41% of days at this bar; strong first-15-min ramps fade 61%.")
