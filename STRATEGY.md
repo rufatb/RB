@@ -251,6 +251,33 @@ output. On no-qualified days the honest answer stays: no trades.
 The 9:31 report remains available as optional context; it is no longer the
 action layer.
 
+## Day-6: replication discipline (the calibration audit that walked things back)
+
+### Live results
+Board 3/5 (TRP +0.03, AEM −0.96, ABX −1.27 won; T −0.40, BCE −0.39 lost —
+both gold shorts delivered, both quiet telecom longs lost small). User traded
+T long (−0.40%%) and AEM short (+1.09%%): net positive day.
+
+### Research on the holdout — three hypotheses tested, most FAILED
+1. **"≥0.60 signals hit ~67%%" DID NOT REPLICATE** (n=9-18 bucket: 67%%→44%%
+   across splits). Walked back in the r945 header: there is NO reliable
+   hit-rate gradient above the 0.55 bar; every qualified signal is the same
+   ~53-55%% lean. Do not overweight the "strongest" pick.
+2. **Salience hypothesis REJECTED before encoding:** hit rate by feature
+   salience was U-shaped (quiet 59%% / mid 40%% / salient 59%%) — noise. Had
+   it been encoded, it would have cut the quiet bucket that actually wins.
+3. **Neighbour-density: instrumented, not gated.** Dense estimates hit 63.5%%
+   vs ~46%% elsewhere but the pattern was non-monotonic on one split. Each
+   pick now carries an [estimate: dense/mid/sparse] tag; after ~20 live days
+   the tag's live record decides whether it becomes a gate. Pre-registered:
+   dense > mid/sparse.
+4. **Kept (consistent across splits):** shorts hit slightly less often but
+   capture ~2.7x more per win — down-moves are fat; noted in the header.
+
+The meta-rule this day encodes: **a pattern is not real until it survives a
+split it wasn't discovered on.** Most "improvements" fail that test; testing
+before encoding IS the edge over intuition-driven tuning.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

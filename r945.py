@@ -9,10 +9,15 @@ minutes DID — not open→close conditioned on yesterday. Built on 60 days of
 validated WALK-FORWARD on a blind holdout before shipping:
 
     baseline P(rest-of-day up): 48.6%  (true coin flip)
-    model @0.55 bar:  54.4% hit on 41% of days   Brier 0.2502
-    model @0.60 bar:  ~67% hit on  4% of days (rare, strong signals)
-    strongest effect: first-15-min ramps >+0.5% FADE 61% of the time
+    model @0.55 bar:  ~53-55% hit on ~40% of days   Brier ≈0.250
+    strongest effect: first-15-min ramps >+0.5% FADE ~61% of the time
                       (median −0.32% rest-of-day) — momentum does NOT carry.
+    WALKED BACK (day-6 replication): an early "≥0.60 signals hit ~67%" read
+    did NOT replicate (n=9-18 bucket flipped 67%→44% across splits). There is
+    NO reliable hit-rate gradient above the 0.55 bar — treat every qualified
+    signal as the same ~53-55% lean; do not overweight the "strongest" pick.
+    Shorts hit slightly less often but capture ~2.7x more per win (asymmetric
+    down-moves).
 
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,
@@ -65,7 +70,7 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     the analog engine; clamped to the hard band."""
     tr = train.dropna(subset=FEATS + ["r1"])
     if len(tr) < 200 or any(today.get(f) is None for f in FEATS):
-        return None, len(tr)
+        return None, len(tr), None
     mu, sd = tr[FEATS].mean(), tr[FEATS].std().replace(0, 1)
     Z = ((tr[FEATS] - mu) / sd).to_numpy()
     z = ((pd.Series(today)[FEATS] - mu) / sd).to_numpy(dtype=float)
@@ -75,7 +80,8 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     y = (tr["r1"].to_numpy()[idx] > 0).astype(float)
     g = float(np.average(y, weights=w))
     p = (g * K + 0.5 * M) / (K + M)
-    return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr)
+    nd = float(np.sqrt(d2[idx]).mean())   # neighbour distance: estimate density
+    return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr), nd
 
 
 def allocate_book(picks: list, equity: float, max_book_pct: float) -> list:
@@ -94,6 +100,16 @@ def allocate_book(picks: list, equity: float, max_book_pct: float) -> list:
         r["alloc"] = round((r["shares"] * px) if px else 0, 0)
         r["adverse_2pct"] = round(r["alloc"] * 0.02, 0)
     return picks
+
+
+def density_label(nd: float, cutoffs: tuple) -> str:
+    """dense/mid/sparse tag for a pick's neighbourhood. INSTRUMENTATION ONLY —
+    holdout hinted dense estimates hit better (63% vs ~46%) but the pattern
+    was non-monotonic on one split, so we TAG and log rather than gate. After
+    ~20 live days the tag's live record decides whether it becomes a gate.
+    Pre-registered hypothesis: dense > mid/sparse."""
+    lo, hi = cutoffs
+    return "dense" if nd <= lo else ("sparse" if nd > hi else "mid")
 
 
 def run(cfg, workers=8):
@@ -139,12 +155,24 @@ def run(cfg, workers=8):
     train = pd.DataFrame(hist_rows)
     train["vp"] = train.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
 
+    # Density cutoffs from a sample of the training rows' own neighbourhoods.
+    sample = train.dropna(subset=FEATS + ["r1"]).sample(
+        n=min(120, len(train)), random_state=7) if len(train) else train
+    nds = []
+    for _, row in sample.iterrows():
+        res = knn_probability(train, {f: row[f] for f in FEATS})
+        if res[0] is not None:
+            nds.append(res[2])
+    cutoffs = (float(np.quantile(nds, 0.33)), float(np.quantile(nds, 0.67))) if nds else (0.0, 9e9)
+
     out = []
     for r in live:
-        p, n = knn_probability(train, r)
+        res = knn_probability(train, r)
+        p, n = res[0], res[1]
         if p is None:
             continue
-        r.update({"p_up": p, "n_train": n})
+        r.update({"p_up": p, "n_train": n,
+                  "confidence": density_label(res[2], cutoffs)})
         out.append(r)
     longs = sorted([r for r in out if r["p_up"] >= min_p], key=lambda r: -r["p_up"])
     shorts = sorted([r for r in out if 1 - r["p_up"] >= min_p], key=lambda r: r["p_up"])
@@ -173,7 +201,8 @@ def render(res, book=False):
             sided = r["p_up"] if side == "LONG" else 1 - r["p_up"]
             print(f"  {r['t']:<9} P({'up' if side=='LONG' else 'down'} into close) "
                   f"{sided:.2f}  | 9:45 px {r['p945']:.2f} (first-15m {r['r0']:+.2f}%, "
-                  f"gap {r['gap']:+.2f}%)  last {r['last']:.2f}")
+                  f"gap {r['gap']:+.2f}%)  last {r['last']:.2f}  "
+                  f"[estimate: {r.get('confidence','?')}]")
             if book and r.get("shares") is not None:
                 print(f"      ➤ {'BUY' if side == 'LONG' else 'SELL SHORT'} {r['shares']} sh "
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")

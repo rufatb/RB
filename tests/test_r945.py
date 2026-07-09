@@ -45,18 +45,18 @@ def test_knn_probability_clamped_and_smoothed():
     })
     # force an extreme pocket: big ramps always fade in this synthetic world
     train.loc[train["r0"] > 0.5, "r1"] = -1.0
-    p, ntr = r945.knn_probability(train, {"r0": 1.0, "gap": 0.0, "vp": 1.0})
+    p, ntr, nd = r945.knn_probability(train, {"r0": 1.0, "gap": 0.0, "vp": 1.0})
     assert ntr == n and p is not None
     assert 0.35 <= p <= 0.65            # hard clamp holds even on a pure pocket
     assert p < 0.5                       # learned the fade
-    p2, _ = r945.knn_probability(train, {"r0": None, "gap": 0.0, "vp": 1.0})
+    p2 = r945.knn_probability(train, {"r0": None, "gap": 0.0, "vp": 1.0})[0]
     assert p2 is None                    # missing feature -> no fabricated call
 
 
 def test_knn_refuses_thin_history():
     train = pd.DataFrame({"r0": [0.1]*50, "gap": [0.0]*50, "vp": [1.0]*50,
                           "r1": [0.2]*50})
-    p, _ = r945.knn_probability(train, {"r0": 0.1, "gap": 0.0, "vp": 1.0})
+    p = r945.knn_probability(train, {"r0": 0.1, "gap": 0.0, "vp": 1.0})[0]
     assert p is None                     # <200 rows: not enough to condition on
 
 
@@ -73,3 +73,18 @@ def test_allocate_book_equal_weight_and_capped():
 
 def test_allocate_book_empty_safe():
     assert r945.allocate_book([], 100_000, 50) == []
+
+
+def test_knn_returns_neighbour_distance():
+    import numpy as np, pandas as pd
+    rng = np.random.default_rng(2)
+    train = pd.DataFrame({"r0": rng.normal(0,1,300), "gap": rng.normal(0,1,300),
+                          "vp": rng.uniform(0.5,2,300), "r1": rng.normal(0,1,300)})
+    p, n, nd = r945.knn_probability(train, {"r0": 0.0, "gap": 0.0, "vp": 1.0})
+    assert p is not None and nd > 0
+
+
+def test_density_label():
+    assert r945.density_label(0.1, (0.5, 1.0)) == "dense"
+    assert r945.density_label(0.7, (0.5, 1.0)) == "mid"
+    assert r945.density_label(2.0, (0.5, 1.0)) == "sparse"
