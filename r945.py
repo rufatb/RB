@@ -112,6 +112,49 @@ def density_label(nd: float, cutoffs: tuple) -> str:
     return "dense" if nd <= lo else ("sparse" if nd > hi else "mid")
 
 
+def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
+    """Exclude any qualified pick whose direction opposes >= min_opposed
+    qualified picks in its own peer group (day-8 lesson: TD short 0.55 against
+    six qualified financial longs — the lone laggard got pulled up +1.22%).
+    Restrictive-only: it removes picks, never adds. Pure + testable."""
+    g_of = {t: g for g, members in (groups or {}).items() for t in members}
+    long_n, short_n = {}, {}
+    for r in longs:
+        g = g_of.get(r["t"]);  long_n[g] = long_n.get(g, 0) + 1 if g else long_n.get(g, 0)
+    for r in shorts:
+        g = g_of.get(r["t"]); short_n[g] = short_n.get(g, 0) + 1 if g else short_n.get(g, 0)
+    excluded = []
+
+    def keep(picks, opposing):
+        kept = []
+        for r in picks:
+            g = g_of.get(r["t"])
+            n_op = opposing.get(g, 0) if g else 0
+            if g and n_op >= min_opposed:
+                r["excluded_reason"] = (f"contradicts {n_op} qualified {g} picks "
+                                        "— lone laggard/leader in a moving sector")
+                excluded.append(r)
+            else:
+                kept.append(r)
+        return kept
+
+    return keep(longs, short_n), keep(shorts, long_n), excluded
+
+
+def pair_of_day(longs: list, shorts: list) -> dict:
+    """THE PAIR for the one-long-one-short daily workflow, with per-leg quality.
+    A leg is STRONG (P>=0.58), OK (0.56-0.58), or WEAK (at the bar). A missing
+    leg is stated as NONE — the tool never invents a leg to satisfy the habit."""
+    def leg(picks, side):
+        if not picks:
+            return {"status": "NONE", "note": f"no qualified {side} — forcing one is a coin flip"}
+        r = picks[0]
+        sided = r["p_up"] if side == "LONG" else 1 - r["p_up"]
+        q = "STRONG" if sided >= 0.58 else ("OK" if sided >= 0.56 else "WEAK (at the bar)")
+        return {"status": q, "pick": r, "sided": sided}
+    return {"long": leg(longs, "LONG"), "short": leg(shorts, "SHORT")}
+
+
 def run(cfg, workers=8):
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
@@ -187,10 +230,15 @@ def run(cfg, workers=8):
         out.append(r)
     longs = sorted([r for r in out if r["p_up"] >= min_p], key=lambda r: -r["p_up"])
     shorts = sorted([r for r in out if 1 - r["p_up"] >= min_p], key=lambda r: r["p_up"])
+    longs, shorts, excluded = peer_gate(
+        longs, shorts, cfg.get("peer_groups"),
+        cfg.get("peer_contradiction_min", 3))
     # Too-early detection: no live rows because today has <3 completed 5m bars.
     too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
-            "longs": longs, "shorts": shorts, "min_p": min_p, "too_early": too_early}
+            "longs": longs, "shorts": shorts, "excluded": excluded,
+            "pair": pair_of_day(longs, shorts),
+            "min_p": min_p, "too_early": too_early}
 
 
 def render(res, book=False):
@@ -221,6 +269,22 @@ def render(res, book=False):
             else:
                 print(f"      entry ~now · stop = today's {'low' if side=='LONG' else 'high'} "
                       f"side of the 9:30-9:45 range · flat by 3:55")
+    for r in res.get("excluded", []):
+        print(f"\n  ⛔ EXCLUDED: {r['t']} — {r['excluded_reason']}")
+    pair = res.get("pair")
+    if pair:
+        print("\n" + "─" * 74)
+        print("THE PAIR (one-long-one-short daily workflow)")
+        for side in ("long", "short"):
+            lg = pair[side]
+            if lg["status"] == "NONE":
+                print(f"  {side.upper():<6}: ⛔ {lg['note']}")
+            else:
+                r = lg["pick"]
+                print(f"  {side.upper():<6}: {r['t']}  sided-P {lg['sided']:.2f}  "
+                      f"[{r.get('confidence','?')}]  leg quality: {lg['status']}")
+        if pair["long"]["status"] == "NONE" or pair["short"]["status"] == "NONE":
+            print("  → One leg is missing: trade the other leg ONLY. A forced leg has no edge.")
     if book:
         print("\n  BOOK MODE: equal-weight, total book capped — sizing IS the risk control")
         print("  (no intraday stop in this workflow; the validation was measured exactly")

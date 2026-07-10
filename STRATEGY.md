@@ -295,6 +295,38 @@ sparse 1/2 — consistent with the pre-registered density hypothesis, decision
 still parked at ~20 tagged days. Winning days get the same audit as losing
 days; the ledger makes that automatic and hindsight-proof.
 
+## Day-8: two banks, opposite calls — peer blindness fixed
+
+### What happened
+Board 4/13 (the 84%%-long board on a fade day — the one-bet warning played
+out). User's pair: BMO long +0.55%% (WIN) and TD short −1.18%% (LOSS — TD
+closed +1.22%%, the strongest financial of the day). Ledger regressed from
+73%% to exactly 54%% — the validated number; the system is performing as
+stated.
+
+### Why one bank long and one short (the user's exact question)
+The engine evaluates names INDEPENDENTLY on (gap, first-15m, volume). TD was
+the only board name that gapped DOWN (−0.46%%, dividend-sized) while six
+financial peers gapped up and qualified LONG. "Small down-gap" neighbours
+lean down → 0.553 → only short → TOP SHORT → forced execution under the
+one-long-one-short daily rule. A lone bank falling in a bid banking sector
+is classically mechanical/idiosyncratic, then pulled up by peers — laggard
+catch-up, which is exactly what printed.
+
+### Encoded fixes
+1. **Peer-contradiction gate** (`r945.peer_gate`, config `peer_groups` +
+   `peer_contradiction_min`): a qualified pick whose direction opposes ≥3
+   qualified same-group picks is EXCLUDED with an explicit reason.
+   Symmetric (lone long vs sector shorts too). Restrictive-only. TD's exact
+   day-8 numbers are the regression test — the gate empties that short side.
+2. **THE PAIR block** (`r945.pair_of_day`): the book now ends with the daily
+   pair and per-leg quality (STRONG ≥0.58 / OK / WEAK-at-the-bar / NONE).
+   When a leg is missing: "trade the other leg ONLY — a forced leg has no
+   edge." The tool never invents a leg to satisfy the daily habit.
+3. **Documented blind spot (not encoded):** ex-dividend gaps read as bearish
+   information. Free feeds can't confirm ex-div dates; with a paid calendar,
+   exclude names on their ex-div day.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

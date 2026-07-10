@@ -153,6 +153,19 @@ sectors:
   crude_beneficiaries: [CNQ.TO, SU.TO, CVE.TO, ENB.TO, TRP.TO, IMO.TO]
   crude_victims: [AC.TO]
 
+# Peer groups (r945 peer-contradiction gate). A qualified pick whose direction
+# opposes >= peer_contradiction_min qualified picks in its own group is
+# EXCLUDED — a lone bank short against a bid banking sector is usually a
+# mechanical/idiosyncratic gap followed by laggard catch-up (the TD day-8
+# loss: 6 financials long, TD short 0.55, TD closed +1.22% — top riser).
+peer_groups:
+  financials: [RY.TO, TD.TO, BMO.TO, BNS.TO, CM.TO, MFC.TO, SLF.TO]
+  energy: [CNQ.TO, SU.TO, CVE.TO, ENB.TO, TRP.TO]
+  gold: [ABX.TO, AEM.TO]
+  telecom: [BCE.TO, T.TO]
+  rail: [CP.TO, CNR.TO]
+peer_contradiction_min: 3
+
 # Midday from-here selection gates (midday.py). A side qualifies on the
 # from-here conditional alone only past the strong threshold; inside the soft
 # band it must be BACKED by the day-shape analog; a contradicting day-shape
