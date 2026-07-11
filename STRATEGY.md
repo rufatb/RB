@@ -376,6 +376,19 @@ discovery/confirm split PLUS an independent odd/even split, with a placebo.
 4. **Crowded-leg warning** printed on the pair (`pair.crowded_conf_warn`),
    instrumented but NOT a gate until live pair data decides.
 
+### Addendum: is 9:45 the right run time? (`validate_time.py`)
+Tested decision times 9:35→11:00 with the identical walk-forward pipeline
+(features known at T, outcome T→close, densest pair, all four splits).
+**9:45 dominated every alternative on hit rate AND capture, and was the only
+stable time across all splits**: 68.5%% / +0.390%% vs 9:40's 48.9%% / +0.073%%
+(pure noise — the opening rotation hasn't resolved) and 9:50's 58.9%% /
++0.096%%; later times trend into less remaining move (median |move| 0.70%%
+at 9:45 → 0.53%% at 11:00) without gaining reliability. Honest caveat: all
+hyperparameters were developed at 9:45, so alternatives ran with borrowed
+settings — the test proves no alternative beats 9:45, not that 9:45 is
+globally optimal. Decision: **the run time stays 9:46** (first moment the
+9:45 bar is complete).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
