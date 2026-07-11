@@ -19,6 +19,19 @@ validated WALK-FORWARD on a blind holdout before shipping:
     Shorts hit slightly less often but capture ~2.7x more per win (asymmetric
     down-moves).
 
+    DAY-9 (validate_pair.py, walk-forward, 49 sessions, 496 qualified picks):
+    the ONE pick per side worth trading is the DENSEST estimate (smallest
+    k-NN neighbour distance), not the highest P. Evidence: densest top-1 hit
+    68.0% discovery / 69.2% confirm (chronological split), 70.5%/66.7% on an
+    independent odd/even split, symmetric by side (68.8% L / 68.3% S), n=89,
+    p≈0.0007 vs the 51% board base; the 2nd-densest placebo drops to 53.9%,
+    and max-P scored only 50.0% on discovery. Interpretation: a dense
+    neighbourhood means "we have seen this exact setup many times"; an
+    extreme P usually comes from a sparse corner (extrapolation). Trade
+    familiarity, not extremity. ALSO found (both splits): picks whose sector
+    direction is CROWDED (>=3 same-group same-direction picks) hit only
+    44%/33% — noted as a printed warning, not yet a gate.
+
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,
 sample sizes shown, STAND DOWN when nothing clears. These are modest, measured
@@ -141,17 +154,43 @@ def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
     return keep(longs, short_n), keep(shorts, long_n), excluded
 
 
-def pair_of_day(longs: list, shorts: list) -> dict:
-    """THE PAIR for the one-long-one-short daily workflow, with per-leg quality.
-    A leg is STRONG (P>=0.58), OK (0.56-0.58), or WEAK (at the bar). A missing
-    leg is stated as NONE — the tool never invents a leg to satisfy the habit."""
+def pair_of_day(longs: list, shorts: list, groups: dict = None,
+                selector: str = "densest", crowd_warn: int = 3) -> dict:
+    """THE PAIR — the single long + single short the daily workflow trades.
+
+    SELECTION (day-9, validated in validate_pair.py — do not revert to max-P):
+    each leg is the DENSEST qualified pick (smallest k-NN neighbour distance),
+    because sided P has NO hit-rate gradient above the bar while the densest
+    pick hit 68%/69% on both validation splits (2nd-densest placebo: 54%,
+    max-P: 50% on discovery). Only 'densest' and 'max_p' (kept for A/B
+    comparison) are accepted — an unknown selector raises rather than
+    silently picking something unvalidated.
+
+    Leg quality = the pick's density tag (DENSE/MID/SPARSE), NOT its P — a
+    P-based label would imply a gradient day-6/day-9 showed doesn't exist.
+    A missing leg is stated as NONE — the tool never invents a leg to satisfy
+    the habit. A leg with >= crowd_warn same-group same-direction picks gets
+    a crowding warning (44%/33% hit in validation) — noted, not yet a gate."""
+    assert selector in ("densest", "max_p"), f"unvalidated pair selector: {selector}"
+    g_of = {t: g for g, ms in (groups or {}).items() for t in ms}
+
     def leg(picks, side):
         if not picks:
             return {"status": "NONE", "note": f"no qualified {side} — forcing one is a coin flip"}
-        r = picks[0]
+        if selector == "densest":
+            r = min(picks, key=lambda x: x["nd"] if x.get("nd") is not None else 9e9)
+        else:
+            r = picks[0]                      # lists arrive sorted by sided P
         sided = r["p_up"] if side == "LONG" else 1 - r["p_up"]
-        q = "STRONG" if sided >= 0.58 else ("OK" if sided >= 0.56 else "WEAK (at the bar)")
-        return {"status": q, "pick": r, "sided": sided}
+        out = {"status": (r.get("confidence") or "?").upper(), "pick": r, "sided": sided,
+               "rank_by_p": 1 + sum(1 for o in picks
+                                    if (o["p_up"] if side == "LONG" else 1 - o["p_up"]) > sided)}
+        g = g_of.get(r["t"])
+        n_conf = sum(1 for o in picks if o is not r and g and g_of.get(o["t"]) == g)
+        if g and n_conf >= crowd_warn:
+            out["warning"] = (f"{n_conf} other {g} picks point the same way — crowded "
+                              f"sector direction hit only 44%/33% in validation")
+        return out
     return {"long": leg(longs, "LONG"), "short": leg(shorts, "SHORT")}
 
 
@@ -225,7 +264,7 @@ def run(cfg, workers=8):
         p, n = res[0], res[1]
         if p is None:
             continue
-        r.update({"p_up": p, "n_train": n,
+        r.update({"p_up": p, "n_train": n, "nd": res[2],
                   "confidence": density_label(res[2], cutoffs)})
         out.append(r)
     longs = sorted([r for r in out if r["p_up"] >= min_p], key=lambda r: -r["p_up"])
@@ -235,9 +274,12 @@ def run(cfg, workers=8):
         cfg.get("peer_contradiction_min", 3))
     # Too-early detection: no live rows because today has <3 completed 5m bars.
     too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
+    pcfg = cfg.get("pair") or {}
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
             "longs": longs, "shorts": shorts, "excluded": excluded,
-            "pair": pair_of_day(longs, shorts),
+            "pair": pair_of_day(longs, shorts, cfg.get("peer_groups"),
+                                pcfg.get("selector", "densest"),
+                                pcfg.get("crowded_conf_warn", 3)),
             "min_p": min_p, "too_early": too_early}
 
 
@@ -251,46 +293,53 @@ def render(res, book=False):
         print("   in-progress bar as the 9:45 print — an unvalidated trade. REFUSING.")
         return
     print("Horizon: from the 9:45 price to the 4:00 close. Validated walk-forward:")
-    print("54% hit on 41% of days at this bar; strong first-15-min ramps fade 61%.")
-    for side, picks, arrow in (("LONG", res["longs"], ">"), ("SHORT", res["shorts"], "<")):
-        print(f"\nQUALIFIED {side}S (sided P ≥ {res['min_p']:.2f}):")
+    print("board base ~51-54%; THE PAIR (densest leg per side) 68%/69% on both splits.")
+    pair = res.get("pair")
+    if pair:
+        print("\n" + "═" * 74)
+        print("THE PAIR — trade these two, nothing else (one long + one short daily)")
+        print("═" * 74)
+        for side in ("long", "short"):
+            lg = pair[side]
+            if lg["status"] == "NONE":
+                print(f"  {side.upper():<6}: ⛔ {lg['note']}")
+                continue
+            r = lg["pick"]
+            print(f"  {side.upper():<6}: {r['t']}  sided-P {lg['sided']:.2f}  "
+                  f"[estimate: {lg['status']}]  9:45 px {r['p945']:.2f}  last {r['last']:.2f}")
+            print(f"          first-15m {r['r0']:+.2f}% · gap {r['gap']:+.2f}% · "
+                  f"board rank by P: #{lg.get('rank_by_p', '?')} "
+                  "(selected by DENSITY — familiarity beats extremity)")
+            if book and r.get("shares") is not None:
+                print(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} {r['shares']} sh "
+                      f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
+            else:
+                print(f"      entry ~now · flat by 3:55")
+            if lg.get("warning"):
+                print(f"      ⚠ {lg['warning']}")
+        if pair["long"]["status"] == "NONE" or pair["short"]["status"] == "NONE":
+            print("  → One leg is missing: trade the other leg ONLY. A forced leg has no edge.")
+    for side, picks in (("LONG", res["longs"]), ("SHORT", res["shorts"])):
+        print(f"\nCONTEXT — qualified {side}S (sided P ≥ {res['min_p']:.2f}, NOT sized, "
+              "logged for learning):")
         if not picks:
             print(f"  ⛔ NO QUALIFIED {side} — do not force one.")
             continue
         for r in picks:
             sided = r["p_up"] if side == "LONG" else 1 - r["p_up"]
-            print(f"  {r['t']:<9} P({'up' if side=='LONG' else 'down'} into close) "
-                  f"{sided:.2f}  | 9:45 px {r['p945']:.2f} (first-15m {r['r0']:+.2f}%, "
-                  f"gap {r['gap']:+.2f}%)  last {r['last']:.2f}  "
-                  f"[estimate: {r.get('confidence','?')}]")
-            if book and r.get("shares") is not None:
-                print(f"      ➤ {'BUY' if side == 'LONG' else 'SELL SHORT'} {r['shares']} sh "
-                      f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
-            else:
-                print(f"      entry ~now · stop = today's {'low' if side=='LONG' else 'high'} "
-                      f"side of the 9:30-9:45 range · flat by 3:55")
+            print(f"  {r['t']:<9} P({'up' if side=='LONG' else 'down'}) {sided:.2f}  "
+                  f"9:45 px {r['p945']:.2f}  first-15m {r['r0']:+.2f}%  gap {r['gap']:+.2f}%  "
+                  f"[{r.get('confidence','?')}]")
     for r in res.get("excluded", []):
         print(f"\n  ⛔ EXCLUDED: {r['t']} — {r['excluded_reason']}")
-    pair = res.get("pair")
-    if pair:
-        print("\n" + "─" * 74)
-        print("THE PAIR (one-long-one-short daily workflow)")
-        for side in ("long", "short"):
-            lg = pair[side]
-            if lg["status"] == "NONE":
-                print(f"  {side.upper():<6}: ⛔ {lg['note']}")
-            else:
-                r = lg["pick"]
-                print(f"  {side.upper():<6}: {r['t']}  sided-P {lg['sided']:.2f}  "
-                      f"[{r.get('confidence','?')}]  leg quality: {lg['status']}")
-        if pair["long"]["status"] == "NONE" or pair["short"]["status"] == "NONE":
-            print("  → One leg is missing: trade the other leg ONLY. A forced leg has no edge.")
     if book:
-        print("\n  BOOK MODE: equal-weight, total book capped — sizing IS the risk control")
-        print("  (no intraday stop in this workflow; the validation was measured exactly")
-        print("  this way: enter at 9:45, hold to close). CLOSE EVERYTHING BY 3:55.")
-    print("\n  Modest, measured edges (54-60%): selectivity IS the edge. Size small,")
-    print("  honour the plan. No 5-minute outlooks — this is close-horizon only.")
+        print("\n  BOOK MODE: only THE PAIR is sized — one long + one short, equal-weight,")
+        print("  total book capped. The pair is ~market-neutral but each leg carries full")
+        print("  single-name risk with no intraday stop — sizing IS the risk control.")
+        print("  CLOSE BOTH BY 3:55.")
+    print("\n  Modest, measured edges: 68%/69% in validation will be LESS live — expect")
+    print("  low-60s at best; the ledger's PAIR line is the arbiter. No 5-minute")
+    print("  outlooks — this is close-horizon only.")
 
 
 def main(argv=None):
@@ -304,22 +353,32 @@ def main(argv=None):
     res = run(cfg, args.workers)
     if args.book:
         rcfg = cfg.get("risk", {})
-        picks = res["longs"] + res["shorts"]
-        allocate_book(picks, rcfg.get("account_equity", 0),
+        # Day-9: only THE PAIR is sized/traded. The rest of the board is
+        # context + ledger-learning material, never an order.
+        pair = res.get("pair") or {}
+        pair_picks = [lg["pick"] for lg in (pair.get("long"), pair.get("short"))
+                      if lg and lg.get("pick")]
+        allocate_book(pair_picks, rcfg.get("account_equity", 0),
                       rcfg.get("max_position_pct", 50))
         # Permanent learning ledger: record picks at PUBLISH time (no hindsight).
+        # Pair legs get role=pair (the executed record); the remaining board is
+        # role=board — kept so density/crowding instrumentation keeps learning.
+        picks = res["longs"] + res["shorts"]
         if picks and not res.get("too_early"):
             import ledger
             date = res["now"][:10]
+            pair_ids = {id(r) for r in pair_picks}
             lrows = [{"ticker": r["t"],
                       "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
                       "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
                       "confidence": r.get("confidence", "n/a"),
-                      "p945": r["p945"]} for r in picks]
+                      "p945": r["p945"],
+                      "role": "pair" if id(r) in pair_ids else "board"} for r in picks]
             n = ledger.append_picks(lrows, date)
             if n:
-                print(f"\n  [ledger: {n} picks recorded for {date} — score after close "
-                      "with `python ledger.py --score`]")
+                print(f"\n  [ledger: {n} picks recorded for {date} "
+                      f"({len(pair_picks)} pair / {n - len(pair_picks)} board) — score "
+                      "after close with `python ledger.py --score`]")
     render(res, book=args.book)
 
 

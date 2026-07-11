@@ -51,8 +51,12 @@ def test_gate_ignores_ungrouped_names():
 
 
 def test_pair_quality_and_missing_leg():
-    pair = r945.pair_of_day([_p("BMO.TO", .65)], [])
-    assert pair["long"]["status"] == "STRONG"
+    # Day-9 contract: leg quality = the DENSITY tag (P-based labels implied a
+    # gradient that day-6/day-9 showed doesn't exist); missing leg stays NONE.
+    pick = dict(_p("BMO.TO", .65), nd=0.5, confidence="dense")
+    pair = r945.pair_of_day([pick], [])
+    assert pair["long"]["status"] == "DENSE"
     assert pair["short"]["status"] == "NONE"
-    pair2 = r945.pair_of_day([_p("X.TO", .551)], [_p("Y.TO", .449)])
-    assert "WEAK" in pair2["long"]["status"] and "WEAK" in pair2["short"]["status"]
+    pair2 = r945.pair_of_day([dict(_p("X.TO", .551), nd=2.0, confidence="sparse")],
+                             [dict(_p("Y.TO", .449), nd=1.0, confidence="mid")])
+    assert pair2["long"]["status"] == "SPARSE" and pair2["short"]["status"] == "MID"

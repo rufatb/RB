@@ -21,7 +21,10 @@ import csv
 import os
 
 LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
-FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "r1", "hit"]
+# `role` (day-9): "pair" = a leg of THE PAIR (the picks actually executed under
+# the one-long-one-short workflow), "board" = qualified-but-not-traded context
+# kept for instrumentation. Pre-day-9 rows have role "" (whole-board era).
+FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role", "r1", "hit"]
 
 
 def load(path: str = LEDGER) -> list:
@@ -49,7 +52,8 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
             continue
         rows.append({"date": date, "ticker": p["ticker"], "side": p["side"],
                      "p_sided": f"{p['p_sided']:.3f}", "confidence": p.get("confidence", "n/a"),
-                     "p945": f"{p['p945']:.4f}", "r1": "", "hit": ""})
+                     "p945": f"{p['p945']:.4f}", "role": p.get("role", "board"),
+                     "r1": "", "hit": ""})
         added += 1
     save(rows, path)
     return added
@@ -89,6 +93,11 @@ def report(rows: list) -> str:
     out.append(line("ALL", done))
     out.append(line("longs", [r for r in done if r["side"] == "LONG"]))
     out.append(line("shorts", [r for r in done if r["side"] == "SHORT"]))
+    pair_sub = [r for r in done if r.get("role") == "pair"]
+    if pair_sub:
+        out.append("  — THE PAIR (densest leg per side — the executed record) —")
+        out.append(line("PAIR legs", pair_sub))
+        out.append(line("board (untraded)", [r for r in done if r.get("role") == "board"]))
     out.append("  — density hypothesis (pre-registered: dense > mid/sparse) —")
     for tag in ("dense", "mid", "sparse", "n/a"):
         sub = [r for r in done if r["confidence"] == tag]

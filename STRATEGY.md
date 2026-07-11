@@ -327,6 +327,55 @@ catch-up, which is exactly what printed.
    information. Free feeds can't confirm ex-div dates; with a paid calendar,
    exclude names on their ex-div day.
 
+## Day-9: THE PAIR is selected by DENSITY, not by P (methodology day)
+
+### The question
+The user's standing rule is one long + one short daily. Which selection-time
+variable should pick the two legs? The old pair took the highest sided P per
+side — but day-6 already established there is NO hit-rate gradient above the
+0.55 bar, so max-P ranks noise.
+
+### The experiment (`validate_pair.py`, committed and re-runnable)
+Walk-forward replay of the 60d/5m dataset: train the pooled k-NN only on
+sessions before day d, qualify at the bar, apply the live peer gate, then
+(A) correlate every selection-time variable with hit across 496 qualified
+picks, and (B) race top-1 selection rules — all on a chronological
+discovery/confirm split PLUS an independent odd/even split, with a placebo.
+
+### Findings (each held on BOTH splits or it didn't count)
+- **Sided P: no gradient — reconfirmed.** Discovery lo/mid/hi terciles
+  53/47/50%%; max-P top-1 scored 50.0%% on discovery. The number that
+  qualifies a pick cannot rank picks.
+- **Densest estimate wins.** The pick with the smallest k-NN neighbour
+  distance hit **68.0%% discovery / 69.2%% confirm / 70.5%% odd / 66.7%%
+  even**, symmetric by side (68.8%% L / 68.3%% S), n=89, p≈0.0007 vs the
+  51%% board base. The 2nd-densest placebo collapses to 53.9%% — the effect
+  is specifically about the MOST familiar setup. Only 25%% of densest legs
+  coincide with the max-P leg. This confirms the density hypothesis
+  PRE-REGISTERED on day-7 — a scheduled test, not a fishing trip.
+- **Crowding is a warning, not a bonus.** Picks with ≥3 same-group
+  same-direction companions hit 44%%/33%% (both splits); densest legs in
+  crowded sectors hit 46%%. Peer CONFIRMATION must never be a ranking bonus
+  (the gate stays restrictive-only, exactly as built on day-8).
+
+### Encoded
+1. **`r945.pair_of_day` selects each leg by min neighbour distance**; config
+   `pair.selector` accepts only validated selectors (`densest`/`max_p`),
+   anything else raises. Leg quality label = the density tag, not a P-based
+   STRONG/OK/WEAK (which implied a gradient that doesn't exist).
+2. **THE PAIR is the headline and the only sized output.** `--book`
+   allocates the capped book across the two legs only (~market-neutral pair,
+   but full single-name risk per leg — sizing is still the only risk
+   control). The rest of the board prints as CONTEXT and is ledgered for
+   learning, never sized.
+3. **Ledger `role` column** (`pair` vs `board`): the executed pair now has
+   its own cumulative line — the arbiter of whether the 68%%/69%% validation
+   survives contact with live trading. Expectation stated up front: live
+   will be LOWER (winner's-curse on rule selection is real even with
+   splits); low-60s would be a very good outcome.
+4. **Crowded-leg warning** printed on the pair (`pair.crowded_conf_warn`),
+   instrumented but NOT a gate until live pair data decides.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
