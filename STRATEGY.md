@@ -389,6 +389,44 @@ settings — the test proves no alternative beats 9:45, not that 9:45 is
 globally optimal. Decision: **the run time stays 9:46** (first moment the
 9:45 bar is complete).
 
+## Day-10: first live day of THE PAIR — 2/2, and learning from a WIN
+
+### What happened (user's fills)
+CP.TO long 128.45 → 129.34 (+0.69%%) and ABX.TO short 50.98 → 50.81
+(+0.33%%): **both legs correct**, ≈ +$256 on the ~$50k pair book. First
+entry in the ledger's PAIR line: 2/2, avg capture +0.51%%.
+
+### Why this win teaches something (wins get the same audit as losses)
+1. **The density rule earned its keep on day one, for the stated reason.**
+   CP was rank #7 of 8 longs by probability but the DENSEST estimate — and
+   it produced the best capture on the entire board (+0.87%% from the 9:45
+   print). The max-P pick the old rule would have traded (CNR, P=0.65,
+   sparse) made +0.01%% — a hit worth nothing. Familiarity beat extremity
+   in exactly the way the day-9 validation predicted. n=1 — logged as
+   supporting evidence, not proof; NO parameters touched on the back of it.
+2. **The untraded board vindicated pair-only sizing.** Board picks went 3/7
+   with −0.22%% avg capture (T −0.60%%, BCE −0.62%%, SLF −0.52%%). The old
+   whole-board book would have lost money today; the selective pair made
+   +0.51%%/leg. Selectivity IS the edge — now visible live, not just in
+   backtest.
+3. **Slippage is real but symmetric today.** User entry at 9:46 market paid
+   +0.17%% vs the 9:45 print on CP (0.87%% model → 0.69%% realized) and
+   GAINED ~0.18%% on ABX (bounce sold into). Realized pair average matched
+   the model exactly (+0.51%%). Track it in future post-mortems: if entry
+   slippage trends one-way, ~0.15-0.2%% is a third of the average edge.
+4. **Cumulative honesty check.** Ledger overall 20/37 (54%%) — still the
+   validated number; density tags now dense 59%% / mid 38%% / sparse 57%%
+   (capture-weighted the ordering is cleaner: +0.13 / −0.28 / −0.14).
+   Density-as-gate decision stays PARKED until ~20 tagged DAYS (rows ≠
+   days); THE PAIR line is the record that now matters most.
+
+### Encoded
+Nothing changed in code — deliberately. The discipline cuts both ways: a
+single winning day must not loosen anything (no size-up, no cap-widening,
+no new "insight"), exactly as a single losing day must not panic-tighten a
+validated rule. The ledger's PAIR line accumulates; the rules stand until
+the data, not the mood, moves them.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
