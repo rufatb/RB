@@ -125,6 +125,31 @@ def density_label(nd: float, cutoffs: tuple) -> str:
     return "dense" if nd <= lo else ("sparse" if nd > hi else "mid")
 
 
+def late_minutes(now: dt.datetime, open_t: dt.time) -> float:
+    """Minutes elapsed past the moment the 9:45 board becomes valid (open+16).
+    The validation enters AT the 9:45 print — a run 20+ minutes later is a
+    different, unvalidated bet (day-11 lesson: a 10:35 run showed the long
+    leg +0.66%% past its print while the fresher 10:30 lens qualified NO
+    longs at all). Pure + testable."""
+    ready = now.replace(hour=open_t.hour, minute=open_t.minute,
+                        second=0, microsecond=0) + dt.timedelta(minutes=16)
+    return (now - ready).total_seconds() / 60.0
+
+
+def leg_drift(side: str, p945: float, last: float, spent_pct: float = 0.3):
+    """How the move since the 9:45 print changes a LATE entry on a pair leg.
+    LONG: price above the print = predicted move already partly consumed.
+    SHORT: price above the print = a better entry than validated (sell
+    higher), and vice versa. Returns (drift_pct, verdict). Pure + testable."""
+    pct = (last / p945 - 1) * 100
+    spent = pct > 0 if side == "LONG" else pct < 0
+    if spent and abs(pct) >= spent_pct:
+        return pct, "edge partly SPENT — do not chase this leg"
+    if not spent and abs(pct) >= 0.05:
+        return pct, "entry better than the 9:45 print"
+    return pct, "≈ unchanged from the print"
+
+
 def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
     """Exclude any qualified pick whose direction opposes >= min_opposed
     qualified picks in its own peer group (day-8 lesson: TD short 0.55 against
@@ -280,7 +305,10 @@ def run(cfg, workers=8):
             "pair": pair_of_day(longs, shorts, cfg.get("peer_groups"),
                                 pcfg.get("selector", "densest"),
                                 pcfg.get("crowded_conf_warn", 3)),
-            "min_p": min_p, "too_early": too_early}
+            "min_p": min_p, "too_early": too_early,
+            "late_min": round(late_minutes(now, open_t), 1),
+            "stale_after_min": pcfg.get("stale_after_min", 20),
+            "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3)}
 
 
 def render(res, book=False):
@@ -295,6 +323,20 @@ def render(res, book=False):
     print("Horizon: from the 9:45 price to the 4:00 close. Validated walk-forward:")
     print("board base ~51-54%; THE PAIR (densest leg per side) 68%/69% on both splits.")
     pair = res.get("pair")
+    late = res.get("late_min") or 0
+    if late > res.get("stale_after_min", 20) and pair:
+        print(f"\n  🕐 LATE RUN — this board reads the 9:45 bar but it is now {late:.0f} min")
+        print("  later. The validation enters AT the 9:45 print; drift since then has")
+        print("  changed each bet (day-11: a late long was +0.66% past its print while")
+        print("  a fresh 10:30 read qualified NO longs). Per-leg drift:")
+        for side in ("long", "short"):
+            lg = pair[side]
+            if lg.get("pick"):
+                r = lg["pick"]
+                pct, verdict = leg_drift(side.upper(), r["p945"], r["last"],
+                                         res.get("spent_drift_pct", 0.3))
+                print(f"      {side.upper():<6} {r['t']}: {pct:+.2f}% since the print — {verdict}")
+        print("  Treat SPENT legs as NO TRADE. Next time run at 9:46.")
     if pair:
         print("\n" + "═" * 74)
         print("THE PAIR — trade these two, nothing else (one long + one short daily)")

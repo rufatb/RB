@@ -427,6 +427,36 @@ no new "insight"), exactly as a single losing day must not panic-tighten a
 validated rule. The ledger's PAIR line accumulates; the rules stand until
 the data, not the mood, moves them.
 
+## Day-11: the late run — 10:35 is not 9:46
+
+### What happened
+"Run report" landed at 10:35, 49 minutes past the validated window. The
+engine happily printed a 9:45-featured board (pair: CM long / ENB short) —
+but CM's price was already +0.66%% past its 9:45 print, and a fresh
+10:30-decision read (the variant validated at 64.5%% in validate_time.py)
+qualified ZERO longs and NINE shorts: the broad morning ramp had flipped
+every long into the fade-prone profile. The published pair was stale on
+arrival. Advice given: skip the long leg entirely (fresher lens + crowded
+financials warning + spent drift all agreed), trade the densest 10:30
+short only (CP.TO, sided-P 0.64, nd 0.25).
+
+### Encoded
+1. **LATE RUN banner** (`r945.late_minutes` + `leg_drift`, config
+   `pair.stale_after_min` / `pair.spent_drift_pct`): a run >20 min past
+   9:46 prints per-leg drift since the 9:45 print with a verdict —
+   LONG above print / SHORT below print = "edge partly SPENT — do not
+   chase"; the mirrored direction = "entry better than the print".
+   The exact CM numbers are the regression test.
+2. **Ledger caveat (process, not code):** the publish-time rows for
+   2026-07-14 record the engine's stale pair (CM/ENB) — kept untouched per
+   the no-hindsight rule; the user's actual executed trade diverged (CP
+   short only). One-off caused by the late run; the banner prevents silent
+   recurrence, and scoring will note the divergence.
+3. NOT built: an automatic multi-time re-decision engine. The 10:30 lens
+   exists in validate_time.py and can be run manually on a late day; making
+   lateness convenient would encourage it, and every minute after 9:46
+   trades away validated capture (0.70%% → 0.53%% median by 11:00).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

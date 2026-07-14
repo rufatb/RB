@@ -36,3 +36,10 @@ date,ticker,side,p_sided,confidence,p945,role,r1,hit
 2026-07-13,CP.TO,LONG,0.561,dense,128.2300,pair,0.866,1
 2026-07-13,SLF.TO,LONG,0.553,sparse,111.5800,board,-0.520,0
 2026-07-13,ABX.TO,SHORT,0.564,sparse,50.8900,pair,-0.157,1
+2026-07-14,TD.TO,LONG,0.598,sparse,171.8900,board,,
+2026-07-14,CM.TO,LONG,0.579,mid,166.9700,pair,,
+2026-07-14,BNS.TO,LONG,0.566,mid,125.0400,board,,
+2026-07-14,SLF.TO,LONG,0.559,mid,111.5500,board,,
+2026-07-14,BCE.TO,SHORT,0.638,sparse,29.8300,board,,
+2026-07-14,ENB.TO,SHORT,0.611,dense,78.0300,pair,,
+2026-07-14,SHOP.TO,SHORT,0.609,sparse,175.1100,board,,

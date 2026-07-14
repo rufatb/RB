@@ -179,6 +179,11 @@ pair:
   crowded_conf_warn: 3    # warn when >= this many same-group picks agree with
                           # a leg — crowded direction hit 44%/33% in validation
                           # (warning only, not a gate, until live data decides)
+  stale_after_min: 20     # a run this many minutes past 9:46 prints the LATE
+                          # RUN banner with per-leg drift — the validation
+                          # enters AT the 9:45 print (day-11 lesson)
+  spent_drift_pct: 0.3    # drift in the call's direction beyond this = leg
+                          # flagged "edge partly SPENT — do not chase"
 
 # Midday from-here selection gates (midday.py). A side qualifies on the
 # from-here conditional alone only past the strong threshold; inside the soft
