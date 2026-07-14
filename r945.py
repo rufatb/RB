@@ -150,6 +150,16 @@ def leg_drift(side: str, p945: float, last: float, spent_pct: float = 0.3):
     return pct, "≈ unchanged from the print"
 
 
+def fill_bound(side: str, decision_px: float, max_chase_pct: float = 0.15) -> float:
+    """Worst acceptable fill for a pair leg. LONG: no higher than the decision
+    price * (1+c); SHORT: no lower than * (1-c). A fill past the bound has
+    consumed the edge before the position even opens (day-11 close: CP short
+    decided at 128.98 was a WINNING call — close 128.54, +0.34% — but a chased
+    fill AT 128.54 captured exactly zero of it). Pure + testable."""
+    c = max_chase_pct / 100.0
+    return decision_px * (1 + c) if side == "LONG" else decision_px * (1 - c)
+
+
 def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
     """Exclude any qualified pick whose direction opposes >= min_opposed
     qualified picks in its own peer group (day-8 lesson: TD short 0.55 against
@@ -308,7 +318,8 @@ def run(cfg, workers=8):
             "min_p": min_p, "too_early": too_early,
             "late_min": round(late_minutes(now, open_t), 1),
             "stale_after_min": pcfg.get("stale_after_min", 20),
-            "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3)}
+            "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
+            "max_chase_pct": pcfg.get("max_chase_pct", 0.15)}
 
 
 def render(res, book=False):
@@ -352,9 +363,19 @@ def render(res, book=False):
             print(f"          first-15m {r['r0']:+.2f}% · gap {r['gap']:+.2f}% · "
                   f"board rank by P: #{lg.get('rank_by_p', '?')} "
                   "(selected by DENSITY — familiarity beats extremity)")
-            if book and r.get("shares") is not None:
+            stale = late > res.get("stale_after_min", 20)
+            if stale:
+                # Day-11 close: a warning banner NEXT TO a live order line loses
+                # — the order line is the instruction, so on a stale board it
+                # must not exist at all.
+                print("      ⛔ NO ORDER — stale board: the decision price has expired.")
+            elif book and r.get("shares") is not None:
+                bound = fill_bound(side.upper(), r["last"],
+                                   res.get("max_chase_pct", 0.15))
                 print(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} {r['shares']} sh "
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
+                print(f"      fill bound: {'≤' if side == 'long' else '≥'} {bound:.2f} — "
+                      "past that the edge is spent before entry: NO TRADE")
             else:
                 print(f"      entry ~now · flat by 3:55")
             if lg.get("warning"):

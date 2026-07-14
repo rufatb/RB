@@ -184,6 +184,9 @@ pair:
                           # enters AT the 9:45 print (day-11 lesson)
   spent_drift_pct: 0.3    # drift in the call's direction beyond this = leg
                           # flagged "edge partly SPENT — do not chase"
+  max_chase_pct: 0.15     # worst acceptable fill vs the printed price; a fill
+                          # past the bound = NO TRADE (day-11 close: a winning
+                          # CP short captured 0 because the fill chased -0.34%)
 
 # Midday from-here selection gates (midday.py). A side qualifies on the
 # from-here conditional alone only past the strong threshold; inside the soft

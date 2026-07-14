@@ -457,6 +457,36 @@ short only (CP.TO, sided-P 0.64, nd 0.25).
    lateness convenient would encourage it, and every minute after 9:46
    trades away validated capture (0.70%% → 0.53%% median by 11:00).
 
+### The close: what the late day actually cost (post-mortem)
+User traded CM long 166.79→166.68 (−0.07%%) and CP short 128.54→128.54
+(0.00%%) and called both "big misses". The tape says otherwise — the losses
+were PROCESS, not prediction:
+1. **CP short was a WINNING call that a chased fill destroyed.** Decision
+   price 128.98 (10:30 lens) → close 128.54 = +0.34%% captured by the
+   model. The fill at 128.54 was −0.34%% past the decision price — the
+   entire edge consumed before entry — then a −0.9%% drawdown (CP hit
+   129.65 at 15:20) round-tripped to breakeven on a final-10-minute plunge.
+2. **CM long should not have existed.** The chat advice said skip it; the
+   stale board itself printed "➤ BUY 148 sh @ market now" beside the
+   warning. The order line is the instruction — it won. Tool defect, now
+   fixed. (The 10:30 no-longs read was right: CM topped at 168.28 at 10:35,
+   the minute the late board printed, and faded to 166.68.)
+3. **The model itself had a losing day, honestly logged.** Even punctual
+   9:46 execution loses: CM −0.17%%, ENB short −0.86%% (ENB qualified on
+   both lenses and still lost — that is the ~1/3 of legs that lose by
+   design). PAIR line now 2/4. NO parameter touched: two legs losing the
+   same day happens ~1 day in 10 at the validated rates.
+
+### Encoded (the two process fixes)
+1. **Stale boards print NO ORDER LINES** (`render`, day-11 regression
+   test): past `pair.stale_after_min` every leg's order is replaced by
+   "⛔ NO ORDER — stale board: the decision price has expired." A warning
+   next to a live order line loses; the order line must not exist.
+2. **Fill bound on every order** (`r945.fill_bound`, `pair.max_chase_pct`,
+   default 0.15%%): each order prints its worst acceptable fill (LONG ≤,
+   SHORT ≥). Past the bound: NO TRADE. CP's exact numbers (128.98 decision,
+   128.54 fill = bound violated) are the regression test.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
