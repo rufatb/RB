@@ -19,18 +19,24 @@ validated WALK-FORWARD on a blind holdout before shipping:
     Shorts hit slightly less often but capture ~2.7x more per win (asymmetric
     down-moves).
 
-    DAY-9 (validate_pair.py, walk-forward, 49 sessions, 496 qualified picks):
-    the ONE pick per side worth trading is the DENSEST estimate (smallest
-    k-NN neighbour distance), not the highest P. Evidence: densest top-1 hit
-    68.0% discovery / 69.2% confirm (chronological split), 70.5%/66.7% on an
-    independent odd/even split, symmetric by side (68.8% L / 68.3% S), n=89,
-    p≈0.0007 vs the 51% board base; the 2nd-densest placebo drops to 53.9%,
-    and max-P scored only 50.0% on discovery. Interpretation: a dense
-    neighbourhood means "we have seen this exact setup many times"; an
-    extreme P usually comes from a sparse corner (extrapolation). Trade
-    familiarity, not extremity. ALSO found (both splits): picks whose sector
-    direction is CROWDED (>=3 same-group same-direction picks) hit only
-    44%/33% — noted as a printed warning, not yet a gate.
+    DAY-9 (validate_pair.py): the densest estimate (smallest k-NN neighbour
+    distance) beat every top-1 selector on every split — 68.0%/69.2%
+    chronological, 70.5%/66.7% odd/even, placebo 53.9%, "p≈0.0007".
+    DAY-12 WALKBACK (re-run after the 60d window rolled by just THREE
+    sessions): densest collapsed to 52.7% full-period (z=0.21, p=0.42),
+    the placebo beat it on two splits, and max-P was equally unstable
+    (50%/68% odd/even). The original significance was inflated: legs are
+    serially correlated (two per day, shared market direction) and every
+    "independent" split shared the same training window — the effective
+    sample was far smaller than n=89. CONCLUSION (mirrors day-6): there is
+    NO validated gradient among qualified picks. Densest is retained as the
+    deterministic tie-break (some rule must pick the leg; its live PAIR
+    ledger record keeps accruing either way) — but the stated expectation
+    is the qualified-pick base rate ~52-56%, NOT 68%. Do not restore the
+    old claim without it surviving a WINDOW-ROLL test, not just a split.
+    CROWDING (>=3 same-group same-direction picks): 44%/33% on day-9 splits,
+    44% (8/18) on the day-12 window — the one read that has stayed stable;
+    still a printed warning, not a gate.
 
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,
@@ -193,13 +199,14 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
                 selector: str = "densest", crowd_warn: int = 3) -> dict:
     """THE PAIR — the single long + single short the daily workflow trades.
 
-    SELECTION (day-9, validated in validate_pair.py — do not revert to max-P):
-    each leg is the DENSEST qualified pick (smallest k-NN neighbour distance),
-    because sided P has NO hit-rate gradient above the bar while the densest
-    pick hit 68%/69% on both validation splits (2nd-densest placebo: 54%,
-    max-P: 50% on discovery). Only 'densest' and 'max_p' (kept for A/B
-    comparison) are accepted — an unknown selector raises rather than
-    silently picking something unvalidated.
+    SELECTION: each leg is the DENSEST qualified pick (smallest k-NN
+    neighbour distance). Day-12 honesty: the day-9 evidence for this
+    (68%/69% both splits) did NOT survive a 3-session window roll (52.7%,
+    z=0.21) — densest is now a deterministic TIE-BREAK among equivalent
+    ~52-56% leans, not a validated edge (see module header). It stays
+    because a daily pair needs one reproducible rule and its live ledger
+    record is accruing. Only 'densest' and 'max_p' are accepted — an
+    unknown selector raises rather than silently picking something new.
 
     Leg quality = the pick's density tag (DENSE/MID/SPARSE), NOT its P — a
     P-based label would imply a gradient day-6/day-9 showed doesn't exist.
@@ -331,8 +338,8 @@ def render(res, book=False):
         print(f"   Ready at {res.get('ready_at', '09:46')} ET. A run before then reads the")
         print("   in-progress bar as the 9:45 print — an unvalidated trade. REFUSING.")
         return
-    print("Horizon: from the 9:45 price to the 4:00 close. Validated walk-forward:")
-    print("board base ~51-54%; THE PAIR (densest leg per side) 68%/69% on both splits.")
+    print("Horizon: from the 9:45 price to the 4:00 close. Honest expectation: every")
+    print("qualified pick is a ~52-56% lean; no selector gradient survived validation.")
     pair = res.get("pair")
     late = res.get("late_min") or 0
     if late > res.get("stale_after_min", 20) and pair:
@@ -400,9 +407,9 @@ def render(res, book=False):
         print("  total book capped. The pair is ~market-neutral but each leg carries full")
         print("  single-name risk with no intraday stop — sizing IS the risk control.")
         print("  CLOSE BOTH BY 3:55.")
-    print("\n  Modest, measured edges: 68%/69% in validation will be LESS live — expect")
-    print("  low-60s at best; the ledger's PAIR line is the arbiter. No 5-minute")
-    print("  outlooks — this is close-horizon only.")
+    print("\n  Modest, measured edges: a qualified leg is a ~52-56% lean (day-12 reset —")
+    print("  the 68% selector claim did not survive a window roll). The ledger's PAIR")
+    print("  line is the arbiter. No 5-minute outlooks — this is close-horizon only.")
 
 
 def main(argv=None):

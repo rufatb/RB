@@ -24,6 +24,17 @@ legs (>=3 same-group confirmations) hit 44%/33% — warning, not yet a gate.
 NOTE the density hypothesis was PRE-REGISTERED (day-7 instrumentation) before
 this test — this is a confirmation, not a fishing trip. Expect live
 performance BELOW these numbers; the ledger's PAIR line is the arbiter.
+
+WALKED BACK (2026-07-15, day-12): re-run after the rolling 60d window moved
+by just THREE sessions — densest fell to 52.7% full-period (z=0.21, p=0.42
+vs the board base), the placebo beat it on two of four splits, and max-P
+swung 50%→68% between odd/even. The day-11 "p≈0.0007" was inflated: legs are
+serially correlated (two per day, shared market direction; both directions
+often share the same tide) and all four "splits" reused one training window,
+so the effective sample was far below n=89. LESSON (now a standing rule): a
+selector claim must survive a WINDOW-ROLL re-run, not just in-window splits.
+Densest remains the deterministic tie-break; the stated pair expectation is
+the qualified-pick base ~52-56%.
 """
 
 import os

@@ -1,8 +1,8 @@
 """
-test_daynine.py — day-9 lesson: THE PAIR's legs are selected by DENSITY
-(smallest k-NN neighbour distance), not by highest P. Validated in
-validate_pair.py: densest 68.0%/69.2% on both splits vs max-P 50.0% on
-discovery; sided P has no hit-rate gradient above the bar. Also: the
+test_daynine.py — day-9: THE PAIR's legs are selected by DENSITY (smallest
+k-NN neighbour distance), not by highest P. (Day-12 walkback: the density
+EDGE claim did not survive a window roll — densest remains the deterministic
+tie-break these tests lock in; see validate_pair.py.) Also: the
 crowded-sector warning, pair-only sizing, and the ledger role column.
 """
 

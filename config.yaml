@@ -167,13 +167,13 @@ peer_groups:
 peer_contradiction_min: 3
 
 # THE PAIR (r945.pair_of_day) — the one long + one short actually traded under
-# the once-daily workflow. Day-9 validated selection (validate_pair.py): each
-# leg is the DENSEST qualified pick (smallest k-NN neighbour distance), NOT
-# the highest P — sided P has no hit-rate gradient above the bar (day-6,
-# reconfirmed day-9), while the densest pick hit 68.0%/69.2% on chronological
-# discovery/confirm splits and 70.5%/66.7% odd/even (2nd-densest placebo:
-# 53.9%; max-P: 50.0% on discovery; n=89, p~0.0007 vs 51% board base).
-# Only validated selectors are accepted by the code: densest | max_p.
+# the once-daily workflow. Each leg is the DENSEST qualified pick (smallest
+# k-NN neighbour distance). Day-12 honesty: the day-9 evidence for densest
+# (68%/69% on all splits, "p~0.0007") did NOT survive a 3-session window
+# roll (52.7%, z=0.21) — densest is a deterministic TIE-BREAK among
+# equivalent ~52-56% leans, not a validated edge. It stays because the daily
+# pair needs one reproducible rule and its live ledger record (role=pair)
+# accrues either way. Only known selectors are accepted: densest | max_p.
 pair:
   selector: densest
   crowded_conf_warn: 3    # warn when >= this many same-group picks agree with

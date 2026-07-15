@@ -487,6 +487,49 @@ were PROCESS, not prediction:
    SHORT ≥). Past the bound: NO TRADE. CP's exact numbers (128.98 decision,
    128.54 fill = bound violated) are the regression test.
 
+## Day-12: the window-roll test — walking back the 68%% selector claim
+
+### What happened
+Morning question: "did yesterday's misses teach us anything that improves
+tomorrow's predictions?" Two hypotheses from the day-11 tape were tested
+walk-forward (breadth: shorts against a rising tide; crowd-avoidance in leg
+selection). BOTH flipped sign between splits — nothing encoded. But re-running
+the committed validator on the current data exposed something bigger: with
+the rolling 60d window moved by just THREE sessions, the densest selector
+fell from 68.5%% (z=3.2, "p≈0.0007") to **52.7%% (z=0.21, p=0.42)**; the
+2nd-densest "placebo" now beats it on two splits; max-P swings 50%%→68%%
+between odd/even. No selector separates qualified picks reliably.
+
+### Why the original p-value lied (methodology lesson, now a standing rule)
+1. Pair legs are NOT independent Bernoulli draws: two per day, sharing the
+   day's tide; hits cluster. Effective n was far below 89.
+2. All four "splits" (chronological + odd/even) reused the SAME training
+   window and the same trained neighbourhoods — they were never independent
+   replications, just re-slicings of one fitted object.
+3. **New standing rule: a selection/gating claim is not validated until it
+   survives a WINDOW-ROLL re-run** (recompute everything on a shifted data
+   window), not merely in-window splits. Splits catch overfit patterns;
+   only a window roll catches overfit machinery.
+
+### What stands after the walkback
+- The 0.55 qualification bar and STAND DOWN behaviour (board base ~51-54%%).
+- The first-15-min ramp-fade effect and the 9:45 decision-time comparison
+  (relative ordering was stable, though its absolute numbers carry the same
+  caveat and 9:40 vs 9:45 remains the sharpest, most mechanism-backed gap).
+- The peer-contradiction gate (mechanism-driven, restrictive-only).
+- Process rules: too-early guard, LATE-RUN no-orders, fill bounds, sizing.
+- Crowding read (44%%/33%% day-9; 44%% on the rolled window) — the one
+  stable observation; stays a warning.
+- Densest stays as the pair's deterministic tie-break (a daily pair needs
+  ONE reproducible rule; live PAIR ledger keeps score) — with stated
+  expectation reset to the honest ~52-56%%, printed in the report itself.
+
+### Encoded
+r945 header + pair docstring + rendered footer walked back to ~52-56%%;
+validate_pair.py header carries the walkback; config comment softened. No
+selector change, no threshold change — the reset is in the CLAIMS, which is
+where the error lived.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
