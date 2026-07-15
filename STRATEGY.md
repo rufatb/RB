@@ -530,6 +530,26 @@ validate_pair.py header carries the walkback; config comment softened. No
 selector change, no threshold change — the reset is in the CLAIMS, which is
 where the error lived.
 
+### The close: destination vs road (learning from a scratch and a win)
+User's fills: CNQ long 60.12→60.11 (scratch; the model's print-to-close was
+−0.17%%, a narrow miss) and CP short 127.28→127.09 (+0.15%%, a hit — and the
+fill was BETTER than the print, inside the bound; the fill-bound rule paid
+on day one). PAIR line: 3/6 live. The user's key observation: both legs
+swung hard against the call mid-day before finishing — CNQ dipped to
+−1.3%% at 11:40 then recovered ALL of it; CP popped +0.5%% against the
+short before paying. **The engine predicts the destination, not the road.**
+Pooled path stats confirm the road is always like this: after a 9:45 entry
+the MEDIAN worst swing against a long is −0.68%% (worse-quartile −1.35%%);
+against a short +0.78%% (+1.40%%). Today's swings were statistically
+ordinary — and holding through them was exactly correct.
+
+**Encoded:** `session_rows` now measures each session's max adverse
+excursion after 9:45 (`mae_dn`/`mae_up`); the pair legs print "normal swing
+AGAINST this leg: median X / worse-quartile Y — the ROAD, not the verdict;
+hold to 3:55." Printed only when ≥100 sessions back it (never fabricated).
+This changes no prediction — it arms the holder against the path, which is
+where hold-to-close workflows actually break.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -76,10 +76,17 @@ def session_rows(bars: pd.DataFrame, ticker: str) -> list:
         prev_close = c
         if not o or not p945:
             continue
+        # Path statistics (day-12): worst excursion each way AFTER the 9:45
+        # entry. The engine predicts the destination, not the road — these
+        # quantify the road so a normal mid-day swing against a correct call
+        # (seen live: −1.3% dip on a leg that closed flat) reads as normal.
+        after = day.iloc[3:]
         rows.append({"t": ticker, "date": str(d), "gap": gap,
                      "r0": (p945 / o - 1) * 100,
                      "v15": float(day["Volume"].iloc[:3].sum()),
-                     "r1": (c / p945 - 1) * 100})
+                     "r1": (c / p945 - 1) * 100,
+                     "mae_dn": (after["Low"].min() / p945 - 1) * 100 if len(after) else None,
+                     "mae_up": (after["High"].max() / p945 - 1) * 100 if len(after) else None})
     return rows
 
 
@@ -290,6 +297,17 @@ def run(cfg, workers=8):
     train = pd.DataFrame(hist_rows)
     train["vp"] = train.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
 
+    # Pooled path expectations: the normal worst swing AGAINST each side
+    # between 9:45 and the close. LONG adversity = the dip (mae_dn, negative);
+    # SHORT adversity = the pop (mae_up, positive). Median and worse-quartile.
+    dn = train["mae_dn"].dropna() if "mae_dn" in train else pd.Series(dtype=float)
+    up = train["mae_up"].dropna() if "mae_up" in train else pd.Series(dtype=float)
+    path_stats = None
+    if len(dn) >= 100 and len(up) >= 100:
+        path_stats = {"n": int(min(len(dn), len(up))),
+                      "long": (float(dn.quantile(0.5)), float(dn.quantile(0.25))),
+                      "short": (float(up.quantile(0.5)), float(up.quantile(0.75)))}
+
     # Density cutoffs from a sample of the training rows' own neighbourhoods.
     sample = train.dropna(subset=FEATS + ["r1"]).sample(
         n=min(120, len(train)), random_state=7) if len(train) else train
@@ -326,7 +344,8 @@ def run(cfg, workers=8):
             "late_min": round(late_minutes(now, open_t), 1),
             "stale_after_min": pcfg.get("stale_after_min", 20),
             "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
-            "max_chase_pct": pcfg.get("max_chase_pct", 0.15)}
+            "max_chase_pct": pcfg.get("max_chase_pct", 0.15),
+            "path_stats": path_stats}
 
 
 def render(res, book=False):
@@ -383,6 +402,12 @@ def render(res, book=False):
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
                 print(f"      fill bound: {'≤' if side == 'long' else '≥'} {bound:.2f} — "
                       "past that the edge is spent before entry: NO TRADE")
+                ps = res.get("path_stats")
+                if ps:
+                    med, worse = ps[side]
+                    print(f"      normal swing AGAINST this leg before close: median {med:+.1f}% / "
+                          f"worse-quartile {worse:+.1f}% (n={ps['n']} sessions).")
+                    print("      A mid-day move of that size is the ROAD, not the verdict — hold to 3:55.")
             else:
                 print(f"      entry ~now · flat by 3:55")
             if lg.get("warning"):
