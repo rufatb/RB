@@ -76,6 +76,20 @@ def score_rows(rows: list, close_fn) -> tuple:
     return rows, scored
 
 
+def live_summary(rows: list, last_n: int = 20) -> dict | None:
+    """Compact live-record numbers for the morning report header (day-13:
+    'so far it's not working' must be visible IN the tool, every day, not
+    discovered later). Pure; None when nothing is scored yet."""
+    done = [r for r in rows if r["hit"] != ""]
+    if not done:
+        return None
+    pair = [r for r in done if r.get("role") == "pair"]
+    recent = done[-last_n:]
+    return {"all_n": len(done), "all_hits": sum(int(r["hit"]) for r in done),
+            "pair_n": len(pair), "pair_hits": sum(int(r["hit"]) for r in pair),
+            "recent_n": len(recent), "recent_hits": sum(int(r["hit"]) for r in recent)}
+
+
 def report(rows: list) -> str:
     done = [r for r in rows if r["hit"] != ""]
     if not done:

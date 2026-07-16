@@ -359,6 +359,14 @@ def render(res, book=False):
         return
     print("Horizon: from the 9:45 price to the 4:00 close. Honest expectation: every")
     print("qualified pick is a ~52-56% lean; no selector gradient survived validation.")
+    lr = res.get("live_record")
+    if lr:
+        print(f"LIVE RECORD (no hindsight): all picks {lr['all_hits']}/{lr['all_n']} "
+              f"({lr['all_hits']/lr['all_n']*100:.0f}%) · PAIR {lr['pair_hits']}/{lr['pair_n']} · "
+              f"last {lr['recent_n']}: {lr['recent_hits']}/{lr['recent_n']}.")
+        if lr["all_n"] >= 30 and lr["all_hits"] / lr["all_n"] < 0.54:
+            print("⚠ The live record has NOT yet demonstrated an edge over a coin flip.")
+            print("  Trade the printed size or do not trade — the edge, if real, is thin.")
     pair = res.get("pair")
     late = res.get("late_min") or 0
     if late > res.get("stale_after_min", 20) and pair:
@@ -431,6 +439,9 @@ def render(res, book=False):
         print("\n  BOOK MODE: only THE PAIR is sized — one long + one short, equal-weight,")
         print("  total book capped. The pair is ~market-neutral but each leg carries full")
         print("  single-name risk with no intraday stop — sizing IS the risk control.")
+        print("  THE SHARE COUNTS ARE THE RISK MODEL: trading a larger size multiplies")
+        print("  every loss by the same factor and voids the stated risk numbers")
+        print("  (day-13: 4x the printed size turned a ~$425 day into -$1,669).")
         print("  CLOSE BOTH BY 3:55.")
     print("\n  Modest, measured edges: a qualified leg is a ~52-56% lean (day-12 reset —")
     print("  the 68% selector claim did not survive a window roll). The ledger's PAIR")
@@ -446,6 +457,12 @@ def main(argv=None):
     args = p.parse_args(argv)
     cfg = load_config(args.config)
     res = run(cfg, args.workers)
+    # Accountability header: the tool faces its own live record every morning.
+    try:
+        import ledger
+        res["live_record"] = ledger.live_summary(ledger.load())
+    except Exception:
+        res["live_record"] = None
     if args.book:
         rcfg = cfg.get("risk", {})
         # Day-9: only THE PAIR is sized/traded. The rest of the board is

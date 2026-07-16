@@ -550,6 +550,54 @@ hold to 3:55." Printed only when ≥100 sessions back it (never fabricated).
 This changes no prediction — it arms the holder against the path, which is
 where hold-to-close workflows actually break.
 
+## Day-13: the losing day, the deep search, and the honest ceiling
+
+### What happened
+Board 3/12; PAIR 0/2 (CVE long −0.91%%, CM short +1.11%% against). Mechanism:
+a 9-short board met a +0.42%% TSX rally that began at 9:46 exactly; the pair
+was long-energy/short-financials and the sector rotation ran precisely
+backwards. The crowding-warned CM leg lost again. User reported −$777 and
+−$892 — but at the PRINTED sizes the day was ≈ −$201 and −$223: the
+positions were run at ~$100k/leg, 4x the printed $25k risk model. In a
+no-stop workflow the share count IS the entire risk control; multiplying it
+multiplies every loss identically.
+
+### The deep search: every candidate fix FAILED the discipline — that is the finding
+1. **Crowding gate: rejected.** The 44%%/33%% crowd stat that held on two
+   windows flipped to 61%% (11/18) when ONE session entered the window.
+   The "stable" signal was small-n illusion. The warning line stays (cheap,
+   possibly true) but it must not gate.
+2. **Board-tilt gate: rejected.** Tilted-board pair legs 42%% vs balanced
+   65%% on discovery — and dead even (60/61) on confirm. Split-flip.
+3. Standing conclusion, now proven three times (68%% selector, breadth,
+   crowding): at ~50 sessions of free 15-min-delayed data, NO selection or
+   gating refinement can be validated. "Thousands of lines of code" cannot
+   extract information the data does not contain — they can only overfit
+   it, and overfit gains evaporate exactly when trusted.
+
+### The honest big picture (what the partners should be told)
+Live ledger: 66 scored picks, 33/66 = 50.0%%; PAIR 3/8; last 20 ≈ 10/20.
+This is consistent with a thin (52-55%%) edge having a normal bad stretch
+AND with zero edge — n is still too small to distinguish. It is NOT
+consistent with a high-60s expectation; that number was withdrawn on day-12
+and must not be quoted. The genuine ceiling-raisers are data, not code:
+real-time quotes/L2 (TwelveData adapter is ready behind an env key), an
+ex-dividend calendar, a news feed. Options going forward: (a) keep trading
+at PRINTED size while the PAIR ledger accumulates to a decisive n(~100
+legs), (b) add paid data and re-validate, (c) paper-trade until the ledger
+proves the edge. Any of these is defensible; 4x size on an unproven edge is
+not.
+
+### Encoded
+1. **Accountability header**: every morning report now prints the live
+   record (all / PAIR / last-20) and, while the record sits below 54%%, an
+   explicit "NOT yet demonstrated an edge — trade the printed size or do
+   not trade" warning (`ledger.live_summary`, tested).
+2. **Sizing contract in BOOK mode**: "THE SHARE COUNTS ARE THE RISK MODEL —
+   trading larger multiplies every loss by the same factor" with day-13's
+   actual numbers as the example.
+3. No new gates, deliberately — documented above.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
