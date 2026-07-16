@@ -10,8 +10,12 @@ validated WALK-FORWARD on a blind holdout before shipping:
 
     baseline P(rest-of-day up): 48.6%  (true coin flip)
     model @0.55 bar:  ~53-55% hit on ~40% of days   Brier ≈0.250
-    strongest effect: first-15-min ramps >+0.5% FADE ~61% of the time
-                      (median −0.32% rest-of-day) — momentum does NOT carry.
+    REFUTED (day-14 deep validation): "ramps >+0.5% fade 61%" did NOT hold
+    on 1 year of US-twin data — fade rate was 42.7-50.5% across all four
+    independent quarters (ramps mildly CONTINUE). Another 60d-window mirage.
+    The 0.55 qualification bar itself is UNPROVEN at the pool level: the
+    qualified pool beat its naive-side base in only 3 of 4 quarters (and
+    LOST to it in one). Do not quote a pool-level edge.
     WALKED BACK (day-6 replication): an early "≥0.60 signals hit ~67%" read
     did NOT replicate (n=9-18 bucket flipped 67%→44% across splits). There is
     NO reliable hit-rate gradient above the 0.55 bar — treat every qualified
@@ -35,8 +39,19 @@ validated WALK-FORWARD on a blind holdout before shipping:
     is the qualified-pick base rate ~52-56%, NOT 68%. Do not restore the
     old claim without it surviving a WINDOW-ROLL test, not just a split.
     CROWDING (>=3 same-group same-direction picks): 44%/33% on day-9 splits,
-    44% (8/18) on the day-12 window — the one read that has stayed stable;
-    still a printed warning, not a gate.
+    44% (8/18) on the day-12 window, 61% (11/18) one session later (day-13)
+    — unstable at these sample sizes; the warning stays printed, gates
+    nothing.
+
+    DAY-14 DEEP VALIDATION (validate_deep.py, 1 yr / 20 US twins / 5,160
+    ticker-sessions, pre-registered all-four-quarters rule): the ONE claim
+    that survived is the densest pair leg — it beat both the qualified pool
+    and max-P in ALL FOUR quarters: 54.7/54.3/56.0/52.9% hit, capture
+    positive every quarter, pooled 239/439 = 54.4% (z=1.86, p≈0.03),
+    weighted capture +0.094%/leg PRE-COST (≈$23/leg/day at $25k). That is
+    the honest ceiling of this machine on this data: a real, thin,
+    barely-significant edge that costs can plausibly halve. Everything
+    stronger that was ever claimed here is dead; do not resurrect it.
 
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,

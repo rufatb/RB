@@ -598,6 +598,40 @@ not.
    actual numbers as the example.
 3. No new gates, deliberately — documented above.
 
+## Day-14: the TwelveData deep validation — one year, four quarters, one survivor
+
+### The data
+User provided a TwelveData key (env var only, never stored). Free tier
+gates TSX symbols, but 20 universe names have NYSE twins with ~1 year of
+5-minute history: 5,160 ticker-sessions across 258 sessions — 4x the Yahoo
+window, split into FOUR independent calendar quarters with the verdict rule
+pre-registered and committed before results (validate_deep.py).
+
+### Verdicts (permanent — recorded in the script header)
+- **REFUTED: ramp-fade.** "Ramps >+0.5%% fade 61%%" — the oldest headline
+  claim in r945 — showed fade rates of 42.7-50.5%% across all four
+  quarters. Ramps mildly CONTINUE. Removed from every claim surface.
+- **NOT VALIDATED: the 0.55 qualification bar.** The qualified pool beat
+  its naive-side base in only 3 of 4 quarters and lost to it in one
+  (47.3%% vs 53.3%%). Consistent with the live 33/66. The bar stays as the
+  candidate-generation mechanism, but no pool-level edge may be claimed.
+- **VALIDATED (the only one): the densest pair leg.** Beat both the
+  qualified pool and max-P in all four quarters (54.7/54.3/56.0/52.9%%),
+  capture positive in every quarter. Pooled: 239/439 = 54.4%%, z=1.86
+  (p≈0.03), weighted capture +0.094%%/leg PRE-COST ≈ $23/leg/day at the
+  printed $25k size. Day-9's direction was right; its magnitude (68%%) was
+  winner's curse — the honest number is ~54%%.
+
+### What this means (told to the user straight)
+The system's ceiling on this data is a real, thin, barely-significant edge
+worth ~$20-45/day pre-cost at printed size — commissions and slippage can
+plausibly halve it. No amount of code changes that; only better data
+(real-time TSX feed, order flow, calendars) could, and even that is
+unproven. The tool's job from here: keep the pair workflow, keep printed
+sizes, keep scoring the ledger, and never again claim more than the deep
+validation supports. US-twin caveat: validation sample, not live levels —
+FX separates the lines intraday.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -21,6 +21,18 @@ PRE-REGISTERED PROTOCOL (written before results were seen):
   Q4 pair selectors (densest vs max-P): hit + capture per period
 This protocol exists because three in-window "edges" (68% selector, breadth,
 crowding) evaporated under window rolls — see STRATEGY.md days 9-13.
+
+RESULTS (2026-07-16, first run — recorded so the verdicts are permanent):
+  Q1 base rate: 50.4-54.7% by quarter (mild long drift, regime-dependent).
+  Q2 REFUTED: ramp-fade. Fade after +0.5% ramps = 45.4/50.5/42.7/47.4% —
+     below 50% in 3 of 4 quarters. The 60d "61% fade" was a window mirage.
+  Q3 NOT VALIDATED: the 0.55-bar qualified pool beat its naive-side base in
+     only 3 of 4 quarters (P1: 47.3% vs 53.3% — worse). No pool-level edge.
+  Q4 VALIDATED (the only one): densest pair leg beat the pool AND max-P in
+     all four quarters (54.7/54.3/56.0/52.9%; capture +0.024/+0.060/+0.121/
+     +0.150%). Pooled: 239/439 = 54.4%, z=1.86 vs coin (p≈0.03), weighted
+     capture +0.094%/leg PRE-COST. Real, thin, marginal — state it exactly
+     that way.
 """
 
 import json
