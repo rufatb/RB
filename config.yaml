@@ -82,6 +82,12 @@ scan:
   # which uses cross-lens AGREEMENT instead of time-persistence. min_persistence
   # only applies to the legacy 5-min loop mode.
   min_persistence: 2
+  # UNIVERSE IS DELIBERATELY COMPACT (day-14, validate_universe.py): a 61-name
+  # TSX-60-style expansion was tested and REJECTED — densest pair legs fell to
+  # 40-50% with negative capture because low-volatility names (EMA/BCE/T/L/H)
+  # hijack the density selection; per-name normalization fixed nothing and
+  # broke the year-long validated result. Do NOT widen this list unless the
+  # expansion passes the deep four-quarter protocol in validate_deep.py.
   universe:                       # liquid TSX names; anchor ticker auto-added
     - AC.TO
     - RY.TO

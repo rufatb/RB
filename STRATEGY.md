@@ -632,6 +632,25 @@ sizes, keep scoring the ledger, and never again claim more than the deep
 validation supports. US-twin caveat: validation sample, not live levels —
 FX separates the lines intraday.
 
+### Addendum: universe expansion (21 → 61) tested and REJECTED
+User's proposal: scan far more names so better opportunities aren't missed.
+Tested properly (validate_universe.py): built a 61-name TSX-60-style list,
+ALL passing a $10M/day median dollar-volume screen, and re-ran the
+walk-forward pair machinery. Result: densest legs COLLAPSED to 40-50%% hit
+with negative capture in 3 of 4 blocks (vs 51-60%% for the 21-name list on
+identical data). Mechanism, verified by inspecting the picked legs: the
+density selector's "familiarity" measure is hijacked by low-volatility
+utilities/telecoms/staples (EMA, BCE, T, L, H) that sit at the centre of
+the pooled feature space every single day — permanently "familiar," no
+signal, tiny moves. Per-name volatility normalization did not rescue the
+wide universe (26.9-46.4%%) AND broke the year-long validated result on 20
+names (fails the all-quarters rule). Both changes rejected. **The
+familiarity edge lives in a compact, homogeneous, liquid universe —
+breadth dilutes it.** "Opportunities outside the radar" were looked for,
+measured, and do not exist for this machine. The 21-name list and global
+feature scaling stand; any future expansion must pass the deep
+four-quarter protocol first.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
