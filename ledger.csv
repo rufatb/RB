@@ -65,3 +65,11 @@ date,ticker,side,p_sided,confidence,p945,role,r1,hit
 2026-07-16,AEM.TO,SHORT,0.580,sparse,194.5200,board,-0.833,1
 2026-07-16,RY.TO,SHORT,0.557,sparse,303.4600,board,-0.099,1
 2026-07-16,CM.TO,SHORT,0.552,mid,167.7600,pair,1.109,0
+2026-07-17,BCE.TO,LONG,0.650,mid,31.2600,board,,
+2026-07-17,T.TO,LONG,0.617,mid,14.9700,board,,
+2026-07-17,CP.TO,LONG,0.614,mid,131.0000,board,,
+2026-07-17,CNQ.TO,LONG,0.587,sparse,61.0100,board,,
+2026-07-17,CNR.TO,LONG,0.575,mid,180.4900,pair,,
+2026-07-17,TRP.TO,LONG,0.564,sparse,98.6300,board,,
+2026-07-17,ABX.TO,SHORT,0.592,sparse,47.7800,board,,
+2026-07-17,NTR.TO,SHORT,0.586,mid,94.6600,pair,,
