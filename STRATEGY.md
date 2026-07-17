@@ -651,6 +651,27 @@ measured, and do not exist for this machine. The 21-name list and global
 feature scaling stand; any future expansion must pass the deep
 four-quarter protocol first.
 
+## Day-15: a clean 2/2 — and the top of the board blew up without us
+
+Pair: CNR long +0.25%% (the user's "end spike" was the ROAD pattern — faded
+to −0.45%% by 14:55, within the printed median swing, then the last hour
+paid; second identical V this week) and NTR short −0.45%% captured. Fills
+inside bounds both legs; realized ≈ +$193 at printed size. Board 4/8.
+
+The live lesson worth recording: the two HIGHEST-P picks on the board were
+the day's disasters — BCE (P=0.65, top of board) −2.05%% and T (0.62)
+−2.74%%, a telecom sector collapse. Max-P would have handed the user BCE
+as the headline long; density selection took CNR (rank #5 by P) and won.
+Recurring live confirmation of the day-14 deep finding: no P gradient,
+extremity is often the trap. Both telecoms escaped peer machinery (group
+of 2 — below all thresholds): observation only, NOT a rule; "avoid
+telecoms" and "last-hour reversion" are exactly the kind of n=1 patterns
+the discipline exists to refuse.
+
+Cumulative: 37/74 (50%%); PAIR 5/10; dense tag 54%% / +0.12%% capture —
+still the only cohort with positive capture, still tracking the
+deep-validation number. Nothing encoded; nothing loosened.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
