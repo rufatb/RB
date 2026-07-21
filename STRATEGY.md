@@ -699,6 +699,38 @@ the measured trade-off stated. Honesty note: −2.5%% would NOT have saved
 today's TD (bottomed −2.44%% — inside the line); its value is the −3%%+
 true disasters. Today's protection was the pair structure, and it worked.
 
+## Day-17: rebound day — the pitfall-avoidance rules that FAILED their test
+
+### What happened
+Day after the dump: broad rebound. Board 6/8 — ALL six longs hit; both
+shorts (SHOP pair leg −1.44%% against, T.TO board −2.42%% against) were
+sparse gap-down continuation calls that the bounce ran over. User's pair:
+MFC long +0.47%% realized (WIN, the dense #1-by-P leg), SHOP short −1.42%%
+realized (LOSS — flagged "sparse, thinner evidence" in the morning report
+itself). Net ≈ −$238 at printed size. PAIR line 7/14.
+
+### Two pre-registered hypotheses from today's shape — BOTH REJECTED
+Tested on the year data with live-faithful density labels, all-quarters rule:
+1. **"Sparse leg → no leg": REJECTED.** Sparse pair legs hit 57/54/71/43%%
+   by quarter (above 50%% in 3 of 4, positive capture in 3 of 4); dropping
+   them worsens Q1 and Q4. Today's SHOP loss and day-13's CP WIN are the
+   same cohort — one bad draw does not condemn it.
+2. **"Minority-side leg on a ≥75%%-tilted board → no leg": REJECTED.**
+   Against-the-tilt legs hit 53-61%% with the BEST capture of any cohort
+   in Q3/Q4 (+0.488%%/+0.274%%); dropping them guts Q3 (+0.192→+0.069%%).
+   The lone qualifier against a trending board is historically a strong
+   trade that happened to lose today (and day-13).
+
+### The standing lesson
+The discipline's value is REFUSING adjustments as much as making them —
+five candidate "fixes" have now failed the four-quarter protocol
+(normalization, universe expansion, crowding gate, sparse-drop,
+minority-drop) while exactly one rule ever passed it (densest leg). A
+losing leg is the tuition of a ~54%% system; the hedge (MFC's win
+offsetting most of SHOP's loss) and the printed size remain the actual
+protections. Nothing changed; the reasons are recorded here so tomorrow's
+bad day doesn't re-litigate them.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
