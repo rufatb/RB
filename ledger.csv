@@ -86,3 +86,11 @@ date,ticker,side,p_sided,confidence,p945,role,r1,hit
 2026-07-20,CNR.TO,SHORT,0.563,dense,180.2000,board,-1.160,1
 2026-07-20,T.TO,SHORT,0.556,dense,14.5200,board,-0.344,1
 2026-07-20,NTR.TO,SHORT,0.551,mid,93.3100,board,0.375,0
+2026-07-21,MFC.TO,LONG,0.615,dense,60.1650,pair,,
+2026-07-21,SLF.TO,LONG,0.610,mid,113.8100,board,,
+2026-07-21,CVE.TO,LONG,0.586,sparse,40.4300,board,,
+2026-07-21,ABX.TO,LONG,0.579,sparse,49.9100,board,,
+2026-07-21,BMO.TO,LONG,0.575,mid,250.7500,board,,
+2026-07-21,AEM.TO,LONG,0.564,sparse,195.3300,board,,
+2026-07-21,SHOP.TO,SHORT,0.604,sparse,171.2700,pair,,
+2026-07-21,T.TO,SHORT,0.571,sparse,14.0500,board,,
