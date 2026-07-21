@@ -125,3 +125,19 @@ def test_on_time_run_has_no_banner(capsys):
            "late_min": 1.0, "stale_after_min": 20, "spent_drift_pct": 0.3}
     r945.render(res)
     assert "LATE RUN" not in capsys.readouterr().out
+
+
+def test_disaster_level_prices():
+    # Day-16: -2.5% from the print, mirrored for shorts.
+    import r945 as _r
+    assert _r.disaster_level("LONG", 173.55, 2.5) == pytest.approx(169.21, abs=0.01)
+    assert _r.disaster_level("SHORT", 98.11, 2.5) == pytest.approx(100.56, abs=0.01)
+
+
+def test_disaster_line_printed_on_book_leg(capsys):
+    res = _res(late_min=1.0)
+    res["disaster_stop_pct"] = 2.5
+    import r945 as _r
+    _r.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "disaster line" in out and "OPTIONAL circuit-breaker" in out

@@ -193,6 +193,11 @@ pair:
   max_chase_pct: 0.15     # worst acceptable fill vs the printed price; a fill
                           # past the bound = NO TRADE (day-11 close: a winning
                           # CP short captured 0 because the fill chased -0.34%)
+  disaster_stop_pct: 2.5  # printed per-leg disaster line (day-16 year-test:
+                          # exiting beyond -2.5% was EV-neutral all four
+                          # quarters and cut the worst leg -3.9% -> -2.6%;
+                          # tighter stops failed). OPTIONAL circuit-breaker —
+                          # hold-to-close remains the validated default.
 
 # Midday from-here selection gates (midday.py). A side qualifies on the
 # from-here conditional alone only past the strong threshold; inside the soft

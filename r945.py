@@ -188,6 +188,18 @@ def fill_bound(side: str, decision_px: float, max_chase_pct: float = 0.15) -> fl
     return decision_px * (1 + c) if side == "LONG" else decision_px * (1 - c)
 
 
+def disaster_level(side: str, p945: float, pct: float = 2.5) -> float:
+    """Price at `pct` percent against the leg from the 9:45 print. Day-16
+    year-test (stop_test, four-quarter): exiting beyond -2.5% was EV-NEUTRAL
+    in all four quarters (max diff 1.4bp) and cut the worst leg -3.88% ->
+    -2.55%; tighter stops (-2.0%/-1.5%) FAILED (they stop out the V-day
+    winners). Strictly the pre-registered adoption bar failed by 0.2bp, so
+    hold-to-close stays the validated DEFAULT — this line is printed as an
+    optional, exactly-quantified circuit-breaker, never a silent contract
+    change. Pure + testable."""
+    return p945 * (1 - pct / 100.0) if side == "LONG" else p945 * (1 + pct / 100.0)
+
+
 def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
     """Exclude any qualified pick whose direction opposes >= min_opposed
     qualified picks in its own peer group (day-8 lesson: TD short 0.55 against
@@ -360,6 +372,7 @@ def run(cfg, workers=8):
             "stale_after_min": pcfg.get("stale_after_min", 20),
             "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
             "max_chase_pct": pcfg.get("max_chase_pct", 0.15),
+            "disaster_stop_pct": pcfg.get("disaster_stop_pct", 2.5),
             "path_stats": path_stats}
 
 
@@ -431,6 +444,13 @@ def render(res, book=False):
                     print(f"      normal swing AGAINST this leg before close: median {med:+.1f}% / "
                           f"worse-quartile {worse:+.1f}% (n={ps['n']} sessions).")
                     print("      A mid-day move of that size is the ROAD, not the verdict — hold to 3:55.")
+                dpct = res.get("disaster_stop_pct")
+                if dpct:
+                    dl_px = disaster_level(side.upper(), r["p945"], dpct)
+                    print(f"      disaster line {dl_px:.2f} ({'-' if side == 'long' else '+'}{dpct}% from print): "
+                          "beyond it the day is a tail event. Year-tested: exiting")
+                    print("      there cost ~nothing in EV and capped the worst leg at -2.6% vs -3.9%.")
+                    print("      OPTIONAL circuit-breaker — the validated default is still hold to 3:55.")
             else:
                 print(f"      entry ~now · flat by 3:55")
             if lg.get("warning"):

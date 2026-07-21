@@ -672,6 +672,33 @@ Cumulative: 37/74 (50%%); PAIR 5/10; dense tag 54%% / +0.12%% capture —
 still the only cohort with positive capture, still tracking the
 deep-validation number. Nothing encoded; nothing loosened.
 
+## Day-16: the market-dump day — the pair structure was the protection
+
+### What happened
+TSX fell −1.06%% from 9:45; ALL financials collapsed together (RY −2.17%%,
+BMO −2.04%%, MFC −1.82%%, TD −2.44%%). Pair: TD long (crowd-warned) −2.44%%
+— a genuine tail day, beyond the printed worse-quartile road within 25
+minutes — and TRP short +1.79%% captured. Net at printed size ≈ −$75 on a
+−1%% tape day: the ~market-neutral pair did exactly what it exists to do.
+Board 4/13. Crowd-warned pair legs are now 0/3 live (CM long d-11, CM
+short d-13, TD long d-16) — still n=3 on an unstable stat; warning, not
+gate.
+
+### The one adjustment today motivates: a DISASTER STOP — year-tested
+Pre-registered criteria, tested on the year-long data across all four
+quarters (scratchpad stop_test, results permanent here):
+- Stops at −2.0%%/−1.5%%/−1.0%% FAIL — they stop out the V-day winners
+  (Q4 capture collapses +0.135%%→+0.044%% at −2.0%%).
+- −2.5%% is EV-NEUTRAL in all four quarters (max diff 1.4bp = noise) and
+  cuts the worst leg −3.88%% → −2.55%%.
+- Strict pre-registered adoption bar (capture ≥ in ≥3/4 quarters) failed
+  by 0.2bp, so the validated hold-to-close contract is UNCHANGED.
+**Encoded as an OPTIONAL printed circuit-breaker** (`r945.disaster_level`,
+`pair.disaster_stop_pct: 2.5`): each leg prints its disaster price with
+the measured trade-off stated. Honesty note: −2.5%% would NOT have saved
+today's TD (bottomed −2.44%% — inside the line); its value is the −3%%+
+true disasters. Today's protection was the pair structure, and it worked.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
