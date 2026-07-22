@@ -731,6 +731,27 @@ offsetting most of SHOP's loss) and the printed size remain the actual
 protections. Nothing changed; the reasons are recorded here so tomorrow's
 bad day doesn't re-litigate them.
 
+## Day-18: the first one-legged day — two structural bugs caught before entry
+
+Board: nine qualified longs, ZERO shorts — the contract's "no forced leg"
+case arrived. Two defects surfaced and were fixed BEFORE the user entered:
+1. **One-legged sizing inverted risk.** The allocator gave the lone MFC leg
+   the WHOLE $50k book — double single-name risk on a day with no hedge.
+   Fixed: the book divides by at least two legs (`allocate_book min_legs`);
+   a missing leg now reduces exposure (lone leg ≈ $25k, rest stays cash).
+2. **Bar revision + re-publication.** A verification re-render 5 minutes
+   later saw REVISED Yahoo bars (SHOP's first-15m print changed), produced
+   a different board (CM/SHOP "pair"), and silently appended them to the
+   ledger as pair rows. Accidental rows removed (documented here — the only
+   ledger edit ever made, correcting a tool artifact, not an outcome);
+   encoded **PUBLISH-ONCE**: the first --book run of a date is THE
+   publication; any later run prints "informational ONLY" and cannot touch
+   the ledger. The (date,ticker) dedupe alone was insufficient because
+   revised bars qualify NEW tickers.
+Lesson class: the 9:46 board is built on bars that the source may still
+revise for minutes afterward. The publication is the decision; everything
+after is commentary.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -125,16 +125,18 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr), nd
 
 
-def allocate_book(picks: list, equity: float, max_book_pct: float) -> list:
-    """Equal-weight share counts across ALL qualified picks, total book capped
-    at max_book_pct of equity. WHY: the once-daily workflow enters immediately
-    and holds to close with NO intraday stop — sizing IS the entire risk
-    control, so no single pick may dominate and the whole book stays capped.
-    Pure + testable."""
+def allocate_book(picks: list, equity: float, max_book_pct: float,
+                  min_legs: int = 2) -> list:
+    """Equal-weight share counts, total book capped at max_book_pct of equity,
+    divided by AT LEAST min_legs. WHY: sizing IS the entire risk control in
+    the no-stop workflow — and on a one-legged day (day-18: nine longs, zero
+    shorts) the missing leg must REDUCE total exposure, not double the
+    surviving leg: a lone leg has no market hedge, so it gets the standard
+    per-leg size and the rest of the book stays in cash. Pure + testable."""
     n = len(picks)
     if n == 0 or equity <= 0:
         return picks
-    alloc = equity * (max_book_pct / 100.0) / n
+    alloc = equity * (max_book_pct / 100.0) / max(n, min_legs)
     for r in picks:
         px = r.get("last") or r.get("p945")
         r["shares"] = int(alloc // px) if px else 0
@@ -514,6 +516,17 @@ def main(argv=None):
         if picks and not res.get("too_early"):
             import ledger
             date = res["now"][:10]
+            # PUBLISH-ONCE (day-18): a re-run minutes later can see REVISED
+            # early bars (seen live: SHOP's first-15m print changed between
+            # 9:47 and 9:52, producing a different board). The first --book
+            # run of the day is THE publication; later runs must never add
+            # or alter rows — the (date,ticker) dedupe alone is not enough
+            # because revised bars qualify NEW tickers.
+            if any(r["date"] == date for r in ledger.load()):
+                print(f"\n  [ledger: {date} already published — this re-run is "
+                      "informational ONLY; the first board of the day stands]")
+                render(res, book=args.book)
+                return
             pair_ids = {id(r) for r in pair_picks}
             lrows = [{"ticker": r["t"],
                       "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",

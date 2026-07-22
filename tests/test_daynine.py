@@ -101,3 +101,36 @@ def test_ledger_old_rows_without_role_still_load(tmp_path):
     assert rows2[0]["role"] == ""
     assert "PAIR legs" not in ledger.report(
         [dict(rows2[0], hit="1", r1="0.5")])     # legacy rows never count as pair
+
+
+def test_single_leg_day_gets_half_book_not_all(  ):
+    # Day-18: a one-legged day must REDUCE exposure — the lone leg gets the
+    # standard per-leg size (book/2), never the whole book.
+    pick = _pick("MFC.TO", 0.60, 0.4, p945=60.63) | {"last": 60.70}
+    r945.allocate_book([pick], equity=100_000, max_book_pct=50)
+    assert pick["alloc"] <= 25_000
+    assert pick["shares"] == int(25_000 // 60.70)
+
+
+def test_publish_once_guard_blocks_second_book_run(tmp_path, monkeypatch, capsys):
+    # Day-18: a later --book re-run (revised bars -> different board) must
+    # not add or alter ledger rows; the first publication stands.
+    path = str(tmp_path / "ledger.csv")
+    monkeypatch.setattr(ledger, "LEDGER", path)
+    ledger.append_picks([{"ticker": "MFC.TO", "side": "LONG", "p_sided": 0.60,
+                          "confidence": "dense", "p945": 60.63, "role": "pair"}],
+                        "2026-07-22", path)
+    fake = {"now": "2026-07-22T09:52:00", "n_names": 21, "min_p": 0.55,
+            "longs": [dict(_pick("CM.TO", 0.55, 0.3, tag="dense", p945=166.08),
+                           last=166.42, r0=0.17, gap=0.08)],
+            "shorts": [], "excluded": [], "too_early": False,
+            "late_min": 6.0, "stale_after_min": 20, "spent_drift_pct": 0.3,
+            "max_chase_pct": 0.15, "live_record": None}
+    fake["pair"] = r945.pair_of_day(fake["longs"], [])
+    monkeypatch.setattr(r945, "run", lambda cfg, workers: fake)
+    monkeypatch.setattr(r945, "load_config", lambda p: {"risk": {"account_equity": 100000}})
+    r945.main(["--book"])
+    out = capsys.readouterr().out
+    assert "already published" in out
+    rows = ledger.load(path)
+    assert len(rows) == 1 and rows[0]["ticker"] == "MFC.TO"   # nothing added
