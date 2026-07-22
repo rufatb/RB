@@ -774,6 +774,32 @@ carries open-ended gap risk that no intraday line protects. VERDICT: the
 intraday contract is the best risk-adjusted expression by a wide margin;
 weekly holds trade beta with 4x the pain. Daily workflow unchanged.
 
+## Day-19: the prediction hit; the fill lost — and the order gets a clock
+
+### What happened
+One-legged day (MFC long only). The model's call was CORRECT: 9:45 print
+60.63 → close 60.67, +0.06%%, a scored HIT (PAIR line 8/15 = 53%%, on the
+validated ~54%%). The user's fill was 60.92 — 0.21%% PAST the printed fill
+bound (≤60.79), bought inside the 9:50-10:55 spike to 61.12 — and rode
+−0.41%% down from there. Under the system's own printed rule the correct
+action at 60.92 was NO TRADE. Same failure shape as day-11's CP short
+(winning call, chased fill, captured nothing), now on the long side.
+
+### "Accuracy is decreasing" — checked against the record
+The traded PAIR line is 8/15 with 3 of the last 5 hitting — exactly on
+the stated ~54%% expectation. What has cost money this week is not the
+direction calls; it is the gap between the printed contract and the
+executed trade (4x size day-13, bound violations day-19). The system
+cannot out-predict its own execution.
+
+### Encoded
+**Entry window** (`pair.entry_window_min`, default 10): every order now
+prints "order window: until HH:MM ET — unfilled by then (or bound
+broken): NO TRADE today." Price was already bounded; TIME wasn't — and
+MFC drifted back inside the price bound at 11:10, where an entry would
+have been an 85-minute-late unvalidated bet (the day-11 principle). The
+order now expires on whichever bound breaks first.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

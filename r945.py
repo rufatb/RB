@@ -375,6 +375,7 @@ def run(cfg, workers=8):
             "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
             "max_chase_pct": pcfg.get("max_chase_pct", 0.15),
             "disaster_stop_pct": pcfg.get("disaster_stop_pct", 2.5),
+            "entry_window_min": pcfg.get("entry_window_min", 10),
             "path_stats": path_stats}
 
 
@@ -440,6 +441,17 @@ def render(res, book=False):
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
                 print(f"      fill bound: {'≤' if side == 'long' else '≥'} {bound:.2f} — "
                       "past that the edge is spent before entry: NO TRADE")
+                # Day-19: TIME bounds the order too — price can wander back
+                # inside the bound an hour later, but that is a different,
+                # unvalidated bet (a +0.06% winning call became a -0.41% ride
+                # via a chased 60.92 fill during the 9:50-10:55 pop).
+                ew = res.get("entry_window_min")
+                if ew:
+                    import datetime as _dt
+                    t0 = _dt.datetime.fromisoformat(res["now"])
+                    tend = (t0 + _dt.timedelta(minutes=ew)).strftime("%H:%M")
+                    print(f"      order window: until {tend} ET — unfilled by then "
+                          "(or bound broken): NO TRADE today")
                 ps = res.get("path_stats")
                 if ps:
                     med, worse = ps[side]

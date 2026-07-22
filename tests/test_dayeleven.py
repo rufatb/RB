@@ -141,3 +141,14 @@ def test_disaster_line_printed_on_book_leg(capsys):
     _r.render(res, book=True)
     out = capsys.readouterr().out
     assert "disaster line" in out and "OPTIONAL circuit-breaker" in out
+
+
+def test_entry_window_printed_on_order(capsys):
+    # Day-19: the order carries a TIME bound, not just a price bound.
+    res = _res(late_min=1.0)
+    res["entry_window_min"] = 10
+    import r945 as _r
+    _r.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "order window: until 10:45 ET" in out       # now=10:35 in _res
+    assert "NO TRADE today" in out

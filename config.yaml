@@ -193,6 +193,11 @@ pair:
   max_chase_pct: 0.15     # worst acceptable fill vs the printed price; a fill
                           # past the bound = NO TRADE (day-11 close: a winning
                           # CP short captured 0 because the fill chased -0.34%)
+  entry_window_min: 10    # orders are valid this many minutes after
+                          # publication; unfilled (or bound broken) -> NO
+                          # TRADE (day-19: a winning +0.06% call became a
+                          # -0.41% ride via a 60.92 chase; price re-entered
+                          # the bound at 11:10 but 85 min late = day-11 bet)
   disaster_stop_pct: 2.5  # printed per-leg disaster line (day-16 year-test:
                           # exiting beyond -2.5% was EV-neutral all four
                           # quarters and cut the worst leg -3.9% -> -2.6%;
