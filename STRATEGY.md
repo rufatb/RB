@@ -752,6 +752,28 @@ Lesson class: the 9:46 board is built on bars that the source may still
 revise for minutes afterward. The publication is the decision; everything
 after is commentary.
 
+## Side-quest research: hold the pair legs for a week? (NO — measured)
+
+Question: is holding the daily pair legs 1-5 sessions better than intraday?
+Year-data answer (439 legs, walk-forward, per-quarter):
+
+| horizon | mean capture | hit | std | worst leg | mean/std |
+|---|---|---|---|---|---|
+| 0d (current) | +0.094%% | 54.4%% | 1.09%% | −3.9%% | 0.086 |
+| 1d | +0.143%% | 53.4%% | 2.07%% | −8.8%% | 0.069 |
+| 3d | +0.183%% | 49.9%% | 3.37%% | −15.3%% | 0.054 |
+| 5d | +0.177%% | 51.3%% | 3.95%% | −17.6%% | 0.045 |
+
+Mean capture creeps up with horizon but risk explodes (3.6x std, 4.5x
+tail) and hit decays to a coin flip; quarters flip sign at every horizon
+past 0d (fails the all-quarters rule). The decomposition is decisive:
+LONG legs 5d = +0.62%% while SHORT legs 5d = −0.39%% — the multi-day
+"return" is just market drift (beta), not signal; the engine's edge has a
+shelf life of ONE session. A week-held short additionally pays borrow and
+carries open-ended gap risk that no intraday line protects. VERDICT: the
+intraday contract is the best risk-adjusted expression by a wide margin;
+weekly holds trade beta with 4x the pain. Daily workflow unchanged.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
