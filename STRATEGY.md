@@ -800,6 +800,38 @@ MFC drifted back inside the price bound at 11:10, where an entry would
 have been an 85-minute-late unvalidated bet (the day-11 principle). The
 order now expires on whichever bound breaks first.
 
+## Day-20: a PROFITABLE day read as a failure — and the 6th rejected "double down"
+
+### The dollars (user's own fills, both inside bounds)
+NTR long 258 sh: 96.97 -> 96.48 = -$126.  SHOP short 153 sh: 162.45 ->
+157.86 = +$702.  **NET +$576** at printed size. The pair did EXACTLY what
+it is built to do: both fills inside the bounds, the short winner (+2.83%%
+captured) dwarfed the long loser (-0.51%%) — the documented short-capture
+asymmetry (day-1) paying out. This was one of the best days of the run,
+experienced as a disappointment because attention anchored on the one red
+leg. PAIR line 9/17 = 53%%, on the ~54%% expectation.
+
+### "Double down on the better prediction" — tested, REJECTED (6th time)
+The intuition: SHOP had aligned down-momentum (gap -1.18%%, first-15m
+-1.20%%); NTR was conflicted (gap +0.77%%, first-15m -0.08%%). Pre-registered
+year test (align_test.py, all four quarters): aligned legs 54.4%% vs
+conflicting legs 54.5%% (z=-0.02); conflicting legs had BETTER capture in
+all four quarters; dropping them lowers returns every quarter. Momentum
+alignment has ZERO predictive value. You cannot identify the better leg at
+9:46 — that is not a tooling gap, it is the measured nature of a ~54%% edge.
+Rejected fixes now number SIX (normalization, universe expansion, crowding,
+sparse-drop, minority-drop, momentum-alignment) against ONE that ever
+passed (densest selection).
+
+### The standing truth to internalize
+A ~54%% pair means ~46%% of legs lose, unpredictably, and the edge is
+delivered by the short-side capture asymmetry over many days — NOT by
+being right on any given morning. "Prevent the misses / double down on the
+winners" is mathematically the request to predict which coin-flip-plus lands
+heads; every attempt overfits and the year data kills it. The system's job
+is to keep taking both legs at printed size and let the asymmetry compound.
+Nothing encoded today; the discipline held and the day made money.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
