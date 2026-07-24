@@ -832,6 +832,56 @@ heads; every attempt overfits and the year data kills it. The system's job
 is to keep taking both legs at printed size and let the asymmetry compound.
 Nothing encoded today; the discipline held and the day made money.
 
+## Day-21: full review — run time re-tested on a year (9:35 refuted, 9:40 rejected)
+
+### Today
+Board 11/13 — the best board of the run (9 of 10 longs hit; both other
+energy shorts, CNQ -1.42%% and CVE -1.67%%, were big winners). PAIR: BNS
+long +0.18%% HIT, TRP short -0.09%% miss (TRP was down to 99.08 at lunch
+and ground back). Net -$17 at printed size — a scratch. PAIR line 10/19.
+
+### The live book, as instructed at printed size (21 legs, 11 sessions)
+  long legs   45%% win, avg -0.181%%, -$498
+  short legs  50%% win, avg +0.231%%, +$577
+  ALL         48%% win, avg +0.015%%, **+$79**
+Flat-to-positive, with the short-capture asymmetry carrying the book
+exactly as the year validation described. **Execution is no longer a
+leak**: measured against the 9:45 prints, fills now run +0.036%%/leg in
+the trader's FAVOUR (+$163 over 18 legs); the only material negative was
+the day-18 bound violation (-0.47%%). Fill bounds + entry windows worked.
+
+### Run-time question re-opened properly (validate_time_deep.py)
+The original time test used the 60-day Yahoo window; day-12 proved those
+produce mirages, so the whole question was re-run on the year-long
+US-twin data (5,160 ticker-sessions) with the adoption bar pre-registered.
+- **9:35 REFUTED.** The "earlier = more opportunities + better entries"
+  hypothesis fails on every axis: 49.2%% hit (below a coin flip), capture
+  negative in 3 of 4 quarters, and FEWER legs/session (1.74 vs 1.78), not
+  more. Two 5-minute bars do not resolve the opening rotation.
+- **9:40 met the bar, then failed the decisive paired test.** It beat
+  9:45 on capture in 4/4 quarters unpaired — so it earned the paired test
+  (paired_time.py) isolating the two possible channels: same-pick earlier
+  entry is worth -0.012%% (t=-0.60, better on 32/72 legs) and different-pick
+  selection is identical (+0.077%% vs +0.078%%, 53%% vs 55%%). Neither
+  channel carries an edge; the aggregate gap was composition noise, and
+  the two datasets disagree (60-day run scored 9:40 at 48.9%%).
+- **Decision: 9:46 stands.** Eighth candidate improvement rejected.
+
+### Codebase review
+149 tests green, 7,769 lines, 20 modules. Scanned for stale accuracy
+claims: every walked-back number (68%% selector, 61%% ramp-fade, 67%%
+gradient) now appears ONLY inside its own refutation — no unsupported
+claim can reach a morning report. Legacy 9:31-era modules (report/scan/
+midday/hold/confirm) remain tested but are no longer in the daily path.
+
+### Standing scoreboard of candidate improvements
+REJECTED (8): per-name normalization · universe expansion to 61 names ·
+crowding gate · sparse-leg drop · minority-leg drop · momentum-alignment ·
+multi-day holds · alternative run times (9:35/9:40/9:50/10:00/10:30).
+ADOPTED (1): densest-leg selection. Plus process rules that all paid off:
+too-early guard, late-run no-orders, fill bounds, entry windows, min-legs
+sizing, publish-once.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
