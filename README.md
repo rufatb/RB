@@ -318,6 +318,34 @@ with explicit guards against hindsight/lookahead bias:
 python backtest.py --ticker AC.TO --days 2000
 ```
 
+## Deep validation without a paid key (`validate_twins.py`)
+
+The four-quarter protocol that decides whether a rule ships. Yahoo caps 5-minute
+bars at 60 days — and 60-day windows have manufactured six separate "edges" that
+later evaporated — so this builds a **2-year** sample from hourly bars on the 20
+US dual-listings (~9,651 ticker-sessions, ~2x the original paid-data study) and
+replays the pair machinery walk-forward.
+
+```bash
+python validate_twins.py                      # rebuild + run (no API key)
+python validate_twins.py --cache twins.csv    # build once, re-use
+```
+
+**Caveat that must not be stripped:** its entry is 10:30 (the first hourly bar),
+not the live 9:45. It is a *mechanism* sample — it can refute or support how a
+rule behaves; it can never certify live 9:45 levels. The ledger's PAIR line
+remains the arbiter of live performance.
+
+### Equal-risk leg weighting
+
+On a two-leg day the pair is sized **inversely to each name's trailing
+entry→close volatility** (capped 35/65), not equal-dollar. Validated on 333
+two-legged sessions: NET volatility −11.8% with **lower volatility in all four
+quarters**, worst day −2.22% → −1.52%, mean return unchanged. It reduces the
+**size** of bad days, **not their frequency** — the hit rate is untouched,
+because it changes only how much of each leg you hold, never which leg is
+picked. Disable with `pair.risk_weight: false`.
+
 **Representative AC.TO result (≈2,400 evaluated days):**
 
 | Metric | Raw (pre-calibration) | Shipped (smoothing + shrinkage 0.5) |
@@ -358,6 +386,7 @@ indicate a lookahead bug than a real edge.
 | `analyst.py`  | Optional Claude advisory layer (read-only; never sets the verdict) |
 | `risk.py`     | Risk-first position sizing (equity-capped), margin & gap-risk math |
 | `backtest.py` | Lookahead-safe backtest (expanding window, decision-time info only) |
+| `validate_twins.py` | **Deep validation, free & re-runnable**: builds ~9,651 ticker-sessions (2yr, 20 US dual-listings, Yahoo hourly) and runs the pre-registered four-quarter protocol — no paid key |
 | `config.yaml` | ALL tunables — universe, sectors, thresholds, clamps, risk (no hardcoding) |
 | `STRATEGY.md` | Trading post-mortems + the rules encoded from them             |
 | `tests/`      | 78 tests: guardrails, patterns, adapters, analyst, backtest, scan, review |

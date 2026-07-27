@@ -203,6 +203,16 @@ pair:
                           # quarters and cut the worst leg -3.9% -> -2.6%;
                           # tighter stops failed). OPTIONAL circuit-breaker —
                           # hold-to-close remains the validated default.
+  risk_weight: true       # day-22: on a TWO-leg day weight the legs inversely
+                          # to each name's trailing entry->close volatility
+                          # instead of equal-dollar. Validated on 333 two-legged
+                          # sessions (2yr/20 US twins): NET std -11.8%, lower in
+                          # ALL FOUR quarters, worst day -2.22% -> -1.52%, mean
+                          # unchanged. It shrinks the SIZE of bad days, not
+                          # their frequency — the hit rate is untouched.
+  weight_cap: 0.35        # floor/ceiling on a leg's share of the book (35/65).
+                          # Risk-weighting must never become a single-name bet;
+                          # the median split is only 58/42, so this rarely binds.
 
 # Midday from-here selection gates (midday.py). A side qualifies on the
 # from-here conditional alone only past the strong threshold; inside the soft

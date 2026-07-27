@@ -21,7 +21,27 @@ validated WALK-FORWARD on a blind holdout before shipping:
     NO reliable hit-rate gradient above the 0.55 bar — treat every qualified
     signal as the same ~53-55% lean; do not overweight the "strongest" pick.
     Shorts hit slightly less often but capture ~2.7x more per win (asymmetric
-    down-moves).
+    down-moves). DAY-22 CORRECTION: this asymmetry is NOT present at scale.
+    On 809 walk-forward pair legs (2yr/20 US twin lines) the avg-win/avg-loss
+    ratio is 1.00x for shorts and 0.98x for longs, and per-quarter capture
+    flips sign on both sides. The 2.7x was another 60-day artifact — do not
+    size, select, or justify a leg with it.
+
+    DAY-22 (validate_twins.py — the deep set is now FREE and 2x bigger):
+    a 2-year / 20-US-twin / 9,651-ticker-session dataset is rebuildable from
+    Yahoo hourly bars with no paid key, replacing the TwelveData dependency.
+    Its entry is 10:30 (first hourly bar), so it PROXIES the mechanism and
+    cannot certify 9:45 levels. On it, NO selector separates from placebo
+    (densest 50.1%, max-P 48.3%, 2nd-densest 50.7%, random 50.2% — all inside
+    one standard error), and four further candidate edges were REJECTED:
+    beta-matched pairing, a tide-removed (cross-sectional) training target,
+    the two combined, and a one-legged-day penalty. Cross-sectional reversal
+    measured corr -0.11 on 60 days and -0.016 on 486 sessions with quarters
+    flipping sign — the sixth independent confirmation that a 60-day window
+    manufactures effects that do not exist. The pair is ALREADY ~tide-neutral
+    (beta +0.12 to the cross-sectional median; calm vs windy days differ by
+    0.02%), so the misses are idiosyncratic, not market exposure: there is
+    nothing left for a smarter selector to remove.
 
     DAY-9 (validate_pair.py): the densest estimate (smallest k-NN neighbour
     distance) beat every top-1 selector on every split — 68.0%/69.2%
@@ -126,22 +146,51 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
 
 
 def allocate_book(picks: list, equity: float, max_book_pct: float,
-                  min_legs: int = 2) -> list:
-    """Equal-weight share counts, total book capped at max_book_pct of equity,
-    divided by AT LEAST min_legs. WHY: sizing IS the entire risk control in
-    the no-stop workflow — and on a one-legged day (day-18: nine longs, zero
-    shorts) the missing leg must REDUCE total exposure, not double the
-    surviving leg: a lone leg has no market hedge, so it gets the standard
-    per-leg size and the rest of the book stays in cash. Pure + testable."""
+                  min_legs: int = 2, risk_weight: bool = True,
+                  weight_cap: float = 0.35) -> list:
+    """Share counts for the book, total capped at max_book_pct of equity and
+    divided by AT LEAST min_legs. WHY min_legs: sizing IS the entire risk
+    control in the no-stop workflow — and on a one-legged day (day-18: nine
+    longs, zero shorts) the missing leg must REDUCE total exposure, not double
+    the surviving leg: a lone leg has no market hedge, so it gets the standard
+    per-leg size and the rest of the book stays in cash.
+
+    EQUAL-RISK WEIGHTING (day-22, the 9th candidate tested and the 2nd ever
+    adopted): on a TWO-leg day the legs are weighted INVERSELY to each name's
+    trailing entry->close volatility instead of equal-dollar, so a jumpy name
+    cannot dominate the book's P&L. This predicts nothing new — it is a pure
+    variance identity — which is why it survived where six alpha claims died.
+    Validated on 333 two-legged sessions (2yr/20 US twin lines, walk-forward):
+    NET std 0.587 -> 0.518 (-11.8%), LOWER IN ALL FOUR QUARTERS, worst day
+    -2.22% -> -1.52%, mean return unchanged (-0.012 -> -0.005). It reduces the
+    SIZE of bad days, NOT their frequency — hit rate is untouched (same picks).
+    `weight_cap` bounds concentration to 35/65 so risk-weighting can never
+    become a disguised single-name bet; the median split is only 58/42.
+    Falls back to equal-dollar whenever vols are missing (back-compatible) or
+    the book is not exactly two legs — the only case validated. Pure+testable."""
     n = len(picks)
     if n == 0 or equity <= 0:
         return picks
-    alloc = equity * (max_book_pct / 100.0) / max(n, min_legs)
-    for r in picks:
+    book = equity * (max_book_pct / 100.0)
+    slots = max(n, min_legs)
+    vols = [r.get("vol") for r in picks]
+    usable = (risk_weight and n == 2
+              and all(v is not None and np.isfinite(v) and v > 0 for v in vols))
+    if usable:
+        w = np.array([1.0 / v for v in vols], dtype=float)
+        w = w / w.sum()
+        if weight_cap > 0:                      # bound single-leg concentration
+            w = np.clip(w, weight_cap, 1 - weight_cap)
+            w = w / w.sum()
+        allocs = (book * n / slots) * w
+    else:
+        allocs = [book / slots] * n
+    for r, alloc in zip(picks, allocs):
         px = r.get("last") or r.get("p945")
         r["shares"] = int(alloc // px) if px else 0
         r["alloc"] = round((r["shares"] * px) if px else 0, 0)
         r["adverse_2pct"] = round(r["alloc"] * 0.02, 0)
+        r["risk_weighted"] = bool(usable)
     return picks
 
 
@@ -338,14 +387,27 @@ def run(cfg, workers=8):
                       "short": (float(up.quantile(0.5)), float(up.quantile(0.75)))}
 
     # Density cutoffs from a sample of the training rows' own neighbourhoods.
+    # BUG FIX (day-22): the sampled row must be REMOVED from the training set
+    # before measuring its neighbourhood. Left in, it matches itself at
+    # distance 0 and drags the mean neighbour distance down — measured bias
+    # -2.4%, pushing both cutoffs ~2.3% low, so LIVE picks (which never match
+    # themselves) were tagged "sparse" more often than they had earned. Labels
+    # only — selection compares nd between live picks and is unaffected — but
+    # the dense tag is the pre-registered candidate for a future gate, so a
+    # biased label would corrupt the very evidence meant to decide it.
     sample = train.dropna(subset=FEATS + ["r1"]).sample(
         n=min(120, len(train)), random_state=7) if len(train) else train
     nds = []
-    for _, row in sample.iterrows():
-        res = knn_probability(train, {f: row[f] for f in FEATS})
+    for idx, row in sample.iterrows():
+        res = knn_probability(train.drop(index=idx), {f: row[f] for f in FEATS})
         if res[0] is not None:
             nds.append(res[2])
     cutoffs = (float(np.quantile(nds, 0.33)), float(np.quantile(nds, 0.67))) if nds else (0.0, 9e9)
+
+    # Per-name trailing volatility of the entry->close move, from the training
+    # window only (today is excluded upstream, so this cannot peek). Feeds the
+    # equal-risk leg weighting in allocate_book — see its docstring.
+    vol_by_t = train.groupby("t")["r1"].std() if len(train) else pd.Series(dtype=float)
 
     out = []
     for r in live:
@@ -353,7 +415,9 @@ def run(cfg, workers=8):
         p, n = res[0], res[1]
         if p is None:
             continue
+        v = vol_by_t.get(r["t"])
         r.update({"p_up": p, "n_train": n, "nd": res[2],
+                  "vol": float(v) if v is not None and np.isfinite(v) else None,
                   "confidence": density_label(res[2], cutoffs)})
         out.append(r)
     longs = sorted([r for r in out if r["p_up"] >= min_p], key=lambda r: -r["p_up"])
@@ -439,6 +503,9 @@ def render(res, book=False):
                                    res.get("max_chase_pct", 0.15))
                 print(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} {r['shares']} sh "
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
+                if r.get("risk_weighted"):
+                    print(f"      sized EQUAL-RISK (trailing vol {r['vol']:.2f}%/day): the legs hold "
+                          "different\n      dollar amounts so neither name dominates the book's P&L.")
                 print(f"      fill bound: {'≤' if side == 'long' else '≥'} {bound:.2f} — "
                       "past that the edge is spent before entry: NO TRADE")
                 # Day-19: TIME bounds the order too — price can wander back
@@ -519,8 +586,11 @@ def main(argv=None):
         pair = res.get("pair") or {}
         pair_picks = [lg["pick"] for lg in (pair.get("long"), pair.get("short"))
                       if lg and lg.get("pick")]
+        pcfg = cfg.get("pair") or {}
         allocate_book(pair_picks, rcfg.get("account_equity", 0),
-                      rcfg.get("max_position_pct", 50))
+                      rcfg.get("max_position_pct", 50),
+                      risk_weight=pcfg.get("risk_weight", True),
+                      weight_cap=pcfg.get("weight_cap", 0.35))
         # Permanent learning ledger: record picks at PUBLISH time (no hindsight).
         # Pair legs get role=pair (the executed record); the remaining board is
         # role=board — kept so density/crowding instrumentation keeps learning.

@@ -882,6 +882,109 @@ ADOPTED (1): densest-leg selection. Plus process rules that all paid off:
 too-early guard, late-run no-orders, fill bounds, entry windows, min-legs
 sizing, publish-once.
 
+## Day-22: the deep set rebuilt FREE and 2x bigger — 4 more rejections, 1 adoption
+
+### The question asked
+"Go deep, micro and macro, find why the picks miss and actually raise the
+9:46 accuracy." Answered by measurement, not opinion. Every claim below is
+re-runnable: `python validate_twins.py`.
+
+### First: the deep data problem was fixed
+`validate_deep.py` needs a TwelveData key AND a scratchpad of pre-downloaded
+JSON that does not survive a session — so the repo's only deep protocol was
+**unrunnable**, which is exactly how a 60-day artifact becomes permanent.
+Measured the alternatives: Yahoo hard-caps 5m bars at 60 days (confirmed,
+HTTP 422 beyond), but serves **hourly bars for 720 days**. TSX hourly bars
+come back with volume zeroed (86%% of rows — kills the `vp` feature); the US
+dual-listings do not. Result: `validate_twins.py`, **9,651 ticker-sessions /
+490 sessions / 20 names, free, rebuildable any time — ~2x the paid study's
+5,160.** Caveat carried everywhere: its entry is 10:30 (first hourly bar),
+so it is a MECHANISM sample and can never certify live 9:45 levels.
+
+### The diagnosis (why legs miss)
+- A universe name moves with the cross-sectional median ("the tide") **65-67%%
+  of the time** — far more reliably than the engine's own ~54%% edge. The tide
+  explains 6.8%% (60d/5m) to 24.0%% (2yr/1h) of single-name variance.
+- **But the pair already neutralises it.** The two-leg book's beta to the tide
+  is **+0.12**, and hedged calm vs windy days differ by 0.02%%/day (P(NET>0)
+  52%% vs 49%%). There is no market-exposure leak left to fix.
+- Therefore **the misses are idiosyncratic** — which is the same as saying
+  there is nothing left for a smarter selector to remove. This is the
+  quantified version of what days 13/14/17/20 kept concluding.
+
+### Four more candidates tested, ALL REJECTED (pre-registered, all-four-quarters)
+1. **Beta-matched pairing** (pick the long/short combo with the closest betas):
+   quarters +0.009/+0.046/-0.060/+0.016. Fails. Its premise was wrong anyway —
+   see the +0.12 beta above.
+2. **Tide-removed (cross-sectional) training target**: +0.020/-0.001/+0.004/
+   -0.032. Fails.
+3. **Both combined**: +0.036/-0.021/+0.052/+0.044 — and *smaller than the
+   2nd-densest placebo* (+0.030). Fails.
+4. **"One-legged days are structurally worse"**: unhedged days +0.029%%/day vs
+   hedged -0.012%%, quarters flip sign. Fails.
+
+### The sixth confirmation that 60 days manufactures edges
+Cross-sectional reversal (hardest first-15m riser underperforms after) measured
+**corr -0.11, Q5-Q1 spread -0.43%%, same sign in all four blocks on 60 days** —
+a textbook "discovery". On 486 sessions it is **corr -0.016, spread -0.005%%,
+quarters flipping sign**, portfolio win rate 48-51%%. A brand-new hypothesis
+class, same mirage. Also on the deep set: **no selector separates from
+placebo** (densest 50.1%%, max-P 48.3%%, 2nd-densest 50.7%%, random 50.2%% — the
+whole spread inside one standard error of 1.7pp).
+
+### A shipped claim was overturned
+**"Shorts capture ~2.7x more per win" is REFUTED at scale**: on 809 walk-forward
+legs the avg-win/avg-loss ratio is **1.00x for shorts, 0.98x for longs**, with
+per-quarter capture flipping sign on both sides. That number had been printed in
+the r945 header since day-1 and used to justify the short side. Corrected in
+place. (The live book's short-side outperformance stands as a live observation;
+what died is the claim that a structural 2.7x magnitude asymmetry drives it.)
+
+### ADOPTED (the 2nd rule ever to pass): equal-RISK leg weighting
+On a two-leg day the legs are now weighted **inversely to each name's trailing
+entry->close volatility** instead of equal-dollar, capped 35/65 so it can never
+become a single-name bet (median split is only 58/42).
+
+| metric | equal-DOLLAR | equal-RISK |
+|---|---|---|
+| NET std | 0.587 | **0.518 (-11.8%%)** |
+| worst day | -2.22%% | **-1.52%%** |
+| mean NET | -0.012%% | -0.005%% (unchanged) |
+| quarters with lower vol | — | **4 of 4** |
+
+**Why this one survived where nine alpha claims died: it predicts nothing.** It
+is a variance identity — stop letting the jumpier leg dominate the book — so
+there is no signal to overfit. State it honestly: it shrinks the **size** of bad
+days, **not their frequency**. The hit rate is untouched (same picks, same
+direction calls). Anyone who reads it as "more accuracy" has misread it.
+
+### Also fixed: a real bug in the density labels
+The dense/mid/sparse cutoffs were computed by measuring sampled training rows
+against a pool **containing themselves** — each matched itself at distance 0,
+biasing mean neighbour distance **-2.4%%** and both cutoffs ~2.3%% low, so live
+picks (which never self-match) were tagged "sparse" more often than earned.
+Selection is unaffected (it compares nd between live picks), but the dense tag
+is the pre-registered candidate for a future gate — a biased label would have
+corrupted the very evidence meant to decide it.
+
+### The honest answer to "raise the accuracy"
+Per-leg hit rate at 9:46 could not be raised, and the reason is now measured
+rather than asserted: the tide is already hedged out, the residual is
+idiosyncratic, and on 486 sessions the selection layer is statistically inert.
+Ten candidate improvements have now been rejected against two adopted. What
+improved today is **risk per unit of return** — a smaller worst day and 12%%
+less volatility for the same picks — plus a deep-validation protocol that
+anyone can re-run for free instead of trusting a number in a docstring.
+
+### Standing scoreboard
+REJECTED (12): per-name normalization · universe expansion · crowding gate ·
+sparse-leg drop · minority-leg drop · momentum-alignment · multi-day holds ·
+alternative run times · beta-matched pairing · cross-sectional target ·
+beta+cross-sectional · one-legged-day penalty.
+ADOPTED (2): densest-leg selection · equal-risk leg weighting.
+REFUTED CLAIMS: ramp-fade 61%% · 68%% selector · 67%% gradient · short 2.7x
+capture asymmetry.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
