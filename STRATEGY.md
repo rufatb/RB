@@ -985,6 +985,39 @@ ADOPTED (2): densest-leg selection · equal-risk leg weighting.
 REFUTED CLAIMS: ramp-fade 61%% · 68%% selector · 67%% gradient · short 2.7x
 capture asymmetry.
 
+### The close: the morning's diagnosis confirmed itself the same afternoon
+PAIR: **BMO long -0.166%% MISS, BCE short +0.464%% HIT — pair NET +0.149%%.**
+Neither leg came near its 2.5%% disaster line (BMO worst -1.09%% at 13:10, BCE
+worst +0.66%% at 10:40 — both inside the printed road). PAIR line 11/21 (52%%).
+
+**Board 4/11 — and the pair still made money. That is the whole thesis in one
+day.** The tide ran **-0.345%%** (15 of 21 names down, breadth 29%%) against a
+board that was **9 longs vs 2 shorts**. The long side was duly run over (2/9);
+the short side went 2/2; the hedge carried the day. A directional book on that
+board loses; the pair nets positive.
+
+**The 65-67%% tide-following base rate measured this morning printed 71%% this
+afternoon** — on the very session it was derived for. The diagnosis is not a
+backtest artifact.
+
+Two honest debits, neither of which may trigger a reversal:
+- **Equal-risk sizing COST ~$23 today** (+$50.54 vs +$73.78 equal-dollar),
+  because the winning leg (BCE, 1.05%%/day) was the jumpier one it down-weights.
+  This is the *expected* cost of a variance trade, not evidence against it: the
+  rule was adopted on 4-of-4 quarters of volatility reduction, and a single
+  favourable draw for the volatile leg is exactly the day it gives back. Day-17's
+  standing rule applies — one bad draw does not condemn a cohort.
+- **Max-P would have beaten density on BOTH legs today** (MFC +0.355%% vs BMO
+  -0.166%%; CVE +1.468%% vs BCE +0.464%%). n=1, and max-P measures *worse* over
+  809 legs (48.3%% vs 50.1%%) and lost to densest in all four quarters of the
+  day-14 study. Logged, not acted on. Recording it here is the point: the
+  temptation arrives on the days the shipped rule underperforms.
+
+One process note: the `--book` publication happened at 10:46, not 9:46, so the
+board was stale and the tool correctly printed **NO ORDER** on both legs rather
+than a live order line at expired prices. The day-11/day-19 machinery did its
+job — but for sized orders the `--book` run must happen AT 9:46.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
