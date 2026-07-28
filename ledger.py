@@ -24,7 +24,16 @@ LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
 # `role` (day-9): "pair" = a leg of THE PAIR (the picks actually executed under
 # the one-long-one-short workflow), "board" = qualified-but-not-traded context
 # kept for instrumentation. Pre-day-9 rows have role "" (whole-board era).
-FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role", "r1", "hit"]
+# `weight` (day-23): the leg's share of the BOOK CAPACITY at publish time.
+# WHY: since day-22 the two pair legs are sized by equal-RISK, not equal
+# dollars, so the equal-weighted "avg move captured" no longer equals what the
+# book earned — day-23 closed at -0.156% equal-weighted while the book made
+# +$94, because the calm winning leg held 65% of the money. Without this column
+# the ledger silently misreports the executed record from day-22 onward. Blank
+# on every pre-day-23 row and on board rows: the weights were computed at
+# publish time but not persisted, and rows are never back-edited (day-18).
+FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role",
+          "weight", "r1", "hit"]
 
 
 def load(path: str = LEDGER) -> list:
@@ -35,8 +44,10 @@ def load(path: str = LEDGER) -> list:
 
 
 def save(rows: list, path: str = LEDGER) -> None:
+    # restval="" so rows written before a column existed survive untouched
+    # rather than raising — the ledger is append-and-fill, never rewritten.
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=FIELDS, restval="")
         w.writeheader()
         w.writerows(rows)
 
@@ -50,9 +61,11 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
         key = (date, p["ticker"])
         if key in seen:
             continue
+        w = p.get("weight")
         rows.append({"date": date, "ticker": p["ticker"], "side": p["side"],
                      "p_sided": f"{p['p_sided']:.3f}", "confidence": p.get("confidence", "n/a"),
                      "p945": f"{p['p945']:.4f}", "role": p.get("role", "board"),
+                     "weight": f"{w:.4f}" if w is not None else "",
                      "r1": "", "hit": ""})
         added += 1
     save(rows, path)
@@ -90,6 +103,29 @@ def live_summary(rows: list, last_n: int = 20) -> dict | None:
             "recent_n": len(recent), "recent_hits": sum(int(r["hit"]) for r in recent)}
 
 
+def book_return_line(pair_rows: list) -> str:
+    """What the BOOK actually earned, per session, on allocated capacity.
+
+    Day-23: `avg move captured` averages the two legs EQUALLY, which stopped
+    matching reality on day-22 when equal-RISK sizing made the legs different
+    sizes. On day-23 the equal-weighted number was -0.156% while the book made
+    +$94, because the calm winning leg carried 65% of the money. This line is
+    the honest one for judging the executed strategy; the equal-weighted line
+    above stays as the clean measure of the DIRECTION calls. Pure + testable."""
+    weighted = [r for r in pair_rows if r.get("weight") not in (None, "")]
+    if not weighted:
+        return ("  book-weighted return : (recording starts day-23 — earlier "
+                "rows predate the weight column)")
+    by_day: dict = {}
+    for r in weighted:
+        capt = float(r["r1"]) * (1 if r["side"] == "LONG" else -1)
+        by_day.setdefault(r["date"], []).append(float(r["weight"]) * capt)
+    daily = [sum(v) for v in by_day.values()]
+    wins = sum(1 for d in daily if d > 0)
+    return (f"  book-weighted return : {sum(daily)/len(daily):+.3f}%/session on "
+            f"capacity over {len(daily)} sessions  ({wins}/{len(daily)} positive)")
+
+
 def report(rows: list) -> str:
     done = [r for r in rows if r["hit"] != ""]
     if not done:
@@ -112,6 +148,7 @@ def report(rows: list) -> str:
         out.append("  — THE PAIR (densest leg per side — the executed record) —")
         out.append(line("PAIR legs", pair_sub))
         out.append(line("board (untraded)", [r for r in done if r.get("role") == "board"]))
+        out.append(book_return_line(pair_sub))
     out.append("  — density hypothesis (pre-registered: dense > mid/sparse) —")
     for tag in ("dense", "mid", "sparse", "n/a"):
         sub = [r for r in done if r["confidence"] == tag]

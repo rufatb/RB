@@ -610,12 +610,22 @@ def main(argv=None):
                 render(res, book=args.book)
                 return
             pair_ids = {id(r) for r in pair_picks}
+            # Day-23: persist each pair leg's share of BOOK CAPACITY. Since the
+            # day-22 equal-risk change the legs are deliberately different
+            # sizes, so an equal-weighted capture no longer describes the book
+            # (day-23: -0.156% equal-weighted vs a +$94 book). Board rows get
+            # no weight — they are never traded.
+            book_cap = (rcfg.get("account_equity", 0)
+                        * rcfg.get("max_position_pct", 50) / 100.0)
             lrows = [{"ticker": r["t"],
                       "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
                       "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
                       "confidence": r.get("confidence", "n/a"),
                       "p945": r["p945"],
-                      "role": "pair" if id(r) in pair_ids else "board"} for r in picks]
+                      "role": "pair" if id(r) in pair_ids else "board",
+                      "weight": ((r.get("alloc") or 0) / book_cap
+                                 if (id(r) in pair_ids and book_cap) else None)}
+                     for r in picks]
             n = ledger.append_picks(lrows, date)
             if n:
                 print(f"\n  [ledger: {n} picks recorded for {date} "

@@ -1018,6 +1018,71 @@ board was stale and the tool correctly printed **NO ORDER** on both legs rather
 than a live order line at expired prices. The day-11/day-19 machinery did its
 job — but for sized orders the `--book` run must happen AT 9:46.
 
+## Day-23: the day the sizing rule paid for itself — and a miss that wasn't one
+
+### What happened
+Board **8/10** — a broad rally (tide **+1.190%**, breadth 76%). PAIR: **SLF long
++0.987%% HIT** (worst against just -0.07%%, a clean one-way trade) and **AEM short
+-1.298%% MISS**. Neither leg approached its disaster line (AEM worst +2.26%% at
+12:00 vs the +2.5%% line at 205.32 — the printed road held again).
+
+### The headline: equal-risk sizing turned a losing day into a winning one
+| | shares | P&L |
+|---|---|---|
+| equal-RISK (shipped day-22) | SLF 276 / AEM 87 | **+$93.96** |
+| equal-DOLLAR (the old rule) | SLF 212 / AEM 124 | **-$76.48** |
+
+**Worth +$170.44 today.** AEM's trailing vol was 1.83%%/day vs SLF's 0.87%%, so
+the rule put 65%% of the book on the calm leg and 35%% on the jumpy one — and the
+jumpy one was the loser. Day-22 the same rule COST $23 when the volatile leg
+won. Two sessions, +$147 net: that is precisely the shape of a variance trade,
+and precisely why it was adopted on volatility reduction rather than on returns.
+
+### The "big miss" was the market, not the pick
+Decomposed against the tide: **AEM +1.30%% actually BEAT the +1.19%% tide** — in
+market-neutral terms the short was **-0.11%%**, essentially median (rank 10 of
+21). Meanwhile the "correct long" SLF (+0.99%%) **UNDERperformed** the tide by
+-0.20%% (rank 12 of 21). The leg that felt like a disaster was the better
+relative call, and the leg that felt like a win was the worse one. A short
+against a +1.19%% tape loses in dollars no matter how good the name selection is
+— which is the entire reason the book carries a long leg at the same time.
+
+### "How do we avoid the bad short?" — every candidate is already dead
+Today's short hit four cohorts that have EACH been separately tested and
+rejected: sparse-tagged (day-17), minority side of a 9-long board (day-17),
+momentum-aligned gap-down continuation (day-20), small peer group (day-15). Two
+NEW hypotheses were pre-registered and tested on the deep set today:
+1. **"Don't short a big gap-down": REJECTED.** Pooled it looks real (bottom-gap
+   shorts hit 41.2%% vs 48.7%%), but it holds in only **3 of 4** quarters — and
+   the LONG side shows the identical pattern in 3 of 4, so it is a gap-bucket
+   artifact, not a short-specific edge. Pre-registration required it to exceed
+   the opposite side; it did not.
+2. **"Don't take legs already stretched from the prior close" (gap+r0 in the leg
+   direction): REJECTED.** 2 of 4 quarters. The 60-day set said the opposite of
+   the deep set (sparse-stretch shorts 80%% vs 48.7%%) — another window mirage.
+
+Rejections now number **14** against **2** adoptions. The honest answer to
+"avoid the bad short" is that this loss is not identifiable at 9:46 by any rule
+that survives its own out-of-sample test — it is the 46%% of legs that lose.
+
+### What the WINNING long teaches (wins get the same audit)
+SLF was **dense**, rank #2 by P, and never traded more than 0.07%% against the
+entry — it was correct within five minutes and stayed correct. There is no
+action in that: the live dense cohort is now **28/51 (55%%) with +0.01%% capture**,
+still the only tag beating its peers (mid 45%%, sparse 53%%), still tracking the
+day-14 deep number, still short of the ~20-tagged-day gate. Nothing to change.
+
+### Encoded: the ledger was silently misreporting the book (day-23 fix)
+`avg move captured` averages the two legs EQUALLY — correct until day-22 made
+them deliberately different sizes. Today it printed **-0.156%%** for a pair whose
+book made **+$94**. A metric that reports a profitable day as negative would
+have corrupted every future judgement of the strategy. Fixed: publish time now
+persists each pair leg's share of book capacity (`weight` column), and the
+report prints a **book-weighted return** beside the equal-weighted one — the
+former judges the executed strategy, the latter stays the clean measure of the
+DIRECTION calls. Existing rows keep a blank weight and are never back-edited
+(day-18 rule); the metric starts accruing from day-23.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
