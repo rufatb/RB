@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import os
 
 LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
@@ -72,11 +73,32 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
     return added
 
 
-def score_rows(rows: list, close_fn) -> tuple:
-    """Fill outcomes for unscored rows using close_fn(ticker)->close. Pure-ish."""
-    scored = 0
+def session_is_final(date_str: str, now: dt.datetime, close_time: dt.time) -> bool:
+    """Has that session's regular close already happened? Pure + testable."""
+    d = dt.date.fromisoformat(date_str)
+    if d != now.date():
+        return d < now.date()
+    return now.time() >= close_time
+
+
+def score_rows(rows: list, close_fn, now: dt.datetime | None = None,
+               close_time: dt.time = dt.time(16, 0)) -> tuple:
+    """Fill outcomes for unscored rows using close_fn(ticker)->close.
+
+    REFUSES to score a session that has not closed yet (day-24 bug: `--score`
+    run at 15:05 happily wrote LIVE mid-session prices into the permanent
+    record as if they were closes — ENB read -1.136% when the session still
+    had 55 minutes to run). The ledger is the arbiter of every claim this repo
+    makes; a single row of non-final data silently corrupts the track record
+    and there is no way to tell afterwards which rows were affected. Held-back
+    rows stay blank and are scored on the next run. Pure-ish + testable."""
+    now = now or dt.datetime.now()
+    scored, held = 0, 0
     for r in rows:
         if r["r1"] != "":
+            continue
+        if not session_is_final(r["date"], now, close_time):
+            held += 1
             continue
         c = close_fn(r["ticker"])
         if c is None:
@@ -86,7 +108,7 @@ def score_rows(rows: list, close_fn) -> tuple:
         r["r1"] = f"{r1:.3f}"
         r["hit"] = "1" if win else "0"
         scored += 1
-    return rows, scored
+    return rows, scored, held
 
 
 def live_summary(rows: list, last_n: int = 20) -> dict | None:
@@ -165,17 +187,31 @@ def main(argv=None):
     args = p.parse_args(argv)
     rows = load()
     if args.score:
+        from zoneinfo import ZoneInfo
+
         from adapters import YahooDirectAdapter
-        a = YahooDirectAdapter()
+        from dashboard import load_config, parse_hhmm
+        cfg = load_config(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                       "config.yaml"))
+        tz = cfg.get("exchange_tz", "America/Toronto")
+        close_t = parse_hhmm(cfg.get("market_close", "16:00"))
+        a = YahooDirectAdapter(exchange_tz=tz)
         def close_fn(t):
             try:
                 q = a.get_quote(t)
                 return q.last
             except Exception:
                 return None
-        rows, n = score_rows(rows, close_fn)
+        rows, n, held = score_rows(rows, close_fn,
+                                   now=dt.datetime.now(ZoneInfo(tz)),
+                                   close_time=close_t)
         save(rows)
         print(f"scored {n} new rows")
+        if held:
+            print(f"  ⏳ {held} rows HELD BACK — their session has not closed "
+                  f"({close_t.strftime('%H:%M')} {tz}). Scoring mid-session would "
+                  "write live\n     prices into the permanent record as outcomes. "
+                  "Re-run after the close.")
     print(report(rows))
 
 

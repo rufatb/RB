@@ -83,7 +83,7 @@ def test_ledger_role_column_and_pair_report(tmp_path):
     ], "2026-07-11", path)
     rows = ledger.load(path)
     assert [r["role"] for r in rows] == ["pair", "board"]
-    rows, n = ledger.score_rows(rows, lambda t: 51.0 if t == "A.TO" else 24.0)
+    rows, n, _ = ledger.score_rows(rows, lambda t: 51.0 if t == "A.TO" else 24.0)
     assert n == 2
     rep = ledger.report(rows)
     assert "PAIR legs" in rep and "board (untraded)" in rep

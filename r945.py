@@ -280,6 +280,51 @@ def peer_gate(longs: list, shorts: list, groups: dict, min_opposed: int = 3):
     return keep(longs, short_n), keep(shorts, long_n), excluded
 
 
+def group_alignment(ticker: str, same_side: list, opp_side: list,
+                    groups: dict) -> tuple:
+    """(n_agreeing_incl_self, n_opposing, group_size) for a ticker's peer group.
+    Returns (0,0,0) when the ticker has no group. Pure + testable."""
+    g_of = {t: g for g, ms in (groups or {}).items() for t in ms}
+    g = g_of.get(ticker)
+    if not g:
+        return 0, 0, 0
+    same = sum(1 for o in same_side if g_of.get(o["t"]) == g)
+    opp = sum(1 for o in opp_side if g_of.get(o["t"]) == g)
+    return same, opp, len((groups or {}).get(g, []))
+
+
+def sector_warning(ticker: str, same_side: list, opp_side: list, groups: dict,
+                   crowd_warn: int = 3) -> str | None:
+    """Sector-concentration warning for a pair leg — WARNING ONLY, never a gate.
+
+    WHY FRACTION AND NOT COUNT (day-24): the count rule needs >=3 same-group
+    picks, but gold, telecom and rail have only TWO members each, so 6 of the
+    21 names could never trigger any peer machinery at all. Both times a
+    two-name sector moved as one it went unflagged — day-15 (BCE and T both
+    long, both collapsed) and day-24 (BCE and T both SHORT, both ripped, the
+    two strongest names in the universe against our short). A group that is
+    100%% aligned is maximal sector concentration whatever its size.
+
+    NOT A GATE — measured and REJECTED as one: fully-aligned legs hit 38.7%%
+    vs 50.7%% (n=62, deep set) but only in 3 of 4 quarters, failing the
+    pre-registered all-four bar exactly as the day-13 crowding stat did. The
+    placebo grouping did NOT reproduce it (56.6%%), so the signal may be real
+    — it is simply not proven, so it informs and never blocks. Pure+testable."""
+    same, opp, size = group_alignment(ticker, same_side, opp_side, groups)
+    if not size:
+        return None
+    g_of = {t: g for g, ms in (groups or {}).items() for t in ms}
+    g = g_of[ticker]
+    if size >= 2 and same == size and opp == 0:
+        return (f"ENTIRE {g} sector ({size}/{size} names) is qualified this way — "
+                f"maximal sector concentration.\n        Measured 38.7% hit vs 50.7% "
+                "(n=62) but only 3 of 4 quarters — a WARNING, not a gate.")
+    if same - 1 >= crowd_warn:
+        return (f"{same - 1} other {g} picks point the same way — crowded "
+                "sector direction hit only 44%/33% in validation")
+    return None
+
+
 def pair_of_day(longs: list, shorts: list, groups: dict = None,
                 selector: str = "densest", crowd_warn: int = 3) -> dict:
     """THE PAIR — the single long + single short the daily workflow trades.
@@ -301,7 +346,7 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
     assert selector in ("densest", "max_p"), f"unvalidated pair selector: {selector}"
     g_of = {t: g for g, ms in (groups or {}).items() for t in ms}
 
-    def leg(picks, side):
+    def leg(picks, side, opp_picks):
         if not picks:
             return {"status": "NONE", "note": f"no qualified {side} — forcing one is a coin flip"}
         if selector == "densest":
@@ -312,13 +357,11 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
         out = {"status": (r.get("confidence") or "?").upper(), "pick": r, "sided": sided,
                "rank_by_p": 1 + sum(1 for o in picks
                                     if (o["p_up"] if side == "LONG" else 1 - o["p_up"]) > sided)}
-        g = g_of.get(r["t"])
-        n_conf = sum(1 for o in picks if o is not r and g and g_of.get(o["t"]) == g)
-        if g and n_conf >= crowd_warn:
-            out["warning"] = (f"{n_conf} other {g} picks point the same way — crowded "
-                              f"sector direction hit only 44%/33% in validation")
+        w = sector_warning(r["t"], picks, opp_picks, groups, crowd_warn)
+        if w:
+            out["warning"] = w
         return out
-    return {"long": leg(longs, "LONG"), "short": leg(shorts, "SHORT")}
+    return {"long": leg(longs, "LONG", shorts), "short": leg(shorts, "SHORT", longs)}
 
 
 def run(cfg, workers=8):
@@ -559,6 +602,17 @@ def render(res, book=False):
         print("  every loss by the same factor and voids the stated risk numbers")
         print("  (day-13: 4x the printed size turned a ~$425 day into -$1,669).")
         print("  CLOSE BOTH BY 3:55.")
+        # Day-24: the temptation to hold a losing pair overnight arrives on the
+        # exact days the numbers are worst, so the measurement belongs HERE,
+        # next to the order — not in a document nobody opens at 3:50.
+        print("\n  WHY 3:55 AND NOT TOMORROW (439 legs, walk-forward, per quarter):")
+        print("    hold to close : capture +0.094%  hit 54.4%  std 1.09%  worst leg -3.9%")
+        print("    hold 1 night  : capture +0.143%  hit 53.4%  std 2.07%  worst leg -8.8%")
+        print("  One night nearly DOUBLES volatility and worsens the tail 2.3x. At 5")
+        print("  days longs made +0.62% while shorts made -0.39% — the multi-day gain")
+        print("  is market drift, not signal: this engine's edge lasts ONE session.")
+        print("  A held SHORT additionally pays borrow and carries open-ended gap")
+        print("  risk, and this tool has NO earnings/dividend/news feed to price it.")
     print("\n  Modest, measured edges: a qualified leg is a ~52-56% lean (day-12 reset —")
     print("  the 68% selector claim did not survive a window roll). The ledger's PAIR")
     print("  line is the arbiter. No 5-minute outlooks — this is close-horizon only.")

@@ -1083,6 +1083,90 @@ former judges the executed strategy, the latter stays the clean measure of the
 DIRECTION calls. Existing rows keep a blank weight and are never back-edited
 (day-18 rule); the metric starts accruing from day-23.
 
+## Day-24: both legs wrong, and this time it was the PICKS — plus the worst bug yet
+
+### What happened
+PAIR: **ENB long -0.906%%** and **BCE short -1.844%%** — a "none" day, both legs
+wrong (~14-16%% of sessions). NET at printed size **-$668** (equal-risk sizing
+saved $19 over equal-dollar; the only thing that worked).
+
+**Unlike day-23, the market is no excuse.** The tide was -0.208%% with breadth
+48%% — a flat tape. Both legs lost on RELATIVE terms:
+- ENB long: **-0.698%% relative, rank 17 of 21**.
+- BCE short: **-2.036%% relative, rank 2 of 21** — we shorted the second
+  strongest name in the universe. The worst relative leg of the run.
+
+Day-23's honest finding was "the miss was the market, not the pick." Today the
+honest finding is the opposite, and it must be recorded as plainly.
+
+### Three causes, one of them a judgement error
+1. **The other engine was right and was overruled.** The morning summary noted
+   that `report.py` had BCE as a LONG and T.TO as THE CALL long, contradicting
+   r945's shorts — and then advised following r945 as "the validated
+   workflow". BCE closed +1.83%% and T.TO +2.83%%, the two strongest names on
+   the board. The reasoning was defensible (r945 owns the 9:45 horizon,
+   report.py is the legacy 9:31 lens) but the call cost money. Logged, NOT
+   turned into a rule: two names on one day is exactly the sample size this
+   discipline exists to refuse.
+2. **A structural blind spot, now fixed.** BCE and T.TO are the whole telecom
+   group. The peer gate needs >=3 OPPOSING picks and the crowding warning >=3
+   AGREEING picks — a 2-name group can reach neither, so **6 of 21 names
+   (gold, telecom, rail) were invisible to all peer machinery**. This is the
+   SECOND time a 2-name telecom move took out picks unflagged (day-15: BCE and
+   T both long, both collapsed; today: both short, both ripped).
+3. **The crude warning was right about the risk, wrong about the mechanism.**
+   ENB was flagged as "substantially a crude bet". Crude rose (+7.09%%, above
+   the +6.50%% at print) and ENB fell anyway — it decoupled. The concentration
+   warning was reasonable; it is not what killed the leg.
+
+### Tested and REJECTED as a gate (#15) — but shipped as a warning
+PRE-REGISTERED: "a pair leg whose PEER GROUP IS FULLY ALIGNED with it
+underperforms." Fraction-of-group, not count, so a 2-name group can register.
+- Fully-aligned legs: **38.7%% hit / -0.076%% capture (n=62)** vs 50.7%% /
+  +0.017%% for the rest — the largest gap any candidate has produced.
+- But **only 3 of 4 quarters** (Q2 flips: +0.184 vs +0.003). **FAILS** the
+  all-four bar, exactly as the day-13 crowding stat did before it flipped.
+- A PLACEBO grouping did NOT reproduce it (fully-aligned 56.6%%, 2/4) — so the
+  signal is plausibly real. Plausible is not proven.
+**Decision: no gate.** `r945.sector_warning` is now FRACTION-based, so a fully
+aligned group of ANY size warns. Replayed on today's board it flags BOTH legs
+(BCE "ENTIRE telecom 2/2", ENB "ENTIRE energy 5/5"); the old count rule was
+SILENT on BCE. Re-test when n grows — if it holds 4/4 it becomes the third
+adopted rule.
+
+### THE WORST BUG FOUND SO FAR: the ledger scored a live session
+`python ledger.py --score` run at **15:05** — 55 minutes before the close —
+cheerfully wrote LIVE mid-session prices into the permanent record as
+outcomes. ENB was stamped -1.136%% while the session still had an hour to run.
+Nothing in the tool objected.
+
+This is worse than any losing trade. The ledger is the arbiter of every claim
+this repo makes — the PAIR line, the density hypothesis, the book-weighted
+return, the "not yet an edge" warning. Non-final rows corrupt all of it, and
+afterwards there is **no way to tell which rows were affected**.
+- **Fixed**: `ledger.session_is_final` + a hard refusal in `score_rows`; held
+  back rows stay blank and print an explicit warning naming the close time.
+- **Repaired**: today's 10 contaminated rows were reverted to unscored and
+  re-scored after the close. (Second ledger edit ever made, and like day-18's
+  it corrects a TOOL ARTIFACT, never an outcome.)
+- Lesson class: the guards were all built around *entry* (too-early, stale
+  board, fill bounds, entry window). Nothing guarded the *measurement*. A
+  system that grades its own homework needs a clock on the grader too.
+
+### Also shipped: the overnight-hold numbers now print next to the order
+Prompted by a live "should I hold these overnight?" while both legs were red.
+The measurement existed (day-18 side quest) but sat in a document nobody opens
+at 3:50pm, which is precisely when the temptation arrives. BOOK mode now
+prints: hold-to-close +0.094%%/54.4%%/std 1.09%%/worst -3.9%% versus one night
++0.143%%/53.4%%/std **2.07%%**/worst **-8.8%%** — one night nearly doubles
+volatility and worsens the tail 2.3x, the 5-day "gain" is drift not signal
+(longs +0.62%% vs shorts -0.39%%), and a held short pays borrow into gap risk
+this tool has no calendar or news feed to price.
+
+### Standing scoreboard
+REJECTED (15): + fully-aligned peer group (3/4 quarters, warning only).
+ADOPTED (2): densest-leg selection · equal-risk leg weighting.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
