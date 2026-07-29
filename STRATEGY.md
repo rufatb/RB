@@ -1146,9 +1146,10 @@ return, the "not yet an edge" warning. Non-final rows corrupt all of it, and
 afterwards there is **no way to tell which rows were affected**.
 - **Fixed**: `ledger.session_is_final` + a hard refusal in `score_rows`; held
   back rows stay blank and print an explicit warning naming the close time.
-- **Repaired**: today's 10 contaminated rows were reverted to unscored and
-  re-scored after the close. (Second ledger edit ever made, and like day-18's
-  it corrects a TOOL ARTIFACT, never an outcome.)
+- **Repaired**: today's 10 contaminated rows were reverted to blank and now sit
+  unscored; the guard holds them until the 16:00 bell, and the next post-close
+  `--score` fills them from real closes. (Second ledger edit ever made, and
+  like day-18's it corrects a TOOL ARTIFACT, never an outcome.)
 - Lesson class: the guards were all built around *entry* (too-early, stale
   board, fill bounds, entry window). Nothing guarded the *measurement*. A
   system that grades its own homework needs a clock on the grader too.
