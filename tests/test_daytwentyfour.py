@@ -40,12 +40,12 @@ def test_score_rows_refuses_to_write_mid_session_prices():
     rows = [{"date": "2026-07-29", "ticker": "ENB.TO", "side": "LONG",
              "p945": "78.36", "r1": "", "hit": ""}]
     rows, n, held = ledger.score_rows(
-        rows, lambda t: 77.65, now=dt.datetime(2026, 7, 29, 15, 5))
+        rows, lambda t, d: 77.65, now=dt.datetime(2026, 7, 29, 15, 5))
     assert (n, held) == (0, 1)
     assert rows[0]["r1"] == "" and rows[0]["hit"] == ""
     # after the bell the same row scores normally
     rows, n, held = ledger.score_rows(
-        rows, lambda t: 77.65, now=dt.datetime(2026, 7, 29, 16, 1))
+        rows, lambda t, d: 77.65, now=dt.datetime(2026, 7, 29, 16, 1))
     assert (n, held) == (1, 0) and rows[0]["hit"] == "0"
 
 
@@ -79,3 +79,27 @@ def test_large_group_count_rule_still_applies():
 def test_group_alignment_counts():
     assert r945.group_alignment("BCE.TO", [{"t": "BCE.TO"}, {"t": "T.TO"}], [], GROUPS) == (2, 0, 2)
     assert r945.group_alignment("SHOP.TO", [{"t": "SHOP.TO"}], [], GROUPS) == (0, 0, 0)
+
+
+def test_close_lookup_is_date_specific_not_latest_price():
+    """Day-24 bug #2, locked: scoring yesterday's rows the NEXT MORNING must use
+    that session's close, not today's live price. BCE.TO was recorded at
+    +0.049% (today's 30.97) when its 2026-07-29 close was 31.42 -> +1.650%."""
+    rows = [{"date": "2026-07-29", "ticker": "BCE.TO", "side": "SHORT",
+             "p945": "30.91", "r1": "", "hit": ""}]
+    closes = {("BCE.TO", "2026-07-29"): 31.42, ("BCE.TO", "2026-07-30"): 30.97}
+    rows, n, _ = ledger.score_rows(
+        rows, lambda t, d: closes.get((t, d)),
+        now=dt.datetime(2026, 7, 30, 9, 47))
+    assert n == 1
+    assert abs(float(rows[0]["r1"]) - 1.650) < 0.01   # the true close, not 30.97
+    assert rows[0]["hit"] == "0"
+
+
+def test_missing_date_is_left_unscored_rather_than_guessed():
+    """No close for that date -> leave blank. Never fall back to a nearby price."""
+    rows = [{"date": "2026-07-29", "ticker": "X.TO", "side": "LONG",
+             "p945": "10.0", "r1": "", "hit": ""}]
+    rows, n, _ = ledger.score_rows(rows, lambda t, d: None,
+                                   now=dt.datetime(2026, 7, 30, 9, 47))
+    assert n == 0 and rows[0]["r1"] == ""

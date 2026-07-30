@@ -1085,19 +1085,24 @@ DIRECTION calls. Existing rows keep a blank weight and are never back-edited
 
 ## Day-24: both legs wrong, and this time it was the PICKS — plus the worst bug yet
 
-### What happened
-PAIR: **ENB long -0.906%%** and **BCE short -1.844%%** — a "none" day, both legs
-wrong (~14-16%% of sessions). NET at printed size **-$668** (equal-risk sizing
-saved $19 over equal-dollar; the only thing that worked).
+### What happened (FINAL, from official daily closes)
+PAIR: **ENB long -1.021%%** and **BCE short -1.650%%** — a "none" day, both legs
+wrong (~14-16%% of sessions). NET at printed size **≈-$654** (equal-risk sizing
+saved ~$19 over equal-dollar; the only thing that worked).
 
-**Unlike day-23, the market is no excuse.** The tide was -0.208%% with breadth
-48%% — a flat tape. Both legs lost on RELATIVE terms:
-- ENB long: **-0.698%% relative, rank 17 of 21**.
-- BCE short: **-2.036%% relative, rank 2 of 21** — we shorted the second
-  strongest name in the universe. The worst relative leg of the run.
+**Unlike day-23, the market is no excuse.** The tide was ≈-0.1%% on 48%% breadth
+— a flat tape — and both legs lost on RELATIVE terms too, so this was stock
+selection, not the tape. Day-23's honest finding was "the miss was the market,
+not the pick"; today's is the opposite and is recorded as plainly.
 
-Day-23's honest finding was "the miss was the market, not the pick." Today the
-honest finding is the opposite, and it must be recorded as plainly.
+**CORRECTION (written day-25):** this section originally reported the 14:34
+intraday state — "ENB -0.906%%, BCE -1.844%%, NET -$668, BCE rank 2 of 21, the
+worst relative leg of the run" — as if it were the outcome. Those were live
+mid-session numbers, and BCE in particular was quoted mid-swing. The direction
+of the day is unchanged, but writing intraday figures into the permanent record
+as results is the SAME error class as the ledger bug documented below, made in
+prose instead of CSV on the very day it was diagnosed. Numbers above now come
+from official daily closes only.
 
 ### Three causes, one of them a judgement error
 1. **The other engine was right and was overruled.** The morning summary noted
@@ -1146,10 +1151,25 @@ return, the "not yet an edge" warning. Non-final rows corrupt all of it, and
 afterwards there is **no way to tell which rows were affected**.
 - **Fixed**: `ledger.session_is_final` + a hard refusal in `score_rows`; held
   back rows stay blank and print an explicit warning naming the close time.
-- **Repaired**: today's 10 contaminated rows were reverted to blank and now sit
-  unscored; the guard holds them until the 16:00 bell, and the next post-close
-  `--score` fills them from real closes. (Second ledger edit ever made, and
-  like day-18's it corrects a TOOL ARTIFACT, never an outcome.)
+- **Repaired**: the 10 contaminated rows were blanked and re-scored from
+  official daily closes. (Second ledger edit ever made, and like day-18's it
+  corrects a TOOL ARTIFACT, never an outcome.)
+
+**AND A SECOND BUG IN THE SAME PLACE, found day-25 because the first fix was
+incomplete.** `close_fn` took only a ticker and returned `get_quote().last` —
+the LATEST price, whatever the row's date. So scoring yesterday's rows the next
+morning recorded TODAY's live price as yesterday's close: BCE.TO went in at
++0.049%% when its actual 2026-07-29 close was **+1.650%%**, a 1.6pp error, and
+three of the ten hits flipped. The day-24 guard ("is the session final?") did
+not catch it because the session WAS final — the wrong day's price was.
+- **Fixed**: `close_fn(ticker, DATE)` is now the contract, served from cached
+  daily bars; a date with no close is left blank, never approximated.
+- **Audited**: all 157 scored rows re-checked against official daily closes.
+  Exactly the 10 rows from that one mis-scored run were wrong; the other 147
+  match. The track record before day-24 is sound.
+- **Standing rule**: after any change to scoring, re-run the full audit. Two
+  bugs in one function in two days, both silent, both in the component that
+  grades everything else.
 - Lesson class: the guards were all built around *entry* (too-early, stale
   board, fill bounds, entry window). Nothing guarded the *measurement*. A
   system that grades its own homework needs a clock on the grader too.

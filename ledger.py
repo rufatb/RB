@@ -83,15 +83,25 @@ def session_is_final(date_str: str, now: dt.datetime, close_time: dt.time) -> bo
 
 def score_rows(rows: list, close_fn, now: dt.datetime | None = None,
                close_time: dt.time = dt.time(16, 0)) -> tuple:
-    """Fill outcomes for unscored rows using close_fn(ticker)->close.
+    """Fill outcomes for unscored rows using close_fn(ticker, date)->close.
 
-    REFUSES to score a session that has not closed yet (day-24 bug: `--score`
-    run at 15:05 happily wrote LIVE mid-session prices into the permanent
-    record as if they were closes — ENB read -1.136% when the session still
-    had 55 minutes to run). The ledger is the arbiter of every claim this repo
-    makes; a single row of non-final data silently corrupts the track record
-    and there is no way to tell afterwards which rows were affected. Held-back
-    rows stay blank and are scored on the next run. Pure-ish + testable."""
+    TWO separate day-24 bugs are guarded here; both wrote wrong numbers into
+    the permanent record with no complaint, and the ledger is the arbiter of
+    every claim this repo makes:
+
+    1. SCORING AN OPEN SESSION. `--score` at 15:05 stamped LIVE mid-session
+       prices as outcomes (ENB read -1.136% with 55 minutes left to trade).
+       Guarded by `session_is_final` — rows stay blank and are retried later.
+    2. SCORING THE WRONG DAY'S PRICE. `close_fn` took only a ticker and
+       returned the LATEST quote, so scoring yesterday's rows the next morning
+       recorded TODAY's live price as yesterday's close — BCE.TO went in at
+       +0.049% when its actual 2026-07-29 close was +1.618%. Guarded by making
+       the date part of the lookup contract: close_fn MUST be given the row's
+       own date and must return that session's close or None.
+
+    Lesson class (day-24): every guard in this repo protected ENTRY. Nothing
+    protected MEASUREMENT, and a system that grades its own homework needs the
+    grader checked hardest. Pure-ish + testable."""
     now = now or dt.datetime.now()
     scored, held = 0, 0
     for r in rows:
@@ -100,7 +110,7 @@ def score_rows(rows: list, close_fn, now: dt.datetime | None = None,
         if not session_is_final(r["date"], now, close_time):
             held += 1
             continue
-        c = close_fn(r["ticker"])
+        c = close_fn(r["ticker"], r["date"])
         if c is None:
             continue
         r1 = (c / float(r["p945"]) - 1) * 100
@@ -196,12 +206,19 @@ def main(argv=None):
         tz = cfg.get("exchange_tz", "America/Toronto")
         close_t = parse_hhmm(cfg.get("market_close", "16:00"))
         a = YahooDirectAdapter(exchange_tz=tz)
-        def close_fn(t):
-            try:
-                q = a.get_quote(t)
-                return q.last
-            except Exception:
-                return None
+        # DATE-SPECIFIC closes from daily bars, cached per ticker. Never
+        # get_quote().last — that is the LATEST price and silently scores the
+        # wrong session whenever --score runs on a later day (day-24 bug #2).
+        _cache: dict = {}
+        def close_fn(t, date):
+            if t not in _cache:
+                try:
+                    bars = a.get_daily_bars(t, 90)
+                    _cache[t] = {str(i.date()): float(c)
+                                 for i, c in bars["Close"].items()}
+                except Exception:
+                    _cache[t] = {}
+            return _cache[t].get(date)
         rows, n, held = score_rows(rows, close_fn,
                                    now=dt.datetime.now(ZoneInfo(tz)),
                                    close_time=close_t)
