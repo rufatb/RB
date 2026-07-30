@@ -97,6 +97,9 @@ def _res(late_min, book_shares=True):
             "shorts": [], "excluded": [], "min_p": 0.55, "too_early": False,
             "pair": r945.pair_of_day([pick], []),
             "late_min": late_min, "stale_after_min": 20,
+            # Day-25: the order window is anchored to the SIGNAL BAR, not the
+            # run time, so the fixture must carry it.
+            "ready_at_iso": "2026-07-14T10:34:00",
             "spent_drift_pct": 0.3, "max_chase_pct": 0.15}
 
 
@@ -113,7 +116,12 @@ def test_fresh_board_prints_order_with_fill_bound(capsys):
     r945.render(_res(late_min=1.0), book=True)
     out = capsys.readouterr().out
     assert "BUY 148 sh" in out
-    assert "fill bound: ≤ 167.25" in out and "NO TRADE" in out
+    # DAY-25 (external audit): the bound is anchored to the DECISION price
+    # p945=166.97, NOT the live last=167.00. Locking 167.25 previously locked
+    # the bug: the bound drifted with the market and enforced nothing.
+    # 166.97 * (1 + 0.15/100) = 167.22 -- and it must NOT be 167.25.
+    assert "fill bound: ≤ 167.22" in out and "NO TRADE" in out
+    assert "167.25" not in out
 
 
 def test_on_time_run_has_no_banner(capsys):
@@ -150,5 +158,9 @@ def test_entry_window_printed_on_order(capsys):
     import r945 as _r
     _r.render(res, book=True)
     out = capsys.readouterr().out
-    assert "order window: until 10:45 ET" in out       # now=10:35 in _res
+    # DAY-25: measured from the 9:45 print (ready_at_iso 10:34 in this
+    # fixture), NOT from run time. 10:34 + 10 = 10:44, so a 10:35 run has 9
+    # minutes left. Under the old run-time anchor this printed 10:45, which
+    # meant a late first run silently minted a longer window.
+    assert "order window: until 10:44 ET" in out
     assert "NO TRADE today" in out

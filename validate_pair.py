@@ -65,10 +65,16 @@ def build_dataset(cfg, workers=8):
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
         fetched = dict(ex.map(fetch, cfg["scan"]["universe"]))
+    # Day-25: never let the CURRENT, still-open session into a research pool —
+    # its "close" is the live price, so it would be scored as a completed
+    # outcome that does not exist yet.
+    import datetime as _dt
+    from zoneinfo import ZoneInfo as _Z
+    today = str(_dt.datetime.now(_Z(cfg["exchange_tz"])).date())
     rows = []
     for t, bars in fetched.items():
         if not bars.empty:
-            rows += r945.session_rows(bars, t)
+            rows += r945.session_rows(bars, t, drop_date=today)
     return pd.DataFrame(rows)
 
 

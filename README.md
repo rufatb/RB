@@ -49,7 +49,26 @@ Python 3.11+ required (uses `zoneinfo`).
 
 ## Run
 
-**The one command (9:31 morning report — recommended):**
+> ### THE ONE CANONICAL COMMAND
+> ```bash
+> TZ=America/Toronto python r945.py --book     # run at 09:46 ET, once per trading day
+> ```
+> This is the **only** command that produces the day's tradeable decision: one
+> long + one short ("THE PAIR"), sized, with fill bounds and an order window.
+> The contract is: enter at market inside the printed bounds, hold, **flat by
+> 3:55**. Score after the close with `python ledger.py --score`.
+>
+> **Everything below `report.py` / `scan.py` / `dashboard.py` / `midday.py` /
+> `hold.py` is LEGACY** — a 09:31 open-to-close lens kept for context and
+> tests. It is *not* the strategy, it is not validated at the 9:45 horizon, and
+> it regularly disagrees with the pair. Do not trade from it.
+>
+> Why this banner exists (day-25, external audit): this README advertised
+> `report.py` at 09:31 as "the one command" while STRATEGY.md recorded
+> `r945.py --book` at 09:46 as the real workflow. Two documents naming
+> different daily commands is how the wrong strategy gets run.
+
+### Legacy 9:31 morning report (context only, not the strategy)
 
 ```bash
 python report.py            # preflight all APIs → scan the TSX → ranked longs/shorts

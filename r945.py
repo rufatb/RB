@@ -89,7 +89,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from adapters import YahooDirectAdapter
+from adapters import YahooDirectAdapter, build_adapter
 from dashboard import load_config, parse_hhmm
 
 FEATS = ["r0", "gap", "vp"]
@@ -97,12 +97,26 @@ K, M = 60, 20                       # neighbours / Beta-prior strength
 HARD_FLOOR, HARD_CAP = 0.35, 0.65
 
 
-def session_rows(bars: pd.DataFrame, ticker: str) -> list:
-    """Per-session feature/outcome rows from 5m bars. Pure given bars."""
+def session_rows(bars: pd.DataFrame, ticker: str, drop_date: str | None = None,
+                 min_bars: int = 10) -> list:
+    """Per-session feature/outcome rows from 5m bars. Pure given bars.
+
+    `drop_date` (day-25, external audit): a session is only an OUTCOME once it
+    has closed, but this function accepted any day with >= `min_bars` bars and
+    treated its last bar as the close. Run intraday — which every research
+    script does when invoked during a session — the CURRENT partial day was
+    scored as a completed outcome, contaminating the training pool with a
+    label that does not exist yet. The live engine filtered today by hand;
+    the research scripts did not. Callers must now pass the session to drop
+    (normally today) rather than remember to filter downstream."""
     rows, prev_close = [], None
     for d, day in bars.groupby(bars.index.date):
         day = day.sort_index()
-        if len(day) < 10:
+        if drop_date is not None and str(d) == drop_date:
+            if len(day):
+                prev_close = day["Close"].iloc[-1]
+            continue
+        if len(day) < min_bars:
             if len(day):
                 prev_close = day["Close"].iloc[-1]
             continue
@@ -123,6 +137,76 @@ def session_rows(bars: pd.DataFrame, ticker: str) -> list:
                      "mae_dn": (after["Low"].min() / p945 - 1) * 100 if len(after) else None,
                      "mae_up": (after["High"].max() / p945 - 1) * 100 if len(after) else None})
     return rows
+
+
+def validate_signal_bars(tb: pd.DataFrame, open_t: dt.time, tz: str,
+                         now: dt.datetime | None = None) -> tuple:
+    """Are these really the completed 09:30 / 09:35 / 09:40 bars?
+
+    DAY-25 (external audit): the engine took `tb["Close"].iloc[2]` — the third
+    row bearing today's date — and called it the 9:45 print, proving nothing
+    about WHICH bars those were. A halt, a missing opening bar, a provider
+    gap or a duplicate silently shifts iloc[2] to a different time, and the
+    whole prediction is then computed on bars the model was never validated
+    on, with no visible failure. Every downstream guard (fill bound, disaster
+    line, entry window) is denominated in a price that would be wrong.
+
+    Returns (ok, reason). Checks, all fail-closed:
+      * at least 3 bars for the session
+      * first bar starts exactly at the open
+      * the first three are on an exact 5-minute grid, sorted and unique
+      * the third bar is COMPLETE (its 09:40-09:44:59 span has elapsed)
+      * OHLC sanity and non-negative volume on those bars
+    Pure given `now`; testable without a network."""
+    if tb is None or len(tb) < 3:
+        return False, f"only {0 if tb is None else len(tb)} bars for today (need 3)"
+    idx = tb.index[:3]
+    if list(idx) != sorted(set(idx)):
+        return False, "duplicate or unsorted timestamps in the first three bars"
+    first = idx[0]
+    if (first.hour, first.minute) != (open_t.hour, open_t.minute):
+        return False, (f"first bar is {first:%H:%M}, expected the {open_t.strftime('%H:%M')} "
+                       "opening bar (missing/halted open?)")
+    for i in (1, 2):
+        gap_min = (idx[i] - idx[i - 1]).total_seconds() / 60.0
+        if abs(gap_min - 5.0) > 1e-6:
+            return False, (f"bar {i} is {gap_min:.0f} min after bar {i-1}, not 5 "
+                           "(missing bar or wrong interval)")
+    now = now or dt.datetime.now(ZoneInfo(tz))
+    bar3_end = idx[2] + dt.timedelta(minutes=5)
+    if now < bar3_end:
+        return False, (f"the {idx[2]:%H:%M} bar closes at {bar3_end:%H:%M} and is still "
+                       "IN PROGRESS — its close is the live price, not the 9:45 print")
+    head = tb.iloc[:3]
+    for col in ("Open", "High", "Low", "Close"):
+        if col in head and not np.isfinite(head[col].to_numpy(dtype=float)).all():
+            return False, f"non-finite {col} in the signal bars"
+    if "Volume" in head and (head["Volume"].fillna(0).to_numpy() < 0).any():
+        return False, "negative volume in the signal bars"
+    if {"High", "Low"} <= set(head.columns) and (head["High"] < head["Low"]).any():
+        return False, "High < Low in the signal bars (corrupt feed)"
+    return True, "ok"
+
+
+def coverage_ok(n_evaluated: int, universe: list, groups: dict,
+                excluded: dict, min_frac: float = 0.8) -> tuple:
+    """Did enough of the universe survive to make a CROSS-SECTIONAL choice?
+
+    DAY-25 (external audit): failed downloads returned an empty frame and were
+    swallowed, so the engine would happily pick 'the densest long' out of
+    whatever names happened to load. This selector compares names against each
+    other — changing the candidate set changes the bet, silently. Below
+    `min_frac` coverage the honest output is no board at all. Pure+testable."""
+    n_uni = len(universe or [])
+    if not n_uni:
+        return False, "empty universe"
+    frac = n_evaluated / n_uni
+    if frac < min_frac:
+        miss = ", ".join(f"{t} ({why})" for t, why in sorted(excluded.items())[:8])
+        return False, (f"only {n_evaluated}/{n_uni} names ({frac:.0%}) passed data "
+                       f"validation, below the {min_frac:.0%} floor — a cross-sectional "
+                       f"pick from a partial board is a different bet.\n   Missing: {miss}")
+    return True, f"{n_evaluated}/{n_uni} names ({frac:.0%})"
 
 
 def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
@@ -229,12 +313,27 @@ def leg_drift(side: str, p945: float, last: float, spent_pct: float = 0.3):
     return pct, "≈ unchanged from the print"
 
 
-def fill_bound(side: str, decision_px: float, max_chase_pct: float = 0.15) -> float:
-    """Worst acceptable fill for a pair leg. LONG: no higher than the decision
-    price * (1+c); SHORT: no lower than * (1-c). A fill past the bound has
-    consumed the edge before the position even opens (day-11 close: CP short
+def fill_bound(side: str, decision_px: float, max_chase_pct: float = 0.04) -> float:
+    """Worst acceptable fill for a pair leg, measured from the DECISION PRICE
+    (the 9:45 print), never from the live market. LONG: no higher than
+    decision * (1+c); SHORT: no lower than decision * (1-c). A fill past the
+    bound has consumed the edge before the position opens (day-11: a CP short
     decided at 128.98 was a WINNING call — close 128.54, +0.34% — but a chased
-    fill AT 128.54 captured exactly zero of it). Pure + testable."""
+    fill AT 128.54 captured exactly zero of it).
+
+    DAY-25 BUG FIX (external audit): render() was passing r["last"] — the LIVE
+    price — so the "bound" drifted with the market and enforced nothing. On a
+    leg running away from the print it silently authorised an unbounded chase,
+    which is the precise failure the bound exists to prevent. It now takes
+    r["p945"].
+
+    DAY-25 TIGHTENING: the default was 0.15%, which EXCEEDS the deep study's
+    entire +0.094%/leg pre-cost edge — a fill at the old bound could pay away
+    more than the edge before costs. Tolerance must be a fraction of the edge,
+    not a round number, so the default is now 0.04% (under half the measured edge)
+    pending a proper executable-cost study. Config `pair.max_chase_pct` still
+    governs. This is deliberately fail-closed: it produces MORE no-trades.
+    Pure + testable."""
     c = max_chase_pct / 100.0
     return decision_px * (1 + c) if side == "LONG" else decision_px * (1 - c)
 
@@ -378,14 +477,33 @@ def run(cfg, workers=8):
         return {"now": now.isoformat(timespec="seconds"), "n_names": 0,
                 "longs": [], "shorts": [], "min_p": 0.55, "too_early": True,
                 "ready_at": ready.strftime("%H:%M")}
-    a = YahooDirectAdapter(exchange_tz=tz)
+    # DAY-25 (external audit): the 9:46 path hard-coded YahooDirectAdapter and
+    # ignored `data_sources.primary` entirely, so the configured source — and
+    # any paid/real-time upgrade — could never reach the one command that
+    # actually places the day's bet. Honour the config, and say out loud which
+    # source produced the board. Falls back only for sources that cannot serve
+    # 5-minute bars, and reports that it did.
+    src = (cfg.get("data_sources") or {}).get("primary", "yahoo_direct")
+    src_note = ""
+    try:
+        a = build_adapter(src, exchange_tz=tz)
+        if not hasattr(a, "_chart"):
+            raise TypeError(f"{src} cannot serve 5m intraday bars")
+    except Exception as e:
+        a = YahooDirectAdapter(exchange_tz=tz)
+        src_note = f"configured source '{src}' unusable ({e}); fell back to yahoo_direct"
+        src = "yahoo_direct"
     uni = cfg.get("scan", {}).get("universe") or []
     min_p = (cfg.get("report") or {}).get("min_sided_p", 0.55)
+    fetch_errors: dict = {}
 
     def fetch(t):
         try:
             return t, a._bars_df(a._chart(t, "5m", "60d"))
-        except Exception:
+        except Exception as e:
+            # Day-25: never swallow silently — a missing name changes the
+            # cross-sectional choice and must be visible and counted.
+            fetch_errors[t] = f"{type(e).__name__}"
             return t, pd.DataFrame()
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
@@ -400,7 +518,10 @@ def run(cfg, workers=8):
         rows = session_rows(bars, t)
         hist_rows += [r for r in rows if r["date"] != today_str]
         tb = bars[[str(d) == today_str for d in bars.index.date]]
-        if len(tb) >= 3:
+        ok, why = validate_signal_bars(tb, open_t, tz, now)
+        if not ok:
+            fetch_errors[t] = why
+        if ok:
             o = tb["Open"].iloc[0]; p945 = tb["Close"].iloc[2]
             v15 = float(tb["Volume"].iloc[:3].sum())
             prior = [r for r in rows if r["date"] != today_str]
@@ -470,6 +591,14 @@ def run(cfg, workers=8):
         cfg.get("peer_contradiction_min", 3))
     # Too-early detection: no live rows because today has <3 completed 5m bars.
     too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
+    # Day-25 coverage gate — fail closed rather than pick from a partial board.
+    cov_ok, cov_msg = coverage_ok(len(out), uni, cfg.get("peer_groups"), fetch_errors,
+                                  (cfg.get("scan") or {}).get("min_coverage_frac", 0.8))
+    if not cov_ok and not too_early:
+        return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
+                "longs": [], "shorts": [], "excluded": [], "pair": None,
+                "min_p": min_p, "too_early": False, "coverage_fail": cov_msg,
+                "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
     pcfg = cfg.get("pair") or {}
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
             "longs": longs, "shorts": shorts, "excluded": excluded,
@@ -477,12 +606,17 @@ def run(cfg, workers=8):
                                 pcfg.get("selector", "densest"),
                                 pcfg.get("crowded_conf_warn", 3)),
             "min_p": min_p, "too_early": too_early,
+            "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
+            "coverage": cov_msg,
             "late_min": round(late_minutes(now, open_t), 1),
             "stale_after_min": pcfg.get("stale_after_min", 20),
             "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
             "max_chase_pct": pcfg.get("max_chase_pct", 0.15),
             "disaster_stop_pct": pcfg.get("disaster_stop_pct", 2.5),
             "entry_window_min": pcfg.get("entry_window_min", 10),
+            # Anchor for the order window: the moment the 9:45 signal bar
+            # became complete (open+16), NOT the moment the command was run.
+            "ready_at_iso": ready.isoformat(timespec="seconds"),
             "path_stats": path_stats}
 
 
@@ -490,10 +624,21 @@ def render(res, book=False):
     print("=" * 74)
     print(f"9:45 → CLOSE ENGINE   ({res['now']})   {res['n_names']} names evaluated")
     print("=" * 74)
+    if res.get("source"):
+        note = f"  [{res['source_note']}]" if res.get("source_note") else ""
+        print(f"source: {res['source']}   coverage: {res.get('coverage', 'n/a')}{note}")
     if res.get("too_early"):
         print(f"⏰ TOO EARLY — the engine needs the full 9:30–9:45 bars COMPLETE.")
         print(f"   Ready at {res.get('ready_at', '09:46')} ET. A run before then reads the")
         print("   in-progress bar as the 9:45 print — an unvalidated trade. REFUSING.")
+        return
+    if res.get("coverage_fail"):
+        # Day-25: a cross-sectional pick from a partial board is a different
+        # bet than the one that was validated. No board, no orders.
+        print("⛔ INSUFFICIENT DATA COVERAGE — NO BOARD, NO ORDERS TODAY.")
+        print(f"   {res['coverage_fail']}")
+        print("   This is fail-closed by design: the pair is chosen by comparing names")
+        print("   against each other, so a missing name silently changes the bet.")
         return
     print("Horizon: from the 9:45 price to the 4:00 close. Honest expectation: every")
     print("qualified pick is a ~52-56% lean; no selector gradient survived validation.")
@@ -542,8 +687,10 @@ def render(res, book=False):
                 # must not exist at all.
                 print("      ⛔ NO ORDER — stale board: the decision price has expired.")
             elif book and r.get("shares") is not None:
-                bound = fill_bound(side.upper(), r["last"],
-                                   res.get("max_chase_pct", 0.15))
+                # Day-25: bound is anchored to the DECISION price (p945), never
+                # the live price — see fill_bound's docstring.
+                bound = fill_bound(side.upper(), r["p945"],
+                                   res.get("max_chase_pct", 0.04))
                 print(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} {r['shares']} sh "
                       f"@ market now (≈${r['alloc']:,.0f}; a 2% adverse move ≈ −${r['adverse_2pct']:,.0f})")
                 if r.get("risk_weighted"):
@@ -556,12 +703,24 @@ def render(res, book=False):
                 # unvalidated bet (a +0.06% winning call became a -0.41% ride
                 # via a chased 60.92 fill during the 9:50-10:55 pop).
                 ew = res.get("entry_window_min")
-                if ew:
+                if ew and res.get("ready_at_iso"):
+                    # Day-25 (external audit): the window used to start at
+                    # RUN time, so a first run at 09:55 minted an order valid
+                    # to 10:05 — 20 minutes past the validated print, an
+                    # entirely different bet (the day-11 lesson). It is now
+                    # anchored to the SIGNAL BAR's availability, so running
+                    # late shortens the window instead of extending it.
                     import datetime as _dt
-                    t0 = _dt.datetime.fromisoformat(res["now"])
-                    tend = (t0 + _dt.timedelta(minutes=ew)).strftime("%H:%M")
-                    print(f"      order window: until {tend} ET — unfilled by then "
-                          "(or bound broken): NO TRADE today")
+                    t0 = _dt.datetime.fromisoformat(res["ready_at_iso"])
+                    tend = t0 + _dt.timedelta(minutes=ew)
+                    now_t = _dt.datetime.fromisoformat(res["now"])
+                    if now_t >= tend:
+                        print(f"      ⛔ ORDER WINDOW CLOSED at {tend.strftime('%H:%M')} ET "
+                              f"({(now_t - tend).total_seconds()/60:.0f} min ago) — NO TRADE today.")
+                    else:
+                        print(f"      order window: until {tend.strftime('%H:%M')} ET "
+                              f"({(tend - now_t).total_seconds()/60:.0f} min left, measured from the "
+                              "9:45 print) —\n      unfilled by then (or bound broken): NO TRADE today")
                 ps = res.get("path_stats")
                 if ps:
                     med, worse = ps[side]
@@ -618,7 +777,30 @@ def render(res, book=False):
     print("  line is the arbiter. No 5-minute outlooks — this is close-horizon only.")
 
 
+def _make_output_safe() -> None:
+    """Windows console default is cp1252, which raises UnicodeEncodeError on the
+    arrows/box-drawing this report prints — the DAILY ENTRY POINT crashed
+    outright on Windows unless PYTHONUTF8=1 was set (day-25, external audit).
+    Reconfigure to UTF-8 where supported, and fall back to a replacing writer
+    so the report degrades to visible placeholders instead of dying mid-order."""
+    import io
+    import sys as _sys
+    for name in ("stdout", "stderr"):
+        stream = getattr(_sys, name, None)
+        if stream is None:
+            continue
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            try:
+                setattr(_sys, name, io.TextIOWrapper(
+                    stream.buffer, encoding="utf-8", errors="replace", line_buffering=True))
+            except Exception:
+                pass
+
+
 def main(argv=None):
+    _make_output_safe()
     p = argparse.ArgumentParser(description="9:45-to-close prediction engine")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--workers", type=int, default=8)
@@ -659,9 +841,16 @@ def main(argv=None):
             # or alter rows — the (date,ticker) dedupe alone is not enough
             # because revised bars qualify NEW tickers.
             if any(r["date"] == date for r in ledger.load()):
+                # DAY-25 (external audit): this used to call render(book=True),
+                # which printed fresh share counts and "BUY n sh @ market now"
+                # for a REVISED board while claiming to be informational. A
+                # printed order line IS the instruction — the disclaimer above
+                # it loses. A re-run is now rendered non-actionable.
                 print(f"\n  [ledger: {date} already published — this re-run is "
-                      "informational ONLY; the first board of the day stands]")
-                render(res, book=args.book)
+                      "informational ONLY; the first board of the day stands.")
+                print("   Order lines are SUPPRESSED: the published board is the "
+                      "only tradeable one.]")
+                render(res, book=False)
                 return
             pair_ids = {id(r) for r in pair_picks}
             # Day-23: persist each pair leg's share of BOOK CAPACITY. Since the

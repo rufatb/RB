@@ -190,9 +190,17 @@ pair:
                           # enters AT the 9:45 print (day-11 lesson)
   spent_drift_pct: 0.3    # drift in the call's direction beyond this = leg
                           # flagged "edge partly SPENT — do not chase"
-  max_chase_pct: 0.15     # worst acceptable fill vs the printed price; a fill
-                          # past the bound = NO TRADE (day-11 close: a winning
-                          # CP short captured 0 because the fill chased -0.34%)
+  max_chase_pct: 0.04     # worst acceptable fill vs the 9:45 DECISION price; a
+                          # fill past the bound = NO TRADE (day-11 close: a
+                          # winning CP short captured 0 because the fill chased
+                          # -0.34%). DAY-25: was 0.15, which EXCEEDED the entire
+                          # measured +0.094%/leg pre-cost edge — the bound could
+                          # authorise paying away more than the edge before
+                          # costs. Tolerance must be a fraction of the edge, not
+                          # a round number. NOTE: on low-priced names one tick
+                          # can exceed this (BCE at ~$30: 1c = 0.032%), which is
+                          # a real signal that the edge is not capturable there,
+                          # not a threshold to loosen.
   entry_window_min: 10    # orders are valid this many minutes after
                           # publication; unfilled (or bound broken) -> NO
                           # TRADE (day-19: a winning +0.06% call became a

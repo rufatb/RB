@@ -1188,6 +1188,90 @@ this tool has no calendar or news feed to price.
 REJECTED (15): + fully-aligned peer group (3/4 quarters, warning only).
 ADOPTED (2): densest-leg selection · equal-risk leg weighting.
 
+## Day-25: external audit — 9 of 10 P0 findings confirmed and fixed
+
+An independent software/model audit was received. Every finding was
+**re-verified against current code before acting**; the results are recorded
+here with the same standard applied to our own claims.
+
+### Verification: 9 confirmed, 1 already fixed, several figures stale
+| # | Finding | Verdict |
+|---|---|---|
+| 1 | adapter hard-coded, config ignored | **CONFIRMED** `r945.py:381` |
+| 2 | signal bars taken by position, unvalidated | **CONFIRMED** `r945.py:402-405` |
+| 3 | fill bound anchored to live price | **CONFIRMED** `r945.py:545`, locked by `test_dayeleven.py:117` |
+| 4 | entry window measured from run time | **CONFIRMED** `r945.py:561-562` |
+| 5 | re-run prints fresh order lines | **CONFIRMED** `r945.py:662` |
+| 6 | ledger scores against the wrong date | **ALREADY FIXED** earlier the same day |
+| 7 | research path scores a partial session | **CONFIRMED** `validate_pair.py:71` + `r945.py:105` |
+| 8 | fetch failures silently shrink the universe | **CONFIRMED** `r945.py:386-387` |
+| 9 | crashes on a cp1252 Windows console | **CONFIRMED** (14 non-ASCII glyphs) |
+| 10 | README advertises the legacy command | **CONFIRMED** `README.md:52,59` |
+
+The audit's *performance* figures come from a pre-day-22 snapshot (126 scored
+rows, 19 pair legs, equal-DOLLAR sizing, 148 tests with one failure, no git
+history). Current: 157 scored rows, 25 pair legs, equal-RISK sizing, 177 tests
+green, full history. **This does not weaken the P0 findings** — those were
+verified line by line against today's code — and its central conclusion is one
+this journal already reached independently: no material executable edge is
+demonstrated, and 52-56% accuracy *means* missing 44-48% of legs.
+
+### The three that were costing money
+1. **The no-chase bound enforced nothing.** `render()` passed `r["last"]`, so
+   the "bound" moved with the market: on a leg running away from the print it
+   silently authorised an unbounded chase — the exact failure it exists to
+   prevent, and the day-11/day-19 losses it was written for. Now anchored to
+   `p945`, and the test that locked the bug now locks the fix.
+2. **The tolerance exceeded the edge.** 0.15% chase against a measured
+   +0.094%/leg pre-cost edge: a fill at the bound could pay away more than the
+   entire edge before costs. Tightened to **0.04%** — a fraction of the edge,
+   not a round number. Deliberately fail-closed; it produces more no-trades.
+   (Honest corollary: on a ~$30 name one tick is 0.032%, so the tolerance is
+   about one tick. That is a real signal the edge may not be capturable in
+   low-priced names, not a threshold to loosen.)
+3. **The order window grew when you were late.** It ran from RUN time, so a
+   first run at 09:55 minted an order valid to 10:05 — 20 minutes past the
+   validated print. Now anchored to the signal bar: running late SHORTENS the
+   window, and past it the tool prints ORDER WINDOW CLOSED.
+
+### The three that were silent-failure risks
+4. **Signal bars are now proven, not assumed** (`validate_signal_bars`): first
+   bar exactly at the open, exact 5-minute grid, no duplicates, third bar
+   COMPLETE, OHLC/volume sanity. A halt or missing opening bar used to shift
+   `iloc[2]` to a different time with no visible failure — and every downstream
+   guard is denominated in that price.
+5. **Coverage gate** (`coverage_ok`, default 80%): the pair is chosen by
+   comparing names against each other, so a silently missing name changes the
+   bet. Below the floor: **no board, no orders**, with every excluded name and
+   reason printed.
+6. **A re-run can no longer print an order.** It rendered with `book=True`,
+   producing fresh share counts for a REVISED board under an "informational
+   only" disclaimer. A printed order line IS the instruction; the disclaimer
+   loses. Re-runs now render non-actionable.
+
+### Also fixed
+7. `session_rows(drop_date=...)` — research scripts no longer score the
+   current, still-open session as a completed outcome.
+8. Configured `data_sources.primary` now reaches the 9:46 path, with the source
+   and any fallback printed on every board.
+9. UTF-8/replacing output so the daily entry point cannot die mid-order on a
+   Windows console.
+10. README now opens with ONE canonical command and labels every other module
+    LEGACY. Two documents naming different daily commands is how the wrong
+    strategy gets run.
+
+### Deliberately NOT done
+The audit's Phases B-F (native point-in-time TSX data, executable bid/ask fills,
+nested cost-aware model search) are **blocked on data we do not have**, and it
+explicitly says not to substitute a weaker dataset and call it equivalent. We
+have no TSX Level 1 subscription and no paid intraday feed; Yahoo caps 5-minute
+bars at 60 days and zeroes TSX hourly volume. Every P1 criticism of the
+historical claim — training-window mismatch, US-twin domain mismatch,
+non-executable bar-close fills, per-leg objective, no outer-fold calibration,
+multiple-testing across 15 rejected candidates, day/ticker dependence — is
+**accepted as valid and unresolved**. Nothing here should be read as evidence of
+an edge. 177 tests green.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
