@@ -121,6 +121,20 @@ def score_rows(rows: list, close_fn, now: dt.datetime | None = None,
     return rows, scored, held
 
 
+def wilson(hits: int, n: int, z: float = 1.96) -> tuple:
+    """Wilson score interval for a hit rate. WHY (day-25, external audit): a
+    bare '44%' invites a decision; '44% (30-59%)' shows it is indistinguishable
+    from a coin flip at n=43 and forbids one. Normal-approximation intervals
+    are wrong at these sample sizes and near the boundaries. Pure+testable."""
+    if n <= 0:
+        return (0.0, 1.0)
+    p = hits / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / d
+    return (max(0.0, centre - half), min(1.0, centre + half))
+
+
 def live_summary(rows: list, last_n: int = 20) -> dict | None:
     """Compact live-record numbers for the morning report header (day-13:
     'so far it's not working' must be visible IN the tool, every day, not
@@ -130,9 +144,16 @@ def live_summary(rows: list, last_n: int = 20) -> dict | None:
         return None
     pair = [r for r in done if r.get("role") == "pair"]
     recent = done[-last_n:]
+    # Day-25: per-SIDE, because the aggregate hid it. Shorts ran 44% while the
+    # header printed a reassuring 50% overall. Reported WITH a Wilson interval
+    # so it cannot be read as "shorts are broken" at these sample sizes.
+    longs = [r for r in done if r["side"] == "LONG"]
+    shorts = [r for r in done if r["side"] == "SHORT"]
     return {"all_n": len(done), "all_hits": sum(int(r["hit"]) for r in done),
             "pair_n": len(pair), "pair_hits": sum(int(r["hit"]) for r in pair),
-            "recent_n": len(recent), "recent_hits": sum(int(r["hit"]) for r in recent)}
+            "recent_n": len(recent), "recent_hits": sum(int(r["hit"]) for r in recent),
+            "long_n": len(longs), "long_hits": sum(int(r["hit"]) for r in longs),
+            "short_n": len(shorts), "short_hits": sum(int(r["hit"]) for r in shorts)}
 
 
 def book_return_line(pair_rows: list) -> str:

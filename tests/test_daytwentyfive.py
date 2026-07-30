@@ -95,3 +95,31 @@ def test_default_chase_tolerance_is_below_the_measured_edge():
     import inspect
     default = inspect.signature(r945.fill_bound).parameters["max_chase_pct"].default
     assert default <= 0.094 / 2
+
+
+# ── Wilson intervals in the accountability header ───────────────────────────
+def test_wilson_interval_matches_known_values():
+    import ledger
+    lo, hi = ledger.wilson(19, 43)          # today's short record
+    assert 0.30 < lo < 0.32 and 0.58 < hi < 0.60
+    assert lo <= 0.5 <= hi, "44% on n=43 must still contain a coin flip"
+
+
+def test_wilson_is_safe_at_boundaries():
+    import ledger
+    assert ledger.wilson(0, 0) == (0.0, 1.0)
+    lo, hi = ledger.wilson(0, 10)
+    assert lo == 0.0 and 0 < hi < 1
+    lo, hi = ledger.wilson(10, 10)
+    assert hi == 1.0 and 0 < lo < 1
+
+
+def test_live_summary_breaks_out_sides():
+    """The aggregate hid it: 50% overall while shorts ran 44%."""
+    import ledger
+    rows = ([{"side": "LONG", "hit": "1", "role": "pair"}] * 6 +
+            [{"side": "SHORT", "hit": "0", "role": "pair"}] * 6)
+    s = ledger.live_summary(rows)
+    assert s["long_n"] == 6 and s["long_hits"] == 6
+    assert s["short_n"] == 6 and s["short_hits"] == 0
+    assert s["all_hits"] / s["all_n"] == 0.5      # aggregate looks fine

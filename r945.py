@@ -647,6 +647,16 @@ def render(res, book=False):
         print(f"LIVE RECORD (no hindsight): all picks {lr['all_hits']}/{lr['all_n']} "
               f"({lr['all_hits']/lr['all_n']*100:.0f}%) · PAIR {lr['pair_hits']}/{lr['pair_n']} · "
               f"last {lr['recent_n']}: {lr['recent_hits']}/{lr['recent_n']}.")
+        if lr.get("short_n"):
+            import ledger as _l
+            for side in ("long", "short"):
+                n, h = lr[f"{side}_n"], lr[f"{side}_hits"]
+                if not n:
+                    continue
+                lo, hi = _l.wilson(h, n)
+                print(f"  {side + 's':<7} {h}/{n} ({h/n*100:.0f}%)  95% CI "
+                      f"{lo*100:.0f}-{hi*100:.0f}% — "
+                      f"{'inside' if lo <= 0.5 <= hi else 'OUTSIDE'} a coin flip")
         if lr["all_n"] >= 30 and lr["all_hits"] / lr["all_n"] < 0.54:
             print("⚠ The live record has NOT yet demonstrated an edge over a coin flip.")
             print("  Trade the printed size or do not trade — the edge, if real, is thin.")
