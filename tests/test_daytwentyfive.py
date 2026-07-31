@@ -123,3 +123,40 @@ def test_live_summary_breaks_out_sides():
     assert s["long_n"] == 6 and s["long_hits"] == 6
     assert s["short_n"] == 6 and s["short_hits"] == 0
     assert s["all_hits"] / s["all_n"] == 0.5      # aggregate looks fine
+
+
+# ── shadow (paper) mode ─────────────────────────────────────────────────────
+def test_shadow_mode_prints_no_order_and_no_size(capsys):
+    """A printed share count IS the instruction (day-25). Paper mode must
+    remove the order line, not caption it."""
+    import r945 as _r
+    pick = {"t": "CM.TO", "p_up": 0.58, "nd": 0.4, "confidence": "mid",
+            "p945": 166.97, "last": 167.00, "r0": 0.58, "gap": -0.03,
+            "shares": 148, "alloc": 24716.0, "adverse_2pct": 494.0}
+    res = {"now": "2026-08-03T09:47:00", "n_names": 21, "longs": [pick],
+           "shorts": [], "excluded": [], "min_p": 0.55, "too_early": False,
+           "pair": _r.pair_of_day([pick], []), "late_min": 1.0,
+           "stale_after_min": 20, "spent_drift_pct": 0.3, "max_chase_pct": 0.04,
+           "ready_at_iso": "2026-08-03T09:46:00", "entry_window_min": 10,
+           "shadow": True}
+    _r.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "SHADOW" in out
+    assert "BUY 148 sh" not in out and "SELL SHORT" not in out
+    assert "148" not in out.split("SHADOW")[1][:200]
+
+
+def test_live_mode_still_prints_the_order(capsys):
+    """Guard against shadow mode silently disabling live trading."""
+    import r945 as _r
+    pick = {"t": "CM.TO", "p_up": 0.58, "nd": 0.4, "confidence": "mid",
+            "p945": 166.97, "last": 167.00, "r0": 0.58, "gap": -0.03,
+            "shares": 148, "alloc": 24716.0, "adverse_2pct": 494.0}
+    res = {"now": "2026-08-03T09:47:00", "n_names": 21, "longs": [pick],
+           "shorts": [], "excluded": [], "min_p": 0.55, "too_early": False,
+           "pair": _r.pair_of_day([pick], []), "late_min": 1.0,
+           "stale_after_min": 20, "spent_drift_pct": 0.3, "max_chase_pct": 0.04,
+           "ready_at_iso": "2026-08-03T09:46:00", "entry_window_min": 10}
+    _r.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "BUY 148 sh" in out and "SHADOW" not in out

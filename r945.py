@@ -691,7 +691,14 @@ def render(res, book=False):
                   f"board rank by P: #{lg.get('rank_by_p', '?')} "
                   "(selected by DENSITY — familiarity beats extremity)")
             stale = late > res.get("stale_after_min", 20)
-            if stale:
+            if res.get("shadow"):
+                # Day-26: PAPER mode. The prediction is still published and
+                # scored, but no order line exists to act on. WHY a mode and
+                # not a note: a printed share count IS the instruction (day-25)
+                # — "paper trade this" written above a BUY line loses.
+                print("      📄 SHADOW — paper only. No order, no size. "
+                      "The ledger still records this leg.")
+            elif stale:
                 # Day-11 close: a warning banner NEXT TO a live order line loses
                 # — the order line is the instruction, so on a stale board it
                 # must not exist at all.
@@ -763,7 +770,12 @@ def render(res, book=False):
                   f"[{r.get('confidence','?')}]")
     for r in res.get("excluded", []):
         print(f"\n  ⛔ EXCLUDED: {r['t']} — {r['excluded_reason']}")
-    if book:
+    if book and res.get("shadow"):
+        print("\n  SHADOW MODE: the board above is a PAPER record. It is published and")
+        print("  scored identically to a live day, so the ledger keeps accruing toward a")
+        print("  decisive sample — but no capital is at risk and no order is implied.")
+        print("  Switch back by dropping --shadow. CLOSE NOTHING; there is nothing open.")
+    elif book:
         print("\n  BOOK MODE: only THE PAIR is sized — one long + one short, equal-weight,")
         print("  total book capped. The pair is ~market-neutral but each leg carries full")
         print("  single-name risk with no intraday stop — sizing IS the risk control.")
@@ -816,9 +828,14 @@ def main(argv=None):
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--book", action="store_true",
                    help="once-daily workflow: exact share counts, enter at market now, flat by 3:55")
+    p.add_argument("--shadow", action="store_true",
+                   help="PAPER mode: publish and score the board exactly as usual, "
+                        "but print NO order lines and NO share counts. The ledger "
+                        "keeps accruing toward a decisive n with no money at risk.")
     args = p.parse_args(argv)
     cfg = load_config(args.config)
     res = run(cfg, args.workers)
+    res["shadow"] = bool(args.shadow)
     # Accountability header: the tool faces its own live record every morning.
     try:
         import ledger
