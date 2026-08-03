@@ -188,6 +188,41 @@ def validate_signal_bars(tb: pd.DataFrame, open_t: dt.time, tz: str,
     return True, "ok"
 
 
+def extrapolation_check(train: pd.DataFrame, today: dict) -> tuple:
+    """Is this name INSIDE the range the model has actually seen?
+
+    DAY-26. Tomorrow's motivating case: Telus's US line closed -12.58% on the
+    TSX holiday, so T.TO gaps enormously at the open. The live 60-day pool's
+    largest |gap| is 6.85% and it holds ZERO rows beyond 8% — yet k-NN takes
+    the 60 nearest neighbours no matter how far away they are, so it returns a
+    confident-looking P for a setup it has never observed. The `sparse` tag
+    hints at this but gates nothing.
+
+    Measured: a live row outside the pool's per-feature range occurs on only
+    0.82% of rows (deep set; 1.75% true set) and those rows move **1.89x**
+    further by the close. Rare and violent — the exact profile where an
+    unsupported extrapolation does most damage.
+
+    HONEST SCOPE: this is NOT an accuracy claim. It has not been shown to
+    raise the hit rate. It refuses to predict where the model has no basis,
+    which is a data-validity guarantee like the day-25 bar checks, not alpha.
+    Parameter-free by design — the bound is the training pool's own observed
+    range, so there is nothing to tune or overfit. Pure + testable."""
+    tr = train.dropna(subset=FEATS) if len(train) else train
+    if len(tr) < 200:
+        return True, "ok"
+    lo, hi = tr[FEATS].min(), tr[FEATS].max()
+    for f in FEATS:
+        v = today.get(f)
+        if v is None:
+            continue
+        if v < lo[f] or v > hi[f]:
+            return False, (f"{f}={v:+.2f} is outside everything the 60-day pool has "
+                           f"seen ([{lo[f]:+.2f}, {hi[f]:+.2f}]) — the model would be "
+                           "extrapolating, not predicting")
+    return True, "ok"
+
+
 def coverage_ok(n_evaluated: int, universe: list, groups: dict,
                 excluded: dict, min_frac: float = 0.8) -> tuple:
     """Did enough of the universe survive to make a CROSS-SECTIONAL choice?
@@ -573,8 +608,14 @@ def run(cfg, workers=8):
     # equal-risk leg weighting in allocate_book — see its docstring.
     vol_by_t = train.groupby("t")["r1"].std() if len(train) else pd.Series(dtype=float)
 
-    out = []
+    out, extrapolated = [], []
     for r in live:
+        # Day-26: refuse to predict outside the model's observed support.
+        ok_x, why_x = extrapolation_check(train, r)
+        if not ok_x:
+            r["excluded_reason"] = why_x
+            extrapolated.append(r)
+            continue
         res = knn_probability(train, r)
         p, n = res[0], res[1]
         if p is None:
@@ -589,6 +630,10 @@ def run(cfg, workers=8):
     longs, shorts, excluded = peer_gate(
         longs, shorts, cfg.get("peer_groups"),
         cfg.get("peer_contradiction_min", 3))
+    # Day-26: names refused for extrapolation are reported alongside peer-gate
+    # exclusions — a silently dropped name is how a partial board hides.
+    for r in extrapolated:
+        excluded.append({"t": r["t"], "excluded_reason": r["excluded_reason"]})
     # Too-early detection: no live rows because today has <3 completed 5m bars.
     too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
     # Day-25 coverage gate — fail closed rather than pick from a partial board.

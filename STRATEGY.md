@@ -1272,6 +1272,76 @@ multiple-testing across 15 rejected candidates, day/ticker dependence — is
 **accepted as valid and unresolved**. Nothing here should be read as evidence of
 an edge. 177 tests green.
 
+## Day-26 (TSX holiday, no trading): two safety fixes and a 16th rejection
+
+Market closed for the Civic Holiday. No board, no orders, nothing traded. Used
+the day for the work a trading morning has no time for.
+
+### The holiday check was broken — and the day-25 gate is what saved it
+`is_trading_day(2026-08-03)` returned **True** on a day the TSX was shut. Cause:
+it depends on the OPTIONAL `pandas_market_calendars`, and where that is not
+installed the `except` branch returns True for **every weekday**. A safety
+check must never be one `pip install` away from silently returning the unsafe
+answer.
+
+What actually protected us was the day-25 coverage gate, on its first real
+test: `0/21 names passed data validation, below the 80%% floor -> NO BOARD, NO
+ORDERS`. Fail-closed worked. But that made the holiday check a single point of
+failure, so it is now backed by `dashboard.tsx_holidays()` — computed, not
+tabulated (so it never expires), covering all ten TSX statutory closures with
+weekend-observance shifts. **Verified against pandas_market_calendars across
+1,045 weekdays of 2024-2027: zero mismatches.**
+
+### Tomorrow's real hazard, found by watching the US lines
+The TSX was shut but the US dual-listings traded. **Telus's US line (TU) closed
+-12.58%%**, so T.TO gaps enormously at tomorrow's open. Also crude **-6.34%%**
+(ENB -2.3%%, CVE -2.6%%, TRP -1.9%%), NTR -4.9%%, AEM -3.4%%, SHOP -3.2%%, while
+financials rose (TD/BMO/CM ~+1%%) and the S&P gained +1.65%% — a sharply split
+tape.
+
+The live 60-day pool's largest |gap| is **6.85%%** and it contains **zero** rows
+beyond 8%%. A -12.6%% gap has no neighbours at all — yet k-NN takes the 60
+nearest regardless of distance, so it returns a confident-looking P for a setup
+it has never observed. The `sparse` tag hints at this and gates nothing.
+
+**ADOPTED: an extrapolation guard** (`r945.extrapolation_check`). A name whose
+features fall outside the training pool's own observed range is REFUSED, with
+the reason printed alongside peer-gate exclusions. Measured before shipping:
+fires on **0.82%%** of rows (deep set; 1.75%% true set) and those rows move
+**1.89x** further by the close — rare and violent, exactly where an
+unsupported extrapolation does most damage. Parameter-free: the bound is the
+pool's own range, so there is nothing to tune or overfit.
+
+**HONEST SCOPE — this is not an accuracy claim.** It has not been shown to
+raise the hit rate. It refuses to predict where the model has no basis, which
+is a data-validity guarantee like the day-25 bar checks, not alpha. It is the
+first fix that directly addresses the earnings/news blind spot this journal has
+listed as unresolved since day-13, and it does so without pretending to have a
+news feed.
+
+### REJECTED (#16): "the short side is structurally broken"
+The week's most tempting conclusion — shorts 3/9 with -1.111%% capture, and
+20/44 (45%%) cumulative. Tested properly by comparing each side against **its
+own naive base rate**, because if the tape simply drifts up then longs win and
+shorts lose with no skill involved, and dropping shorts would be a beta bet
+rather than an improvement.
+
+| | deep set | true 5m set |
+|---|---|---|
+| long skill vs P(up) | +1.1pp | **-6.2pp** |
+| short skill vs P(down) | -1.8pp | **+5.3pp** |
+| short skill negative in | 2 of 4 quarters | 1 of 4 quarters |
+
+**The two datasets say opposite things about which side is better.** Fails the
+all-four-quarters bar, and the true-horizon data would have had us cut the
+LONGS. The live 45%% short record is a bad run, not a structural defect —
+acting on it would have been backwards. Rejections now 16 against 2 adoptions.
+
+### Ready for tomorrow
+Shadow mode (`--shadow`) is available if the decision is to stop risking
+capital while the ledger accrues. The recommendation from day-26 stands: after
+29 executed pair legs at 14/29, no interval excludes a coin flip.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

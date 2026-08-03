@@ -310,22 +310,81 @@ def build_levels(struct, orb, levels) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # Holiday / weekday gate (for scheduled runs)
 # ─────────────────────────────────────────────────────────────────────────────
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> dt.date:
+    """The n-th `weekday` (Mon=0) of a month. Pure + testable."""
+    d = dt.date(year, month, 1)
+    d += dt.timedelta(days=(weekday - d.weekday()) % 7)
+    return d + dt.timedelta(weeks=n - 1)
+
+
+def _easter(year: int) -> dt.date:
+    """Anonymous Gregorian computus — Good Friday is Easter minus two days."""
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    f, g = (b + 8) // 25, (b - (b + 8) // 25 + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    return dt.date(year, month, (h + l - 7 * m + 114) % 31 + 1)
+
+
+def tsx_holidays(year: int) -> set:
+    """TSX statutory closures for a year, computed rather than tabulated so it
+    never expires. Weekend statutory days observe on the following Monday.
+
+    WHY THIS EXISTS (day-26): `is_trading_day` depended on the OPTIONAL
+    `pandas_market_calendars`, and on a machine where it was not installed the
+    `except` branch returned True for EVERY weekday — so the Civic Holiday
+    (2026-08-03) reported as a trading day. A safety check must not be one
+    `pip install` away from silently returning the unsafe answer. Verified
+    against pandas_market_calendars for 2024-2027. Pure + testable."""
+    def observed(d):
+        if d.weekday() == 5:
+            return d + dt.timedelta(days=2)
+        if d.weekday() == 6:
+            return d + dt.timedelta(days=1)
+        return d
+
+    good_friday = _easter(year) - dt.timedelta(days=2)
+    victoria = dt.date(year, 5, 25) - dt.timedelta(days=1)
+    while victoria.weekday() != 0:                     # Monday before May 25
+        victoria -= dt.timedelta(days=1)
+    boxing = observed(dt.date(year, 12, 26))
+    christmas = observed(dt.date(year, 12, 25))
+    if boxing == christmas:                            # never collide
+        boxing += dt.timedelta(days=1)
+    return {
+        observed(dt.date(year, 1, 1)),                 # New Year's Day
+        _nth_weekday(year, 2, 0, 3),                   # Family Day
+        good_friday,
+        victoria,                                      # Victoria Day
+        observed(dt.date(year, 7, 1)),                 # Canada Day
+        _nth_weekday(year, 8, 0, 1),                   # Civic Holiday
+        _nth_weekday(year, 9, 0, 1),                   # Labour Day
+        _nth_weekday(year, 10, 0, 2),                  # Thanksgiving
+        christmas,
+        boxing,
+    }
+
+
 def is_trading_day(day: dt.date, exchange: str = "TSX") -> bool:
     """
-    Skip weekends and exchange holidays. Uses pandas_market_calendars when
-    available; falls back to a weekday check (with a loud note) if not.
+    Skip weekends and exchange holidays. Prefers pandas_market_calendars when
+    available; otherwise uses the built-in TSX table — NOT a bare weekday
+    check, which silently called every holiday a trading day (day-26).
     """
     if day.weekday() >= 5:
         return False
     try:
         import pandas_market_calendars as mcal
         cal = mcal.get_calendar(exchange)
-        sched = cal.schedule(start_date=day, end_date=day)
-        return not sched.empty
+        return not cal.schedule(start_date=day, end_date=day).empty
     except Exception:
-        # Fallback: weekday only. Better to run on a holiday and have the data
-        # guard refuse than to silently skip a real trading day.
-        return True
+        if exchange.upper() in ("TSX", "TSXV", "XTSE"):
+            return day not in tsx_holidays(day.year)
+        return True     # unknown exchange: defer to the data guard
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ rich>=13.0
 
 # Scheduling + market holidays (optional but recommended)
 schedule>=1.2
-pandas_market_calendars>=4.0
+pandas_market_calendars>=4.0   # optional: dashboard.tsx_holidays is a verified built-in fallback
 
 # Testing
 pytest>=7.0
