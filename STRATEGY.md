@@ -1342,6 +1342,77 @@ Shadow mode (`--shadow`) is available if the decision is to stop risking
 capital while the ledger accrues. The recommendation from day-26 stands: after
 29 executed pair legs at 14/29, no interval excludes a coin flip.
 
+## Day-27: execution is now an ASSET — and two more tempting patterns rejected
+
+### The trade (user's own fills)
+BNS.TO long 123.67 -> 122.68 (-0.80%%) and BMO.TO short 254.25 -> 253.05
+(+0.47%%). **NET -$87.75** at printed size (205 / 96 shares). Long MISS, short
+HIT. Exits were 122.68 / 253.05 — the exact closing prints, so the hold-to-3:55
+contract was honoured in full.
+
+### What went RIGHT — and it is the thing that was broken for weeks
+**Both fills beat the printed decision price.** BNS bought 0.024%% BELOW the
+9:45 print; BMO sold 0.035%% ABOVE it. Execution ADDED **+$14.79** versus
+trading at the print (+$6.15 on BNS, +$8.64 on BMO).
+
+That closes the loop opened on day-11 (chased CP short captured zero), day-19
+(fill 0.21%% past the bound), day-13 (4x size) and day-25 (the bound was
+anchored to the LIVE price and enforced nothing). Execution used to be the
+single largest drain in this system. It is now a small positive contributor,
+two sessions running. **This is the one part of the machine that has verifiably
+improved.**
+
+### What went WRONG — the relative call, and only that
+Tide **+0.069%%** (flat, 57%% breadth). Financials fell **-0.710%%** as a sector.
+Because BOTH legs were financials, the sector move cancelled almost exactly and
+**100%% of the outcome was the internal ranking**:
+
+| financial | 9:45->close | |
+|---|---|---|
+| MFC | +0.962%% | |
+| SLF | +0.069%% | |
+| BMO | **-0.437%%** | our SHORT |
+| RY | -0.710%% | |
+| BNS | **-0.825%%** | our LONG |
+| CM | -1.114%% | |
+| TD | -1.380%% | |
+
+The bet was "BNS outperforms BMO"; BNS underperformed by **-0.388%%**. We were
+long the weaker of the two. BNS ranked 18/21 in the universe, BMO 16/21 — the
+engine picked two weak names and went long the weaker one. No market move, no
+execution error, no data fault: the relative call was simply wrong.
+
+### REJECTED (#17): "a same-sector pair is a worse structure"
+Today's pair was intra-sector, which makes the book ONE relative-value call
+rather than two hedged bets. Tested on 333 two-legged deep sessions:
+same-sector NET -0.0109%%/day vs cross-sector -0.0122%%, legs hit 50%% vs 51%%,
+worse in only **2 of 4** quarters. Statistically indistinguishable. The one
+real difference favours it: **lower volatility (std 0.447 vs 0.605)**, exactly
+as the cancelling sector move predicts. Today's structure was not the problem.
+
+### REJECTED (#18): "drop the MID density tag"
+The live density record has stopped being the pre-registered monotonic
+dense>mid>sparse and become a U-shape: dense 54%%, sparse 53%%, **mid 39%%**
+(capture -0.304%%). Both of today's losing-pair legs were MID. Day-7 flagged
+non-monotonicity as the reason to tag rather than gate, and picking the worst
+of three buckets post-hoc is a multiple comparison — so it went to the full bar.
+
+**The deep set says the OPPOSITE.** Mid is the BEST bucket: 53.0%% hit /
++0.0695%% capture, against dense 48.5%% / -0.0098%% and sparse 52.0%% / -0.1842%%.
+Mid was worse in only **1 of 4** quarters. Cutting mid would have cut the
+strongest cohort in the larger sample.
+
+### The pattern that keeps repeating — now three for three
+This week every live pattern that looked worth acting on pointed the OPPOSITE
+way in the larger sample:
+1. "shorts are broken" (45%% live) -> true-horizon data says shorts +5.3pp and
+   LONGS -6.2pp (#16);
+2. "same-sector pairs are worse" -> indistinguishable, and lower variance (#17);
+3. "mid tags are bad" (39%% live) -> mid is the best bucket on 809 legs (#18).
+Rejections now **18** against 2 adoptions. At ~30 executed legs the live record
+cannot distinguish cohorts; it can only generate plausible stories, and acting
+on any of them this week would have made things worse.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
