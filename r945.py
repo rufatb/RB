@@ -155,6 +155,26 @@ def density_label(nd: float, cutoffs: tuple) -> str:
     return "dense" if nd <= lo else ("sparse" if nd > hi else "mid")
 
 
+def clock_vs_data(today: str, latest_session: str) -> tuple:
+    """Refuse to publish when the host clock disagrees with the DATA's latest
+    session. Day-22 (live incident): the container clock was a WEEK behind, so
+    the engine treated a completed historical session as "today", printed 9:45
+    prices from that stale day, and published a full order block a week late.
+    Every other guard (too-early, late-run, staleness) reads the same wrong
+    clock, so none of them fired. The data's own newest session is the only
+    trustworthy clock. Returns (ok, message). Pure + testable."""
+    if latest_session is None:
+        return False, "no session data returned by the feed"
+    if latest_session == today:
+        return True, ""
+    if latest_session > today:
+        return False, (f"HOST CLOCK IS BEHIND: clock says {today} but the feed's "
+                       f"newest session is {latest_session}. Any board built now "
+                       "would price a historical day as if it were live.")
+    return False, (f"FEED IS STALE: clock says {today} but the newest session is "
+                   f"{latest_session}. Market closed/holiday, or the feed is late.")
+
+
 def late_minutes(now: dt.datetime, open_t: dt.time) -> float:
     """Minutes elapsed past the moment the 9:45 board becomes valid (open+16).
     The validation enters AT the 9:45 print — a run 20+ minutes later is a
@@ -301,6 +321,15 @@ def run(cfg, workers=8):
 
     # Pooled history EXCLUDING today (today's close is the future — no leakage).
     today_str = str(now.date())
+    # DATA-VS-CLOCK INTEGRITY (day-22): must run BEFORE anything is priced.
+    seen = {str(d) for bars in fetched.values() if not bars.empty for d in bars.index.date}
+    latest_session = max(seen) if seen else None
+    ok, why = clock_vs_data(today_str, latest_session)
+    if not ok:
+        return {"now": now.isoformat(timespec="seconds"), "n_names": 0,
+                "longs": [], "shorts": [], "excluded": [], "pair": None,
+                "min_p": min_p, "too_early": False, "clock_error": why,
+                "latest_session": latest_session}
     hist_rows, live = [], []
     for t, bars in fetched.items():
         if bars.empty:
@@ -383,6 +412,12 @@ def render(res, book=False):
     print("=" * 74)
     print(f"9:45 → CLOSE ENGINE   ({res['now']})   {res['n_names']} names evaluated")
     print("=" * 74)
+    if res.get("clock_error"):
+        print("⛔ REFUSING TO PUBLISH — data/clock integrity failure")
+        print(f"   {res['clock_error']}")
+        print("   No orders, no ledger rows. Fix the clock (or wait for the feed)")
+        print("   and re-run. A board priced off the wrong session is not a trade.")
+        return
     if res.get("too_early"):
         print(f"⏰ TOO EARLY — the engine needs the full 9:30–9:45 bars COMPLETE.")
         print(f"   Ready at {res.get('ready_at', '09:46')} ET. A run before then reads the")
@@ -525,7 +560,7 @@ def main(argv=None):
         # Pair legs get role=pair (the executed record); the remaining board is
         # role=board — kept so density/crowding instrumentation keeps learning.
         picks = res["longs"] + res["shorts"]
-        if picks and not res.get("too_early"):
+        if picks and not res.get("too_early") and not res.get("clock_error"):
             import ledger
             date = res["now"][:10]
             # PUBLISH-ONCE (day-18): a re-run minutes later can see REVISED

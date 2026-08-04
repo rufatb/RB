@@ -83,3 +83,36 @@ def test_render_omits_path_line_when_stats_unavailable(capsys):
            "max_chase_pct": 0.15, "path_stats": None}
     r945.render(res, book=True)
     assert "normal swing AGAINST" not in capsys.readouterr().out
+
+
+# ── Day-22: host clock vs data session (the week-behind-clock incident) ─────
+def test_clock_behind_data_refuses():
+    ok, why = r945.clock_vs_data("2026-07-27", "2026-08-04")
+    assert not ok and "CLOCK IS BEHIND" in why and "2026-08-04" in why
+
+
+def test_stale_feed_refuses():
+    ok, why = r945.clock_vs_data("2026-08-04", "2026-07-31")
+    assert not ok and "FEED IS STALE" in why
+
+
+def test_matching_session_passes():
+    ok, why = r945.clock_vs_data("2026-08-04", "2026-08-04")
+    assert ok and why == ""
+
+
+def test_no_data_refuses():
+    ok, why = r945.clock_vs_data("2026-08-04", None)
+    assert not ok
+
+
+def test_render_refuses_and_prints_nothing_tradeable(capsys):
+    res = {"now": "2026-07-27T09:59:00", "n_names": 0, "longs": [], "shorts": [],
+           "excluded": [], "pair": None, "min_p": 0.55, "too_early": False,
+           "clock_error": "HOST CLOCK IS BEHIND: clock says 2026-07-27 but the "
+                          "feed's newest session is 2026-08-04.",
+           "latest_session": "2026-08-04"}
+    r945.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "REFUSING TO PUBLISH" in out
+    assert "BUY" not in out and "SELL SHORT" not in out
