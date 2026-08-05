@@ -181,3 +181,10 @@ date,ticker,side,p_sided,confidence,p945,role,weight,r1,hit
 2026-08-04,CNQ.TO,SHORT,0.581,sparse,64.1800,board,,1.169,0
 2026-08-04,T.TO,SHORT,0.581,sparse,13.0900,board,,2.292,0
 2026-08-04,ENB.TO,SHORT,0.571,sparse,75.0600,board,,0.040,0
+2026-08-05,CP.TO,LONG,0.561,mid,127.5400,pair,0.4327,,
+2026-08-05,BMO.TO,SHORT,0.620,sparse,255.4200,board,,,
+2026-08-05,RY.TO,SHORT,0.596,sparse,297.1500,pair,0.5642,,
+2026-08-05,CM.TO,SHORT,0.588,sparse,166.7400,board,,,
+2026-08-05,ENB.TO,SHORT,0.575,sparse,74.0800,board,,,
+2026-08-05,TRP.TO,SHORT,0.570,sparse,90.9000,board,,,
+2026-08-05,MFC.TO,SHORT,0.550,sparse,62.3100,board,,,
