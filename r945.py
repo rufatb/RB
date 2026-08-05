@@ -941,6 +941,20 @@ def main(argv=None):
                       "weight": ((r.get("alloc") or 0) / book_cap
                                  if (id(r) in pair_ids and book_cap) else None)}
                      for r in picks]
+            # Day-28: persist the 9:45 print for EVERY evaluated name, not just
+            # the qualified ones. WHY: the pair is market-neutral, so a leg's
+            # real contribution is its move RELATIVE to the universe — today RY
+            # "HIT" while contributing 7% of the pair's gain (a median name on a
+            # falling tape), and on day-23 AEM "MISSED" while being relatively
+            # fine. Without the whole universe's prints the tide cannot be
+            # reconstructed after the fact, so selection skill can never be
+            # separated from tape luck. Qualified picks alone are a SELECTED
+            # sample and would give a biased tide.
+            try:
+                ledger.append_universe_prints(
+                    [{"ticker": r["t"], "p945": r["p945"]} for r in out], date)
+            except Exception:
+                pass
             n = ledger.append_picks(lrows, date)
             if n:
                 print(f"\n  [ledger: {n} picks recorded for {date} "

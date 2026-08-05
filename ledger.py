@@ -37,6 +37,61 @@ FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role",
           "weight", "r1", "hit"]
 
 
+PRINTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universe_prints.csv")
+PRINT_FIELDS = ["date", "ticker", "p945"]
+
+
+def append_universe_prints(rows: list, date: str, path: str = PRINTS) -> int:
+    """Store the 9:45 print for EVERY evaluated universe name (day-28).
+
+    The pair is market-neutral, so the tide cancels between the legs and a
+    leg's real contribution is its move RELATIVE to the universe. The ledger's
+    `hit` column is absolute, so it credits a short for a falling tape and
+    penalises a long for the same — measuring the market as much as the
+    selection. Reconstructing the tide afterwards needs every name's 9:45
+    price, and the QUALIFIED picks alone are a selected sample that would give
+    a biased tide. Publish-once, like the ledger itself."""
+    existing = []
+    if os.path.exists(path):
+        with open(path) as f:
+            existing = list(csv.DictReader(f))
+    if any(r["date"] == date for r in existing):
+        return 0
+    for r in rows:
+        existing.append({"date": date, "ticker": r["ticker"], "p945": f"{r['p945']:.4f}"})
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=PRINT_FIELDS, restval="")
+        w.writeheader()
+        w.writerows(existing)
+    return len(rows)
+
+
+def tide_by_date(prints: list, close_fn) -> dict:
+    """date -> median 9:45->close move across the whole universe. Pure-ish."""
+    by = {}
+    for r in prints:
+        c = close_fn(r["ticker"], r["date"])
+        if c is None:
+            continue
+        by.setdefault(r["date"], []).append((c / float(r["p945"]) - 1) * 100)
+    return {d: float(sorted(v)[len(v) // 2]) for d, v in by.items() if len(v) >= 10}
+
+
+def relative_line(pair_rows: list, tides: dict) -> str:
+    """Pair-leg capture measured against the tide — selection skill with the
+    tape removed. Absolute capture stays reported alongside it; neither alone
+    is the whole picture, and only this one answers 'are the PICKS good?'."""
+    usable = [r for r in pair_rows if r["date"] in tides and r["r1"] != ""]
+    if len(usable) < 4:
+        return ("  relative capture     : (needs universe prints — recording "
+                "started day-28)")
+    rel = [(float(r["r1"]) - tides[r["date"]]) * (1 if r["side"] == "LONG" else -1)
+           for r in usable]
+    wins = sum(1 for x in rel if x > 0)
+    return (f"  relative capture     : {sum(rel)/len(rel):+.3f}%/leg vs the tide "
+            f"over {len(usable)} legs  ({wins}/{len(usable)} beat it)")
+
+
 def load(path: str = LEDGER) -> list:
     if not os.path.exists(path):
         return []
@@ -179,6 +234,30 @@ def book_return_line(pair_rows: list) -> str:
             f"capacity over {len(daily)} sessions  ({wins}/{len(daily)} positive)")
 
 
+def _relative_for_report(pair_rows: list) -> str:
+    """Best-effort relative line for the CLI report; silent if prints/net absent."""
+    try:
+        if not os.path.exists(PRINTS):
+            return relative_line([], {})
+        with open(PRINTS) as f:
+            prints = list(csv.DictReader(f))
+        from adapters import YahooDirectAdapter
+        a = YahooDirectAdapter(exchange_tz="America/Toronto")
+        cache: dict = {}
+
+        def close_fn(t, date):
+            if t not in cache:
+                try:
+                    b = a.get_daily_bars(t, 90)
+                    cache[t] = {str(i.date()): float(c) for i, c in b["Close"].items()}
+                except Exception:
+                    cache[t] = {}
+            return cache[t].get(date)
+        return relative_line(pair_rows, tide_by_date(prints, close_fn))
+    except Exception:
+        return relative_line([], {})
+
+
 def report(rows: list) -> str:
     done = [r for r in rows if r["hit"] != ""]
     if not done:
@@ -202,6 +281,7 @@ def report(rows: list) -> str:
         out.append(line("PAIR legs", pair_sub))
         out.append(line("board (untraded)", [r for r in done if r.get("role") == "board"]))
         out.append(book_return_line(pair_sub))
+        out.append(_relative_for_report(pair_sub))
     out.append("  — density hypothesis (pre-registered: dense > mid/sparse) —")
     for tag in ("dense", "mid", "sparse", "n/a"):
         sub = [r for r in done if r["confidence"] == tag]

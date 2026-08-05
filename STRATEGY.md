@@ -1413,6 +1413,69 @@ Rejections now **18** against 2 adoptions. At ~30 executed legs the live record
 cannot distinguish cohorts; it can only generate plausible stories, and acting
 on any of them this week would have made things worse.
 
+## Day-28: a WINNING day, audited the same as a loss — and the metric that was missing
+
+### The trade
+PAIR **2/2**: CP.TO long +0.369%% HIT, RY.TO short +0.404%% HIT. **NET +$193.90**
+at printed size. Board 6/7. First positive book session in five. Neither leg
+went materially against (worst -0.27%% / +0.28%%) — right early, right all day.
+
+### The decomposition that matters (wins get the same audit — day-4, day-10)
+Tide **-0.352%%** (down day, breadth 43%%):
+
+| leg | absolute capture | RELATIVE to tide | universe rank |
+|---|---|---|---|
+| CP.TO long | +0.369%% | **+0.721%%** | 5/21 |
+| RY.TO short | +0.404%% | **+0.052%%** | 12/21 |
+
+**The long supplied 93%% of the pair's gain; the short supplied 7%%.** RY reads as
+a clean HIT in the ledger, but market-neutral it was a MEDIAN name that fell
+because the whole tape fell — on a -0.35%% day almost any short "wins". CP was
+the real pick: it beat a falling tide by +0.72%%.
+
+This is the exact mirror of day-23, where AEM "MISSED" while being relatively
+fine. **The `hit` column measures the TAPE as much as the SELECTION.**
+
+### ENCODED: relative (tide-removed) capture
+The pair is market-neutral by construction, so the tide cancels between the
+legs and a leg's real contribution is its move RELATIVE to the universe. Until
+today the ledger had no way to express that — it credited a short for a falling
+tape and penalised a long for the same.
+
+Reconstructing the tide afterwards needs **every** name's 9:45 print, and the
+qualified picks alone are a SELECTED sample that would give a biased tide. So
+publish time now persists the 9:45 print for all evaluated names
+(`universe_prints.csv`, publish-once), and the report prints relative capture
+beside the absolute figures. Backfilled 252 prints across the 12 sessions still
+inside Yahoo's 5-minute window.
+
+**The first honest read of selection skill:**
+```
+  PAIR legs        17/33 (52%)   avg move captured -0.14%
+  book-weighted    -0.315%/session over 5 sessions (1/5 positive)
+  relative capture -0.129%/leg vs the tide over 23 legs (11/23 beat it)
+```
+With the tape removed the picks beat the universe **11 of 23 times (48%%)** with
+slightly negative capture. That is the cleanest statement yet: the selection
+layer has not demonstrated skill, and the absolute hit rate was partly
+measuring the market all along.
+
+### What today does NOT license
+The all-SPARSE short board flagged as thin evidence this morning went **5/6**,
+and in relative terms averaged +0.42%%. That contradicts my own morning caution
+and reinforces day-17's rejection of "drop sparse legs" — it stays un-gated.
+One good day is not evidence, in either direction: no rule was changed.
+
+### The extrapolation guard's first live firing
+SHOP.TO excluded on a **+20.83%%** gap (pool range [-7.28, +6.85]); verified
+genuine — 173.41 close to a 209.08 open. It then moved -1.358%% post-gap. The
+guard's job was to refuse a prediction it had no basis for, NOT to call the
+direction, so this is a neutral outcome and must not be scored as a save.
+Notable because day-27 walked back the anecdote that motivated the guard (the
+"-12.58%% Telus" figure was a misread meta field); the measured justification —
+fires on 0.82%% of rows, those rows move 1.89x further — was always the real
+one, and today is the first live confirmation that the mechanism exists.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
