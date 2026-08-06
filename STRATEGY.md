@@ -1476,6 +1476,64 @@ Notable because day-27 walked back the anecdote that motivated the guard (the
 fires on 0.82%% of rows, those rows move 1.89x further — was always the real
 one, and today is the first live confirmation that the mechanism exists.
 
+## Day-29: both legs missed on a FLAT tape — a clean selection failure, and a 19th rejection
+
+### The trade
+PAIR **0/2**: RY.TO long -0.148%%, ABX.TO short -0.728%%. **NET -$175.22**,
+book-weighted capture -0.351%%. Board **2/9**.
+
+### No tape excuse — this one is entirely the picks
+Tide **-0.070%%**, breadth 48%%. Dead flat. Relative decomposition:
+
+| leg | absolute | RELATIVE | rank |
+|---|---|---|---|
+| RY.TO long | -0.148%% | -0.078%% | 14/21 |
+| ABX.TO short | +0.728%% | **-0.798%%** | **6/21** |
+
+We shorted the **6th strongest name in the universe** on a flat tape. And the
+whole board failed the same way: **board relative capture -0.289%%, only 2 of 9
+picks beat the tide** — identical to the 2/9 absolute hit rate, because with a
+flat tide absolute and relative coincide. This was not a market day that ran
+over good picks; the picks were bad.
+
+### REJECTED (#19): "do not oppose your own sector's opening move"
+ABX (gold) closed +0.73%% while its ONLY peer AEM closed +1.47%% — the gold
+sector rallied and we were short a member. The sector's first-15-minute move IS
+known at 9:46, and this is a DIFFERENT variable from the day-20 rejection,
+which tested the NAME's own momentum.
+
+Tested on 754 deep legs with the all-four-quarters bar:
+- opposing legs **52.8%% hit / +0.0360%% capture**; with-sector legs 47.3%% /
+  -0.0123%% — **the opposite direction to the hypothesis**;
+- worse in only **2 of 4** quarters;
+- the **PLACEBO grouping reproduces the same 2/4 pattern**, so even the quarter
+  split is not group-specific.
+Opposing your sector is, if anything, mildly better. Today's ABX loss was not
+an identifiable pitfall. Rejections now **19** against 2 adoptions.
+
+### The number that now matters, and it is not the hit rate
+With the day-28 relative metric accruing:
+
+```
+  PAIR absolute    17/35 (49%)   95% CI 33-64%
+  relative capture -0.153%/leg over 25 legs   11/25 (44%) beat the tide
+                   95% CI 27-63%
+```
+
+**The two disagree informatively.** The absolute pair record reads as a coin
+flip; measured against the universe the picks are *slightly below* the median.
+Whatever the absolute number flatters comes from the tape, not the selection.
+Neither interval excludes 50%% at these sample sizes — but the direction of the
+gap is the honest read, and it points the same way as the deep validation:
+**the selection layer has not demonstrated skill.**
+
+### The density tags reshuffled AGAIN — which is itself the finding
+Live cohorts today: sparse 36/66 (55%%, +0.21%% capture), dense 32/62 (52%%),
+mid 26/65 (40%%). A week ago dense led and sparse trailed; day-28 rejected
+cutting mid because the deep set called mid the BEST bucket. Three orderings in
+ten sessions. The tag ranking is noise at this n, and every attempt to gate on
+it (#16 shorts, #18 mid) has pointed the wrong way. Do not gate on the tags.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
