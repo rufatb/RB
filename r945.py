@@ -75,8 +75,24 @@ validated WALK-FORWARD on a blind holdout before shipping:
 
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,
-sample sizes shown, STAND DOWN when nothing clears. These are modest, measured
-edges — selectivity is the edge; nothing here exceeds the honest ceiling.
+sample sizes shown, STAND DOWN when nothing clears.
+
+    DAY-29 CORRECTION — "SELECTIVITY IS THE EDGE" IS REFUTED. That claim stood
+    here unmeasured from the start, because the qualification bar had never
+    actually been VARIED. Tested on 479 deep sessions across bars 0.55 -> 0.65:
+        bar   sessions  legs   hit     capture    pair NET/day
+        0.55    476      809  50.1%   -0.0047%     +0.0004%
+        0.58    452      611  47.6%   -0.0024%     +0.0080%
+        0.60    376      437  48.7%   -0.0196%     -0.0111%
+        0.62    245      258  51.2%   -0.0294%     -0.0402%
+        0.65     91       91  52.7%   -0.0762%     -0.0762%
+    Capture DEGRADES monotonically as the bar rises, and NO bar produces
+    positive capture in all four quarters. Hit rate creeps up (50.1 -> 52.7%)
+    while capture falls — the higher-conviction picks are right slightly more
+    often on SMALLER moves, which is worse after costs, not better. Being more
+    selective does not help this machine; there is no bar at which it earns.
+    The 0.55 bar is retained ONLY as the candidate-generation mechanism, never
+    as a claimed edge. Do not restore the old sentence.
 """
 
 from __future__ import annotations

@@ -1534,6 +1534,56 @@ cutting mid because the deep set called mid the BEST bucket. Three orderings in
 ten sessions. The tag ranking is noise at this n, and every attempt to gate on
 it (#16 shorts, #18 mid) has pointed the wrong way. Do not gate on the tags.
 
+### Day-29 addendum: "why no adjustment?" — the last untested lever, tested
+
+Challenged on making no adjustment after an 0/2 day. Two honest answers.
+
+**1. Magnitude.** RY -0.148%% is essentially flat against a printed normal
+adverse swing of -0.7%% median / -1.3%% worse-quartile; ABX -0.728%% sits inside
+the +1.2%% worse-quartile for a short. Book -0.351%% of capacity, disaster lines
+(2.5%%) never approached. This was an ORDINARY losing session — the run's worst
+is -1.310%% — and loss size is the evidence about whether something BROKE.
+Nothing broke.
+
+**2. Adjustments HAVE been made — just not to the selector.** Equal-risk
+weighting (worth +$170 on day-23, +$187 on day-25, -$23 on day-22) and the
+extrapolation guard are the two adoptions; execution went from the largest
+drain in the system to a small positive (+$14.79 on day-27). What is refused is
+re-tuning the SELECTION on one session — and three times in this window the
+live pattern pointed the OPPOSITE way to the larger sample (#16 shorts, #18
+mid, #19 sector-momentum). Acting on any would have made it worse.
+
+**REJECTED (#20) — and this is the decisive one.** The single structural lever
+never varied: the system trades EVERY session, publishing whenever two names
+clear 0.55. The header claimed "selectivity IS the edge" — a claim that had
+never been measured, because the bar had never been moved.
+
+| bar | sessions | legs | hit | capture | pair NET/day |
+|---|---|---|---|---|---|
+| 0.55 | 476 | 809 | 50.1%% | -0.0047%% | +0.0004%% |
+| 0.58 | 452 | 611 | 47.6%% | -0.0024%% | +0.0080%% |
+| 0.60 | 376 | 437 | 48.7%% | -0.0196%% | -0.0111%% |
+| 0.62 | 245 | 258 | 51.2%% | -0.0294%% | -0.0402%% |
+| 0.65 | 91 | 91 | 52.7%% | -0.0762%% | -0.0762%% |
+
+Capture **degrades monotonically** as the bar rises, and NO bar gives positive
+capture in all four quarters. Hit rate creeps up (50.1 -> 52.7%%) while capture
+falls: stricter picks are right slightly more often on SMALLER moves — worse
+after costs, not better. **There is no bar at which this machine earns.**
+The refuted sentence has been deleted from the r945 header.
+
+### What this means
+Twenty adjustments have now been tested against two adoptions, and the
+adjustment space is close to exhausted: selector, side, sector, density tag,
+pairing structure, target variable, universe, run time, horizon, and now the
+qualification bar. The one metric that isolates skill from tape — relative
+capture — reads **-0.153%%/leg, 11/25 (44%%) beating the universe**.
+
+The evidence-supported adjustment is no longer a parameter. It is to STOP
+RISKING CAPITAL on the selection layer while the ledger accrues (`--shadow`,
+shipped day-26). Continuing to trade live is a defensible choice about the
+owner's own capital; it is not a choice this evidence supports.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
