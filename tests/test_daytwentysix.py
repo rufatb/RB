@@ -146,3 +146,18 @@ def test_universe_prints_are_publish_once(tmp_path):
 def test_relative_line_is_honest_when_prints_missing():
     import ledger
     assert "recording started day-28" in ledger.relative_line([], {})
+
+
+def test_run_result_exposes_evaluated_prints_for_the_tide():
+    """Day-29 bug: main() read `out`, a local of run(), so a NameError swallowed
+    by `except: pass` meant NO universe prints were ever written and the
+    relative-capture metric would have silently stopped accruing on day one."""
+    import inspect
+
+    import r945
+    src = inspect.getsource(r945.run)
+    assert '"evaluated"' in src, "run() must expose evaluated prints"
+    main_src = inspect.getsource(r945.main)
+    assert 'res.get("evaluated")' in main_src, "main() must read them off the result"
+    assert "except Exception:\n                pass" not in main_src, \
+        "print-saving failures must be reported, never swallowed"

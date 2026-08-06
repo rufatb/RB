@@ -651,6 +651,9 @@ def run(cfg, workers=8):
                                 pcfg.get("selector", "densest"),
                                 pcfg.get("crowded_conf_warn", 3)),
             "min_p": min_p, "too_early": too_early,
+            # Day-29: every evaluated name's 9:45 print, so the tide can be
+            # reconstructed at scoring time (see ledger.append_universe_prints).
+            "evaluated": [{"ticker": r["t"], "p945": r["p945"]} for r in out],
             "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
             "coverage": cov_msg,
             "late_min": round(late_minutes(now, open_t), 1),
@@ -950,11 +953,20 @@ def main(argv=None):
             # reconstructed after the fact, so selection skill can never be
             # separated from tape luck. Qualified picks alone are a SELECTED
             # sample and would give a biased tide.
+            # DAY-29 BUG FIX: this read `out`, a local of run(), from main() —
+            # a NameError swallowed by a bare `except: pass`, so NO prints were
+            # ever written and the relative-capture metric would have quietly
+            # stopped accruing from the day it shipped. Silent failure is the
+            # exact anti-pattern days 24-26 removed elsewhere; it must not be
+            # reintroduced by the code that measures the system.
+            ev = res.get("evaluated") or []
             try:
-                ledger.append_universe_prints(
-                    [{"ticker": r["t"], "p945": r["p945"]} for r in out], date)
-            except Exception:
-                pass
+                np_ = ledger.append_universe_prints(ev, date)
+                if not np_ and ev:
+                    print(f"  [prints: {date} already recorded]")
+            except Exception as e:
+                print(f"\n  ⚠ UNIVERSE PRINTS NOT SAVED ({type(e).__name__}: {e}) — "
+                      "relative capture cannot be computed for this session.")
             n = ledger.append_picks(lrows, date)
             if n:
                 print(f"\n  [ledger: {n} picks recorded for {date} "
