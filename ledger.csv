@@ -197,3 +197,6 @@ date,ticker,side,p_sided,confidence,p945,role,weight,r1,hit
 2026-08-06,RY.TO,LONG,0.552,dense,297.0000,pair,0.6482,-0.148,0
 2026-08-06,ABX.TO,SHORT,0.607,mid,57.6600,pair,0.3495,0.728,0
 2026-08-06,AC.TO,SHORT,0.565,sparse,26.2400,board,,0.572,0
+2026-08-07,CP.TO,LONG,0.553,mid,126.5500,pair,0.5415,,
+2026-08-07,CVE.TO,SHORT,0.576,sparse,38.8500,board,,,
+2026-08-07,CNQ.TO,SHORT,0.563,sparse,62.6900,pair,0.4564,,
