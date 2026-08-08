@@ -161,3 +161,41 @@ def test_run_result_exposes_evaluated_prints_for_the_tide():
     assert 'res.get("evaluated")' in main_src, "main() must read them off the result"
     assert "except Exception:\n                pass" not in main_src, \
         "print-saving failures must be reported, never swallowed"
+
+
+# ── day-31: two legs per side, capacity unchanged ───────────────────────────
+def test_two_legs_per_side_splits_the_same_book_not_more():
+    """Capacity is IDENTICAL to the 1+1 book — extra legs divide the same money.
+    Half the book per side, equal-risk within a side."""
+    import r945
+    picks = [{"last": 100.0, "vol": 1.0, "side_hint": "LONG"},
+             {"last": 100.0, "vol": 1.0, "side_hint": "LONG"},
+             {"last": 100.0, "vol": 1.0, "side_hint": "SHORT"},
+             {"last": 100.0, "vol": 1.0, "side_hint": "SHORT"}]
+    r945.allocate_book(picks, equity=100_000, max_book_pct=50)
+    total = sum(p["alloc"] for p in picks)
+    assert total <= 50_000
+    for side in ("LONG", "SHORT"):
+        s = sum(p["alloc"] for p in picks if p["side_hint"] == side)
+        assert abs(s - 25_000) < 200, f"{side} side should hold half the book"
+
+
+def test_a_missing_side_leaves_its_half_in_cash():
+    """Day-18 contract survives day-31: one side absent must not double the
+    other, it must reduce total exposure."""
+    import r945
+    picks = [{"last": 100.0, "vol": 1.0, "side_hint": "LONG"},
+             {"last": 100.0, "vol": 1.0, "side_hint": "LONG"}]
+    r945.allocate_book(picks, equity=100_000, max_book_pct=50)
+    assert sum(p["alloc"] for p in picks) <= 25_100
+
+
+def test_pair_of_day_returns_extra_legs_densest_first():
+    import r945
+    L = [{"t": "A.TO", "p_up": 0.60, "nd": 0.9, "confidence": "mid"},
+         {"t": "B.TO", "p_up": 0.58, "nd": 0.2, "confidence": "dense"},
+         {"t": "C.TO", "p_up": 0.57, "nd": 0.5, "confidence": "mid"}]
+    pair = r945.pair_of_day(L, [], legs_per_side=2)
+    assert pair["long"]["pick"]["t"] == "B.TO"          # densest is primary
+    assert [x["t"] for x in pair["long"]["extra"]] == ["C.TO"]   # next densest
+    assert r945.pair_of_day(L, [], legs_per_side=1)["long"].get("extra") is None

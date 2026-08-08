@@ -24,8 +24,10 @@ import r945
 def test_risk_weighting_gives_the_jumpier_leg_less_money():
     """Inverse-vol: the higher-volatility name must hold FEWER dollars, so one
     jumpy leg cannot dominate the book's P&L (day-22 adoption)."""
-    picks = [{"last": 100.0, "vol": 1.0},      # calm
-             {"last": 100.0, "vol": 2.0}]      # twice as jumpy
+    # Day-31: equal-RISK applies WITHIN a side, so the side is now explicit.
+    # Both legs on one side here — the original day-22 case.
+    picks = [{"last": 100.0, "vol": 1.0, "side_hint": "LONG"},      # calm
+             {"last": 100.0, "vol": 2.0, "side_hint": "LONG"}]      # twice as jumpy
     r945.allocate_book(picks, equity=100_000, max_book_pct=50)
     assert picks[0]["alloc"] > picks[1]["alloc"]
     assert all(p["risk_weighted"] for p in picks)
@@ -36,7 +38,8 @@ def test_risk_weighting_gives_the_jumpier_leg_less_money():
 def test_risk_weighting_respects_the_concentration_cap():
     """A wildly lopsided vol pair must still not become a single-name bet:
     no leg may exceed `weight_cap`'s ceiling (default 65% of the book)."""
-    picks = [{"last": 100.0, "vol": 0.1}, {"last": 100.0, "vol": 9.0}]
+    picks = [{"last": 100.0, "vol": 0.1, "side_hint": "LONG"},
+             {"last": 100.0, "vol": 9.0, "side_hint": "LONG"}]
     r945.allocate_book(picks, equity=100_000, max_book_pct=50, weight_cap=0.35)
     total = sum(p["alloc"] for p in picks)
     assert max(p["alloc"] for p in picks) / total <= 0.66
@@ -45,7 +48,8 @@ def test_risk_weighting_respects_the_concentration_cap():
 def test_risk_weighting_preserves_the_total_book_cap():
     """Weighting redistributes the book; it must never inflate it — the share
     counts ARE the risk model (day-13)."""
-    picks = [{"last": 100.0, "vol": 1.0}, {"last": 40.0, "vol": 3.0}]
+    picks = [{"last": 100.0, "vol": 1.0, "side_hint": "LONG"},
+             {"last": 40.0, "vol": 3.0, "side_hint": "LONG"}]
     r945.allocate_book(picks, equity=100_000, max_book_pct=50)
     assert sum(p["alloc"] for p in picks) <= 50_000
 
@@ -66,7 +70,8 @@ def test_equal_dollar_fallback_when_vols_missing_or_not_two_legs():
 
 
 def test_risk_weighting_can_be_disabled():
-    picks = [{"last": 100.0, "vol": 1.0}, {"last": 100.0, "vol": 4.0}]
+    picks = [{"last": 100.0, "vol": 1.0, "side_hint": "LONG"},
+             {"last": 100.0, "vol": 4.0, "side_hint": "LONG"}]
     r945.allocate_book(picks, equity=100_000, max_book_pct=50, risk_weight=False)
     assert picks[0]["alloc"] == picks[1]["alloc"]
 
@@ -74,7 +79,7 @@ def test_risk_weighting_can_be_disabled():
 def test_one_legged_day_still_halves_exposure():
     """Day-18 contract survives the day-22 change: a lone leg gets the standard
     per-leg size, the rest of the book stays in cash."""
-    picks = [{"last": 60.70, "vol": 1.2}]
+    picks = [{"last": 60.70, "vol": 1.2, "side_hint": "LONG"}]
     r945.allocate_book(picks, equity=100_000, max_book_pct=50)
     assert picks[0]["alloc"] <= 25_000
 

@@ -1642,6 +1642,60 @@ Twenty adjustments tested, two adopted. Execution is fixed and is now a small
 positive. The selection layer still has not demonstrated skill, and the metric
 that isolates it from the tape remains negative.
 
+## Day-31: "why only one long and one short?" — never measured, now measured
+
+### Why the CNQ short failed (2026-08-07)
+Setup at 9:46: gap -1.21%%, first-15m -0.49%% — a falling name shorted for
+CONTINUATION. It reversed **within 15 minutes of the print** (+0.19%% by 10:00)
+and never came back, closing +1.21%%.
+
+Mechanism: **crude rallied +1.15%% that day, and we shorted a producer into it.**
+The producers followed crude (CNQ +1.21%%, CVE +1.36%%) while the pipelines did
+not (ENB +0.04%%, TRP -0.11%%, SU -0.32%%) — so the energy sector median was a
+flat +0.04%% and the split was producer-vs-pipeline, not sector-wide. Crude's
+intraday direction was not knowable at 9:46, and the closest available proxy —
+opposing your own sector's opening move — was tested and REJECTED as #19.
+
+### ADOPTED (#3 ever): TWO legs per side, not one
+The 1+1 structure was chosen on day-9 by workflow preference and **never
+measured**. Tested with book CAPACITY HELD CONSTANT — more legs split the same
+money, they do not add exposure — equal-risk within each side, half the book per
+side:
+
+| legs/side | NET/day | std | mean/std | worst |
+|---|---|---|---|---|
+| 1 (shipped) | +0.0004%% | 0.625 | +0.0007 | -2.22%% |
+| **2** | **+0.0115%%** | **0.517** | **+0.0222** | -2.18%% |
+| 3 | +0.0042%% | 0.499 | +0.0083 | -2.19%% |
+| ALL | +0.0023%% | 0.509 | +0.0046 | -2.18%% |
+
+Judged on the criterion that estimates fast — variance, exactly as the day-22
+equal-risk adoption was — **2 legs/side lowers NET std in ALL FOUR quarters**
+(0.573->0.442, 0.660->0.638, 0.563->0.495, 0.688->0.476), -17.1%% overall, with
+the mean improving and the worst day slightly better. True-set: -24.4%%, 3/4.
+Identical evidence profile to the one rule that has demonstrably helped.
+
+**HONEST SCOPE — this is not "better opportunities".** It is the diversification
+identity: spreading the same ~coin-flip across more names cuts idiosyncratic
+variance. Nothing here says the picks improved; mean/std improves because the
+denominator falls. 3 legs/side cuts variance slightly more but with a lower
+mean, so 2 is the adoption.
+
+### The honest counter-example, stated up front
+Replayed on the very day that prompted the question, the new rule would have
+been **WORSE**: Friday's second short (CVE -1.364%%) also missed, taking the book
+from -$79.75 to -$96.31. That is expected. The rule was adopted on variance
+across 479 sessions, not on any single session, and a day where the extra leg
+also loses is exactly what a variance argument predicts will sometimes happen.
+
+### Implementation notes
+`pair.legs_per_side: 2`. The primary leg per side is unchanged (densest); extras
+are the next-densest. Sizing is now SIDE-AWARE and the side must be **explicit**
+— an earlier draft inferred it from `p_up`, which silently mis-sized any caller
+that did not carry one, so a book with no side information now falls back to the
+pre-day-31 flat split rather than guessing. The day-18 contract still holds: a
+missing side leaves its half in cash. 200 tests green.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

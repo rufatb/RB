@@ -307,19 +307,40 @@ def allocate_book(picks: list, equity: float, max_book_pct: float,
     if n == 0 or equity <= 0:
         return picks
     book = equity * (max_book_pct / 100.0)
-    slots = max(n, min_legs)
-    vols = [r.get("vol") for r in picks]
-    usable = (risk_weight and n == 2
+    # DAY-31: sides are sized independently — half the book each, equal-risk
+    # WITHIN a side. Capacity is identical to the 1+1 book; extra legs split
+    # the same money. A side with no legs leaves its half in cash (day-18).
+    # The side must be EXPLICIT. Inferring it (e.g. from p_up) silently
+    # mis-sized any caller that did not carry one, so a book with no side
+    # information falls back to the pre-day-31 flat split instead of guessing.
+    if not any(r.get("side_hint") for r in picks):
+        allocs = [book / max(n, min_legs)] * n
+        for r, alloc in zip(picks, allocs):
+            px = r.get("last") or r.get("p945")
+            r["shares"] = int(alloc // px) if px else 0
+            r["alloc"] = round((r["shares"] * px) if px else 0, 0)
+            r["adverse_2pct"] = round(r["alloc"] * 0.02, 0)
+            r["risk_weighted"] = False
+        return picks
+    sides = {}
+    for r in picks:
+        sides.setdefault(r["side_hint"], []).append(r)
+    allocs_by_id = {}
+    per_side = book / max(len(sides), min_legs)
+    for _sd, grp in sides.items():
+        vols = [r.get("vol") for r in grp]
+        ok = (risk_weight and len(grp) >= 2
               and all(v is not None and np.isfinite(v) and v > 0 for v in vols))
-    if usable:
-        w = np.array([1.0 / v for v in vols], dtype=float)
-        w = w / w.sum()
-        if weight_cap > 0:                      # bound single-leg concentration
-            w = np.clip(w, weight_cap, 1 - weight_cap)
-            w = w / w.sum()
-        allocs = (book * n / slots) * w
-    else:
-        allocs = [book / slots] * n
+        if ok:
+            w = np.array([1.0 / v for v in vols], dtype=float); w = w / w.sum()
+            if weight_cap > 0 and len(grp) == 2:
+                w = np.clip(w, weight_cap, 1 - weight_cap); w = w / w.sum()
+        else:
+            w = np.ones(len(grp)) / len(grp)
+        for r, wi in zip(grp, per_side * w):
+            allocs_by_id[id(r)] = wi
+    allocs = [allocs_by_id[id(r)] for r in picks]
+    usable = any(r.get("vol") for r in picks) and risk_weight
     for r, alloc in zip(picks, allocs):
         px = r.get("last") or r.get("p945")
         r["shares"] = int(alloc // px) if px else 0
@@ -476,7 +497,8 @@ def sector_warning(ticker: str, same_side: list, opp_side: list, groups: dict,
 
 
 def pair_of_day(longs: list, shorts: list, groups: dict = None,
-                selector: str = "densest", crowd_warn: int = 3) -> dict:
+                selector: str = "densest", crowd_warn: int = 3,
+                legs_per_side: int = 1) -> dict:
     """THE PAIR — the single long + single short the daily workflow trades.
 
     SELECTION: each leg is the DENSEST qualified pick (smallest k-NN
@@ -510,6 +532,13 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
         w = sector_warning(r["t"], picks, opp_picks, groups, crowd_warn)
         if w:
             out["warning"] = w
+        # DAY-31: additional legs beyond the first, densest-ordered. Book
+        # CAPACITY IS UNCHANGED — half per side, split across that side's legs
+        # — so this spreads the same money, it does not add exposure.
+        if legs_per_side > 1:
+            ordered = (sorted(picks, key=lambda x: x["nd"] if x.get("nd") is not None else 9e9)
+                       if selector == "densest" else picks)
+            out["extra"] = [x for x in ordered if x is not r][:legs_per_side - 1]
         return out
     return {"long": leg(longs, "LONG", shorts), "short": leg(shorts, "SHORT", longs)}
 
@@ -665,7 +694,8 @@ def run(cfg, workers=8):
             "longs": longs, "shorts": shorts, "excluded": excluded,
             "pair": pair_of_day(longs, shorts, cfg.get("peer_groups"),
                                 pcfg.get("selector", "densest"),
-                                pcfg.get("crowded_conf_warn", 3)),
+                                pcfg.get("crowded_conf_warn", 3),
+                                pcfg.get("legs_per_side", 2)),
             "min_p": min_p, "too_early": too_early,
             # Day-29: every evaluated name's 9:45 print, so the tide can be
             # reconstructed at scoring time (see ledger.append_universe_prints).
@@ -817,6 +847,18 @@ def render(res, book=False):
                     print("      OPTIONAL circuit-breaker — the validated default is still hold to 3:55.")
             else:
                 print(f"      entry ~now · flat by 3:55")
+            for x in (lg.get("extra") or []):
+                sd = 1 if side == "long" else -1
+                px = x.get("last") or x.get("p945")
+                bnd = fill_bound(side.upper(), x["p945"], res.get("max_chase_pct", 0.04))
+                line = (f"      + {x['t']}  sided-P "
+                        f"{(x['p_up'] if side == 'long' else 1 - x['p_up']):.2f}  "
+                        f"[{x.get('confidence','?')}]  9:45 px {x['p945']:.2f}")
+                if book and x.get("shares") is not None and not stale and not res.get("shadow"):
+                    line += (f"\n        ➤ {'BUY' if side == 'long' else 'SELL SHORT'} "
+                             f"{x['shares']} sh (≈${x['alloc']:,.0f})  fill bound "
+                             f"{'≤' if side == 'long' else '≥'} {bnd:.2f}")
+                print(line)
             if lg.get("warning"):
                 print(f"      ⚠ {lg['warning']}")
         if pair["long"]["status"] == "NONE" or pair["short"]["status"] == "NONE":
@@ -911,8 +953,12 @@ def main(argv=None):
         # Day-9: only THE PAIR is sized/traded. The rest of the board is
         # context + ledger-learning material, never an order.
         pair = res.get("pair") or {}
-        pair_picks = [lg["pick"] for lg in (pair.get("long"), pair.get("short"))
-                      if lg and lg.get("pick")]
+        pair_picks = []
+        for side in ("long", "short"):
+            lg = pair.get(side) or {}
+            for r in ([lg["pick"]] if lg.get("pick") else []) + (lg.get("extra") or []):
+                r["side_hint"] = side.upper()
+                pair_picks.append(r)
         pcfg = cfg.get("pair") or {}
         allocate_book(pair_picks, rcfg.get("account_equity", 0),
                       rcfg.get("max_position_pct", 50),

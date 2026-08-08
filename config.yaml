@@ -211,6 +211,16 @@ pair:
                           # quarters and cut the worst leg -3.9% -> -2.6%;
                           # tighter stops failed). OPTIONAL circuit-breaker —
                           # hold-to-close remains the validated default.
+  legs_per_side: 2        # day-31: how many legs the book holds PER SIDE.
+                          # Was 1 (chosen by workflow preference on day-9, never
+                          # measured). Tested on 479 deep sessions with book
+                          # CAPACITY HELD CONSTANT — 2 legs/side splits the same
+                          # money, it does not add exposure. NET std 0.625 ->
+                          # 0.517 (-17.1%), LOWER IN ALL FOUR QUARTERS, mean
+                          # +0.0004 -> +0.0115, worst day slightly better. Same
+                          # evidence profile as the day-22 equal-risk adoption.
+                          # A VARIANCE result, not a claim of better picks: it
+                          # spreads the same ~coin-flip across more names.
   risk_weight: true       # day-22: on a TWO-leg day weight the legs inversely
                           # to each name's trailing entry->close volatility
                           # instead of equal-dollar. Validated on 333 two-legged
