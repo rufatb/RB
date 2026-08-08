@@ -1584,6 +1584,64 @@ RISKING CAPITAL on the selection layer while the ledger accrues (`--shadow`,
 shipped day-26). Continuing to trade live is a defensible choice about the
 owner's own capital; it is not a choice this evidence supports.
 
+## Day-30: the pair, the week — and a narrative I nearly shipped
+
+### Friday's pair
+CP.TO long **+0.893%% HIT**, CNQ.TO short **-1.212%% MISS**. NET **-$34.82** —
+almost flat, because the hedge did its job: a 1.2%% short miss was nearly
+cancelled by a 0.89%% long win. Board 1/3 (the narrowest board of the run).
+
+Tide **-0.020%%** (flat). Relative: CP **+0.913%%, rank 6/21** — a genuinely good
+long. CNQ **-1.232%%, rank 4/21** — we shorted the 4th strongest name.
+
+### The narrative I nearly shipped — and the data that killed it
+Four consecutive short legs landed near the TOP of the universe:
+BCE 2/21 (d-24), AC 2/21 (d-25), ABX 6/21 (d-29), CNQ 4/21 (d-30). Random
+shorts would average rank ~11/21. That is a compelling story, it was forming in
+my own write-ups, and it points at an obvious "fix" to the short side.
+
+**It is false.** Measured over every pair leg with the tide removed:
+
+| side | n | mean relative | beat the tide | 95%% CI |
+|---|---|---|---|---|
+| LONG | 14 | **-0.183%%** | 5/14 (36%%) | 16-61%% |
+| SHORT | 13 | **-0.122%%** | 7/13 (54%%) | 29-77%% |
+
+**Shorts are the BETTER side in relative terms; the LONGS are the weaker one.**
+The four bad shorts were a salient recent streak, not the pattern — exactly the
+recency trap this journal has documented nineteen times, and I was one step
+from proposing a short-side gate on the strength of it.
+
+Worth noting it agrees with rejection #16, where the true-horizon data said
+longs -6.2pp and shorts +5.3pp. Two independent measurements now point at the
+LONG side as the weaker one. Still not actionable: the CIs overlap almost
+completely (16-61%% vs 29-77%%) and the deep set said the opposite (long +1.1pp,
+short -1.8pp). Recorded, not acted on.
+
+### The week
+| date | long | short | book |
+|---|---|---|---|
+| 08-04 | BNS -0.825%% MISS | BMO +0.437%% HIT | -$102.45 |
+| 08-05 | CP +0.369%% HIT | RY +0.404%% HIT | +$193.80 |
+| 08-06 | RY -0.148%% MISS | ABX -0.728%% MISS | -$175.18 |
+| 08-07 | CP +0.893%% HIT | CNQ -1.212%% MISS | -$34.80 |
+
+**WEEK -$118.64**, pair legs 4/8, all picks 11/26. Against week 1's -$883, the
+two-week total is **-$1,001**. The improvement is almost entirely variance
+reduction, not better prediction: no leg came near a disaster line, the worst
+book day was -0.350%% (vs -1.310%% in week 1), and the equal-risk weighting plus
+the hedge repeatedly turned bad legs into small days.
+
+### Standing position after 37 executed legs
+```
+  PAIR absolute    18/37 (49%)
+  book-weighted    -0.285%/session over 7 sessions (1/7 positive)
+  relative capture -0.154%/leg over 27 legs, 12/27 (44%) beat the tide
+```
+Twenty adjustments tested, two adopted. Execution is fixed and is now a small
+positive. The selection layer still has not demonstrated skill, and the metric
+that isolates it from the tape remains negative.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
