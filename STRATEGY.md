@@ -1756,6 +1756,66 @@ That does not prove event trading cannot work — it says it cannot be validated
 with free, survivorship-biased data, and this project's standing rule is not to
 trade what it cannot validate.
 
+## Day-33: the best-selected day of the run — and the ROI lever, measured and rejected
+
+### The book (first live 2-legs-per-side board, and it was one-sided)
+No qualified long; two shorts taken. **MFC.TO +0.790%% HIT, CP.TO +1.506%% HIT.
+NET +$281.44** on ~$24.9k deployed — HALF the book, with the long side in cash.
+Board 3/5.
+
+**These were genuinely good picks, not tape.** The tide was **+0.117%%** — slightly
+UP — and the shorts still won:
+
+| leg | absolute | RELATIVE | universe rank |
+|---|---|---|---|
+| MFC short | +0.790%% | **+0.907%%** | **19/21** |
+| CP short | +1.506%% | **+1.622%%** | **20/21** |
+
+We shorted the 19th and 20th weakest names out of 21, against a rising tide.
+That is the clearest instance of real selection skill in the run, and it is the
+mirror of day-28's win (where the short "hit" while contributing 7%%).
+
+### The day-31 change earned its keep — and gave some back Friday
+Under the old one-leg rule only MFC would have been taken (403 sh, half book):
+**+$197.47**. The two-leg book made **+$281.44** — the change was worth
+**+$83.97 today**, against **-$16.56 on Friday**. Helped once, hurt once, exactly
+as a variance argument predicts. Neither day is evidence; the 479-session
+four-quarter variance result is.
+
+### REJECTED (#22): "deploy more capital on one-sided days" — the ROI lever
+Today's obvious ROI complaint: a +0.563%% book capture earned +$281 instead of
++$563 because half the capital sat idle. So: should one-sided days be sized up?
+
+**First, the part that is arithmetic and not a discovery.** Doubling every
+position doubles mean AND std; mean/std is unchanged. Scaling is a RISK-BUDGET
+decision, never an edge. The only real question is whether one-sided sessions
+are systematically better.
+
+They look it — until the tide is removed:
+
+| cohort | ABSOLUTE | blocks | RELATIVE (tide removed) | blocks |
+|---|---|---|---|---|
+| two-sided | -0.0065%% | FLIP | -0.0065%% | FLIP |
+| **one-sided** | **+0.0267%%** | **CONSISTENT 4/4** | **-0.0076%%** | **FLIP** |
+
+**The tide supplies 128%% of the one-sided gain** — the selection actually
+detracts slightly. A one-sided book is NAKED directional, so it earns when the
+tape happens to move its way; sizing it up would lever a beta bet, not harvest
+an edge. The half-book rule (day-18) stands.
+
+### The honest answer to "bigger ROI"
+There are exactly two sources: a better edge, or more risk. Twenty-two tested
+adjustments say the edge is not available in this data — and the one lever that
+looked like free ROI is beta. More risk is always available and needs no
+research; it is a decision about capital, and this project will not dress it up
+as a discovery.
+
+What HAS moved is the measurement: relative capture improved from -0.154%% to
+**-0.056%%/leg (14/29 beat the tide)** and book-weighted from -0.285%% to
+**-0.179%%/session (2/8 positive)**. Still negative, still no edge demonstrated —
+but the metric that isolates skill is the one to watch, and today it moved for
+the right reason.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
