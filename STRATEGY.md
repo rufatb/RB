@@ -1696,6 +1696,66 @@ that did not carry one, so a book with no side information now falls back to the
 pre-day-31 flat split rather than guessing. The day-18 contract still holds: a
 missing side leaves its half in cash. 200 tests green.
 
+## Day-32: SLN, event swing trades, and longer holds — measured, NO EDGE FOUND
+
+### What happened to SLN
+**Silence Therapeutics (SLN, NasdaqGM)** — not a TSX name and not in the pair
+universe. Friday close 11.95 -> Monday open **16.02, a +34.1%% gap**, on
+**7.85M shares versus ~400k typical (~20x)**. Session high 17.00, low 15.245.
+That volume-and-gap signature is a binary corporate/clinical event.
+
+Its own history offers nothing to trade on: **3 gaps >= 15%% in 1,255 sessions
+(0.2%% of days)**, and only TWO with five sessions of follow-through
+(+8.3%%, -3.2%%). A single name's event history cannot support a strategy — which
+is why this went to a cross-sectional study.
+
+### The study (validate_events*.py, committed and re-runnable)
+10 years of DAILY bars, 166 liquid US names, **400,703 ticker-days**. Entry at
+the CLOSE of the gap day (observable, executable); horizons 1/3/5/10 sessions;
+returns reported RAW and MARKET-RELATIVE, because day-18 already established
+that multi-day "returns" from this project's engine were pure drift.
+
+Exactly one bucket passed the pre-registered five-block consistency test:
+**gap -5%%..-10%%, market-relative, +0.60%% (5d) / +0.98%% (10d), consistent in all
+five two-year blocks, n=1,791.** Everything else flipped sign across blocks.
+
+### Three tests dissolved it
+1. **TAIL-CARRIED.** mean rel-10d +0.980%% but **MEDIAN +0.010%%**, win rate
+   **49.9%%**. The typical event does nothing; a few huge rebounds carry the mean.
+2. **BETA, NOT SELECTION.** The bounce exists only on market-DOWN days
+   (+1.105%%) and is **NEGATIVE on market-up days (-0.624%%)**. A high-beta name
+   that gapped down mechanically out-bounces the cross-sectional median when the
+   tape recovers. Not a stock-specific edge.
+3. **NOT SIZE-ROBUST.** Flips in 3 of 4 liquidity quartiles; the smallest
+   quartile is outright **negative (-0.965%%)**.
+
+**VERDICT: no tradeable gap-event edge found.** Rejection #21.
+
+### The SLN-sized trade is unstudiable with this data
+|gap| >= 20%% occurs **141 times in 10 years across 166 names**. At that
+frequency no bucket reaches the sample size needed to distinguish a real effect
+from noise — which is the same answer SLN's own n=2 history gave.
+
+### SURVIVORSHIP BIAS — the caveat that matters most
+The universe is TODAY's ticker list, so companies that gapped down and delisted
+are ABSENT. That biases gap-DOWN results optimistically — the exact direction of
+the one apparent finding. Removing it requires a point-in-time universe
+including dead tickers, which is a paid data product. Any future revisit of this
+question should start there, not with another free-data study.
+
+### On "higher accuracy and returns with longer holds"
+Two independent measurements now say no:
+- **day-18** (this engine's own legs): 0d +0.094%%/54.4%%/std 1.09%% vs 5d
+  +0.177%%/51.3%%/std **3.95%%**, worst leg -3.9%% -> **-17.6%%**, and the multi-day
+  gain decomposed as market beta (longs +0.62%% vs shorts -0.39%% at 5d);
+- **day-32** (event-driven, a genuinely different hypothesis on 400k
+  ticker-days): the single surviving candidate is tail-carried beta.
+
+Longer holds raise VARIANCE far faster than return in everything measured here.
+That does not prove event trading cannot work — it says it cannot be validated
+with free, survivorship-biased data, and this project's standing rule is not to
+trade what it cannot validate.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
