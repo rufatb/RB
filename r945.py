@@ -708,6 +708,7 @@ def run(cfg, workers=8):
             "max_chase_pct": pcfg.get("max_chase_pct", 0.15),
             "disaster_stop_pct": pcfg.get("disaster_stop_pct", 2.5),
             "entry_window_min": pcfg.get("entry_window_min", 10),
+            "legs_per_side": pcfg.get("legs_per_side", 2),
             # Anchor for the order window: the moment the 9:45 signal bar
             # became complete (open+16), NOT the moment the command was run.
             "ready_at_iso": ready.isoformat(timespec="seconds"),
@@ -771,7 +772,9 @@ def render(res, book=False):
         print("  Treat SPENT legs as NO TRADE. Next time run at 9:46.")
     if pair:
         print("\n" + "═" * 74)
-        print("THE PAIR — trade these two, nothing else (one long + one short daily)")
+        n_ls = res.get("legs_per_side", 1)
+        print(f"THE BOOK — trade these and nothing else "
+              f"({'one long + one short' if n_ls == 1 else f'up to {n_ls} per side'}, daily)")
         print("═" * 74)
         for side in ("long", "short"):
             lg = pair[side]
@@ -882,13 +885,16 @@ def render(res, book=False):
         print("  decisive sample — but no capital is at risk and no order is implied.")
         print("  Switch back by dropping --shadow. CLOSE NOTHING; there is nothing open.")
     elif book:
-        print("\n  BOOK MODE: only THE PAIR is sized — one long + one short, equal-weight,")
-        print("  total book capped. The pair is ~market-neutral but each leg carries full")
-        print("  single-name risk with no intraday stop — sizing IS the risk control.")
+        n_ls = res.get("legs_per_side", 1)
+        print(f"\n  BOOK MODE: only the printed legs are sized — up to {n_ls} per side,")
+        print("  HALF THE BOOK PER SIDE, equal-RISK within a side. More legs SPLIT the")
+        print("  same money; they do not add exposure. A missing side leaves its half in")
+        print("  cash. The book is ~market-neutral but each leg carries full single-name")
+        print("  risk with no intraday stop — sizing IS the risk control.")
         print("  THE SHARE COUNTS ARE THE RISK MODEL: trading a larger size multiplies")
         print("  every loss by the same factor and voids the stated risk numbers")
         print("  (day-13: 4x the printed size turned a ~$425 day into -$1,669).")
-        print("  CLOSE BOTH BY 3:55.")
+        print("  CLOSE EVERY LEG BY 3:55.")
         # Day-24: the temptation to hold a losing pair overnight arrives on the
         # exact days the numbers are worst, so the measurement belongs HERE,
         # next to the order — not in a document nobody opens at 3:50.

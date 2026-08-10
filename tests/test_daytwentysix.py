@@ -199,3 +199,30 @@ def test_pair_of_day_returns_extra_legs_densest_first():
     assert pair["long"]["pick"]["t"] == "B.TO"          # densest is primary
     assert [x["t"] for x in pair["long"]["extra"]] == ["C.TO"]   # next densest
     assert r945.pair_of_day(L, [], legs_per_side=1)["long"].get("extra") is None
+
+
+def test_printed_contract_matches_the_configured_leg_count():
+    """Day-31: the header said 'one long + one short' and 'equal-weight' after
+    the book became up-to-2-per-side, equal-RISK. A printed contract that
+    contradicts the behaviour is the same defect class as the stale README."""
+    import io
+    from contextlib import redirect_stdout
+
+    import r945
+    pick = {"t": "A.TO", "p_up": 0.42, "nd": 0.3, "confidence": "dense",
+            "p945": 62.03, "last": 62.03, "r0": 0.67, "gap": -0.29,
+            "shares": 212, "alloc": 13150.0, "adverse_2pct": 263.0}
+    res = {"now": "2026-08-10T09:47:00", "n_names": 21, "longs": [], "shorts": [pick],
+           "excluded": [], "min_p": 0.55, "too_early": False,
+           "pair": r945.pair_of_day([], [pick], legs_per_side=2),
+           "late_min": 1.0, "stale_after_min": 20, "spent_drift_pct": 0.3,
+           "max_chase_pct": 0.04, "ready_at_iso": "2026-08-10T09:46:00",
+           "entry_window_min": 10, "legs_per_side": 2}
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        r945.render(res, book=True)
+    out = buf.getvalue()
+    assert "one long + one short" not in out
+    assert "up to 2 per side" in out
+    assert "equal-weight" not in out and "equal-RISK" in out
+    assert "CLOSE EVERY LEG BY 3:55" in out
