@@ -1816,6 +1816,65 @@ What HAS moved is the measurement: relative capture improved from -0.154%% to
 but the metric that isolates skill is the one to watch, and today it moved for
 the right reason.
 
+## Day-34: a bad day the new structure made materially less bad
+
+### The book (first full 2+2)
+**1 of 4 legs hit. NET -$205.74**, book-weighted capture -0.411%%.
+
+| leg | absolute | RELATIVE | rank |
+|---|---|---|---|
+| RY.TO long | -1.067%% MISS | -0.520%% | 17/21 |
+| BMO.TO long | -1.264%% MISS | -0.718%% | 19/21 |
+| CP.TO short | -0.416%% MISS | -0.962%% | 6/21 |
+| ABX.TO short | **+1.552%% HIT** | **+1.006%%** | 20/21 |
+
+Tide **-0.546%%** (breadth 33%%) and **financials -1.067%%** as a sector. Some of
+this is tape — but only some: **three of four legs were also bad RELATIVE**, so
+this was a genuine selection failure with a down tape on top, not one or the
+other.
+
+### The day-31 change was worth **+$163.58 today**
+Under the old one-leg rule the book would have been RY long 84 sh + CP short
+196 sh = **-$369.32**. The four-leg book lost **-$205.74**. The two losing legs
+were half-sized and ABX — the extra short, which would never have been taken —
+was the day's best leg at +1.552%%.
+
+Running tally for the change: **-$16.56** (Fri), **+$83.97** (Mon), **+$163.58**
+(today) = **+$231 over three sessions**. Still not evidence — three days never
+are — but it is behaving as the 479-session variance result predicted: it makes
+good days slightly better and bad days materially less bad.
+
+### REJECTED (#23): "diversify the two legs on a side across sectors"
+Today's obvious complaint: BOTH long legs were banks (RY + BMO), so when
+financials fell they lost together. The extra leg is chosen by DENSITY alone
+with no diversification constraint — a side can be two names from one sector,
+and this happens on **43%% of sessions**.
+
+Tested with the same bar as day-22/day-31:
+
+| rule | NET/day | std | worst | P(>0) |
+|---|---|---|---|---|
+| density only (shipped) | **+0.0115%%** | 0.517 | -2.18%% | 51.9%% |
+| + diversify across sectors | -0.0051%% | 0.517 | -2.21%% | 48.3%% |
+
+**std is unchanged (0.517 -> 0.517), the mean gets WORSE, the worst day gets
+slightly worse, and only 2 of 4 quarters improve.** Forcing sector spread buys
+nothing. The reason is visible once stated: the book is long AND short, so a
+same-sector long pair is still hedged by the short side — and the -17.1%%
+variance reduction measured on day-31 already INCLUDED same-sector sides in 43%%
+of its sessions. Today's intuition was reasonable and is measurably wrong.
+
+### On "better and bigger ROI" — the same answer, now with a number
+Twenty-three tested adjustments, three adopted, and every adopted one is a
+VARIANCE result rather than a prediction improvement. That is not evasion, it is
+what the data supports — and it is worth noting what it has actually bought:
+today the book lost **-0.41%%** of capacity where the pre-day-22/31 structure
+would have lost **-0.74%%**. The prediction layer has not improved; the damage
+per unit of being wrong has roughly halved.
+
+Standing: pair 21/43 (49%%), book-weighted -0.205%%/session (2/9 positive),
+relative capture -0.085%%/leg with 15/33 beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
