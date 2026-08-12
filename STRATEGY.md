@@ -1875,6 +1875,68 @@ per unit of being wrong has roughly halved.
 Standing: pair 21/43 (49%%), book-weighted -0.205%%/session (2/9 positive),
 relative capture -0.085%%/leg with 15/33 beating the tide.
 
+## Day-35: a green day — and the metric that says it was less green than it looks
+
+First session of the run where **all four legs came in DENSE**, and the first
+where the intraday path never went negative (+0.11%% by mid-morning, +0.21%% by
+early afternoon, close in between).
+
+| leg | side | capture | tide-relative | rank | verdict |
+|---|---|---|---|---|---|
+| MFC.TO | LONG | **-0.261%%** | -0.891%% | 18/21 | MISS |
+| TD.TO | LONG | **+0.815%%** | +0.186%% | 8/21 | HIT |
+| CNR.TO | SHORT | **+0.040%%** | +0.669%% | 15/21 | hit (scratch) |
+| CNQ.TO | SHORT | **+0.015%%** | +0.644%% | 13/21 | hit (scratch) |
+
+**NET +$87.23**, book-weighted capture **+0.175%%**. Tide **+0.629%%** — a
+broadly rising tape, which makes the short side the honest story of the day:
+both shorts finished essentially flat while the market rose two-thirds of a
+percent, so **both beat the tide by ~0.65%%** even though neither made money.
+That is exactly what a short leg is supposed to do on a green day, and it is
+invisible in the raw hit column.
+
+### The learning, and it is not a flattering one
+Two of the three "hits" were **+0.040%%** and **+0.015%%**. Those are not
+outcomes, they are noise that happened to land on the correct side of zero. The
+`hit` column is a pure sign test, so a leg finishing +0.015%% counts exactly as
+much as one finishing +1.5%%.
+
+Measured across all 47 pair legs: **11%% finish inside ±0.10%%, and 4 of those 5
+scored as HITS.** The headline hit rate is therefore inflated by ~3pp.
+
+Implemented `decisive_line()` in `ledger.py` (+2 tests, 203 passing). The report
+now prints both numbers side by side:
+
+```
+PAIR legs           : n=47   hit 24/47 (51%%)
+decisive legs       : 20/42 (48%%) with |capture| >= 0.10%%  (5 scratches excluded)
+```
+
+This is a deliberately **less** favourable metric than the one it sits beside.
+It was added on a winning day precisely so it can't be read as excuse-making
+later, and it is the number to watch from here: a sign test on a distribution
+centred near zero will always flatter itself.
+
+### The excluded name that moved: AC.TO
+The extrapolation guard refused AC.TO on `r0 = +5.67%%` — outside the training
+pool's observed feature range — and it then moved **+2.580%%** from its 9:45
+print. This is not an argument against the guard. The guard does not claim AC
+would have fallen; it says the k-NN has **no neighbours** at that r0 and cannot
+assign a direction, so the honest output is abstention. Day-25 measured the
+alternative: rows outside the range move **1.89x further** than in-range rows,
+i.e. the guard is refusing exactly the rows where a wrong call is most
+expensive. Taking the trade would have been luck, not skill.
+
+### No adjustment adopted today
+Nothing in this session pointed at a testable rule change. The one miss (MFC)
+was idiosyncratic — worst-decile relative on a day its sector twin TD was
+mid-pack — which is the same idiosyncratic-residual pattern established on
+day-29, not a new pattern. Twenty-three rejections, three adoptions, unchanged.
+
+Standing: pair 24/47 (51%%), **decisive 20/42 (48%%)**, book-weighted
+-0.167%%/session (3/10 positive), relative capture -0.057%%/leg with 18/37
+beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -226,3 +226,24 @@ def test_printed_contract_matches_the_configured_leg_count():
     assert "up to 2 per side" in out
     assert "equal-weight" not in out and "equal-RISK" in out
     assert "CLOSE EVERY LEG BY 3:55" in out
+
+
+# ── day-35: hit rate excluding economic scratches ───────────────────────────
+def test_decisive_line_excludes_scratches_and_is_less_flattering():
+    """The hit column is a pure sign test: +0.015% counts as much as +1.5%.
+    On the live record 11% of legs end inside +/-0.10% and most landed on the
+    winning side, inflating the headline by ~3pp. This line removes that."""
+    import ledger
+    rows = ([{"side": "LONG", "r1": "0.015"}] * 3          # scratch 'wins'
+            + [{"side": "LONG", "r1": "1.50"}] * 3          # real wins
+            + [{"side": "LONG", "r1": "-1.50"}] * 4)        # real losses
+    line = ledger.decisive_line(rows, threshold=0.10)
+    assert "3/7 (43%)" in line and "3 scratches excluded" in line
+    # headline would read 6/10 = 60%; decisive is the LESS flattering 43%
+    assert sum(1 for r in rows if float(r["r1"]) > 0) / len(rows) == 0.6
+
+
+def test_decisive_line_is_honest_when_underpowered():
+    import ledger
+    assert "needs more scored legs" in ledger.decisive_line(
+        [{"side": "LONG", "r1": "1.0"}] * 5)
