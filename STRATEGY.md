@@ -2137,6 +2137,49 @@ what looks like a multi-day edge is beta.**
 
 Twenty-eight rejections, three adoptions.
 
+## Day-39: is 9:46 the right time to run? — re-raced on rebuildable data
+
+Day-21 already raced six decision times and kept 9:45. Re-running it was still
+worth doing for two reasons: **its dataset can no longer be fetched** (a 1-year
+5m twins set; Yahoo caps 5m at 60 days), so the verdict rested on data nobody
+can regenerate — and it **predates the placebo calibration**, which day-37
+showed this grid badly needs.
+
+Entry time is not the same question as day-36's exit time: moving the entry
+moves **both** ends. A later entry gives a longer momentum window in `r0` and
+more volume to judge `vp` against, but leaves less session to capture. Those
+push opposite ways, so it has to be measured.
+
+| TSX 5m (35 sessions) | mean | t | | twins 1h (288 sessions, 2yr) | mean | t |
+|---|---|---|---|---|---|---|
+| 09:35 | -0.0285%% | -0.25 | | **10:30\*** | -0.0212%% | -0.82 |
+| 09:40 | +0.0802%% | +1.00 | | 11:30 | -0.0316%% | -1.39 |
+| **09:45\*** | +0.0730%% | +0.56 | | 12:30 | -0.0064%% | -0.35 |
+| 09:50 | **+0.1034%%** | +1.00 | | 13:30 | -0.0082%% | -0.52 |
+| 10:00 | +0.0220%% | +0.23 | | | | |
+| 10:15 | -0.0754%% | -0.87 | | | | |
+| 10:30 | +0.0510%% | +0.66 | | | | |
+| 11:00 | +0.0690%% | +1.04 | | | | |
+
+**TSX: p = 0.640. Twins: p = 0.940. REJECTED (#29).** On the TSX sample the
+placebo's *median* winner (+0.1212%%) beats the real winner (+0.1034%%). On two
+years **every entry time is negative.** And the two samples disagree about
+which time wins — 09:50 vs 12:30 — the instability signature day-21 named when
+it refused 09:40.
+
+### Two things that ARE real, and neither is an edge
+* **Variance falls monotonically with a later entry** — TSX std 0.667 -> 0.393,
+  twins 0.440 -> 0.268 — simply because less session remains, and the mean does
+  not rise with it. Structurally identical to day-36: this strategy can always
+  buy less risk by shortening exposure, never more return.
+* **"Positive sessions" climbs to 66%% at 10:30/11:00 while the mean stays
+  flat.** That is exactly the scratch artifact `decisive_line` was built for on
+  day-35: shorter horizons make smaller moves, so more of them land barely on
+  the right side of zero. A win rate that improves while the mean doesn't is a
+  measurement artifact, not a better entry.
+
+Twenty-nine rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

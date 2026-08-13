@@ -379,3 +379,40 @@ def test_abstention_rules_can_actually_skip_days():
     flat = {"p": np.array([0.30, 0.31]), "nd": np.array([0.1, 0.2]),
             "r": {1: np.array([1.0, -1.0])}, "date": "d", "dow": "Mon"}
     assert vh.skip(flat, "margin", 0.55) is True       # 0.70 vs 0.69, no margin
+
+
+# ── day-39: the entry-time race must not peek ───────────────────────────────
+def _bars(n=30, start="09:30"):
+    import pandas as pd
+    idx = pd.date_range(f"2026-08-03 {start}", periods=n, freq="5min")
+    px = [100.0 + i for i in range(n)]
+    return pd.DataFrame({"Open": px, "High": px, "Low": px, "Close": px,
+                         "Volume": [10.0] * n}, index=idx)
+
+
+def test_entry_features_and_outcome_split_at_the_decision_bar():
+    """The load-bearing property of an entry-time race: at decision bar i,
+    r0 and v15 may use bars 0..i ONLY, and the outcome must run from bar i to
+    the close. An off-by-one here would let a later entry silently read part of
+    its own outcome and win the race by cheating."""
+    import validate_entry as ve
+    b = _bars()
+    r2 = ve.rows_at(b, "X", 2, min_bars=5)[0]      # close of the 3rd bar = 102
+    r5 = ve.rows_at(b, "X", 5, min_bars=5)[0]      # close of the 6th bar = 105
+    assert abs(r2["r0"] - (102 / 100 - 1) * 100) < 1e-9
+    assert abs(r5["r0"] - (105 / 100 - 1) * 100) < 1e-9
+    # volume accumulates through the decision bar and no further
+    assert r2["v15"] == 30.0 and r5["v15"] == 60.0
+    # outcome starts AT the decision bar, so a later entry has less left
+    assert abs(r2["r1"] - (129 / 102 - 1) * 100) < 1e-9
+    assert r5["r1"] < r2["r1"], "a later entry must have a shorter horizon"
+
+
+def test_entry_race_refuses_sessions_too_short_for_the_decision_bar():
+    """A half-day with fewer bars than the decision index must be dropped, not
+    silently scored off its last available bar — that would compare different
+    entry times on different sessions."""
+    import validate_entry as ve
+    short = _bars(n=6)
+    assert ve.rows_at(short, "X", 2, min_bars=5) != []
+    assert ve.rows_at(short, "X", 11, min_bars=5) == []
