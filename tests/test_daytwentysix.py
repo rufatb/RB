@@ -334,3 +334,48 @@ def test_sweep_book_is_half_per_side_and_full_when_one_sided():
     lng = vs.book_returns(days, 1, "long-only", 0.55, "densest", "all")
     assert abs(both[0] - 1.0) < 1e-9, "0.5*(+1) + 0.5*(+1) from the short"
     assert abs(lng[0] - 2 * 0.5 * 1.0) < 1e-9, "long-only deploys fully"
+
+
+# ── day-38: multi-day holds must not be scored with an inflated t-stat ──────
+def test_multiday_t_uses_non_overlapping_trades():
+    """A 3-day hold opened every session overlaps itself, so consecutive
+    observations are not independent and a naive t is inflated by ~sqrt(N).
+    `stat` must de-overlap before testing: same mean, smaller |t|."""
+    import numpy as np
+    import validate_shape as vh
+    rng = np.random.default_rng(3)
+    vals = rng.normal(0.05, 1.0, 300)
+    m1, pd1, t1, n1 = vh.stat(vals, 1)
+    m3, pd3, t3, n3 = vh.stat(vals, 3)
+    assert m1 == m3 == vals.mean(), "mean uses every trade"
+    assert n1 == n3 == 300, "n reports every trade"
+    assert abs(t3) < abs(t1), "de-overlapped t must be smaller"
+    assert abs(pd3 - vals.mean() / 3) < 1e-12, "per-day divides by the hold"
+
+
+def test_per_day_of_risk_penalises_longer_holds():
+    """A 5-day hold returning +0.5% is not better than a 1-day hold returning
+    +0.2%: it ties up capital five times as long. Ranking on raw per-trade
+    return would invert that, which is exactly how a drift-collecting
+    multi-day book gets mistaken for an edge."""
+    import numpy as np
+    import validate_shape as vh
+    long_hold = vh.stat(np.full(100, 0.50), 5)
+    short_hold = vh.stat(np.full(100, 0.20), 1)
+    assert long_hold[0] > short_hold[0], "raw per-trade favours the long hold"
+    assert long_hold[1] < short_hold[1], "per day of risk reverses it"
+
+
+def test_abstention_rules_can_actually_skip_days():
+    """A no-trade rule that never fires would silently make every abstention
+    config identical to 'none' and manufacture a fake null result."""
+    import numpy as np
+    import validate_shape as vh
+    weak = {"p": np.array([0.56, 0.44]), "nd": np.array([0.9, 0.1]),
+            "r": {1: np.array([1.0, -1.0])}, "date": "d", "dow": "Mon"}
+    assert vh.skip(weak, "p>=0.60", 0.55) is True      # no name reaches 0.60
+    assert vh.skip(weak, "none", 0.55) is False
+    assert vh.skip(weak, "deep-board", 0.55) is True   # only 2 qualified
+    flat = {"p": np.array([0.30, 0.31]), "nd": np.array([0.1, 0.2]),
+            "r": {1: np.array([1.0, -1.0])}, "date": "d", "dow": "Mon"}
+    assert vh.skip(flat, "margin", 0.55) is True       # 0.70 vs 0.69, no margin

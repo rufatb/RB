@@ -2078,6 +2078,65 @@ contain one.** The recommendation is to stop risking capital on it and run
 ledger keeps accruing legs at zero cost. If the record ever separates from a
 coin flip, that is when it earns money back.
 
+## Day-38: one pick a day? no-trade days? 3-day and 1-week holds? — all measured
+
+Three fair questions day-37's sweep did NOT answer: it always took a two-sided
+book, always traded every session, always held to that day's close.
+`validate_shape.py` sweeps 60 configurations — 4 shapes x 3 hold lengths x 5
+abstention rules — with the same placebo calibration.
+
+**Result: p = 0.920. The best real config (+0.1249%%/day of risk) is BELOW the
+placebo MEDIAN (+0.1643%%).** A randomly-sided book routinely beats the best
+real one on this grid. The shipped config ranks 42 of 60.
+
+### 1. ONE PICK PER DAY — rejected (#26)
+`one-best` at 1 day returns **-0.0196%%/trade, worse than the two-sided pair
+(+0.0004%%)**. And the decisive detail: the single pick is **83%% LONG (239 long
+/ 49 short)**. "One pick" is not a concentrated bet on the model's best idea —
+it is a directional bet on the market wearing a pick's clothing. Concentration
+also **triples volatility** (std 1.149 vs 0.451) and takes the worst trade from
+-1.71%% to **-4.32%%**.
+
+### 2. NO-TRADE DAYS — rejected (#27)
+Five rules: minimum conviction, top pick must be dense, conviction margin over
+the runner-up, deep board, none. **No rule helps consistently** — `top-dense`
+improves one-best and hurts pair1/pair2/one-dense, and every sign flips across
+shapes. Sign-flipping across neighbouring configurations is the signature of
+noise, not a filter.
+
+### 3. THREE-DAY AND ONE-WEEK HOLDS — rejected (#28), and this is the one that
+### looks best until it's decomposed
+
+| | per trade |
+|---|---|
+| one-best / **5 days** | **+0.5393%%** |
+| whole universe over 5 days | **+0.5298%%** |
+| one-best / **3 days** | +0.2507%% |
+| whole universe over 3 days | +0.2805%% |
+
+**The entire multi-day gain is market drift** collected by an 83%%-long book
+over a rising two-year sample. At 3 days it is BELOW the market. Selection
+contributes ~0.01%%. Hedge it properly and the drift vanishes: pair2/5d gives
++0.1123%%/trade, t +0.94.
+
+The risk side is worse than the return side is good:
+
+| config | std | worst trade |
+|---|---|---|
+| pair2 / 1 day | 0.451 | -1.71%% |
+| one-best / 5 days | **4.584** | **-19.84%%** |
+
+Ten times the volatility and a worst trade that would erase a year of the
+printed edge — in exchange for the market return you could get from an index
+fund without the single-name risk.
+
+This is now the **third independent** measurement saying the same thing, after
+day-24 (one night doubles volatility, 2.3x worse tail) and day-32 (event
+swings: no edge): **this engine's signal does not survive past one session, and
+what looks like a multi-day edge is beta.**
+
+Twenty-eight rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
