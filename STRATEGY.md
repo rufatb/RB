@@ -2180,6 +2180,61 @@ it refused 09:40.
 
 Twenty-nine rejections, three adoptions.
 
+## Day-40: hundreds of names instead of 21 — the last untested lever
+
+This was the one dimension I had been unable to rule out, and it needed new
+data. Two things made it possible:
+
+* **The S&P/TSX Composite list** (220 names) instead of the hand-picked 21.
+* **TSX hourly volume is usable again.** Day-22 measured 86%% of TSX 1h bars
+  with zeroed volume, which killed the `vp` feature and forced every deep study
+  onto 20 US dual-listings as a proxy. Re-measured today: **~13%% on 1h, ~1%% on
+  5m.** So for the first time this repo has a **native** deep sample:
+  **153,112 rows / 218 names / 715 sessions.**
+
+Day-14 rejected 21 -> 61 names, but on 60 days, without a placebo, and it
+conflated two channels. It did find a real mechanism — low-volatility utilities
+sit at the centre of the feature cloud *every* day, so they are permanently
+"familiar" and hijack density selection — which implies a fix nobody tried:
+rank a name's density against **its own** history, not the cross-section.
+Growing the universe also gives more TRAINING data, so this run trains every
+arm on the full wide universe and varies **only the eligible candidate set**:
+same model, different menu.
+
+### VERDICT — REJECTED (#30). 654 test sessions, ~3 years.
+
+| pool | densest | max_p | random | self-relative |
+|---|---|---|---|---|
+| 21 shipped | -0.0163%% | +0.0021%% | -0.0074%% | -0.0081%% |
+| 21 random | -0.0146%% | -0.0021%% | -0.0041%% | -0.0057%% |
+| 50 random | +0.0018%% | -0.0078%% | -0.0024%% | +0.0056%% |
+| 100 random | -0.0014%% | -0.0079%% | -0.0017%% | -0.0063%% |
+| **all (218)** | +0.0122%% | -0.0217%% | **+0.0206%%** | -0.0020%% |
+
+**Every arm sits inside ±0.022%%. Every t between -1.03 and +0.82. No trend
+with pool size in any column.** The best arm (+0.0206%%) is *below* the placebo
+median (+0.0314%%). **p = 0.867.**
+
+### The finding is not what day-14 said
+Day-14 concluded "the familiarity edge lives in a compact, homogeneous
+universe." With 30x the sessions that reads as wrong in an instructive way:
+**there is no edge to dilute at any breadth.** The 21-name universe is not
+where the edge lives — it is where 60 days of data were too thin to see its
+absence.
+
+### The day-14 fix was well-motivated and changes nothing
+Self-relative density scores **-0.0020%%** at full breadth. A better ordering of
+a signal-free ranking is still signal-free.
+
+### The thin sample would have lied — again
+On 29 native 5m sessions, `all-220 / densest` scored **-0.2512%% (t -1.89)** and
+looked like strong evidence that breadth actively HURTS. On 654 sessions the
+same arm is **+0.0122%% (t +0.65)**. Had only the 5m run existed I would have
+confidently written up a mechanism that does not exist — which is precisely
+what day-14 did, and why it needed redoing.
+
+Thirty rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

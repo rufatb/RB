@@ -416,3 +416,62 @@ def test_entry_race_refuses_sessions_too_short_for_the_decision_bar():
     short = _bars(n=6)
     assert ve.rows_at(short, "X", 2, min_bars=5) != []
     assert ve.rows_at(short, "X", 11, min_bars=5) == []
+
+
+# ── day-40: the batched scorer must BE the shipped model, not resemble it ───
+def test_batched_scorer_matches_r945_knn_exactly():
+    """validate_pool scores 220 names x 500 sessions, which r945.knn_probability
+    cannot do (it rebuilds the standardised training matrix on every call). The
+    batched version is only legitimate if it is numerically identical — same
+    standardisation, K, weighting, Beta prior and clamp. If these ever diverge,
+    every wide-universe result would be about a DIFFERENT model than the one
+    being traded, and the comparison to 21 names would be meaningless."""
+    import numpy as np
+    import pandas as pd
+    import r945
+    import validate_pool as vp
+    rng = np.random.default_rng(5)
+    train = pd.DataFrame({"r0": rng.normal(0, 0.5, 900),
+                          "gap": rng.normal(0, 0.8, 900),
+                          "vp": rng.normal(1, 0.2, 900),
+                          "r1": rng.normal(0, 1, 900)})
+    today = pd.DataFrame({"r0": rng.normal(0, 0.5, 25),
+                          "gap": rng.normal(0, 0.8, 25),
+                          "vp": rng.normal(1, 0.2, 25)})
+    p, nd = vp.score_day(train, today)
+    for i in range(len(today)):
+        want_p, _, want_nd = r945.knn_probability(
+            train, {f: today[f].iloc[i] for f in r945.FEATS})
+        assert abs(p[i] - want_p) < 1e-9, f"row {i}: {p[i]} vs {want_p}"
+        assert abs(nd[i] - want_nd) < 1e-9, f"row {i} nd: {nd[i]} vs {want_nd}"
+
+
+def test_batched_scorer_refuses_a_thin_pool_like_the_shipped_one():
+    import numpy as np
+    import pandas as pd
+    import validate_pool as vp
+    rng = np.random.default_rng(6)
+    thin = pd.DataFrame({"r0": rng.normal(0, 1, 100), "gap": rng.normal(0, 1, 100),
+                         "vp": rng.normal(1, 1, 100), "r1": rng.normal(0, 1, 100)})
+    assert vp.score_day(thin, thin.head(3))[0] is None
+
+
+def test_self_relative_density_neutralises_a_permanently_central_name():
+    """The day-14 pathology: a low-volatility name sits at the centre of the
+    feature cloud every day, so raw `nd` picks it forever. Self-relative
+    density must rank it as ordinary while flagging a name that is unusually
+    familiar TODAY relative to its own history."""
+    import numpy as np
+    import validate_pool as vp
+    days = []
+    for i in range(30):
+        days.append({"date": "d%02d" % i, "t": np.array(["UTIL", "MINER"]),
+                     "nd": np.array([0.10, 1.00]),      # UTIL always central
+                     "p": np.array([0.6, 0.6]), "r": np.array([0.1, 0.1])})
+    days.append({"date": "d99", "t": np.array(["UTIL", "MINER"]),
+                 "nd": np.array([0.10, 0.30]),          # MINER unusually close
+                 "p": np.array([0.6, 0.6]), "r": np.array([0.1, 0.1])})
+    vp.add_self_relative(days)
+    last = days[-1]
+    assert np.argmin(last["nd"]) == 0, "raw density still picks the utility"
+    assert np.argmin(last["nd_rel"]) == 1, "self-relative picks the miner"
