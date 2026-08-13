@@ -1937,6 +1937,73 @@ Standing: pair 24/47 (51%%), **decisive 20/42 (48%%)**, book-weighted
 -0.167%%/session (3/10 positive), relative capture -0.057%%/leg with 18/37
 beating the tide.
 
+## Day-36: "is there a better exit than 15:59?" — the biggest untested parameter
+
+Fair question, and an embarrassing one: **the exit time was never chosen.** It
+was inherited from the first script and then baked into the ledger, every
+backtest, the twins study and the adoption bar. Every number this system has
+ever produced assumes a 9:45 -> close hold. Unlike most levers, changing it is
+free — no new data, no new model, just a different clock.
+
+Built `validate_exit.py`. Four independent samples, pre-registered bar written
+before looking (75 candidate exits guarantees a winner by chance, so the bar is
+built to make a lucky spike fail): beat the close on mean capture, in **all
+four quarters**, with **+/-15 minutes also beating it** (no isolated spikes), by
+**more than one standard error**, and agreeing on an independent sample.
+
+### VERDICT — REJECTED (#24). No exit beats the close.
+
+The 2-year twins are decisive: **944 pair legs over 288 test sessions**, and
+the whole capture curve is flat inside +/-0.02%%.
+
+| exit | 11:30 | 12:30 | 13:30 | 14:30 | 15:30 | close |
+|---|---|---|---|---|---|---|
+| mean | -0.020%% | -0.008%% | **+0.007%%** | +0.004%% | -0.004%% | -0.004%% |
+| std | 0.51 | 0.70 | 0.78 | 0.86 | 0.91 | 0.96 |
+
+Best-vs-close is **+0.011%% against a 1-se bar of 0.025%%**; fails smoothness,
+fails the se bar, 3/4 quarters. Same story on the native 5m walk-forward (124
+pair legs): best raw exit 15:45, **+0.007%%** better, 2/4 quarters.
+
+### WHY there is nothing to find — the mechanism, and it is sample-independent
+Correlation between the move so far and the rest of the day, across all 1,260
+ticker-sessions: **+0.07 at 10:00, -0.00 at 11:30, -0.04 at 13:00, -0.02 at
+15:45.** The path from 9:45 is essentially a martingale. It does not
+systematically hand back what it gave, **so there is no peak to exit at.** An
+exit rule can only help if the tape reverts; this one doesn't.
+
+### The mirage I nearly shipped
+On **three of four samples** the best raw exit was 09:50 or 10:00, and on the 47
+real ledger legs a 10:00 exit "would have" returned **+0.056%%** against the
+close's **-0.086%%**. That is a 0.14%% swing on the live record — exactly the
+kind of number that gets adopted. It is not real:
+
+1. it is the best of 75 candidates on 47 legs;
+2. it does not reproduce on the same rule with 124 legs, nor with 944;
+3. **differencing the curve into windows kills it.** The live legs' entire
+   "early-exit edge" is ONE window — 10:00->10:30, **-0.202%%, t=-3.59.** One bad
+   half-hour in a small sample, not a decay curve. On the 124-leg walk-forward
+   no window carries the edge at all: every t-stat lands in **[-0.83, +1.35]**.
+   Capture accrues roughly uniformly through the day.
+
+A 0.03-0.06%% "edge" is also under a realistic round-trip cost, so even taking
+the mirage at face value it does not pay for itself.
+
+### What IS true, and is not actionable yet
+**Variance keeps growing after the mean stops.** On the twins std runs 0.51 ->
+0.96 from 11:30 to the close while the mean sits at zero; on the 5m pair sample
+the mean is flat from 11:20 (+0.055 -> +0.062) while std goes 0.85 -> 1.32. If
+that flatness is real, the last 4.5 hours buy **~55%% more risk for nothing** —
+which would be the fourth variance result in a row, and this system's only
+adoptions have all been variance results.
+
+It fails the bar (2/4 quarters; the gain is a fraction of one se) and **124 legs
+cannot separate +0.055 from +0.062.** So it is logged, not shipped.
+`validate_exit.py` re-runs from scratch with no key and no cached artifact, so
+this gets re-asked as the ledger grows rather than re-mined from memory.
+
+Twenty-four rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

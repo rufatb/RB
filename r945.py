@@ -906,6 +906,17 @@ def render(res, book=False):
         print("  is market drift, not signal: this engine's edge lasts ONE session.")
         print("  A held SHORT additionally pays borrow and carries open-ended gap")
         print("  risk, and this tool has NO earnings/dividend/news feed to price it.")
+        # Day-36: the symmetric question — "why not exit EARLIER?" — used to
+        # have no answer here at all. The exit time was inherited, never
+        # chosen, which made it the largest untested parameter in the strategy.
+        print("\n  WHY NOT EARLIER EITHER (944 legs / 288 sessions, validate_exit.py):")
+        print("    11:30 -0.020%  12:30 -0.008%  13:30 +0.007%  15:30 -0.004%  close -0.004%")
+        print("  The whole curve is flat inside 0.02% — best-vs-close is +0.011% against")
+        print("  a 1-se bar of 0.025%. Correlation between the move so far and the rest")
+        print("  of the day is ~0 at EVERY exit, so the tape does not hand back what it")
+        print("  gave: there is no peak to exit at. Early exits that look good in small")
+        print("  samples are one bad half-hour, not a decay curve — and a 0.03-0.06%")
+        print("  'edge' is under the round-trip cost anyway.")
     print("\n  Modest, measured edges: a qualified leg is a ~52-56% lean (day-12 reset —")
     print("  the 68% selector claim did not survive a window roll). The ledger's PAIR")
     print("  line is the arbiter. No 5-minute outlooks — this is close-horizon only.")

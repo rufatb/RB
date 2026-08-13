@@ -247,3 +247,53 @@ def test_decisive_line_is_honest_when_underpowered():
     import ledger
     assert "needs more scored legs" in ledger.decisive_line(
         [{"side": "LONG", "r1": "1.0"}] * 5)
+
+
+# ── day-36: the exit-time study's two load-bearing mechanics ────────────────
+def test_curve_risk_adjusts_so_early_exits_are_compared_fairly():
+    """The trap this locks: at 09:50 barely any price movement has happened,
+    so an early exit posts a smaller MEAN for a purely mechanical reason. A
+    naive raw-mean comparison would always crown the close. `ir` (mean/std) and
+    `scaled` (ir * close std) are what make the comparison fair."""
+    import validate_exit as ve
+    # the close earns a BIGGER mean, but buys it with far more dispersion
+    idx = {}
+    legs = []
+    for i in range(60):
+        early, late = (0.10, 0.60) if i % 3 else (-0.05, -0.60)
+        idx[("T%d" % i, "d", 5)] = early
+        idx[("T%d" % i, "d", 375)] = late
+        legs.append({"t": "T%d" % i, "date": "d", "side": "LONG"})
+    cv = ve.curve(legs, [5, 375], idx)
+    assert cv.iloc[0]["mean"] < cv.iloc[-1]["mean"], "raw mean favours the close"
+    assert cv.iloc[0]["ir"] > cv.iloc[-1]["ir"], "risk-adjusted favours early"
+    # `scaled` restates the early exit at close-equivalent size
+    assert cv.iloc[0]["scaled"] > cv.iloc[-1]["mean"]
+
+
+def test_windows_are_incremental_not_cumulative():
+    """A cumulative curve makes one good stretch look like a trend at every
+    later exit. `windows` must difference it, so a leg that earns everything
+    before 10:00 and nothing after shows ONE positive window, not eight."""
+    import validate_exit as ve
+    idx, legs = {}, []
+    for i in range(40):
+        legs.append({"t": "T%d" % i, "date": "d", "side": "LONG"})
+        for m in (15, 45, 75, 135, 195, 255, 315, 375):
+            idx[("T%d" % i, "d", m)] = 0.50      # all earned before 10:00, flat after
+    w = ve.windows(legs, idx, "test")
+    assert abs(w.iloc[0]["mean"] - 0.50) < 1e-9, "first window holds the move"
+    assert all(abs(m) < 1e-9 for m in w["mean"].iloc[1:]), "later windows flat"
+
+
+def test_windows_respects_side_sign():
+    """A SHORT leg that falls has POSITIVE capture. Getting this backwards
+    would invert every verdict in the study."""
+    import validate_exit as ve
+    idx, legs = {}, []
+    for i in range(40):
+        legs.append({"t": "T%d" % i, "date": "d", "side": "SHORT"})
+        idx[("T%d" % i, "d", 15)] = -0.30       # price fell -> short profits
+        idx[("T%d" % i, "d", 45)] = -0.30
+    w = ve.windows(legs, idx, "test", edges=(0, 15, 45))
+    assert w.iloc[0]["mean"] > 0
