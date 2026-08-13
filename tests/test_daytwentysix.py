@@ -297,3 +297,40 @@ def test_windows_respects_side_sign():
         idx[("T%d" % i, "d", 45)] = -0.30
     w = ve.windows(legs, idx, "test", edges=(0, 15, 45))
     assert w.iloc[0]["mean"] > 0
+
+
+# ── day-37: the sweep's null must actually destroy the signal ───────────────
+def test_placebo_destroys_a_real_edge():
+    """The whole verdict rests on the null being a real null. If the placebo
+    leaked the directional call, a rigged dataset would still 'win' under it
+    and every rejection in the sweep would be unearned. Build days where the
+    model is PERFECT, then confirm the placebo strips the edge away."""
+    import numpy as np
+    import validate_sweep as vs
+    rng0 = np.random.default_rng(0)
+    days = []
+    for i in range(120):
+        r = rng0.normal(0, 1, 8)
+        p = np.where(r > 0, 0.9, 0.1)          # oracle: p_up knows the outcome
+        days.append({"date": "d%03d" % i, "dow": "Mon",
+                     "p": p, "nd": rng0.random(8), "r": r})
+    real = vs.book_returns(days, 2, "long+short", 0.55, "densest", "all")
+    null = vs.book_returns(days, 2, "long+short", 0.55, "densest", "all",
+                           rng=np.random.default_rng(1))
+    assert real.mean() > 0.5, "oracle config should be strongly positive"
+    assert abs(null.mean()) < 0.2, "placebo must strip the edge"
+    assert real.mean() > 4 * abs(null.mean())
+
+
+def test_sweep_book_is_half_per_side_and_full_when_one_sided():
+    """Capacity accounting: a hedged book puts half on each side, a single-sided
+    book deploys the whole thing. Getting this wrong would make long-only look
+    artificially small (or large) against the shipped config it is compared to."""
+    import numpy as np
+    import validate_sweep as vs
+    days = [{"date": "d", "dow": "Mon", "p": np.array([0.9, 0.1]),
+             "nd": np.array([0.1, 0.2]), "r": np.array([1.0, -1.0])}]
+    both = vs.book_returns(days, 1, "long+short", 0.55, "densest", "all")
+    lng = vs.book_returns(days, 1, "long-only", 0.55, "densest", "all")
+    assert abs(both[0] - 1.0) < 1e-9, "0.5*(+1) + 0.5*(+1) from the short"
+    assert abs(lng[0] - 2 * 0.5 * 1.0) < 1e-9, "long-only deploys fully"

@@ -2004,6 +2004,80 @@ this gets re-asked as the ledger grows rather than re-mined from memory.
 
 Twenty-four rejections, three adoptions.
 
+## Day-37: the holistic sweep — 800 configurations, and the honest verdict
+
+Today all four legs missed. Both longs fell AND both shorts rose, so the tide
+cannot explain it: **a pure selection failure in both directions.**
+
+| leg | side | capture |
+|---|---|---|
+| RY.TO | LONG | -0.063%% |
+| ENB.TO | LONG | -0.557%% |
+| NTR.TO | SHORT | -0.374%% |
+| T.TO | SHORT | -0.824%% |
+
+Book **-0.423%%** of capacity. The right response was not another one-lever
+test, so this is the sweep: **every knob at once, plus the null that says
+whether any winner is real.**
+
+### THE LIVE RECORD, stated plainly
+* **PAIR legs 24/51 (47.1%%)** — two-sided binomial **p = 0.78**. That is not
+  "underperforming", it is *indistinguishable from a coin flip.*
+* mean capture **-0.113%%/leg**, t = **-0.80**. All 233 picks: 48.9%%, t = -0.56.
+* Book: **23 sessions, mean -0.097%%/session, 9/23 positive, cumulative
+  -2.24%% of capacity.**
+* decisive legs (excluding scratches) **20/45 (44%%)**; relative capture
+  **-0.098%%/leg** vs the tide.
+
+### THE SWEEP — 800 configurations on 290 sessions
+Legs per side 1-4 x long-only/short-only/both x bar 0.50-0.65 x four selectors
+x every weekday, all re-slicing ONE walk-forward pass so no config gets a
+different model.
+
+**The shipped config — 2 legs / both sides / 0.55 / densest / all days — scores
+mean +0.0004%%/session, t +0.01, 48%% positive: RANK 449 OF 800.** It is not
+unlucky. It is average, and average here is zero.
+
+### The one thing that nearly survived — and why it didn't
+Best config: **long-only / bar 0.60 / Thursday / 1 leg, +0.512%%/session,
+t +2.09**, and against 100 placebo sweeps (same names, days and sizes, sides
+assigned at random) **p = 0.040**. First result in 25 tests to clear a placebo
+band. It dies on autopsy, four ways:
+
+1. **Quarters: +0.573 / -0.564 / +0.538 / +1.067.** Q2 strongly negative —
+   fails the all-four-quarters bar outright.
+2. **n = 37 Thursdays**, 6-11 per quarter.
+3. **The selector is BACKWARDS.** random **+0.512** beats densest **+0.361**,
+   max_p +0.371, sparsest +0.333. If the k-NN ranking were doing the work,
+   densest would lead. Random leading is the signature of *no skill* — whatever
+   this is, the model's ordering is not producing it.
+4. It is not a Thursday tape effect either: buying the **whole universe** on
+   Thursdays pays **+0.009%%/session**.
+
+The null's own **median** best config was **+0.368%%/session**. A grid this size
+manufactures half-percent "winners" from noise routinely. That is what the null
+is for, and why a bare p-value would have been a trap.
+
+### The structural fact that settles it: THIS CANNOT BE MEASURED IN TIME
+Detecting a true **55%% hit rate at 80%% power needs ~781 legs.** The live
+ledger has **51**. At 4 legs/session that is **roughly four years of trading**
+before the record could distinguish a real edge from a coin flip — while paying
+spread, commission and single-name risk the whole way.
+
+### VERDICT — REJECTED (#25), and a recommendation, not another lever
+Twenty-five tested changes, three adopted, and all three adopted ones were
+**variance** results — none ever improved accuracy. The deep validation said
+the selection layer is inert (densest 50.1%% vs random 50.2%%, 944 legs). The
+exit time is flat. The entry time was refuted. Overnight doubles volatility.
+Multi-day found no edge. Now the joint sweep finds nothing either.
+
+**The honest conclusion is that this signal — pooled k-NN on r0/gap/vp over 21
+TSX large caps — has no edge, and the surrounding strategy space does not
+contain one.** The recommendation is to stop risking capital on it and run
+`r945.py --shadow`, which prints the same book with no share counts, so the
+ledger keeps accruing legs at zero cost. If the record ever separates from a
+coin flip, that is when it earns money back.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
