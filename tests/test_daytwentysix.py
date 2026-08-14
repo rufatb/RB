@@ -475,3 +475,74 @@ def test_self_relative_density_neutralises_a_permanently_central_name():
     last = days[-1]
     assert np.argmin(last["nd"]) == 0, "raw density still picks the utility"
     assert np.argmin(last["nd_rel"]) == 1, "self-relative picks the miner"
+
+
+# ── day-41: the visual board must suppress orders wherever the terminal does ─
+def _res(**kw):
+    base = {"now": "2026-08-13T09:47:00-04:00", "n_names": 21,
+            "ready_at_iso": "2026-08-13T09:46:00-04:00", "entry_window_min": 10,
+            "max_chase_pct": 0.04, "coverage": "21/21", "source": "yahoo_direct",
+            "longs": [], "shorts": [], "excluded": [],
+            "pair": {"long": {"status": "DENSE", "pick": {
+                        "t": "ENB.TO", "p945": 71.87, "last": 71.80, "r0": 0.38,
+                        "gap": -0.14, "p_up": 0.563, "confidence": "dense",
+                        "shares": 163, "alloc": 11703, "adverse_2pct": 234}},
+                     "short": {"status": "NONE"}}}
+    base.update(kw)
+    return base
+
+
+def test_visual_board_shows_orders_only_on_a_live_book_run():
+    import report_html
+    page = report_html.render_html(_res(), book=True)
+    assert "BUY 163 sh" in page
+
+
+def test_visual_board_suppresses_orders_on_an_informational_rerun():
+    """Day-25's rule: a printed order line IS the instruction, and a re-run can
+    see REVISED early bars and mint a DIFFERENT board. The terminal already
+    suppresses order lines there; a prettier report that did not would be a
+    more dangerous one."""
+    import report_html
+    page = report_html.render_html(_res(), book=False)
+    assert "BUY" not in page and "SELL SHORT" not in page
+    assert "Informational run" in page
+
+
+def test_visual_board_suppresses_orders_in_shadow_and_after_the_window():
+    import report_html
+    shadow = report_html.render_html(_res(shadow=True), book=True)
+    assert "BUY" not in shadow and "SHADOW" in shadow
+    late = report_html.render_html(
+        _res(now="2026-08-13T10:30:00-04:00"), book=True)
+    assert "BUY" not in late and "window closed" in late.lower()
+
+
+def test_visual_board_refuses_to_render_a_board_it_must_not_show():
+    """too-early and coverage-fail are fail-closed states: the page must carry
+    the refusal and no picks at all."""
+    import report_html
+    early = report_html.render_html(
+        {"now": "2026-08-13T09:38:00-04:00", "too_early": True,
+         "ready_at": "09:46"}, book=True)
+    assert "Too early" in early and 'class="tkt' not in early
+    dead = report_html.render_html(
+        {"now": "2026-08-13T09:47:00-04:00", "coverage_fail": "only 12/21"},
+        book=True)
+    assert "No board, no orders" in dead and 'class="tkt' not in dead
+
+
+def test_visual_board_escapes_untrusted_fields():
+    import report_html
+    page = report_html.render_html(
+        _res(excluded=[{"t": "<img src=x onerror=alert(1)>",
+                        "excluded_reason": "r0 out of range"}]), book=True)
+    assert "<img src=x" not in page and "&lt;img" in page
+
+
+def test_visual_board_carries_no_document_scaffold():
+    """Artifact wraps the file in its own <!doctype>/<head>/<body>."""
+    import report_html
+    page = report_html.render_html(_res(), book=True).lower()
+    for tag in ("<!doctype", "<html", "<body", "<head>"):
+        assert tag not in page

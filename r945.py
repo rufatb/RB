@@ -951,6 +951,10 @@ def main(argv=None):
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--book", action="store_true",
                    help="once-daily workflow: exact share counts, enter at market now, flat by 3:55")
+    p.add_argument("--html", metavar="PATH",
+                   help="also write the visual board to PATH. Rendered from the "
+                        "same result object the terminal prints, so the two can "
+                        "never disagree.")
     p.add_argument("--shadow", action="store_true",
                    help="PAPER mode: publish and score the board exactly as usual, "
                         "but print NO order lines and NO share counts. The ledger "
@@ -1005,6 +1009,7 @@ def main(argv=None):
                 print("   Order lines are SUPPRESSED: the published board is the "
                       "only tradeable one.]")
                 render(res, book=False)
+                _write_html(res, args, book=False)
                 return
             pair_ids = {id(r) for r in pair_picks}
             # Day-23: persist each pair leg's share of BOOK CAPACITY. Since the
@@ -1052,6 +1057,35 @@ def main(argv=None):
                       f"({len(pair_picks)} pair / {n - len(pair_picks)} board) — score "
                       "after close with `python ledger.py --score`]")
     render(res, book=args.book)
+    _write_html(res, args, book=args.book)
+
+
+def _write_html(res: dict, args, book: bool) -> None:
+    """Emit the visual board, if asked. Never raises into the trading path.
+
+    A rendering bug must not be able to take down the 9:46 run: the terminal
+    report has already printed by the time this is called, and that report is
+    the instruction. Failures are reported and swallowed HERE and nowhere else
+    — see the day-29 rule against bare excepts.
+    """
+    if not getattr(args, "html", None):
+        return
+    try:
+        import report_html
+        line = ""
+        try:
+            import ledger
+            rows = ledger.load()
+            line = ledger.decisive_line([r for r in rows if r.get("role") == "pair"])
+            line = line.split(":", 1)[1].strip() if ":" in line else line
+        except Exception:
+            pass
+        with open(args.html, "w", encoding="utf-8") as fh:
+            fh.write(report_html.render_html(res, book=book, record_line=line))
+        print(f"\n  [visual board written to {args.html}]")
+    except Exception as e:
+        print(f"\n  ⚠ visual board NOT written ({type(e).__name__}: {e}) — "
+              "the terminal report above is unaffected and stands.")
 
 
 if __name__ == "__main__":
