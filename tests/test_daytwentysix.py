@@ -546,3 +546,55 @@ def test_visual_board_carries_no_document_scaffold():
     page = report_html.render_html(_res(), book=True).lower()
     for tag in ("<!doctype", "<html", "<body", "<head>"):
         assert tag not in page
+
+
+# ---------------------------------------------------------------- day-42
+# A stale clone made the 9:46 report print PAIR 24/47 (51%) when the true
+# figure was 24/51 (47%), and claim there had been no session the previous
+# day. Absence of rows was read as absence of events. These lock the guard.
+
+def _cal(trading):
+    return lambda d: d.isoformat() in trading
+
+
+def test_missing_sessions_flags_a_trading_day_gap():
+    import ledger, datetime as dt
+    rows = [{"date": "2026-08-12", "ticker": "X"}]
+    gaps = ledger.missing_sessions(rows, dt.date(2026, 8, 14),
+                                   _cal({"2026-08-13", "2026-08-14"}))
+    assert gaps == ["2026-08-13"]
+
+
+def test_missing_sessions_ignores_weekends_and_holidays():
+    import ledger, datetime as dt
+    # nothing between the 12th and the 14th is a trading day -> no gap
+    gaps = ledger.missing_sessions([{"date": "2026-08-12", "ticker": "X"}],
+                                   dt.date(2026, 8, 14), _cal({"2026-08-14"}))
+    assert gaps == []
+
+
+def test_missing_sessions_excludes_today_itself():
+    """Today is being published right now; it is never a 'missing' session."""
+    import ledger, datetime as dt
+    gaps = ledger.missing_sessions([{"date": "2026-08-13", "ticker": "X"}],
+                                   dt.date(2026, 8, 14),
+                                   _cal({"2026-08-13", "2026-08-14"}))
+    assert gaps == []
+
+
+def test_missing_sessions_empty_ledger_is_not_a_gap():
+    import ledger, datetime as dt
+    assert ledger.missing_sessions([], dt.date(2026, 8, 14), _cal({"2026-08-14"})) == []
+
+
+def test_gap_line_silent_when_complete_and_loud_when_not():
+    import ledger
+    assert ledger.gap_line([]) == ""
+    line = ledger.gap_line(["2026-08-13"])
+    assert "INCOMPLETE" in line and "2026-08-13" in line
+
+
+def test_gap_line_truncates_long_gap_lists():
+    import ledger
+    line = ledger.gap_line([f"2026-08-{d:02d}" for d in range(3, 12)])
+    assert "…" in line and len(line.splitlines()) == 2

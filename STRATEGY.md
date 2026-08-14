@@ -2235,6 +2235,75 @@ what day-14 did, and why it needed redoing.
 
 Thirty rejections, three adoptions.
 
+## Day-42: a green day, and the bug that was in MY report, not the market
+
+| leg | side | capture | tide-rel | rank | verdict |
+|---|---|---|---|---|---|
+| BCE.TO | LONG | -0.276%% | -0.475%% | 14/21 | MISS |
+| TRP.TO | LONG | **+0.726%%** | +0.526%% | 2/21 | HIT |
+| BNS.TO | SHORT | -0.530%% | -0.331%% | 6/21 | MISS |
+| CNR.TO | SHORT | **+1.080%%** | +1.280%% | 19/21 | HIT |
+
+**NET +$119.90**, book-weighted **+0.240%%**, tide **+0.200%%** (breadth 13/21).
+Relative capture **+0.250%%/leg** — 2 of 4 beat the tide, and the two that hit
+did so on genuine selection: CNR was the 19th-best mover of 21 on a short, TRP
+the 2nd-best of 21 on a long. Second consecutive green session.
+
+**This changes nothing.** Two good days is what a coin flip looks like twice.
+The day-37 verdict — 25+ tested changes, 3 adopted, all variance results, the
+selection layer inert at 50.1%% vs 50.2%% random over 944 legs — is not touched
+by a +$119 Friday, and it would be exactly the failure mode this file exists to
+prevent to write it up as though it were.
+
+### The real defect today was in the REPORT, not the strategy
+Two sessions were working this repository in parallel. This clone was **eight
+commits stale**, so `ledger.csv` was missing the entire 2026-08-13 session —
+which went **0/4 on the pair**. Consequences, both in the 9:46 report handed to
+the user:
+
+1. The record printed **PAIR 24/47 (51%%)**. The truth was **24/51 (47%%)** —
+   overstated by 4pp, in the flattering direction.
+2. The report stated *"no run yesterday, so there's no unscored backlog."*
+   There had been a run. It was the worst session of the month.
+
+Absence of rows was read as absence of events. The board itself was never at
+risk — it is computed from market data and never reads the ledger, and the
+parallel session's `r945.py` changes were print-text plus an optional `--html`
+flag, so the picks were byte-identical either way. But the *record* underneath
+the board is the only thing that tells the user whether to trust it, and it was
+wrong in the direction that makes the system look better than it is.
+
+### IMPLEMENTED: `missing_sessions()` / `gap_line()` (+6 tests, 228 passing)
+Between the ledger's last entry and today, any TSX trading day with no rows is
+now named in both `ledger.py`'s report and the 9:46 board header:
+
+```
+  ⚠ RECORD MAY BE INCOMPLETE: no rows for trading day(s) 2026-08-13. Either no
+    board was published then, or this copy of the ledger is stale (day-42).
+```
+
+Verified by replaying commit `061ca63`'s `ledger.csv` — this morning's exact
+stale state — through the guard: it names 2026-08-13. On the current complete
+ledger it is silent.
+
+**Deliberately a warning, not a fail-closed refusal**, which breaks from
+`coverage_ok` and `extrapolation_check`. Those protect the BET, and a partial
+universe silently changes it, so refusing is right. This protects the RECORD,
+and withholding a board that does not depend on the ledger would be theatre. A
+legitimate no-run day trips it too — correctly, since from the ledger's side a
+day nobody ran and a day that failed to sync are indistinguishable, and only the
+reader can tell them apart.
+
+### No strategy change adopted
+Nothing in the session's four legs was a new pattern. The [mid] tag stayed bad
+(both board mid names missed; the bucket is now 30/73, 41%%) but the pair only
+ever selects DENSE legs, so mid never enters the book — dropping it changes no
+trade, which is why it was rejected before and is still not a lever.
+
+Standing: pair 26/55 (47%%), decisive 22/49 (45%%), book-weighted
+-0.154%%/session (4/12 positive), relative capture -0.068%%/leg with 20/45
+beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

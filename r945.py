@@ -752,6 +752,16 @@ def render(res, book=False):
                 print(f"  {side + 's':<7} {h}/{n} ({h/n*100:.0f}%)  95% CI "
                       f"{lo*100:.0f}-{hi*100:.0f}% — "
                       f"{'inside' if lo <= 0.5 <= hi else 'OUTSIDE'} a coin flip")
+        # Day-42: the record printed here is only as complete as the local
+        # ledger file. A stale clone made this line overstate the pair by 4pp.
+        try:
+            import ledger as _lg, dashboard as _db, datetime as _dt
+            _g = _lg.gap_line(_lg.missing_sessions(_lg.load(), _dt.date.today(),
+                                                   _db.is_trading_day))
+            if _g:
+                print(_g)
+        except Exception as _e:
+            print(f"  (session-gap check unavailable: {type(_e).__name__})")
         if lr["all_n"] >= 30 and lr["all_hits"] / lr["all_n"] < 0.54:
             print("⚠ The live record has NOT yet demonstrated an edge over a coin flip.")
             print("  Trade the printed size or do not trade — the edge, if real, is thin.")

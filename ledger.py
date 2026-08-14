@@ -128,6 +128,50 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
     return added
 
 
+def missing_sessions(rows: list, today: dt.date, is_trading_day_fn,
+                     lookback: int = 10) -> list:
+    """Trading days between the ledger's last entry and today that it has NO
+    rows for. Pure + testable (the calendar is injected).
+
+    DAY-42, and this one bit a live report rather than a backtest. Two sessions
+    were working the same repo; this clone was eight commits stale, so
+    `ledger.csv` was missing an entire scored session (2026-08-13, 0/4 on the
+    pair). The 9:46 board itself was unaffected — it is computed from market
+    data and never reads the ledger — but the RECORD printed underneath it was
+    wrong in the flattering direction: PAIR 24/47 (51%) when the truth was
+    24/51 (47%), and the report stated there had been no session the previous
+    day. Both claims came from absence of data being read as absence of events.
+
+    Deliberately a WARNING and not a fail-closed refusal, unlike the coverage
+    and extrapolation guards. Those protect the BET, and a partial universe
+    silently changes it. This protects the RECORD, and the honest response to a
+    possibly-incomplete record is to say so, not to withhold a board that does
+    not depend on it. A legitimate no-run day (nobody asked) trips this too —
+    that is the correct behaviour, because from the ledger's side the two are
+    indistinguishable and only the reader can tell them apart."""
+    dates = {r["date"] for r in rows if r.get("date")}
+    if not dates:
+        return []
+    last = dt.date.fromisoformat(max(dates))
+    gaps, d = [], last + dt.timedelta(days=1)
+    while d < today and len(gaps) <= lookback:
+        if is_trading_day_fn(d) and d.isoformat() not in dates:
+            gaps.append(d.isoformat())
+        d += dt.timedelta(days=1)
+    return gaps
+
+
+def gap_line(gaps: list) -> str:
+    """One-line caveat for the report header; empty string when there is none."""
+    if not gaps:
+        return ""
+    shown = ", ".join(gaps[:5]) + ("…" if len(gaps) > 5 else "")
+    return ("  ⚠ RECORD MAY BE INCOMPLETE: no rows for trading day(s) "
+            f"{shown}. Either no board was published then, or this copy of the\n"
+            "    ledger is stale (day-42). Percentages below are computed only "
+            "on what is here.")
+
+
 def session_is_final(date_str: str, now: dt.datetime, close_time: dt.time) -> bool:
     """Has that session's regular close already happened? Pure + testable."""
     d = dt.date.fromisoformat(date_str)
@@ -287,6 +331,13 @@ def report(rows: list) -> str:
     if not done:
         return "ledger: no scored rows yet"
     out = ["=" * 60, f"LEDGER REPORT — {len(done)} scored picks (live, no hindsight)", "=" * 60]
+    try:
+        import dashboard
+        g = gap_line(missing_sessions(rows, dt.date.today(), dashboard.is_trading_day))
+        if g:
+            out.append(g)
+    except Exception as e:                       # calendar unavailable, never fatal
+        out.append(f"  (session-gap check unavailable: {type(e).__name__})")
 
     def line(label, sub):
         if not sub:
