@@ -2304,6 +2304,100 @@ Standing: pair 26/55 (47%%), decisive 22/49 (45%%), book-weighted
 -0.154%%/session (4/12 positive), relative capture -0.068%%/leg with 20/45
 beating the tide.
 
+## Day-43: the question thirty rejections never asked — model, or information?
+
+Every one of the thirty rejected changes varied the **wrapper**: which leg to
+pick, when to enter, when to exit, how long to hold, how many names to scan,
+how many picks to take, what bar to qualify at, how to size. Not one varied the
+**information** the prediction is computed from. The engine has used exactly
+three features since day one — `r0`, `gap`, `vp` — and nobody ever asked whether
+those three carry signal at all.
+
+`validate_ceiling.py` asks it. If the features are informative and the k-NN is
+too weak to extract them, a stronger learner wins and there is an accuracy lever.
+If they carry nothing, then no selector, bar, or sizing rule built on them can
+ever add accuracy — and thirty rejections stop looking like thirty unlucky draws
+and start looking like **one fact observed thirty times**.
+
+### The result, on 122,234 out-of-sample rows / 715 sessions (native TSX 1h)
+
+| model | AUC | z | acc | Brier |
+|---|---|---|---|---|
+| baseline | 0.4895 | -6.34 | 49.5%% | 0.2501 |
+| **knn (shipped)** | 0.4994 | **-0.39** | 50.0%% | 0.2525 |
+| logistic | 0.4925 | -4.54 | 49.8%% | 0.2501 |
+| **grad boost** | 0.5022 | **+1.32** | 50.3%% | 0.2508 |
+
+Walk-forward by SESSION, never by row — two legs of one day share market
+direction, so a row-wise split leaks. Gradient boosting has ~100x the capacity
+of the shipped k-NN and finds **nothing**: z=1.32 on 122k rows.
+
+Repeated on the native 9:45 5m pool where all three features ARE computable
+(13,090 rows / 60 sessions): best real AUC **0.5106, z=1.04**. Same verdict.
+
+### The positive control — why this null is trustworthy
+This project's history is a history of false POSITIVES: a 60-day window
+manufactures an effect, it ships, a wider sample kills it. A ceiling test has
+the **opposite** failure mode — reporting "no signal" when the harness is simply
+broken, which looks identical from the outside. So every run also fits the same
+pipeline to a synthetic feature carrying a deliberately weak **52%%** edge:
+
+| | real features | planted 52%% coin |
+|---|---|---|
+| knn (shipped) | z = **-0.39** | z = **+6.44** |
+| logistic | z = -4.54 | z = **+15.47** |
+| grad boost | z = +1.32 | z = **+13.39** |
+
+The harness detects a 52%% coin at z=15. It sees nothing in `r0`/`gap`. Even the
+shipped k-NN — the weakest extractor of the three — would have lit up at z=6.4
+had a 52%% edge been present. **The features are the ceiling, not the model.**
+
+### A data defect found on the way, and it invalidates a claim in shipped code
+`build_pool.py` said TSX hourly volume was re-measured at "~13%% zeroed, so `vp`
+is now computable and a NATIVE 2-year panel is possible". Day-22 had said 86%%.
+**Both are right, and the conclusion drawn from the 13%% was wrong.** Measured
+over 720 days on 5 large caps:
+
+    all 1h bars       12.4-12.6%% zeroed     <- the reassuring number
+    FIRST bar of day  86.1-86.8%% zeroed     <- the one that matters
+    later bars         0.0- 0.3%% zeroed
+
+The zeros are almost entirely the first bar of each session — and the 1h pool's
+entry IS the first bar. So 85.9%% of its `v15` is zero and `vp` is not computable
+on that panel at all.
+
+It fails **silently**, twice over. First run of the ceiling test, `vp` NaN'd out
+**145,201 of 145,228 rows** and left 27. And the idiom used across the existing
+validators, `v15 / (median or 1)`, is worse than that: **100%% of tickers have a
+zero median v15**, so it divides by 1 and yields RAW SHARE VOLUME — a big name's
+raw count standardised against a small name's, exactly zero on 86%% of rows.
+Every 1h-pool study that included `vp` was run on that column.
+
+**This does not overturn day-37 through day-40.** Those compare arms drawn from
+the same rows, and both arms carried the identical broken column, so the
+comparisons stand. What changes is the description: no 1h result may be called a
+test of the shipped THREE-feature engine. `usable_feats()` now measures the zero
+rate and drops the column loudly instead of either failure mode.
+
+### What this means for "how do we improve accuracy"
+The honest answer is now specific rather than discouraging. Accuracy cannot be
+improved by rearranging these three features — that is measured, not opined, and
+the thirty rejections are its downstream consequence. It can only be improved by
+**new information**. The candidates, in order of plausibility and none of them
+free: order-book imbalance and true 9:45 volume pace (needs L1/L2 — TMX or IBKR,
+not Yahoo); overnight news and earnings/guidance events (needs a dated feed with
+point-in-time timestamps); sector/index futures state at 9:45; and short
+interest or borrow cost. All of them are DATA acquisitions, not code changes,
+and each one has to clear the same all-four-quarters bar as everything else.
+
+Until such a feed exists, `--shadow` remains the correct mode — the day-37
+recommendation, now with a mechanism behind it rather than an accumulation of
+disappointments.
+
+Standing: pair 26/55 (47%%), decisive 22/49 (45%%), book-weighted
+-0.154%%/session (4/12 positive), relative capture -0.068%%/leg with 20/45
+beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

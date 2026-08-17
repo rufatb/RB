@@ -598,3 +598,53 @@ def test_gap_line_truncates_long_gap_lists():
     import ledger
     line = ledger.gap_line([f"2026-08-{d:02d}" for d in range(3, 12)])
     assert "…" in line and len(line.splitlines()) == 2
+
+
+# ---------------------------------------------------------------- day-43
+# `vp` is not computable on the 1-hour panel: Yahoo zeroes ~86% of FIRST
+# hourly bars while later bars are ~0.1% zeroed, so the all-bars rate (~12.5%)
+# looks survivable and is not. It failed SILENTLY two ways — dropping 145,201
+# of 145,228 rows via NaN, or becoming raw share volume when the per-ticker
+# median is itself zero. These lock the detector, not the data.
+
+def test_usable_feats_drops_vp_when_entry_volume_is_mostly_zero():
+    import pandas as pd, validate_ceiling as vc
+    df = pd.DataFrame({"v15": [0.0] * 86 + [1000.0] * 14})
+    assert vc.usable_feats(df) == ["r0", "gap"]
+
+
+def test_usable_feats_keeps_vp_when_volume_is_populated():
+    import pandas as pd, validate_ceiling as vc
+    df = pd.DataFrame({"v15": [1000.0] * 99 + [0.0]})
+    assert vc.usable_feats(df) == ["r0", "gap", "vp"]
+
+
+def test_add_vp_never_uses_a_rows_own_or_future_volume():
+    """The normaliser is an expanding median shifted one session back."""
+    import pandas as pd, numpy as np, validate_ceiling as vc
+    n = 40
+    df = pd.DataFrame({"t": ["A"] * n,
+                       "date": [f"2026-01-{i+1:02d}" for i in range(n)],
+                       "v15": np.arange(1.0, n + 1.0)})
+    out = vc.add_vp(df)
+    # first 20 rows have no 20-observation history -> undefined, not fabricated
+    assert out["vp"].iloc[:20].isna().all()
+    # row 20 is normalised by the median of rows 0..19 (= 10.5), not by itself
+    assert abs(float(out["vp"].iloc[20]) - 21.0 / 10.5) < 1e-9
+
+
+def test_auc_matches_hand_computed_value():
+    import numpy as np, validate_ceiling as vc
+    y = np.array([0, 0, 1, 1])
+    assert abs(vc.auc(y, np.array([0.1, 0.2, 0.3, 0.4])) - 1.0) < 1e-9
+    assert abs(vc.auc(y, np.array([0.4, 0.3, 0.2, 0.1])) - 0.0) < 1e-9
+    assert abs(vc.auc(y, np.array([0.5, 0.5, 0.5, 0.5])) - 0.5) < 1e-9
+
+
+def test_control_feature_actually_carries_its_planted_edge():
+    """If this fails, a null result from the harness means nothing."""
+    import pandas as pd, numpy as np, validate_ceiling as vc
+    rng = np.random.default_rng(1)
+    df = pd.DataFrame({"y": rng.integers(0, 2, 20000)})
+    out = vc.add_control(df, edge=0.02)
+    assert vc.auc(out["y"].to_numpy(), out["ctrl"].to_numpy()) > 0.51

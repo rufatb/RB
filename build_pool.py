@@ -11,9 +11,27 @@ once and every later experiment is instant. Two tables:
                  (10:30). Coarser entry, but 14x the sessions.
 
 TSX hourly volume used to be unusable (day-22 measured 86% of bars zeroed).
-Re-measured 2026-08-13: ~13% zeroed on 1h and ~1% on 5m, so `vp` is now
-computable on both and a NATIVE 2-year TSX panel is possible for the first
-time — previously the only deep sample was 20 US dual-listings.
+Re-measured 2026-08-13: ~13% zeroed on 1h and ~1% on 5m.
+
+DAY-43 CORRECTION — BOTH numbers are right and the conclusion drawn from the
+13% was WRONG. The zeros are not spread across the session, they are almost
+entirely the FIRST hourly bar. Measured over 720 days on 5 large caps:
+
+    all 1h bars      12.4-12.6% zeroed      <- the reassuring number
+    FIRST bar of day 86.1-86.8% zeroed      <- the one that matters
+    later bars        0.0- 0.3% zeroed
+
+The 1h pool's entry IS the first bar, so 85.9% of its `v15` values are zero and
+`vp` is NOT computable on this panel. Worse, it fails QUIETLY: every ticker's
+median v15 is 0, so the usual `v15 / (median or 1)` divides by 1 and yields RAW
+SHARE VOLUME — cross-sectionally meaningless (a big name's raw count against a
+small name's) and exactly zero on 86% of rows. Any 1h-pool result computed with
+`vp` was computed on that, not on volume pace. Comparisons BETWEEN arms of the
+same study are unaffected — both arms carried the same broken column — but no
+1h result may be described as testing the shipped THREE-feature engine.
+
+`vp` is computable on the 5m pool (0.0% zeroed) and nowhere else. Use
+`validate_ceiling.usable_feats()` rather than assuming a column is populated.
 
 SURVIVORSHIP: the constituent list is TODAY's S&P/TSX Composite applied
 backwards, so names delisted during the window are absent and recent additions
