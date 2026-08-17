@@ -239,3 +239,9 @@ date,ticker,side,p_sided,confidence,p945,role,weight,r1,hit
 2026-08-14,BNS.TO,SHORT,0.575,dense,126.3100,pair,0.2626,0.530,0
 2026-08-14,CNR.TO,SHORT,0.562,dense,177.7900,pair,0.2349,-1.080,1
 2026-08-14,BMO.TO,SHORT,0.551,mid,256.1300,board,,0.683,0
+2026-08-17,NTR.TO,SHORT,0.617,dense,95.0000,pair,0.3004,,
+2026-08-17,TD.TO,SHORT,0.602,dense,172.8400,board,,,
+2026-08-17,T.TO,SHORT,0.579,dense,13.5700,pair,0.1984,,
+2026-08-17,ENB.TO,SHORT,0.561,sparse,70.4500,board,,,
+2026-08-17,CVE.TO,SHORT,0.554,mid,43.7300,board,,,
+2026-08-17,TRP.TO,SHORT,0.553,sparse,87.8400,board,,,
