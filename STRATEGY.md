@@ -2433,6 +2433,54 @@ The instructive part isn't the answer, which was already known — it's that
 citation of day-40 alone. Both are now on the record with today's numbers, not
 just the 3-year backtest's.
 
+## Day-44: both legs hit, and the intraday path confirms existing rules rather than adding one
+
+| leg | move | tide-rel | rank | verdict |
+|---|---|---|---|---|
+| NTR.TO | -0.274%% | -0.089%% | 12/21 | HIT |
+| T.TO | **-0.958%%** | **-0.773%%** | **21/21** | HIT |
+
+**NET +$136.63.** Tide -0.185%% (breadth 8/21 up). The two hits were earned
+very differently: NTR's own move barely exceeded the tape's own decline (rank
+12/21, near-zero relative capture), while T.TO was the single worst-performing
+name in the entire 21-name universe (rank 21/21) — real selection, not drift.
+
+### Intraday path
+T.TO fell fast right after entry (-0.59%% by 9:50), partially round-tripped back
+toward flat by 10:00-10:15 (-0.07%%), then built its real move from 11:30 on,
+bottoming near -1.25%% at 15:00 before closing -0.96%%. NTR chopped between
++0.28%% and -0.47%% all session with no trend, finding its closing print only in
+the final 45 minutes. Book P&L dipped negative twice early (-$16 at 9:30, -$35
+at 10:00) before the afternoon move took over. Neither leg approached the 2.5%%
+disaster line.
+
+Of the six qualified shorts, the DENSE ones (NTR, T, TD) all hit; CVE (mid) missed
+badly at +1.898%%, TRP (sparse) scratched at +0.011%%. Directionally consistent
+with the standing density hypothesis (dense 53%% vs mid 41%% cumulative) — one
+more data point in an existing column, not new evidence.
+
+### No new lever — this session corroborates three shipped findings
+1. **T.TO's early round-trip is why hold-to-close exists.** Watching the 10:00
+   print would have shown the short near breakeven; bailing there would have
+   missed the entire afternoon move. Day-19/20, reconfirmed.
+2. **NTR's signal materialised only in the final 45 minutes.** Consistent with
+   day-36's exit-timing study (944 legs, flat curve, no peak to exit at). One
+   session does not move that result.
+3. **NTR vs T is a clean live case of why `relative_line()` exists.** Both
+   scored as ledger HITs; only the tide-relative number shows T did the real
+   work while NTR mostly matched the market. The machinery already answers the
+   question this contrast raises — nothing to add.
+
+No code change. Also directly answered live and re-logged as a day-44 addendum:
+"are you sure no longs?" (verified — closest miss SU.TO at 0.535) and "increase
+the coverage then" (tested live against all 220 TSX Composite names, 18 longs
+would have qualified — but this is day-40 re-litigated, 654 sessions already
+inside +/-0.022%%, p=0.867; user chose to keep the 21-name universe).
+
+Standing: pair 28/57 (49%%), decisive 24/51 (47%%), book-weighted
+-0.122%%/session (5/13 positive), relative capture -0.046%%/leg with 22/47
+beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
