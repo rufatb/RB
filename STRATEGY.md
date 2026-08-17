@@ -2398,6 +2398,41 @@ Standing: pair 26/55 (47%%), decisive 22/49 (45%%), book-weighted
 -0.154%%/session (4/12 positive), relative capture -0.068%%/leg with 20/45
 beating the tide.
 
+## Day-44 addendum: "are you sure no longs? increase the coverage then" — re-verified live, and re-declined
+
+A one-legged day (SHORT only, NTR.TO + T.TO) drew the obvious question: is
+"no qualified long" really true, and would widening the universe fix it?
+
+### Verified directly, not re-asserted
+Reran the pipeline live and printed every one of the 21 names' `p_up`, not
+just the qualified ones. Highest was **SU.TO at 0.535** — 15bp short of the
+0.55 bar. No long today is correct, not a bug or a stale read.
+
+### Widened it live, to answer the question with a number instead of a citation
+Pulled the full 220-name S&P/TSX Composite and ran today's exact pipeline
+against it (187/220 fetched). **18 qualified longs appeared** — densest pick
+ABRA.TO, p_up 0.551. So yes: mechanically, more candidates means more names
+cross an arbitrary threshold on any given day.
+
+**This is day-40, re-litigated.** That was already the question, tested on
+654 sessions: every pool size from 21 to 218 scored inside +/-0.022%%, p=0.867,
+and the full-universe densest arm sat BELOW the placebo median. A wider net
+catches more fish and more driftwood at the same ratio — today's ABRA.TO is
+one draw from a pool that adds candidates without adding accuracy.
+
+### Decision, put to the user rather than assumed
+Three options were laid out plainly — keep 21 (matches the evidence), widen
+permanently (accept day-40's null in exchange for fewer no-trade days), or log
+the wide board as unstraded instrumentation. **Chosen: keep 21.** No config
+change. Today's one-legged book (SHORT NTR.TO + T.TO, LONG side in cash)
+stands as published.
+
+The instructive part isn't the answer, which was already known — it's that
+"are you sure" got a direct re-measurement instead of a restated prior, and
+"increase the coverage" got an actual live run of the alternative instead of a
+citation of day-40 alone. Both are now on the record with today's numbers, not
+just the 3-year backtest's.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
