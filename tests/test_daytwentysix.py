@@ -648,3 +648,63 @@ def test_control_feature_actually_carries_its_planted_edge():
     df = pd.DataFrame({"y": rng.integers(0, 2, 20000)})
     out = vc.add_control(df, edge=0.02)
     assert vc.auc(out["y"].to_numpy(), out["ctrl"].to_numpy()) > 0.51
+
+
+# ---------------------------------------------------------------- day-45
+# The book's return splits exactly into market exposure and selection:
+#   sum(w*cap) = tide*sum(w*sign) + sum(w*sign*rel)
+# Losing days had always been argued verbally as "the market" vs "the picks";
+# this reconciles to the book-weighted number with no residual.
+
+def _row(date, tk, side, w, r1):
+    return {"date": date, "ticker": tk, "side": side, "weight": str(w),
+            "r1": str(r1), "role": "pair"}
+
+
+def test_attribution_sums_to_the_book_weighted_return():
+    import ledger
+    rows = [_row("2026-08-18", "A", "LONG", 0.25, -0.492),
+            _row("2026-08-18", "B", "LONG", 0.25, -0.537),
+            _row("2026-08-18", "C", "SHORT", 0.25, 0.134),
+            _row("2026-08-18", "D", "SHORT", 0.25, -0.350)]
+    tides = {"2026-08-18": -0.466}
+    t_c, s_c, n = ledger.attribution(rows, tides)
+    book = sum(float(r["weight"]) * float(r["r1"]) *
+               (1 if r["side"] == "LONG" else -1) for r in rows)
+    assert n == 1
+    assert abs((t_c + s_c) - book) < 1e-9
+
+
+def test_attribution_perfectly_hedged_book_has_zero_tide_component():
+    """Equal weight long and short -> market exposure cancels exactly."""
+    import ledger
+    rows = [_row("2026-01-05", "A", "LONG", 0.5, 2.0),
+            _row("2026-01-05", "B", "SHORT", 0.5, -1.0)]
+    t_c, s_c, _ = ledger.attribution(rows, {"2026-01-05": 5.0})
+    assert abs(t_c) < 1e-12          # no residual directional exposure
+    assert abs(s_c - 0.5 * (2.0 - 5.0) - 0.5 * -(-1.0 - 5.0)) < 1e-12
+
+
+def test_attribution_one_legged_book_carries_real_tide_exposure():
+    """A missing side leaves the book directional — that must show up."""
+    import ledger
+    t_c, s_c, _ = ledger.attribution(
+        [_row("2026-01-06", "A", "SHORT", 0.5, 0.0)], {"2026-01-06": -1.0})
+    assert abs(t_c - 0.5) < 1e-12    # short a falling tape = +0.5% of exposure
+
+
+def test_attribution_skips_rows_without_weight_prints_or_outcome():
+    import ledger
+    rows = [_row("2026-01-07", "A", "LONG", 0.5, 1.0),
+            {"date": "2026-01-07", "ticker": "B", "side": "LONG",
+             "weight": "", "r1": "1.0", "role": "pair"},          # no weight
+            {"date": "2026-01-07", "ticker": "C", "side": "LONG",
+             "weight": "0.5", "r1": "", "role": "pair"},          # unscored
+            _row("2026-09-09", "D", "LONG", 0.5, 1.0)]            # no tide
+    _, _, n = ledger.attribution(rows, {"2026-01-07": 0.0})
+    assert n == 1
+
+
+def test_attribution_line_is_silent_without_data():
+    import ledger
+    assert "needs universe prints" in ledger.attribution_line([], {})

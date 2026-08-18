@@ -2481,6 +2481,81 @@ Standing: pair 28/57 (49%%), decisive 24/51 (47%%), book-weighted
 -0.122%%/session (5/13 positive), relative capture -0.046%%/leg with 22/47
 beating the tide.
 
+## Day-45: 1/4 legs — and the decomposition that says it was ALL selection
+
+| leg | side | move | capture | tide-rel | rank | verdict |
+|---|---|---|---|---|---|---|
+| CNR.TO | LONG | -0.492%% | -0.492%% | **-0.026%%** | 12/21 | MISS |
+| RY.TO | LONG | -0.537%% | -0.537%% | **-0.071%%** | 13/21 | MISS |
+| SLF.TO | SHORT | +0.134%% | -0.134%% | **-0.600%%** | 7/21 | MISS |
+| BNS.TO | SHORT | -0.350%% | +0.350%% | -0.116%% | 10/21 | HIT |
+
+Hypothetical **-$97.53**, book-weighted **-0.195%%**. Tide **-0.466%%**, breadth
+7/21. (No capital was at risk — the order window had closed before the run
+finished, see day-45 publish note.)
+
+### The two longs were NOT the mistake, and the relative column proves it
+CNR at -0.026%% and RY at -0.071%% relative are, to two decimals, *the tide*.
+They fell because the whole tape fell half a percent. As direction calls they
+were near-perfectly average; as P&L they were the biggest dollar losers. Those
+are different statements and the ledger has, until now, only reported the
+second one clearly.
+
+**The actual error was SLF.TO**: -0.600%% relative, the only leg meaningfully
+worse than the tape, and 72%% of the day's entire loss. It was shorted and it
+ROSE on a day when 14 of 21 names fell.
+
+### IMPLEMENTED: `attribution()` / `attribution_line()` (+5 tests, 238 passing)
+Every post-mortem here has argued verbally about "the market" vs "the picks",
+and the two existing lines each answer half: `book_return_line` gives the
+total, `relative_line` gives per-leg skill but is equal-weighted and does not
+reconcile to the book. This splits it exactly, with no residual:
+
+    sum(w*cap) = tide * sum(w*sign)     <- TIDE component (residual exposure)
+               + sum(w*sign*rel)         <- SELECTION component (the picks)
+
+Live over 14 sessions:
+
+```
+attribution : TIDE +0.018%%/session (market exposure, target ~0)
+            · SELECTION -0.145%%/session (the picks)
+```
+
+They sum to the -0.127%%/session book return. **The hedge works — residual
+market exposure is +0.009%% with t=+0.78, indistinguishable from the zero it is
+designed to be. Every bit of the loss is selection.** That is the first direct
+measurement of the long/short construction actually doing its job, rather than
+it being assumed.
+
+Honest caveat on the other half: SELECTION is -0.136%%/session with **t=-1.10,
+95%% CI [-0.379, +0.106]** — it contains zero. Fourteen sessions cannot
+distinguish a bad selector from an unlucky coin flip, and day-43 already
+established which one it is (AUC 0.5022, z=1.32 on 122k rows). This is what a
+signal-free selector looks like when you watch it for three weeks.
+
+### The tempting pattern, measured and NOT adopted
+The two best shorts in the universe today were T.TO (-1.031%%) and SHOP.TO
+(-1.321%%) — **both were qualified, and both were rejected by the density
+selector because they were tagged [mid]**. It took SLF (dense) instead, which
+had the LOWEST sided-P of the five qualified shorts and was the worst outcome
+of them. The obvious inference is "density is picking the wrong leg."
+
+Tested it on the live ledger, tide-removed, comparing each day-side's PAIR legs
+against the untraded BOARD legs on the same side — the direct question of
+whether the selector adds value over the names it passed over:
+
+    pair beat board on 17 of 34 day-sides
+    mean advantage +0.047%%/leg, t = +0.26
+
+**Exactly a coin flip.** Today is an anecdote in a sample that says the selector
+neither adds nor destroys value, which matches day-9/12/14/22 (densest 50.1%%
+vs max-P 48.3%% vs random 50.2%%). No change adopted. Rejection count stands at
+thirty.
+
+Standing: pair 29/61 (48%%), decisive 25/55 (45%%), book-weighted
+-0.127%%/session (5/14 positive), relative capture -0.057%%/leg with 22/51
+beating the tide.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

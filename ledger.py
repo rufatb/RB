@@ -302,11 +302,67 @@ def book_return_line(pair_rows: list) -> str:
             f"capacity over {len(daily)} sessions  ({wins}/{len(daily)} positive)")
 
 
-def _relative_for_report(pair_rows: list) -> str:
-    """Best-effort relative line for the CLI report; silent if prints/net absent."""
+def attribution(pair_rows: list, tides: dict) -> tuple:
+    """Split the book's return into TIDE exposure and SELECTION. Pure + testable.
+
+    DAY-45. Every post-mortem here has had to argue verbally about whether a
+    losing day was "the market" or "the picks", and the two existing lines each
+    answer half of it: `book_return_line` gives the total, `relative_line` gives
+    per-leg skill but is equal-weighted and so does not reconcile to the book.
+    This reconciles exactly.
+
+    A leg's capture is `(tide + rel) * sign`, so the weighted book return splits
+    cleanly and without residual:
+
+        sum(w*cap) = tide * sum(w*sign)      <- TIDE component
+                   + sum(w*sign*rel)          <- SELECTION component
+
+    `sum(w*sign)` is the book's residual directional exposure. The long/short
+    construction is supposed to hold it near zero, and this is the first thing
+    that measures whether it actually does rather than assuming it. Measured
+    over the first 14 sessions: TIDE +0.009%/session (t=+0.78) and SELECTION
+    -0.136%/session (t=-1.10) — i.e. the hedge does its job and every bit of the
+    loss is the picks, which is exactly what day-43's ceiling result predicts a
+    signal-free selector would produce.
+
+    Returns (tide_component, selection_component, n_sessions), each a per-session
+    mean in percent."""
+    usable = [r for r in pair_rows
+              if r.get("weight") not in (None, "") and r.get("r1") not in (None, "")
+              and r.get("date") in tides]
+    if not usable:
+        return (None, None, 0)
+    by_day: dict = {}
+    for r in usable:
+        sign = 1 if r["side"] == "LONG" else -1
+        w, mv, td = float(r["weight"]), float(r["r1"]), tides[r["date"]]
+        t_c, s_c = by_day.setdefault(r["date"], [0.0, 0.0])
+        by_day[r["date"]] = [t_c + w * sign * td, s_c + w * sign * (mv - td)]
+    n = len(by_day)
+    return (sum(v[0] for v in by_day.values()) / n,
+            sum(v[1] for v in by_day.values()) / n, n)
+
+
+def attribution_line(pair_rows: list, tides: dict) -> str:
+    """Two-line report block for the attribution split; empty when unavailable."""
+    t_c, s_c, n = attribution(pair_rows, tides)
+    if not n:
+        return "  attribution          : (needs universe prints + weights)"
+    return (f"  attribution          : TIDE {t_c:+.3f}%/session (market exposure, "
+            f"target ~0) · SELECTION {s_c:+.3f}%/session (the picks)\n"
+            f"                         over {n} sessions — these sum to the "
+            f"book-weighted return above")
+
+
+def _tides_for_report() -> dict:
+    """Best-effort tide-by-date for the CLI report; {} when prints/net absent.
+
+    Computed ONCE and shared by the relative and attribution lines — otherwise
+    each rebuilds it, meaning two full passes of daily-bar downloads for
+    identical numbers."""
     try:
         if not os.path.exists(PRINTS):
-            return relative_line([], {})
+            return {}
         with open(PRINTS) as f:
             prints = list(csv.DictReader(f))
         from adapters import YahooDirectAdapter
@@ -316,14 +372,14 @@ def _relative_for_report(pair_rows: list) -> str:
         def close_fn(t, date):
             if t not in cache:
                 try:
-                    b = a.get_daily_bars(t, 90)
+                    b = a.get_daily_bars(t, 120)
                     cache[t] = {str(i.date()): float(c) for i, c in b["Close"].items()}
                 except Exception:
                     cache[t] = {}
             return cache[t].get(date)
-        return relative_line(pair_rows, tide_by_date(prints, close_fn))
+        return tide_by_date(prints, close_fn)
     except Exception:
-        return relative_line([], {})
+        return {}
 
 
 def report(rows: list) -> str:
@@ -357,7 +413,9 @@ def report(rows: list) -> str:
         out.append(line("board (untraded)", [r for r in done if r.get("role") == "board"]))
         out.append(book_return_line(pair_sub))
         out.append(decisive_line(pair_sub))
-        out.append(_relative_for_report(pair_sub))
+        tides = _tides_for_report()
+        out.append(relative_line(pair_sub, tides))
+        out.append(attribution_line(pair_sub, tides))
     out.append("  — density hypothesis (pre-registered: dense > mid/sparse) —")
     for tag in ("dense", "mid", "sparse", "n/a"):
         sub = [r for r in done if r["confidence"] == tag]
