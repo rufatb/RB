@@ -55,8 +55,30 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from validate_ceiling import auc, brier, fit_models, se_auc  # noqa: E402
+from validate_ceiling import auc, brier, se_auc  # noqa: E402
 from validate_exit import SCRATCH  # noqa: E402
+
+
+def boost(Xtr, ytr, Xte, seed: int = 0):
+    """Highest-capacity learner only — this script probes the CEILING.
+
+    Day-43's `fit_models` also fits the shipped k-NN, which scores each test row
+    against every training row. At this panel's size (120k train x 25k test per
+    fold) that is ~3e9 distance evaluations per fold and the first attempt at
+    this sweep was killed before printing a line. The k-NN's job was to show
+    that the SHIPPED model is no weaker than the alternatives, and day-43
+    already established that; here the only question is whether a strong learner
+    can find anything at all, so fit the strong learner and nothing else.
+
+    HistGradientBoosting rather than GradientBoosting: same family, binned
+    splits, ~20x faster above 10^5 rows, and it takes NaNs natively so a family
+    with partial coverage is not silently reduced to its complete-case subset.
+    """
+    from sklearn.ensemble import HistGradientBoostingClassifier
+    m = HistGradientBoostingClassifier(random_state=seed, max_iter=300,
+                                       learning_rate=0.05, max_depth=3,
+                                       early_stopping=False)
+    return m.fit(Xtr, ytr).predict_proba(Xte)[:, 1]
 
 FAMILIES = {
     "shipped": ["r0", "gap", "vp"],
@@ -105,14 +127,15 @@ def walk_forward(df: pd.DataFrame, feats: list, target: str,
     for a, b in zip(edges[:-1], edges[1:]):
         if b <= a:
             continue
-        tr = df[df["date"].isin(sess[:a])].dropna(subset=feats + [target])
-        te = df[df["date"].isin(sess[a:b])].dropna(subset=feats + [target])
+        # NaNs are kept — the booster handles them natively, so a family is
+        # never silently narrowed to whichever rows happen to be complete.
+        tr = df[df["date"].isin(sess[:a])].dropna(subset=[target])
+        te = df[df["date"].isin(sess[a:b])].dropna(subset=[target])
         if te.empty or len(tr) < 500:
             continue
-        m = fit_models(tr[feats].to_numpy(float), tr[target].to_numpy(int),
-                       te[feats].to_numpy(float))
+        ss.append(boost(tr[feats].to_numpy(float), tr[target].to_numpy(int),
+                        te[feats].to_numpy(float)))
         ys.append(te[target].to_numpy(int))
-        ss.append(m["grad boost"])          # strongest learner = the ceiling probe
     if not ys:
         return None, None
     return np.concatenate(ys), np.concatenate(ss)
