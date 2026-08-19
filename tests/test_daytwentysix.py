@@ -708,3 +708,50 @@ def test_attribution_skips_rows_without_weight_prints_or_outcome():
 def test_attribution_line_is_silent_without_data():
     import ledger
     assert "needs universe prints" in ledger.attribution_line([], {})
+
+
+# ---------------------------------------------------------------- day-47
+# A one-legged book is NOT market-neutral. Day-47 closed +$73 on a -1.334%
+# tape with ~50% net short exposure: TIDE +0.666%, SELECTION -0.518%. The
+# profit was unhedged direction, the picks were the worst of the run, and the
+# board never said so. These lock the warning that now says it at 9:46.
+
+def _pair(long_status, short_status, n_short_legs=2):
+    def leg(status, n):
+        if status == "NONE":
+            return {"status": "NONE", "note": "no qualified leg"}
+        return {"pick": {"t": "A"}, "extra": [{"t": "B"}] if n > 1 else []}
+    return {"long": leg(long_status, 0), "short": leg(short_status, n_short_legs)}
+
+
+def test_one_sided_warning_names_the_short_exposure():
+    import r945
+    w = r945.one_sided_warning(_pair("NONE", "OK"))
+    assert "NOT MARKET-NEUTRAL" in w and "SHORT" in w
+    assert "profits if the market falls" in w
+
+
+def test_one_sided_warning_names_the_long_exposure():
+    import r945
+    w = r945.one_sided_warning({"long": {"pick": {"t": "A"}, "extra": []},
+                                "short": {"status": "NONE"}})
+    assert "LONG" in w and "profits if the market rises" in w
+
+
+def test_one_sided_warning_handles_an_empty_book():
+    """Neither side qualified is correct output, not a directional bet."""
+    import r945
+    w = r945.one_sided_warning(_pair("NONE", "NONE", 0))
+    assert "cash" in w and "NOT MARKET-NEUTRAL" not in w
+
+
+def test_one_sided_warning_agrees_with_the_attribution_arithmetic():
+    """The warning claims ~50% net exposure; attribution must show it."""
+    import ledger
+    rows = [{"date": "2026-08-19", "ticker": "BCE.TO", "side": "SHORT",
+             "weight": "0.2685", "r1": "0.430", "role": "pair"},
+            {"date": "2026-08-19", "ticker": "CNQ.TO", "side": "SHORT",
+             "weight": "0.2304", "r1": "-1.140", "role": "pair"}]
+    t_c, s_c, _ = ledger.attribution(rows, {"2026-08-19": -1.334})
+    assert t_c > 0.6 and s_c < -0.5          # tide carried it, picks lost
+    assert abs((t_c + s_c) - 0.1472) < 1e-3  # and they reconcile to the book

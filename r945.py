@@ -385,6 +385,47 @@ def leg_drift(side: str, p945: float, last: float, spent_pct: float = 0.3):
     return pct, "≈ unchanged from the print"
 
 
+def one_sided_warning(pair: dict) -> str:
+    """Name the directional exposure a one-legged book carries. Pure + testable.
+
+    DAY-47, and it took a WINNING day to expose the gap. The tape fell 1.334%,
+    the book was short-only because no long qualified, and it closed +$73. Read
+    as a win. The day-45 attribution says otherwise:
+
+        net directional exposure  -0.4989   (a hedged book is ~0)
+        TIDE component            +0.6655%
+        SELECTION component       -0.5183%
+        book-weighted total       +0.1472%
+
+    Every cent came from being unhedged on a falling tape. The picks LOST half a
+    percent — the worst selection day of the run — and the same exposure would
+    have cost the same amount had the tape risen instead. The board already said
+    "one leg is missing", which reads as a note about lost opportunity; it never
+    said the surviving leg turns a market-neutral strategy into a directional
+    bet whose outcome is dominated by the tape rather than by the picks.
+
+    This states it at 9:46, when it can still inform the decision, instead of
+    leaving it to be discovered in the evening post-mortem."""
+    side = "SHORT" if (pair.get("long") or {}).get("status") == "NONE" else "LONG"
+    legs = (pair.get("short") if side == "SHORT" else pair.get("long")) or {}
+    n = len([x for x in ([legs.get("pick")] if legs.get("pick") else [])
+             + (legs.get("extra") or [])])
+    if not n:
+        return ("  ⚠ NEITHER side qualified — the whole book stays in cash. "
+                "That is the correct output, not a failure.")
+    move = "falls" if side == "SHORT" else "rises"
+    against = "rises" if side == "SHORT" else "falls"
+    return (
+        f"  ⚠ THIS BOOK IS NOT MARKET-NEUTRAL TODAY. With the {'long' if side == 'SHORT' else 'short'} "
+        f"half in cash it runs ~50% net {side} exposure,\n"
+        f"    so today's P&L will be dominated by the TAPE, not by the picks: it "
+        f"profits if the market {move}\n"
+        f"    and loses by the same amount if it {against}, whether or not the "
+        f"{n} leg{'s' if n > 1 else ''} {'are' if n > 1 else 'is'} well chosen.\n"
+        f"    Day-45 measured residual exposure at ~0 on two-sided days; that "
+        f"protection is absent here.")
+
+
 def fill_bound(side: str, decision_px: float, max_chase_pct: float = 0.04) -> float:
     """Worst acceptable fill for a pair leg, measured from the DECISION PRICE
     (the 9:45 print), never from the live market. LONG: no higher than
@@ -876,6 +917,8 @@ def render(res, book=False):
                 print(f"      ⚠ {lg['warning']}")
         if pair["long"]["status"] == "NONE" or pair["short"]["status"] == "NONE":
             print("  → One leg is missing: trade the other leg ONLY. A forced leg has no edge.")
+            for ln in one_sided_warning(pair).splitlines():
+                print(ln)
     for side, picks in (("LONG", res["longs"]), ("SHORT", res["shorts"])):
         print(f"\nCONTEXT — qualified {side}S (sided P ≥ {res['min_p']:.2f}, NOT sized, "
               "logged for learning):")

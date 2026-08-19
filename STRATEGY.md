@@ -2556,6 +2556,90 @@ Standing: pair 29/61 (48%%), decisive 25/55 (45%%), book-weighted
 -0.127%%/session (5/14 positive), relative capture -0.057%%/leg with 22/51
 beating the tide.
 
+## Day-47: a WINNING day whose profit was luck, and rejection #31
+
+The book closed **+$73.39**. The attribution says do not celebrate it:
+
+```
+net directional exposure  -0.4989   (a hedged book is ~0)
+TIDE component            +0.6655%
+SELECTION component       -0.5183%
+book-weighted total       +0.1472%
+```
+
+Tide **-1.334%**, breadth 4/21. No long qualified, so the book was short-only
+and carried ~50%% net short exposure into a falling tape. **Every cent came from
+being unhedged. The picks lost half a percent — the worst selection day of the
+run.** Had the tape risen the same amount, the identical book loses the same
+$73 with the identical picks. Without the day-45 attribution this reads as a
+green day.
+
+### The selector drew from the bottom of the day's distribution
+13 of 15 qualified shorts hit. Ranked by capture, the top eight were all
+`sparse` or `mid`; the two `dense` names — the only two the selector sizes —
+came **9th and 14th of 15**, and the day's highest-conviction pick (BCE,
+sided-P 0.617) closed UP while the tape fell 1.3%%.
+
+| rank | ticker | tag | capture |
+|---|---|---|---|
+| 1 | BMO.TO | sparse | +3.296%% |
+| 2 | CM.TO | sparse | +3.076%% |
+| 3 | TD.TO | mid | +2.884%% |
+| **9** | **CNQ.TO** | **dense** | **+1.140%%** <- sized |
+| **14** | **BCE.TO** | **dense** | **-0.430%%** <- sized |
+
+### REJECTED (#31), but the mechanism is REAL — `validate_density.py`, 719 sessions
+The obvious inference is that density picks losers. Tested on 40,801 qualified
+picks, walk-forward, with the standing four-quarter rule:
+
+| tag | n | hit | capture | \|move\| | vol20 |
+|---|---|---|---|---|---|
+| dense | 13,601 | 49.5%% | -0.0062 | **0.732%%** | 1.565 |
+| mid | 13,600 | 49.7%% | +0.0082 | 0.851%% | 1.821 |
+| sparse | 13,600 | 49.6%% | +0.0012 | **1.287%%** | 2.657 |
+
+**Q1 and Q2 confirmed, Q3 refuted.** `corr(nd, vol20) = +0.174` — dense really
+is a proxy for CALM, and dense names really do move 43%% less than sparse ones.
+But hit rate is flat to a tenth of a point across all three tags, and sparse
+beat dense on capture in only **2 of 4 quarters** against a 4-of-4 bar. The tag
+sorts by VOLATILITY, not by edge. Picking the calm name for the same expected
+return is exactly what a tie-break should do — and all three adopted changes in
+this project have been variance results.
+
+Today felt like proof because big movers pay on a big-tide day. They punish
+symmetrically on the days the tape runs the other way; that is variance, not
+edge, and the whole point of the four-quarter rule is to stop one vivid session
+from being mistaken for the second kind.
+
+### The pre-registered density gate is now CLOSED — verdict: NO GATE
+The live ledger currently shows sparse 56%% vs dense 52%%, which is what tempted
+this in the first place. That is n=90 against n=13,601 per bucket in the deep
+test. `ledger.py` no longer says "gate decision at ~20 tagged days"; it states
+the verdict and why the live spread is noise, so the next reader is not tempted
+by the same table.
+
+### IMPLEMENTED: `one_sided_warning()` (+4 tests, 242 passing)
+The board already printed "one leg is missing", which reads as a note about
+lost opportunity. It never said the surviving leg converts a market-neutral
+strategy into a directional bet. Now it does, at 9:46, while it can still
+inform the decision:
+
+```
+⚠ THIS BOOK IS NOT MARKET-NEUTRAL TODAY. With the long half in cash it runs
+  ~50%% net SHORT exposure, so today's P&L will be dominated by the TAPE, not
+  by the picks: it profits if the market falls and loses by the same amount if
+  it rises, whether or not the 2 legs are well chosen.
+  Day-45 measured residual exposure at ~0 on two-sided days; that protection
+  is absent here.
+```
+
+One of its tests asserts the warning agrees with the attribution arithmetic on
+today's actual rows, so the claim and the measurement cannot drift apart.
+
+Standing: pair 30/63 (48%%), decisive 26/57 (46%%), book-weighted
+-0.109%%/session (6/15 positive), relative capture -0.080%%/leg with 20/48
+beating the tide. Thirty-one rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -422,7 +422,17 @@ def report(rows: list) -> str:
         if sub:
             out.append(line(f"[{tag}]", sub))
     n_tagged = len([r for r in done if r["confidence"] in ("dense", "mid", "sparse")])
-    out.append(f"  (gate decision at ~20 tagged days; tagged so far: {n_tagged})")
+    # DAY-47: the pre-registered gate is now DECIDED, and against the
+    # hypothesis. On 40,801 qualified picks over 719 walk-forward sessions
+    # (validate_density.py) the three tags hit 49.5% / 49.7% / 49.6% — flat to
+    # a tenth of a point — and sparse beat dense on capture in only 2 of 4
+    # quarters, against a 4-of-4 bar. The tag is real and measures something
+    # (corr(nd, vol20) = +0.17; dense names move 0.73% vs sparse 1.29%) but it
+    # sorts by VOLATILITY, not by edge. Whatever spread the small live sample
+    # shows below is noise: n=91 against n=13,601 per bucket in the deep test.
+    out.append(f"  (tagged so far: {n_tagged} — GATE DECIDED day-47: NO gate. "
+               "Tags sort by volatility,\n   not by edge; the live spread here "
+               "is noise against 40,801 deep-panel picks.)")
     return "\n".join(out)
 
 
