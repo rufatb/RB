@@ -755,3 +755,39 @@ def test_one_sided_warning_agrees_with_the_attribution_arithmetic():
     t_c, s_c, _ = ledger.attribution(rows, {"2026-08-19": -1.334})
     assert t_c > 0.6 and s_c < -0.5          # tide carried it, picks lost
     assert abs((t_c + s_c) - 0.1472) < 1e-3  # and they reconcile to the book
+
+
+# ---------------------------------------------------------------- day-49
+# Day-47 decided the density gate (NO gate) but the verdict did not propagate:
+# four places still advertised it as pending or quoted the refuted 63% holdout
+# figure, including a tagline printed on EVERY board. A measurement that
+# contradicts shipped text is only half-applied until the text changes too.
+
+def test_no_module_still_advertises_the_density_gate_as_pending():
+    import pathlib
+    for name in ("r945.py", "ledger.py"):
+        src = pathlib.Path(name).read_text(encoding="utf-8")
+        assert "~20 live days the tag" not in src, name
+        assert "to be judged\non ~20 live days" not in src, name
+
+
+def test_the_refuted_63_percent_density_claim_is_gone():
+    import pathlib
+    src = pathlib.Path("r945.py").read_text(encoding="utf-8")
+    # it may be NAMED as dead, but never asserted as current evidence
+    assert "hinted dense estimates hit better (63%" not in src
+
+
+def test_board_tagline_does_not_claim_density_is_an_edge():
+    import pathlib
+    src = pathlib.Path("r945.py").read_text(encoding="utf-8")
+    assert "familiarity beats extremity" not in src
+    assert "CALMNESS sort, not an edge" in src
+
+
+def test_density_label_still_tags_correctly():
+    """The verdict changed the prose, not the behaviour."""
+    import r945
+    assert r945.density_label(0.01, (0.05, 0.20)) == "dense"
+    assert r945.density_label(0.10, (0.05, 0.20)) == "mid"
+    assert r945.density_label(0.50, (0.05, 0.20)) == "sparse"

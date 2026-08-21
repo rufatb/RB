@@ -2640,6 +2640,74 @@ Standing: pair 30/63 (48%%), decisive 26/57 (46%%), book-weighted
 -0.109%%/session (6/15 positive), relative capture -0.080%%/leg with 20/48
 beating the tide. Thirty-one rejections, three adoptions.
 
+## Day-49: 0/3, no tape to blame — and four refuted claims still shipping
+
+| leg | side | move | capture | rank | verdict |
+|---|---|---|---|---|---|
+| SU.TO | LONG | -1.023%% | -1.023%% | **18/21** | MISS |
+| CNR.TO | SHORT | +0.718%% | -0.718%% | **4/21** | MISS |
+| CP.TO | SHORT | +0.445%% | -0.445%% | **5/21** | MISS |
+
+**NET -$401.33.** Tide only -0.237%%, and the book was properly hedged:
+
+```
+net directional exposure  +0.0044   (hedged, as designed)
+TIDE component            -0.0010%%
+SELECTION component       -0.8016%%   <- all of it
+```
+
+Yesterday's excuse does not apply. The hedge did its job and the selection
+still lost 0.80%% — **the worst selection day of the run**. Nor were these near
+misses: the engine longed the 4th-WORST name and shorted the 4th- and 5th-BEST.
+Maximally anti-correlated on all three legs. That is a bad draw from a coin
+(day-43: AUC 0.5022 on 122k rows), not a malfunction — but it is the shape of
+day this record will keep producing until the information changes.
+
+### THE REAL DEFECT FOUND TODAY: a decided verdict that never propagated
+Day-47 closed the density gate. The verdict reached ONE line of `ledger.py` and
+stopped. Four places still asserted the refuted position, and one of them
+printed on **every board, every morning**:
+
+1. `r945.py` docstring citing a **"63%% vs ~46%%"** holdout — refuted by
+   49.5/49.7/49.6 on 40,801 picks.
+2. Same docstring leaving the gate pending **"~20 live days"** — decided.
+3. `ledger.py` module docstring repeating the pending framing.
+4. The board tagline **"selected by DENSITY — familiarity beats extremity"** —
+   an explicit edge claim, when day-47 showed density sorts by VOLATILITY.
+
+This is the same failure class as day-42's stale ledger: a measurement is only
+half-applied while the shipped text still says the old thing. A user reading
+the board this morning was told density beats extremity, three days after that
+was disproved. Now reads:
+
+```
+(tie-broken by DENSITY — a CALMNESS sort, not an edge: day-47)
+```
+
+Four regression tests assert none of the four can creep back (246 passing).
+
+### Rest of the audit, clean
+Every module byte-compiles; no bare excepts survive the day-29 rule; the two
+`except Exception: pass` sites are correctly-scoped optional paths (a Windows
+encoding fallback and the optional HTML record line), each with a working outer
+report. **There is no bug in this repo that caused today**, and saying so is not
+a deflection — it is the reason the only remaining lever is new information,
+not new code.
+
+### The out-of-sample replication is finally running
+Day-46's `scaled` family (r0 and gap in units of each name's own volatility)
+was the one arm positive in all four cells of that sweep, but it was generated
+from a 12-arm search over the TSX panel and re-testing it there would be the
+same draw read twice. `build_rich.py --us` now builds the identical feature
+panel on **503 S&P 500 names** — different names, different market. 5m panel
+built (29,968 rows / 501 names); the 3-year hourly panel is in flight. The
+scrape fails loudly below 400 symbols rather than silently testing a truncated
+universe.
+
+Standing: pair 30/66 (45%%), decisive 26/60 (43%%), book-weighted
+-0.152%%/session (6/16 positive), relative capture -0.123%%/leg with 20/51
+beating the tide. Thirty-one rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

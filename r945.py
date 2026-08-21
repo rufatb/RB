@@ -351,11 +351,23 @@ def allocate_book(picks: list, equity: float, max_book_pct: float,
 
 
 def density_label(nd: float, cutoffs: tuple) -> str:
-    """dense/mid/sparse tag for a pick's neighbourhood. INSTRUMENTATION ONLY —
-    holdout hinted dense estimates hit better (63% vs ~46%) but the pattern
-    was non-monotonic on one split, so we TAG and log rather than gate. After
-    ~20 live days the tag's live record decides whether it becomes a gate.
-    Pre-registered hypothesis: dense > mid/sparse."""
+    """dense/mid/sparse tag for a pick's neighbourhood. INSTRUMENTATION ONLY.
+
+    DAY-47 — THE PRE-REGISTERED GATE IS DECIDED, AND THE ANSWER IS NO GATE.
+    The original note here claimed a holdout showed dense estimates hitting
+    63% vs ~46% and left the gate pending "~20 live days". Both are now dead.
+    On 40,801 qualified picks over 719 walk-forward sessions
+    (validate_density.py) the three tags hit 49.5% / 49.7% / 49.6% — flat to a
+    tenth of a point — and sparse beat dense on capture in only 2 of 4
+    quarters, against the standing 4-of-4 bar.
+
+    What the tag DOES measure is volatility: corr(nd, vol20) = +0.174, and
+    dense names move 0.732% on the day against sparse names' 1.287%. So it
+    sorts calm from jumpy, not right from wrong. It is retained as the
+    deterministic tie-break (some rule must choose a leg, and choosing the
+    calmer name for the same expected return is what a tie-break should do)
+    and is never to be turned into a filter without new evidence at that
+    sample size. Do not restore the 63% claim."""
     lo, hi = cutoffs
     return "dense" if nd <= lo else ("sparse" if nd > hi else "mid")
 
@@ -837,7 +849,7 @@ def render(res, book=False):
                   f"[estimate: {lg['status']}]  9:45 px {r['p945']:.2f}  last {r['last']:.2f}")
             print(f"          first-15m {r['r0']:+.2f}% · gap {r['gap']:+.2f}% · "
                   f"board rank by P: #{lg.get('rank_by_p', '?')} "
-                  "(selected by DENSITY — familiarity beats extremity)")
+                  "(tie-broken by DENSITY — a CALMNESS sort, not an edge: day-47)")
             stale = late > res.get("stale_after_min", 20)
             if res.get("shadow"):
                 # Day-26: PAPER mode. The prediction is still published and

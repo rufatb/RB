@@ -5,9 +5,15 @@ ledger.py — the permanent learning record ("learn every single day").
 Every pick the 9:45 engine publishes is APPENDED at publish time (date,
 ticker, side, sided P, confidence tag, 9:45 price); after the close,
 `python ledger.py --score` fills each row's outcome and prints the CUMULATIVE
-report — overall hit rate, longs vs shorts, and the hit rate BY CONFIDENCE
-TAG (the pre-registered density hypothesis: dense > mid/sparse, to be judged
-on ~20 live days before it may become a gate).
+report — overall hit rate, longs vs shorts, and the hit rate BY CONFIDENCE TAG.
+
+The density hypothesis that tag was registered to test (dense > mid/sparse) is
+DECIDED as of day-47 and the answer is NO GATE: on 40,801 qualified picks over
+719 walk-forward sessions the tags hit 49.5% / 49.7% / 49.6%, and sparse beat
+dense on capture in only 2 of 4 quarters. The tag sorts by VOLATILITY, not by
+edge. The buckets are still printed — they are the live record and it stays
+auditable — but the spread between them is noise at these sample sizes and
+must not be acted on.
 
 WHY a file and not memory: learning must be auditable and survive sessions.
 Rows are written before outcomes are knowable (no hindsight), never edited
@@ -416,7 +422,8 @@ def report(rows: list) -> str:
         tides = _tides_for_report()
         out.append(relative_line(pair_sub, tides))
         out.append(attribution_line(pair_sub, tides))
-    out.append("  — density hypothesis (pre-registered: dense > mid/sparse) —")
+    out.append("  — density buckets (hypothesis DECIDED day-47: NO gate — "
+               "these sort by volatility, not edge) —")
     for tag in ("dense", "mid", "sparse", "n/a"):
         sub = [r for r in done if r["confidence"] == tag]
         if sub:

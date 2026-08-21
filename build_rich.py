@@ -138,10 +138,42 @@ def add_cross_sectional(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def sp500(cache: str) -> list:
+    """S&P 500 tickers, for OUT-OF-SAMPLE replication on a different market.
+
+    A hypothesis generated on TSX rows and then re-tested on the same TSX rows
+    is not a test, it is the same draw read twice. Day-46's `scaled` result came
+    out of a 12-arm sweep over this panel; confirming it needs different names
+    in a different market, which is what this list is for."""
+    import json
+    import re
+    import urllib.request
+    path = os.path.join(cache, "sp500.json")
+    if os.path.exists(path):
+        return json.load(open(path))
+    url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    html = urllib.request.urlopen(req, timeout=60).read().decode("utf8", "replace")
+    # The ticker sits in the link TEXT of an external quote link; the tag
+    # carries a variable pile of id/data-mw attributes between the class and
+    # the closing '>', so match the class then skip to the text.
+    out = []
+    for sym in re.findall(r'class="external text"[^>]*>([A-Z][A-Z.\-]{0,5})</a>', html):
+        y = sym.replace(".", "-")
+        if y not in out:
+            out.append(y)
+    if len(out) < 400:
+        raise SystemExit(f"S&P 500 scrape returned only {len(out)} symbols — "
+                         "the page markup changed; fix the parser rather than "
+                         "silently testing on a truncated universe")
+    json.dump(out, open(path, "w"))
+    return out
+
+
 def build(interval: str, rng: str, n_entry: int, out_path: str,
-          workers: int = 16) -> pd.DataFrame:
+          workers: int = 16, universe: list | None = None) -> pd.DataFrame:
     a = YahooDirectAdapter(exchange_tz="America/Toronto")
-    uni = constituents(SCRATCH)
+    uni = universe if universe is not None else constituents(SCRATCH)
 
     def one(t):
         try:
@@ -166,16 +198,23 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=SCRATCH)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--us", action="store_true",
+                    help="build the S&P 500 panel instead — the out-of-sample "
+                         "market for replicating a TSX-generated hypothesis")
     a = ap.parse_args(argv)
     os.makedirs(a.cache, exist_ok=True)
-    for interval, rng, n_entry, name in (("5m", "60d", 3, "rich_5m.csv"),
-                                         ("1h", "720d", 1, "rich_1h.csv")):
+    uni = sp500(a.cache) if a.us else None
+    tag = "us_" if a.us else ""
+    if a.us:
+        print(f"universe: {len(uni)} S&P 500 names (out-of-sample market)")
+    for interval, rng, n_entry, name in (("5m", "60d", 3, f"rich_{tag}5m.csv"),
+                                         ("1h", "720d", 1, f"rich_{tag}1h.csv")):
         p = os.path.join(a.cache, name)
         if os.path.exists(p) and not a.force:
             print(f"  {name}: cached")
             continue
         print(f"  building {name} ...", flush=True)
-        build(interval, rng, n_entry, p)
+        build(interval, rng, n_entry, p, universe=uni)
 
 
 if __name__ == "__main__":
