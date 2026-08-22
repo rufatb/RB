@@ -78,14 +78,28 @@ BIO_SIC = {"2833", "2834", "2835", "2836", "8731"}
 # precision at the filter, so every plausible phrasing is queried and
 # classify.py decides. Hits overlap heavily; (cik, date) de-duplicates them.
 PHRASES = {
-    "CRL": ['"received a Complete Response Letter"',
-            '"Complete Response Letter from the U.S. Food and Drug Administration"',
-            '"issued a Complete Response Letter"',
-            '"receipt of a Complete Response Letter"'],
+    # DAY-71: this list was four specific verb constructions, and measuring
+    # its recall showed the search stage was the bottleneck. In 2023 the four
+    # returned 35 unique filings; the BARE phrase returned 128, of which 93
+    # were new. Every one of the four contains the bare phrase as a substring,
+    # so all four are subsumed by it and none is lost.
+    #
+    # This was a violation of the repo's own day-66 rule -- BROAD SEARCH,
+    # STRICT CLASSIFIER -- committed on the leg where it did the most damage.
+    # A narrow search cannot be repaired downstream: a filing that is never
+    # retrieved is never classified, and its absence looks exactly like a
+    # company that had no rejection to announce.
+    #
+    # The approval side was measured the same way and is near-saturated: three
+    # alternative phrasings returned 0 new filings between them and a fourth
+    # returned 5, so the asymmetry was in the search, not in the language.
+    "CRL": ['"complete response letter"',
+            '"CRL from the FDA"'],
     "APPROVAL": ['"approved by the U.S. Food and Drug Administration"',
                  '"FDA has approved"',
                  '"announced FDA approval"',
                  '"received FDA approval"',
+                 '"has been approved by the FDA"',
                  '"U.S. Food and Drug Administration has approved"'],
 }
 

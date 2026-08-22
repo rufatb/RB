@@ -174,12 +174,34 @@ def test_a_failed_audit_is_stated_not_silently_skipped():
     assert "UNAVAILABLE" in out and "unverified" in out
 
 
+def test_the_report_says_the_rejection_leg_cannot_be_audited_at_all():
+    """The FDA publishes no rejections, so half the ratio has no external
+    check. A reader who is not told that will assume both legs were verified."""
+    out = _rendered()
+    assert "publishes no rejections" in out
+    assert "no external record to audit" in out
+
+
+def test_the_bracket_never_presents_itself_as_a_correction():
+    """It was called 'corrected', and the word was doing the arguing."""
+    out = _rendered({"fda_total": 1000, "fda_public": 400, "found": 200,
+                     "rate": 0.5, "misses": []},
+                    {"n_appr_adj": 140.0, "p": 0.176, "capture": 0.5})
+    flat = " ".join(out.split())
+    assert "CORRECTED" not in out
+    assert "absent by construction, not missing" in flat
+    assert "FLOOR" in out and "CEILING" in out
+    # the bracket must state its own limits, not just its ends
+    assert "not decisive against one of 20%" in flat
+
+
 def test_a_completed_audit_shows_the_capture_rate_and_what_was_missed():
     out = _rendered({"fda_total": 1000, "fda_public": 400, "found": 200,
                      "rate": 0.5, "misses": ["2024-05-01 SOMECO"]},
                     {"n_appr_adj": 140.0, "p": 0.176, "capture": 0.5})
     assert "50% capture" in out
-    assert "CORRECTED P(CRL) = 17.6%" in out
+    assert "FLOOR" in out and "17.6%" in out
+    assert "CEILING" in out and "30.0%" in out
     assert "2024-05-01 SOMECO" in out
 
 

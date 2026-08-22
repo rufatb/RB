@@ -382,15 +382,22 @@ def capture_rate(my_appr: list, fda: list, registrants: list,
 
 
 def corrected(raw: dict, capture: float) -> dict:
-    """P(CRL) if the approval leg is scaled up by what the audit says is missing.
+    """The FLOOR: P(CRL) if every approval the audit says is missing belongs.
 
-    THE ASSUMPTION, stated because it is doing real work: rejections are
-    assumed to be captured MORE completely than approvals, because a CRL is
-    unambiguous, singular, and unambiguously material, while 'approved' appears
-    in filings for supplements, foreign regulators and partners' products, and
-    the classifier is deliberately strict about which of those it counts.
-    Scaling only the approval leg therefore produces a LOWER bound on P(CRL) if
-    that assumption holds, and the raw figure is the upper bound.
+    THIS WAS CALLED "CORRECTED" AND THAT WAS THE WRONG WORD, which mattered
+    because the word was doing the arguing. Scaling the approval leg by 1/capture
+    treats every FDA approval granted to a domestic 8-K filer as a decision that
+    SHOULD have appeared in this population. That assumption is maximally
+    generous to the approval side and it is almost certainly false: materiality
+    is company-specific, and a large sponsor does not file an 8-K when one of
+    fifty products gets a routine approval. Those approvals are not missing from
+    the harvest, they are absent from the population by construction.
+
+    So the number this returns is not a correction. It is the FLOOR — the
+    lowest P(CRL) that any reading of the coverage evidence can support — and
+    the raw ratio sits at the other end. Naming it honestly is the difference
+    between a bracket a reader can reason about and a point estimate that
+    happens to be wrong.
     """
     if not capture or capture != capture or capture <= 0:
         return {}
@@ -427,10 +434,36 @@ def render(raw: dict, cap: dict, corr: dict, start: str, end: str,
     else:
         L.append("  UNAVAILABLE — the audit could not run, so the raw figure "
                  "above is\n  unverified in the direction that matters most.")
+    L += ["",
+          "  WHAT THE AUDIT CANNOT COVER, and it is the other half: the FDA",
+          "  publishes no rejections, so there is no external record to audit "
+          "the CRL",
+          "  leg against. Its completeness is bounded only by how well the "
+          "search",
+          "  phrases cover the language, which is why the phrase list is "
+          "measured for",
+          "  recall rather than assumed (see build_catalyst.PHRASES)."]
     if corr:
-        L += ["", f"  scaling the approval leg by 1/{corr['capture']:.2f} gives "
-                  f"{corr['n_appr_adj']:.0f} approvals",
-              f"  CORRECTED P(CRL) = {corr['p']:.1%}"]
+        L += ["", "-" * 74, "THE BRACKET, both ends derived, each with its "
+                            "assumption", "",
+              f"  FLOOR   {corr['p']:>6.1%}   every FDA approval granted to a "
+              "domestic 8-K filer",
+              "                   is treated as belonging in this population "
+              "(scaling the",
+              f"                   approval leg by 1/{corr['capture']:.2f} to "
+              f"{corr['n_appr_adj']:.0f}). Almost certainly",
+              "                   false: a large sponsor does not 8-K a routine "
+              "approval,",
+              "                   so those decisions are absent by "
+              "construction, not missing.",
+              f"  CEILING {raw['p']:>6.1%}   the harvest as it stands, which "
+              "holds only if the two",
+              "                   legs are captured equally well.",
+              "",
+              "  A wide bracket is still decisive against a breakeven of 89%. "
+              "It is not",
+              "  decisive against one of 20%, and the report must not pretend "
+              "otherwise."]
     if strat:
         L += ["", "-" * 74,
               "THE SPLIT THAT MATTERS MORE THAN THE HEADLINE", ""]
