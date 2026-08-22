@@ -133,9 +133,19 @@ def test_an_unpriced_thesis_is_not_flagged():
     assert "market has largely come to agree" not in out
 
 
-def test_catalyst_block_never_presents_the_floor_as_a_bound():
+def test_catalyst_block_never_lets_an_assumed_floor_stand_unchallenged():
+    """Day-68 replaced the warning with EVIDENCE. The block used to say a cash
+    floor is "an ASSUMPTION, not a bound"; it now prints the measured CRL
+    distribution and the median-implied floor beside whatever the thesis
+    assumed, which does the same job with numbers instead of an adjective.
+    """
     out = brief.render_catalyst_detail([_cat_leg(28.67)], TODAY)
-    assert "ASSUMPTION, not a bound" in out
+    assert "MEASURED downside" in out and "n=64 verified CRLs" in out
+    assert "worse than -40%" in out
+    # the assumed floor is confronted with the measured one, not just flagged
+    assert "compare with the $20.50 the thesis assumes" in out
+    # and the asymmetry that makes a long-into-PDUFA trade insurance-like
+    assert "the rejection is violent, the approval is largely priced" in out
 
 
 def test_a_stale_mark_does_not_fabricate_a_probability():
