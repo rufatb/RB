@@ -442,6 +442,25 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
 
     if intraday:
         parts.append(intraday)
+        # Earnings proximity for the names actually picked. The 9:45 model has
+        # no earnings feed (its own header says so), and next week every
+        # Canadian bank reports -- a universe that is a third financials.
+        if not no_net:
+            try:
+                import earnings as _e
+                uni = (cfg.get("scan") or {}).get("universe") or []
+                picks = set()
+                for side in ("long", "short"):
+                    lg = (res.get("pair") or {}).get(side) or {}
+                    if lg.get("pick"):
+                        picks.add(lg["pick"]["t"])
+                    picks |= {x["t"] for x in (lg.get("extra") or [])}
+                blk = _e.render(_e.gather(uni), today, picks)
+                if blk:
+                    parts.append(blk)
+            except Exception as ex:
+                parts.append(f"\u258e EARNINGS NEARBY\n   \u26a0 unavailable "
+                             f"({type(ex).__name__}) — unknown, not clear")
     parts.append(render_record(ledger.load()))
     parts.append("Read-only. Nothing here placed, sized, or cancelled an order.")
     return "\n\n".join(parts)
