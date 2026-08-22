@@ -82,9 +82,45 @@ def test_render_states_the_fda_is_not_bound_by_the_vote():
          "direction": "favourable", "tally": (10, 3), "sentence": ""}]}
     out = A.render(data, TODAY)
     assert "FDA is NOT bound by these votes" in out
-    assert "no probability" in out
+    # day-69: the wording moved from "no probability of approval is derived
+    # from them here" to "No probability is derived here" when the EXTERNAL
+    # base rates were added beside it. The property is unchanged: this module
+    # never derives a probability of its own.
+    assert "No probability is" in out and "derived here" in out
 
 
 def test_an_empty_window_says_so():
     assert "none scheduled or voted" in A.render({"upcoming": [], "votes": []},
                                                  TODAY)
+
+
+# ── day-69: the conditional is BORROWED, and must always say so ─────────────
+def test_external_base_rates_are_printed_with_their_asymmetry():
+    """Day-69 could not measure P(approval|vote) from 8-K text: 12 years gave
+    45 votes, 16 joined, n=1 on the unfavourable arm. Published research has
+    the sample this repo cannot assemble, and the asymmetry is the useful part
+    — a positive vote is far more informative than a negative one."""
+    data = {"upcoming": [], "votes": [
+        {"ticker": "REPL", "company": "Replimune", "filed": "2026-07-31",
+         "direction": "favourable", "tally": (10, 3), "sentence": ""}]}
+    out = A.render(data, TODAY)
+    assert "97%" in out and "67%" in out
+    assert "closer to a long delay than to a verdict" in out
+
+
+def test_borrowed_numbers_are_always_labelled_external():
+    """A borrowed measurement quoted as one's own is how a prior becomes a
+    claim. It carries someone else's window and assumptions."""
+    data = {"upcoming": [], "votes": [
+        {"ticker": "X", "company": "Y", "filed": "2026-07-31",
+         "direction": "favourable", "tally": None, "sentence": ""}]}
+    out = A.render(data, TODAY)
+    assert "EXTERNAL" in out
+    assert "JAMA" in out and "2010-2021" in out
+    assert "No probability is" in out and "derived here" in out
+
+
+def test_the_external_constants_match_the_cited_study():
+    assert A.EXT_POSITIVE_APPROVED == 0.97      # 142/147
+    assert A.EXT_NEGATIVE_REJECTED == 0.67      # 40/60
+    assert (A.EXT_MEDIAN_DAYS_POS, A.EXT_MEDIAN_DAYS_NEG) == (74, 700)

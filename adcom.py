@@ -31,6 +31,34 @@ the evidence FAILS to support a use. So direction is taken from the LANGUAGE,
 the tally is reported beside it, and when the language is ambiguous the tool
 says so and prints the sentence rather than guessing.
 
+THE CONDITIONAL, AND WHY IT IS BORROWED RATHER THAN MEASURED HERE. Day-69 tried
+to measure P(approval | vote) from 8-K text and FAILED on power, not on method:
+twelve years of filings yielded 45 verified votes, only 16 of which joined to a
+verified decision, leaving n=10 favourable and n=1 unfavourable. The Wilson
+intervals (49-94% and 0-79%) overlap so heavily that no conditional could be
+quoted, and the constraint is the SOURCE -- most AdCom votes never appear in an
+8-K with recognisable phrasing.
+
+Published research has the sample this repo cannot assemble. Cannizzaro et al.,
+JAMA Health Forum 2023, examined 409 advisory committee meetings from 2010-2021
+(298 votes analysed) and found FDA actions aligned with the vote 88% of the
+time, with a MARKED ASYMMETRY:
+
+    positive vote, initial approval : 97% approved      (142 of 147)
+    negative vote, initial approval : 67% NOT approved  ( 40 of  60)
+
+A positive vote is therefore far more informative than a negative one -- the
+agency overrode negative recommendations roughly a third of the time, and
+overrode positive ones almost never. The timeline diverges too: a median 74 days
+to approval after a positive vote against 700 days after a negative one, so a
+negative vote is closer to a long delay than to a verdict.
+
+These constants are labelled EXTERNAL throughout. They are someone else's
+measurement on a 2010-2021 window, not this repo's, and they carry that window's
+assumptions about an FDA whose behaviour may since have changed. They are a
+documented prior to set against a market-implied number, never a result to
+claim. Source: https://jamanetwork.com/journals/jama-health-forum/fullarticle/2807050
+
 WHAT IT DOES NOT DO. It does not convert a vote into a probability of approval.
 The FDA follows its panels most of the time but not always, and day-56
 established this repo cannot yet measure outcome frequencies reliably enough to
@@ -58,6 +86,17 @@ from validate_exit import SCRATCH  # noqa: E402
 FTS = "https://efts.sec.gov/LATEST/search-index"
 SCHEDULED = '"Advisory Committee meeting"'
 VOTED = '"Advisory Committee voted"'
+
+# EXTERNAL PRIOR — NOT measured in this repo. See the module docstring.
+# Cannizzaro et al., JAMA Health Forum 2023: 409 advisory committee meetings,
+# 2010-2021, 298 votes analysed. Day-69 tried to measure this from 8-K text and
+# failed on POWER (45 votes in 12 years, 16 joined, n=1 unfavourable), so the
+# number is borrowed and labelled as such wherever it is printed.
+EXT_POSITIVE_APPROVED = 0.97      # 142/147 initial approvals after a YES vote
+EXT_NEGATIVE_REJECTED = 0.67      # 40/60 NOT approved after a NO vote
+EXT_MEDIAN_DAYS_POS, EXT_MEDIAN_DAYS_NEG = 74, 700
+EXT_SOURCE = ("Cannizzaro et al., JAMA Health Forum 2023 (n=298 votes, "
+              "2010-2021) — EXTERNAL, not measured here")
 
 DATE_RE = re.compile(
     r"(?:Advisory Committee|AdCom)[^.]{0,120}?"
@@ -195,8 +234,15 @@ def render(data: dict, today: dt.date, horizon: int = 120,
     if len(L) == 1:
         L.append("   none scheduled or voted in the window")
     else:
-        L.append("   ── the FDA is NOT bound by these votes, and no probability")
-        L.append("      of approval is derived from them here.")
+        L.append("   ── the FDA is NOT bound by these votes. No probability is")
+        L.append("      derived here; these are EXTERNAL base rates:")
+        L.append(f"      after a POSITIVE vote {EXT_POSITIVE_APPROVED:.0%} are "
+                 f"approved (median {EXT_MEDIAN_DAYS_POS}d to approval).")
+        L.append(f"      after a NEGATIVE vote only {EXT_NEGATIVE_REJECTED:.0%} "
+                 f"are rejected, and approval then takes a median "
+                 f"{EXT_MEDIAN_DAYS_NEG}d —")
+        L.append("      so a NO is closer to a long delay than to a verdict.")
+        L.append(f"      {EXT_SOURCE}.")
     return "\n".join(L)
 
 
