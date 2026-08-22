@@ -2892,6 +2892,65 @@ second one pays — worth remembering the next time a big z appears.
 
 Thirty-three rejections, three adoptions.
 
+## Day-53: train on cross-sectional rank instead of direction? — REJECTED (#34)
+
+The oldest mismatch in the engine, finally tested as a CHANGE. The k-NN learns
+`r1 > 0` — "will this go up?" — but the book is long AND short, so the tape
+cancels between the legs and only relative performance pays. Day-45 made it
+concrete: residual market exposure is +0.009%%/session (t=+0.78) while 100%% of
+P&L is the cross-sectional term. The engine predicts one quantity to bet on
+another.
+
+`validate_target.py` runs the WHOLE shipped pipeline twice on identical rows —
+same k-NN, same 0.55 bar, same densest tie-break, same 2-per-side — differing
+in one line:
+
+    shipped   y = (r1 > 0)
+    xs        y = (r1 > that session's median r1)
+
+scored on **tide-relative capture per leg**, not AUC on the target. Day-46's
+hint was AUC-on-target, which is near-circular: a model trained on y_rel will
+of course predict y_rel better, and that says nothing about what the book earns.
+
+### Result: 2 of 4 quarters on BOTH markets
+
+| quarter | TSX shipped | TSX xs | diff | US shipped | US xs | diff |
+|---|---|---|---|---|---|---|
+| Q1 | +0.0005 | -0.0382 | **-0.0388** | -0.0528 | -0.0246 | +0.0282 |
+| Q2 | -0.0266 | -0.0398 | -0.0132 | +0.0225 | +0.0736 | +0.0511 |
+| Q3 | -0.0331 | -0.0330 | +0.0001 | +0.0167 | +0.0090 | -0.0077 |
+| Q4 | +0.0010 | +0.0432 | **+0.0421** | -0.0337 | -0.0627 | -0.0290 |
+| **POOLED** | -0.0146 | -0.0169 | **-0.0024** | -0.0118 | -0.0012 | **+0.0106** |
+
+**TSX 2/4 (pooled WORSE), US 2/4 (pooled better).** Not a near miss — the
+quarters that win on one market are the quarters that lose on the other. TSX's
+best quarter for `xs` is Q4 (+0.0421); US's Q4 is its worst (-0.0290). Sign
+disagreement across neighbouring windows is the signature of noise, which is the
+same verdict day-38 reached about its no-trade rules.
+
+The theoretical argument for this change was, and remains, correct: predicting
+absolute direction to place a relative bet IS a mismatch. It simply does not
+matter, because neither label carries signal (day-43: AUC 0.5022 with gradient
+boosting on 122k rows). **Relabelling noise produces different noise.** A
+well-motivated fix to a component that has no signal to fix changes nothing —
+the same lesson day-40 recorded when self-relative density scored -0.0020%%
+("a better ordering of a signal-free ranking is still signal-free").
+
+### MY OWN STATED HYPOTHESIS, REFUTED
+I predicted `xs` would remove one-legged days, since ~half the universe beats
+the median by construction, and day-47 showed a one-legged book runs ~50%% net
+exposure with its P&L dominated by the tape. Measured:
+
+    shipped  one-legged sessions: 0/599 (0.0%%)
+    xs       one-legged sessions: 0/599 (0.0%%)
+
+**Zero for both arms.** The one-legged day is a SMALL-UNIVERSE artifact — with
+218 names there is always a candidate on each side; with the shipped 21 there
+is not. The cross-sectional label cannot fix it because the label was never the
+cause. Worth recording that I asserted a mechanism and the data refused it.
+
+Thirty-four rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
