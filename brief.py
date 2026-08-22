@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+"""
+brief.py — the single morning page. One command, four layers, honest labels.
+
+WHY ONE PAGE. Until now "run report" printed a fresh intraday pair and nothing
+else: no memory of what you were holding, no view of what was coming, and the
+pair presented first as though it were the most important thing on the screen.
+It is the least. This composes the four layers in the order a decision actually
+needs them —
+
+    1  POSITIONS    what you hold, marked, with the exit written at entry
+    2  ACTIONS      what closes today, what enters a binary window soon
+    3  CALENDAR     scheduled FDA decisions (facts, from company filings)
+    4  INTRADAY     the 9:46 pair, printed WITH its own record
+
+— and each layer states what it may claim, because they are not equal:
+
+    positions   fact. no prediction at all.
+    calendar    fact. a date a company disclosed; no probability implied.
+    intraday    MEASURED, NO EDGE. 34 rejections; gradient boosting reaches
+                AUC 0.5022 on 122,234 rows where the same harness detects a
+                planted 52% coin at z=15. It prints its live record next to
+                every pick so the number is never out of sight.
+
+THE POINT OF THE REDESIGN is that this page can say "nothing to do today".
+The old report could not — it manufactured a pair every session, which trains
+a reader to trade a coin flip. Most mornings the honest output is a position
+review and no new risk.
+
+WHAT THE INTRADAY SECTION ADDS. Its hit rate cannot be improved; that is
+measured and settled. What can improve is how much it tells you about WHY a
+name was chosen and WHAT WOULD INVALIDATE it — the runner-up it beat and by
+how much, whether its side is crowded into one sector, and its expectation
+stated tide-relative rather than absolute. A pick you can interrogate is worth
+more than a probability you cannot.
+
+Read-only throughout. Nothing here places, sizes, or cancels an order.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import os
+import sys
+from zoneinfo import ZoneInfo
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import ledger  # noqa: E402
+import positions as pos  # noqa: E402
+from validate_exit import SCRATCH  # noqa: E402
+
+RULE = "─" * 74
+
+
+def _fmt_pct(x, w=7):
+    return f"{x:+{w}.2f}%" if x is not None else f"{'stale':>{w}} "
+
+
+# ──────────────────────────────────────────────────────────── 1. POSITIONS
+def render_positions(book: dict, today: dt.date,
+                     mark_errors: dict | None = None) -> str:
+    legs = book["legs"]
+    if not legs:
+        return ("▎OPEN POSITIONS — none\n"
+                "   Flat. Nothing to mark, nothing to manage.")
+    x = pos.net_exposure(legs)
+    tag = ("hedged" if abs(x) < 0.25 else
+           f"DIRECTIONAL {'long' if x > 0 else 'short'}")
+    L = [f"▎OPEN POSITIONS ({len(legs)})".ljust(46) +
+         f"net exposure {x:+.2f} ({tag})", "   " + RULE,
+         f"   {'id':<3}{'ticker':<8}{'side':<6}{'entry':>9}{'mark':>9}"
+         f"{'P&L':>9}{'$':>10}{'held':>6}  waiting on"]
+    for l in legs:
+        ev = (f"{l['event_kind'] or 'event'} {l['event_date']}"
+              if l["event_date"] else l["exit_condition"][:26])
+        mark = f"{l['mark']:>9.2f}" if l["mark"] is not None else f"{'—':>9}"
+        usd = f"{l['pnl_usd']:>+10.0f}" if l["pnl_usd"] is not None else f"{'—':>10}"
+        L.append(f"   {l['id']:<3}{l['ticker']:<8}{l['side']:<6}"
+                 f"{l['entry_px']:>9.2f}{mark}{_fmt_pct(l['pnl_pct'])}{usd}"
+                 f"{l['days']:>5}d  {ev}")
+    L.append("   " + RULE)
+    L.append(f"   book {book['net_pct']:+.2f}% on ${book['gross']:,.0f} "
+             f"deployed  ·  {book['net_usd']:+,.0f}")
+    if book["stale"]:
+        why = (f" ({', '.join(sorted(set(mark_errors.values())))})"
+               if mark_errors else "")
+        L.append(f"   ⚠ {book['stale']} position(s) could not be marked{why} and "
+                 "are EXCLUDED from the total.\n     A stale leg is not a flat "
+                 "leg — price it by hand before acting.")
+    return "\n".join(L)
+
+
+# ────────────────────────────────────────────────────────────── 2. ACTIONS
+def render_actions(book: dict, today: dt.date, pair_note: str) -> str:
+    closing, upcoming = pos.due_today(book["legs"], today)
+    L = ["▎TODAY'S ACTIONS"]
+    if closing:
+        for l in closing:
+            L.append(f"   ⏰ CLOSE-OUT DUE  {l['ticker']} — {l['event_kind']} "
+                     f"was {l['event_date']}. Exit rule: {l['exit_condition']}")
+    else:
+        L.append("   CLOSE   nothing due")
+    L.append(f"   OPEN    {pair_note}")
+    for l, d in upcoming:
+        L.append(f"   ⚠ {l['ticker']} enters its {l['event_kind']} window in "
+                 f"{d}d ({l['event_date']}).")
+        L.append("     Decide NOW whether to hold through the binary or exit "
+                 "before it —\n     a decision taken during the gap is not a "
+                 "decision.")
+    return "\n".join(L)
+
+
+# ───────────────────────────────────────────────────────────── 4. INTRADAY
+def pair_reasoning(res: dict, side: str, cfg: dict) -> list:
+    """Why THIS name and not the runner-up — the part that lets you overrule it.
+
+    The old board printed a probability and a density tag. Neither tells you
+    whether the choice was close. A leg picked over a near-identical rival is a
+    coin flip inside a coin flip; a leg with a clear margin at least reflects
+    the rule the engine claims to follow.
+    """
+    lg = (res.get("pair") or {}).get(side) or {}
+    if lg.get("status") == "NONE" or not lg.get("pick"):
+        return []
+    pick = lg["pick"]
+    pool = res["longs"] if side == "long" else res["shorts"]
+    rivals = [r for r in pool if r["t"] != pick["t"]]
+    out = []
+    if rivals:
+        nxt = min(rivals, key=lambda r: r.get("nd", 9e9))
+        margin = nxt.get("nd", 0) - pick.get("nd", 0)
+        close = abs(margin) < 0.02
+        out.append(f"      chosen over {nxt['t']} on density "
+                   f"(nd {pick.get('nd', 0):.3f} vs {nxt.get('nd', 0):.3f}"
+                   f"{', a near tie — treat as arbitrary' if close else ''})")
+    groups = cfg.get("peer_groups") or {}
+    sector = next((g for g, names in groups.items() if pick["t"] in names), None)
+    if sector:
+        same = [r for r in pool if r["t"] in groups.get(sector, [])]
+        if len(same) > 1:
+            out.append(f"      {len(same)} of this side's candidates are "
+                       f"{sector} — the side is concentrated, not diversified")
+    out.append(f"      invalidated if: filled worse than the bound, or the "
+               f"9:45 print is stale by >20 min")
+    return out
+
+
+def render_intraday(res: dict, cfg: dict, shadow: bool) -> tuple:
+    lr = res.get("live_record") or {}
+    L = ["▎INTRADAY PAIR — the 9:46 book"]
+    if res.get("too_early"):
+        return "\n".join(L + [f"   ⏰ too early; ready {res.get('ready_at')}"]), \
+               "nothing — engine not ready"
+    if res.get("coverage_fail"):
+        return "\n".join(L + ["   ⛔ INSUFFICIENT COVERAGE — no board today",
+                              f"   {res['coverage_fail']}"]), \
+               "nothing — coverage gate failed"
+    if lr.get("pair_n"):
+        L.append(f"   live record: PAIR {lr['pair_hits']}/{lr['pair_n']} "
+                 f"({lr['pair_hits']/lr['pair_n']*100:.0f}%) — a coin flip, "
+                 "measured 34 ways")
+    pair = res.get("pair") or {}
+    opened = []
+    for side in ("long", "short"):
+        lg = pair.get(side) or {}
+        if lg.get("status") == "NONE" or not lg.get("pick"):
+            L.append(f"   {side.upper():<6}: ⛔ none qualified — do not force one")
+            continue
+        p = lg["pick"]
+        L.append(f"   {side.upper():<6}: {p['t']:<9} sided-P {lg['sided']:.2f}  "
+                 f"[{p.get('confidence','?')}]  9:45 ${p['p945']:.2f}")
+        L += pair_reasoning(res, side, cfg)
+        for x in (lg.get("extra") or []):
+            L.append(f"      + {x['t']} (second leg — SPLITS the same half, "
+                     "does not add exposure)")
+        opened.append(p["t"])
+    if shadow:
+        L.append("   ⛔ SHADOW — published and scored, NO capital. The record "
+                 "keeps accruing at zero cost.")
+        return "\n".join(L), "nothing — intraday running in shadow"
+    return "\n".join(L), (", ".join(opened) if opened else
+                          "nothing — no leg qualified")
+
+
+# ─────────────────────────────────────────────────────────────── 5. RECORD
+def render_record(rows: list) -> str:
+    done = [r for r in rows if r.get("hit") not in ("", None)]
+    pair = [r for r in done if r.get("role") == "pair"]
+    if not pair:
+        return "▎RECORD — no scored pair legs yet"
+    hits = sum(int(r["hit"]) for r in pair)
+    L = ["▎RECORD", f"   pair legs {hits}/{len(pair)} "
+                    f"({hits/len(pair)*100:.0f}%)"]
+    L.append("   " + ledger.decisive_line(pair).strip())
+    tides = ledger._tides_for_report()
+    if tides:
+        L.append("   " + ledger.relative_line(pair, tides).strip())
+        L.append("   " + ledger.attribution_line(pair, tides)
+                 .strip().replace("\n", "\n   "))
+    return "\n".join(L)
+
+
+# ───────────────────────────────────────────────────────────────── compose
+def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
+    from dashboard import load_config
+    cfg = load_config(cfg_path)
+    tz = ZoneInfo(cfg.get("exchange_tz", "America/Toronto"))
+    now = dt.datetime.now(tz)
+    today = now.date()
+
+    parts = [f"═" * 74,
+             f"MORNING BRIEF — {now:%a %Y-%m-%d %H:%M} {now.tzname()}",
+             "═" * 74]
+
+    # 1 positions
+    prows = pos.load()
+    marks: dict = {}
+    mark_errors: dict = {}
+    if not no_net:
+        from adapters import YahooDirectAdapter
+        a = YahooDirectAdapter(exchange_tz=str(tz))
+        for t in {r["ticker"] for r in prows if r.get("status") == pos.OPEN}:
+            # `Quote.last`, not `.price` — the field is named for what it is, a
+            # last trade. Getting this wrong marked every position STALE, which
+            # the fail-closed path reported honestly rather than hiding, but a
+            # brief where nothing can be marked is a brief nobody will read.
+            try:
+                q = a.get_quote(t)
+                if q.last is not None:
+                    marks[t] = float(q.last)
+            except Exception as e:
+                mark_errors[t] = type(e).__name__
+    book = pos.mark_book(prows, marks, today)
+    parts.append(render_positions(book, today, mark_errors))
+
+    # 4 intraday (computed before actions, which cite it)
+    pair_note, intraday = "nothing — engine not run", ""
+    if not no_net:
+        import r945
+        res = r945.run(cfg, workers=12)
+        intraday, pair_note = render_intraday(res, cfg, shadow)
+
+    parts.append(render_actions(book, today, pair_note))
+
+    # 3 calendar
+    try:
+        import pdufa
+        cal_path = os.path.join(SCRATCH, "pdufa_calendar.json")
+        cal = (json.load(open(cal_path)) if os.path.exists(cal_path)
+               else (pdufa.build(6, today, cal_path) if not no_net else []))
+        parts.append(pdufa.render(cal, today, 120))
+    except Exception as e:
+        parts.append(f"▎FDA DECISION CALENDAR\n   ⚠ unavailable "
+                     f"({type(e).__name__}) — the rest of the brief stands")
+
+    if intraday:
+        parts.append(intraday)
+    parts.append(render_record(ledger.load()))
+    parts.append("Read-only. Nothing here placed, sized, or cancelled an order.")
+    return "\n\n".join(parts)
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", default="config.yaml")
+    ap.add_argument("--shadow", action="store_true",
+                    help="print the pair but claim no capital")
+    ap.add_argument("--offline", action="store_true",
+                    help="positions/record only; no network")
+    a = ap.parse_args(argv)
+    print(build(a.config, a.shadow, a.offline))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
