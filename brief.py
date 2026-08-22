@@ -341,6 +341,20 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
         cal = (json.load(open(cal_path)) if os.path.exists(cal_path)
                else (pdufa.build(6, today, cal_path) if not no_net else []))
         parts.append(pdufa.render(cal, today, 120))
+        # The calendar says WHAT is scheduled; the screen says what the market
+        # has already paid for it. A date without price context is a diary
+        # entry, not an opportunity.
+        if not no_net and cal:
+            try:
+                import screen as _scr
+                held = {l["ticker"] for l in book["legs"]}
+                rows = [r for r in _scr.screen(cal, today, 130, 12)
+                        if r["ticker"] not in held]
+                parts.append(_scr.render(rows, today))
+            except Exception as e:
+                parts.append(f"▎CATALYST OPPORTUNITIES\n   ⚠ pricing "
+                             f"unavailable ({type(e).__name__}) — the calendar "
+                             "above stands, the pricing does not")
     except Exception as e:
         parts.append(f"▎FDA DECISION CALENDAR\n   ⚠ unavailable "
                      f"({type(e).__name__}) — the rest of the brief stands")
