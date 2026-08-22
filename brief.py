@@ -142,6 +142,21 @@ def render_catalyst_detail(legs: list, today: dt.date) -> str:
                        "Most of the\n        disagreement you entered for is "
                        "priced; the remaining upside is\n        thin against "
                        "an unchanged downside.")
+        # Check the floor against the balance sheet rather than repeating the
+        # thesis's own assumption back at the reader.
+        try:
+            import fundamentals as _f
+            from build_catalyst import ticker_map
+            cik = ticker_map(SCRATCH).get(l["ticker"], "")
+            fs = _f.summarise(cik, today) if cik else None
+            if fs and fs.get("cash_per_share"):
+                out += _f.render(fs, l["mark"])
+                if dn > fs["cash_per_share"] * 2:
+                    out.append(f"      \u26a0 the ${dn:,.2f} floor is "
+                               f"{dn/fs['cash_per_share']:.0f}x cash per share — "
+                               "a cash argument does not support it.")
+        except Exception:
+            pass
         out.append("      NOTE: a CRL floor is an ASSUMPTION, not a bound — "
                    "day-56 could not\n        establish the drawdown "
                    "distribution, and verified CRLs in that\n        sample "

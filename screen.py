@@ -194,6 +194,15 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
             row["error"] = type(ex).__name__
         row["stance"], row["why"] = stance(row["move"], row["skew"], d,
                                            c.get("signals", []))
+        # The balance sheet is the only hard-ish floor a pre-revenue name has,
+        # and every catalyst thesis leans on it without checking. See
+        # fundamentals.py: the ZYME matrix claimed a cash-backed floor at
+        # $20.50 while the 10-Q shows $2.53/share.
+        try:
+            import fundamentals as _f
+            row["fund"] = _f.summarise(c["cik"], today) if c.get("cik") else None
+        except Exception:
+            row["fund"] = None
         out.append(row)
         if len(out) >= max_names:
             break
@@ -216,6 +225,9 @@ def render(rows: list, today: dt.date) -> str:
             dn = r["spot"] * (1 - r["move"])
             L.append(f"        priced range on the print: ${dn:,.2f} … ${up:,.2f}"
                      f"  (expiry {r.get('expiry','?')})")
+        if r.get("fund"):
+            import fundamentals as _f
+            L += [("  " + x) for x in _f.render(r["fund"], r.get("spot"))]
         if r.get("signals"):
             L.append(f"        filings : {', '.join(r['signals'])}")
         if r.get("error"):
