@@ -1,3 +1,2 @@
-id,ticker,side,shares,entry_px,entry_date,source,thesis,exit_condition,event_date,event_kind,status,exit_px,exit_date
-1,ZYME,LONG,400,24.9000,2026-08-19,catalyst,"PDUFA 08-25, priority review",close on PDUFA outcome 2026-08-25,2026-08-25,PDUFA,OPEN,,
-2,CNR.TO,SHORT,76,175.5900,2026-08-20,intraday,,flat by 3:55 same session,,,OPEN,,
+id,ticker,side,shares,entry_px,entry_date,source,thesis,exit_condition,event_date,event_kind,upside,downside,status,exit_px,exit_date
+1,ZYME,LONG,400,24.9000,2026-08-19,catalyst,priority review; matrix assumed P(approval)=85%,close on PDUFA outcome 2026-08-25,2026-08-25,PDUFA,36.0000,20.5000,OPEN,,

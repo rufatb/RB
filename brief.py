@@ -93,6 +93,64 @@ def render_positions(book: dict, today: dt.date,
     return "\n".join(L)
 
 
+def render_catalyst_detail(legs: list, today: dt.date) -> str:
+    """For every binary position: what the market is paying NOW, versus what
+    was assumed at entry.
+
+    THE FAILURE THIS EXISTS TO PREVENT. A catalyst thesis is written once, at a
+    price, with a probability attached. The price then moves — and the implied
+    probability moves with it, silently. The ZYME matrix was written at $25
+    against a $36/$20.50 bracket, implying the market held 29% while the thesis
+    asserted 85%. At $28.67 the market implies 53%. The 56-point disagreement
+    that WAS the trade has shrunk to 32 points, and nothing in a static matrix
+    would ever tell you that.
+
+    So the number is recomputed every morning from the live mark. If the market
+    has come to agree with you, the edge you entered for is gone whether or not
+    the position is profitable — and profit makes that easier to miss, not
+    harder.
+    """
+    import catalyst
+    out = []
+    for l in legs:
+        if not (l.get("upside") and l.get("downside") and l["event_date"]):
+            continue
+        up, dn = float(l["upside"]), float(l["downside"])
+        d = (dt.date.fromisoformat(l["event_date"]) - today).days
+        out.append(f"   {l['ticker']} — {l['event_kind']} in {d}d "
+                   f"({l['event_date']})")
+        if l["thesis"]:
+            out.append(f"      thesis at entry : {l['thesis']}")
+        out.append(f"      bracket         : ${dn:,.2f} (fail) → ${up:,.2f} (pass)")
+        p_entry = catalyst.implied_probability(l["entry_px"], up, dn)
+        out.append(f"      implied P at your ${l['entry_px']:,.2f} entry: "
+                   f"{p_entry:.0%}")
+        if l["mark"] is None:
+            out.append("      implied P now   : unavailable (mark is stale)")
+            continue
+        p_now = catalyst.implied_probability(l["mark"], up, dn)
+        out.append(f"      implied P NOW at ${l['mark']:,.2f}       : "
+                   f"{p_now:.0%}   ({(p_now-p_entry)*100:+.0f} pts since entry)")
+        # what is still on the table versus what is at risk
+        to_up = (up / l["mark"] - 1) * 100
+        to_dn = (dn / l["mark"] - 1) * 100
+        out.append(f"      from here       : {to_up:+.1f}% if approved, "
+                   f"{to_dn:+.1f}% if not  →  risk/reward "
+                   f"{abs(to_up/to_dn):.2f}:1" if to_dn else "")
+        if p_now > 0.65:
+            out.append("      ⚠ the market has largely come to agree with you. "
+                       "Most of the\n        disagreement you entered for is "
+                       "priced; the remaining upside is\n        thin against "
+                       "an unchanged downside.")
+        out.append("      NOTE: a CRL floor is an ASSUMPTION, not a bound — "
+                   "day-56 could not\n        establish the drawdown "
+                   "distribution, and verified CRLs in that\n        sample "
+                   "ran to -80%.")
+    if not out:
+        return ""
+    return "▎CATALYST POSITIONS — what the market is paying now\n" + "\n".join(out)
+
+
 # ────────────────────────────────────────────────────────────── 2. ACTIONS
 def render_actions(book: dict, today: dt.date, pair_note: str) -> str:
     closing, upcoming = pos.due_today(book["legs"], today)
@@ -244,6 +302,9 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
         intraday, pair_note = render_intraday(res, cfg, shadow)
 
     parts.append(render_actions(book, today, pair_note))
+    cat_detail = render_catalyst_detail(book['legs'], today)
+    if cat_detail:
+        parts.append(cat_detail)
 
     # 3 calendar
     try:

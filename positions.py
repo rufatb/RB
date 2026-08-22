@@ -40,9 +40,15 @@ import os
 
 POSITIONS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "positions.csv")
+# `upside`/`downside` are the two branches of a BINARY thesis, recorded at
+# entry. They exist so the brief can show the probability the market is paying
+# TODAY versus the one assumed when the position was opened — the ZYME thesis
+# was written at $25 implying 29%, and by $28.67 the market implied 53%. The
+# gap you are betting on shrinks as the price runs, and that has to be visible
+# before the event, not reconstructed after it. Blank for non-binary positions.
 FIELDS = ["id", "ticker", "side", "shares", "entry_px", "entry_date",
           "source", "thesis", "exit_condition", "event_date", "event_kind",
-          "status", "exit_px", "exit_date"]
+          "upside", "downside", "status", "exit_px", "exit_date"]
 OPEN, CLOSED = "OPEN", "CLOSED"
 
 
@@ -69,7 +75,9 @@ def next_id(rows: list) -> str:
 def open_position(rows: list, ticker: str, side: str, shares: float,
                   entry_px: float, entry_date: str, source: str,
                   exit_condition: str, thesis: str = "",
-                  event_date: str = "", event_kind: str = "") -> list:
+                  event_date: str = "", event_kind: str = "",
+                  upside: float | None = None,
+                  downside: float | None = None) -> list:
     """Append a new OPEN position.
 
     `exit_condition` is REQUIRED and free text — "flat by 3:55", "close on
@@ -88,8 +96,10 @@ def open_position(rows: list, ticker: str, side: str, shares: float,
                  "shares": f"{shares:g}", "entry_px": f"{entry_px:.4f}",
                  "entry_date": entry_date, "source": source, "thesis": thesis,
                  "exit_condition": exit_condition, "event_date": event_date,
-                 "event_kind": event_kind, "status": OPEN,
-                 "exit_px": "", "exit_date": ""})
+                 "event_kind": event_kind,
+                 "upside": f"{upside:.4f}" if upside else "",
+                 "downside": f"{downside:.4f}" if downside else "",
+                 "status": OPEN, "exit_px": "", "exit_date": ""})
     return rows
 
 
@@ -134,7 +144,9 @@ def mark_book(rows: list, marks: dict, today: dt.date) -> dict:
                "exit_condition": r.get("exit_condition", ""),
                "event_date": r.get("event_date", ""),
                "event_kind": r.get("event_kind", ""),
-               "source": r.get("source", ""), "stale": mark is None}
+               "source": r.get("source", ""), "thesis": r.get("thesis", ""),
+               "upside": r.get("upside", ""), "downside": r.get("downside", ""),
+               "stale": mark is None}
         if mark is None:
             stale += 1
             leg.update({"mark": None, "pnl_pct": None, "pnl_usd": None})

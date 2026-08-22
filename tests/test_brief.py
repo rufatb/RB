@@ -99,3 +99,52 @@ def test_coverage_failure_blocks_the_board():
     out, note = brief.render_intraday({"coverage_fail": "only 9/21 names"},
                                       {}, shadow=False)
     assert "INSUFFICIENT COVERAGE" in out and "nothing" in note
+
+
+def _cat_leg(mark, entry=24.90, up=36.00, dn=20.50):
+    return {"ticker": "ZYME", "side": "LONG", "entry_px": entry, "mark": mark,
+            "days": 2, "event_date": "2026-08-25", "event_kind": "PDUFA",
+            "exit_condition": "close on outcome", "source": "catalyst",
+            "thesis": "priority review", "upside": str(up), "downside": str(dn)}
+
+
+def test_catalyst_block_recomputes_implied_probability_from_the_live_mark():
+    """A thesis is written once; the implied probability moves with the price."""
+    out = brief.render_catalyst_detail([_cat_leg(28.67)], TODAY)
+    assert "implied P at your $24.90 entry: 28%" in out
+    assert "implied P NOW at $28.67       : 53%" in out
+    assert "+24 pts since entry" in out
+
+
+def test_catalyst_block_states_remaining_reward_against_remaining_risk():
+    out = brief.render_catalyst_detail([_cat_leg(28.67)], TODAY)
+    assert "+25.6% if approved, -28.5% if not" in out
+    assert "risk/reward 0.90:1" in out
+
+
+def test_a_priced_in_thesis_is_flagged():
+    """If the market has come to agree, the edge is gone even in profit."""
+    out = brief.render_catalyst_detail([_cat_leg(32.00)], TODAY)
+    assert "market has largely come to agree" in out
+
+
+def test_an_unpriced_thesis_is_not_flagged():
+    out = brief.render_catalyst_detail([_cat_leg(22.00)], TODAY)
+    assert "market has largely come to agree" not in out
+
+
+def test_catalyst_block_never_presents_the_floor_as_a_bound():
+    out = brief.render_catalyst_detail([_cat_leg(28.67)], TODAY)
+    assert "ASSUMPTION, not a bound" in out
+
+
+def test_a_stale_mark_does_not_fabricate_a_probability():
+    out = brief.render_catalyst_detail([_cat_leg(None)], TODAY)
+    assert "unavailable (mark is stale)" in out
+    assert "implied P NOW" not in out
+
+
+def test_non_binary_positions_produce_no_catalyst_block():
+    leg = _cat_leg(28.67)
+    leg["upside"] = leg["downside"] = ""
+    assert brief.render_catalyst_detail([leg], TODAY) == ""
