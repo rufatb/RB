@@ -58,11 +58,45 @@ from validate_ceiling import auc, se_auc  # noqa: E402
 from validate_exit import SCRATCH  # noqa: E402
 
 
-def load_events(path: str) -> pd.DataFrame:
+def load_events(path: str, collapse_days: int = 45) -> pd.DataFrame:
+    """Events, with retrospective mentions collapsed into their announcement.
+
+    THE DEFECT THIS FIXES, found by inspecting outliers rather than trusting the
+    aggregate. A full-text search returns every 8-K that MENTIONS a complete
+    response letter, not only the one that ANNOUNCES it. Companies keep
+    referring to a CRL for months — in guidance updates, resubmission news,
+    financing documents — so the same rejection entered the sample repeatedly,
+    at dates when the stock had already recovered. The tell was identical
+    returns on duplicated tickers:
+
+        AXSM 2022-06-02  +155.2%   AXSM 2022-06-28  +155.2%
+        ALDX 2025-06-17  +171.6%   ALDX 2025-06-26  +171.6%
+        AIM  2012-07-11  +185.7%   AIM  2012-08-01  +185.7%
+
+    Axsome's actual CRL was in April 2022; the June filings discuss it after the
+    recovery. Uncollapsed, this produced the impossible headline that CRLs had a
+    HIGHER median reaction than approvals.
+
+    The first mention within a window is the announcement and later ones are
+    discussion, so events for one filer and one kind inside `collapse_days` are
+    folded into the earliest. Cheap, and it removes both the double counting and
+    the retrospective dates in a single pass.
+    """
     with open(path) as f:
         df = pd.DataFrame(list(csv.DictReader(f)))
     df["date"] = pd.to_datetime(df["date"])
-    return df
+    df = df.sort_values(["cik", "kind", "date"])
+    keep, last = [], {}
+    for i, r in df.iterrows():
+        k = (r["cik"], r["kind"])
+        prev = last.get(k)
+        if prev is None or (r["date"] - prev).days > collapse_days:
+            keep.append(i)
+            last[k] = r["date"]
+    out = df.loc[keep].reset_index(drop=True)
+    print(f"  collapsed {len(df):,} mentions -> {len(out):,} distinct events "
+          f"({collapse_days}d window per filer)")
+    return out
 
 
 def fetch_prices(tickers: list, workers: int = 12) -> dict:
