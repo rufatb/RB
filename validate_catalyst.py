@@ -157,6 +157,48 @@ def pct(a: np.ndarray, q: float) -> float:
     return float(np.percentile(a, q)) if len(a) else float("nan")
 
 
+def placebo_windows(px: dict, per_ticker: int = 5, seed: int = 0) -> pd.DataFrame:
+    """Random windows on the SAME tickers — the test that decides everything.
+
+    DAY-56, and it overturned the whole study. An event window only means
+    something if it differs from an arbitrary window on the same name. Measured:
+
+        CRL       n=654   mean  +5.36   median -1.11   p10 -41.64   p90 +40.39
+        APPROVAL  n=934   mean +15.26   median -2.60   p10 -38.78   p90 +39.89
+        RANDOM   n=1520   mean  +4.24   median -2.75   p10 -34.45   p90 +33.04
+
+        CRL vs RANDOM      +1.12pp,  t=+0.31
+        APPROVAL vs RANDOM +11.02pp, t=+0.99
+
+    Neither is distinguishable from a random three-day window. That is not a
+    finding about FDA decisions — it is a verdict on the LABELS. A full-text
+    phrase search identifies filings that MENTION an event, and the 8-K filing
+    date is not reliably the announcement date, so the sample is a mixture of
+    real announcements and unrelated dates on names that routinely move +/-35%
+    in three days anyway.
+
+    Collapsing retrospective mentions (day-56, first fix) removed the duplicate
+    dates and did NOT fix this: approvals still showed a WORSE median than CRLs
+    afterwards, which is impossible for correctly-labelled events.
+
+    Always run this before reading any event statistic from this file.
+    """
+    rng = np.random.default_rng(seed)
+    out = []
+    for p in px.values():
+        s = p["Close"].dropna()
+        if len(s) < 60:
+            continue
+        for _ in range(per_ticker):
+            j = int(rng.integers(25, len(s) - 3))
+            ts = s.index[j]
+            ts = ts.tz_localize(None) if ts.tzinfo else ts
+            w = window_returns(p, ts.to_pydatetime())
+            if w:
+                out.append(w)
+    return pd.DataFrame(out)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--events", default=os.path.join(SCRATCH, "catalyst_events.csv"))
@@ -199,6 +241,27 @@ def main(argv=None) -> int:
         return 2
     crl = d[d["kind"] == "CRL"]["event"].to_numpy()
     app = d[d["kind"] == "APPROVAL"]["event"].to_numpy()
+
+    # [0] THE GATE. Everything below is meaningless if the labels are noise.
+    P = placebo_windows(px)
+    rnd = P["event"].to_numpy(dtype=float)
+    print(f"\n[0] PLACEBO GATE — random windows on the SAME tickers (n={len(rnd):,})")
+    print(f"    {'sample':<10}{'n':>7}{'mean':>9}{'median':>9}{'p10':>9}{'p90':>9}")
+    for lab, arr in (("CRL", crl), ("APPROVAL", app), ("RANDOM", rnd)):
+        print(f"    {lab:<10}{len(arr):>7}{arr.mean():>+9.2f}{pct(arr,50):>+9.2f}"
+              f"{pct(arr,10):>+9.2f}{pct(arr,90):>+9.2f}")
+    blocked = True
+    for lab, arr in (("CRL", crl), ("APPROVAL", app)):
+        se = (arr.std()**2/len(arr) + rnd.std()**2/len(rnd)) ** 0.5
+        t = (arr.mean() - rnd.mean()) / se if se else 0.0
+        print(f"    {lab} vs RANDOM: {arr.mean()-rnd.mean():+.2f}pp, t={t:+.2f}")
+        if abs(t) >= 3:
+            blocked = False
+    if blocked:
+        print("\n    \u26d4 BLOCKED: neither event class separates from a random window.")
+        print("       The labels carry no information, so nothing below is a")
+        print("       finding about FDA decisions. Fix event IDENTIFICATION")
+        print("       before reading any number in sections 2-4.")
 
     print(f"\n[2] EVENT-WINDOW REACTION  (close t-2 -> close t+1)")
     print(f"    {'':<10}{'n':>6}{'mean':>9}{'median':>9}{'p10':>9}{'p25':>9}"
