@@ -50,6 +50,15 @@ reason.
 6. **Sync before working.** The container resets between turns; `git fetch` and
    fast-forward first. A stale clone once put a wrong record in a live report
    (day-42).
+7. **A ratio needs both legs from one population.** Day-71: P(CRL) is only
+   meaningful because rejections AND approvals come from the same harvest, the
+   same classifier and the same window. Mixing an EDGAR numerator with a
+   Drugs@FDA denominator would have produced a confident number describing
+   nothing. Where a leg might be undercounted, MEASURE the undercount and show
+   the correction beside the raw figure rather than folding it in.
+8. **A rate over a population is never a forecast for one name.** Print
+   UNCONDITIONAL next to it every single time. It is the prior you argue away
+   from.
 
 ## Read-only, always
 
