@@ -183,3 +183,29 @@ def test_the_audit_scales_to_a_real_registrant_list():
     cap = B.capture_rate([{"name": "Zymeworks Inc.", "date": "2024-05-01"}],
                          fda, regs)
     assert cap["fda_public"] == 1 and cap["found"] == 1
+
+
+# ── the stratification that attacks the "unconditional" caveat
+def test_sponsors_are_split_by_how_often_they_face_the_agency():
+    rows = ([_row("big", "APPROVAL", f"2020-0{i}-01") for i in range(1, 9)] +
+            [_row("small", "CRL", "2020-01-01")])
+    s = B.by_sponsor_frequency(rows, "2015-01-01", "2026-12-31")
+    assert s["serial filer"]["n"] == 8 and s["serial filer"]["n_crl"] == 0
+    assert s["single-asset"]["n"] == 1 and s["single-asset"]["n_crl"] == 1
+
+
+def test_a_mid_frequency_sponsor_falls_into_neither_bucket():
+    """Four decisions is neither a developer with one drug nor a regulatory
+    function. Forcing it into a bucket would blur the contrast being tested."""
+    rows = [_row("mid", "APPROVAL", f"2020-0{i}-01") for i in range(1, 5)]
+    s = B.by_sponsor_frequency(rows, "2015-01-01", "2026-12-31")
+    assert s["serial filer"]["n"] == 0 and s["single-asset"]["n"] == 0
+
+
+def test_each_stratum_carries_its_own_interval_because_one_will_be_small():
+    rows = ([_row("big", "APPROVAL", f"2020-0{i}-01") for i in range(1, 9)] +
+            [_row("small", "CRL", "2020-01-01")])
+    s = B.by_sponsor_frequency(rows, "2015-01-01", "2026-12-31")
+    single = s["single-asset"]
+    assert single["lo"] < single["p"] <= single["hi"]
+    assert single["hi"] - single["lo"] > 0.4      # n=1 must look like n=1

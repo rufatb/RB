@@ -145,6 +145,51 @@ def raw_rate(rows: list, start: str, end: str) -> dict:
             "lo": lo, "hi": hi, "crl": crl, "appr": appr}
 
 
+SERIAL_MIN = 6          # announced decisions in the window: big-pharma cadence
+SINGLE_MAX = 2          # one or two decisions in twelve years: a developer
+
+
+def by_sponsor_frequency(rows: list, start: str, end: str) -> dict:
+    """Split the rate by how often the sponsor faces the agency at all.
+
+    THE CAVEAT THIS ATTACKS. "Unconditional" is the honest label on the
+    headline number and it is also its biggest weakness: the approval leg is
+    crowded with large sponsors announcing routine decisions, while the
+    rejection leg is crowded with small developers facing their one binary.
+    A portfolio manager looking at a single-asset biotech is not looking at the
+    average of those two populations, and telling them the blended rate invites
+    precisely the wrong inference.
+
+    Sponsor frequency is a crude proxy for that difference and it costs nothing
+    — it is computed from the harvest itself, needs no market-cap feed, and is
+    knowable for any name at screen time by counting that CIK's own history.
+    A filer with one or two announced decisions in twelve years is a developer
+    with a drug; one with six or more is running a regulatory function.
+
+    IT IS A PROXY AND NOT A MECHANISM. Frequency correlates with size, with
+    resources, with how many supplements are in the mix, and with survivorship
+    — a developer whose only drug was rejected may never file again, which by
+    construction puts it in the infrequent bucket. That last one is a real
+    circularity and it is the reason this is reported as a stratification to
+    read, not as a multiplier to apply.
+    """
+    rows = [r for r in rows if start <= r["date"] <= end]
+    per: dict = {}
+    for r in rows:
+        per[r["cik"]] = per.get(r["cik"], 0) + 1
+    out = {}
+    for label, keep in (("single-asset", lambda n: n <= SINGLE_MAX),
+                        ("serial filer", lambda n: n >= SERIAL_MIN)):
+        sub = [r for r in rows if keep(per[r["cik"]])]
+        crl = sum(1 for r in sub if r["kind"] == "CRL")
+        n = len(sub)
+        lo, hi = wilson(crl, n)
+        out[label] = {"n": n, "n_crl": crl, "n_sponsors":
+                      len({r["cik"] for r in sub}),
+                      "p": crl / n if n else float("nan"), "lo": lo, "hi": hi}
+    return out
+
+
 # ──────────────────────────────────────────────────────── the FDA record
 def fetch_daf(cache: str = DAF_DIR) -> str:
     if not os.path.exists(os.path.join(cache, "Submissions.txt")):
@@ -311,7 +356,8 @@ def corrected(raw: dict, capture: float) -> dict:
             "capture": capture}
 
 
-def render(raw: dict, cap: dict, corr: dict, start: str, end: str) -> str:
+def render(raw: dict, cap: dict, corr: dict, start: str, end: str,
+           strat: dict | None = None) -> str:
     L = ["=" * 74, "baserate — P(CRL) for an announced FDA decision", "=" * 74,
          "",
          f"WINDOW {start} .. {end}   (one harvest, one classifier, both legs)",
@@ -341,6 +387,30 @@ def render(raw: dict, cap: dict, corr: dict, start: str, end: str) -> str:
         L += ["", f"  scaling the approval leg by 1/{corr['capture']:.2f} gives "
                   f"{corr['n_appr_adj']:.0f} approvals",
               f"  CORRECTED P(CRL) = {corr['p']:.1%}"]
+    if strat:
+        L += ["", "-" * 74,
+              "THE SPLIT THAT MATTERS MORE THAN THE HEADLINE", ""]
+        for label, d in strat.items():
+            if not d["n"]:
+                L.append(f"  {label:<14} no decisions in this bucket")
+                continue
+            L.append(f"  {label:<14} {d['p']:>6.1%}   "
+                     f"[{d['lo']:.0%}, {d['hi']:.0%}]   "
+                     f"{d['n_crl']:>3}/{d['n']:<4} decisions, "
+                     f"{d['n_sponsors']} sponsors")
+        L += ["",
+              "  A single-asset developer facing its one binary is not the "
+              "average of",
+              "  this population, and neither is a sponsor running a "
+              "regulatory function.",
+              "  Frequency is a crude proxy for that and it is knowable for any "
+              "name at",
+              "  screen time. It is also circular in one direction: a developer "
+              "whose only",
+              "  drug was rejected may never file again, which by construction "
+              "lands it in",
+              "  the infrequent bucket. Read it as a stratification, not a "
+              "multiplier."]
     L += ["", "-" * 74, "HOW TO READ IT", ""]
     if corr:
         lo, hi = min(corr["p"], raw["p"]), max(corr["p"], raw["p"])
@@ -371,6 +441,7 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
             end: str = "2026-12-31", audit: bool = True) -> dict:
     rows = dedupe(load_events(events_path))
     raw = raw_rate(rows, start, end)
+    strat = by_sponsor_frequency(rows, start, end)
     cap, corr = {}, {}
     if audit:
         try:
@@ -381,6 +452,7 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
         except Exception as e:
             cap = {"error": type(e).__name__}
     out = {"computed": dt.date.today().isoformat(), "start": start, "end": end,
+           "strata": strat,
            "raw": {k: v for k, v in raw.items() if k not in ("crl", "appr")},
            "capture": {k: v for k, v in cap.items() if k != "misses"},
            "corrected": corr}
@@ -388,7 +460,7 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
         json.dump(out, open(OUT, "w"), indent=1)
     except Exception:
         pass
-    return {"raw": raw, "capture": cap, "corrected": corr,
+    return {"raw": raw, "capture": cap, "corrected": corr, "strata": strat,
             "start": start, "end": end}
 
 
@@ -430,7 +502,8 @@ def main(argv=None) -> int:
     ap.add_argument("--no-audit", action="store_true")
     a = ap.parse_args(argv)
     r = compute(a.events, a.start, a.end, not a.no_audit)
-    print(render(r["raw"], r["capture"], r["corrected"], a.start, a.end))
+    print(render(r["raw"], r["capture"], r["corrected"], a.start, a.end,
+                 r.get("strata")))
     return 0
 
 
