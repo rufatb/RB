@@ -63,11 +63,27 @@ from validate_exit import SCRATCH  # noqa: E402
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120 Safari/537.36")
 H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
-# Binary biotech events historically deliver large moves; an implied move well
-# under this is the market pricing a non-event. Not a threshold for trading —
-# a threshold for LOOKING.
-CHEAP_MOVE = 0.20
-RICH_MOVE = 0.45
+# THRESHOLDS ANCHORED TO A MEASUREMENT, not to round numbers. These were 0.20
+# and 0.45 — defensible-sounding figures with nothing behind them, and one of
+# them produced a false sentence in the live report: IONS at +/-16% was told it
+# was "smaller than the 15.2% median rejection", which it is not. A threshold
+# that cannot be stated truthfully in the line it triggers is the wrong
+# threshold.
+#
+# Both are now multiples of the MEASURED median rejection (catalyst.CRL_MEDIAN,
+# -15.2%, day-68), which is the only size in this domain this repo has actually
+# established:
+#
+#   IMMATERIAL  half the median rejection. Below this the market cannot be
+#               pricing a company-level binary at all — whatever the FDA says,
+#               the enterprise barely moves. RPRX at +/-4% is the case.
+#   RICH        three times the median rejection. Above this the tape is
+#               already paying near the measured TAIL (p10 -57.5%), not the
+#               median, so both sides are dear.
+_CRL = 15.20                      # kept literal so import order cannot bite
+IMMATERIAL_MOVE = _CRL / 2 / 100          # 0.076
+RICH_MOVE = _CRL * 3 / 100                # 0.456
+CHEAP_MOVE = IMMATERIAL_MOVE              # name kept: callers outside this file
 
 
 class Yahoo:
@@ -116,12 +132,61 @@ def _atm(rows: list, spot: float) -> dict | None:
     return min(rows, key=lambda r: abs(r["strike"] - spot)) if rows else None
 
 
+def option_price(row: dict) -> tuple:
+    """(price, source). MID when a two-sided quote exists, LAST otherwise.
+
+    THE TRAP THIS AVOIDS, and it corrupts the one number the verdict turns on.
+    `lastPrice` is whenever that contract last traded — on an illiquid biotech
+    strike that can be days ago at a materially different spot. Run live, JAZZ
+    priced an ATM put at 3.7% of spot against a 10% implied move: the two legs
+    of one straddle disagreeing by more than the event they price. A breakeven
+    computed from that is not conservative or aggressive, it is fiction.
+
+    The mid of a live bid/ask is a real, current price. `lastPrice` is a
+    historical fact that may not be a price at all, so when it is all there is,
+    the source travels with it and the caller says so out loud."""
+    b, a = row.get("bid"), row.get("ask")
+    if b is not None and a is not None and float(a) > 0 and float(a) >= float(b):
+        return (float(b) + float(a)) / 2, "mid"
+    lp = row.get("lastPrice")
+    return (float(lp), "last") if lp is not None else (None, "none")
+
+
+def parity_gap(call: dict, put: dict, spot: float) -> float | None:
+    """|C - P - (S - K)| over spot. Near zero when both legs are live.
+
+    Put-call parity is an ARBITRAGE identity, not a model — it holds whatever
+    anyone thinks the FDA will do, so a large violation is a statement about
+    the DATA, not about the stock. It is the cheapest available test of whether
+    both quotes are real, and it costs one subtraction."""
+    if not call or not put or not spot:
+        return None
+    c, _ = option_price(call)
+    p, _ = option_price(put)
+    if c is None or p is None:
+        return None
+    k = float(call.get("strike") or 0)
+    if k <= 0 or float(put.get("strike") or 0) != k:
+        return None            # different strikes: parity does not apply
+    return abs((c - p) - (spot - k)) / spot
+
+
+# Above this, one of the two legs is not a current price. Interest-rate carry
+# over a two-month expiry is well under 1% of spot, so 3% cannot be explained
+# by anything but a stale quote.
+PARITY_TOL = 0.03
+
+
 def implied_move(calls: list, puts: list, spot: float) -> float | None:
     """ATM straddle over spot — the market's expected magnitude, either way."""
     c, p = _atm(calls, spot), _atm(puts, spot)
     if not c or not p or not spot:
         return None
-    return (float(c["lastPrice"]) + float(p["lastPrice"])) / spot
+    cp, _ = option_price(c)
+    pp, _ = option_price(p)
+    if cp is None or pp is None:
+        return None
+    return (cp + pp) / spot
 
 
 def leg_costs(calls: list, puts: list, spot: float) -> tuple:
@@ -136,7 +201,11 @@ def leg_costs(calls: list, puts: list, spot: float) -> tuple:
     c, p = _atm(calls, spot), _atm(puts, spot)
     if not c or not p or not spot:
         return None, None
-    return float(c["lastPrice"]) / spot, float(p["lastPrice"]) / spot
+    cp, _ = option_price(c)
+    pp, _ = option_price(p)
+    if cp is None or pp is None:
+        return None, None
+    return cp / spot, pp / spot
 
 
 def skew(calls: list, puts: list, spot: float) -> float | None:
@@ -168,11 +237,12 @@ def stance(move: float | None, sk: float | None, days: int,
     """
     if move is None:
         return "no options", "no listed chain covering the event — cash equity only"
-    if move < CHEAP_MOVE:
+    if move < IMMATERIAL_MOVE:
         s = ("not material",
-             f"only +/-{move:.0%} implied — the market treats this decision as "
-             "immaterial to the enterprise, not as a mispriced binary. A "
-             "diversified or large-cap sponsor; the event is not the story")
+             f"only +/-{move:.0%} implied, under half the measured median "
+             "rejection — the market treats this decision as immaterial to the "
+             "enterprise, not as a mispriced binary. A diversified or large-cap "
+             "sponsor; the event is not the story")
     elif move > RICH_MOVE:
         s = ("existential",
              f"+/-{move:.0%} implied — the market prices this as a company-"
@@ -269,14 +339,39 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
                    f"view is cash equity — which carries the full measured "
                    f"{_cat.CRL_MEDIAN:.1f}% median rejection with nothing "
                    "capping it")
-    elif mv < CHEAP_MOVE:
+    elif mv < IMMATERIAL_MOVE:
         call = "NOT AN EVENT TRADE"
-        why.append(f"+/-{mv:.0%} implied is smaller than the "
+        why.append(f"+/-{mv:.0%} implied is less than HALF the "
                    f"{abs(_cat.CRL_MEDIAN):.1f}% median rejection measured here "
-                   "— not a bargain, a statement that this decision does not "
-                   "move the enterprise. There is nothing to capture either way")
+                   "— at that size the market cannot be pricing a company-level "
+                   "binary, so this is not a mispricing, it is a decision that "
+                   "does not move the enterprise")
     else:
-        if be is None:
+        # THE QUOTE IS CHECKED BEFORE IT IS TRUSTED. Everything below turns on
+        # one put price, so a stale or one-sided quote does not produce a
+        # slightly-off verdict, it produces a confident wrong one. Where the
+        # input fails a check, the call says the input failed — it does not
+        # quietly pick a rung on the ladder.
+        bad = []
+        if row.get("parity") is not None and row["parity"] > PARITY_TOL:
+            bad.append(f"the two legs violate put-call parity by "
+                       f"{row['parity']:.1%} of spot, which no interest rate "
+                       "explains — one of these quotes is not a current price")
+        if row.get("px_source") == "last":
+            bad.append("the put has no two-sided quote; this is its LAST TRADE, "
+                       "which on an illiquid strike can be days old at a "
+                       "different spot")
+        if row.get("put_oi") == 0:
+            bad.append("the ATM put has zero open interest — nobody holds this "
+                       "contract, so its price is an indication, not a market")
+        if bad:
+            call = "PRICING UNRELIABLE — VERIFY THE QUOTE"
+            why += bad
+            if be is not None:
+                why.append(f"on the number as fetched the breakeven would be "
+                           f"~{be:.0%}, stated only so you know what to check "
+                           "it against — do not act on it")
+        elif be is None:
             call = "STAND ASIDE INTO THE PRINT"
             why.append("the put covering the date could not be priced, so the "
                        "cost of the only expression with measured support is "
@@ -386,6 +481,11 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
                                    row["spot"])
                 row["call_pct"], row["put_pct"] = leg_costs(
                     o.get("calls", []), o.get("puts", []), row["spot"])
+                ca, pa = (_atm(o.get("calls", []), row["spot"]),
+                          _atm(o.get("puts", []), row["spot"]))
+                row["px_source"] = option_price(pa)[1] if pa else "none"
+                row["parity"] = parity_gap(ca, pa, row["spot"])
+                row["put_oi"] = (pa or {}).get("openInterest")
         except Exception as ex:
             row["error"] = type(ex).__name__
         row["stance"], row["why"] = stance(row["move"], row["skew"], d,
@@ -444,8 +544,12 @@ def render(rows: list, today: dt.date) -> str:
         if v:
             L.append(f"        VERDICT : {v['call']}")
             for w in v["why"]:
-                L += ["          - " + x for x in _wrap(w, 66)]
-            L.append(f"        window  : {hold_window(r['days'], r['date'])}")
+                wrapped = _wrap(w, 64)
+                L.append("          - " + wrapped[0])
+                L += ["            " + x for x in wrapped[1:]]
+            wl = _wrap(hold_window(r["days"], r["date"]), 64)
+            L.append("        window  : " + wl[0])
+            L += ["                    " + x for x in wl[1:]]
     import catalyst as _cat
     L.append("   ── the spine of every verdict above, MEASURED here (day-68), not")
     L.append("      borrowed: a rejection moves the stock a median "
@@ -469,7 +573,7 @@ def _wrap(text: str, width: int) -> list:
     for w in text.split():
         if line and len(line) + 1 + len(w) > width:
             out.append(line)
-            line = "  " + w if out else w
+            line = w
         else:
             line = (line + " " + w) if line else w
     if line:

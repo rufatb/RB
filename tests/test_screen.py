@@ -223,3 +223,81 @@ def test_leg_costs_separate_the_two_sides_the_straddle_averages_together():
     call_pct, put_pct = S.leg_costs(c, p, 100.0)
     assert call_pct == 0.12 and put_pct == 0.18
     assert S.leg_costs([], [], 100.0) == (None, None)
+
+
+def test_thresholds_are_multiples_of_the_measured_rejection_not_round_numbers():
+    """They were 0.20 and 0.45 — numbers with nothing behind them."""
+    assert abs(S.IMMATERIAL_MOVE - abs(C.CRL_MEDIAN) / 2 / 100) < 1e-9
+    assert abs(S.RICH_MOVE - abs(C.CRL_MEDIAN) * 3 / 100) < 1e-9
+
+
+def test_the_not_material_line_never_makes_a_false_numeric_claim():
+    """Live, IONS at +/-16% was told it was 'smaller than the 15.2% median
+    rejection'. It is not. A threshold that cannot be stated truthfully in the
+    line it triggers is the wrong threshold."""
+    v = S.verdict(_row(move=0.16, put_pct=0.08))
+    assert v["call"] != "NOT AN EVENT TRADE"          # 16% clears half of 15.2%
+    small = S.verdict(_row(move=0.04, put_pct=0.02))
+    assert "less than HALF" in " ".join(small["why"])
+
+
+def test_wrapped_reasons_do_not_repeat_the_bullet_on_continuation_lines():
+    out = S.render([_row(verdict=S.verdict(_row(put_pct=0.20)))],
+                   dt.date(2026, 8, 22))
+    bullets = [l for l in out.splitlines() if l.strip().startswith("- ")]
+    for b in bullets:
+        assert not b.strip()[2:].lstrip().startswith("-")
+
+
+# ── the quote itself. Everything above turns on one put price; these check
+# that a bad price produces a warning rather than a confident wrong verdict.
+
+def test_a_two_sided_quote_is_priced_at_the_mid_not_the_last_trade():
+    px, src = S.option_price({"bid": 4.0, "ask": 5.0, "lastPrice": 12.0})
+    assert px == 4.5 and src == "mid"
+
+
+def test_last_trade_is_used_only_as_a_fallback_and_is_labelled():
+    px, src = S.option_price({"bid": None, "ask": None, "lastPrice": 12.0})
+    assert px == 12.0 and src == "last"
+    assert S.option_price({})[0] is None
+
+
+def test_a_crossed_or_empty_book_falls_back_rather_than_inventing_a_mid():
+    assert S.option_price({"bid": 9.0, "ask": 0.0, "lastPrice": 8.0})[1] == "last"
+
+
+def test_parity_holds_for_live_quotes_and_breaks_for_a_stale_leg():
+    """C - P = S - K is arbitrage, not a model: it holds whatever anyone thinks
+    the FDA will do, so a large gap is a statement about the DATA."""
+    live_c = {"strike": 100.0, "bid": 7.9, "ask": 8.1}
+    live_p = {"strike": 100.0, "bid": 7.9, "ask": 8.1}
+    assert S.parity_gap(live_c, live_p, 100.0) < 0.005
+    stale_p = {"strike": 100.0, "bid": None, "ask": None, "lastPrice": 2.0}
+    assert S.parity_gap(live_c, stale_p, 100.0) > S.PARITY_TOL
+
+
+def test_parity_is_not_applied_across_different_strikes():
+    assert S.parity_gap({"strike": 100.0, "bid": 8.0, "ask": 8.0},
+                        {"strike": 95.0, "bid": 5.0, "ask": 5.0}, 100.0) is None
+
+
+def test_a_parity_violation_downgrades_the_verdict_to_a_data_warning():
+    """JAZZ live: an ATM put at 3.7% of spot against a 10% implied move — the
+    two legs of one straddle disagreeing by more than the event they price."""
+    v = S.verdict(_row(put_pct=0.037, parity=0.06))
+    assert v["call"] == "PRICING UNRELIABLE — VERIFY THE QUOTE"
+    joined = " ".join(v["why"])
+    assert "not a current price" in joined and "do not act on it" in joined
+
+
+def test_a_stale_last_trade_or_empty_interest_also_downgrades_the_verdict():
+    for kw in ({"px_source": "last"}, {"put_oi": 0}):
+        v = S.verdict(_row(put_pct=0.04, **kw))
+        assert v["call"] == "PRICING UNRELIABLE — VERIFY THE QUOTE"
+
+
+def test_a_clean_quote_is_not_downgraded():
+    v = S.verdict(_row(put_pct=0.04, parity=0.004, px_source="mid",
+                       put_oi=1200))
+    assert v["call"] == "DOWNSIDE IS THE CHEAPER SIDE"
