@@ -2951,6 +2951,82 @@ cause. Worth recording that I asserted a mechanism and the data refused it.
 
 Thirty-four rejections, three adoptions.
 
+## Day-54: a catalyst-thesis checker — `catalyst.py` (+11 tests, 257 passing)
+
+A biotech PDUFA thesis was proposed as a new strategy class: upside $36.00,
+downside $20.50, price $25.00, claimed P(approval) 85%%, "expected value +34.7%%".
+Binary catalysts differ from everything else here in one important way — they
+have a MECHANISM. A scheduled FDA decision reveals real information on a known
+date. `r0`/`gap`/`vp` never had that.
+
+### The arithmetic kills this particular thesis before any biology is discussed
+
+```
+market-implied p = (25.00 - 20.50) / (36.00 - 20.50) = 29.0%%
+```
+
+**The claim is 85%%. The tape says 29%%.** That 56-point gap IS the trade, and
+nothing in the matrix defends it. Worse, the triple is impossible: for p=85%%
+with a $36 upside to produce a $25 price, the downside would have to be
+**-$37.33/share**. At least one input is wrong.
+
+The stress table matters more than the EV headline, because the downside is an
+ASSUMPTION — a "$322.5M cash floor" is not a bound, and small/mid-cap biotech
+routinely trades BELOW cash after a CRL:
+
+| CRL price | drop | breakeven p |
+|---|---|---|
+| $20.50 | -18%% | 29.0%% |
+| $15.00 | -40%% | 47.6%% |
+| $12.00 | -52%% | 54.2%% |
+| $9.00 | -64%% | 59.3%% |
+
+### Base rate: 85%% is above it, not at it
+FDA's own first-cycle review data puts recent first-cycle complete-response
+rates near 30%%, i.e. a first-cycle approval base rate around **70%%**. A PDUFA
+date IS a first-cycle decision. The ~75-80%% figure most theses quote is
+EVENTUAL approval across multiple cycles — a different and much friendlier
+number that does not apply to a single date.
+
+### The design lesson: a checker that always objects carries no information
+The first FRAGILE rule fired whenever a -64%% stress demanded a high breakeven —
+which is true of nearly every binary trade, so the warning was noise. Rebuilt
+on a CUSHION: `implied_downside` IS the floor at which the claimed probability
+breaks even, so the distance from the assumed floor is the room the thesis has
+to be wrong. Fires below 15%% of share price.
+
+Then the tool rejected the "sound thesis" written for its own passing test —
+price 25, up 30, down 22, p=45%% — because that edge breaks even at $20.91, only
+**4%% of price** below the assumed $22 floor. **The tool was right and the test
+was wrong.** The test now records this, and a separate case locks the silence on
+a genuinely sound thesis (wide bracket, price near the low end, claim only
+modestly above the market's).
+
+### What it deliberately cannot do
+It cannot tell you whether 85%% is right. That is a research question about the
+drug and it is the ONLY question that matters — so the job is to make the size
+of the claim explicit rather than launder it into an "expected value" that reads
+like a measurement. Read-only and order-free, like everything else here.
+
+### Why this class is worth pursuing where the 9:45 engine was not
+Unlike the intraday features (day-43: AUC 0.5022 on 122k rows), catalysts have a
+real mechanism AND the historical data is obtainable — BiopharmaWatch's Elite
+tier carries historical PDUFA outcomes with run-up/run-down analytics, OZMOSI
+covers ~3,000 events over ~700 tickers. That is a purchasable dataset, not the
+$1,109/month TMX wall.
+
+**The bias that would destroy a naive backtest**: failed biotechs delist or get
+acquired, so any catalyst study built on TODAY's tickers is survivorship-poisoned
+in the most dangerous direction — the wipeouts are literally absent. Day-40
+caught a milder version of this in the TSX universe. The dataset must be
+point-in-time or it is worthless.
+
+Three questions, in order, before any capital: (1) do PDUFA outcomes beat their
+market-implied probabilities, or is the market calibrated — the same ceiling
+question day-43 asked; (2) what is the ACTUAL CRL drawdown distribution, versus
+what cash-floor arguments assume; (3) how much of the documented run-up is
+already arbitraged away.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
