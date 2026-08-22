@@ -166,3 +166,20 @@ def test_a_completed_audit_shows_the_capture_rate_and_what_was_missed():
 def test_load_returns_none_when_never_computed_rather_than_a_default():
     """A caller must say 'not computed', never substitute a plausible number."""
     assert B.load("/nonexistent/baserate.json") is None
+
+
+def test_the_audit_scales_to_a_real_registrant_list():
+    """The naive form is 1,556 sponsors x 10,403 registrants of set
+    intersection, inside a morning report. The index must not change any
+    answer while making that tractable."""
+    import random
+    random.seed(0)
+    regs = [f"Company{i} Pharmaceuticals Inc" for i in range(10000)]
+    regs.append("Zymeworks Inc")
+    fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
+            "type": "NDA", "priority": "PRIORITY"},
+           {"applno": "2", "date": "2024-05-01", "sponsor": "NOT LISTED LLC",
+            "type": "NDA", "priority": "STANDARD"}]
+    cap = B.capture_rate([{"name": "Zymeworks Inc.", "date": "2024-05-01"}],
+                         fda, regs)
+    assert cap["fda_public"] == 1 and cap["found"] == 1

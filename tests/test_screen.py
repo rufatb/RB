@@ -437,3 +437,12 @@ def test_an_unaudited_base_rate_is_shown_as_a_single_approximate_figure():
     with _with_base(0.25, 0.25, audited=False):
         line = " ".join(S.against_base_rate(0.89))
     assert "~25%" in line and "-25%" not in line
+
+
+def test_a_holder_gets_the_base_rate_comparison_on_the_hedge_too():
+    """The holder needs it more than the screener does — this is the number
+    that decides whether to pay for protection today."""
+    with _with_base(0.18, 0.25):
+        lines = " ".join(S.position_verdict(_leg(), _row(put_pct=0.08),
+                                            dt.date(2026, 8, 22)))
+    assert "base rate" in lines and "UNCONDITIONAL" in lines

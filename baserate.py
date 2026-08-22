@@ -243,15 +243,32 @@ def capture_rate(my_appr: list, fda: list, registrants: list,
     a harvest that finds rejections more completely than approvals reports a
     P(CRL) that is too high.
     """
-    reg_tok = [tokens(n) for n in registrants]
-    reg_tok = [t for t in reg_tok if t]
+    # An inverted index, because the naive form is 1,556 sponsors x 10,403
+    # registrants of set intersection and this runs inside a morning report.
+    # Only registrants sharing at least one distinguishing token can possibly
+    # match, and that is a tiny candidate list for a real company name.
+    index: dict = {}
+    for n in registrants:
+        t = tokens(n)
+        if not t:
+            continue
+        for w in t:
+            index.setdefault(w, []).append(t)
 
     def is_public(sponsor: str) -> bool:
         ts = tokens(sponsor)
         if not ts:
             return False
-        return any(ts & r and (ts <= r or r <= ts or len(ts & r) >= 2)
-                   for r in reg_tok)
+        seen = set()
+        for w in ts:
+            for r in index.get(w, ()):
+                key = id(r)
+                if key in seen:
+                    continue
+                seen.add(key)
+                if ts <= r or r <= ts or len(ts & r) >= 2:
+                    return True
+        return False
 
     mine = [(tokens(r.get("name", "")), dt.date.fromisoformat(r["date"]))
             for r in my_appr]
@@ -363,7 +380,7 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
             corr = corrected(raw, cap.get("rate", 0))
         except Exception as e:
             cap = {"error": type(e).__name__}
-    out = {"start": start, "end": end,
+    out = {"computed": dt.date.today().isoformat(), "start": start, "end": end,
            "raw": {k: v for k, v in raw.items() if k not in ("crl", "appr")},
            "capture": {k: v for k, v in cap.items() if k != "misses"},
            "corrected": corr}
@@ -401,6 +418,7 @@ def summary(path: str = OUT) -> dict | None:
                          else [])
     return {"lo": min(ends), "hi": max(ends), "n": raw["n"],
             "n_crl": raw["n_crl"], "wilson": (raw["lo"], raw["hi"]),
+            "computed": d.get("computed"),
             "audited": bool(d.get("corrected", {}).get("p"))}
 
 

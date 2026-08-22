@@ -565,6 +565,10 @@ def position_verdict(leg: dict, row: dict | None, today: dt.date) -> list:
                  f"{row['put_pct']:.1%} of spot, so it pays for")
         L.append(f"        itself if a rejection is more than ~{be:.0%} likely "
                  "at the measured median.")
+        # A holder needs the comparison at least as much as a screener does:
+        # this is the number that decides whether to pay for protection today.
+        for x in against_base_rate(be):
+            L += ["        " + y for y in _wrap(x, 62)]
         if row.get("parity") is not None and row["parity"] > PARITY_TOL:
             L.append("        ⚠ that quote FAILS the parity check — verify it "
                      "before pricing a hedge on it.")
