@@ -301,3 +301,57 @@ def test_a_clean_quote_is_not_downgraded():
     v = S.verdict(_row(put_pct=0.04, parity=0.004, px_source="mid",
                        put_oi=1200))
     assert v["call"] == "DOWNSIDE IS THE CHEAPER SIDE"
+
+
+# ── the position already open. verdict() answers "should this become a
+# position"; for one that exists that question is settled, and asking it again
+# produces advice the holder cannot act on.
+
+def _leg(**kw):
+    l = {"ticker": "ZYME", "side": "LONG", "shares": 400, "mark": 28.67,
+         "entry_px": 24.90, "event_date": "2026-08-25", "event_kind": "PDUFA"}
+    l.update(kw)
+    return l
+
+
+def test_the_naked_carry_is_priced_in_dollars_not_described_in_percent():
+    """'Decide now' is a reminder. A dollar figure is a decision input."""
+    lines = " ".join(S.position_verdict(_leg(), _row(), dt.date(2026, 8, 22)))
+    at_risk = 28.67 * 0.152 * 400
+    assert f"${at_risk:,.0f} at risk" in lines
+
+
+def test_the_default_route_is_named_as_the_default():
+    lines = " ".join(S.position_verdict(_leg(), _row(), dt.date(2026, 8, 22)))
+    assert "it happens if nobody chooses" in lines
+
+
+def test_a_long_is_told_what_it_forfeits_by_exiting_and_what_that_is_worth():
+    lines = " ".join(S.position_verdict(_leg(), _row(), dt.date(2026, 8, 22)))
+    assert "EXIT BEFORE" in lines
+    assert "no measured payer for a long" in lines
+
+
+def test_the_hedge_route_is_priced_in_the_same_breakeven_terms():
+    lines = " ".join(S.position_verdict(_leg(), _row(put_pct=0.08),
+                                        dt.date(2026, 8, 22)))
+    assert "HEDGE" in lines and "~53% likely" in lines
+
+
+def test_a_hedge_quote_that_fails_parity_is_flagged_inside_the_decision():
+    lines = " ".join(S.position_verdict(_leg(), _row(put_pct=0.08, parity=0.09),
+                                        dt.date(2026, 8, 22)))
+    assert "FAILS the parity check" in lines
+
+
+def test_no_listed_hedge_is_reported_as_a_fact_about_the_name():
+    lines = " ".join(S.position_verdict(_leg(), None, dt.date(2026, 8, 22)))
+    assert "Absence of a listed hedge is itself a fact" in lines
+
+
+def test_a_stale_mark_refuses_to_price_any_route():
+    """A decision taken on a stale mark is a guess with a number attached."""
+    lines = " ".join(S.position_verdict(_leg(mark=None), _row(),
+                                        dt.date(2026, 8, 22)))
+    assert "STALE" in lines
+    assert "at risk" not in lines and "HEDGE" not in lines

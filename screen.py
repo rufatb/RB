@@ -444,6 +444,82 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
     return {"call": call, "why": why, "breakeven": be}
 
 
+def position_verdict(leg: dict, row: dict | None, today: dt.date) -> list:
+    """The decision on a position ALREADY OPEN, which is a different question.
+
+    WHY IT NEEDED ITS OWN FUNCTION. `verdict()` answers "should this become a
+    position", and for an open one that question is already settled — asking it
+    again produces advice the holder cannot act on. What a holder faces is
+    narrower and harder: the print is coming, the exposure exists, and doing
+    nothing is itself a choice that gets made by default if nobody names it.
+
+    THE GAP THIS CLOSES. The screen skips names already held, on the sensible
+    grounds that they are not opportunities. The effect was perverse — the one
+    position with real money on it got LESS analysis than seven names with
+    none, and the analysis it did get stopped at "decide now", which is a
+    reminder rather than a recommendation.
+
+    WHAT THE MEASUREMENT SAYS TO A HOLDER, and it is uncomfortable and
+    specific. Holding a long through the print is the trade the day-68
+    asymmetry argues against most directly: the approval leg is
+    indistinguishable from a random window and the rejection leg takes -15.2%
+    at the median. That is not an argument for exiting at any price, but it is
+    an argument that the reward for carrying the event is not visible in the
+    data, while the cost is.
+
+    THREE ROUTES OUT, priced rather than listed:
+      EXIT BEFORE       keeps the run-up, forfeits the print. Costs nothing but
+                        the gap you did not take.
+      HEDGE             keeps the upside, buys the tail. Priced here against
+                        the measured median, in the same breakeven terms as
+                        every other name.
+      CARRY IT NAKED    the default, and the only one that must be chosen out
+                        loud. What is at stake is stated in dollars.
+    """
+    import catalyst as _cat
+    d = (dt.date.fromisoformat(leg["event_date"]) - today).days
+    mark = leg.get("mark")
+    sh = leg.get("shares")
+    size = f"{sh:,.0f} share " if sh else ""
+    L = [f"      DECISION on the {size}{leg['side']} you already hold, "
+         f"{d}d out:"]
+    if mark is None:
+        L.append("        the mark is STALE, so none of the routes below can be "
+                 "priced. Price it by hand before the print; a decision taken "
+                 "on a stale mark is a guess with a number attached.")
+        return L
+    at_risk = mark * abs(_cat.CRL_MEDIAN) / 100 * (leg.get("shares") or 0)
+    L.append(f"        CARRY IT NAKED — at the measured median rejection that "
+             f"is ${at_risk:,.0f} at risk from here")
+    L.append(f"        ({abs(_cat.CRL_MEDIAN):.1f}% of ${mark:,.2f}), and "
+             f"{_cat.CRL_WORSE_THAN_40:.0%} of rejections finish worse than "
+             "-40%. This is the")
+    L.append("        default route: it happens if nobody chooses, which is "
+             "the reason to choose.")
+    if leg["side"].upper() == "LONG":
+        L.append(f"        EXIT BEFORE — banks the move to ${mark:,.2f} and "
+                 "forfeits the print. On this")
+        L.append(f"        evidence the print has no measured payer for a long "
+                 f"(approval t=+{_cat.APPROVAL_T:.2f}),")
+        L.append("        so what is forfeited is a gap the data cannot show "
+                 "you being paid for.")
+    be = put_breakeven((row or {}).get("put_pct"))
+    if be is not None and (row or {}).get("put_pct") is not None:
+        L.append(f"        HEDGE — the put covering the date costs "
+                 f"{row['put_pct']:.1%} of spot, so it pays for")
+        L.append(f"        itself if a rejection is more than ~{be:.0%} likely "
+                 "at the measured median.")
+        if row.get("parity") is not None and row["parity"] > PARITY_TOL:
+            L.append("        ⚠ that quote FAILS the parity check — verify it "
+                     "before pricing a hedge on it.")
+    else:
+        L.append("        HEDGE — no usable put quote covering the date, so "
+                 "the only routes are")
+        L.append("        exit or carry. Absence of a listed hedge is itself a "
+                 "fact about this name.")
+    return L
+
+
 def hold_window(days: int, date: str) -> str:
     """When the position has to exist by, and when it stops being one."""
     if days <= 0:

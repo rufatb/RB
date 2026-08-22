@@ -98,7 +98,8 @@ def render_positions(book: dict, today: dt.date,
     return "\n".join(L)
 
 
-def render_catalyst_detail(legs: list, today: dt.date) -> str:
+def render_catalyst_detail(legs: list, today: dt.date,
+                           priced: dict | None = None) -> str:
     """For every binary position: what the market is paying NOW, versus what
     was assumed at entry.
 
@@ -176,6 +177,15 @@ def render_catalyst_detail(legs: list, today: dt.date) -> str:
         out.append("      Approvals did NOT separate from a random window "
                    "(t=+0.98, median\n        -2.52%): the rejection is "
                    "violent, the approval is largely priced.")
+        # The routes out, priced. Without this the section ends on a
+        # description of the risk and never names what to DO about it.
+        try:
+            import screen as _scr
+            out += _scr.position_verdict(l, (priced or {}).get(l["ticker"]),
+                                         today)
+        except Exception as e:
+            out.append(f"      \u26a0 the routes out could not be priced "
+                       f"({type(e).__name__}) — the reading above stands")
     if not out:
         return ""
     return "▎CATALYST POSITIONS — what the market is paying now\n" + "\n".join(out)
@@ -375,16 +385,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                          "score after close with `python ledger.py --score`]")
 
     parts.append(render_actions(book, today, pair_note))
-    cat_detail = render_catalyst_detail(book['legs'], today)
-    if cat_detail:
-        parts.append(cat_detail)
 
-    # 3 calendar
-    #
-    # The AdCom vote is loaded BEFORE the screen, not after, because the screen
-    # now needs it: a favourable vote changes what protection is worth on that
-    # name (adcom.py's EXTERNAL base rates), and a verdict written without it
-    # would price a binary whose first half has already resolved in public.
     ac_data = None
     if not no_net:
         try:
@@ -399,11 +400,42 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         if v.get("ticker") and v.get("direction") in ("favourable",
                                                       "unfavourable"):
             votes[v["ticker"]] = v
+
+    # PRICE EVERY CALENDAR NAME, held or not, and split afterwards. The screen
+    # used to skip held names as "not opportunities", which had it backwards:
+    # the one position with money on it got less analysis than seven with none.
+    cal, screen_rows = [], []
     try:
         import pdufa
         cal_path = os.path.join(SCRATCH, "pdufa_calendar.json")
         cal = (json.load(open(cal_path)) if os.path.exists(cal_path)
                else (pdufa.build(6, today, cal_path) if not no_net else []))
+        if not no_net and cal:
+            import screen as _scr
+            screen_rows = _scr.screen(cal, today, 130, 14, votes)
+    except Exception as e:
+        # NEVER a bare pass here. An earlier version of this block swallowed a
+        # NameError and the held position silently reported "no usable put
+        # quote" for a name the screen had priced at 13.6% of spot. A layer
+        # that fails quietly reports absence as cleanliness -- the day-29 rule.
+        screen_fail = type(e).__name__
+        parts.append(f"\u258e CATALYST PRICING\n   \u26a0 the options layer "
+                     f"failed ({screen_fail}) — every catalyst reading below "
+                     "is UNPRICED, not clean")
+    priced = {r["ticker"]: r for r in screen_rows}
+
+    cat_detail = render_catalyst_detail(book['legs'], today, priced)
+    if cat_detail:
+        parts.append(cat_detail)
+
+    # 3 calendar
+    #
+    # The AdCom vote is loaded BEFORE the screen, not after, because the screen
+    # now needs it: a favourable vote changes what protection is worth on that
+    # name (adcom.py's EXTERNAL base rates), and a verdict written without it
+    # would price a binary whose first half has already resolved in public.
+    try:
+        import pdufa
         parts.append(pdufa.render(cal, today, 120))
         # The calendar says WHAT is scheduled; the screen says what the market
         # has already paid for it. A date without price context is a diary
@@ -412,8 +444,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
             try:
                 import screen as _scr
                 held = {l["ticker"] for l in book["legs"]}
-                rows = [r for r in _scr.screen(cal, today, 130, 12, votes)
-                        if r["ticker"] not in held]
+                rows = [r for r in screen_rows if r["ticker"] not in held]
                 parts.append(_scr.render(rows, today))
                 # LOG every surfaced catalyst, traded or not. Recording only
                 # the trades taken would measure the trader, not the screen —

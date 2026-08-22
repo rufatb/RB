@@ -1,0 +1,10 @@
+logged,ticker,event_kind,event_date,px_at_log,implied_move,skew,cash_per_share,runway_q,adcom,stance,traded,px_after,outcome,move_actual,note
+2026-08-22,RPRX,PDUFA,2026-08-25,61.3100,0.0277,-0.0098,2.1564,,,not material,0,,,,
+2026-08-22,JAZZ,PDUFA,2026-08-25,254.2800,0.1030,-0.0224,24.9528,,,material binary,0,,,,
+2026-08-22,IONS,PDUFA,2026-09-22,59.7400,0.1699,-0.0654,12.3633,18.08,,material binary,0,,,,
+2026-08-22,IONS,PDUFA,2026-10-26,59.7400,0.2394,0.0128,12.3633,18.08,,material binary,0,,,,
+2026-08-22,INO,PDUFA,2026-10-30,1.1800,0.6356,0.6719,0.3547,1.85,,existential,0,,,,
+2026-08-22,CYTK,PDUFA,2026-11-14,76.8400,0.2050,0.0699,8.3848,7.64,,material binary,0,,,,
+2026-08-22,COGT,PDUFA,2026-11-30,36.7300,0.4342,0.3765,4.5659,9.65,,material binary,0,,,,
+2026-08-22,PRAX,PDUFA,2026-12-27,375.9400,0.3165,-0.0672,27.1687,9.27,,material binary,0,,,,
+2026-08-22,COGT,PDUFA,2026-12-30,36.7300,0.4342,0.3765,4.5659,9.65,,material binary,0,,,,
