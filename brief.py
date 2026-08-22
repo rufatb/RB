@@ -366,6 +366,25 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         parts.append(cat_detail)
 
     # 3 calendar
+    #
+    # The AdCom vote is loaded BEFORE the screen, not after, because the screen
+    # now needs it: a favourable vote changes what protection is worth on that
+    # name (adcom.py's EXTERNAL base rates), and a verdict written without it
+    # would price a binary whose first half has already resolved in public.
+    ac_data = None
+    if not no_net:
+        try:
+            import adcom as _ac
+            ac_path = os.path.join(SCRATCH, "adcom.json")
+            ac_data = (json.load(open(ac_path)) if os.path.exists(ac_path)
+                       else _ac.build(5, today, ac_path))
+        except Exception:
+            ac_data = None                # rendered as UNKNOWN further down
+    votes = {}
+    for v in (ac_data or {}).get("votes", []):
+        if v.get("ticker") and v.get("direction") in ("favourable",
+                                                      "unfavourable"):
+            votes[v["ticker"]] = v
     try:
         import pdufa
         cal_path = os.path.join(SCRATCH, "pdufa_calendar.json")
@@ -379,7 +398,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
             try:
                 import screen as _scr
                 held = {l["ticker"] for l in book["legs"]}
-                rows = [r for r in _scr.screen(cal, today, 130, 12)
+                rows = [r for r in _scr.screen(cal, today, 130, 12, votes)
                         if r["ticker"] not in held]
                 parts.append(_scr.render(rows, today))
                 # LOG every surfaced catalyst, traded or not. Recording only
@@ -412,10 +431,9 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
     if not no_net:
         try:
             import adcom as _ac
-            ac_path = os.path.join(SCRATCH, "adcom.json")
-            data = (json.load(open(ac_path)) if os.path.exists(ac_path)
-                    else _ac.build(5, today, ac_path))
-            parts.append(_ac.render(data, today, 120))
+            if ac_data is None:
+                raise RuntimeError("adcom harvest failed earlier in this run")
+            parts.append(_ac.render(ac_data, today, 120))
         except Exception as e:
             parts.append(f"\u258e ADVISORY COMMITTEES\n   \u26a0 unavailable "
                          f"({type(e).__name__}) — treat as UNKNOWN, not as "

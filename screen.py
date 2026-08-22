@@ -23,18 +23,27 @@ readings come out of it:
                  be insured against a CRL. Negative means the reverse. It is a
                  read on FEAR, not on the FDA.
 
-WHAT THIS DELIBERATELY DOES NOT DO. It does not estimate a probability of
-approval. Day-56 established that this repo cannot yet identify catalyst
-outcomes reliably enough to backtest one, so any number I produced would be
-unvalidated dressing on a guess. What it CAN do is state precisely what the
-market has already priced, so a human judgement about the drug is applied to
-the residual rather than to the whole question.
+WHAT IT NOW DOES WITH THAT, and did not before day-70. Printing implied move,
+skew, cash and runway in four separate lines is a data dump, not analysis; it
+pushes the hardest step onto the reader. Every name now carries a VERDICT that
+combines them against the day-68 measurement, and the hinge is one number:
 
-HOW TO READ THE STANCE COLUMN. It is a description of the SETUP, never a
-recommendation to buy. "Cheap binary" means the options market is pricing a
-smaller move than binaries of this kind usually deliver — which is a reason to
-look, not a reason to trade. The molecule decides the trade; this decides where
-to spend the afternoon.
+  BREAKEVEN P(CRL)   put cost / |measured median rejection|. A put at 9% of
+                     spot against the measured -15.2% median needs a rejection
+                     to be ~59% likely just to break even. Most catalyst
+                     "lottery tickets" do not survive being asked that.
+
+WHAT THIS STILL DELIBERATELY DOES NOT DO. It does not estimate a probability of
+approval, and that refusal is now a measured position rather than an absence.
+8-K filings supply the numerator (64 rejections) and not the denominator, so a
+base rate computed here would be fabricated. The screen states the probability
+you would have to hold; the conviction stays with the reader.
+
+HOW TO READ THE STANCE LINE. It describes the SETUP and nothing else, and it
+reads the implied move as MATERIALITY rather than as value — a +/-4% print is
+the market saying the decision does not move the enterprise, not that the
+options are cheap. That distinction was learned the hard way (see `stance`).
+The VERDICT line below it is where the judgement lives.
 """
 
 from __future__ import annotations
@@ -115,6 +124,21 @@ def implied_move(calls: list, puts: list, spot: float) -> float | None:
     return (float(c["lastPrice"]) + float(p["lastPrice"])) / spot
 
 
+def leg_costs(calls: list, puts: list, spot: float) -> tuple:
+    """ATM call and ATM put, each as a fraction of spot.
+
+    The straddle is one number for a two-sided question. Day-68 measured the
+    two sides separately and found them nothing alike, so the cost of each side
+    has to be separable too — the put is priced against a MEASURED -15.2%
+    median rejection, the call against an approval leg that failed its placebo
+    gate. Averaging them into one 'implied move' hides exactly the asymmetry
+    that makes the decision."""
+    c, p = _atm(calls, spot), _atm(puts, spot)
+    if not c or not p or not spot:
+        return None, None
+    return float(c["lastPrice"]) / spot, float(p["lastPrice"]) / spot
+
+
 def skew(calls: list, puts: list, spot: float) -> float | None:
     """ATM put IV minus ATM call IV. Positive = downside costs more."""
     c, p = _atm(calls, spot), _atm(puts, spot)
@@ -169,9 +193,179 @@ def stance(move: float | None, sk: float | None, days: int,
     return s
 
 
+def put_breakeven(put_pct: float | None,
+                  drop_pct: float = None) -> float | None:
+    """The probability of a CRL you must believe for the put to break even.
+
+    THIS IS THE ONE NUMBER THE SCREEN OWES A PORTFOLIO MANAGER. Everything
+    upstream is description — implied move, skew, runway. This converts the
+    market's price and the repo's MEASURED rejection distribution into the
+    single question a position actually turns on: how likely does the bad
+    outcome have to be before paying this premium makes sense?
+
+        breakeven P(CRL) = put cost / |median CRL drawdown|
+
+    at a put cost of 9% of spot and the measured -15.2% median, you need to
+    believe a rejection is roughly 59% likely. Say that out loud and most
+    catalyst 'lottery tickets' die on the spot.
+
+    IT IS AN UPPER BOUND, and that direction matters. It uses the MEDIAN drop,
+    but the left tail is much fatter (p10 -57.5%, worst -83.6%), so the true
+    expected payoff is larger and the true breakeven lower. Erring toward
+    'this is expensive' is the safe direction for a screen that must not talk
+    anyone into a position.
+
+    Returns None when the put cannot be priced, and a value above 1.0 when the
+    premium exceeds the median drawdown outright — not an error to clamp, it
+    means no probability makes the median case pay and the position is a bet on
+    the tail alone."""
+    import catalyst as _cat
+    if put_pct is None:
+        return None
+    drop = abs(drop_pct if drop_pct is not None else _cat.CRL_MEDIAN) / 100.0
+    return put_pct / drop if drop else None
+
+
+def verdict(row: dict, vote: dict | None = None) -> dict:
+    """One call per name, assembled from what is measured plus this name's facts.
+
+    WHY A SYNTHESIS AT ALL. Until now the screen printed implied move, skew,
+    cash per share and runway in separate lines and left the reader to combine
+    them. That is not analysis, it is a data dump with good manners — and it
+    quietly pushes the hardest step, the one where mistakes cost money, onto
+    the person with the least context about how each number was derived.
+
+    THE SPINE OF EVERY VERDICT is the day-68 asymmetry, which is measured here
+    and not borrowed:
+
+        a rejection is violent and unpriced   median -15.2%, -15.0pp vs random,
+                                              t=-3.41 on 64 events
+        an approval is already in the price   median -2.52% against a random
+                                              -0.54%, t=+0.98 — FAILS the same
+                                              placebo gate the CRL leg passes
+
+    Read together they say something specific and uncomfortable: on this
+    evidence there is no probability of approval at which holding a long
+    THROUGH the print has positive measured expectation, because the winning
+    outcome pays nothing distinguishable from a random three-day window while
+    the losing one takes 15%. A long into a PDUFA is not buying a lottery
+    ticket, it is selling insurance — and the screen should say so in those
+    words every time, not once in a footnote.
+
+    WHAT IT REFUSES TO DO. It does not supply P(CRL). That number is not
+    measurable from 8-K filings (see catalyst.py) and inventing one would
+    convert an honest breakeven into a fake edge. The verdict states the
+    probability you would have to hold; the conviction is the reader's."""
+    import catalyst as _cat
+    mv, spot = row.get("move"), row.get("spot")
+    f = row.get("fund") or {}
+    sig = row.get("signals") or []
+    why, be = [], put_breakeven(row.get("put_pct"))
+    row["put_be"] = be
+
+    if mv is None:
+        call = "NO PRICED EXPRESSION"
+        why.append("no listed chain covers the date, so the only way to hold a "
+                   f"view is cash equity — which carries the full measured "
+                   f"{_cat.CRL_MEDIAN:.1f}% median rejection with nothing "
+                   "capping it")
+    elif mv < CHEAP_MOVE:
+        call = "NOT AN EVENT TRADE"
+        why.append(f"+/-{mv:.0%} implied is smaller than the "
+                   f"{abs(_cat.CRL_MEDIAN):.1f}% median rejection measured here "
+                   "— not a bargain, a statement that this decision does not "
+                   "move the enterprise. There is nothing to capture either way")
+    else:
+        if be is None:
+            call = "STAND ASIDE INTO THE PRINT"
+            why.append("the put covering the date could not be priced, so the "
+                       "cost of the only expression with measured support is "
+                       "unknown")
+        elif be > 1.0:
+            call = "PROTECTION IS DEAR — STAND ASIDE"
+            why.append(
+                f"the put covering the date costs {row['put_pct']:.1%} of spot, "
+                f"MORE than the {abs(_cat.CRL_MEDIAN):.1f}% median rejection "
+                "delivers. No probability makes the median case pay; buying it "
+                "is a bet on the tail alone (p10 "
+                f"{_cat.CRL_P10:.1f}%, {_cat.CRL_WORSE_THAN_40:.0%} of CRLs "
+                "finish worse than -40%)")
+        elif be > 0.75:
+            call = "PROTECTION IS DEAR — STAND ASIDE"
+            why.append(
+                f"the put costs {row['put_pct']:.1%} of spot; at the measured "
+                f"{abs(_cat.CRL_MEDIAN):.1f}% median drop it needs a rejection "
+                f"to be ~{be:.0%} likely just to break even")
+        elif be > 0.35:
+            call = "STAND ASIDE INTO THE PRINT"
+            why.append(
+                f"the put costs {row['put_pct']:.1%} of spot — a rejection has "
+                f"to be ~{be:.0%} likely to break even at the measured median. "
+                "Fairly priced against what this repo can prove; the edge would "
+                "have to come from the drug")
+        else:
+            call = "DOWNSIDE IS THE CHEAPER SIDE"
+            why.append(
+                f"the put costs only {row['put_pct']:.1%} of spot — it breaks "
+                f"even if a rejection is ~{be:.0%} likely at the measured "
+                f"{abs(_cat.CRL_MEDIAN):.1f}% median, and the tail is fatter "
+                f"than the median (p10 {_cat.CRL_P10:.1f}%), so that is an "
+                "upper bound on what you must believe")
+        why.append(
+            f"the long side has no measured payer: approval windows are not "
+            f"distinguishable from random ones (t=+{_cat.APPROVAL_T:.2f}, "
+            f"median {_cat.APPROVAL_MEDIAN:.2f}% vs random "
+            f"{_cat.APPROVAL_RANDOM:.2f}%), so holding through the print is "
+            "selling insurance, not buying a ticket")
+
+    # Financing is a SECOND binary, and it is not the FDA's. A name that has to
+    # raise inside the year dilutes on good news too.
+    q = f.get("runway_q")
+    if q is not None and q < 4:
+        why.append(f"runway {q:.1f} quarters — this name faces a financing "
+                   "event independent of the decision; approval does not stop "
+                   "the raise, it prices it")
+    cps, sp = f.get("cash_per_share"), spot
+    if cps and sp and sp / cps > 5:
+        why.append(f"${sp - cps:.2f} of the ${sp:.2f} price is pipeline, not "
+                   f"cash ({sp/cps:.0f}x cash) — there is no balance-sheet "
+                   "floor under a downside case here")
+    if "prior CRL" in sig:
+        why.append("resubmission after a prior CRL — the same review has "
+                   "already said no once")
+    if "review EXTENDED" in sig:
+        why.append("the review was EXTENDED, which follows a major amendment")
+
+    if vote and vote.get("direction") == "favourable":
+        why.append("an advisory committee voted FAVOURABLY; EXTERNALLY 97% of "
+                   "those are approved (JAMA 2023) — that pushes the required "
+                   "P(CRL) further out of reach, so protection here is dearer "
+                   "than it looks")
+    elif vote and vote.get("direction") == "unfavourable":
+        why.append("an advisory committee voted AGAINST; EXTERNALLY only 67% "
+                   "of those are rejected and approval then takes a median "
+                   "700 days (JAMA 2023) — the risk being held is TIME, not a "
+                   "verdict")
+    return {"call": call, "why": why, "breakeven": be}
+
+
+def hold_window(days: int, date: str) -> str:
+    """When the position has to exist by, and when it stops being one."""
+    if days <= 0:
+        return "the date is TODAY — any expression had to exist yesterday"
+    if days <= 5:
+        return (f"{days}d out — express or stand aside now; premium decays into "
+                f"the print and the decision can land early")
+    if days <= 45:
+        return (f"{days}d out — the working window. Express by D-5 ({date} minus "
+                "a week); after that you are paying peak premium")
+    return (f"{days}d out — too early to pay premium; the work now is the drug "
+            "and the balance sheet, and the position is a later decision")
+
+
 def screen(cal: list, today: dt.date, horizon: int = 120,
-           max_names: int = 12) -> list:
-    y, out = Yahoo(), []
+           max_names: int = 12, votes: dict | None = None) -> list:
+    y, out, votes = Yahoo(), [], votes or {}
     for c in cal:
         d = (dt.date.fromisoformat(c["date"]) - today).days
         if not (0 <= d <= horizon) or not c.get("ticker"):
@@ -190,6 +384,8 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
                                            row["spot"])
                 row["skew"] = skew(o.get("calls", []), o.get("puts", []),
                                    row["spot"])
+                row["call_pct"], row["put_pct"] = leg_costs(
+                    o.get("calls", []), o.get("puts", []), row["spot"])
         except Exception as ex:
             row["error"] = type(ex).__name__
         row["stance"], row["why"] = stance(row["move"], row["skew"], d,
@@ -203,6 +399,17 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
             row["fund"] = _f.summarise(c["cik"], today) if c.get("cik") else None
         except Exception:
             row["fund"] = None
+        # The synthesis runs LAST, after every input it reads is on the row.
+        # It must never be the reason a name drops out of the screen: a broken
+        # verdict still leaves a real date and a real price worth seeing.
+        try:
+            row["verdict"] = verdict(row, votes.get(c["ticker"]))
+        except Exception as ex:
+            row["verdict"] = {"call": "VERDICT UNAVAILABLE",
+                              "why": [f"synthesis failed ({type(ex).__name__}) "
+                                      "— the inputs below stand, the "
+                                      "conclusion does not"],
+                              "breakeven": None}
         out.append(row)
         if len(out) >= max_names:
             break
@@ -233,10 +440,41 @@ def render(rows: list, today: dt.date) -> str:
         if r.get("error"):
             L.append(f"        ⚠ options unavailable ({r['error']}) — "
                      "the date stands, the pricing does not")
-    L.append("   ── no approval probability is estimated here. Day-56 could not")
-    L.append("      identify catalyst outcomes well enough to backtest one, so")
-    L.append("      the molecule decides the trade; this decides where to look.")
+        v = r.get("verdict")
+        if v:
+            L.append(f"        VERDICT : {v['call']}")
+            for w in v["why"]:
+                L += ["          - " + x for x in _wrap(w, 66)]
+            L.append(f"        window  : {hold_window(r['days'], r['date'])}")
+    import catalyst as _cat
+    L.append("   ── the spine of every verdict above, MEASURED here (day-68), not")
+    L.append("      borrowed: a rejection moves the stock a median "
+             f"{_cat.CRL_MEDIAN:.1f}% and")
+    L.append(f"      {_cat.CRL_VS_RANDOM_PP:.1f}pp against random windows on the "
+             f"same names (t={_cat.CRL_T:.2f}, n={_cat.CRL_N});")
+    L.append("      an approval FAILS that same placebo gate "
+             f"(t=+{_cat.APPROVAL_T:.2f}, median "
+             f"{_cat.APPROVAL_MEDIAN:.2f}% vs")
+    L.append(f"      random {_cat.APPROVAL_RANDOM:.2f}%) — it is priced before "
+             "the letter arrives.")
+    L.append("   ── P(CRL) is deliberately NOT supplied. 8-K filings give the")
+    L.append("      numerator and not the denominator, so a base rate computed")
+    L.append("      here would be fabricated. The verdicts state the probability")
+    L.append("      you would have to hold; the conviction is yours.")
     return "\n".join(L)
+
+
+def _wrap(text: str, width: int) -> list:
+    out, line = [], ""
+    for w in text.split():
+        if line and len(line) + 1 + len(w) > width:
+            out.append(line)
+            line = "  " + w if out else w
+        else:
+            line = (line + " " + w) if line else w
+    if line:
+        out.append(line)
+    return out
 
 
 def main(argv=None) -> int:

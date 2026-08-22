@@ -76,6 +76,18 @@ BASE_RATE_FIRST_CYCLE = 0.70      # see BASE RATE note above
 # priced in before it arrives.
 CRL_MEDIAN, CRL_P10, CRL_WORST = -15.20, -57.53, -83.61
 CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.47, 0.20
+CRL_N, CRL_VS_RANDOM_PP, CRL_T = 64, -15.00, -3.41
+# The approval leg, same harness, same placebo gate -- and it FAILED it. An
+# approval window is not statistically distinguishable from a random window on
+# the same tickers, so the honest reading is that the pop is priced before the
+# letter arrives. Kept as constants so no caller has to re-derive the asymmetry.
+APPROVAL_MEDIAN, APPROVAL_RANDOM, APPROVAL_T = -2.52, -0.54, 0.98
+# NOT MEASURED, and deliberately so: P(CRL) itself. 64 rejections were
+# harvested from 8-Ks; the denominator -- every decision the FDA issued,
+# including the quiet approvals nobody files an 8-K about the same way -- is
+# not observable from this source. A base rate computed from the numerator
+# alone would be fabricated. The caller supplies the probability; this module
+# supplies what the outcome costs when it happens.
 GAP_WARN = 0.15                   # claimed - implied, above which the bet is "on the gap"
 
 
