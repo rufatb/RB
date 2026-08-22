@@ -78,21 +78,27 @@ BIO_SIC = {"2833", "2834", "2835", "2836", "8731"}
 # precision at the filter, so every plausible phrasing is queried and
 # classify.py decides. Hits overlap heavily; (cik, date) de-duplicates them.
 PHRASES = {
-    # DAY-71: this list was four specific verb constructions, and measuring
-    # its recall showed the search stage was the bottleneck. In 2023 the four
-    # returned 35 unique filings; the BARE phrase returned 128, of which 93
-    # were new. Every one of the four contains the bare phrase as a substring,
-    # so all four are subsumed by it and none is lost.
+    # DAY-71, and the result was the opposite of what the change expected.
+    # This list was four specific verb constructions, and at the FILING level
+    # it looked badly narrow: in 2023 the four returned 35 unique filings while
+    # the bare phrase returned 128, of which 93 were new.
     #
-    # This was a violation of the repo's own day-66 rule -- BROAD SEARCH,
-    # STRICT CLASSIFIER -- committed on the leg where it did the most damage.
-    # A narrow search cannot be repaired downstream: a filing that is never
-    # retrieved is never classified, and its absence looks exactly like a
-    # company that had no rejection to announce.
+    # Re-harvesting all twelve years with the bare phrase produced EXACTLY the
+    # same verified events -- 2019:12, 2020:16, 2021:16, 2022:4, 2023:9,
+    # 2024:6, 2025:3, 2026:5, identical in every year. Tripling search recall
+    # added nothing, because every filing that ANNOUNCES a rejection uses one
+    # of those four constructions, and the other 93 were risk factors,
+    # historical references and MD&A discussion -- precisely what classify.py
+    # exists to reject.
     #
-    # The approval side was measured the same way and is near-saturated: three
-    # alternative phrasings returned 0 new filings between them and a fourth
-    # returned 5, so the asymmetry was in the search, not in the language.
+    # Two things are worth keeping from that. The bare phrase is retained
+    # because breadth costs only fetches and protects against phrasings that
+    # have not appeared yet. And the agreement between an independent narrow
+    # search and a strict classifier over a threefold wider net is the best
+    # evidence yet that classify.py is doing what it claims -- so the low
+    # capture of APPROVALS against Drugs@FDA is not a search failure, it is
+    # materiality: a large sponsor does not file an 8-K for one routine
+    # approval among fifty products.
     "CRL": ['"complete response letter"',
             '"CRL from the FDA"'],
     "APPROVAL": ['"approved by the U.S. Food and Drug Administration"',

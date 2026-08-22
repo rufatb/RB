@@ -33,11 +33,17 @@ combines them against the day-68 measurement, and the hinge is one number:
                      to be ~59% likely just to break even. Most catalyst
                      "lottery tickets" do not survive being asked that.
 
-WHAT THIS STILL DELIBERATELY DOES NOT DO. It does not estimate a probability of
-approval, and that refusal is now a measured position rather than an absence.
-8-K filings supply the numerator (64 rejections) and not the denominator, so a
-base rate computed here would be fabricated. The screen states the probability
-you would have to hold; the conviction stays with the reader.
+AND SINCE DAY-71 THE BREAKEVEN IS COMPARED, not just stated. This module used
+to say a base rate "would be fabricated" because 8-Ks give the numerator and
+not the denominator. `baserate.py` disproved that by drawing BOTH legs from one
+harvest: for sponsors whose decision is material enough to announce either way,
+P(rejection) is 21% [16%, 27%] over 202 decisions. So a 89% breakeven now reads
+as "this name would have to be 3.3-5.6x worse than average" — a claim about the
+DRUG, which is the claim a reader should be made to state out loud.
+
+WHAT IT STILL REFUSES TO DO is attach a probability to THIS name. The base rate
+is unconditional and is labelled so everywhere it appears; nothing here knows
+anything about the molecule.
 
 HOW TO READ THE STANCE LINE. It describes the SETUP and nothing else, and it
 reads the implied move as MATERIALITY rather than as value — a +/-4% print is
@@ -345,10 +351,10 @@ def against_base_rate(be: float | None) -> list:
                 f"{lo_mult:.1f}-{hi_mult:.1f}x more likely to be rejected than "
                 f"the average decision — that is a claim about the DRUG, and "
                 f"it is the claim to argue")
-    return [f"against the measured base rate of {span} "
-            f"(n={s['n']:,} announced decisions, day-71), {tail}. The base "
-            "rate is UNCONDITIONAL — it is the prior you argue away from, not "
-            "an answer for this name"]
+    return [f"against the measured base rate of {span} for "
+            f"{s.get('population', 'announced decisions')} "
+            f"(n={s['n']:,}, day-71), {tail}. That rate is UNCONDITIONAL — the "
+            "prior you argue away from, not an answer for this name"]
 
 
 def verdict(row: dict, vote: dict | None = None) -> dict:

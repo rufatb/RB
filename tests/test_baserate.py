@@ -296,3 +296,51 @@ def test_a_transient_lookup_failure_is_never_cached_as_a_form_verdict():
     finally:
         B.urllib.request.urlopen = orig
     assert cache == {}
+
+
+def test_summary_serves_the_screening_population_not_the_blended_one():
+    """A name with a PDUFA worth screening is one for which the decision is
+    material, so BOTH its outcomes get announced. That is the only stratum
+    whose two legs are captured symmetrically."""
+    import json as _j
+    import tempfile
+    d = {"computed": "2026-08-22",
+         "raw": {"n": 431, "n_crl": 101, "p": 0.234, "lo": 0.197, "hi": 0.277},
+         "corrected": {"p": 0.017},
+         "strata": {"single-asset": {"n": 202, "n_crl": 42, "p": 0.208,
+                                     "lo": 0.16, "hi": 0.27, "n_sponsors": 163},
+                    "serial filer": {"n": 69, "n_crl": 12, "p": 0.174,
+                                     "lo": 0.10, "hi": 0.28, "n_sponsors": 9}}}
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        _j.dump(d, f)
+        p = f.name
+    s = B.summary(p)
+    assert s["population"] == "single-asset sponsors"
+    assert abs(s["p"] - 0.208) < 1e-9 and s["n"] == 202
+
+
+def test_a_thin_stratum_falls_back_to_the_blended_figure_and_says_so():
+    """Better a wider population than a rate built on twenty decisions."""
+    import json as _j
+    import tempfile
+    d = {"computed": "2026-08-22",
+         "raw": {"n": 431, "n_crl": 101, "p": 0.234, "lo": 0.197, "hi": 0.277},
+         "corrected": {"p": 0.017},
+         "strata": {"single-asset": {"n": 12, "n_crl": 3, "p": 0.25,
+                                     "lo": 0.05, "hi": 0.60, "n_sponsors": 9}}}
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        _j.dump(d, f)
+        p = f.name
+    s = B.summary(p)
+    assert s["population"] == "all announced decisions" and s["n"] == 431
+
+
+def test_the_report_distinguishes_the_two_questions_the_ends_answer():
+    """They are not two estimates of one quantity."""
+    out = _rendered({"fda_total": 1556, "fda_public": 499, "found": 29,
+                     "rate": 0.058, "misses": []},
+                    {"n_appr_adj": 5678.0, "p": 0.017, "capture": 0.058})
+    flat = " ".join(out.split())
+    assert "not two estimates of one quantity" in flat
+    assert "was ANNOUNCED in an 8-K" in flat
+    assert "including every routine approval nobody announced" in flat

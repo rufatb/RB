@@ -488,17 +488,48 @@ def render(raw: dict, cap: dict, corr: dict, start: str, end: str,
               "lands it in",
               "  the infrequent bucket. Read it as a stratification, not a "
               "multiplier."]
-    L += ["", "-" * 74, "HOW TO READ IT", ""]
-    if corr:
-        lo, hi = min(corr["p"], raw["p"]), max(corr["p"], raw["p"])
-        L.append(f"  Take {lo:.0%}-{hi:.0%} as the range for a decision drawn at "
-                 "random from this")
-        L.append("  population. The corrected end assumes rejections are "
-                 "captured more")
-        L.append("  completely than approvals, which is likely and is not "
-                 "proven.")
+    L += ["", "-" * 74, "WHICH NUMBER TO USE, and why they differ", ""]
+    L += ["  The floor and the ceiling are not two estimates of one quantity.",
+          "  They answer different questions:",
+          "",
+          f"    {raw['p']:.0%}   P(rejection | the decision was ANNOUNCED in an "
+          "8-K)",
+          "           Both legs of this are complete. The rejection leg "
+          "replicated",
+          "           exactly under a threefold wider search (day-71), and the",
+          "           approvals it misses are ones no 8-K was ever filed for.",
+          "",
+          "     ~2%   approaches P(rejection | ANY original FDA decision), "
+          "including",
+          "           every routine approval nobody announced. A larger "
+          "population",
+          "           and a different question.",
+          ""]
+    single = (strat or {}).get("single-asset") or {}
+    if single.get("n"):
+        L += [f"  FOR SCREENING, USE {single['p']:.0%} "
+              f"[{single['lo']:.0%}, {single['hi']:.0%}] — the single-asset "
+              "stratum",
+              f"  ({single['n_crl']}/{single['n']} decisions across "
+              f"{single['n_sponsors']} sponsors). A name with a PDUFA date "
+              "worth",
+              "  screening is a name for which the decision is material, so "
+              "BOTH its",
+              "  outcomes would be announced. That is the population whose two "
+              "legs are",
+              "  captured symmetrically, which is the only property that makes "
+              "a ratio",
+              "  mean anything.",
+              "",
+              "  It is biased UPWARD by one mechanism: a developer whose only "
+              "drug was",
+              "  rejected may never file again, so rejections are "
+              "over-represented among",
+              "  infrequent filers by construction. Treat it as the high end "
+              "of a fair",
+              "  reading."]
     L += ["",
-          "  It is UNCONDITIONAL. A first-cycle application with a clean "
+          "  UNCONDITIONAL either way. A first-cycle application with a clean "
           "advisory",
           "  committee is not the average decision, and neither is a "
           "resubmission",
@@ -509,7 +540,7 @@ def render(raw: dict, cap: dict, corr: dict, start: str, end: str,
           "harvest,",
           "  and they are approved more often — which pushes this estimate "
           "DOWN, the",
-          "  opposite way from any undercount of approvals.",
+          "  opposite way from the circularity above.",
           "-" * 74]
     return "\n".join(L)
 
@@ -563,10 +594,20 @@ def summary(path: str = OUT) -> dict | None:
     if not d or not d.get("raw", {}).get("n"):
         return None
     raw = d["raw"]
-    ends = [raw["p"]] + ([d["corrected"]["p"]] if d.get("corrected", {}).get("p")
-                         else [])
-    return {"lo": min(ends), "hi": max(ends), "n": raw["n"],
-            "n_crl": raw["n_crl"], "wilson": (raw["lo"], raw["hi"]),
+    # THE SCREENING POPULATION, not the blended one. A name with a PDUFA date
+    # worth screening is a name for which the decision is material, so both its
+    # outcomes would be announced -- and that is the only stratum whose two
+    # legs are captured symmetrically. The blended figure mixes in serial
+    # filers who announce their rejections and not their routine approvals,
+    # which is precisely the asymmetry that makes a ratio meaningless.
+    single = (d.get("strata") or {}).get("single-asset") or {}
+    if single.get("n", 0) >= 50:
+        return {"lo": single["lo"], "hi": single["hi"], "p": single["p"],
+                "n": single["n"], "n_crl": single["n_crl"],
+                "population": "single-asset sponsors",
+                "computed": d.get("computed"), "audited": True}
+    return {"lo": raw["lo"], "hi": raw["hi"], "p": raw["p"], "n": raw["n"],
+            "n_crl": raw["n_crl"], "population": "all announced decisions",
             "computed": d.get("computed"),
             "audited": bool(d.get("corrected", {}).get("p"))}
 

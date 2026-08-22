@@ -3153,6 +3153,106 @@ printed a false sentence live: IONS at ±16% was told it was "smaller than the
 median rejection — half it, and three times it. A threshold that cannot be
 stated truthfully in the line it triggers is the wrong threshold.
 
+## Day-71: P(CRL) — the number every breakeven was missing
+
+`screen.py` could compute the honest half of the question and had to stop:
+*"the put costs 13.6% of spot, so it breaks even if a rejection is ~89% likely."*
+That sentence has no ending. A reader with no base rate cannot tell whether 89%
+is absurd or routine.
+
+**Why no free base rate existed.** The FDA does not publish rejections.
+Drugs@FDA — the agency's own complete record, free, no key — was checked
+directly: **192,337 approvals, 1,205 tentative approvals, zero rejections of any
+kind**. A complete response letter is a private communication to the sponsor.
+The only public trace is the sponsor disclosing it, which forces the numerator
+to EDGAR — and forces the denominator there too, because a ratio whose top and
+bottom come from different populations is not a rate.
+
+### The measurement
+
+Both legs from one harvest, one classifier, one window (2015–2026):
+
+| | count |
+|---|---|
+| rejections announced | 101 |
+| approvals announced | 330 |
+| **decisions** | **431** |
+| **RAW P(CRL)** | **23.4%**, 95% Wilson [19.7%, 27.7%] |
+
+### The audit, and the wrong turn it caused
+
+The approval leg was audited against Drugs@FDA: of 1,556 original NDA/BLA
+approvals, 499 went to SEC registrants, and the harvest found **29 — 6%
+capture.** That looked like a broken approval harvest, so the phrase lists were
+tested for recall. The result inverted the diagnosis:
+
+    2023, approvals   5 shipped phrases -> 337 filings
+                      3 alternatives    -> 0 NEW between them
+                      1 alternative     -> 5 NEW          (saturated)
+    2023, rejections  4 shipped phrases -> 35 filings
+                      the BARE phrase   -> 128, of which 93 NEW
+
+So the CRL search looked badly narrow, and it was re-run across all twelve
+years with the bare phrase. **It produced exactly the same verified events** —
+2019:12, 2020:16, 2021:16, 2022:4, 2023:9, 2024:6, 2025:3, 2026:5, identical in
+every year, 102 CRLs and 436 events either way.
+
+Tripling search recall added nothing, because every filing that ANNOUNCES a
+rejection uses one of those four constructions; the other 93 were risk factors,
+historical references and MD&A discussion — exactly what `classify.py` exists to
+reject. **The agreement between an independent narrow search and a strict
+classifier over a threefold wider net is the best evidence yet that the
+classifier does what it claims.**
+
+Which resolves the audit: the missing approvals are not a search failure. They
+are **materiality**. A large sponsor does not file an 8-K when one of fifty
+products gets a routine approval — those decisions are absent from the
+population by construction, not missing from the harvest.
+
+### Two numbers that answer two different questions
+
+| | |
+|---|---|
+| **23.4%** | P(rejection \| the decision was ANNOUNCED in an 8-K). Both legs complete. |
+| **~1.7%** | approaches P(rejection \| ANY original FDA decision), including every routine approval nobody announced. A different, larger population. |
+
+The second was called "CORRECTED", and the word was doing the arguing. It is the
+**floor**; the raw ratio is the **ceiling**.
+
+### What the screen uses
+
+**21% [16%, 27%]** — the single-asset stratum, 42/202 decisions across 163
+sponsors. A name with a PDUFA date worth screening is a name for which the
+decision is material, so **both** its outcomes would be announced. That is the
+only population whose two legs are captured symmetrically, which is the sole
+property that makes a ratio mean anything.
+
+Biased **upward** by one mechanism, stated in the output: a developer whose only
+drug was rejected may never file again, so rejections are over-represented among
+infrequent filers by construction.
+
+### The payoff
+
+The breakeven becomes a comparison, live on the open ZYME position:
+
+> HEDGE — the put covering the date costs 13.6% of spot, so it pays for itself
+> if a rejection is more than ~89% likely at the measured median.
+> **Against the measured base rate of 16%–27% for single-asset sponsors
+> (n=202), the premium only pays if this name is 3.3–5.7x more likely to be
+> rejected than the average decision** — that is a claim about the DRUG, and it
+> is the claim to argue.
+
+Across the current screen: JAZZ 1.0–1.7x (at the base rate), CYTK 2.1–3.6x,
+ZYME 3.3–5.7x, PRAX 3.6–6.2x.
+
+**One bias caught in the audit itself.** The first version asked only "is this
+sponsor an SEC registrant", and the approvals it reported as missed were Takeda,
+Novartis, AstraZeneca and Sanofi — all registrants, none of which has ever filed
+an 8-K, because a foreign private issuer reports on 20-F and 6-K. Counting them
+would have understated capture, inflated the correction, and pushed P(CRL) down
+for a reason having nothing to do with the FDA. A form code told them apart, the
+same way it separated Canadian issuers on day-70.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
