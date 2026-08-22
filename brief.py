@@ -17,7 +17,7 @@ needs them —
 
     positions   fact. no prediction at all.
     calendar    fact. a date a company disclosed; no probability implied.
-    intraday    MEASURED, NO EDGE. 34 rejections; gradient boosting reaches
+    intraday    MEASURED, NO EDGE. 36 rejections; gradient boosting reaches
                 AUC 0.5022 on 122,234 rows where the same harness detects a
                 planted 52% coin at z=15. It prints its live record next to
                 every pick so the number is never out of sight.
@@ -236,7 +236,8 @@ def pair_reasoning(res: dict, side: str, cfg: dict) -> list:
     return out
 
 
-def render_intraday(res: dict, cfg: dict, shadow: bool) -> tuple:
+def render_intraday(res: dict, cfg: dict, shadow: bool,
+                    no_net: bool = False, today: dt.date | None = None) -> tuple:
     lr = res.get("live_record") or {}
     L = ["▎INTRADAY PAIR — the 9:46 book"]
     if res.get("too_early"):
@@ -274,6 +275,18 @@ def render_intraday(res: dict, cfg: dict, shadow: bool) -> tuple:
             L.append(f"      + {x['t']}{sh} (second leg — SPLITS the same half, "
                      "does not add exposure)")
         opened.append(p["t"])
+    # The one thing day-70 measured about this universe. It cannot improve the
+    # direction call -- nothing can, that is settled -- but a name that filed a
+    # 6-K yesterday hands you the same coin flip with a bigger stake on it, and
+    # the reader is entitled to know that before sizing.
+    if opened and not no_net:
+        try:
+            import sixk as _sk
+            L += _sk.render(_sk.check(opened, today or dt.date.today()),
+                            today or dt.date.today())
+        except Exception as e:
+            L.append(f"   ⚠ 6-K filing check unavailable ({type(e).__name__}) "
+                     "— treat the picks as UNCHECKED, not as clean")
     if shadow:
         L.append("   ⛔ SHADOW — published and scored, NO capital. The record "
                  "keeps accruing at zero cost.")
@@ -348,7 +361,8 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         # permanent record — a board printed but never recorded would stop the
         # ledger accruing on the day this shipped, silently.
         st = r945.publish(res, cfg)
-        intraday, pair_note = render_intraday(res, cfg, shadow)
+        intraday, pair_note = render_intraday(res, cfg, shadow,
+                                              no_net, today)
         for e in st["errors"]:
             intraday += f"\n   ⚠ {e}"
         if st["already"]:

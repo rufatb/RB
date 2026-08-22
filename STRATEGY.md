@@ -3027,6 +3027,132 @@ question day-43 asked; (2) what is the ACTUAL CRL drawdown distribution, versus
 what cash-floor arguments assume; (3) how much of the documented run-up is
 already arbitraged away.
 
+## Day-70: the intraday side finally gets NEW information — rejection #36, and one adopted risk flag
+
+**The habit worth breaking.** Thirty-five rejections on the intraday side share
+one property: every one was a new function of the SAME three numbers — morning
+return, overnight gap, volume. Gradient boosting reached AUC 0.5022 on 122,234
+rows where the same harness detects a planted 52% coin at z=15. That stopped
+being a modelling problem a long time ago. Another model on those features is
+not a plan, it is a habit.
+
+The catalyst side broke out of exactly this by using an EVENT rather than a
+price feature, and the break was decisive (CRL vs random: -15.0pp, t=-3.41). So
+day-70 applies the lesson to the intraday universe.
+
+**The source nobody had looked for.** `earnings.py` has carried the admission
+since day-64 that there is "no free source of historical announcement dates for
+TSX names". That was true of Yahoo and false of EDGAR: a Canadian issuer
+cross-listed in the US furnishes a **6-K** for material news, and the SEC
+submissions API serves every filing date, historically, free.
+
+**The join is where this nearly died.** Matching TSX tickers to CIKs by root
+symbol is a trap — AC.TO is Air Canada, but AC in the US is Associated Capital
+Group. ARE.TO matched Alexandria Real Estate. CCO.TO (Cameco) matched Clear
+Channel Outdoor. ABX.TO matched Abacus Global Management. **Forty-one names
+matched a real CIK belonging to a different company**, and joining those filing
+dates onto TSX prices would have produced a clean-looking dataset made of pure
+noise.
+
+The guard is one form code: Canadian issuers report under MJDS on 40-F, and a
+US domestic filer never does. All forty-one were caught by it.
+
+**A second bug the guard exposed.** `build_catalyst.ticker_map` builds
+CIK → ticker, but the SEC's file has one row per SECURITY — Royal Bank lists
+common and several preferred series under one CIK, so the dict collapsed them
+and the last row won. 7,998 tickers survived out of 10,403, and the casualties
+included **RY, TD, ENB and ABX**. Inverting a lossy map does not recover what it
+lost; `sixk.us_ticker_map()` reads the source file and keys by ticker. Coverage
+went 56 names → **78 names**, 3,178 filings → **4,537**.
+
+**Same-day is not the test, for a causal reason rather than a statistical one.**
+The API gives a filing DATE and no timestamp, so a 6-K furnished at 16:30 tags a
+session whose leg closed at 16:00 — and worse, a company may file BECAUSE the
+stock moved, letting the outcome cause the label. The primary definition is the
+first session STRICTLY AFTER the filing date. (Same-day duly came in at +1.88pp,
+z=+2.22 — the reverse-causality direction, and still under the bar.)
+
+**Pre-registered:** adopt only at |z| ≥ 3 under a SESSION-CLUSTERED bootstrap
+(Canadian banks report on the same mornings and share that day's market
+direction; treating those rows as independent would inflate any z by √cluster),
+with a passing placebo and a passing positive control.
+
+| | event sessions | other sessions | difference | z |
+|---|---|---|---|---|
+| continuation of the morning move | 48.43% | 48.66% | **-0.23pp** | **-0.28** |
+| size of the move, either way | 1.11% | 0.97% | **+0.140pp** | **+6.35** |
+
+*positive control detected; placebo (random sessions, same names, same counts)
++0.64pp at z=+0.72; 52,919 rows across 78 names.*
+
+**REJECTION #36 — direction.** A 6-K filing is real, dated, and free, and the
+session after one is not one basis point more predictable in direction than any
+other session of the same name.
+
+**ADOPTED — magnitude, as a RISK FLAG and never as a signal.** The same rows
+move measurably further either way. More risk at no more edge is not a neutral
+change; at a coin-flip direction, added variance is pure cost.
+
+**Labelled honestly:** the magnitude test was written AFTER seeing the |r1|
+column in the first run. It was not pre-registered and does not get called a
+discovery. Two things earn it a place anyway — the mechanism is the least exotic
+one in finance (news arrives, the stock moves more), and z=+6.35 survives any
+sane correction for having asked two questions instead of one.
+
+Shipped as `sixk.py`, printed under the intraday pair, warning and never
+blocking — for the same reason `earnings.py` warns: no flag rescues a coin flip,
+but a reader is entitled to know they are in the wider half of the distribution
+before they size it.
+
+## Day-70: the catalyst screen stops printing inputs and starts giving a verdict
+
+The screen had been printing implied move, skew, cash per share and runway as
+four separate lines and leaving the reader to combine them. That is a data dump
+with good manners — it pushes the hardest step, the one where mistakes cost
+money, onto the person with the least context about how each number was derived.
+
+**The hinge is one number.**
+
+    breakeven P(CRL) = put cost / |measured median rejection|
+
+A put at 9% of spot against the measured -15.2% median needs a rejection to be
+~59% likely just to break even. Asked that way, most catalyst "lottery tickets"
+die on the spot. It is an UPPER bound — it uses the median while the left tail
+is much fatter (p10 -57.5%) — and erring toward "this is expensive" is the safe
+direction for a screen that must not talk anyone into a position.
+
+**The spine of every verdict is the day-68 asymmetry, measured here:** a
+rejection is violent and unpriced (-15.2% median, -15.0pp vs random, t=-3.41,
+n=64) while an approval FAILS the same placebo gate (t=+0.98, median -2.52% vs
+random -0.54%). Read together there is **no probability of approval at which
+holding a long through the print is positive on this evidence** — the winning
+outcome pays nothing distinguishable from a random three-day window while the
+losing one takes 15%. A long into a PDUFA is selling insurance, not buying a
+lottery ticket, and the screen now says so on every name.
+
+**What it still refuses to do is supply P(CRL).** 8-K filings give the numerator
+(64 rejections) and not the denominator, so a base rate computed here would be
+fabricated. The verdict states the probability you would have to hold; the
+conviction stays with the reader.
+
+**The quote is checked before it is trusted**, because the verdict turns on one
+put price and a stale quote does not produce a slightly-off call, it produces a
+confident wrong one. Prices now come from the MID of a two-sided quote, with
+`lastPrice` as a labelled fallback. Not theoretical: ZYME's ATM put was **24.6%
+of spot on last trades and 13.6% on mids**, moving the breakeven from "no
+probability makes the median case pay" to ~89%. Three checks gate the verdict —
+put-call parity (an arbitrage identity, not a model: it holds whatever anyone
+thinks the FDA will do, so a gap above 3% of spot is a statement about the
+DATA), no two-sided quote, and zero open interest — and where any fails the call
+becomes PRICING UNRELIABLE rather than a rung on the ladder.
+
+**And two thresholds that were round numbers became measured ones.** The
+materiality cutoffs were 0.20 and 0.45, with nothing behind them, and one
+printed a false sentence live: IONS at ±16% was told it was "smaller than the
+15.2% median rejection", which it is not. Both are now multiples of the measured
+median rejection — half it, and three times it. A threshold that cannot be
+stated truthfully in the line it triggers is the wrong threshold.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
