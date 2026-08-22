@@ -2708,6 +2708,61 @@ Standing: pair 30/66 (45%%), decisive 26/60 (43%%), book-weighted
 -0.152%%/session (6/16 positive), relative capture -0.123%%/leg with 20/51
 beating the tide. Thirty-one rejections, three adoptions.
 
+## Day-50: 4/4, and for once the reason is the good one
+
+| leg | side | move | capture | tide-rel | rank | verdict |
+|---|---|---|---|---|---|---|
+| SU.TO | LONG | +0.159%% | +0.159%% | **+0.677%%** | 8/21 | HIT |
+| AEM.TO | LONG | +0.013%% | +0.013%% | +0.531%% | 9/21 | hit (SCRATCH) |
+| TD.TO | SHORT | -1.219%% | **+1.219%%** | **+0.701%%** | 18/21 | HIT |
+| MFC.TO | SHORT | -0.728%% | **+0.728%%** | +0.210%% | 14/21 | HIT |
+
+**NET +$267.99.** Tide -0.518%%, and the attribution is the point:
+
+```
+net exposure  -0.0007   (hedged, as designed)
+TIDE          +0.0004%%  (essentially nothing)
+SELECTION     +0.5356%%  <- all of it
+```
+
+**All four legs beat the tide**, three by more than half a percent. This is the
+best SELECTION day recorded, and it completes a three-day set that shows why the
+day-45 attribution was worth building:
+
+| day | NET | hedge | TIDE | SELECTION | the honest reading |
+|---|---|---|---|---|---|
+| 47 | +$73 | one-legged | **+0.666%%** | -0.518%% | profit was unhedged luck |
+| 49 | -$401 | working | -0.001%% | **-0.802%%** | picks were simply wrong |
+| 50 | +$268 | working | +0.000%% | **+0.536%%** | picks were simply right |
+
+Three consecutive sessions where the sign of the P&L and the sign of the SKILL
+disagreed, agreed, and agreed again — and only the decomposition can tell them
+apart. The headline number could not.
+
+### Two things not to over-read
+**TD short was the day's best call and had no evidence behind it.** It was
+shorted after a +0.83%% first fifteen minutes, and the header records that the
+"ramps fade" claim was REFUTED on 5,160 ticker-sessions (fade rate 42.7-50.5%%
+across all four quarters; ramps mildly CONTINUE). It worked. One session does
+not revive a claim that died on a year of data, and writing it up as though it
+did is the exact failure mode this file exists to prevent.
+
+**AEM is an economic scratch** (+0.013%%, $1.32). It scores as a hit in the sign
+column. The honest count is three real hits, not four — which is what
+`decisive_line` was added on day-35 to say out loud.
+
+### NOTHING ADOPTED
+A 4/4 day is when the pull to "lock in what worked" is strongest, and this
+project's false positives were all born exactly there: day-9's 68%% selector,
+day-22's 2.7x short asymmetry, day-29's selectivity claim. Each was vivid,
+small, and killed by a wider sample.
+
+One great day moved the pair line from 45%% to 49%%. It is still a coin flip.
+
+Standing: pair 34/70 (49%%), decisive 29/63 (46%%), book-weighted
+-0.111%%/session (7/17 positive), relative capture -0.087%%/leg with 26/60
+beating the tide. Thirty-one rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
