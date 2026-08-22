@@ -286,7 +286,8 @@ def render_record(rows: list) -> str:
 
 
 # ───────────────────────────────────────────────────────────────── compose
-def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
+def build(cfg_path: str, shadow: bool, no_net: bool = False,
+          days_back: int = 4) -> str:
     from dashboard import load_config
     cfg = load_config(cfg_path)
     tz = ZoneInfo(cfg.get("exchange_tz", "America/Toronto"))
@@ -374,6 +375,35 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
         parts.append(f"▎FDA DECISION CALENDAR\n   ⚠ unavailable "
                      f"({type(e).__name__}) — the rest of the brief stands")
 
+    # WHAT CHANGED — filings since the last brief, for held and watched names.
+    # A position waiting weeks on a decision is not static; the company keeps
+    # filing, and some of those filings matter more than the decision.
+    if not no_net:
+        try:
+            import newsflow as _nf
+            from build_catalyst import ticker_map
+            # ticker_map is CIK -> ticker (that is what the SEC file provides);
+            # invert it for lookups by symbol. The calendar already carries a
+            # CIK per row, so prefer that and fall back to the inverted map.
+            by_ticker = {v: k for k, v in ticker_map(SCRATCH).items()}
+            watch = {}
+            for l in book["legs"]:
+                watch[l["ticker"]] = by_ticker.get(l["ticker"], "")
+            for c in (cal or []):
+                t = c.get("ticker")
+                if not t:
+                    continue
+                if 0 <= (dt.date.fromisoformat(c["date"]) - today).days <= 45:
+                    watch[t] = c.get("cik") or by_ticker.get(t, "")
+            pairs = sorted(watch.items())
+            if pairs:
+                since = today - dt.timedelta(days=days_back)
+                parts.append(_nf.render(_nf.gather(pairs, since), since, today))
+        except Exception as e:
+            parts.append(f"\u258e WHAT CHANGED\n   \u26a0 filing check "
+                         f"unavailable ({type(e).__name__}) — treat this as "
+                         "UNKNOWN, not as quiet")
+
     if intraday:
         parts.append(intraday)
     parts.append(render_record(ledger.load()))
@@ -386,10 +416,12 @@ def main(argv=None) -> int:
     ap.add_argument("--config", default="config.yaml")
     ap.add_argument("--shadow", action="store_true",
                     help="print the pair but claim no capital")
+    ap.add_argument("--days-back", type=int, default=4,
+                    help="lookback for the WHAT CHANGED filing scan")
     ap.add_argument("--offline", action="store_true",
                     help="positions/record only; no network")
     a = ap.parse_args(argv)
-    print(build(a.config, a.shadow, a.offline))
+    print(build(a.config, a.shadow, a.offline, a.days_back))
     return 0
 
 
