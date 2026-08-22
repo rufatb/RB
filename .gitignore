@@ -7,3 +7,6 @@ venv/
 brief.log
 .scan_state.json
 .DS_Store
+
+# transient run logs — these mutate on every run and are not history
+.runlogs/
