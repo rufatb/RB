@@ -2763,6 +2763,71 @@ Standing: pair 34/70 (49%%), decisive 29/63 (46%%), book-weighted
 -0.111%%/session (7/17 positive), relative capture -0.087%%/leg with 26/60
 beating the tide. Thirty-one rejections, three adoptions.
 
+## Day-51: should each pick carry its own suggested HOLD DURATION? — REJECTED (#32)
+
+Asked directly: add a suggested duration so the book can capture event/swing
+moves instead of being capped at intraday. Four prior measurements bear on it
+(day-24 overnight, day-32 event swings, day-36 exit time, day-38 fixed 3d/5d
+holds) but **all four applied the SAME horizon to every trade**. Whether the
+right horizon is PREDICTABLE PER PICK had never been asked, and that is the
+only version of the idea that justifies a duration field.
+`validate_horizon.py`, 38,402 qualified picks over 719 walk-forward sessions.
+
+### A — does holding longer make the DIRECTION more often right?
+
+| hold | hit (raw) | **hit (tide-relative)** | raw cap | **REL cap** | std | worst |
+|---|---|---|---|---|---|---|
+| to close | 49.6%% | **49.6%%** | +0.0006 | -0.0025 | 1.314 | -16.23%% |
+| +1 day | 50.0%% | **50.0%%** | +0.0231 | +0.0012 | 2.667 | -80.43%% |
+| +2 days | 50.2%% | **49.8%%** | +0.0224 | -0.0035 | 3.489 | -80.02%% |
+| +3 days | 50.2%% | **49.9%%** | +0.0313 | -0.0114 | 4.204 | -80.33%% |
+| +5 days | 50.4%% | **49.7%%** | +0.0592 | +0.0084 | 5.385 | -79.52%% |
+
+**No.** Raw hit rate creeps 49.6%% -> 50.4%%, and every point of that is drift:
+tide-relative accuracy is FLAT at 49.6-50.0%% across all five horizons. The raw
+column is measuring the market, not the prediction — day-38's finding, now
+visible in the accuracy column rather than just the return column.
+
+Meanwhile the risk is not flat at all. Volatility **4x** (1.314 -> 5.385) and
+the worst trade goes from **-16%% to -80%%**. Zero return improvement, five times
+the tail.
+
+### C — is the right horizon predictable?
+Correlation between every 9:45 feature and the advantage of holding three extra
+days: **max |corr| = 0.026** (`ret5`). Everything else is under 0.02. Nothing
+knows which picks deserve a longer hold.
+
+### D — the oracle bound, and the mistake I nearly shipped
+Perfect per-pick horizon selection would earn **+2.3453%%/trade** against
++0.0084%% for the best fixed horizon — a gap of **+2.34%%**. The first version of
+this script printed *"the gap is large; a predictor could matter"*, which is
+wrong, and would have justified building the feature.
+
+**Taking the maximum of five noisy, positively-correlated draws exceeds their
+mean BY CONSTRUCTION**, signal or no signal. Recomputing the oracle on
+multivariate noise with the same means and covariance:
+
+```
+REAL    oracle gap  +2.3369%%/trade
+PLACEBO oracle gap  +2.8510%%/trade   (20 draws, sd 0.0117)
+real / placebo = 0.82x
+```
+
+**The real gap is SMALLER than pure noise produces.** The entire "prize" is the
+expected maximum of five noisy draws. There is nothing for any predictor to
+find, at any skill level — the question is closed without needing a model.
+
+The placebo is now built into the script and the verdict logic keys off the
+EXCESS over it, so the naive reading cannot recur.
+
+### On "event trade capture" specifically
+Real event capture requires knowing WHEN events occur — earnings, guidance,
+news. This engine has no such feed (day-43's binding gap). Without one, a longer
+hold is not event capture; it is a longer random exposure to whatever happens.
+A duration field cannot manufacture event awareness out of OHLCV bars.
+
+Thirty-two rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
