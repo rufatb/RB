@@ -262,12 +262,12 @@ def same_company(a: str, b: str) -> bool:
 
 
 def sec_registrant_names(cache: str = SCRATCH) -> list:
-    """Company names the SEC lists as current registrants.
+    """(name, CIK) for every current SEC registrant.
 
-    Used only to answer one question: is this FDA sponsor the kind of entity
-    that would have filed an 8-K at all? A private sponsor's absent 8-K is not
-    a miss by the harvest, and counting it as one would manufacture a coverage
-    problem that does not exist.
+    Used to answer one question: is this FDA sponsor the kind of entity whose
+    approval SHOULD appear in an 8-K harvest? A private sponsor's absent 8-K is
+    not a miss, and counting it as one would manufacture a coverage problem
+    that does not exist.
     """
     p = os.path.join(cache, "company_tickers.json")
     if not os.path.exists(p):
@@ -275,7 +275,39 @@ def sec_registrant_names(cache: str = SCRATCH) -> list:
             "https://www.sec.gov/files/company_tickers.json",
             headers={**H, "Accept": "application/json"}), timeout=60).read()
         json.dump(json.loads(raw), open(p, "w"))
-    return [v.get("title", "") for v in json.load(open(p)).values()]
+    return [(v.get("title", ""), str(v.get("cik_str", "")))
+            for v in json.load(open(p)).values()]
+
+
+FORM_CACHE = os.path.join(SCRATCH, "files_8k.json")
+
+
+def files_8k(cik: str, cache: dict) -> bool:
+    """Does this registrant file 8-Ks at all?
+
+    THE BIAS THIS EXISTS TO REMOVE, caught while auditing a live run. The first
+    version asked only "is the sponsor an SEC registrant", and the misses it
+    reported were Takeda, Novartis, AstraZeneca and Sanofi — all registrants,
+    none of which has ever filed an 8-K in its life. A foreign private issuer
+    reports on 20-F and 6-K; Form 8-K is a domestic filer's obligation.
+
+    Counting their approvals as ones the harvest SHOULD have found would have
+    understated the capture rate, which would have inflated the correction,
+    which would have pushed P(CRL) down by a mechanism with nothing to do with
+    the FDA. The same logic in reverse to `sixk.py`, where a form code told
+    Canadian issuers apart from US ones.
+    """
+    if cik in cache:
+        return cache[cik]
+    try:
+        sub = json.loads(urllib.request.urlopen(urllib.request.Request(
+            f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json",
+            headers={**H, "Accept": "application/json"}), timeout=30).read())
+    except Exception:
+        return False              # NOT cached: a transient error is not a fact
+    forms = sub.get("filings", {}).get("recent", {}).get("form", [])
+    cache[cik] = any(f.startswith("8-K") for f in forms)
+    return cache[cik]
 
 
 def capture_rate(my_appr: list, fda: list, registrants: list,
@@ -293,25 +325,33 @@ def capture_rate(my_appr: list, fda: list, registrants: list,
     # Only registrants sharing at least one distinguishing token can possibly
     # match, and that is a tiny candidate list for a real company name.
     index: dict = {}
-    for n in registrants:
+    for n, cik in registrants:
         t = tokens(n)
         if not t:
             continue
         for w in t:
-            index.setdefault(w, []).append(t)
+            index.setdefault(w, []).append((t, cik))
+
+    fcache = {}
+    if os.path.exists(FORM_CACHE):
+        try:
+            fcache = json.load(open(FORM_CACHE))
+        except Exception:
+            fcache = {}
 
     def is_public(sponsor: str) -> bool:
+        """Registrant AND a domestic 8-K filer. Both halves are load-bearing."""
         ts = tokens(sponsor)
         if not ts:
             return False
         seen = set()
         for w in ts:
-            for r in index.get(w, ()):
-                key = id(r)
-                if key in seen:
+            for r, cik in index.get(w, ()):
+                if cik in seen:
                     continue
-                seen.add(key)
-                if ts <= r or r <= ts or len(ts & r) >= 2:
+                seen.add(cik)
+                if (ts <= r or r <= ts or len(ts & r) >= 2) and \
+                        files_8k(cik, fcache):
                     return True
         return False
 
@@ -332,6 +372,10 @@ def capture_rate(my_appr: list, fda: list, registrants: list,
             found += 1
         elif len(misses) < 12:
             misses.append(f"{a['date']} {a['sponsor'][:34]}")
+    try:
+        json.dump(fcache, open(FORM_CACHE, "w"))
+    except Exception:
+        pass
     rate = found / public if public else float("nan")
     return {"fda_total": len(fda), "fda_public": public, "found": found,
             "rate": rate, "misses": misses}

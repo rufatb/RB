@@ -11,6 +11,23 @@ import json
 import baserate as B
 
 
+class _domestic:
+    """Every registrant in these fixtures files 8-Ks. The foreign-issuer case
+    has its own test; stubbing here keeps the other tests off the network and
+    focused on the matching logic they are about."""
+
+    def __init__(self, value=True):
+        self.value = value
+
+    def __enter__(self):
+        self.orig = B.files_8k
+        B.files_8k = lambda cik, cache: self.value
+        return self
+
+    def __exit__(self, *a):
+        B.files_8k = self.orig
+
+
 def _row(cik, kind, date, name="Zymeworks Inc."):
     return {"cik": cik, "kind": kind, "date": date, "name": name,
             "sic": "2836", "accession": f"{cik}-{date}", "ticker": ""}
@@ -83,7 +100,7 @@ def test_a_private_sponsors_absent_filing_is_not_counted_as_a_miss():
     failure would manufacture a problem that does not exist."""
     fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "PRIVATE BIOTECH",
             "type": "NDA", "priority": "PRIORITY"}]
-    cap = B.capture_rate([], fda, ["Zymeworks Inc"])
+    cap = B.capture_rate([], fda, [("Zymeworks Inc", "1")])
     assert cap["fda_public"] == 0
     assert cap["fda_total"] == 1
 
@@ -92,14 +109,16 @@ def test_a_public_sponsors_approval_that_the_harvest_found_counts_as_captured():
     fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
             "type": "NDA", "priority": "PRIORITY"}]
     mine = [{"name": "Zymeworks Inc.", "date": "2024-05-02"}]
-    cap = B.capture_rate(mine, fda, ["Zymeworks Inc"])
+    with _domestic():
+        cap = B.capture_rate(mine, fda, [("Zymeworks Inc", "1")])
     assert cap["fda_public"] == 1 and cap["found"] == 1 and cap["rate"] == 1.0
 
 
 def test_a_public_sponsors_approval_the_harvest_missed_is_reported_as_a_miss():
     fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
             "type": "NDA", "priority": "PRIORITY"}]
-    cap = B.capture_rate([], fda, ["Zymeworks Inc"])
+    with _domestic():
+        cap = B.capture_rate([], fda, [("Zymeworks Inc", "1")])
     assert cap["fda_public"] == 1 and cap["found"] == 0 and cap["rate"] == 0.0
     assert cap["misses"]
 
@@ -108,7 +127,8 @@ def test_an_approval_matched_to_a_filing_months_away_is_not_the_same_event():
     fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
             "type": "NDA", "priority": "PRIORITY"}]
     mine = [{"name": "Zymeworks Inc.", "date": "2024-11-02"}]
-    assert B.capture_rate(mine, fda, ["Zymeworks Inc"])["found"] == 0
+    with _domestic():
+        assert B.capture_rate(mine, fda, [("Zymeworks Inc", "1")])["found"] == 0
 
 
 # ── the correction
@@ -174,14 +194,15 @@ def test_the_audit_scales_to_a_real_registrant_list():
     answer while making that tractable."""
     import random
     random.seed(0)
-    regs = [f"Company{i} Pharmaceuticals Inc" for i in range(10000)]
-    regs.append("Zymeworks Inc")
+    regs = [(f"Company{i} Pharmaceuticals Inc", str(i)) for i in range(10000)]
+    regs.append(("Zymeworks Inc", "99999"))
     fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
             "type": "NDA", "priority": "PRIORITY"},
            {"applno": "2", "date": "2024-05-01", "sponsor": "NOT LISTED LLC",
             "type": "NDA", "priority": "STANDARD"}]
-    cap = B.capture_rate([{"name": "Zymeworks Inc.", "date": "2024-05-01"}],
-                         fda, regs)
+    with _domestic():
+        cap = B.capture_rate([{"name": "Zymeworks Inc.", "date": "2024-05-01"}],
+                             fda, regs)
     assert cap["fda_public"] == 1 and cap["found"] == 1
 
 
@@ -209,3 +230,47 @@ def test_each_stratum_carries_its_own_interval_because_one_will_be_small():
     single = s["single-asset"]
     assert single["lo"] < single["p"] <= single["hi"]
     assert single["hi"] - single["lo"] > 0.4      # n=1 must look like n=1
+
+
+def test_a_foreign_private_issuer_is_not_expected_to_have_filed_an_8k():
+    """Caught on a live run: the misses were Takeda, Novartis, AstraZeneca and
+    Sanofi. All SEC registrants, none of which has ever filed an 8-K -- a
+    foreign private issuer reports on 20-F and 6-K. Counting their approvals as
+    ones the harvest should have found would understate the capture rate,
+    inflate the correction, and push P(CRL) down for a reason that has nothing
+    to do with the FDA."""
+    fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "NOVARTIS PHARMS CORP",
+            "type": "NDA", "priority": "PRIORITY"}]
+    orig = B.files_8k
+    B.files_8k = lambda cik, cache: False        # a 20-F/6-K filer
+    try:
+        cap = B.capture_rate([], fda, [("NOVARTIS AG", "1")])
+    finally:
+        B.files_8k = orig
+    assert cap["fda_public"] == 0 and not cap["misses"]
+
+
+def test_a_domestic_8k_filer_is_still_expected_to_have_filed_one():
+    fda = [{"applno": "1", "date": "2024-05-01", "sponsor": "ZYMEWORKS INC",
+            "type": "NDA", "priority": "PRIORITY"}]
+    orig = B.files_8k
+    B.files_8k = lambda cik, cache: True
+    try:
+        cap = B.capture_rate([], fda, [("Zymeworks Inc", "1")])
+    finally:
+        B.files_8k = orig
+    assert cap["fda_public"] == 1 and cap["found"] == 0
+
+
+def test_a_transient_lookup_failure_is_never_cached_as_a_form_verdict():
+    cache = {}
+    orig = B.urllib.request.urlopen
+
+    def boom(*a, **k):
+        raise TimeoutError("slow")
+    B.urllib.request.urlopen = boom
+    try:
+        assert B.files_8k("1", cache) is False
+    finally:
+        B.urllib.request.urlopen = orig
+    assert cache == {}
