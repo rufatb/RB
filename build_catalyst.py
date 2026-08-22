@@ -130,31 +130,49 @@ def ticker_map(cache: str) -> dict:
     return json.load(open(p))
 
 
-def ticker_from_filing(cik: str, accession: str, cache: dict) -> str:
-    """Last resort for a delisted issuer: read the 8-K cover page.
+TICK_RE = re.compile(
+    r"\((?:the\s+)?(?:Nasdaq|NASDAQ|NYSE|NYSE\s+American|NYSE\s+MKT|AMEX|OTCQB|"
+    r"OTC\s+Markets)[^)]{0,30}?:\s*([A-Z]{1,5})\s*\)")
 
-    Cover pages carry the trading symbol — as XBRL `dei:TradingSymbol` since
-    ~2019, and before that in the 'Securities registered pursuant to' block.
-    Only called for CIKs the SEC's current-registrant file cannot resolve, so
-    the request count stays proportional to the survivorship hole itself.
+
+def ticker_from_filing(cik: str, accession: str, cache: dict,
+                       stats: dict) -> str:
+    """Last resort for a delisted issuer: read the FULL SUBMISSION text.
+
+    First attempt read the `-index.htm` page for a 'Trading Symbol' cell and
+    recovered ZERO from 2,214 filings. Two reasons, both worth recording:
+
+      1. `Accept: application/json` is MANDATORY on sec.gov — without it every
+         request returns 403 regardless of User-Agent. Verified by isolation.
+      2. Even served correctly, the index page carries no ticker, and the
+         structured `dei:TradingSymbol` cover-page tag only exists from ~2019,
+         so it is absent for exactly the older delisted names that matter most.
+
+    What DOES work across the whole period is the press release inside the
+    submission: biotech 8-Ks almost always write "(Nasdaq: RPRX)" in the
+    boilerplate. Verified on Repros Therapeutics (delisted, 2015) -> RPRX.
+
+    A partner company named in the same release can also match, so the FIRST
+    occurrence is taken — the filer's own identifier appears in the dateline
+    before any partner is discussed. Failures are COUNTED, never swallowed:
+    2,214 silent 403s are what hid the bug the first time (the day-29 rule).
     """
     key = f"{cik}:{accession}"
     if key in cache:
         return cache[key]
     tick = ""
     try:
-        acc = accession.replace("-", "")
-        idx = (f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/"
-               f"{accession}-index.htm")
-        html = _get(idx).decode("utf8", "replace")
-        m = re.search(r"Trading Symbol[^<]*</td>\s*<td[^>]*>\s*([A-Z]{1,5})\b",
-                      html) or re.search(r"\(Nasdaq[^)]*:\s*([A-Z]{1,5})\)", html)
+        raw = _get(f"https://www.sec.gov/Archives/edgar/data/{cik}/"
+                   f"{accession}.txt")[:400_000]
+        m = TICK_RE.search(raw.decode("utf8", "replace"))
         if m:
             tick = m.group(1)
-    except Exception:
-        pass
+        else:
+            stats["no_match"] = stats.get("no_match", 0) + 1
+    except Exception as e:
+        stats[type(e).__name__] = stats.get(type(e).__name__, 0) + 1
     cache[key] = tick
-    time.sleep(0.15)
+    time.sleep(0.12)
     return tick
 
 
@@ -195,15 +213,18 @@ def main(argv=None) -> int:
 
     if a.resolve_delisted:
         miss = [r for r in rows if not r["ticker"]]
-        print(f"resolving {len(miss)} unmapped (likely delisted) from cover pages...")
+        stats: dict = {}
+        print(f"resolving {len(miss)} unmapped (likely delisted) from filings...")
         for i, r in enumerate(miss, 1):
-            r["ticker"] = ticker_from_filing(r["cik"], r["accession"], fcache)
-            if i % 50 == 0:
+            r["ticker"] = ticker_from_filing(r["cik"], r["accession"], fcache, stats)
+            if i % 200 == 0:
                 got = sum(1 for x in miss if x["ticker"])
                 print(f"    {i}/{len(miss)}  recovered {got}", flush=True)
         hit2 = sum(1 for r in rows if r["ticker"])
-        print(f"ticker resolved after cover-page pass: {hit2}/{len(rows)} "
+        print(f"ticker resolved after filing pass: {hit2}/{len(rows)} "
               f"({hit2/max(len(rows),1):.0%})")
+        if stats:
+            print(f"  unresolved breakdown: {stats}")
 
     with open(out_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["kind", "cik", "date", "name", "sic",
