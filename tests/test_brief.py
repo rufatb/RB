@@ -148,3 +148,36 @@ def test_non_binary_positions_produce_no_catalyst_block():
     leg = _cat_leg(28.67)
     leg["upside"] = leg["downside"] = ""
     assert brief.render_catalyst_detail([leg], TODAY) == ""
+
+
+def test_the_brief_publishes_before_it_renders():
+    """Day-59: brief.py replaces `r945.py --book` as the morning command, so it
+    inherits the obligation to write the day's permanent record. A board printed
+    but never recorded would stop the ledger accruing on the day this shipped —
+    silently, which is the day-29/day-42 failure mode. Locked at the source so
+    a refactor cannot drop it."""
+    import inspect
+
+    import brief as B
+    src = inspect.getsource(B.build)
+    assert "r945.publish(res, cfg)" in src, \
+        "the brief must publish the board it prints"
+    assert src.index("r945.publish(res, cfg)") < src.index("render_intraday"), \
+        "publish must happen BEFORE rendering, not after"
+
+
+def test_publish_and_main_share_one_implementation():
+    """Two publish paths would drift, and the one that drifts holds the only
+    evidence this system has about itself."""
+    import inspect
+
+    import r945
+    assert "publish(res, cfg)" in inspect.getsource(r945.main)
+
+
+def test_shadow_mode_prints_no_share_counts():
+    r = _res()
+    r["pair"]["long"]["pick"]["shares"] = 160
+    r["pair"]["long"]["pick"]["alloc"] = 15042
+    out, _ = brief.render_intraday(r, {}, shadow=True)
+    assert "BUY" not in out and "160 sh" not in out

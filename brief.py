@@ -230,9 +230,18 @@ def render_intraday(res: dict, cfg: dict, shadow: bool) -> tuple:
         p = lg["pick"]
         L.append(f"   {side.upper():<6}: {p['t']:<9} sided-P {lg['sided']:.2f}  "
                  f"[{p.get('confidence','?')}]  9:45 ${p['p945']:.2f}")
+        if p.get("shares") and not shadow:
+            import r945 as _r
+            b = _r.fill_bound(side.upper(), p["p945"],
+                              res.get("max_chase_pct", 0.04))
+            L.append(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} "
+                     f"{p['shares']} sh (~${p.get('alloc', 0):,.0f})  "
+                     f"fill bound {'<=' if side == 'long' else '>='} {b:.2f}")
         L += pair_reasoning(res, side, cfg)
         for x in (lg.get("extra") or []):
-            L.append(f"      + {x['t']} (second leg — SPLITS the same half, "
+            sh = (f" — {x['shares']} sh (~${x.get('alloc', 0):,.0f})"
+                  if x.get("shares") and not shadow else "")
+            L.append(f"      + {x['t']}{sh} (second leg — SPLITS the same half, "
                      "does not add exposure)")
         opened.append(p["t"])
     if shadow:
@@ -299,7 +308,26 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False) -> str:
     if not no_net:
         import r945
         res = r945.run(cfg, workers=12)
+        try:
+            res["live_record"] = ledger.live_summary(ledger.load())
+        except Exception:
+            res["live_record"] = None
+        # PUBLISH before rendering. The brief replaces `r945.py --book` as the
+        # morning command, so it inherits the obligation to write the day's
+        # permanent record — a board printed but never recorded would stop the
+        # ledger accruing on the day this shipped, silently.
+        st = r945.publish(res, cfg)
         intraday, pair_note = render_intraday(res, cfg, shadow)
+        for e in st["errors"]:
+            intraday += f"\n   ⚠ {e}"
+        if st["already"]:
+            intraday += ("\n   [already published today — this is a re-read; "
+                         "the first board of the day stands.\n    Share counts "
+                         "shown are from that board, not a re-computation.]")
+        elif st["picks"]:
+            intraday += (f"\n   [recorded {st['picks']} picks "
+                         f"({st['pair']} pair / {st['picks']-st['pair']} board); "
+                         "score after close with `python ledger.py --score`]")
 
     parts.append(render_actions(book, today, pair_note))
     cat_detail = render_catalyst_detail(book['legs'], today)

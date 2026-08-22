@@ -157,10 +157,19 @@ def test_run_result_exposes_evaluated_prints_for_the_tide():
     import r945
     src = inspect.getsource(r945.run)
     assert '"evaluated"' in src, "run() must expose evaluated prints"
-    main_src = inspect.getsource(r945.main)
-    assert 'res.get("evaluated")' in main_src, "main() must read them off the result"
-    assert "except Exception:\n                pass" not in main_src, \
+    # Day-59: the publish path moved out of main() into r945.publish() so that
+    # brief.py and main() share ONE implementation. The day-29 protection is
+    # unchanged in substance — whoever writes the prints must read them off the
+    # RESULT, never off a local of run() — so the assertion follows the code.
+    pub_src = inspect.getsource(r945.publish)
+    assert 'res.get("evaluated")' in pub_src, \
+        "publish() must read evaluated prints off the result"
+    assert "publish(res, cfg)" in inspect.getsource(r945.main), \
+        "main() must delegate to publish() rather than reimplement it"
+    assert "except Exception:\n                pass" not in pub_src, \
         "print-saving failures must be reported, never swallowed"
+    assert 'out["errors"].append' in pub_src, \
+        "publish() must SURFACE a print-saving failure to its caller"
 
 
 # ── day-31: two legs per side, capacity unchanged ───────────────────────────

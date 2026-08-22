@@ -51,12 +51,31 @@ Python 3.11+ required (uses `zoneinfo`).
 
 > ### THE ONE CANONICAL COMMAND
 > ```bash
-> TZ=America/Toronto python r945.py --book     # run at 09:46 ET, once per trading day
+> TZ=America/Toronto python brief.py          # run at 09:46 ET, once per trading day
 > ```
-> This is the **only** command that produces the day's tradeable decision: one
-> long + one short ("THE PAIR"), sized, with fill bounds and an order window.
-> The contract is: enter at market inside the printed bounds, hold, **flat by
-> 3:55**. Score after the close with `python ledger.py --score`.
+> **"run report" means this command** (day-59). It prints the whole morning
+> page and writes the day's permanent record:
+>
+> | section | what it may claim |
+> |---|---|
+> | OPEN POSITIONS | fact — what you hold, marked, exit written at entry |
+> | TODAY'S ACTIONS | what closes today; what enters a binary window soon |
+> | CATALYST POSITIONS | arithmetic — implied P now vs at entry, risk/reward |
+> | FDA CALENDAR | fact — dates companies disclosed; **no probability implied** |
+> | INTRADAY PAIR | **MEASURED, NO EDGE** — prints its own record beside every pick |
+> | RECORD | live hit rate, decisive legs, tide-relative capture, attribution |
+>
+> The intraday contract is unchanged: enter at market inside the printed
+> bounds, hold, **flat by 3:55**. Score after the close with
+> `python ledger.py --score`.
+>
+> `brief.py` calls `r945.publish()` — the SAME publish path `r945.py --book`
+> uses — so the ledger keeps accruing either way. Running `r945.py --book`
+> directly still works and still publishes; it just prints the pair alone,
+> without positions, calendar or catalyst arithmetic.
+>
+> `--shadow` publishes and scores the board with **no order lines and no share
+> counts**. `--offline` renders positions and record only, no network.
 >
 > **Everything below `report.py` / `scan.py` / `dashboard.py` / `midday.py` /
 > `hold.py` is LEGACY** — a 09:31 open-to-close lens kept for context and
@@ -66,7 +85,9 @@ Python 3.11+ required (uses `zoneinfo`).
 > Why this banner exists (day-25, external audit): this README advertised
 > `report.py` at 09:31 as "the one command" while STRATEGY.md recorded
 > `r945.py --book` at 09:46 as the real workflow. Two documents naming
-> different daily commands is how the wrong strategy gets run.
+> different daily commands is how the wrong strategy gets run. The same rule
+> applies to this update: `brief.py` is now the single named command, and
+> `r945.py --book` is documented as the narrower view of the same publish.
 
 ### Legacy 9:31 morning report (context only, not the strategy)
 

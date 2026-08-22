@@ -1035,94 +1035,96 @@ def main(argv=None):
     except Exception:
         res["live_record"] = None
     if args.book:
-        rcfg = cfg.get("risk", {})
-        # Day-9: only THE PAIR is sized/traded. The rest of the board is
-        # context + ledger-learning material, never an order.
-        pair = res.get("pair") or {}
-        pair_picks = []
-        for side in ("long", "short"):
-            lg = pair.get(side) or {}
-            for r in ([lg["pick"]] if lg.get("pick") else []) + (lg.get("extra") or []):
-                r["side_hint"] = side.upper()
-                pair_picks.append(r)
-        pcfg = cfg.get("pair") or {}
-        allocate_book(pair_picks, rcfg.get("account_equity", 0),
-                      rcfg.get("max_position_pct", 50),
-                      risk_weight=pcfg.get("risk_weight", True),
-                      weight_cap=pcfg.get("weight_cap", 0.35))
-        # Permanent learning ledger: record picks at PUBLISH time (no hindsight).
-        # Pair legs get role=pair (the executed record); the remaining board is
-        # role=board — kept so density/crowding instrumentation keeps learning.
-        picks = res["longs"] + res["shorts"]
-        if picks and not res.get("too_early"):
-            import ledger
+        st = publish(res, cfg)
+        for e in st["errors"]:
+            print(f"\n  ⚠ {e}")
+        if st["already"]:
+            # DAY-25: a re-run must not print fresh order lines for a REVISED
+            # board. A printed order line IS the instruction; the disclaimer
+            # above it loses.
             date = res["now"][:10]
-            # PUBLISH-ONCE (day-18): a re-run minutes later can see REVISED
-            # early bars (seen live: SHOP's first-15m print changed between
-            # 9:47 and 9:52, producing a different board). The first --book
-            # run of the day is THE publication; later runs must never add
-            # or alter rows — the (date,ticker) dedupe alone is not enough
-            # because revised bars qualify NEW tickers.
-            if any(r["date"] == date for r in ledger.load()):
-                # DAY-25 (external audit): this used to call render(book=True),
-                # which printed fresh share counts and "BUY n sh @ market now"
-                # for a REVISED board while claiming to be informational. A
-                # printed order line IS the instruction — the disclaimer above
-                # it loses. A re-run is now rendered non-actionable.
-                print(f"\n  [ledger: {date} already published — this re-run is "
-                      "informational ONLY; the first board of the day stands.")
-                print("   Order lines are SUPPRESSED: the published board is the "
-                      "only tradeable one.]")
-                render(res, book=False)
-                _write_html(res, args, book=False)
-                return
-            pair_ids = {id(r) for r in pair_picks}
-            # Day-23: persist each pair leg's share of BOOK CAPACITY. Since the
-            # day-22 equal-risk change the legs are deliberately different
-            # sizes, so an equal-weighted capture no longer describes the book
-            # (day-23: -0.156% equal-weighted vs a +$94 book). Board rows get
-            # no weight — they are never traded.
-            book_cap = (rcfg.get("account_equity", 0)
-                        * rcfg.get("max_position_pct", 50) / 100.0)
-            lrows = [{"ticker": r["t"],
-                      "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
-                      "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
-                      "confidence": r.get("confidence", "n/a"),
-                      "p945": r["p945"],
-                      "role": "pair" if id(r) in pair_ids else "board",
-                      "weight": ((r.get("alloc") or 0) / book_cap
-                                 if (id(r) in pair_ids and book_cap) else None)}
-                     for r in picks]
-            # Day-28: persist the 9:45 print for EVERY evaluated name, not just
-            # the qualified ones. WHY: the pair is market-neutral, so a leg's
-            # real contribution is its move RELATIVE to the universe — today RY
-            # "HIT" while contributing 7% of the pair's gain (a median name on a
-            # falling tape), and on day-23 AEM "MISSED" while being relatively
-            # fine. Without the whole universe's prints the tide cannot be
-            # reconstructed after the fact, so selection skill can never be
-            # separated from tape luck. Qualified picks alone are a SELECTED
-            # sample and would give a biased tide.
-            # DAY-29 BUG FIX: this read `out`, a local of run(), from main() —
-            # a NameError swallowed by a bare `except: pass`, so NO prints were
-            # ever written and the relative-capture metric would have quietly
-            # stopped accruing from the day it shipped. Silent failure is the
-            # exact anti-pattern days 24-26 removed elsewhere; it must not be
-            # reintroduced by the code that measures the system.
-            ev = res.get("evaluated") or []
-            try:
-                np_ = ledger.append_universe_prints(ev, date)
-                if not np_ and ev:
-                    print(f"  [prints: {date} already recorded]")
-            except Exception as e:
-                print(f"\n  ⚠ UNIVERSE PRINTS NOT SAVED ({type(e).__name__}: {e}) — "
-                      "relative capture cannot be computed for this session.")
-            n = ledger.append_picks(lrows, date)
-            if n:
-                print(f"\n  [ledger: {n} picks recorded for {date} "
-                      f"({len(pair_picks)} pair / {n - len(pair_picks)} board) — score "
-                      "after close with `python ledger.py --score`]")
+            print(f"\n  [ledger: {date} already published — this re-run is "
+                  "informational ONLY; the first board of the day stands.")
+            print("   Order lines are SUPPRESSED: the published board is the "
+                  "only tradeable one.]")
+            render(res, book=False)
+            _write_html(res, args, book=False)
+            return
+        if st["picks"]:
+            print(f"\n  [ledger: {st['picks']} picks recorded for "
+                  f"{res['now'][:10]} ({st['pair']} pair / "
+                  f"{st['picks'] - st['pair']} board) — score after close with "
+                  "`python ledger.py --score`]")
     render(res, book=args.book)
     _write_html(res, args, book=args.book)
+
+
+def publish(res: dict, cfg: dict) -> dict:
+    """Size the pair and write the day's permanent record. ONE publish path.
+
+    DAY-59. This was inline in `main()`, which was fine while `--book` was the
+    only caller. `brief.py` then began calling `run()` directly to render the
+    morning page — and a brief wired to replace the old command would have
+    printed a board while writing NOTHING to the ledger. The learning record
+    would have stopped accruing silently on the day the new report shipped,
+    which is the day-29 and day-42 failure mode exactly: a thing that looks
+    right and quietly records nothing.
+
+    Extracted rather than copied, deliberately. Two implementations of the
+    publish path would drift, and the one that drifts is the one holding the
+    only evidence this system has about itself.
+
+    Returns a status dict; the caller decides what to print. `already` means
+    the publish-once guard fired (day-18: a re-run minutes later sees REVISED
+    early bars and would produce a DIFFERENT board — the first board of the day
+    is the publication, and later runs must never add or alter rows).
+    """
+    import ledger
+    rcfg = cfg.get("risk", {})
+    pcfg = cfg.get("pair") or {}
+    out = {"already": False, "picks": 0, "pair": 0, "prints": 0, "errors": []}
+
+    pair = res.get("pair") or {}
+    pair_picks = []
+    for side in ("long", "short"):
+        lg = pair.get(side) or {}
+        for r in ([lg["pick"]] if lg.get("pick") else []) + (lg.get("extra") or []):
+            r["side_hint"] = side.upper()
+            pair_picks.append(r)
+    allocate_book(pair_picks, rcfg.get("account_equity", 0),
+                  rcfg.get("max_position_pct", 50),
+                  risk_weight=pcfg.get("risk_weight", True),
+                  weight_cap=pcfg.get("weight_cap", 0.35))
+    out["pair"] = len(pair_picks)
+
+    picks = res["longs"] + res["shorts"]
+    if not picks or res.get("too_early"):
+        return out
+    date = res["now"][:10]
+    if any(r["date"] == date for r in ledger.load()):
+        out["already"] = True
+        return out
+
+    pair_ids = {id(r) for r in pair_picks}
+    book_cap = (rcfg.get("account_equity", 0)
+                * rcfg.get("max_position_pct", 50) / 100.0)
+    lrows = [{"ticker": r["t"],
+              "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
+              "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
+              "confidence": r.get("confidence", "n/a"),
+              "p945": r["p945"],
+              "role": "pair" if id(r) in pair_ids else "board",
+              "weight": ((r.get("alloc") or 0) / book_cap
+                         if (id(r) in pair_ids and book_cap) else None)}
+             for r in picks]
+    try:
+        out["prints"] = ledger.append_universe_prints(res.get("evaluated") or [],
+                                                      date)
+    except Exception as e:
+        out["errors"].append(f"universe prints NOT saved ({type(e).__name__}: {e})"
+                             " — relative capture is lost for this session")
+    out["picks"] = ledger.append_picks(lrows, date)
+    return out
 
 
 def _write_html(res: dict, args, book: bool) -> None:
