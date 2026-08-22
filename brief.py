@@ -375,6 +375,20 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         parts.append(f"▎FDA DECISION CALENDAR\n   ⚠ unavailable "
                      f"({type(e).__name__}) — the rest of the brief stands")
 
+    # ADVISORY COMMITTEES — the public expert vote, which usually moves the
+    # stock more than the decision that follows it.
+    if not no_net:
+        try:
+            import adcom as _ac
+            ac_path = os.path.join(SCRATCH, "adcom.json")
+            data = (json.load(open(ac_path)) if os.path.exists(ac_path)
+                    else _ac.build(5, today, ac_path))
+            parts.append(_ac.render(data, today, 120))
+        except Exception as e:
+            parts.append(f"\u258e ADVISORY COMMITTEES\n   \u26a0 unavailable "
+                         f"({type(e).__name__}) — treat as UNKNOWN, not as "
+                         "nothing scheduled")
+
     # WHAT CHANGED — filings since the last brief, for held and watched names.
     # A position waiting weeks on a decision is not static; the company keeps
     # filing, and some of those filings matter more than the decision.
