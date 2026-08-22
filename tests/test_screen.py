@@ -79,14 +79,22 @@ def test_missing_options_are_named_never_guessed():
     assert label == "no options" and "no listed chain" in why
 
 
-def test_render_never_states_an_approval_probability():
+def test_render_never_states_a_probability_for_THIS_name():
     rows = [{"date": "2026-08-25", "days": 3, "ticker": "ZYME",
              "company": "Zymeworks Inc.", "spot": 28.67, "move": 0.31,
              "skew": None, "expiry": "2026-09-18", "signals": ["priority review"],
              "stance": "material binary", "why": "+/-31% implied"}]
     out = S.render(rows, dt.date(2026, 8, 22))
-    assert "P(CRL) is deliberately NOT supplied" in out
-    assert "would be fabricated" in out
+    # A base rate over a POPULATION is not a forecast for this drug, and the
+    # distinction has to survive in the text: wherever a rate appears it is
+    # labelled unconditional, and nowhere is one attached to the name.
+    if "no base rate has been computed" in out:
+        assert "baserate.py" in out          # names the fix, states no number
+    else:
+        assert "UNCONDITIONAL" in out        # a population rate, never a forecast
+    for claim in ("probability of approval for", "likely to be approved",
+                  "we expect approval"):
+        assert claim not in out
     assert "$19.78" in out and "$37.56" in out       # priced range shown
 
 
@@ -355,3 +363,77 @@ def test_a_stale_mark_refuses_to_price_any_route():
                                         dt.date(2026, 8, 22)))
     assert "STALE" in lines
     assert "at risk" not in lines and "HEDGE" not in lines
+
+
+# ── day-71: the breakeven finally gets something to be compared against.
+# "The put breaks even if a rejection is ~89% likely" is honest and useless on
+# its own. These lock the comparison and keep it from becoming a forecast.
+
+import baserate as _BR
+
+
+def _with_base(lo, hi, n=300, audited=True):
+    class _Ctx:
+        def __enter__(self):
+            self.orig = _BR.summary
+            _BR.summary = lambda *a, **k: {"lo": lo, "hi": hi, "n": n,
+                                           "n_crl": int(n * hi),
+                                           "wilson": (lo, hi),
+                                           "audited": audited}
+            return self
+
+        def __exit__(self, *a):
+            _BR.summary = self.orig
+    return _Ctx()
+
+
+def test_no_breakeven_means_no_comparison_rather_than_a_fabricated_one():
+    assert S.against_base_rate(None) == []
+
+
+def test_a_missing_base_rate_says_so_and_names_the_command():
+    class _Ctx:
+        pass
+    orig = _BR.summary
+    _BR.summary = lambda *a, **k: None
+    try:
+        out = S.against_base_rate(0.89)
+    finally:
+        _BR.summary = orig
+    assert len(out) == 1 and "no base rate has been computed" in out[0]
+    assert "baserate.py" in out[0]
+
+
+def test_the_breakeven_becomes_a_multiple_of_the_base_rate():
+    with _with_base(0.18, 0.25):
+        line = " ".join(S.against_base_rate(0.89))
+    assert "3.6-4.9x more likely to be rejected" in line
+    assert "claim about the DRUG" in line
+
+
+def test_a_premium_under_the_base_rate_is_named_as_cheap_not_as_an_edge():
+    with _with_base(0.18, 0.25):
+        line = " ".join(S.against_base_rate(0.10))
+    assert "BELOW the base rate" in line
+    assert "more likely to be rejected" not in line
+
+
+def test_a_premium_at_the_base_rate_says_the_market_is_charging_the_base_rate():
+    with _with_base(0.18, 0.25):
+        line = " ".join(S.against_base_rate(0.24))
+    assert "about the base rate itself" in line
+
+
+def test_the_comparison_always_restates_that_the_base_rate_is_unconditional():
+    """It knows nothing about the molecule and must never sound like it does."""
+    for be in (0.05, 0.24, 0.89, 1.4):
+        with _with_base(0.18, 0.25):
+            line = " ".join(S.against_base_rate(be))
+        assert "UNCONDITIONAL" in line
+        assert "prior you argue away from" in line
+
+
+def test_an_unaudited_base_rate_is_shown_as_a_single_approximate_figure():
+    with _with_base(0.25, 0.25, audited=False):
+        line = " ".join(S.against_base_rate(0.89))
+    assert "~25%" in line and "-25%" not in line

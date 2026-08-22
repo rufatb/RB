@@ -296,6 +296,61 @@ def put_breakeven(put_pct: float | None,
     return put_pct / drop if drop else None
 
 
+def against_base_rate(be: float | None) -> list:
+    """Turn the breakeven into a comparison, which is what it was missing.
+
+    THE SENTENCE THAT HAD NO ENDING. "The put breaks even if a rejection is
+    ~89% likely" is honest and useless on its own: a reader with no base rate
+    cannot tell whether 89% is absurd or routine. The module said as much —
+    P(CRL) was "deliberately NOT supplied" because 8-Ks give the numerator and
+    not the denominator.
+
+    `baserate.py` closes that (day-71) by drawing BOTH legs from the same
+    harvest and the same classifier, and by auditing the approval leg against
+    Drugs@FDA. So the breakeven can finally be divided by something:
+
+        how much more likely than average would this rejection have to be?
+
+    A multiple near 1 means the market is charging roughly the base rate. A
+    multiple of 4 means the premium only pays if this name is four times worse
+    than the average decision in the population — which is a claim about the
+    drug, and is exactly the claim the reader should be made to state.
+
+    IT STAYS A RANGE, and it stays unconditional. Nothing here knows anything
+    about the molecule. Returns [] when the base rate has never been computed,
+    because a caller must say "not computed" rather than reach for a plausible
+    number.
+    """
+    if be is None:
+        return []
+    try:
+        import baserate as _br
+        s = _br.summary()
+    except Exception:
+        return []
+    if not s:
+        return ["no base rate has been computed, so the breakeven above cannot "
+                "be compared with anything — run `python baserate.py`"]
+    lo_mult, hi_mult = be / s["hi"], be / s["lo"]
+    span = (f"{s['lo']:.0%}-{s['hi']:.0%}" if s["audited"]
+            else f"~{s['hi']:.0%}")
+    if lo_mult < 1.0 < hi_mult or abs(hi_mult - 1) < 0.15:
+        tail = (f"which is about the base rate itself — the market is charging "
+                f"roughly what this population delivers")
+    elif hi_mult <= 1.0:
+        tail = (f"BELOW the base rate: the premium is cheaper than an average "
+                f"decision in this population would justify")
+    else:
+        tail = (f"so the premium only pays if this name is "
+                f"{lo_mult:.1f}-{hi_mult:.1f}x more likely to be rejected than "
+                f"the average decision — that is a claim about the DRUG, and "
+                f"it is the claim to argue")
+    return [f"against the measured base rate of {span} "
+            f"(n={s['n']:,} announced decisions, day-71), {tail}. The base "
+            "rate is UNCONDITIONAL — it is the prior you argue away from, not "
+            "an answer for this name"]
+
+
 def verdict(row: dict, vote: dict | None = None) -> dict:
     """One call per name, assembled from what is measured plus this name's facts.
 
@@ -412,6 +467,7 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
             f"median {_cat.APPROVAL_MEDIAN:.2f}% vs random "
             f"{_cat.APPROVAL_RANDOM:.2f}%), so holding through the print is "
             "selling insurance, not buying a ticket")
+        why += against_base_rate(be)
 
     # Financing is a SECOND binary, and it is not the FDA's. A name that has to
     # raise inside the year dilutes on good news too.
@@ -637,10 +693,31 @@ def render(rows: list, today: dt.date) -> str:
              f"{_cat.APPROVAL_MEDIAN:.2f}% vs")
     L.append(f"      random {_cat.APPROVAL_RANDOM:.2f}%) — it is priced before "
              "the letter arrives.")
-    L.append("   ── P(CRL) is deliberately NOT supplied. 8-K filings give the")
-    L.append("      numerator and not the denominator, so a base rate computed")
-    L.append("      here would be fabricated. The verdicts state the probability")
-    L.append("      you would have to hold; the conviction is yours.")
+    try:
+        import baserate as _br
+        s = _br.summary()
+    except Exception:
+        s = None
+    if s:
+        span = (f"{s['lo']:.0%}-{s['hi']:.0%}" if s["audited"]
+                else f"~{s['hi']:.0%}")
+        L.append(f"   ── the base rate above is {span}: of {s['n']:,} FDA "
+                 f"decisions announced in")
+        L.append(f"      8-Ks {s['n_crl']:,} were rejections, both legs from one "
+                 "harvest and one")
+        L.append("      classifier (day-71). The FDA publishes no rejections at "
+                 "all — Drugs@FDA")
+        L.append("      carries approvals only — so the sponsor's own filing is "
+                 "the only free")
+        L.append("      trace one leaves, and that is why this number did not "
+                 "exist before.")
+        L.append("      It is UNCONDITIONAL: the prior you argue away from, not "
+                 "an answer.")
+    else:
+        L.append("   ── no base rate has been computed, so each breakeven above "
+                 "stands alone")
+        L.append("      with nothing to compare it against. Run "
+                 "`python baserate.py`.")
     return "\n".join(L)
 
 
