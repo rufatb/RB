@@ -60,7 +60,14 @@ TICKER_RE = re.compile(r"\(([A-Z]{1,5})\)\s*$")
 # phrases that tell you where a review actually stands
 SIGNALS = [
     (r"[Aa]dvisory [Cc]ommittee", "AdCom mentioned"),
-    (r"no.{0,20}[Aa]dvisory [Cc]ommittee|does not (?:currently )?plan to (?:hold|convene)",
+    # "does not plan to REQUEST an advisory committee meeting" is Praxis's
+    # actual phrasing and the most natural one; covering only hold/convene
+    # flagged that filing as "AdCom mentioned" — telling a reader a committee
+    # review was coming when the FDA had said the opposite.
+    (r"no.{0,20}[Aa]dvisory [Cc]ommittee"
+     r"|do(?:es)? not (?:currently )?(?:plan|intend|expect) to "
+     r"(?:hold|convene|request|schedule)"
+     r"|no plans? to (?:hold|convene|request|schedule)",
      "AdCom NOT planned"),
     (r"[Mm]id-cycle", "mid-cycle meeting"),
     (r"[Pp]riority [Rr]eview", "priority review"),
@@ -114,6 +121,33 @@ def context_for(text: str, window: int = 220) -> str:
     return text[a:m.end() + window].strip()
 
 
+def signals_near(text: str, date_str: str, radius: int = 900) -> list:
+    """Signals attributed to ONE PDUFA date, not to the whole document.
+
+    DAY-67. Praxis's 8-K of 2026-08-06 announces TWO decisions — relutrigine
+    (27 Dec 2026) and ulixacaltamide (29 Jan 2027) — and the filing states that
+    only RELUTRIGINE's review was extended, after the FDA deemed additional
+    sensitivity analyses "a major amendment". Document-level attribution stamped
+    "review EXTENDED" onto BOTH dates, telling a reader that a clean review had
+    been extended when it had not.
+
+    A sponsor with two programmes has two decisions, and a signal belongs to the
+    one it is written next to. This scopes to a window around each mention of
+    the date and falls back to the whole document only when the date is absent.
+    """
+    try:
+        pretty = dt.date.fromisoformat(date_str).strftime("%B %-d, %Y")
+    except (ValueError, TypeError):
+        return review_signals(text)
+    alt = pretty.replace(" 0", " ")
+    idx = [m.start() for m in re.finditer(re.escape(pretty), text)]
+    idx += [m.start() for m in re.finditer(re.escape(alt), text) if not idx]
+    if not idx:
+        return review_signals(text)
+    seg = " ".join(text[max(0, i - radius):i + radius // 3] for i in idx)
+    return review_signals(seg)
+
+
 def review_signals(text: str) -> list:
     """Named review-status markers, de-duplicated, in a stable order."""
     out = []
@@ -161,7 +195,7 @@ def build(months_back: int = 8, today: dt.date | None = None,
                 "date": d, "ticker": tm.group(1) if tm else "",
                 "company": re.sub(r"\s*\(.*", "", name).strip(),
                 "filed": s.get("file_date", ""), "cik": cik, "accession": acc,
-                "signals": review_signals(text), "context": context_for(text)})
+                "signals": signals_near(text, d), "context": context_for(text)})
         time.sleep(0.12)
     return dedupe(out, cache_path)
 
