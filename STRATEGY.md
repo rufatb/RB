@@ -2828,6 +2828,70 @@ A duration field cannot manufacture event awareness out of OHLCV bars.
 
 Thirty-two rejections, three adoptions.
 
+## Day-52: the US replication — `scaled` survives one market, dies in the other (#33)
+
+Day-46's sweep found `scaled` (r0/gap in units of each name's OWN trailing
+volatility) positive in all four cells on TSX, below the |z|>=3 bar. Day-51
+re-ran the identical sweep on **500 S&P 500 names, 719 sessions, 294,949
+out-of-sample rows** — a different market, so a TSX-generated hypothesis could
+be confirmed rather than re-read on the draw that produced it.
+
+### The pooled numbers looked like the first real find in fifty-one days
+
+| | TSX (generated) | S&P 500 (replication) |
+|---|---|---|
+| `scaled` on y_rel | AUC 0.5045, z=+2.72 | AUC 0.5064, **z=+6.03** |
+
+Same sign, near-identical effect size, comfortably past the bar out-of-sample.
+
+### The four-quarter rule killed it, and the TSX column is the reason
+
+| quarter | TSX shipped | TSX scaled | diff | US shipped | US scaled | diff |
+|---|---|---|---|---|---|---|
+| Q1 | 0.4967 | 0.5054 | **+0.0087** | 0.5007 | 0.5029 | +0.0022 |
+| Q2 | 0.5085 | 0.5044 | -0.0040 | 0.5074 | 0.5144 | +0.0069 |
+| Q3 | 0.5082 | 0.5036 | -0.0047 | 0.4991 | 0.4996 | +0.0006 |
+| Q4 | 0.5057 | 0.5046 | -0.0011 | 0.5041 | 0.5076 | +0.0036 |
+| **POOLED** | 0.5045 | 0.5045 | **-0.0001** | 0.5030 | 0.5064 | +0.0034 |
+
+**US: 4 of 4 quarters. TSX: 1 of 4, and pooled dead level at -0.0001.**
+`scaled` is genuinely better than `shipped` on US large caps and genuinely
+IDENTICAL to it on the TSX names actually traded. Adopting on the strength of
+the US column would be shipping a feature that measurably does nothing in the
+only market the book touches. **REJECTED (#33).**
+
+### The mistake in how day-46 was READ, which this exposes
+Day-46 called `scaled` "the only family positive in all four cells". True, and
+misleading: `shipped` was ALSO positive on y_rel (z=+2.75 TSX, +2.81 US). Each
+family was compared against ZERO, never head-to-head against the incumbent.
+Against the incumbent, on TSX, the difference is -0.0001 AUC.
+
+**The real finding of day-46 was never `scaled`. It was the TARGET.** `y_rel`
+("does this name beat the day's median") beat `y_abs` ("does it go up") for
+almost every family on both markets — which is what day-45's attribution
+implied, since residual market exposure is ~0 and 100%% of the book's P&L is
+cross-sectional. Predicting absolute direction to place a relative bet has been
+a mismatch since day one. That remains untested AS A CHANGE and is the one
+thread left worth pulling.
+
+### A flaw in my own pre-registered bar, stated plainly
+The day-46 bar required sign agreement on the NATIVE 5-minute panel. That leg
+is uninformative: 60 sessions is all Yahoo serves at 5m, and the native
+positive control came back **z=-1.71 and z=+2.32** — it cannot detect a PLANTED
+52%% coin and got one sign wrong. The bar was unsatisfiable with free data. This
+was flagged on day-46 and not fixed, so day-51 re-ran into the same wall.
+Replaced by the two-market four-quarter test above, which is stricter and
+actually executable.
+
+### And the caution that outlives all of it
+AUC 0.5064 on 295k rows is overwhelmingly significant and nearly worthless.
+z=6 certifies the effect is real; it says nothing about whether it is large
+enough to survive spread and slippage. A +0.0034 AUC lift is a rounding error
+against costs. Significance and usefulness are different questions and only the
+second one pays — worth remembering the next time a big z appears.
+
+Thirty-three rejections, three adoptions.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
