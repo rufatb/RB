@@ -101,3 +101,44 @@ def test_ids_are_unique_and_survive_closes():
     rows = P.close_position(rows, "1", 20.0, "2026-08-24")
     rows = P.open_position(rows, "XYZ", "LONG", 1, 1.0, "2026-08-24", "m", "x")
     assert [r["id"] for r in rows] == ["1", "2", "3"]
+
+
+def test_event_concentration_sees_what_net_exposure_cannot():
+    """The live calendar has RPRX, JAZZ and ZYME all on 2026-08-25. A book
+    holding all three is a SINGLE-DAY event book however balanced by side.
+
+    Share counts are chosen so the book is genuinely balanced — ~$16.1k long
+    against ~$16.0k short — which is the whole point: it looks hedged, and the
+    only dimension that matters that morning is not the side.
+    """
+    rows = []
+    for tk, side, px, sh in (("RPRX", "LONG", 61.31, 100),
+                             ("ZYME", "LONG", 24.90, 400),
+                             ("JAZZ", "SHORT", 254.28, 63)):
+        rows = P.open_position(rows, tk, side, sh, px, "2026-08-19",
+                               "catalyst", "close on outcome",
+                               event_date="2026-08-25", event_kind="PDUFA")
+    legs = P.mark_book(rows, {}, TODAY)["legs"]
+    # by side this book reads as hedged...
+    assert abs(P.net_exposure(legs)) < 0.01
+    # ...but every dollar of it resolves on one morning
+    clusters = P.event_concentration(legs)
+    assert len(clusters) == 1
+    d, gross, names = clusters[0]
+    assert d == "2026-08-25" and sorted(names) == ["JAZZ", "RPRX", "ZYME"]
+    assert gross == pytest.approx(61.31 * 100 + 24.90 * 400 + 254.28 * 63)
+
+
+def test_a_lone_event_is_not_a_cluster():
+    rows = P.open_position([], "ZYME", "LONG", 100, 24.90, "2026-08-19",
+                           "catalyst", "close on outcome",
+                           event_date="2026-08-25", event_kind="PDUFA")
+    assert P.event_concentration(P.mark_book(rows, {}, TODAY)["legs"]) == []
+
+
+def test_positions_without_an_event_date_never_cluster():
+    rows = P.open_position([], "CNR.TO", "SHORT", 76, 175.59, "2026-08-20",
+                           "intraday", "flat by 3:55")
+    rows = P.open_position(rows, "SU.TO", "LONG", 160, 94.10, "2026-08-20",
+                           "intraday", "flat by 3:55")
+    assert P.event_concentration(P.mark_book(rows, {}, TODAY)["legs"]) == []

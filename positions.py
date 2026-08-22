@@ -192,3 +192,26 @@ def due_today(legs: list, today: dt.date, warn_days: int = 7) -> tuple:
         elif d <= warn_days:
             upcoming.append((l, d))
     return closing, upcoming
+
+
+def event_concentration(legs: list) -> list:
+    """Capital resolving on the SAME date, largest first. Pure + testable.
+
+    `net_exposure` sees long against short and nothing else. It cannot see that
+    three positions all resolve on one morning — and the live calendar has
+    exactly that shape: RPRX, JAZZ and ZYME all carry a 2026-08-25 PDUFA. A book
+    holding all three is a SINGLE-DAY event book however balanced it looks by
+    side, because binaries settling together are perfectly correlated on the
+    only dimension that matters that day.
+
+    Returns [(date, gross_dollars, [tickers])] for dates with a real cluster.
+    """
+    by: dict = {}
+    for l in legs:
+        d = l.get("event_date")
+        if not d:
+            continue
+        gross, names = by.get(d, (0.0, []))
+        by[d] = (gross + l["entry_px"] * l["shares"], names + [l["ticker"]])
+    return sorted(((d, g, n) for d, (g, n) in by.items() if len(n) > 1),
+                  key=lambda x: -x[1])

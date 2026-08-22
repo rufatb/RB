@@ -84,6 +84,11 @@ def render_positions(book: dict, today: dt.date,
     L.append("   " + RULE)
     L.append(f"   book {book['net_pct']:+.2f}% on ${book['gross']:,.0f} "
              f"deployed  ·  {book['net_usd']:+,.0f}")
+    for d, gross, names in pos.event_concentration(legs):
+        L.append(f"   ⚠ ${gross:,.0f} resolves on ONE date ({d}): "
+                 f"{', '.join(names)}.\n     Binaries settling together are "
+                 "perfectly correlated that morning, however\n     balanced the "
+                 "book looks by side.")
     if book["stale"]:
         why = (f" ({', '.join(sorted(set(mark_errors.values())))})"
                if mark_errors else "")
@@ -367,6 +372,23 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                 rows = [r for r in _scr.screen(cal, today, 130, 12)
                         if r["ticker"] not in held]
                 parts.append(_scr.render(rows, today))
+                # LOG every surfaced catalyst, traded or not. Recording only
+                # the trades taken would measure the trader, not the screen —
+                # and without this the catalyst layer would still have zero
+                # scored outcomes in six months (day-64).
+                try:
+                    import catledger as _cl
+                    lrows, added = _cl.log_screen(_cl.load(), rows, today,
+                                                  {l["ticker"] for l in book["legs"]})
+                    if added:
+                        _cl.save(lrows)
+                        parts[-1] += (f"\n   [logged {added} new event(s) to the "
+                                      "catalyst record — score with "
+                                      "`python catledger.py --score`]")
+                except Exception as e:
+                    parts[-1] += (f"\n   \u26a0 catalyst record NOT written "
+                                  f"({type(e).__name__}) — the screen ran but "
+                                  "nothing was learned from it")
             except Exception as e:
                 parts.append(f"▎CATALYST OPPORTUNITIES\n   ⚠ pricing "
                              f"unavailable ({type(e).__name__}) — the calendar "
