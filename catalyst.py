@@ -57,6 +57,25 @@ from __future__ import annotations
 import argparse
 
 BASE_RATE_FIRST_CYCLE = 0.70      # see BASE RATE note above
+
+# DAY-68: the CRL drawdown distribution, MEASURED. Day-56 could not establish
+# this because the event labels were noise -- random three-day windows were
+# indistinguishable from event windows -- and the earlier "28% worse than -18%"
+# figure had to be retracted. With classify.py verifying that each 8-K
+# ANNOUNCES rather than mentions a CRL, the labels pass their placebo gate
+# (CRL vs random: -15.00pp, t=-3.41 on 64 events) and the distribution can be
+# stated:
+#
+#     median -15.20%   p10 -57.53%   worst -83.61%
+#     47% of CRLs finish worse than -18%
+#     20% finish worse than -40%
+#
+# Use these when a thesis asserts a downside. The approval side did NOT pass
+# the same gate (t=+0.98, median -2.52% against a random -0.54%), so the
+# asymmetry is the point: the rejection is violent and the approval is largely
+# priced in before it arrives.
+CRL_MEDIAN, CRL_P10, CRL_WORST = -15.20, -57.53, -83.61
+CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.47, 0.20
 GAP_WARN = 0.15                   # claimed - implied, above which the bet is "on the gap"
 
 
@@ -157,8 +176,9 @@ def assess(price: float, upside: float, downside: float, p_claim: float,
         findings.append(
             f"FRAGILE: the edge breaks even at a ${need_dn:,.2f} floor, only "
             f"{cushion*100:.0f}% of the share price below your assumed "
-            f"${downside:,.2f}. Biotech CRL drawdowns routinely exceed that, "
-            "and a cash-floor argument is an assumption, not a bound.")
+            f"${downside:,.2f}. Measured CRL drawdowns (day-68, n=64): median "
+            f"{CRL_MEDIAN:.1f}%, {CRL_WORSE_THAN_40:.0%} worse than -40%, worst "
+            f"{CRL_WORST:.0f}%.")
 
     return {"p_market": p_mkt, "p_claim": p_claim, "gap": gap,
             "ev": ev, "ev_return": ev / price - 1,

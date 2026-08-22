@@ -287,8 +287,20 @@ def main(argv=None) -> int:
     rng = np.random.default_rng(0)
     ctrl = rng.normal(size=len(d)) + (2 * d["y"].to_numpy() - 1) * 0.05
     A = auc(d["y"].to_numpy(), ctrl)
-    print(f"    {'[control]':<10}{A:>9.4f}{(A-0.5)/se_auc(d['y'].to_numpy()):>8.2f}"
+    cz = (A - 0.5) / se_auc(d["y"].to_numpy())
+    print(f"    {'[control]':<10}{A:>9.4f}{cz:>8.2f}"
           f"   <- planted edge; if this is small the sample is too thin to trust")
+    # The section-[0] gate can PASS on the event side while this section stays
+    # unreadable: separating a -15% crash from a random window needs far less
+    # power than ranking which of two pre-event states predicts an outcome.
+    # Day-68 hit exactly that -- CRL t=-3.41 (real) beside a control of z=-0.32
+    # (blind) -- so the two verdicts are stated separately rather than letting
+    # one borrow credibility from the other.
+    if abs(cz) < 3:
+        print("    \u26d4 CEILING TEST UNREADABLE: the control cannot detect a")
+        print("       planted edge at n={:,}. Nothing in section [3] is a".format(len(d)))
+        print("       finding -- neither the AUCs nor their signs. More events")
+        print("       are the only fix; a larger model would not help.")
 
     print(f"\n[4] IS THE RUN-UP ALREADY PRICED?")
     for lab, sub in (("CRL", d[d["kind"] == "CRL"]),

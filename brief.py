@@ -162,10 +162,20 @@ def render_catalyst_detail(legs: list, today: dt.date) -> str:
                                "a cash argument does not support it.")
         except Exception:
             pass
-        out.append("      NOTE: a CRL floor is an ASSUMPTION, not a bound — "
-                   "day-56 could not\n        establish the drawdown "
-                   "distribution, and verified CRLs in that\n        sample "
-                   "ran to -80%.")
+        import catalyst as _cat
+        out.append(f"      MEASURED downside (day-68, n=64 verified CRLs): median "
+                   f"{_cat.CRL_MEDIAN:.1f}%, "
+                   f"{_cat.CRL_WORSE_THAN_18:.0%} worse than -18%, "
+                   f"{_cat.CRL_WORSE_THAN_40:.0%} worse than -40%, worst "
+                   f"{_cat.CRL_WORST:.0f}%.")
+        if l["mark"]:
+            implied_floor = l["mark"] * (1 + _cat.CRL_MEDIAN / 100)
+            out.append(f"      At the median that is ${implied_floor:,.2f} from "
+                       f"today's ${l['mark']:,.2f} — compare with the "
+                       f"${dn:,.2f} the thesis assumes.")
+        out.append("      Approvals did NOT separate from a random window "
+                   "(t=+0.98, median\n        -2.52%): the rejection is "
+                   "violent, the approval is largely priced.")
     if not out:
         return ""
     return "▎CATALYST POSITIONS — what the market is paying now\n" + "\n".join(out)
