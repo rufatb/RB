@@ -55,14 +55,38 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from validate_exit import SCRATCH  # noqa: E402
 
+
+def _strip(raw: bytes, cap: int = 400_000) -> str:
+    t = raw[:cap].decode("utf8", "replace")
+    t = re.sub(r"<[^>]+>", " ", t)
+    return re.sub(r"\s+", " ", t)
+
 UA = {"User-Agent": "RB-research/1.0 (non-commercial backtest)",
       "Accept": "application/json"}
 FTS = "https://efts.sec.gov/LATEST/search-index"
 # 2833-2836 pharma/biological, 8731 commercial physical & biological research
 BIO_SIC = {"2833", "2834", "2835", "2836", "8731"}
+# DAY-66: search ANNOUNCEMENT phrasing, not the bare noun. The bare noun
+# returned 4,463 matches of which most were retrospective mentions, and
+# day-56 measured the result: event windows were indistinguishable from
+# random ones. Each hit is then classified by classify.py, which fails
+# closed toward "mention".
+# ARCHITECTURE: BROAD SEARCH, STRICT CLASSIFIER. A first attempt narrowed the
+# SEARCH to one announcement phrasing and returned 22 CRLs and ZERO approvals
+# over five years -- trading contamination for sample starvation, which is just
+# a different way to have no study. Recall belongs at the search stage and
+# precision at the filter, so every plausible phrasing is queried and
+# classify.py decides. Hits overlap heavily; (cik, date) de-duplicates them.
 PHRASES = {
-    "CRL": '"complete response letter"',
-    "APPROVAL": '"approved by the U.S. Food and Drug Administration"',
+    "CRL": ['"received a Complete Response Letter"',
+            '"Complete Response Letter from the U.S. Food and Drug Administration"',
+            '"issued a Complete Response Letter"',
+            '"receipt of a Complete Response Letter"'],
+    "APPROVAL": ['"approved by the U.S. Food and Drug Administration"',
+                 '"FDA has approved"',
+                 '"announced FDA approval"',
+                 '"received FDA approval"',
+                 '"U.S. Food and Drug Administration has approved"'],
 }
 
 
@@ -98,9 +122,16 @@ def search_year(phrase: str, year: int, page_size: int = 100) -> list:
         time.sleep(0.15)
 
 
-def rows_from_hits(hits: list, kind: str) -> list:
-    """One row per (cik, date) — a filing may index several documents."""
+def rows_from_hits(hits: list, kind: str, verify: bool = False,
+                   stats: dict | None = None) -> list:
+    """One row per (cik, date) — a filing may index several documents.
+
+    With `verify`, each candidate's full text is classified (day-66) and only
+    ANNOUNCEMENTS survive. Slower by one fetch per hit, and the reason the
+    resulting labels mean anything.
+    """
     seen, rows = set(), []
+    stats = stats if stats is not None else {}
     for h in hits:
         s = h.get("_source", {})
         sic = (s.get("sics") or [""])[0]
@@ -111,6 +142,22 @@ def rows_from_hits(hits: list, kind: str) -> list:
         if not cik or not date or (cik, date) in seen:
             continue
         seen.add((cik, date))
+        if verify:
+            import classify
+            try:
+                txt = _strip(_get(f"https://www.sec.gov/Archives/edgar/data/"
+                                  f"{cik.lstrip('0')}/{s.get('adsh','')}.txt"))
+            except Exception as e:
+                stats[f"fetch:{type(e).__name__}"] = stats.get(
+                    f"fetch:{type(e).__name__}", 0) + 1
+                continue
+            fn = (classify.classify_crl if kind == "CRL"
+                  else classify.classify_approval)
+            ok, why = fn(txt, date)
+            if not ok:
+                stats[why[:38]] = stats.get(why[:38], 0) + 1
+                continue
+            time.sleep(0.12)
         name = (s.get("display_names") or [""])[0]
         rows.append({"kind": kind, "cik": cik.lstrip("0"), "date": date,
                      "name": re.sub(r"\s*\(CIK.*", "", name).strip(),
@@ -187,20 +234,32 @@ def main(argv=None) -> int:
     os.makedirs(a.cache, exist_ok=True)
     out_path = os.path.join(a.cache, "catalyst_events.csv")
 
-    rows = []
-    for kind, phrase in PHRASES.items():
+    rows, reasons = [], {}
+    for kind, phrases in PHRASES.items():
         for y in range(a.start, a.end + 1):
-            try:
-                hits = search_year(phrase, y)
-            except Exception as e:
-                print(f"  {kind} {y}: FAILED ({type(e).__name__}) — skipped",
-                      flush=True)
-                continue
-            r = rows_from_hits(hits, kind)
+            hits = []
+            for phrase in phrases:
+                try:
+                    hits += search_year(phrase, y)
+                except Exception as e:
+                    print(f"  {kind} {y} [{phrase[:28]}]: FAILED "
+                          f"({type(e).__name__})", flush=True)
+            seen_here = set()
+            uniq = []
+            for h in hits:
+                k = h.get("_source", {}).get("adsh", "")
+                if k and k not in seen_here:
+                    seen_here.add(k)
+                    uniq.append(h)
+            r = rows_from_hits(uniq, kind, verify=True, stats=reasons)
             rows += r
-            print(f"  {kind} {y}: {len(hits):>4} hits -> {len(r):>3} bio events",
-                  flush=True)
+            print(f"  {kind} {y}: {len(uniq):>4} unique hits -> {len(r):>3} "
+                  "verified events", flush=True)
 
+    if reasons:
+        print("\nrejected by the announcement classifier:")
+        for k, v in sorted(reasons.items(), key=lambda x: -x[1])[:8]:
+            print(f"    {v:>5}  {k}")
     tm = ticker_map(a.cache)
     fcache: dict = {}
     hit = 0
