@@ -77,6 +77,7 @@ import math
 import os
 import re
 import sys
+import time
 import urllib.request
 import zipfile
 
@@ -320,11 +321,23 @@ def files_8k(cik: str, cache: dict) -> bool:
     """
     if cik in cache:
         return cache[cik]
-    try:
-        sub = json.loads(urllib.request.urlopen(urllib.request.Request(
-            f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json",
-            headers={**H, "Accept": "application/json"}), timeout=30).read())
-    except Exception:
+    # THROTTLED, because the audit asks this ~650 times in a row. The SEC caps
+    # automated access at ten requests a second and answers a burst with an
+    # HTTP error, which is what took down the first live run of this audit --
+    # and it failed as one opaque HTTPError at the end rather than as 650
+    # visible refusals, which is exactly the day-29 shape.
+    url = f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json"
+    sub = None
+    for attempt in range(3):
+        try:
+            time.sleep(0.12)
+            sub = json.loads(urllib.request.urlopen(urllib.request.Request(
+                url, headers={**H, "Accept": "application/json"}),
+                timeout=30).read())
+            break
+        except Exception:
+            time.sleep(0.5 * (attempt + 1))
+    if sub is None:
         return False              # NOT cached: a transient error is not a fact
     forms = sub.get("filings", {}).get("recent", {}).get("form", [])
     cache[cik] = any(f.startswith("8-K") for f in forms)
@@ -443,7 +456,14 @@ def render(raw: dict, cap: dict, corr: dict, start: str, end: str,
              f"95% Wilson [{raw['lo']:.1%}, {raw['hi']:.1%}]")
     L += ["", "-" * 74,
           "THE AUDIT — is the approval leg undercounted?", ""]
-    if cap:
+    if cap.get("error"):
+        L.append(f"  UNAVAILABLE — the audit failed ({cap['error']}), so the "
+                 "raw figure above is")
+        L.append("  unverified in the direction that matters most. This is a "
+                 "reportable")
+        L.append("  failure, not a missing section: rerun it before trusting "
+                 "the number.")
+    elif cap.get("fda_total") is not None:
         L.append(f"  original NDA/BLA approvals, Drugs@FDA   {cap['fda_total']:>5}")
         L.append(f"  ...granted to an SEC registrant         {cap['fda_public']:>5}")
         L.append(f"  ...found in this harvest                {cap['found']:>5}"

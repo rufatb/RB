@@ -58,36 +58,53 @@ import argparse
 
 BASE_RATE_FIRST_CYCLE = 0.70      # see BASE RATE note above
 
-# DAY-68: the CRL drawdown distribution, MEASURED. Day-56 could not establish
-# this because the event labels were noise -- random three-day windows were
-# indistinguishable from event windows -- and the earlier "28% worse than -18%"
-# figure had to be retracted. With classify.py verifying that each 8-K
-# ANNOUNCES rather than mentions a CRL, the labels pass their placebo gate
-# (CRL vs random: -15.00pp, t=-3.41 on 64 events) and the distribution can be
-# stated:
+# DAY-72 SUPERSEDES DAY-68, and the reason is a data bug that nothing caught
+# for four days. `fetch_prices` asked Yahoo for interval="1d" over range="max".
+# Yahoo does not refuse that; it silently returns WEEKLY, MONTHLY or even
+# QUARTERLY bars depending on how long the ticker has existed -- SRPT came back
+# at a 31-day median gap, HRTX at 92. Every window in validate_catalyst.py
+# counts BARS, so the "close t-2 -> close t+1" event window was three MONTHS on
+# those names. The numbers below were wrong and were quoted in the morning
+# report for four days.
 #
-#     median -15.20%   p10 -57.53%   worst -83.61%
-#     47% of CRLs finish worse than -18%
-#     20% finish worse than -40%
+# What caught it was a positive control: validate_runup.py could not detect a
+# planted +1% drift, which is only possible if the sample is far noisier than a
+# daily window should be. The aggregate looked plausible throughout.
 #
-# Use these when a thesis asserts a downside. The approval side did NOT pass
-# the same gate (t=+0.98, median -2.52% against a random -0.54%), so the
-# asymmetry is the point: the rejection is violent and the approval is largely
-# priced in before it arrives.
-CRL_MEDIAN, CRL_P10, CRL_WORST = -15.20, -57.53, -83.61
-CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.47, 0.20
-CRL_N, CRL_VS_RANDOM_PP, CRL_T = 64, -15.00, -3.41
-# The approval leg, same harness, same placebo gate -- and it FAILED it. An
-# approval window is not statistically distinguishable from a random window on
-# the same tickers, so the honest reading is that the pop is priced before the
-# letter arrives. Kept as constants so no caller has to re-derive the asymmetry.
-APPROVAL_MEDIAN, APPROVAL_RANDOM, APPROVAL_T = -2.52, -0.54, 0.98
-# NOT MEASURED, and deliberately so: P(CRL) itself. 64 rejections were
-# harvested from 8-Ks; the denominator -- every decision the FDA issued,
-# including the quiet approvals nobody files an 8-K about the same way -- is
-# not observable from this source. A base rate computed from the numerator
-# alone would be fabricated. The caller supplies the probability; this module
-# supplies what the outcome costs when it happens.
+# Re-measured on verified daily bars (median gap <= 4 days, asserted rather
+# than requested), same events, same classifier:
+#
+#     CRL        n=57    mean -18.48%   median -8.97%   p10 -60.38%   worst -74.95%
+#                42% worse than -18%, 19% worse than -40%
+#                vs random windows: -18.31pp, t=-5.64   (was -15.00pp, t=-3.41)
+#     APPROVAL   n=173   mean  +5.21%   median +0.21%
+#                vs random windows:  +5.38pp, t=+2.42   (was +0.98, and NEGATIVE)
+#
+# TWO THINGS CHANGED MATERIALLY. The rejection finding got STRONGER -- it was
+# never in doubt and now separates from random at t=-5.64. But the approval
+# claim this repo has been repeating, that an approval is "indistinguishable
+# from a random window" and therefore already priced, does NOT survive: on
+# daily bars the approval reaction is positive, +5.4pp over random at t=+2.42.
+#
+# That still does not clear the pre-registered |t| >= 3 bar, so it is NOT
+# adopted and no long is recommended on it. The honest statement is "positive
+# and below the bar", which is a different sentence from "indistinguishable
+# from random", and the report must stop saying the second one.
+#
+# MEAN AND MEDIAN ARE BOTH KEPT because they answer different questions. An
+# option's payoff is an expectation, so a breakeven belongs against the MEAN
+# (-18.48%); the median (-8.97%) describes the case a holder should picture.
+# The gap between them is the fat left tail, and quoting only one hides it.
+CRL_MEDIAN, CRL_MEAN = -8.97, -18.48
+CRL_P10, CRL_WORST = -60.38, -74.95
+CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.42, 0.19
+CRL_N, CRL_VS_RANDOM_PP, CRL_T = 57, -18.31, -5.64
+APPROVAL_MEDIAN, APPROVAL_MEAN = 0.21, 5.21
+APPROVAL_VS_RANDOM_PP, APPROVAL_T, APPROVAL_N = 5.38, 2.42, 173
+APPROVAL_RANDOM = -0.17
+# The bar that was pre-registered and is not being moved now that a number
+# came close to it.
+ADOPT_T = 3.0
 GAP_WARN = 0.15                   # claimed - implied, above which the bet is "on the gap"
 
 

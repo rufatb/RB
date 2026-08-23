@@ -164,7 +164,8 @@ def render_catalyst_detail(legs: list, today: dt.date,
         except Exception:
             pass
         import catalyst as _cat
-        out.append(f"      MEASURED downside (day-68, n=64 verified CRLs): median "
+        out.append(f"      MEASURED downside (day-72, n={_cat.CRL_N} verified CRLs, "
+                   f"daily bars): median "
                    f"{_cat.CRL_MEDIAN:.1f}%, "
                    f"{_cat.CRL_WORSE_THAN_18:.0%} worse than -18%, "
                    f"{_cat.CRL_WORSE_THAN_40:.0%} worse than -40%, worst "
@@ -174,9 +175,13 @@ def render_catalyst_detail(legs: list, today: dt.date,
             out.append(f"      At the median that is ${implied_floor:,.2f} from "
                        f"today's ${l['mark']:,.2f} — compare with the "
                        f"${dn:,.2f} the thesis assumes.")
-        out.append("      Approvals did NOT separate from a random window "
-                   "(t=+0.98, median\n        -2.52%): the rejection is "
-                   "violent, the approval is largely priced.")
+        out.append(f"      Approvals DO separate, but below the bar: "
+                   f"+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp over random windows "
+                   f"(t=+{_cat.APPROVAL_T:.2f},\n        n="
+                   f"{_cat.APPROVAL_N}) against a required "
+                   f"|t|>={_cat.ADOPT_T:.0f}. The rejection leg separates at "
+                   f"t={_cat.CRL_T:.2f}\n        by comparison — the asymmetry "
+                   "is real, the long side is not yet actionable.")
         # The routes out, priced. Without this the section ends on a
         # description of the risk and never names what to DO about it.
         try:

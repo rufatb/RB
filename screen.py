@@ -82,11 +82,16 @@ H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
 #
 #   IMMATERIAL  half the median rejection. Below this the market cannot be
 #               pricing a company-level binary at all — whatever the FDA says,
-#               the enterprise barely moves. RPRX at +/-4% is the case.
+#               the enterprise barely moves. RPRX at +/-3% is the case.
 #   RICH        three times the median rejection. Above this the tape is
-#               already paying near the measured TAIL (p10 -57.5%), not the
+#               already paying near the measured TAIL (p10 -60.4%), not the
 #               median, so both sides are dear.
-_CRL = 15.20                      # kept literal so import order cannot bite
+#
+# DAY-72: the median moved from -15.20% to -8.97% when the bar-interval bug was
+# found (see catalyst.py), so both thresholds moved with it. They are anchored
+# to a measurement precisely so that correcting the measurement corrects them,
+# rather than leaving two stale round numbers behind.
+_CRL = 8.97                       # day-72 median, on verified daily bars
 IMMATERIAL_MOVE = _CRL / 2 / 100          # 0.076
 RICH_MOVE = _CRL * 3 / 100                # 0.456
 CHEAP_MOVE = IMMATERIAL_MOVE              # name kept: callers outside this file
@@ -269,6 +274,24 @@ def stance(move: float | None, sk: float | None, days: int,
     return s
 
 
+def breakeven_pair(put_pct: float | None) -> tuple:
+    """(against the MEAN, against the MEDIAN). Both, because they differ a lot.
+
+    AN OPTION PAYS AN EXPECTATION, so the breakeven that decides whether a
+    premium is worth paying belongs against the MEAN drawdown (-18.5%). The
+    median (-9.0%) answers a different and also necessary question: what should
+    a holder picture happening.
+
+    The gap between them IS the fat left tail — 19% of rejections finish worse
+    than -40% — and quoting only one of the two hides exactly the feature of
+    this distribution that matters most. Day-68 quoted only the median, which
+    made every put look roughly twice as dear as its expectation justifies.
+    """
+    import catalyst as _cat
+    return (put_breakeven(put_pct, _cat.CRL_MEAN),
+            put_breakeven(put_pct, _cat.CRL_MEDIAN))
+
+
 def put_breakeven(put_pct: float | None,
                   drop_pct: float = None) -> float | None:
     """The probability of a CRL you must believe for the put to break even.
@@ -298,7 +321,7 @@ def put_breakeven(put_pct: float | None,
     import catalyst as _cat
     if put_pct is None:
         return None
-    drop = abs(drop_pct if drop_pct is not None else _cat.CRL_MEDIAN) / 100.0
+    drop = abs(drop_pct if drop_pct is not None else _cat.CRL_MEAN) / 100.0
     return put_pct / drop if drop else None
 
 
@@ -372,8 +395,8 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
         a rejection is violent and unpriced   median -15.2%, -15.0pp vs random,
                                               t=-3.41 on 64 events
         an approval is already in the price   median -2.52% against a random
-                                              -0.54%, t=+0.98 — FAILS the same
-                                              placebo gate the CRL leg passes
+                                              +5.4pp over random, t=+2.42 —
+                                              positive, and BELOW the bar
 
     Read together they say something specific and uncomfortable: on this
     evidence there is no probability of approval at which holding a long
@@ -391,8 +414,9 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
     mv, spot = row.get("move"), row.get("spot")
     f = row.get("fund") or {}
     sig = row.get("signals") or []
-    why, be = [], put_breakeven(row.get("put_pct"))
-    row["put_be"] = be
+    why = []
+    be, be_med = breakeven_pair(row.get("put_pct"))
+    row["put_be"], row["put_be_median"] = be, be_med
 
     if mv is None:
         call = "NO PRICED EXPRESSION"
@@ -441,38 +465,41 @@ def verdict(row: dict, vote: dict | None = None) -> dict:
             call = "PROTECTION IS DEAR — STAND ASIDE"
             why.append(
                 f"the put covering the date costs {row['put_pct']:.1%} of spot, "
-                f"MORE than the {abs(_cat.CRL_MEDIAN):.1f}% median rejection "
-                "delivers. No probability makes the median case pay; buying it "
+                f"MORE than the {abs(_cat.CRL_MEAN):.1f}% MEAN rejection "
+                "delivers. No probability makes the average case pay; buying it "
                 "is a bet on the tail alone (p10 "
                 f"{_cat.CRL_P10:.1f}%, {_cat.CRL_WORSE_THAN_40:.0%} of CRLs "
                 "finish worse than -40%)")
         elif be > 0.75:
             call = "PROTECTION IS DEAR — STAND ASIDE"
             why.append(
-                f"the put costs {row['put_pct']:.1%} of spot; at the measured "
-                f"{abs(_cat.CRL_MEDIAN):.1f}% median drop it needs a rejection "
-                f"to be ~{be:.0%} likely just to break even")
+                f"the put costs {row['put_pct']:.1%} of spot; against the "
+                f"measured mean rejection ({_cat.CRL_MEAN:.1f}%) it needs one "
+                f"to be ~{be:.0%} likely just to break even, and ~{be_med:.0%} "
+                "against the median")
         elif be > 0.35:
             call = "STAND ASIDE INTO THE PRINT"
             why.append(
                 f"the put costs {row['put_pct']:.1%} of spot — a rejection has "
-                f"to be ~{be:.0%} likely to break even at the measured median. "
-                "Fairly priced against what this repo can prove; the edge would "
-                "have to come from the drug")
+                f"to be ~{be:.0%} likely to break even against the measured "
+                f"mean ({be_med:.0%} against the median). Fairly priced against "
+                "what this repo can prove; the edge would have to come from the "
+                "drug")
         else:
             call = "DOWNSIDE IS THE CHEAPER SIDE"
             why.append(
                 f"the put costs only {row['put_pct']:.1%} of spot — it breaks "
-                f"even if a rejection is ~{be:.0%} likely at the measured "
-                f"{abs(_cat.CRL_MEDIAN):.1f}% median, and the tail is fatter "
-                f"than the median (p10 {_cat.CRL_P10:.1f}%), so that is an "
-                "upper bound on what you must believe")
+                f"even if a rejection is ~{be:.0%} likely against the measured "
+                f"MEAN rejection ({_cat.CRL_MEAN:.1f}%), or ~{be_med:.0%} "
+                f"against the median ({_cat.CRL_MEDIAN:.1f}%). The mean is the "
+                "one an option pays against; the gap between them is the tail")
         why.append(
-            f"the long side has no measured payer: approval windows are not "
-            f"distinguishable from random ones (t=+{_cat.APPROVAL_T:.2f}, "
-            f"median {_cat.APPROVAL_MEDIAN:.2f}% vs random "
-            f"{_cat.APPROVAL_RANDOM:.2f}%), so holding through the print is "
-            "selling insurance, not buying a ticket")
+            f"the long side is POSITIVE but BELOW THE BAR: approval windows "
+            f"beat random ones by {_cat.APPROVAL_VS_RANDOM_PP:+.1f}pp "
+            f"(t=+{_cat.APPROVAL_T:.2f}, n={_cat.APPROVAL_N}), which does not "
+            f"clear the pre-registered |t| >= {_cat.ADOPT_T:.0f}. Not nothing, "
+            "and not enough to act on — the rejection leg separates at "
+            f"t={_cat.CRL_T:.2f} by comparison")
         why += against_base_rate(be)
 
     # Financing is a SECOND binary, and it is not the FDA's. A name that has to
@@ -561,16 +588,21 @@ def position_verdict(leg: dict, row: dict | None, today: dt.date) -> list:
     if leg["side"].upper() == "LONG":
         L.append(f"        EXIT BEFORE — banks the move to ${mark:,.2f} and "
                  "forfeits the print. On this")
-        L.append(f"        evidence the print has no measured payer for a long "
-                 f"(approval t=+{_cat.APPROVAL_T:.2f}),")
-        L.append("        so what is forfeited is a gap the data cannot show "
-                 "you being paid for.")
-    be = put_breakeven((row or {}).get("put_pct"))
+        L.append(f"        evidence the approval leg is positive but below "
+                 f"the bar (+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp over random,")
+        L.append(f"        t=+{_cat.APPROVAL_T:.2f} against a required "
+                 f"{_cat.ADOPT_T:.0f}), so what is forfeited is a gap the data "
+                 "hints at")
+        L.append("        and cannot yet demonstrate.")
+    be, be_med = breakeven_pair((row or {}).get("put_pct"))
     if be is not None and (row or {}).get("put_pct") is not None:
         L.append(f"        HEDGE — the put covering the date costs "
                  f"{row['put_pct']:.1%} of spot, so it pays for")
         L.append(f"        itself if a rejection is more than ~{be:.0%} likely "
-                 "at the measured median.")
+                 f"against the measured MEAN")
+        import catalyst as _c2
+        L.append(f"        rejection ({_c2.CRL_MEAN:.1f}%) — or ~{be_med:.0%} "
+                 f"against the median ({_c2.CRL_MEDIAN:.1f}%).")
         # A holder needs the comparison at least as much as a screener does:
         # this is the number that decides whether to pay for protection today.
         for x in against_base_rate(be):
@@ -680,11 +712,13 @@ def rank_opportunities(rows: list, top: int = 2) -> dict:
         MONTH    11-45 days   the working window; express by D-5
         QUARTER  46+ days     too early to pay premium, right time to research
 
-    WHAT IS DELIBERATELY ABSENT IS A LONG SIDE. Day-68 measured approval
-    windows as indistinguishable from random ones (t=+0.98), so on this
-    evidence no long into a print is supported, and ranking one would be
-    inventing a side to make the output look balanced. If a pre-decision drift
-    is ever established (validate_runup.py), it belongs here and not before.
+    WHAT IS DELIBERATELY ABSENT IS A LONG SIDE, and day-72 made that call
+    closer rather than easier. On corrected daily bars the approval reaction is
+    POSITIVE — +5.4pp over random windows, t=+2.42 on 173 events — where day-68
+    had it indistinguishable from noise. That still does not clear the
+    pre-registered |t| >= 3, and the bar does not move because a number came
+    close to it. So no long is ranked, and the reason printed is the true one:
+    positive and below the bar, not absent.
 
     Names whose quote failed the parity, two-sided or open-interest checks are
     EXCLUDED rather than ranked last: a ranking built on a price known to be
@@ -751,12 +785,17 @@ def render_ranked(ranked: dict, today: dt.date, top: int = 2) -> str:
                  "what this population")
         L.append("      actually delivers; a high multiple is a lottery ticket "
                  "with a story.")
-    L.append("   ── NO LONG SIDE IS RANKED. Day-68 measured approval windows as")
-    L.append("      indistinguishable from random ones (t=+0.98), so no long "
-             "into a print")
-    L.append("      is supported here. Inventing one to balance the page would "
-             "be a lie")
-    L.append("      of format.")
+    import catalyst as _cat
+    L.append("   ── NO LONG SIDE IS RANKED, and day-72 made that call closer. On")
+    L.append(f"      corrected daily bars the approval reaction is POSITIVE — "
+             f"+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp over")
+    L.append(f"      random windows, t=+{_cat.APPROVAL_T:.2f} on "
+             f"{_cat.APPROVAL_N} events. It does not clear the")
+    L.append(f"      pre-registered |t| >= {_cat.ADOPT_T:.0f}, and the bar does "
+             "not move because a number came")
+    L.append("      close to it. Positive and below the bar is the honest "
+             "reason, and it")
+    L.append("      is a different sentence from 'no edge exists'.")
     for t, why in ranked["skipped"][:6]:
         L.append(f"   · {t} not ranked — {why}")
     return "\n".join(L)
@@ -802,11 +841,12 @@ def render(rows: list, today: dt.date) -> str:
              f"{_cat.CRL_MEDIAN:.1f}% and")
     L.append(f"      {_cat.CRL_VS_RANDOM_PP:.1f}pp against random windows on the "
              f"same names (t={_cat.CRL_T:.2f}, n={_cat.CRL_N});")
-    L.append("      an approval FAILS that same placebo gate "
-             f"(t=+{_cat.APPROVAL_T:.2f}, median "
-             f"{_cat.APPROVAL_MEDIAN:.2f}% vs")
-    L.append(f"      random {_cat.APPROVAL_RANDOM:.2f}%) — it is priced before "
-             "the letter arrives.")
+    L.append(f"      an approval is POSITIVE but below the bar "
+             f"(+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp over random, "
+             f"t=+{_cat.APPROVAL_T:.2f},")
+    L.append(f"      n={_cat.APPROVAL_N}) — not adopted, and no longer the "
+             "'already priced' claim")
+    L.append("      day-68 made on contaminated bars.")
     try:
         import baserate as _br
         s = _br.summary()

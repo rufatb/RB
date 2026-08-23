@@ -61,7 +61,8 @@ def test_a_large_implied_move_is_labelled_existential_not_expensive():
 
 
 def test_a_typical_move_is_a_material_binary():
-    assert S.stance(0.31, None, 3, [])[0] == "material binary"
+    """Between half and three times the measured median rejection."""
+    assert S.stance(0.15, None, 3, [])[0] == "material binary"
 
 
 def test_put_bid_over_calls_is_reported_as_fear_not_forecast():
@@ -120,12 +121,22 @@ def _row(**kw):
     return r
 
 
-def test_breakeven_is_put_cost_over_the_measured_median_drop():
+def test_breakeven_is_put_cost_over_the_measured_MEAN_drop():
     """The one number the screen owes a PM: how likely the bad outcome has to
-    be before the premium makes sense."""
+    be before the premium makes sense.
+
+    Day-72 moved this from the median to the MEAN. An option pays an
+    expectation, and quoting only the median made every put look roughly twice
+    as dear as its expectation justifies."""
     be = S.put_breakeven(0.09)
-    assert abs(be - 0.09 / 0.152) < 1e-9
-    assert 0.58 < be < 0.60
+    assert abs(be - 0.09 / (abs(C.CRL_MEAN) / 100)) < 1e-9
+
+
+def test_both_breakevens_are_reported_because_the_tail_is_the_difference():
+    mean_be, med_be = S.breakeven_pair(0.09)
+    assert mean_be < med_be                 # the mean is the fatter number
+    assert abs(med_be - 0.09 / (abs(C.CRL_MEDIAN) / 100)) < 1e-9
+    assert S.breakeven_pair(None) == (None, None)
 
 
 def test_breakeven_above_one_is_reported_not_clamped():
@@ -141,21 +152,25 @@ def test_a_dear_put_is_called_dear_and_the_tail_named_as_the_only_case():
     assert "bet on the tail alone" in " ".join(v["why"])
 
 
-def test_a_cheap_put_is_the_cheaper_side_with_an_upper_bound_stated():
+def test_a_cheap_put_is_the_cheaper_side_with_both_breakevens_stated():
     v = S.verdict(_row(put_pct=0.04))
     assert v["call"] == "DOWNSIDE IS THE CHEAPER SIDE"
     joined = " ".join(v["why"])
-    assert "upper bound" in joined          # median understates the payoff
+    assert "MEAN rejection" in joined and "against the median" in joined
+    assert "the gap between them is the tail" in joined
 
 
 def test_no_verdict_ever_endorses_holding_a_long_through_the_print():
-    """The day-68 asymmetry in one assertion. Approval windows are
-    indistinguishable from random ones, so the winning outcome pays nothing
-    measurable while the losing one takes 15%."""
+    """The asymmetry in one assertion, and day-72 made it a CLOSER call rather
+    than an easier one: on corrected daily bars the approval leg is positive
+    (+5.4pp, t=+2.42) where day-68 had it at noise. It still does not clear the
+    pre-registered bar, and the bar does not move because a number came close
+    to it."""
     for put in (0.03, 0.09, 0.16, 0.25):
         v = S.verdict(_row(put_pct=put))
         joined = " ".join(v["why"])
-        assert "selling insurance, not buying a ticket" in joined
+        assert "BELOW THE BAR" in joined
+        assert "not enough to act on" in joined
         assert "BUY" not in v["call"] and "LONG" not in v["call"]
 
 
@@ -223,7 +238,9 @@ def test_the_footer_states_the_measured_asymmetry_with_its_test_statistics():
     out = S.render([_row(verdict=S.verdict(_row()))], dt.date(2026, 8, 22))
     assert f"{C.CRL_MEDIAN:.1f}%" in out and f"t={C.CRL_T:.2f}" in out
     assert f"n={C.CRL_N}" in out
-    assert "FAILS that same placebo gate" in out
+    # the approval leg is reported as positive-below-bar, never as "no edge"
+    assert "POSITIVE but below the bar" in out
+    assert f"t=+{C.APPROVAL_T:.2f}" in out
 
 
 def test_leg_costs_separate_the_two_sides_the_straddle_averages_together():
@@ -325,7 +342,7 @@ def _leg(**kw):
 def test_the_naked_carry_is_priced_in_dollars_not_described_in_percent():
     """'Decide now' is a reminder. A dollar figure is a decision input."""
     lines = " ".join(S.position_verdict(_leg(), _row(), dt.date(2026, 8, 22)))
-    at_risk = 28.67 * 0.152 * 400
+    at_risk = 28.67 * abs(C.CRL_MEDIAN) / 100 * 400
     assert f"${at_risk:,.0f} at risk" in lines
 
 
@@ -337,13 +354,18 @@ def test_the_default_route_is_named_as_the_default():
 def test_a_long_is_told_what_it_forfeits_by_exiting_and_what_that_is_worth():
     lines = " ".join(S.position_verdict(_leg(), _row(), dt.date(2026, 8, 22)))
     assert "EXIT BEFORE" in lines
-    assert "no measured payer for a long" in lines
+    flat = " ".join(lines.split())
+    assert "positive but below the bar" in flat
+    assert "hints at and cannot yet demonstrate" in flat
 
 
 def test_the_hedge_route_is_priced_in_the_same_breakeven_terms():
     lines = " ".join(S.position_verdict(_leg(), _row(put_pct=0.08),
                                         dt.date(2026, 8, 22)))
-    assert "HEDGE" in lines and "~53% likely" in lines
+    flat = " ".join(lines.split())
+    assert "HEDGE" in flat
+    assert f"~{0.08 / (abs(C.CRL_MEAN) / 100):.0%} likely" in flat
+    assert f"~{0.08 / (abs(C.CRL_MEDIAN) / 100):.0%} against the median" in flat
 
 
 def test_a_hedge_quote_that_fails_parity_is_flagged_inside_the_decision():
@@ -509,7 +531,9 @@ def test_the_ranking_never_invents_a_long_side_to_balance_the_page():
         out = S.render_ranked(S.rank_opportunities([_scr_row("A", 3, 0.3)]),
                               dt.date(2026, 8, 22))
     assert "NO LONG SIDE IS RANKED" in out
-    assert "lie" in out and "t=+0.98" in out
+    assert f"t=+{C.APPROVAL_T:.2f}" in out
+    assert "the bar does not move because a number came" in out
+    assert "different sentence from 'no edge exists'" in out
 
 
 def test_without_a_base_rate_nothing_is_ranked_rather_than_ranked_badly():

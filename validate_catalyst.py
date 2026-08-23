@@ -99,15 +99,50 @@ def load_events(path: str, collapse_days: int = 45) -> pd.DataFrame:
     return out
 
 
+# DAY-72: this was 8000, and Yahoo does not say no. Asked for interval="1d"
+# over range="max" it silently returns WEEKLY, MONTHLY or even QUARTERLY bars
+# depending on how long the ticker has existed -- SRPT came back at a 31-day
+# median gap, HRTX at 92. Every window in this file counts BARS, so a "3-day
+# event window" on those series was three months, and a 20-bar run-up was
+# twenty months. Nothing errored and nothing looked wrong in aggregate.
+#
+# 3600 ("10y") is the largest range that still returns true daily bars. It
+# costs the 2015 events, which is the cheaper half of the trade.
+LOOKBACK_DAYS = 3600
+# A series whose median gap exceeds this is not daily, whatever was requested.
+MAX_GAP_DAYS = 4
+
+
+def is_daily(idx) -> bool:
+    """Verify the interval that came back, not the one that was asked for.
+
+    The day-29 rule applied to granularity: silently degraded data is worse
+    than an error, because an error stops the run and this does not.
+    """
+    if len(idx) < 10:
+        return False
+    g = pd.Series(idx).diff().dt.days.dropna()
+    return bool(g.median() <= MAX_GAP_DAYS)
+
+
 def fetch_prices(tickers: list, workers: int = 12) -> dict:
-    """Daily closes per ticker. Delisted names often 404 — counted, not hidden."""
+    """Daily closes per ticker. Delisted names often 404 — counted, not hidden.
+
+    Series that come back at the wrong INTERVAL are rejected the same way, and
+    counted separately, because they are the more dangerous failure: a 404 is
+    visible and a monthly bar labelled 'daily' is not.
+    """
     a = YahooDirectAdapter(exchange_tz="America/New_York")
     out, fail = {}, {}
 
     def one(t):
         try:
-            b = a.get_daily_bars(t, 8000)
-            return t, b[["Close"]] if len(b) else None
+            b = a.get_daily_bars(t, LOOKBACK_DAYS)
+            if not len(b):
+                return t, "empty"
+            if not is_daily(b.index):
+                return t, "NOT-DAILY"
+            return t, b[["Close"]]
         except Exception as e:
             return t, type(e).__name__
 
@@ -120,8 +155,15 @@ def fetch_prices(tickers: list, workers: int = 12) -> dict:
             if n % 200 == 0:
                 print(f"    {n}/{len(tickers)} fetched, {len(out)} usable",
                       flush=True)
+    nd = sum(1 for v in fail.values() if v == "NOT-DAILY")
     print(f"  price series: {len(out)}/{len(tickers)} tickers usable "
           f"({len(out)/max(len(tickers),1):.0%})")
+    if nd:
+        print(f"  ⚠ {nd} series REJECTED for wrong interval — Yahoo served "
+              "non-daily bars for a daily request")
+    if fail:
+        from collections import Counter
+        print(f"  failures by kind: {dict(Counter(fail.values()))}")
     return out
 
 
@@ -201,7 +243,8 @@ def placebo_windows(px: dict, per_ticker: int = 5, seed: int = 0) -> pd.DataFram
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--events", default=os.path.join(SCRATCH, "catalyst_events.csv"))
+    import baserate as _br
+    ap.add_argument("--events", default=_br.EVENTS)
     ap.add_argument("--max-tickers", type=int, default=0)
     a = ap.parse_args(argv)
 

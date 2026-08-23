@@ -139,13 +139,17 @@ def test_catalyst_block_never_lets_an_assumed_floor_stand_unchallenged():
     distribution and the median-implied floor beside whatever the thesis
     assumed, which does the same job with numbers instead of an adjective.
     """
+    import catalyst as _c
     out = brief.render_catalyst_detail([_cat_leg(28.67)], TODAY)
-    assert "MEASURED downside" in out and "n=64 verified CRLs" in out
+    assert "MEASURED downside" in out
+    assert f"n={_c.CRL_N} verified CRLs" in out
     assert "worse than -40%" in out
     # the assumed floor is confronted with the measured one, not just flagged
     assert "compare with the $20.50 the thesis assumes" in out
-    # and the asymmetry that makes a long-into-PDUFA trade insurance-like
-    assert "the rejection is violent, the approval is largely priced" in out
+    # day-72: the approval leg is positive-below-bar, NOT "already priced" --
+    # that claim came from bars that were silently monthly.
+    assert "Approvals DO separate, but below the bar" in out
+    assert f"t=+{_c.APPROVAL_T:.2f}" in out
 
 
 def test_a_stale_mark_does_not_fabricate_a_probability():

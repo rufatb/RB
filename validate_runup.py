@@ -66,7 +66,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from validate_catalyst import fetch_prices, load_events  # noqa: E402
 from validate_exit import SCRATCH  # noqa: E402
 
-EVENTS = os.path.join(SCRATCH, "catalyst_events.csv")
+import baserate as _br  # noqa: E402
+
+EVENTS = _br.EVENTS   # the committed copy wins; see data/README.md
 HORIZONS = (5, 10, 20, 40)
 BAR_Z = 3.5                 # raised from 3.0: four horizons, not one
 BOOT = 2000
