@@ -446,3 +446,85 @@ def test_a_holder_gets_the_base_rate_comparison_on_the_hedge_too():
         lines = " ".join(S.position_verdict(_leg(), _row(put_pct=0.08),
                                             dt.date(2026, 8, 22)))
     assert "base rate" in lines and "UNCONDITIONAL" in lines
+
+
+# ── day-72: the short list. The screen lists names in DATE order, which is the
+# order a calendar has and not the order a decision has.
+
+def _scr_row(ticker, days, be, call="STAND ASIDE INTO THE PRINT", put=0.08):
+    return {"ticker": ticker, "date": "2026-09-01", "days": days,
+            "company": ticker, "spot": 50.0, "move": 0.30, "put_pct": put,
+            "put_be": be, "verdict": {"call": call, "why": [], "breakeven": be}}
+
+
+def test_names_are_bucketed_by_the_horizon_a_pm_thinks_in():
+    rows = [_scr_row("A", 3, 0.3), _scr_row("B", 30, 0.3), _scr_row("C", 90, 0.3)]
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities(rows)
+    assert [x["ticker"] for x in r["buckets"]["WEEK"]] == ["A"]
+    assert [x["ticker"] for x in r["buckets"]["MONTH"]] == ["B"]
+    assert [x["ticker"] for x in r["buckets"]["QUARTER"]] == ["C"]
+
+
+def test_the_ranking_is_by_breakeven_over_the_base_rate_not_by_date():
+    """A pure number, comparable across names of any price or size."""
+    rows = [_scr_row("DEAR", 20, 0.90), _scr_row("CHEAP", 25, 0.20),
+            _scr_row("MID", 22, 0.50)]
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities(rows, top=3)
+    assert [x["ticker"] for x in r["buckets"]["MONTH"]] == ["CHEAP", "MID", "DEAR"]
+
+
+def test_only_the_top_n_survive_each_bucket():
+    rows = [_scr_row(f"T{i}", 20, 0.1 * i) for i in range(1, 6)]
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities(rows, top=2)
+    assert len(r["buckets"]["MONTH"]) == 2
+
+
+def test_a_name_whose_quote_failed_its_checks_is_excluded_not_ranked_last():
+    """A ranking built on a price known to be wrong is worse than a shorter
+    list."""
+    rows = [_scr_row("BAD", 20, 0.05,
+                     call="PRICING UNRELIABLE — VERIFY THE QUOTE"),
+            _scr_row("GOOD", 20, 0.40)]
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities(rows)
+    assert [x["ticker"] for x in r["buckets"]["MONTH"]] == ["GOOD"]
+    assert ("BAD", "quote failed its checks") in r["skipped"]
+
+
+def test_an_immaterial_decision_is_excluded_with_its_reason():
+    rows = [_scr_row("RPRX", 20, 0.05, call="NOT AN EVENT TRADE")]
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities(rows)
+    assert not r["buckets"]["MONTH"]
+    assert r["skipped"][0][1].startswith("decision is immaterial")
+
+
+def test_the_ranking_never_invents_a_long_side_to_balance_the_page():
+    """Day-68 measured approval windows as indistinguishable from random ones.
+    A long column would be a lie of format."""
+    with _with_base(0.16, 0.27):
+        out = S.render_ranked(S.rank_opportunities([_scr_row("A", 3, 0.3)]),
+                              dt.date(2026, 8, 22))
+    assert "NO LONG SIDE IS RANKED" in out
+    assert "lie" in out and "t=+0.98" in out
+
+
+def test_without_a_base_rate_nothing_is_ranked_rather_than_ranked_badly():
+    orig = _BR.summary
+    _BR.summary = lambda *a, **k: None
+    try:
+        r = S.rank_opportunities([_scr_row("A", 3, 0.3)])
+        out = S.render_ranked(r, dt.date(2026, 8, 22))
+    finally:
+        _BR.summary = orig
+    assert "nothing can be ranked" in out and "baserate.py" in out
+
+
+def test_an_empty_bucket_says_so_rather_than_being_hidden():
+    with _with_base(0.16, 0.27):
+        out = S.render_ranked(S.rank_opportunities([_scr_row("A", 3, 0.3)]),
+                              dt.date(2026, 8, 22))
+    assert out.count("nothing priced in this window") == 2   # MONTH + QUARTER

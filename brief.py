@@ -461,6 +461,13 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                 import screen as _scr
                 held = {l["ticker"] for l in book["legs"]}
                 rows = [r for r in screen_rows if r["ticker"] not in held]
+                # THE SHORT LIST FIRST. The full screen is ordered by date,
+                # which is the order the FDA's diary has and not the order a
+                # decision has. A PM asking for their two best pharma trades
+                # this month should not have to rank eight names by eye across
+                # four inputs.
+                parts.append(_scr.render_ranked(
+                    _scr.rank_opportunities(rows, top=2), today, top=2))
                 parts.append(_scr.render(rows, today))
                 # LOG every surfaced catalyst, traded or not. Recording only
                 # the trades taken would measure the trader, not the screen —

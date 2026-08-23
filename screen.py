@@ -658,6 +658,110 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
     return out
 
 
+def rank_opportunities(rows: list, top: int = 2) -> dict:
+    """The best-priced expressions per horizon, ranked by a measured quantity.
+
+    WHY THE SCREEN NEEDED THIS ON TOP OF ITSELF. It lists names in DATE order,
+    which is the order a calendar has and not the order a decision has. A
+    portfolio manager asking "what are my two best pharma trades this month"
+    was being handed eight names sorted by when the FDA happens to be sitting,
+    and left to rank them by eye across four different inputs.
+
+    THE RANKING QUANTITY, and there is only one honest candidate: the breakeven
+    P(CRL) divided by the MEASURED base rate for this population (day-71). It
+    is a pure number, it is comparable across names of any price or size, and
+    it says exactly what a PM needs — how far from the average this name would
+    have to be before the premium pays. A multiple near 1 is protection priced
+    at what the population actually delivers. A multiple of 5 is a lottery
+    ticket with a story attached.
+
+    THE HORIZONS ARE THE USER'S, not the calendar's:
+        WEEK     <= 10 days   the position has to exist now
+        MONTH    11-45 days   the working window; express by D-5
+        QUARTER  46+ days     too early to pay premium, right time to research
+
+    WHAT IS DELIBERATELY ABSENT IS A LONG SIDE. Day-68 measured approval
+    windows as indistinguishable from random ones (t=+0.98), so on this
+    evidence no long into a print is supported, and ranking one would be
+    inventing a side to make the output look balanced. If a pre-decision drift
+    is ever established (validate_runup.py), it belongs here and not before.
+
+    Names whose quote failed the parity, two-sided or open-interest checks are
+    EXCLUDED rather than ranked last: a ranking built on a price known to be
+    wrong is worse than a shorter list.
+    """
+    import baserate as _br
+    s = _br.summary()
+    buckets = {"WEEK": [], "MONTH": [], "QUARTER": []}
+    skipped = []
+    for r in rows:
+        v = r.get("verdict") or {}
+        if v.get("call") in ("PRICING UNRELIABLE — VERIFY THE QUOTE",
+                             "VERDICT UNAVAILABLE"):
+            skipped.append((r["ticker"], "quote failed its checks"))
+            continue
+        if v.get("call") == "NOT AN EVENT TRADE":
+            skipped.append((r["ticker"], "decision is immaterial to the "
+                                         "enterprise"))
+            continue
+        be = r.get("put_be")
+        if be is None or not s:
+            skipped.append((r["ticker"], "no comparable breakeven"))
+            continue
+        d = r["days"]
+        key = "WEEK" if d <= 10 else ("MONTH" if d <= 45 else "QUARTER")
+        buckets[key].append({**r, "multiple_lo": be / s["hi"],
+                             "multiple_hi": be / s["lo"]})
+    for k in buckets:
+        buckets[k].sort(key=lambda r: r["multiple_lo"])
+        buckets[k] = buckets[k][:top]
+    return {"buckets": buckets, "skipped": skipped, "base": s}
+
+
+def render_ranked(ranked: dict, today: dt.date, top: int = 2) -> str:
+    """The short list, above the full one. Ranked, not dated."""
+    s = ranked.get("base")
+    L = [f"▎BEST-PRICED PHARMA EXPRESSIONS — top {top} per horizon"]
+    if not s:
+        return ("▎BEST-PRICED PHARMA EXPRESSIONS\n   ⚠ no base rate computed, "
+                "so nothing can be ranked. Run `python baserate.py`.")
+    any_row = False
+    for key, label in (("WEEK", "THIS WEEK   (<= 10d — the position has to "
+                                "exist now)"),
+                       ("MONTH", "THIS MONTH  (11-45d — express by D-5)"),
+                       ("QUARTER", "LATER       (46d+ — research now, position "
+                                   "later)")):
+        L.append(f"   {label}")
+        rows = ranked["buckets"][key]
+        if not rows:
+            L.append("      nothing priced in this window")
+            continue
+        any_row = True
+        for i, r in enumerate(rows, 1):
+            L.append(f"      {i}. {r['ticker']:<6} {r['date']}  ({r['days']:>3}d)"
+                     f"   put {r['put_pct']:.1%} of spot")
+            L.append(f"         needs P(CRL) ~{r['put_be']:.0%} = "
+                     f"{r['multiple_lo']:.1f}-{r['multiple_hi']:.1f}x the "
+                     f"measured base rate")
+            L.append(f"         {r['verdict']['call']}")
+    if any_row:
+        L.append(f"   ── ranked by breakeven P(CRL) over the measured base rate "
+                 f"({s['lo']:.0%}-{s['hi']:.0%},")
+        L.append(f"      n={s['n']:,}). Nearest to 1x is protection priced at "
+                 "what this population")
+        L.append("      actually delivers; a high multiple is a lottery ticket "
+                 "with a story.")
+    L.append("   ── NO LONG SIDE IS RANKED. Day-68 measured approval windows as")
+    L.append("      indistinguishable from random ones (t=+0.98), so no long "
+             "into a print")
+    L.append("      is supported here. Inventing one to balance the page would "
+             "be a lie")
+    L.append("      of format.")
+    for t, why in ranked["skipped"][:6]:
+        L.append(f"   · {t} not ranked — {why}")
+    return "\n".join(L)
+
+
 def render(rows: list, today: dt.date) -> str:
     if not rows:
         return ("▎CATALYST OPPORTUNITIES\n   nothing scheduled in the window "
