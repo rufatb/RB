@@ -79,11 +79,34 @@ def test_the_bootstrap_clusters_on_the_event_date():
     assert a["sd"] == 0 or a["sd"] > b["sd"]
 
 
-def test_the_positive_control_shifts_the_sample_by_a_known_amount():
-    d = pd.DataFrame({"date": pd.bdate_range("2024-01-02", periods=60),
-                      "h20": np.zeros(60)})
-    c = R.positive_control(d, "h20", edge=1.0)
-    assert abs(c["mean"] - 1.0) < 1e-9
+def test_power_measures_detectability_not_the_samples_own_drift():
+    """The first version added the edge and reported the SHIFTED sample's z --
+    (base mean + edge)/sd, not edge/sd. With a base drift of +2.5% it printed
+    z=1.92 for a 1% plant, which says nothing about detectability."""
+    rng = np.random.default_rng(0)
+    x = rng.normal(0.0, 8.0, 200)
+    idx = pd.bdate_range("2024-01-02", periods=200)
+    quiet = pd.DataFrame({"date": idx, "h20": x})
+    drifting = pd.DataFrame({"date": idx, "h20": x + 50.0})   # same noise
+    a = R.power(quiet, "h20", edge=1.0, boot=300)
+    b = R.power(drifting, "h20", edge=1.0, boot=300)
+    # detectability depends ONLY on dispersion, never on the sample's own level
+    assert abs(a["z_for_edge"] - b["z_for_edge"]) < 1e-9
+    assert abs(a["mde"] - R.BAR_Z * a["sd"]) < 1e-9
+
+
+def test_an_underpowered_sample_is_not_reported_as_a_null():
+    """Rule 4: a harness that cannot detect a planted edge cannot report a
+    null. Saying 'no effect' when the MDE exceeds any tradeable drift is a
+    claim the data cannot support."""
+    noisy = pd.DataFrame({"date": pd.bdate_range("2024-01-02", periods=100),
+                          "h20": np.random.default_rng(1).normal(0, 40, 100)})
+    p = R.power(noisy, "h20", edge=1.0, boot=200)
+    assert not p["detectable"]
+    real = {h: R.clustered_mean(noisy, "h20", boot=100) for h in R.HORIZONS}
+    out = R.report(real, {}, p, {})
+    assert "UNDERPOWERED" in out and "NOT a rejection" in out
+    assert "REJECT" not in out
 
 
 def test_the_bar_is_raised_for_having_asked_four_horizons():

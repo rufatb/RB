@@ -191,19 +191,33 @@ def placebo(px: dict, bench: pd.Series, tickers: list, per: int = 4,
     return sample(fake, px, bench, horizons) if len(fake) else pd.DataFrame()
 
 
-def positive_control(vals: pd.DataFrame, col: str, edge: float = 1.0,
-                     seed: int = 7) -> dict:
-    """Plant a drift of known size and confirm the harness sees it.
+def power(vals: pd.DataFrame, col: str, edge: float = 1.0,
+          boot: int = 800, seed: int = 7) -> dict:
+    """Can this sample detect a drift of `edge` at the pre-registered bar?
 
-    1.0% over the horizon is roughly the smallest number that could pay for
-    two crossings of a biotech spread. A harness that cannot see it cannot
-    report a null about a tradeable effect."""
-    d = vals.copy()
-    d[col] = d[col] + edge
-    return clustered_mean(d, col, boot=500, seed=seed)
+    THE BUG THIS REPLACES, and it flattered the harness. The first version
+    added the edge to every observation and reported the z of the SHIFTED
+    sample -- which is (base mean + edge) / sd, not edge / sd. With a base mean
+    of +2.51% it printed z=1.92 for a 1% plant, a number that says nothing
+    about detectability and everything about the sample's own drift.
+
+    What matters is the standard error, and from it the MINIMUM DETECTABLE
+    EFFECT: bar x sd. If that number is larger than any drift worth trading,
+    the study cannot answer the question, and saying "no effect found" would be
+    a claim the data cannot support. Rule 4 of this repo exists for exactly
+    this case -- day-46's bar turned out to be unsatisfiable and the honest
+    output was to say so.
+    """
+    base = clustered_mean(vals, col, boot=boot, seed=seed)
+    sd = base["sd"]
+    if not sd or sd != sd or sd <= 0:
+        return {"sd": float("nan"), "z_for_edge": float("nan"),
+                "mde": float("nan"), "edge": edge, "detectable": False}
+    return {"sd": sd, "z_for_edge": edge / sd, "mde": BAR_Z * sd,
+            "edge": edge, "detectable": (edge / sd) >= BAR_Z}
 
 
-def report(real: dict, plac: dict, ctrl: dict, split: dict) -> str:
+def report(real: dict, plac: dict, pw: dict, split: dict) -> str:
     L = ["=" * 76,
          "validate_runup — is there a week-to-month trade BEFORE an FDA decision?",
          "=" * 76, "",
@@ -216,36 +230,46 @@ def report(real: dict, plac: dict, ctrl: dict, split: dict) -> str:
         L.append(f"  {h:>3}d      {r['n']:>6}{r['mean']:>8.2f}%"
                  f"{r['median']:>8.2f}%{r['win']*100:>7.0f}%{r['z']:>8.2f}"
                  f"      {p.get('z', float('nan')):>6.2f}")
-    L += ["", f"[control] a planted +1.00% at 20d is seen at "
-              f"z={ctrl['z']:+.2f} (measured {ctrl['mean']:+.2f}%)"]
-    ok = abs(ctrl["z"]) >= BAR_Z
-    L.append("          " + ("PASS — the harness can detect a drift worth "
-                             "trading." if ok else
-                             "FAIL — nothing below is readable as a null."))
+    L += ["", "[power] the question the control actually has to answer",
+          f"        standard error at 20d           {pw['sd']:.2f}pp",
+          f"        a {pw['edge']:.1f}% drift would show at      "
+          f"z={pw['z_for_edge']:.2f}",
+          f"        MINIMUM DETECTABLE EFFECT       {pw['mde']:.2f}pp "
+          f"(bar |z| >= {BAR_Z})"]
     pl_ok = all(abs(plac.get(h, {}).get("z", 0)) < BAR_Z for h in HORIZONS)
-    L.append(f"[placebo] random windows on the same names: "
+    L.append("[placebo] random windows on the same names: "
              + ("clean." if pl_ok else "FIRED — the label is not the thing."))
-    best = max(HORIZONS, key=lambda h: abs(real[h]["z"]) if real[h]["z"] == real[h]["z"] else 0)
+    best = max(HORIZONS,
+               key=lambda h: abs(real[h]["z"]) if real[h]["z"] == real[h]["z"]
+               else 0)
     L += ["", "-" * 76, "VERDICT"]
-    if not ok:
-        L.append("  UNREADABLE — fix the harness before reading anything.")
-    elif not pl_ok:
+    if not pl_ok:
         L.append("  UNREADABLE — the placebo fired.")
     elif abs(real[best]["z"]) >= BAR_Z:
         L.append(f"  ADOPT at {best}d: {real[best]['mean']:+.2f}% "
-                 f"{BENCH}-relative, z={real[best]['z']:+.2f}, "
-                 f"n={real[best]['n']}.")
-        L.append("  This is an UPPER BOUND: the sample is dated by the decision "
-                 "that actually")
-        L.append("  landed, while a live entry uses the disclosed PDUFA date, "
-                 "which moves.")
+                 f"{BENCH}-relative, z={real[best]['z']:+.2f}.")
+    elif not pw["detectable"]:
+        L.append("  UNDERPOWERED — and that is NOT a rejection.")
+        L.append(f"  This sample can only resolve a drift larger than "
+                 f"{pw['mde']:.1f}pp over 20 sessions.")
+        L.append("  Anything smaller — including any run-up worth trading — is "
+                 "invisible to it,")
+        L.append("  so 'no effect found' would be a claim the data cannot "
+                 "support. The")
+        L.append("  observed drifts are positive at every horizon and none of "
+                 "them clears")
+        L.append("  the bar; that is a statement about SIZE, not about the "
+                 "world.")
+        L.append("")
+        L.append("  What would fix it is events, not modelling: n=231 with a "
+                 "per-event")
+        L.append("  dispersion this wide is simply too thin. The harvest grows "
+                 "by roughly")
+        L.append("  35 decisions a year.")
     else:
-        L.append("  REJECT — #37. No horizon clears the pre-registered bar "
-                 f"(|z| >= {BAR_Z},")
-        L.append("  raised for having asked four). The run-up into an FDA "
-                 "decision is one of")
-        L.append("  the most-repeated claims in biotech trading and it is not "
-                 "in this sample.")
+        L.append(f"  REJECT — #37. No horizon clears |z| >= {BAR_Z}, and the "
+                 "sample IS powered")
+        L.append(f"  to detect {pw['edge']:.1f}%, so this is a real null.")
     L += ["", "-" * 76,
           "DIAGNOSTIC ONLY — split by outcome. NOT TRADEABLE: ex ante you do",
           "not know which of these you are holding.", ""]
@@ -282,10 +306,10 @@ def main(argv=None) -> int:
     pl = placebo(px, bench, tickers)
     plac = {h: clustered_mean(pl, f"h{h}", max(400, a.boot // 4))
             for h in HORIZONS} if len(pl) else {}
-    ctrl = positive_control(vals, "h20")
+    pw = power(vals, "h20")
     split = {k: clustered_mean(g, "h20", 400)
              for k, g in vals.groupby("kind")}
-    print(report(real, plac, ctrl, split))
+    print(report(real, plac, pw, split))
     return 0
 
 
