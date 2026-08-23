@@ -84,10 +84,31 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from validate_exit import SCRATCH  # noqa: E402
 
-EVENTS = os.path.join(SCRATCH, "catalyst_events.csv")
+REPO = os.path.dirname(os.path.abspath(__file__))
+DATA = os.path.join(REPO, "data")
+
+
+def _first(*paths) -> str:
+    """The committed copy wins over the scratch copy.
+
+    The container is recycled between sessions and takes the scratch directory
+    with it. When that happened mid-build the report did not fail, it QUIETLY
+    got worse: the base rate vanished and screen.py fell back to "no base rate
+    has been computed" for a reason that had nothing to do with the market.
+    Looking in the repository first makes the morning report reproducible from
+    a fresh clone."""
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return paths[-1]
+
+
+EVENTS = _first(os.path.join(DATA, "catalyst_events.csv"),
+                os.path.join(SCRATCH, "catalyst_events.csv"))
 DAF_URL = "https://www.fda.gov/media/89850/download"
 DAF_DIR = os.path.join(SCRATCH, "drugsatfda")
-OUT = os.path.join(SCRATCH, "baserate.json")
+OUT = os.path.join(DATA, "baserate.json")
+OUT_READ = _first(OUT, os.path.join(SCRATCH, "baserate.json"))
 H = {"User-Agent": "RB-research/1.0 (non-commercial)"}
 # One decision, announced twice (an 8-K and its amendment, or two filings on
 # consecutive days), is one decision.
@@ -565,6 +586,7 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
            "capture": {k: v for k, v in cap.items() if k != "misses"},
            "corrected": corr}
     try:
+        os.makedirs(DATA, exist_ok=True)
         json.dump(out, open(OUT, "w"), indent=1)
     except Exception:
         pass
@@ -572,16 +594,16 @@ def compute(events_path: str = EVENTS, start: str = "2015-01-01",
             "start": start, "end": end}
 
 
-def load(path: str = OUT) -> dict | None:
+def load(path: str = None) -> dict | None:
     """What the screen reads. None when it has never been computed — the
     caller must then say so rather than substituting a guess."""
     try:
-        return json.load(open(path))
+        return json.load(open(path or OUT_READ))
     except Exception:
         return None
 
 
-def summary(path: str = OUT) -> dict | None:
+def summary(path: str = None) -> dict | None:
     """The two ends of the estimate, for a caller that wants one line.
 
     A RANGE AND NOT A POINT, deliberately. The raw ratio and the

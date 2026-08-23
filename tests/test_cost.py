@@ -1,0 +1,79 @@
+"""Day-72: what the intraday pair costs to express.
+
+The engine's edge is measured at zero, so the spread is not a cost on top of
+the edge -- it IS the expected outcome. These lock the arithmetic and, above
+all, lock the one wrong answer that would be catastrophic: reporting an unknown
+spread as zero, which says the trade is free.
+"""
+
+import cost as C
+
+
+def test_spread_is_basis_points_of_the_mid():
+    assert abs(C.spread_bps({"bid": 9.99, "ask": 10.01}) - 20.0) < 0.1
+
+
+def test_a_one_sided_or_missing_quote_is_unknown_never_zero():
+    """Zero is the most expensive wrong answer available: it says the trade is
+    free."""
+    for q in ({"bid": 10.0, "ask": None}, {"bid": None, "ask": 10.0}, {},
+              {"bid": 0, "ask": 0}):
+        assert C.spread_bps(q) is None
+
+
+def test_a_crossed_book_is_unknown_rather_than_negative():
+    assert C.spread_bps({"bid": 10.05, "ask": 9.95}) is None
+
+
+def test_the_cost_is_a_full_spread_because_both_crossings_are_certain():
+    """The strategy is flat by 15:55 every day. There is no version of this
+    trade that pays the spread once."""
+    d = C.drag(20.0, shares=1000, price=50.0)
+    assert abs(d["usd"] - 20.0 / 10000 * 1000 * 50.0) < 1e-9
+
+
+def test_the_spread_is_expressed_against_the_measured_typical_move():
+    d = C.drag(25.0, shares=None, price=None)
+    assert abs(d["share_of_move"] - 0.25 / 0.97) < 1e-9
+    assert d["usd"] is None                 # no size given, none invented
+
+
+def test_an_unknown_spread_produces_no_dollar_figure():
+    d = C.drag(None, shares=1000, price=50.0)
+    assert d["usd"] is None and d["share_of_move"] is None
+
+
+def test_the_directional_term_is_negative_at_the_live_record():
+    """34/70 is below a coin flip, and the report should not round that up."""
+    assert C.edge_bps(34, 70) < 0
+
+
+def test_the_directional_term_is_zero_at_exactly_even():
+    assert abs(C.edge_bps(35, 70)) < 1e-9
+
+
+def test_a_real_edge_would_show_as_positive_basis_points():
+    assert C.edge_bps(42, 70) > 0
+
+
+def test_an_empty_record_does_not_divide_by_zero():
+    assert C.edge_bps(0, 0) == 0.0
+
+
+def test_render_states_the_arithmetic_is_not_a_forecast():
+    rows = [{"ticker": "ABX.TO", "shares": 100, "price": 30.0,
+             "cost": C.drag(30.0, 100, 30.0)}]
+    out = " ".join(C.render(rows))
+    assert "arithmetic, not a forecast" in out
+    assert "it IS the outcome" in out
+
+
+def test_render_names_an_unknown_spread_as_unknown_in_the_report():
+    rows = [{"ticker": "X.TO", "shares": 100, "price": 30.0,
+             "cost": C.drag(None, 100, 30.0)}]
+    out = " ".join(C.render(rows))
+    assert "UNKNOWN" in out and "Not zero: unknown" in out
+
+
+def test_render_is_silent_with_nothing_to_price():
+    assert C.render([]) == []

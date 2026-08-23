@@ -290,6 +290,22 @@ def render_intraday(res: dict, cfg: dict, shadow: bool,
     # 6-K yesterday hands you the same coin flip with a bigger stake on it, and
     # the reader is entitled to know that before sizing.
     if opened and not no_net:
+        # What the pair COSTS. The engine's directional edge is measured at
+        # zero, so this is not a footnote on the expectation -- it is the
+        # expectation. It had never appeared in the report at all.
+        try:
+            import cost as _c
+            rows = []
+            for side in ("long", "short"):
+                lg = pair.get(side) or {}
+                p_ = lg.get("pick") or {}
+                if p_.get("t"):
+                    rows.append({"ticker": p_["t"], "shares": p_.get("shares"),
+                                 "price": p_.get("p945")})
+            L += _c.render(_c.assess(rows))
+        except Exception as e:
+            L.append(f"   ⚠ cost to express unavailable ({type(e).__name__}) "
+                     "— the spread is being paid whether or not it is shown")
         try:
             import sixk as _sk
             L += _sk.render(_sk.check(opened, today or dt.date.today()),
