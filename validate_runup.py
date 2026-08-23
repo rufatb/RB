@@ -266,7 +266,7 @@ def main(argv=None) -> int:
     ap.add_argument("--boot", type=int, default=BOOT)
     a = ap.parse_args(argv)
     ev = load_events(a.events)
-    ev = ev[ev["ticker"].astype(bool)]
+    ev = ev[ev["ticker"].fillna("").astype(str).str.strip().ne("")]
     print(f"events with a ticker: {len(ev):,}", flush=True)
     tickers = sorted(ev["ticker"].unique())
     px = fetch_prices(tickers)
