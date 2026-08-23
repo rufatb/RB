@@ -59,6 +59,14 @@ reason.
 8. **A rate over a population is never a forecast for one name.** Print
    UNCONDITIONAL next to it every single time. It is the prior you argue away
    from.
+9. **Verify the data you got, not the data you asked for.** Day-72: Yahoo
+   answers `interval="1d", range="max"` with WEEKLY, MONTHLY or QUARTERLY bars
+   and no error, so day-68's "3-day event window" was three months on some
+   names and shipped for four days. Assert granularity, count what you reject.
+10. **A control that cannot detect a planted edge means UNDERPOWERED, not
+   NULL.** Day-72's run-up study can only resolve a drift above 6.2pp; "no
+   effect found" there would be a claim the data cannot support. And build the
+   control to measure `edge / sd`, never `(mean + edge) / sd`.
 
 ## Read-only, always
 

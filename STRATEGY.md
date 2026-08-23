@@ -3253,6 +3253,120 @@ would have understated capture, inflated the correction, and pushed P(CRL) down
 for a reason having nothing to do with the FDA. A form code told them apart, the
 same way it separated Canadian issuers on day-70.
 
+## Day-72: a data bug that survived four days, and the control that caught it
+
+`fetch_prices` asked Yahoo for `interval="1d"` over `range="max"`. **Yahoo does
+not refuse that.** It silently returns weekly, monthly or even quarterly bars
+depending on how long the ticker has existed:
+
+    SRPT   median gap 31d      HRTX   median gap 92d      ZYME   median gap 7d
+
+Every window in `validate_catalyst.py` counts BARS. So the "close t-2 → close
+t+1" event window was **three months** on those names, and day-68's entire CRL
+distribution was computed on them. Those numbers were in the morning report for
+four days.
+
+**What caught it was a positive control.** `validate_runup.py` could not detect
+a planted +1% drift, which is only possible if the sample is far noisier than a
+daily window can be. Every aggregate looked plausible throughout — the medians
+were sane, the t-statistics were significant, nothing errored. Without the
+control the run-up study would have shipped on twenty-month windows.
+
+`fetch_prices` now caps the lookback at 3,600 days (the largest range that still
+returns daily bars) and **asserts the interval that came back** rather than the
+one requested: a series whose median gap exceeds 4 days is rejected and counted.
+Six of 117 tickers were rejected on the re-run.
+
+### Re-measured — same events, same classifier, verified daily bars
+
+| | was (contaminated) | now (daily) |
+|---|---|---|
+| CRL median | −15.20% | **−8.97%** (mean −18.48%) |
+| CRL p10 / worst | −57.53% / −83.61% | −60.38% / −74.95% |
+| CRL vs random | −15.00pp, t=−3.41 | **−18.31pp, t=−5.64** |
+| APPROVAL vs random | −0.54%, t=+0.98 | **+5.38pp, t=+2.42** |
+
+**The rejection finding got stronger.** It was never in doubt and now separates
+from random at t=−5.64 on 57 events.
+
+**The approval claim did not survive.** This repo had been repeating that an
+approval is "indistinguishable from a random window" and therefore already
+priced. On daily bars the approval reaction is *positive*. It still does not
+clear the pre-registered |t| ≥ 3, so nothing is adopted and no long is
+recommended — but **"positive and below the bar" is a different sentence from
+"no edge exists"**, and the report now says the true one in every place the old
+one appeared.
+
+The bar did not move because a number came close to it.
+
+### Breakevens now run against the mean as well as the median
+
+An option pays an **expectation**, so the breakeven that decides whether a
+premium is worth paying belongs against the mean drawdown (−18.5%). Quoting only
+the median (−9.0%) made every put look roughly twice as dear as its expectation
+justifies. Both are printed, because the gap between them **is** the fat left
+tail — 19% of rejections finish worse than −40%.
+
+## Day-72: the pre-decision window — UNDERPOWERED, which is not a rejection
+
+The tradeable week-to-month question is: take a position N days before a
+scheduled decision, exit *before* the print. It never carries the binary, so
+unlike everything else in this domain it can be sized.
+
+Measured pooled (ex ante you do not know the outcome), XBI-relative so sector
+beta is not mistaken for an edge, window ending two sessions early so the print
+can never fall inside it:
+
+| horizon | n | mean | median | win% | z | placebo z |
+|---|---|---|---|---|---|---|
+| 5d | 231 | +0.53% | −0.61% | 45% | 0.85 | −0.53 |
+| 10d | 231 | +0.18% | −0.57% | 47% | 0.18 | 2.05 |
+| 20d | 231 | +2.51% | −0.94% | 45% | 1.40 | 1.91 |
+| 40d | 230 | +3.23% | +0.13% | 50% | 1.51 | 1.30 |
+
+Positive at every horizon, clearing nothing. **The reason is power, not
+absence:**
+
+    standard error at 20d       1.76pp
+    minimum detectable effect   6.16pp    (bar |z| >= 3.5)
+
+This sample can only resolve a drift larger than 6.2pp over 20 sessions. Any
+run-up worth trading is smaller than that and therefore invisible to it, so "no
+effect found" would be a claim the data cannot support. Rule 4 exists for this
+case — day-46's bar was unsatisfiable and the honest output was to say so.
+
+**The control had to be fixed before it could say this.** The first version
+added the planted edge to every observation and reported the z of the *shifted*
+sample — (base mean + edge)/sd rather than edge/sd — so with a base drift of
++2.5% it printed z=1.92 for a 1% plant. That is a number about the sample's own
+drift, not about detectability. Power now derives from dispersion alone.
+
+What fixes it is events, not modelling: the harvest grows by roughly 35
+decisions a year.
+
+## Day-72: what the intraday pair costs to express
+
+`adapters.py` says in its own header that bid/ask is not exposed by any adapter
+here, so the one term that actually determines the intraday book's result had
+never appeared in the report. That matters because a coin flip is not a
+zero-expectation trade:
+
+    E[net] = (hit rate - 1/2) x 2 x E|move| - spread - fees
+             \_______________________/
+                    measured at ~0
+
+With the directional term at zero across 36 rejections and a 34/70 record, the
+spread is not a cost on top of the edge — **it is the outcome**. Live on liquid
+TSX names the answer is smaller than expected and worth knowing either way:
+ABX.TO 8bps, RY.TO 2bps, ENB.TO 1bp against a typical 0.97% move. Directional
+term −3bps per leg, spread term −4bps, both certain, both previously invisible.
+
+An unknown spread reports as UNKNOWN, never zero — zero is the most expensive
+wrong answer available, because it says the trade is free. And this does **not**
+re-rank the picks: the engine's selection rule produced the 70-leg record, and
+silently changing it would break the only track record this repo has while
+pretending to improve it.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
