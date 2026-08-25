@@ -287,3 +287,7 @@ date,ticker,side,p_sided,confidence,p945,role,weight,r1,hit
 2026-08-24,CM.TO,SHORT,0.562,mid,158.2000,board,,,
 2026-08-24,BMO.TO,SHORT,0.560,mid,237.8000,board,,,
 2026-08-24,SHOP.TO,SHORT,0.550,mid,204.3200,pair,0.1728,,
+2026-08-25,AC.TO,LONG,0.567,sparse,29.2100,pair,0.4995,,
+2026-08-25,ABX.TO,SHORT,0.576,sparse,66.4900,pair,0.1888,,
+2026-08-25,NTR.TO,SHORT,0.570,sparse,100.3200,board,,,
+2026-08-25,TRP.TO,SHORT,0.550,mid,85.4000,pair,0.3098,,
