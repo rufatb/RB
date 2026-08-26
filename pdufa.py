@@ -160,6 +160,17 @@ def review_signals(text: str) -> list:
     return out
 
 
+def _partner_of(text: str) -> dict | None:
+    """Never let an ownership check break the calendar. A date with no
+    ownership read is still a date; a crash here would lose both."""
+    try:
+        import partners
+        p = partners.classify(text)
+        return p if p["role"] != "not detected" else None
+    except Exception:
+        return None
+
+
 def search(months_back: int = 8, today: dt.date | None = None) -> list:
     today = today or dt.date.today()
     start = (today - dt.timedelta(days=30 * months_back)).isoformat()
@@ -195,7 +206,12 @@ def build(months_back: int = 8, today: dt.date | None = None,
                 "date": d, "ticker": tm.group(1) if tm else "",
                 "company": re.sub(r"\s*\(.*", "", name).strip(),
                 "filed": s.get("file_date", ""), "cik": cik, "accession": acc,
-                "signals": signals_near(text, d), "context": context_for(text)})
+                "signals": signals_near(text, d), "context": context_for(text),
+                # OWNERSHIP, extracted here because the text is already in
+                # hand. Day-74: the ZYME call turned on whether the company
+                # held its own application, and nothing surfaced it even
+                # though this function had the filing open.
+                "partner": _partner_of(text)})
         time.sleep(0.12)
     return dedupe(out, cache_path)
 
@@ -222,6 +238,7 @@ def dedupe(rows: list, cache_path: str | None = None) -> list:
                 # keep the union of signals; a later filing may mention fewer
                 r = dict(r)
                 r["signals"] = sorted(set(r["signals"]) | set(cur["signals"]))
+                r["partner"] = r.get("partner") or cur.get("partner")
             best[k] = r
     out = sorted(best.values(), key=lambda r: r["date"])
     if cache_path:

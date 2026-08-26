@@ -822,6 +822,14 @@ def render(rows: list, today: dt.date) -> str:
             L += [("  " + x) for x in _f.render(r["fund"], r.get("spot"))]
         if r.get("signals"):
             L.append(f"        filings : {', '.join(r['signals'])}")
+        # Whose application is it? The single fact that would have changed the
+        # ZYME call on 2026-08-25 (see partners.py).
+        try:
+            import partners as _p
+            sh = (r.get("fund") or {}).get("shares")
+            L += _p.render(r.get("partner"), r.get("spot"), sh)
+        except Exception:
+            pass
         if r.get("error"):
             L.append(f"        ⚠ options unavailable ({r['error']}) — "
                      "the date stands, the pricing does not")
