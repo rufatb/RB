@@ -264,9 +264,33 @@ def main(argv=None) -> int:
     os.makedirs(a.cache, exist_ok=True)
     out_path = os.path.join(a.cache, "catalyst_events.csv")
 
+    # RESUMABLE, because this run takes the better part of an hour and the
+    # container it runs in has been reclaimed three times mid-harvest -- once
+    # reporting exit code 0 with four years missing and nothing on disk. An
+    # expensive, reproducible artifact that only exists at the END of a long
+    # run is an artifact that keeps not existing.
+    part_path = out_path + ".partial"
+    done: set = set()
     rows, reasons = [], {}
+    if os.path.exists(part_path):
+        with open(part_path, newline="") as f:
+            rows = list(csv.DictReader(f))
+        done = {(r["kind"], r["date"][:4]) for r in rows}
+        print(f"resuming: {len(rows):,} rows already harvested, "
+              f"{len(done)} (kind, year) blocks complete", flush=True)
+
+    def _checkpoint():
+        with open(part_path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["kind", "cik", "date", "name",
+                                              "sic", "accession", "ticker"])
+            w.writeheader()
+            w.writerows(rows)
+
     for kind, phrases in PHRASES.items():
         for y in range(a.start, a.end + 1):
+            if (kind, str(y)) in done:
+                print(f"  {kind} {y}: already harvested, skipping", flush=True)
+                continue
             hits = []
             for phrase in phrases:
                 try:
@@ -285,6 +309,9 @@ def main(argv=None) -> int:
             rows += r
             print(f"  {kind} {y}: {len(uniq):>4} unique hits -> {len(r):>3} "
                   "verified events", flush=True)
+            for x in r:
+                x.setdefault("ticker", "")
+            _checkpoint()
 
     if reasons:
         print("\nrejected by the announcement classifier:")
@@ -320,6 +347,10 @@ def main(argv=None) -> int:
                                           "accession", "ticker"])
         w.writeheader()
         w.writerows(sorted(rows, key=lambda r: (r["date"], r["cik"])))
+    try:
+        os.remove(part_path)          # the finished file supersedes the partial
+    except OSError:
+        pass
     n_crl = sum(1 for r in rows if r["kind"] == "CRL")
     print(f"\nwrote {len(rows):,} events ({n_crl} CRL / {len(rows)-n_crl} approval) "
           f"-> {out_path}")
