@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import json
 import os
 import re
@@ -57,8 +58,17 @@ from validate_exit import SCRATCH  # noqa: E402
 
 
 def _strip(raw: bytes, cap: int = 400_000) -> str:
-    t = raw[:cap].decode("utf8", "replace")
+    """Filing text, tags removed and ENTITIES DECODED.
+
+    DAY-74: the entity decode was missing, and EDGAR filings are full of them.
+    Zymeworks' approval 8-K reads `Administration (&#8220;FDA&#8221;) approval`
+    in the raw HTML, so every phrase test ran against text that no human would
+    recognise and no pattern could match. Tag-stripping without entity-decoding
+    is half a job.
+    """
+    t = html.unescape(raw[:cap].decode("utf8", "replace"))
     t = re.sub(r"<[^>]+>", " ", t)
+    # a decoded entity can glue words together where a tag used to separate them
     return re.sub(r"\s+", " ", t)
 
 UA = {"User-Agent": "RB-research/1.0 (non-commercial backtest)",

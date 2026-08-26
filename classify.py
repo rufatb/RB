@@ -110,15 +110,18 @@ def classify_crl(text: str, filing_date: str, max_lag: int = 3) -> tuple:
     2-day lag — inside any sane window — and is still plainly a reference to
     something that already happened.
     """
-    low = text.lower()
-    i = low.find("complete response letter")
-    if i < 0:
+    spots = _anchors(text, CRL_ANCHOR_RE)
+    if not spots:
         return False, "phrase absent"
-    seg = text[max(0, i - 300):i + 200]
-    if MENTION_RE.search(seg):
-        return False, "refers to a previously disclosed CRL"
-    if not ANNOUNCE_RE.search(seg):
-        return False, "no announcement phrasing near the mention"
+    i, first_why = None, None
+    for cand in spots:
+        ok, why = _judge(text, cand, ANNOUNCE_RE)
+        if ok:
+            i = cand
+            break
+        first_why = first_why or why
+    if i is None:
+        return False, (first_why or "no announcement phrasing near the mention")
     try:
         fd = dt.date.fromisoformat(filing_date)
     except ValueError:
@@ -132,17 +135,66 @@ def classify_crl(text: str, filing_date: str, max_lag: int = 3) -> tuple:
     return True, "announcement phrasing, no date stated"
 
 
-def classify_approval(text: str, filing_date: str) -> tuple:
-    """Same discipline for the approval side."""
-    low = text.lower()
-    i = min([x for x in (low.find("approved by the u.s. food"),
-                         low.find("fda has approved"),
-                         low.find("fda approval of")) if x >= 0] or [-1])
-    if i < 0:
-        return False, "phrase absent"
-    seg = text[max(0, i - 300):i + 200]
+# DAY-74: the anchor list was three literal strings, and a live filing walked
+# straight through all three. Zymeworks' 8-K of 2026-08-25 announces an FDA
+# approval in its first sentence and was classified "phrase absent":
+#
+#   "...has received U.S. Food and Drug Administration ("FDA") approval for
+#    two Ziihera(R) (zanidatamab-hrii)-containing regimens..."
+#
+# Two independent misses in one sentence. The anchor "fda approval of" hardcodes
+# a PREPOSITION, and this filing says "approval for" and later "approval in".
+# And the agency-name form is separated from "approval" by a parenthetical
+# gloss, which no fixed string can span.
+#
+# So the anchor becomes a pattern rather than a list of strings, and it keeps
+# the day-66 architecture intact: BROAD ANCHOR, STRICT VERIFICATION. Widening
+# what gets LOOKED at is safe precisely because the mention-veto and the
+# announcement test still have to pass afterwards.
+APPROVAL_ANCHOR_RE = re.compile(
+    r"(?:FDA|Food\s+and\s+Drug\s+Administration)[^.]{0,80}?approv\w+"
+    r"|approv\w+[^.]{0,80}?(?:by|from)\s+the\s+"
+    r"(?:FDA|U\.?S\.?\s+Food\s+and\s+Drug\s+Administration)", re.I)
+
+CRL_ANCHOR_RE = re.compile(r"[Cc]omplete\s+[Rr]esponse\s+[Ll]etter", re.I)
+
+
+def _anchors(text: str, rx: re.Pattern, cap: int = 40) -> list:
+    """Every place the event is named, not just the first.
+
+    THE SECOND RECALL BUG, and it is subtler than the anchor strings. Both
+    classifiers used `str.find`, which returns the FIRST occurrence and nothing
+    else. A filing whose opening paragraph refers to a prior approval and whose
+    body announces a new one was judged entirely on the reference — the veto
+    fired on occurrence one and the announcement at occurrence four was never
+    examined.
+
+    Scanning every occurrence raises recall without loosening any test: a
+    filing still counts only if SOME occurrence carries announcement phrasing
+    with no mention marker beside it. Strictness is unchanged; thoroughness is
+    not.
+    """
+    return [m.start() for m in list(rx.finditer(text))[:cap]]
+
+
+def _judge(text: str, idx: int, announce: re.Pattern) -> tuple:
+    seg = text[max(0, idx - 300):idx + 200]
     if MENTION_RE.search(seg):
-        return False, "refers to a previously disclosed approval"
-    if not APPROVAL_ANNOUNCE_RE.search(seg):
+        return False, "refers to a previously disclosed event"
+    if not announce.search(seg):
         return False, "no announcement phrasing near the mention"
     return True, "announcement phrasing"
+
+
+def classify_approval(text: str, filing_date: str) -> tuple:
+    """Same discipline for the approval side, applied at every occurrence."""
+    spots = _anchors(text, APPROVAL_ANCHOR_RE)
+    if not spots:
+        return False, "phrase absent"
+    reasons = []
+    for i in spots:
+        ok, why = _judge(text, i, APPROVAL_ANNOUNCE_RE)
+        if ok:
+            return True, why
+        reasons.append(why)
+    return False, reasons[0]

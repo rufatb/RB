@@ -88,3 +88,83 @@ def test_approval_side_uses_the_same_discipline():
             "Administration in 2019, continues to be marketed")
     assert C.classify_approval(ann, "2026-01-01")[0] is True
     assert C.classify_approval(ment, "2026-01-01")[0] is False
+
+
+# ── day-74: two recall bugs, both found by one real filing.
+# Zymeworks' 8-K of 2026-08-25 announces an FDA approval in its first sentence
+# and was classified "phrase absent". It is kept as a fixture because a
+# regression here silently undercounts the approval leg of the base rate.
+
+import os
+
+FIXTURE = os.path.join(os.path.dirname(__file__), "fixtures_zyme_8k.txt")
+
+
+def _zyme():
+    with open(FIXTURE) as f:
+        return f.read()
+
+
+def test_the_real_filing_that_broke_the_classifier_is_now_caught():
+    ok, why = C.classify_approval(_zyme(), "2026-08-25")
+    assert ok, why
+
+
+def test_that_filing_is_not_also_read_as_a_rejection():
+    ok, _ = C.classify_crl(_zyme(), "2026-08-25")
+    assert not ok
+
+
+def test_the_anchor_no_longer_hardcodes_a_preposition():
+    """'FDA approval of' was a literal string; the filing said 'approval for'
+    and later 'approval in'."""
+    for prep in ("of", "for", "in", "to"):
+        t = (f"The Company announced today that it has received FDA approval "
+             f"{prep} its lead programme.")
+        ok, why = C.classify_approval(t, "2026-08-25")
+        assert ok, f"{prep}: {why}"
+
+
+def test_a_parenthetical_gloss_between_agency_and_approval_is_spanned():
+    t = ('The Company issued a press release announcing that it has received '
+         'U.S. Food and Drug Administration ("FDA") approval for two regimens.')
+    assert C.classify_approval(t, "2026-08-25")[0]
+
+
+def test_every_occurrence_is_examined_not_only_the_first():
+    """A filing whose opening refers to a prior approval and whose body
+    announces a new one was judged entirely on the reference."""
+    t = ("As previously disclosed, the FDA approved the Company's first "
+         "product in 2019. " + "Filler sentence. " * 40 +
+         "Today the Company announced that the FDA has approved its second "
+         "product.")
+    ok, why = C.classify_approval(t, "2026-08-25")
+    assert ok, why
+
+
+def test_widening_the_anchor_did_not_loosen_the_mention_veto():
+    """Strictness unchanged, thoroughness increased -- a pure reference must
+    still be rejected however it is phrased."""
+    for t in ("As previously disclosed, the Company received FDA approval for "
+              "its lead programme last year.",
+              "Following the issuance of FDA approval in March, the Company "
+              "amended its loan agreement."):
+        ok, why = C.classify_approval(t, "2026-08-25")
+        assert not ok, why
+
+
+def test_a_filing_that_only_names_the_agency_is_not_an_approval():
+    t = ("The Company intends to submit a New Drug Application to the U.S. "
+         "Food and Drug Administration later this year.")
+    assert not C.classify_approval(t, "2026-08-25")[0]
+
+
+def test_html_entities_are_decoded_before_any_phrase_test_runs():
+    """EDGAR filings are full of them. Tag-stripping without entity-decoding is
+    half a job, and it ran the phrase tests against text no pattern could
+    match."""
+    import build_catalyst as BC
+    raw = b'<p>Administration (&#8220;FDA&#8221;) approval&nbsp;for two</p>'
+    out = BC._strip(raw)
+    assert "&#8220;" not in out and "&nbsp;" not in out
+    assert '("FDA") approval' in out.replace("“", '"').replace("”", '"')
