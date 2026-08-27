@@ -125,6 +125,23 @@ def render_catalyst_detail(legs: list, today: dt.date,
         d = (dt.date.fromisoformat(l["event_date"]) - today).days
         out.append(f"   {l['ticker']} — {l['event_kind']} in {d}d "
                    f"({l['event_date']})")
+        # HAS IT ALREADY HAPPENED? Everything below prices a PENDING binary,
+        # and on 2026-08-27 all of it ran on a decision settled two days
+        # earlier -- quoting $1,027 of rejection risk on a position whose
+        # rejection risk was zero. A negative day count was printed and
+        # nothing acted on it.
+        settled = None
+        if d <= 0:
+            try:
+                import resolved as _rs
+                settled = _rs.check(l["ticker"], l["event_date"], today)
+                out += _rs.render(settled, l)
+            except Exception as e:
+                out.append(f"      ⚠ could not check whether the decision "
+                           f"landed ({type(e).__name__}) — the numbers below "
+                           "assume it is still pending")
+        if settled and settled["outcome"] in ("APPROVED", "REJECTED"):
+            continue          # do not price a binary that has already settled
         if l["thesis"]:
             out.append(f"      thesis at entry : {l['thesis']}")
         out.append(f"      bracket         : ${dn:,.2f} (fail) → ${up:,.2f} (pass)")
