@@ -142,12 +142,15 @@ def test_both_breakevens_are_reported_because_the_tail_is_the_difference():
 def test_breakeven_above_one_is_reported_not_clamped():
     """A premium above the median drawdown means no probability makes the
     median case pay. Clamping that to 100% would hide it."""
-    assert S.put_breakeven(0.20) > 1.0
+    # derived from the constant, not hardcoded: the measurement moves and a
+    # test pinned to a stale number breaks for the wrong reason
+    dear = abs(C.CRL_MEAN) / 100 * 1.1
+    assert S.put_breakeven(dear) > 1.0
     assert S.put_breakeven(None) is None
 
 
 def test_a_dear_put_is_called_dear_and_the_tail_named_as_the_only_case():
-    v = S.verdict(_row(put_pct=0.20))
+    v = S.verdict(_row(put_pct=abs(C.CRL_MEAN) / 100 * 1.1))
     assert v["call"] == "PROTECTION IS DEAR — STAND ASIDE"
     assert "bet on the tail alone" in " ".join(v["why"])
 

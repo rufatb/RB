@@ -58,52 +58,46 @@ import argparse
 
 BASE_RATE_FIRST_CYCLE = 0.70      # see BASE RATE note above
 
-# DAY-72 SUPERSEDES DAY-68, and the reason is a data bug that nothing caught
-# for four days. `fetch_prices` asked Yahoo for interval="1d" over range="max".
-# Yahoo does not refuse that; it silently returns WEEKLY, MONTHLY or even
-# QUARTERLY bars depending on how long the ticker has existed -- SRPT came back
-# at a 31-day median gap, HRTX at 92. Every window in validate_catalyst.py
-# counts BARS, so the "close t-2 -> close t+1" event window was three MONTHS on
-# those names. The numbers below were wrong and were quoted in the morning
-# report for four days.
+# DAY-77 SUPERSEDES DAY-72, on a sample 2.6x larger. The day-74 classifier
+# fixes tripled the harvest and day-77 replaced the price fetch's DURATION with
+# an explicit period1/period2 window, which recovered every 2015-2016 event the
+# "10 years back from today" lookback had been silently dropping. Usable event
+# windows went 230 -> 605.
 #
-# What caught it was a positive control: validate_runup.py could not detect a
-# planted +1% drift, which is only possible if the sample is far noisier than a
-# daily window should be. The aggregate looked plausible throughout.
+#     CRL        n=71    mean -20.30%   median -11.79%   p10 -61.27%   worst -74.95%
+#                45% worse than -18%, 24% worse than -40%
+#                vs random windows: -20.60pp, t=-6.83   (was -18.31pp, t=-5.64)
+#     APPROVAL   n=534   mean  +2.92%   median  +0.10%
+#                vs random windows:  +2.63pp, t=+2.61   (was +5.38pp, t=+2.42)
 #
-# Re-measured on verified daily bars (median gap <= 4 days, asserted rather
-# than requested), same events, same classifier:
+# THE APPROVAL LEG IS REJECTED, and the test was pre-registered before the
+# sample was built (PREREGISTER_day77.md). The claim was that +5.38pp was real
+# and merely under-sampled. Tripling n from 173 to 534 would have carried a real
+# effect of that size to t=4.3. Instead the EFFECT HALVED and t barely moved --
+# the signature of a small-sample overestimate regressing toward a smaller
+# truth. The sample was powered to find it: SE 1.01pp, minimum detectable
+# effect 3.02pp, against a claimed 5.38pp. This is a rejection, not an
+# underpowered result, and the pre-registration said in advance that a t
+# between 2 and 3 on a larger sample counts as one.
 #
-#     CRL        n=57    mean -18.48%   median -8.97%   p10 -60.38%   worst -74.95%
-#                42% worse than -18%, 19% worse than -40%
-#                vs random windows: -18.31pp, t=-5.64   (was -15.00pp, t=-3.41)
-#     APPROVAL   n=173   mean  +5.21%   median +0.21%
-#                vs random windows:  +5.38pp, t=+2.42   (was +0.98, and NEGATIVE)
+# WHAT IT COSTS: there is no systematic long-into-decision trade. With the
+# approval leg unestablished, E[hold a long through the print] is -1.7% to
+# -3.2% per event at the measured base rate; crediting the unconfirmed +2.92%
+# it is -0.8% to +1.0%. The reverse trade is the mirror and straddles zero the
+# same way. Neither direction has an edge.
 #
-# TWO THINGS CHANGED MATERIALLY. The rejection finding got STRONGER -- it was
-# never in doubt and now separates from random at t=-5.64. But the approval
-# claim this repo has been repeating, that an approval is "indistinguishable
-# from a random window" and therefore already priced, does NOT survive: on
-# daily bars the approval reaction is positive, +5.4pp over random at t=+2.42.
-#
-# That still does not clear the pre-registered |t| >= 3 bar, so it is NOT
-# adopted and no long is recommended on it. The honest statement is "positive
-# and below the bar", which is a different sentence from "indistinguishable
-# from random", and the report must stop saying the second one.
-#
-# MEAN AND MEDIAN ARE BOTH KEPT because they answer different questions. An
-# option's payoff is an expectation, so a breakeven belongs against the MEAN
-# (-18.48%); the median (-8.97%) describes the case a holder should picture.
-# The gap between them is the fat left tail, and quoting only one hides it.
-CRL_MEDIAN, CRL_MEAN = -8.97, -18.48
-CRL_P10, CRL_WORST = -60.38, -74.95
-CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.42, 0.19
-CRL_N, CRL_VS_RANDOM_PP, CRL_T = 57, -18.31, -5.64
-APPROVAL_MEDIAN, APPROVAL_MEAN = 0.21, 5.21
-APPROVAL_VS_RANDOM_PP, APPROVAL_T, APPROVAL_N = 5.38, 2.42, 173
-APPROVAL_RANDOM = -0.17
-# The bar that was pre-registered and is not being moved now that a number
-# came close to it.
+# WHAT SURVIVES, and it got stronger: the rejection leg. A CRL is violent and
+# unpriced, now at t=-6.83. That is the only durable measurement in this repo
+# -- but at a base rate of 8.5-15.9% it does not produce a directional equity
+# edge on its own.
+CRL_MEDIAN, CRL_MEAN = -11.79, -20.30
+CRL_P10, CRL_WORST = -61.27, -74.95
+CRL_WORSE_THAN_18, CRL_WORSE_THAN_40 = 0.45, 0.24
+CRL_N, CRL_VS_RANDOM_PP, CRL_T = 71, -20.60, -6.83
+APPROVAL_MEDIAN, APPROVAL_MEAN = 0.10, 2.92
+APPROVAL_VS_RANDOM_PP, APPROVAL_T, APPROVAL_N = 2.63, 2.61, 534
+APPROVAL_RANDOM = 0.29
+# Pre-registered and not moved after the fact.
 ADOPT_T = 3.0
 GAP_WARN = 0.15                   # claimed - implied, above which the bet is "on the gap"
 

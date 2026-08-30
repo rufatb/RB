@@ -3367,6 +3367,53 @@ re-rank the picks: the engine's selection rule produced the 70-leg record, and
 silently changing it would break the only track record this repo has while
 pretending to improve it.
 
+## Day-77: REJECTION #37 — the approval leg, pre-registered and refused
+
+The day-74 base-rate correction flipped the sign of the only tradeable
+proposition in this repo, and the whole sign rested on one number that had never
+passed: the approval reaction at **t = +2.42 on n = 173**, out of 977 approvals
+in the harvest. The bar was **pre-registered and committed before the sample was
+built** (`PREREGISTER_day77.md`).
+
+**What was fixed to expand the sample.** The price fetch took a DURATION, which
+Yahoo answers by choosing an interval to suit — and "10 years back from today"
+silently dropped every 2015 and most 2016 event. An explicit `period1/period2`
+pair returns true daily bars for any bounded window, verified back to
+2015-01-02. Usable event windows went **230 → 605**.
+
+| | before (n=173) | after (n=534) |
+|---|---|---|
+| approval vs random | +5.38pp, t=+2.42 | **+2.63pp, t=+2.61** |
+| CRL vs random | −18.31pp, t=−5.64 | **−20.60pp, t=−6.83** (n=71) |
+
+**This is a rejection, not an underpowered result.** Tripling n would have
+carried a real +5.38pp effect to t ≈ 4.3. Instead **the effect halved and t
+barely moved** — the signature of a small-sample overestimate regressing toward
+a smaller truth. And the sample was powered to find it: SE 1.01pp, minimum
+detectable effect 3.02pp, against a claimed 5.38pp. The pre-registration stated
+in advance that a t between 2 and 3 on a larger sample counts as a rejection.
+
+**What it costs.** There is no systematic long-into-decision trade:
+
+    E[hold a long through the print]
+      approval leg unestablished (=0)   -1.72% .. -3.22% per event
+      crediting the unconfirmed +2.92%  -0.77% .. +0.95%
+
+The reverse trade is the mirror and straddles zero the same way. **Neither
+direction has an edge.**
+
+**What survives, and it got stronger.** The rejection leg: a CRL is violent and
+unpriced, now **t = −6.83** on 71 events, median −11.79%, mean −20.30%, 45%
+worse than −18%, 24% worse than −40%. That is the only durable measurement in
+this repo. At a base rate of 8.5–15.9% it does not produce a directional equity
+edge on its own — it prices insurance, and the market charges 2.7–5.7× the
+measured fair value for that insurance.
+
+**The decision this forces**, taken from the pre-registered action table: stop
+trading this system. It becomes research and monitoring. The intraday engine is
+36 rejections and 311 live picks at 49%; the catalyst engine now has its own
+rejection on the only leg that could have made a long pay.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

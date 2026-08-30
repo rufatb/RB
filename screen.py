@@ -91,7 +91,7 @@ H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
 # found (see catalyst.py), so both thresholds moved with it. They are anchored
 # to a measurement precisely so that correcting the measurement corrects them,
 # rather than leaving two stale round numbers behind.
-_CRL = 8.97                       # day-72 median, on verified daily bars
+_CRL = 11.79                      # day-77 median, n=71, explicit-range daily bars
 IMMATERIAL_MOVE = _CRL / 2 / 100          # 0.076
 RICH_MOVE = _CRL * 3 / 100                # 0.456
 CHEAP_MOVE = IMMATERIAL_MOVE              # name kept: callers outside this file

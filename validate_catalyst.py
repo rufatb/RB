@@ -113,6 +113,40 @@ LOOKBACK_DAYS = 3600
 MAX_GAP_DAYS = 4
 
 
+# DAY-77: the lookback was a DURATION, which Yahoo answers by choosing an
+# interval to suit -- 3600 days still silently dropped every 2015 and most 2016
+# event because "10y" is measured from today. An explicit period1/period2 pair
+# returns true daily bars for any bounded window, verified back to 2015-01-02,
+# so the study window is stated once and the vendor is given no latitude.
+RANGE_START = dt.datetime(2014, 6, 1)
+
+
+def daily_range(ticker: str, start: dt.datetime = None,
+                end: dt.datetime = None) -> "pd.DataFrame | None":
+    """Daily closes over an EXPLICIT window. Granularity still asserted."""
+    import json as _json
+    import urllib.request as _u
+    p1 = int((start or RANGE_START).timestamp())
+    p2 = int((end or dt.datetime.now()).timestamp())
+    url = (f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}"
+           f"?interval=1d&period1={p1}&period2={p2}")
+    h = {"User-Agent": "Mozilla/5.0 (compatible; research/1.0)",
+         "Accept": "application/json"}
+    r = _json.loads(_u.urlopen(_u.Request(url, headers=h), timeout=45).read())
+    res = (r.get("chart") or {}).get("result") or []
+    if not res:
+        return None
+    res = res[0]
+    ts = res.get("timestamp") or []
+    q = ((res.get("indicators") or {}).get("quote") or [{}])[0]
+    closes = q.get("close") or []
+    if not ts or len(ts) != len(closes):
+        return None
+    df = pd.DataFrame({"Close": closes},
+                      index=pd.to_datetime(ts, unit="s", utc=True))
+    return df.dropna()
+
+
 def is_daily(idx) -> bool:
     """Verify the interval that came back, not the one that was asked for.
 
@@ -132,13 +166,12 @@ def fetch_prices(tickers: list, workers: int = 12) -> dict:
     counted separately, because they are the more dangerous failure: a 404 is
     visible and a monthly bar labelled 'daily' is not.
     """
-    a = YahooDirectAdapter(exchange_tz="America/New_York")
     out, fail = {}, {}
 
     def one(t):
         try:
-            b = a.get_daily_bars(t, LOOKBACK_DAYS)
-            if not len(b):
+            b = daily_range(t)
+            if b is None or not len(b):
                 return t, "empty"
             if not is_daily(b.index):
                 return t, "NOT-DAILY"
