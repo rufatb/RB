@@ -102,7 +102,8 @@ def log_screen(rows: list, screened: list, today: dt.date,
     return out, added
 
 
-def score(rows: list, price_fn, today: dt.date, settle_days: int = 3) -> tuple:
+def score(rows: list, price_fn, today: dt.date, settle_days: int = 3,
+          outcome_fn=None) -> tuple:
     """Fill the outcome for events whose date has passed. Never back-edits.
 
     `settle_days` because a decision announced on the date is often disclosed
@@ -126,6 +127,19 @@ def score(rows: list, price_fn, today: dt.date, settle_days: int = 3) -> tuple:
         before = float(r["px_at_log"])
         r["px_after"] = f"{px:.4f}"
         r["move_actual"] = f"{(px / before - 1) * 100:.3f}"
+        # DAY-80: the price move alone cannot say WHICH WAY the agency ruled.
+        # A name can fall on an approval and rise on a rejection, so scoring on
+        # price and calling it an outcome would build a record of the tape
+        # rather than of the decision. `resolved.py` reads the 8-K.
+        if outcome_fn is not None and not r.get("outcome"):
+            try:
+                res = outcome_fn(r["ticker"], r["event_date"])
+                r["outcome"] = res.get("outcome", "") or ""
+                if res.get("filed"):
+                    r["note"] = (r.get("note") or "") + f"announced {res['filed']}"
+            except Exception as e:
+                r["outcome"] = ""
+                r["note"] = (r.get("note") or "") + f"outcome unchecked ({type(e).__name__})"
         n += 1
     return rows, n
 

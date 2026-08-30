@@ -499,7 +499,36 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                     import catledger as _cl
                     lrows, added = _cl.log_screen(_cl.load(), rows, today,
                                                   {l["ticker"] for l in book["legs"]})
-                    if added:
+                    # SCORE BEFORE LOGGING, every morning, automatically.
+                    # The report used to print "score with `catledger.py
+                    # --score`" and nobody ever did -- 9 events logged, 0
+                    # scored. A record that requires a human to remember is
+                    # not a record, and six months of that leaves us exactly
+                    # where we started.
+                    try:
+                        import resolved as _rs
+                        from adapters import YahooDirectAdapter as _YA
+                        _ad = _YA(exchange_tz="America/New_York")
+
+                        def _px(t):
+                            try:
+                                q = _ad.get_quote(t)
+                                return float(q.last) if q.last else None
+                            except Exception:
+                                return None
+
+                        lrows, nsc = _cl.score(lrows, _px, today,
+                                               outcome_fn=_rs.check)
+                        if nsc:
+                            parts[-1] += (f"\n   [scored {nsc} resolved "
+                                          "catalyst event(s) — outcome read "
+                                          "from the 8-K, not the tape]")
+                    except Exception as e:
+                        parts[-1] += (f"\n   \u26a0 catalyst scoring failed "
+                                      f"({type(e).__name__}) — the record is "
+                                      "NOT accruing, which is the one thing "
+                                      "it must do")
+                    if added or True:
                         _cl.save(lrows)
                         parts[-1] += (f"\n   [logged {added} new event(s) to the "
                                       "catalyst record — score with "
