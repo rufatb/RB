@@ -3484,6 +3484,111 @@ the harness are committed so the test is re-runnable when the harvest grows,
 and `screen.py` now records that the prior-CRL conditioning was tested and did
 not clear.
 
+## Day-81: a diagnostic that could not see its own case, and the constant it exposed
+
+Two robustness items were requested — a second fair-value estimator and a
+plausibility gate. Both were built. Both immediately found that something
+already shipping was wrong, which is the only real evidence that a check works.
+
+### The second estimator caught nothing, because it was aimed wrong
+
+Day-80 added a lognormal cross-check to `fairvalue.py` whose warning read *"the
+empirical figure resamples this name's own history, so a single past crash
+inflates it"*. It fired on no live name, and that silence was reported as
+reassurance.
+
+Planted controls (900 days, σ=0.8%/day, each defect isolated) say otherwise:
+
+| control                      | gap | mean window return | σ drop when trimmed |
+|------------------------------|-----|--------------------|---------------------|
+| clean                        |  4% | +0.05%             |  3%                 |
+| drift only (−40% over path)  | 43% | −1.13%             |  3%                 |
+| one −55% day, drift removed  | 44% | +0.04%             | 71%                 |
+| that crash **with** its level shift | **14%** | −2.84%   | 71%                 |
+
+Three findings, none of them the one claimed:
+
+1. **The direction was backwards.** A single crash inflates the LOGNORMAL, not
+   the empirical estimate. σ is a second moment and one day dominates it;
+   `E[max(0,-r)]` is a first moment where one day in 900 carries ~1/900 weight.
+2. **The gap measures drift, not tails** — and not only drift. *Both*
+   mechanisms open a gap, and **they subtract**. A name carrying both defects
+   reads at 14%, under the 0.40 bar, while either alone reads at ~43%. **The
+   worst case looked like the cleanest.** Gap magnitude is not a diagnostic.
+3. **`trimmed_fv` tested the robust leg.** It winsorised the empirical
+   estimator's window returns — 1% movement on the clean control and 1% on the
+   crash control. That is why no live name tripped it.
+
+Rebuilt: `window_drift` and `vol_outlier` measure the two mechanisms
+separately, each with a planted positive control that must fire on its own
+defect and stay quiet on the others (rule 4). Where both fire, both are named —
+reporting only the first match would narrow the finding silently, the same
+fault one layer down. On the live board **four of five names now carry a flag
+where day-80 flagged none**, and PRAX's 0.55x "cheap" reading is explained by
+its *lognormal* leg, not by the outlier story I gave in the report.
+
+### The plausibility gate found a shipping arithmetic defect on its first run
+
+`sanity.py` asserts bounds that no correct number can violate — a put cannot
+exceed spot, a probability cannot leave [0,1], a rejection drawdown cannot be
+positive, daily bars cannot be a week apart. Bounds are calibrated, not
+guessed: the largest gap in real daily bars is 4 days (July 4 weekend, across
+seven 3,080-bar series) and weekly bars are 7, so the bar sits at 6.
+
+**Honest score against the five defects that actually shipped: one of five.**
+Only day-72's monthly bars trip it. day-74 (334 approvals where the truth was
+977), day-75 (a settled binary priced), day-79 (a 2.5x undercount) are all
+perfectly possible numbers, and day-81's mislabelled warning is not a number.
+It is a floor, not a net, and `tests/test_sanity.py` asserts the four misses
+stay misses so the file can never be quietly read as more.
+
+On its first run it raised on live output: **`fairvalue.fair_put` took its point
+estimate from the volatility TERCILE (1.54/2.29/2.91) and its interval from the
+OVERALL sample [2.07, 2.86]**, so for every low-vol name the printed fair value
+fell outside its own printed range. Two populations in one line — rule 7, in
+arithmetic. Shipping since day-79.
+
+### Re-measuring it removed the tercile ladder entirely — REJECTION #38
+
+The day-79 constants had no committed script, so they could not be re-derived.
+`validate_eventmult.py` now reproduces them, resampling **names** rather than
+events (605 decisions come from 184 names; one biotech contributes many
+decisions from one volatility regime).
+
+The headline replicates: **2.45x, 95% [1.95x, 3.00x]** against day-79's 2.46x.
+The structure does not:
+
+| tercile | day-79 | re-measured | 95% |
+|---------|--------|-------------|-----|
+| low     | 1.54x  | **2.09x**   | [1.49, 2.93] |
+| mid     | 2.29x  | **2.09x**   | [1.28, 3.18] |
+| high    | 2.91x  | **2.82x**   | [2.12, 3.68] |
+
+Low and mid are identical. Tested directly rather than by eye — overlapping
+marginal intervals prove nothing, so the *difference* was bootstrapped:
+
+    high - low   +0.76x   95% [-0.34, +1.84]
+    mid  - low   -0.01x   95% [-1.19, +1.25]
+
+Both intervals are **wider than the effect**: the sample cannot resolve a
+tercile gap below ~1.09x. By rule 10 that is **UNDERPOWERED, not refuted** —
+the volatility effect day-79 claimed may well be real. But pricing off a
+three-rung ladder this data cannot distinguish is not defensible, and it never
+faced a direct test before being adopted.
+
+**Shipped:** one multiplier, 2.45x, with its own matching interval. The name's
+tercile is still printed beside it as an open question, explicitly not priced
+in. That fixes the point-outside-interval defect at its root.
+
+### What shipped
+
+`sanity.py` + `validate_eventmult.py` + `fairvalue.py` rebuilt diagnostics,
+`PREREGISTER_day81.md` (bars fixed from controls before any live name was run;
+one rationale amendment recorded in place, no bar moved), `data/eventmult.json`,
+34 new tests (553 → 587). The gate runs on every `brief.py` — constants checked
+before rendering, prices checked before any horizon counts bars, and a name
+that fails it now says so and withholds its fair value instead of printing one.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

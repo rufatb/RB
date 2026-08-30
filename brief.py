@@ -623,7 +623,19 @@ def main(argv=None) -> int:
     ap.add_argument("--offline", action="store_true",
                     help="positions/record only; no network")
     a = ap.parse_args(argv)
+
+    # THE PLAUSIBILITY GATE, before a single number is rendered. These are
+    # module-level literals that nothing else would notice a typo in, and every
+    # breakeven in the report is built on their signs. Deliberately NOT wrapped
+    # in a try/except: an Impossible here means a published constant is
+    # arithmetically impossible, and the report must stop rather than print it.
+    # Fail closed (rule 2) — a wrong number acted on costs more than no report.
+    import sanity
+    warn = sanity.gate(sanity.check_catalyst_constants)
+
     print(build(a.config, a.shadow, a.offline, a.days_back))
+    if warn:
+        print("\n".join(sanity.render(warn)))
     return 0
 
 

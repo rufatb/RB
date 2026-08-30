@@ -64,6 +64,9 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import sanity as _sn  # noqa: E402  — module scope on purpose: an `except
+#   _sn.Impossible` whose import sat inside the try would raise NameError from
+#   the handler and hide the real failure. That is the day-29 pattern exactly.
 from validate_exit import SCRATCH  # noqa: E402
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -680,18 +683,32 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
         # The breakeven-vs-base-rate number below counts only the CRL branch
         # and undercounts a put by ~2.5x; see fairvalue.py.
         row["fv"] = None
+        row["fv_error"] = None
         try:
             import fairvalue as _fv
             from validate_catalyst import daily_range as _dr
             df = _dr(c["ticker"])
             if df is not None and len(df):
+                # DAY-72 GATE, before anything counts these bars. Yahoo serves
+                # weekly or monthly bars for a daily request without erroring,
+                # and every horizon below is measured in BARS.
+                _sn.check_prices(df, c["ticker"])
                 exp = row.get("expiry")
                 dte = ((dt.date.fromisoformat(exp) - today).days * 5 // 7
                        if exp else 21)
-                row["fv"] = _fv.fair_put(df["Close"].to_numpy(), max(dte, 3))
+                fv = _fv.fair_put(df["Close"].to_numpy(), max(dte, 3))
+                # Fail closed on an impossible number (rule 2): drop the fair
+                # value and SAY so. One bad name must not stop the report, and
+                # must not print either.
+                row["fv_warn"] = _sn.check_fair_value(fv, c["ticker"])
+                row["fv"] = fv
                 row["fv_days"] = max(dte, 3)
-        except Exception:
+        except _sn.Impossible as ex:
+            row["fv"], row["fv_error"] = None, f"failed the plausibility gate — {ex}"
+        except Exception as ex:
+            # Never silently (rule 1, day-29 and day-55). Name it on the row.
             row["fv"] = None
+            row["fv_error"] = f"{type(ex).__name__}: {ex}"
         try:
             row["verdict"] = verdict(row, votes.get(c["ticker"]))
         except Exception as ex:
@@ -863,9 +880,15 @@ def render(rows: list, today: dt.date) -> str:
         if r.get("error"):
             L.append(f"        ⚠ options unavailable ({r['error']}) — "
                      "the date stands, the pricing does not")
+        if r.get("fv_error"):
+            L += _wrap_at(f"⚠ no fair value for {r['ticker']}: "
+                          f"{r['fv_error']}. The date and the quote stand; "
+                          "the fair-value comparison is withheld.", 8)
         if r.get("fv") and r.get("put_pct") is not None:
             import fairvalue as _fv
             L += _fv.render(r["put_pct"] * 100, r["fv"], r.get("fv_days", 21))
+            for w in r.get("fv_warn") or []:
+                L += _wrap_at(w, 8)
         v = r.get("verdict")
         if v:
             L.append(f"        VERDICT : {v['call']}")
@@ -927,6 +950,13 @@ def render(rows: list, today: dt.date) -> str:
         L.append("      with nothing to compare it against. Run "
                  "`python baserate.py`.")
     return "\n".join(L)
+
+
+def _wrap_at(text: str, indent: int, width: int = 68) -> list:
+    """Wrapped and indented, for the gate's messages beside a name."""
+    pad = " " * indent
+    lines = _wrap(text, width)
+    return [pad + lines[0]] + [pad + "  " + x for x in lines[1:]]
 
 
 def _wrap(text: str, width: int) -> list:
