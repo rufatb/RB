@@ -676,6 +676,22 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
         # The synthesis runs LAST, after every input it reads is on the row.
         # It must never be the reason a name drops out of the screen: a broken
         # verdict still leaves a real date and a real price worth seeing.
+        # DAY-79: what protection SHOULD cost, from THIS name's own returns.
+        # The breakeven-vs-base-rate number below counts only the CRL branch
+        # and undercounts a put by ~2.5x; see fairvalue.py.
+        row["fv"] = None
+        try:
+            import fairvalue as _fv
+            from validate_catalyst import daily_range as _dr
+            df = _dr(c["ticker"])
+            if df is not None and len(df):
+                exp = row.get("expiry")
+                dte = ((dt.date.fromisoformat(exp) - today).days * 5 // 7
+                       if exp else 21)
+                row["fv"] = _fv.fair_put(df["Close"].to_numpy(), max(dte, 3))
+                row["fv_days"] = max(dte, 3)
+        except Exception:
+            row["fv"] = None
         try:
             row["verdict"] = verdict(row, votes.get(c["ticker"]))
         except Exception as ex:
@@ -739,15 +755,23 @@ def rank_opportunities(rows: list, top: int = 2) -> dict:
                                          "enterprise"))
             continue
         be = r.get("put_be")
-        if be is None or not s:
-            skipped.append((r["ticker"], "no comparable breakeven"))
+        fv = r.get("fv")
+        ratio = None
+        if fv and r.get("put_pct") is not None and fv.get("fair"):
+            ratio = (r["put_pct"] * 100) / fv["fair"]
+        if ratio is None:
+            skipped.append((r["ticker"], "no measurable fair value"))
             continue
         d = r["days"]
         key = "WEEK" if d <= 10 else ("MONTH" if d <= 45 else "QUARTER")
-        buckets[key].append({**r, "multiple_lo": be / s["hi"],
-                             "multiple_hi": be / s["lo"]})
+        buckets[key].append({**r, "fv_ratio": ratio,
+                             "multiple_lo": (be / s["hi"]) if be and s else None,
+                             "multiple_hi": (be / s["lo"]) if be and s else None})
     for k in buckets:
-        buckets[k].sort(key=lambda r: r["multiple_lo"])
+        # RANK BY FAIR-VALUE RATIO. Cheapest against what the name's own
+        # returns say the protection is worth -- the correct economic
+        # comparison, and not the CRL-only breakeven that undercounts a put.
+        buckets[k].sort(key=lambda r: r["fv_ratio"])
         buckets[k] = buckets[k][:top]
     return {"buckets": buckets, "skipped": skipped, "base": s}
 
@@ -774,17 +798,23 @@ def render_ranked(ranked: dict, today: dt.date, top: int = 2) -> str:
         for i, r in enumerate(rows, 1):
             L.append(f"      {i}. {r['ticker']:<6} {r['date']}  ({r['days']:>3}d)"
                      f"   put {r['put_pct']:.1%} of spot")
-            L.append(f"         needs P(CRL) ~{r['put_be']:.0%} = "
-                     f"{r['multiple_lo']:.1f}-{r['multiple_hi']:.1f}x the "
-                     f"measured base rate")
+            L.append(f"         vs measured fair value {r['fv']['fair']:.1f}% "
+                     f"-> {r['fv_ratio']:.2f}x  ({r['fv']['bucket']}-vol)")
+            if r.get("multiple_lo") is not None:
+                L.append(f"         [secondary, CRL branch only: needs P(CRL) "
+                         f"~{r['put_be']:.0%} = {r['multiple_lo']:.1f}-"
+                         f"{r['multiple_hi']:.1f}x the base rate]")
             L.append(f"         {r['verdict']['call']}")
     if any_row:
-        L.append(f"   ── ranked by breakeven P(CRL) over the measured base rate "
-                 f"({s['lo']:.0%}-{s['hi']:.0%},")
-        L.append(f"      n={s['n']:,}). Nearest to 1x is protection priced at "
-                 "what this population")
-        L.append("      actually delivers; a high multiple is a lottery ticket "
-                 "with a story.")
+        L.append("   ── ranked by QUOTED / MEASURED FAIR VALUE, computed from "
+                 "each name's own")
+        L.append("      returns (605 decisions, 7,440 random windows). Below "
+                 "1.0x the market")
+        L.append("      charges less than the name's own history says the "
+                 "protection is worth.")
+        L.append("      The fair value is measured; whether trading the gap "
+                 "pays is NOT")
+        L.append("      backtested — no free historical option prices exist.")
     import catalyst as _cat
     L.append("   ── NO LONG SIDE IS RANKED, and day-72 made that call closer. On")
     L.append(f"      corrected daily bars the approval reaction is POSITIVE — "
@@ -833,6 +863,9 @@ def render(rows: list, today: dt.date) -> str:
         if r.get("error"):
             L.append(f"        ⚠ options unavailable ({r['error']}) — "
                      "the date stands, the pricing does not")
+        if r.get("fv") and r.get("put_pct") is not None:
+            import fairvalue as _fv
+            L += _fv.render(r["put_pct"] * 100, r["fv"], r.get("fv_days", 21))
         v = r.get("verdict")
         if v:
             L.append(f"        VERDICT : {v['call']}")

@@ -476,10 +476,17 @@ def test_a_holder_gets_the_base_rate_comparison_on_the_hedge_too():
 # ── day-72: the short list. The screen lists names in DATE order, which is the
 # order a calendar has and not the order a decision has.
 
-def _scr_row(ticker, days, be, call="STAND ASIDE INTO THE PRINT", put=0.08):
+def _scr_row(ticker, days, be, call="STAND ASIDE INTO THE PRINT", put=0.08,
+             fair=8.0):
+    """`fair` is the measured fair value in % of spot; the ranking is
+    quoted/fair, so a LOWER ratio is a cheaper name."""
     return {"ticker": ticker, "date": "2026-09-01", "days": days,
             "company": ticker, "spot": 50.0, "move": 0.30, "put_pct": put,
-            "put_be": be, "verdict": {"call": call, "why": [], "breakeven": be}}
+            "put_be": be, "fv_days": 21,
+            "fv": {"fair": fair, "fair_lo": fair * 0.9, "fair_hi": fair * 1.1,
+                   "ordinary": fair * 0.6, "event": fair * 0.4,
+                   "own3": 2.0, "bucket": "mid"},
+            "verdict": {"call": call, "why": [], "breakeven": be}}
 
 
 def test_names_are_bucketed_by_the_horizon_a_pm_thinks_in():
@@ -491,17 +498,29 @@ def test_names_are_bucketed_by_the_horizon_a_pm_thinks_in():
     assert [x["ticker"] for x in r["buckets"]["QUARTER"]] == ["C"]
 
 
-def test_the_ranking_is_by_breakeven_over_the_base_rate_not_by_date():
-    """A pure number, comparable across names of any price or size."""
-    rows = [_scr_row("DEAR", 20, 0.90), _scr_row("CHEAP", 25, 0.20),
-            _scr_row("MID", 22, 0.50)]
+def test_the_ranking_is_by_quoted_over_MEASURED_FAIR_VALUE():
+    """Day-79: the old criterion was breakeven-vs-base-rate, which counts only
+    the CRL branch and undercounts a put by ~2.5x because roughly half of
+    approvals also fall. Ranking is now quoted / measured fair value."""
+    rows = [_scr_row("DEAR", 20, 0.9, put=0.16, fair=8.0),    # 2.00x
+            _scr_row("CHEAP", 25, 0.2, put=0.04, fair=8.0),   # 0.50x
+            _scr_row("MID", 22, 0.5, put=0.08, fair=8.0)]     # 1.00x
     with _with_base(0.16, 0.27):
         r = S.rank_opportunities(rows, top=3)
     assert [x["ticker"] for x in r["buckets"]["MONTH"]] == ["CHEAP", "MID", "DEAR"]
 
 
+def test_a_name_without_a_measurable_fair_value_is_not_ranked():
+    row = _scr_row("X", 20, 0.5)
+    row["fv"] = None
+    with _with_base(0.16, 0.27):
+        r = S.rank_opportunities([row])
+    assert not r["buckets"]["MONTH"]
+    assert ("X", "no measurable fair value") in r["skipped"]
+
+
 def test_only_the_top_n_survive_each_bucket():
-    rows = [_scr_row(f"T{i}", 20, 0.1 * i) for i in range(1, 6)]
+    rows = [_scr_row(f"T{i}", 20, 0.1 * i, put=0.02 * i) for i in range(1, 6)]
     with _with_base(0.16, 0.27):
         r = S.rank_opportunities(rows, top=2)
     assert len(r["buckets"]["MONTH"]) == 2
