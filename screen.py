@@ -875,6 +875,19 @@ def render(rows: list, today: dt.date) -> str:
                  "exist before.")
         L.append("      It is UNCONDITIONAL: the prior you argue away from, not "
                  "an answer.")
+        # DAY-78: the most obvious conditioning was tested and did not clear
+        # its pre-registered bar. Recorded here so the question is closed
+        # rather than quietly re-asked every few weeks.
+        L.append("   ── conditioning TESTED (day-78): a sponsor with a prior CRL "
+                 "runs 16.0%")
+        L.append("      [11.9, 21.2] against 9.9% [8.0, 12.2] without, n=238 vs "
+                 "817. The")
+        L.append("      pre-registered bar was non-overlapping intervals and "
+                 "they overlap by")
+        L.append("      0.3pp, so the unconditional rate STANDS. Direction and "
+                 "size are worth")
+        L.append("      knowing when you read a resubmission; the rate above is "
+                 "not adjusted.")
     else:
         L.append("   ── no base rate has been computed, so each breakeven above "
                  "stands alone")

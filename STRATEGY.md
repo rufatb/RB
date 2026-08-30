@@ -3414,6 +3414,76 @@ trading this system. It becomes research and monitoring. The intraday engine is
 36 rejections and 311 live picks at 49%; the catalyst engine now has its own
 rejection on the only leg that could have made a long pay.
 
+## Day-78: two tests of a different kind — one rejected by a hair, one unanswerable
+
+Both **pre-registered and committed before any result was computed**
+(`PREREGISTER_day78.md`). Neither tests price predicting price, which is what
+all 37 previous rejections were.
+
+### TEST B — is P(CRL) conditional on the sponsor's own prior rejections?
+
+| stratum | P(CRL) | 95% Wilson | n |
+|---|---|---|---|
+| no prior CRL for this sponsor | 9.9% | [8.0%, 12.2%] | 817 |
+| **has a prior CRL** | **16.0%** | [11.9%, 21.2%] | 238 |
+| has two or more | 17.1% | [10.3%, 27.1%] | 76 |
+
+**REJECTED — the intervals overlap by 0.3pp.** The pre-registered bar was
+non-overlapping Wilson intervals and it is not being moved after the fact.
+
+For transparency: the standard two-proportion test gives **z = +2.60,
+p = 0.0094**, which conventional practice would call significant. I chose a
+stricter bar than convention and I am holding it. Recorded as a **re-test
+candidate**, not an adoption — and the bias runs *against* the finding, since a
+sponsor rejected once may never file again, so "has a prior CRL" over-selects
+survivors and pushes the conditional rate DOWN.
+
+The report now states this was tested and did not clear, so the question is
+closed rather than quietly re-asked.
+
+### TEST A — does insider open-market buying precede FDA outcomes?
+
+Built `build_insider.py` on the SEC's bulk Insider Transactions datasets:
+**373,229 code-P open-market purchases across 8,572 issuers, 2014–2026Q2**,
+forty-seven quarterly ZIPs instead of ten thousand XML round trips. Code A
+(awards at $0), M (option exercises), F (tax withholding) and S (sales) are all
+discarded.
+
+**The look-ahead trap is closed by construction.** A Form 4 is filed up to two
+business days after the trade, so `TRANS_DATE` is not public when it happens.
+Every purchase is keyed on **FILING_DATE**. Using the transaction date would
+credit a trader with information nobody had, and is why much published insider
+research fails to replicate.
+
+    605 events with a usable price window
+      115 (19%) had code-P buying FILED in the prior 90 days
+
+    A1 outcome  AUC 0.5238   z=+0.66     (bar |z| >= 3.3)
+    A2 return   +2.63pp      z=+1.12     (bar |z| >= 3.3)
+
+**UNDERPOWERED — and that is not a rejection.** SE 2.36pp, minimum detectable
+effect **7.78pp**. The observed +2.63pp is well inside the noise, so "no effect"
+would be a claim the data cannot support.
+
+**But the placebo is the more useful result.** The same 90-day lookback ending
+at a *random* date produced **+2.01pp (z=+1.03)** — 76% of the apparent effect.
+Whatever is there is a company-TYPE effect (the kind of company whose insiders
+buy at all) rather than a TIMING effect (buying because a decision is coming).
+That is worth more than the headline: it says raising n would likely be chasing
+a confound.
+
+**The confound named in advance did not appear.** Insiders bought into strength,
+not weakness — prior 20d return +3.07% with buying versus +1.50% without. So
+this is not a reversal signal wearing an insider costume; it simply is not a
+signal at this sample size.
+
+### What shipped
+
+Nothing to the trading logic. `data/insider_buys.csv.gz` (6MB compressed) and
+the harness are committed so the test is re-runnable when the harvest grows,
+and `screen.py` now records that the prior-CRL conditioning was tested and did
+not clear.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
