@@ -213,7 +213,7 @@ def test_the_pair_carries_what_it_costs_to_express():
     """
     out = V.render(_pair_digest())
     assert "$27 behind" in out
-    assert "IS" in out and "outcome" in out
+    assert "IS the expectation" in out
 
 
 def test_an_unknown_spread_is_not_reported_as_zero():
@@ -242,8 +242,19 @@ def test_a_re_read_says_it_is_a_re_read():
     d["publish"] = {"already": True,
                     "restore_note": "restored exactly from the published board"}
     out = V.render(d)
-    assert "re-read of the board published at 9:46" in out
-    assert "restored exactly" in out
+    assert "re-read of the 9:46 board" in out
+    # Restored exactly -> no "re-derived" caveat; the caveat must be earned.
+    assert "re-derived" not in out
+
+
+def test_a_re_read_whose_sizes_were_re_derived_says_so():
+    """An approximate restore must not read like an exact one."""
+    d = _pair_digest()
+    d["publish"] = {"already": True,
+                    "restore_note": "share counts re-derived from the "
+                                    "published allocation and the 9:45 print"}
+    out = V.render(d)
+    assert "re-read of the 9:46 board" in out and "re-derived" in out
 
 
 def test_an_unrestorable_size_is_blank_not_recomputed():
@@ -262,3 +273,99 @@ def test_an_unrestorable_size_is_blank_not_recomputed():
     assert "not restorable" in out
     assert "do not size from here" in out
     assert "135 sh" not in out and "136 sh" not in out
+
+
+# ── the discipline that keeps it short ──────────────────────────────────────
+
+def _fat_digest():
+    """A busy morning: a position, an exit, a pair, and ranked opportunities."""
+    fv = {"fair": 26.3, "ordinary": 20.0, "own3": 3.0, "event": 6.3,
+          "fair_lo": 24.0, "fair_hi": 29.0,
+          "cross": {"faults": [("LOGNORMAL", "sigma is outlier-driven")]}}
+    def opp(t, days, ratio, call):
+        return {"ticker": t, "days": days, "put_pct": 0.117, "fv": fv,
+                "fv_ratio": ratio, "verdict": {"call": call}}
+    d = _pair_digest()
+    d.update(
+        book={"legs": [leg()], "net_pct": 13.53, "net_usd": 1348.0,
+              "gross": 9960, "stale": 0},
+        closing=[leg()], settled={"ZYME": {"outcome": "APPROVED"}},
+        cal=[{"date": "2027-05-13", "ticker": "", "company": "BRISTOL MYERS"}],
+        ledger_rows=[{"role": "pair", "hit": "1"}] * 38
+                    + [{"role": "pair", "hit": "0"}] * 47,
+        ranked={"buckets": {
+            "WEEK": [],
+            "MONTH": [opp("IONS", 22, 0.89, "DOWNSIDE IS THE CHEAPER SIDE")],
+            "QUARTER": [opp("PRAX", 118, 0.44, "STAND ASIDE INTO THE PRINT"),
+                        opp("CYTK", 75, 0.84, "STAND ASIDE INTO THE PRINT")]},
+            "skipped": [("INO", "quote failed its checks")], "base": {}})
+    return d
+
+
+def test_no_line_overflows_the_column():
+    """Wrapped text is the whole point; an overflowing line breaks the layout.
+
+    Overflow crept back three times, so it is asserted rather than eyeballed.
+    """
+    V.C.setup(force=False)
+    over = [l for l in V.render(_fat_digest()).split("\n") if len(l) > 76]
+    assert not over, "over-width:\n" + "\n".join(f"{len(l)}: {l}" for l in over)
+
+
+def test_a_busy_morning_still_fits_on_one_screen():
+    V.C.setup(force=False)
+    n = len(V.render(_fat_digest()).split("\n"))
+    assert n <= 50, f"the short page has grown to {n} lines"
+
+
+# ── opportunities are ranked by value, not by date ──────────────────────────
+
+def test_opportunities_are_ranked_cheapest_first_across_horizons():
+    """PRAX at 0.44x sits 118d out and was invisible in a date-ordered list.
+
+    The screen's whole output is the ranking; showing the FDA's diary instead
+    hides the one name it exists to surface.
+    """
+    out = V.render(_fat_digest())
+    body = out[out.index("OPPORTUNITIES"):]
+    assert body.index("PRAX") < body.index("CYTK") < body.index("IONS")
+
+
+def test_a_ranked_but_unreliable_fair_value_is_marked_in_place():
+    out = V.render(_fat_digest())
+    assert "~PRAX" in out
+    assert "not a price to act on" in out
+
+
+def test_the_absent_long_side_gives_its_reason():
+    """Absent without a reason reads as an oversight rather than a decision."""
+    out = V.render(_fat_digest())
+    assert "no long ranked" in out
+    assert "|t|>=3" in out          # the bar it failed, not just that it failed
+
+
+def test_names_excluded_for_a_bad_quote_are_named():
+    assert "INO" in V.render(_fat_digest())
+
+
+def test_verdicts_are_tagged_not_truncated_mid_word():
+    """"DOWNSIDE IS THE CHEAPER SI" is not a verdict."""
+    out = V.render(_fat_digest())
+    assert "downside cheaper" in out
+    assert "CHEAPER SI\n" not in out and "CHEAPER SI " not in out
+
+
+def test_an_unmapped_verdict_falls_through_rather_than_blanking():
+    """A new verdict string must still print, not vanish."""
+    d = _fat_digest()
+    d["ranked"]["buckets"]["MONTH"][0]["verdict"] = {"call": "SOMETHING NEW"}
+    assert "something new" in V.render(d)
+
+
+def test_the_tilde_hint_names_a_name_actually_shown():
+    """It named COGT, which is excluded from the ranking and never marked ~."""
+    out = V.render(_fat_digest())
+    import re
+    m = re.search(r"fairvalue\.py (\w+)", out)
+    assert m, "no hint printed"
+    assert f"~{m.group(1)}" in out, f"{m.group(1)} is not marked ~ on the page"

@@ -3685,6 +3685,42 @@ block will say "too early".
 **Shipped:** `view.py`, `brief.py --full`, a digest hook through `build()`,
 16 tests (605 -> 622).
 
+## Day-81 (cont.): the research output reaches the front page
+
+The short view shipped with the catalyst list in DATE order — the five nearest
+FDA decisions. That is the order the FDA's diary has, not the order a decision
+has, and it hid the screen's entire output: **PRAX, the cheapest name on the
+board at 0.44x quoted-to-fair, sits 118 days out and was the sixth row.** It
+never appeared at all. The ranking existed and was correct; it was reachable
+only via `--full`.
+
+`OPPORTUNITIES` now leads with the ranking, cheapest first across all horizons,
+each row carrying the ratio, the quote, the measured fair value and a verdict
+tag. The date-ordered calendar is kept only as a fallback when nothing ranks.
+
+**Two presentation defects fixed at the same time.** Verdicts truncated
+mid-word ("DOWNSIDE IS THE CHEAPER SI") because the screen's sentences were
+written to be read in a paragraph — each now has a short tag and keeps its full
+sentence in `--full`, with unmapped verdicts falling through rather than
+blanking. And the "why is this marked ~" hint pointed at COGT, a name EXCLUDED
+from the ranking and therefore never marked; it now names a name the reader can
+actually see.
+
+**A duplicated 12-second download.** `_watch`/`_record` called
+`ledger._tides_for_report()` — 120 days of daily bars for every ticker in
+`universe_prints` — which `render_record` had already computed in the same run.
+Two renderings, one computation was the stated rule and this broke it. The
+tides now travel in the digest: the view test suite went 91s → 4.2s and every
+morning run saves the same duplicate fetch.
+
+**Width and length are now asserted, not eyeballed.** Overflow crept back three
+times, so `test_no_line_overflows_the_column` and `test_a_busy_morning_still_
+fits_on_one_screen` run against a deliberately busy digest — a position, an
+exit, a pair, and a full ranking. Live output: 50 lines, zero over-width.
+
+**Shipped:** `_opportunities` in `view.py`, verdict tags, tides through the
+digest, 13 tests (629 -> 642).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

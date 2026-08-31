@@ -194,9 +194,12 @@ def render(d: dict) -> str:
                  f"risk is a normal morning.{C.RESET}")
     L.append("")
 
+    # ── OPPORTUNITIES ───────────────────────────────────────────────────
+    L += _opportunities(d)
+
     # ── COMING UP ───────────────────────────────────────────────────────
     cal = d.get("cal") or []
-    if cal:
+    if cal and not (d.get("ranked") or {}).get("buckets"):
         L.append(f"  {head('COMING UP')}   {C.DIM}FDA decisions "
                  f"(company-disclosed dates, no probability implied){C.RESET}")
         held = {l["ticker"] for l in legs}
@@ -256,9 +259,89 @@ def render(d: dict) -> str:
     L += _record(d)
     L.append("")
     L.append(rule())
-    L.append(f"  {C.DIM}full page: python brief.py --full   ·   "
-             f"score after close: python ledger.py --score{C.RESET}")
+    L.append(f"  {C.DIM}detail: brief.py --full   ·   after close: "
+             f"ledger.py --score{C.RESET}")
     return "\n".join(L)
+
+
+# The screen's verdicts are written to be read in a paragraph. In a ranked
+# column they truncated mid-word ("DOWNSIDE IS THE CHEAPER SI"), so each gets a
+# short tag here and keeps its full sentence in `--full`. Anything unmapped
+# falls through to its own text rather than being silently blanked.
+_VERDICT_TAG = {
+    "DOWNSIDE IS THE CHEAPER SIDE": "downside cheaper",
+    "STAND ASIDE INTO THE PRINT": "stand aside",
+    "PROTECTION IS DEAR — STAND ASIDE": "protection dear",
+    "NO PRICED EXPRESSION": "no expression",
+    "NOT AN EVENT TRADE": "immaterial",
+    "PRICING UNRELIABLE — VERIFY THE QUOTE": "quote unreliable",
+    "VERDICT UNAVAILABLE": "no verdict",
+}
+
+
+def _opportunities(d: dict) -> list:
+    """The research output, ranked by decision value rather than by date.
+
+    WHY THIS REPLACED THE CALENDAR HERE. The short page listed the five nearest
+    FDA dates, which is the order the FDA's diary has. PRAX — the cheapest name
+    on the board at 0.44x quoted-to-fair — sits 118 days out and was the sixth
+    row, so it never appeared at all. A page that shows the diary instead of the
+    ranking hides the one thing the screen exists to produce.
+
+    Ranked by QUOTED / MEASURED FAIR VALUE, from each name's own returns. Below
+    1.0x the market is charging less than the name's own history says the
+    protection is worth. That comparison is measured; whether TRADING the gap
+    pays is not backtested and cannot be with free data.
+    """
+    rk = d.get("ranked") or {}
+    buckets = rk.get("buckets") or {}
+    rows = [r for hz in ("WEEK", "MONTH", "QUARTER") for r in buckets.get(hz, [])]
+    if not rows:
+        return []
+    rows.sort(key=lambda r: r["fv_ratio"])
+    shown_shaky: list = []
+    d["_shown_shaky"] = shown_shaky
+    out = [f"  {head('OPPORTUNITIES')}   {C.DIM}ranked by quoted ÷ measured "
+           f"fair value, not by date{C.RESET}"]
+    shaky = False
+    for r in rows[:5]:
+        fv = r["fv"]
+        mark = " "
+        if (fv.get("cross") or {}).get("faults"):
+            mark, shaky = "~", True
+        ratio = r["fv_ratio"]
+        col = C.GREEN if ratio < 0.80 else (C.RED if ratio > 1.25 else C.DIM)
+        raw = (r.get("verdict") or {}).get("call", "")
+        call = _VERDICT_TAG.get(raw, raw.lower())
+        out.append(f"    {col}{ratio:.2f}x{C.RESET} {mark}{r['ticker']:<6}"
+                   f"{r['days']:>4}d {C.DIM}put{r['put_pct']*100:5.1f}%/"
+                   f"fair{fv['fair']:5.1f}%{C.RESET} {call[:26]}")
+        # remembered so WATCH can point at a name the reader can actually see
+        shown_shaky.append(r["ticker"]) if mark == "~" else None
+    # THE FOOTNOTES MUST NOT OUTGROW THE CONTENT. Four rows of ranking had
+    # five rows of caveat under them, which is how a page teaches its reader to
+    # skip the caveats. Everything below is one line each, and each one is
+    # load-bearing: what the ratio means, why a ~ is not a price, why no long.
+    tail = "<1.0x = cheaper than this name's own history says; measured, " \
+           "but trading the gap is NOT backtested"
+    if shaky:
+        tail = "~ = estimators disagree, not a price to act on. " + tail
+    out += _wrap(tail, 6, dim=True)
+    try:
+        import catalyst as _cat
+        out += _wrap(f"no long ranked: approval edge "
+                     f"+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp "
+                     f"(t={_cat.APPROVAL_T:+.2f}, n={_cat.APPROVAL_N}) is under "
+                     f"the pre-registered |t|>={_cat.ADOPT_T:.0f} bar", 6,
+                     dim=True)
+    except Exception:
+        pass
+    sk = rk.get("skipped") or []
+    if sk:
+        names = ", ".join(sorted({t for t, _ in sk}))
+        out += _wrap(f"excluded, quote failed its checks: {names}", 6, dim=True)
+    out.append("")
+    return out
 
 
 def _pair_lines(d: dict, note: str) -> list:
@@ -280,9 +363,10 @@ def _pair_lines(d: dict, note: str) -> list:
         # The board is the 9:46 instruction; a later run is reading it back,
         # not issuing a new one. Saying so is the difference between an order
         # and a reminder.
-        out += _wrap("· re-read of the board published at 9:46 — "
-                     + str(st.get("restore_note", "restore status unknown")),
-                     4, dim=True)
+        exact = "exact" in str(st.get("restore_note", ""))
+        out.append(f"    {C.DIM}· re-read of the 9:46 board"
+                   + ("" if exact else " (sizes re-derived, ±1 sh)")
+                   + f"{C.RESET}")
     for side in ("long", "short"):
         lg = pair.get(side) or {}
         p = lg.get("pick") or {}
@@ -319,11 +403,10 @@ def _pair_lines(d: dict, note: str) -> list:
     known = [r for r in rows if (r.get("cost") or {}).get("usd")]
     if known:
         total = sum(r["cost"]["usd"] for r in known)
-        out.append(f"      {C.YELLOW}this pair starts ~${total:,.0f} behind "
-                   f"before the market moves{C.RESET} — the engine's edge is")
-        out.append("      measured at zero, so the spread is not a cost on top "
-                   "of the edge, it IS")
-        out.append("      the outcome. Arithmetic, not a forecast.")
+        out.append(f"      {C.YELLOW}starts ~${total:,.0f} behind on spread"
+                   f"{C.RESET}{C.DIM} — the edge is zero, so this{C.RESET}")
+        out.append(f"      {C.DIM}is not a cost on top of the edge, it IS "
+                   f"the expectation.{C.RESET}")
     elif rows:
         out.append(f"      {C.YELLOW}⚠ spread unknown on one or both legs — "
                    f"not zero, unknown{C.RESET}")
@@ -347,24 +430,24 @@ def _watch(d: dict) -> list:
         names = ", ".join(sorted({(c.get("company") or "?")[:26]
                                   for c in noticker}))
         out.append(f"    {C.YELLOW}⚠{C.RESET} {len(noticker)} scheduled "
-                   f"decision(s) with NO ticker resolved — cannot be priced "
-                   f"at all")
-        out.append(f"      {C.DIM}{names}{C.RESET}")
+                   f"decision(s) with NO ticker — unpriceable:")
+        out += _wrap(names, 6, dim=True)
     if unp:
         out.append(f"    {C.YELLOW}⚠{C.RESET} {len(unp)} calendar name(s) "
-                   f"unpriced — options quotes failed their checks: "
-                   f"{', '.join(unp[:6])}")
+                   f"unpriced — quotes failed their checks:")
+        out += _wrap(", ".join(unp[:8]), 6, dim=True)
 
-    # Fair values the long page flagged unreliable. ONE line, not one per name:
-    # five identical warnings push the things that differ off the screen, and a
-    # section nobody finishes reading is the failure this view exists to fix.
+    # The `~` in OPPORTUNITIES already carries this per name. Repeating the
+    # roster here was five lines saying what one mark says, and repetition is
+    # what pushed the things that differ off the screen in the first place.
     shaky = sorted(t for t, r in priced.items()
                    if (((r.get("fv") or {}).get("cross")) or {}).get("faults"))
-    if shaky:
-        out.append(f"    {C.YELLOW}⚠{C.RESET} fair value indicative only "
-                   f"(marked ~ above): {', '.join(shaky)}")
-        out.append(f"      {C.DIM}run `python fairvalue.py TKR --days N` for "
-                   f"which estimator is compromised and why{C.RESET}")
+    # Point at a name the reader can SEE marked, not one excluded from the
+    # ranking entirely -- it named COGT, which never appears with a ~.
+    seen = d.get("_shown_shaky") or shaky
+    if seen:
+        out.append(f"      {C.DIM}why a name is marked ~: "
+                   f"`python fairvalue.py {seen[0]} --days 60`{C.RESET}")
 
     # constants that moved, and contradictions between published numbers
     try:
@@ -380,9 +463,8 @@ def _watch(d: dict) -> list:
         # lost its caveats. Two lines and a command that prints the reasoning.
         for what, _why, short in K.tensions():
             out.append(f"    {C.YELLOW}⚠{C.RESET} {what}: two published "
-                       f"numbers disagree and BOTH reach this page")
-            out += _wrap(f"{short}. Do not mix them in one argument — "
-                         "`python constants.py` for the reasoning.",
+                       f"numbers disagree, both reach this page")
+            out += _wrap(f"{short}; never mix them (`python constants.py`)",
                          6, dim=True)
     except Exception as e:                       # never silently (rule 1)
         out.append(f"    {C.RED}⚠{C.RESET} constants check failed: "
@@ -404,7 +486,8 @@ def _record(d: dict) -> list:
                    f"{C.DIM}a coin flip, and expected to stay one{C.RESET}")
         try:
             import ledger
-            tides = ledger._tides_for_report()
+            # From the digest: computed once by build(), never re-downloaded.
+            tides = d.get("tides")
             if tides:
                 a = ledger.attribution_line(pair, tides)
                 # Pull the two numbers out rather than reprinting the sentence:
@@ -415,9 +498,10 @@ def _record(d: dict) -> list:
                 if tide and sel:
                     s = float(sel.group(1))
                     col = C.RED if s < 0 else C.GREEN
-                    out.append(f"    of which  tide {tide.group(1)}%/session"
-                               f"  ·  {col}selection {sel.group(1)}%/session"
-                               f"{C.RESET}  {C.DIM}(the picks){C.RESET}")
+                    out.append(f"    of which  tide {tide.group(1)}%"
+                               f"  ·  {col}selection {sel.group(1)}%"
+                               f"{C.RESET} {C.DIM}/session (the picks)"
+                               f"{C.RESET}")
         except Exception as e:
             out.append(f"    {C.DIM}attribution unavailable "
                        f"({type(e).__name__}){C.RESET}")

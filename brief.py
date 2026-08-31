@@ -354,7 +354,7 @@ def render_intraday(res: dict, cfg: dict, shadow: bool,
 
 
 # ─────────────────────────────────────────────────────────────── 5. RECORD
-def render_record(rows: list) -> str:
+def render_record(rows: list, tides: dict | None = None) -> str:
     done = [r for r in rows if r.get("hit") not in ("", None)]
     pair = [r for r in done if r.get("role") == "pair"]
     if not pair:
@@ -363,7 +363,7 @@ def render_record(rows: list) -> str:
     L = ["▎RECORD", f"   pair legs {hits}/{len(pair)} "
                     f"({hits/len(pair)*100:.0f}%)"]
     L.append("   " + ledger.decisive_line(pair).strip())
-    tides = ledger._tides_for_report()
+    tides = ledger._tides_for_report() if tides is None else tides
     if tides:
         L.append("   " + ledger.relative_line(pair, tides).strip())
         L.append("   " + ledger.attribution_line(pair, tides)
@@ -526,8 +526,12 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                 # decision has. A PM asking for their two best pharma trades
                 # this month should not have to rank eight names by eye across
                 # four inputs.
-                parts.append(_scr.render_ranked(
-                    _scr.rank_opportunities(rows, top=2), today, top=2))
+                # The RESEARCH OUTPUT. It lived only in the long page, so the
+                # cheapest name on the board (PRAX at 0.44x) never appeared in
+                # the default view — the short page listed catalysts in DATE
+                # order, which is the FDA's diary, not a ranking.
+                d["ranked"] = _scr.rank_opportunities(rows, top=3)
+                parts.append(_scr.render_ranked(d["ranked"], today, top=3))
                 parts.append(_scr.render(rows, today))
                 # LOG every surfaced catalyst, traded or not. Recording only
                 # the trades taken would measure the trader, not the screen —
@@ -647,7 +651,15 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                 parts.append(f"\u258e EARNINGS NEARBY\n   \u26a0 unavailable "
                              f"({type(ex).__name__}) — unknown, not clear")
     d["ledger_rows"] = ledger.load()
-    parts.append(render_record(d["ledger_rows"]))
+    # ONE tide computation, shared. `_tides_for_report` downloads 120 days of
+    # bars for every ticker in universe_prints -- about 12 seconds -- and the
+    # short view was calling it a SECOND time, doubling the network on every
+    # run. Two renderings, one computation; that was the rule and this broke it.
+    try:
+        d["tides"] = ledger._tides_for_report()
+    except Exception as e:
+        d["tides"], d["tides_error"] = {}, f"{type(e).__name__}: {e}"
+    parts.append(render_record(d["ledger_rows"], d["tides"]))
     parts.append("Read-only. Nothing here placed, sized, or cancelled an order.")
     return "\n\n".join(parts)
 
