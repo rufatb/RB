@@ -435,6 +435,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         # short view first shipped "OPEN SU.TO, BMO.TO" — no side, no size, no
         # fill bound, and no mention that the pair starts behind by the spread.
         d["res"], d["cfg"], d["shadow"] = res, cfg, shadow
+        d["publish"] = st
         d["cost"] = []
         intraday, pair_note = render_intraday(res, cfg, shadow,
                                               no_net, today,
@@ -442,9 +443,13 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         for e in st["errors"]:
             intraday += f"\n   ⚠ {e}"
         if st["already"]:
+            # The note used to ASSERT that share counts came from the published
+            # board. They did not — `allocate_book` re-sized against the live
+            # price on every re-read. It now reports what actually happened.
             intraday += ("\n   [already published today — this is a re-read; "
-                         "the first board of the day stands.\n    Share counts "
-                         "shown are from that board, not a re-computation.]")
+                         "the first board of the day stands.\n    "
+                         + str(st.get("restore_note") or
+                               "restore status unknown") + "]")
         elif st["picks"]:
             intraday += (f"\n   [recorded {st['picks']} picks "
                          f"({st['pair']} pair / {st['picks']-st['pair']} board); "

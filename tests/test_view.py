@@ -229,3 +229,36 @@ def test_a_side_that_did_not_qualify_is_not_forced():
     d["res"]["pair"]["short"] = {"status": "NONE", "pick": None}
     out = V.render(d)
     assert "none qualified" in out and "not forced" in out
+
+
+# ── a re-read must show the PUBLISHED board, not a fresh one ────────────────
+
+def test_a_re_read_says_it_is_a_re_read():
+    """The board is the 9:46 instruction; a later run reads it back.
+
+    Saying so is the difference between an order and a reminder.
+    """
+    d = _pair_digest()
+    d["publish"] = {"already": True,
+                    "restore_note": "restored exactly from the published board"}
+    out = V.render(d)
+    assert "re-read of the board published at 9:46" in out
+    assert "restored exactly" in out
+
+
+def test_an_unrestorable_size_is_blank_not_recomputed():
+    """DAY-81. SU.TO published at 135 shares and read back at 136.
+
+    `allocate_book` sizes off the LIVE price and ran before the publish-once
+    guard, so every re-read re-sized against the current tape while the page
+    claimed the counts came from the published board. A size the ledger does
+    not score is worse than no size at all.
+    """
+    d = _pair_digest()
+    d["publish"] = {"already": True, "restored": False,
+                    "restore_note": "1 leg(s) could not be restored"}
+    d["res"]["pair"]["long"]["pick"]["shares"] = None
+    out = V.render(d)
+    assert "not restorable" in out
+    assert "do not size from here" in out
+    assert "135 sh" not in out and "136 sh" not in out

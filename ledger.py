@@ -39,8 +39,12 @@ LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
 # the ledger silently misreports the executed record from day-22 onward. Blank
 # on every pre-day-23 row and on board rows: the weights were computed at
 # publish time but not persisted, and rows are never back-edited (day-18).
+# DAY-81: `shares` added. `weight` alone makes the published ALLOCATION exact
+# but not the share count -- the original divisor was the live price at publish
+# and is not recoverable -- so a re-read could not reproduce the board it
+# claimed to be showing. Rows written before day-81 leave it blank.
 FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role",
-          "weight", "r1", "hit"]
+          "weight", "shares", "r1", "hit"]
 
 
 PRINTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universe_prints.csv")

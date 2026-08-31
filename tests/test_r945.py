@@ -88,3 +88,50 @@ def test_density_label():
     assert r945.density_label(0.1, (0.5, 1.0)) == "dense"
     assert r945.density_label(0.7, (0.5, 1.0)) == "mid"
     assert r945.density_label(2.0, (0.5, 1.0)) == "sparse"
+
+
+# ── day-81: a re-read must restore the published board, never re-size ───────
+
+def test_restore_puts_the_published_shares_back_on_the_picks():
+    """The record is authoritative; the live tape is not."""
+    import r945
+    picks = [{"t": "SU.TO", "shares": 136, "alloc": 12625},
+             {"t": "BMO.TO", "shares": 55, "alloc": 13041}]
+    todays = [{"ticker": "SU.TO", "weight": "0.2523", "p945": "93.3600",
+               "shares": "135"},
+              {"ticker": "BMO.TO", "weight": "0.2608", "p945": "239.0400",
+               "shares": "55"}]
+    ok, note = r945._restore_published(picks, todays, 50000.0)
+    assert ok and "exactly" in note
+    assert picks[0]["shares"] == 135, "the re-computation must not survive"
+    assert picks[0]["alloc"] == round(0.2523 * 50000)
+
+
+def test_a_pre_day81_board_re_derives_shares_and_says_so():
+    """Rows written before day-81 carry weight but no share count.
+
+    The ALLOCATION is exact; the divisor the original board used was the live
+    price at publish and is gone. That is stated, not papered over.
+    """
+    import r945
+    picks = [{"t": "SU.TO", "shares": 136, "alloc": 12625}]
+    todays = [{"ticker": "SU.TO", "weight": "0.2523", "p945": "93.3600",
+               "shares": ""}]
+    ok, note = r945._restore_published(picks, todays, 50000.0)
+    assert ok and "re-derived" in note
+    assert picks[0]["shares"] == 135
+
+
+def test_a_leg_absent_from_the_record_is_blanked_not_left_stale():
+    """Rule 2: fail closed. A blank is honest, a wrong size is not."""
+    import r945
+    picks = [{"t": "GHOST.TO", "shares": 999, "alloc": 99999}]
+    ok, note = r945._restore_published(picks, [], 50000.0)
+    assert not ok and "could not be restored" in note
+    assert picks[0]["shares"] is None and picks[0]["alloc"] is None
+
+
+def test_shares_are_stored_in_the_ledger_schema():
+    """Without this the published board cannot be reproduced at all."""
+    import ledger
+    assert "shares" in ledger.FIELDS

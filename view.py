@@ -275,6 +275,14 @@ def _pair_lines(d: dict, note: str) -> list:
     res = d.get("res") or {}
     pair = res.get("pair") or {}
     out = []
+    st = d.get("publish") or {}
+    if st.get("already"):
+        # The board is the 9:46 instruction; a later run is reading it back,
+        # not issuing a new one. Saying so is the difference between an order
+        # and a reminder.
+        out += _wrap("· re-read of the board published at 9:46 — "
+                     + str(st.get("restore_note", "restore status unknown")),
+                     4, dim=True)
     for side in ("long", "short"):
         lg = pair.get(side) or {}
         p = lg.get("pick") or {}
@@ -285,6 +293,13 @@ def _pair_lines(d: dict, note: str) -> list:
         verb = "BUY " if side == "long" else "SHORT"
         col = C.GREEN if side == "long" else C.RED
         line = (f"    {col}▸ {verb} {p['t']:<8}{C.RESET}")
+        if p.get("shares") is None and st.get("already"):
+            # Blank, never a re-computation. A size that differs from the one
+            # the ledger scores is worse than no size at all.
+            out.append(line + f"  {C.YELLOW}size not restorable from the "
+                              f"published board — do not size from here"
+                              f"{C.RESET}")
+            continue
         if p.get("shares") and not d.get("shadow"):
             try:
                 import r945 as _r

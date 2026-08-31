@@ -1059,6 +1059,56 @@ def main(argv=None):
     _write_html(res, args, book=args.book)
 
 
+def _restore_published(pair_picks: list, todays: list,
+                       book_cap: float) -> tuple:
+    """Put the PUBLISHED sizing back onto the picks for a re-read.
+
+    The board published at 9:46 is the instruction and the ledger is the record
+    of it. A later run must show that board, not a fresh one sized against a
+    price that has since moved. Where a row cannot be restored the size is
+    CLEARED rather than left as the re-computation — a blank is honest, a
+    silently different number is not (rule 2).
+
+    `shares` is stored from day-81 on. Boards published before that carry only
+    `weight`, from which the ALLOCATION is exact (weight x book_cap) but the
+    share count is not, because the original divisor was the live price at
+    publish and is gone. Those say so instead of guessing.
+    """
+    by = {r["ticker"]: r for r in todays}
+    exact, approx, missing = 0, 0, 0
+    for p in pair_picks:
+        row = by.get(p.get("t"))
+        if not row:
+            p["shares"], p["alloc"] = None, None
+            missing += 1
+            continue
+        try:
+            w = float(row.get("weight") or 0) or None
+        except ValueError:
+            w = None
+        p["alloc"] = round(w * book_cap) if w else None
+        sh = (row.get("shares") or "").strip()
+        if sh:
+            p["shares"] = int(sh)
+            exact += 1
+        elif w and row.get("p945"):
+            # Best available: the allocation is exact, the divisor is the 9:45
+            # print rather than the live price the original board used.
+            p["shares"] = int(w * book_cap // float(row["p945"]))
+            approx += 1
+        else:
+            p["shares"] = None
+            missing += 1
+    if missing:
+        return False, (f"{missing} leg(s) could not be restored from the "
+                       "published board — size shown as blank, not re-computed")
+    if approx:
+        return True, ("share counts re-derived from the published allocation "
+                      "and the 9:45 print (this board predates day-81, which "
+                      "began storing them)")
+    return True, "restored exactly from the published board"
+
+
 def publish(res: dict, cfg: dict) -> dict:
     """Size the pair and write the day's permanent record. ONE publish path.
 
@@ -1101,13 +1151,25 @@ def publish(res: dict, cfg: dict) -> dict:
     if not picks or res.get("too_early"):
         return out
     date = res["now"][:10]
-    if any(r["date"] == date for r in ledger.load()):
+    book_cap = (rcfg.get("account_equity", 0)
+                * rcfg.get("max_position_pct", 50) / 100.0)
+    todays = [r for r in ledger.load() if r["date"] == date]
+    if todays:
         out["already"] = True
+        # RESTORE THE PUBLISHED BOARD instead of showing the re-computation.
+        #
+        # DAY-81. `allocate_book` above sizes off `r.get("last") or p945` -- the
+        # LIVE price -- and it runs before this guard, so every re-read re-sized
+        # the board against the current tape while the report printed "share
+        # counts shown are from that board, not a re-computation." SU.TO was
+        # published at 135 shares and read back at 136 forty minutes later. The
+        # note was false, and a reader acting on the later number would have
+        # traded a size the ledger does not score.
+        out["restored"], out["restore_note"] = _restore_published(
+            pair_picks, todays, book_cap)
         return out
 
     pair_ids = {id(r) for r in pair_picks}
-    book_cap = (rcfg.get("account_equity", 0)
-                * rcfg.get("max_position_pct", 50) / 100.0)
     lrows = [{"ticker": r["t"],
               "side": "LONG" if r["p_up"] >= 0.5 else "SHORT",
               "p_sided": r["p_up"] if r["p_up"] >= 0.5 else 1 - r["p_up"],
@@ -1115,7 +1177,10 @@ def publish(res: dict, cfg: dict) -> dict:
               "p945": r["p945"],
               "role": "pair" if id(r) in pair_ids else "board",
               "weight": ((r.get("alloc") or 0) / book_cap
-                         if (id(r) in pair_ids and book_cap) else None)}
+                         if (id(r) in pair_ids and book_cap) else None),
+              # Stored so a re-read can show THIS board rather than a fresh
+              # one sized against a price that has since moved (day-81).
+              "shares": (r.get("shares") if id(r) in pair_ids else None)}
              for r in picks]
     try:
         out["prints"] = ledger.append_universe_prints(res.get("evaluated") or [],
