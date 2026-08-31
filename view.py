@@ -183,7 +183,7 @@ def render(d: dict) -> str:
         acted = True
     note = (d.get("pair_note") or "").strip()
     if "nothing" not in note.lower():
-        L.append(f"    ▸ OPEN   {note}")
+        L += _pair_lines(d, note)
         acted = True
     else:
         # The note already begins "nothing —"; prefixing it again read
@@ -259,6 +259,60 @@ def render(d: dict) -> str:
     L.append(f"  {C.DIM}full page: python brief.py --full   ·   "
              f"score after close: python ledger.py --score{C.RESET}")
     return "\n".join(L)
+
+
+def _pair_lines(d: dict, note: str) -> list:
+    """The pair as an ORDER, plus what it costs to express.
+
+    The first version of this view printed `OPEN SU.TO, BMO.TO` — no side, no
+    size, no fill bound. The one line that asks for an action has to carry the
+    action, or it is a headline pretending to be an instruction.
+
+    And it carries the cost. The engine's directional edge is measured at zero,
+    so the spread is not a fee deducted from an expectation — it IS the
+    expectation, and a BUY printed without it reads far better than it is.
+    """
+    res = d.get("res") or {}
+    pair = res.get("pair") or {}
+    out = []
+    for side in ("long", "short"):
+        lg = pair.get(side) or {}
+        p = lg.get("pick") or {}
+        if not p.get("t"):
+            out.append(f"    {C.DIM}· {side.upper():<5} none qualified — "
+                       f"not forced{C.RESET}")
+            continue
+        verb = "BUY " if side == "long" else "SHORT"
+        col = C.GREEN if side == "long" else C.RED
+        line = (f"    {col}▸ {verb} {p['t']:<8}{C.RESET}")
+        if p.get("shares") and not d.get("shadow"):
+            try:
+                import r945 as _r
+                b = _r.fill_bound(side.upper(), p["p945"],
+                                  res.get("max_chase_pct", 0.04))
+                line += (f"{p['shares']:>5} sh  ~${p.get('alloc', 0):,.0f}"
+                         f"   {C.DIM}fill "
+                         f"{'≤' if side == 'long' else '≥'} "
+                         f"{b:.2f}{C.RESET}")
+            except Exception:
+                line += f"{p['shares']:>5} sh"
+        else:
+            line += f"  {C.DIM}9:45 ${p.get('p945', 0):.2f}{C.RESET}"
+        out.append(line)
+    # The whole expected outcome, in one line.
+    rows = d.get("cost") or []
+    known = [r for r in rows if (r.get("cost") or {}).get("usd")]
+    if known:
+        total = sum(r["cost"]["usd"] for r in known)
+        out.append(f"      {C.YELLOW}this pair starts ~${total:,.0f} behind "
+                   f"before the market moves{C.RESET} — the engine's edge is")
+        out.append("      measured at zero, so the spread is not a cost on top "
+                   "of the edge, it IS")
+        out.append("      the outcome. Arithmetic, not a forecast.")
+    elif rows:
+        out.append(f"      {C.YELLOW}⚠ spread unknown on one or both legs — "
+                   f"not zero, unknown{C.RESET}")
+    return out
 
 
 def _watch(d: dict) -> list:

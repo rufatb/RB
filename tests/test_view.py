@@ -176,3 +176,56 @@ def test_the_bar_puts_gains_right_of_centre_and_losses_left():
 def test_render_survives_a_digest_with_nothing_in_it():
     """A partial run must still draw a page rather than raising."""
     assert V.render({})
+
+
+# ── the pair must print as an ORDER, not a headline ─────────────────────────
+
+def _pair_digest():
+    return digest(
+        pair_note="SU.TO, BMO.TO", shadow=False,
+        res={"max_chase_pct": 0.04,
+             "pair": {"long": {"sided": 0.56,
+                               "pick": {"t": "SU.TO", "p945": 93.36,
+                                        "shares": 135, "alloc": 12613}},
+                      "short": {"sided": 0.57,
+                                "pick": {"t": "BMO.TO", "p945": 239.04,
+                                         "shares": 55, "alloc": 13132}}}},
+        cost=[{"ticker": "SU.TO", "cost": {"bps": 16, "usd": 20}},
+              {"ticker": "BMO.TO", "cost": {"bps": 5, "usd": 7}}])
+
+
+def test_the_pair_prints_side_size_and_fill_bound():
+    """It first shipped as `OPEN SU.TO, BMO.TO` — unactionable.
+
+    The one line that asks for an action has to carry the action.
+    """
+    out = V.render(_pair_digest())
+    assert "BUY" in out and "SHORT" in out
+    assert "SU.TO" in out and "BMO.TO" in out
+    assert "135 sh" in out and "55 sh" in out
+    assert "fill" in out and "93.4" in out
+
+
+def test_the_pair_carries_what_it_costs_to_express():
+    """The edge is measured at zero, so the spread IS the expectation.
+
+    A BUY printed without it reads far better than it is — dropping doubt.
+    """
+    out = V.render(_pair_digest())
+    assert "$27 behind" in out
+    assert "IS" in out and "outcome" in out
+
+
+def test_an_unknown_spread_is_not_reported_as_zero():
+    """Rule 2: absence of a quote is not absence of cost."""
+    d = _pair_digest()
+    d["cost"] = [{"ticker": "SU.TO", "cost": {"bps": None, "usd": None}}]
+    out = V.render(d)
+    assert "not zero, unknown" in out
+
+
+def test_a_side_that_did_not_qualify_is_not_forced():
+    d = _pair_digest()
+    d["res"]["pair"]["short"] = {"status": "NONE", "pick": None}
+    out = V.render(d)
+    assert "none qualified" in out and "not forced" in out

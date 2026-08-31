@@ -272,7 +272,8 @@ def pair_reasoning(res: dict, side: str, cfg: dict) -> list:
 
 
 def render_intraday(res: dict, cfg: dict, shadow: bool,
-                    no_net: bool = False, today: dt.date | None = None) -> tuple:
+                    no_net: bool = False, today: dt.date | None = None,
+                    cost_out: list | None = None) -> tuple:
     lr = res.get("live_record") or {}
     L = ["▎INTRADAY PAIR — the 9:46 book"]
     if res.get("too_early"):
@@ -327,7 +328,13 @@ def render_intraday(res: dict, cfg: dict, shadow: bool,
                 if p_.get("t"):
                     rows.append({"ticker": p_["t"], "shares": p_.get("shares"),
                                  "price": p_.get("p945")})
-            L += _c.render(_c.assess(rows))
+            assessed = _c.assess(rows)
+            L += _c.render(assessed)
+            # Carried to the short view too. The engine's edge is measured at
+            # zero, so this IS the expectation, not a footnote on it — the one
+            # number the reader most needs beside a BUY.
+            if cost_out is not None:
+                cost_out.extend(assessed)
         except Exception as e:
             L.append(f"   ⚠ cost to express unavailable ({type(e).__name__}) "
                      "— the spread is being paid whether or not it is shown")
@@ -424,8 +431,14 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         # permanent record — a board printed but never recorded would stop the
         # ledger accruing on the day this shipped, silently.
         st = r945.publish(res, cfg)
+        # THE ONE LINE THAT ASKS FOR AN ACTION has to carry the action. The
+        # short view first shipped "OPEN SU.TO, BMO.TO" — no side, no size, no
+        # fill bound, and no mention that the pair starts behind by the spread.
+        d["res"], d["cfg"], d["shadow"] = res, cfg, shadow
+        d["cost"] = []
         intraday, pair_note = render_intraday(res, cfg, shadow,
-                                              no_net, today)
+                                              no_net, today,
+                                              cost_out=d["cost"])
         for e in st["errors"]:
             intraday += f"\n   ⚠ {e}"
         if st["already"]:
