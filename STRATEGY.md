@@ -3589,6 +3589,60 @@ one rationale amendment recorded in place, no bar moved), `data/eventmult.json`,
 before rendering, prices checked before any horizon counts bars, and a name
 that fails it now says so and withholds its fair value instead of printing one.
 
+## Day-81 (cont.): provenance for every number, and the contradiction it found
+
+Five shipping constants were retracted in eleven days and in every case a human
+re-deriving them by hand was what caught it. `constants.py` registers all 38
+published numbers — **1 cited, 14 design, 23 measured** — and makes three things
+checkable that were previously only visible in a diff.
+
+**Provenance.** Each number is MEASURED (a named script re-derives it), CITED
+(from outside this repo, with no control here), or DESIGN (a chosen threshold).
+One measured number, `fairvalue.N_RANDOM`, still has no script and is named as
+such on every run. The distinction matters because day-79's constants sat
+unprovenanced for two days and could not be checked until a script was written.
+
+**Drift.** Values are snapshotted to `data/constants.json` and any change prints
+with old → new, plus the command that re-derives it.
+
+**Tension — and this is what it found.** Two constants in this report describe
+P(rejection) and they disagree:
+
+    catalyst.BASE_RATE_FIRST_CYCLE = 0.70   CITED, implies P(CRL) = 30%
+    baserate (day-71)                       MEASURED 11.7%, 95% [8.5%, 15.9%]
+
+The measured interval **excludes** the cited value. Both ship: `catalyst.assess`
+anchors its guardrails on the first, every breakeven in the screen divides by
+the second. So the report has been telling the reader a rejection is 30% likely
+in one paragraph and 8–16% likely in the next, since day-54.
+
+**Neither is declared wrong**, because they are not the same population and the
+registry's job is to surface the conflict rather than settle it. The measured
+leg counts only decisions announced in an 8-K, and companies publicise
+approvals far more readily than rejections — so its CRL numerator is the leg
+more likely to be undercounted, biasing it **down**, toward the cited figure
+being the more honest one for a PDUFA date. The harvest also includes
+supplements, which approve at higher rates, biasing it down a second time.
+Against that, the measured leg has a positive control and a published interval
+and the cited one has neither, here. What is not defensible is using both in
+one argument (rule 8).
+
+### A cache collision worth recording
+
+Testing drift end-to-end, the registry reported a value the source file did not
+contain. CPython invalidates bytecode on the source's mtime **truncated to the
+second** plus its size, and rewriting `2.45` → `1.54` is the same number of
+characters inside the same second — so `import` served a stale `.pyc`. Harmless
+in a morning run where nothing has been edited for hours, but a false "nothing
+moved" is the exact failure this file exists to prevent, so `live()` now reads
+each constant a second time from the source text via `ast` and reports any
+disagreement. Computed constants parse to None and are simply not double-read;
+a check that always fires is one nobody reads.
+
+**Shipped:** `constants.py`, `data/constants.json`, 18 tests (587 → 605), wired
+into `brief.py` after the report so a changed basis is read next to the
+conclusions it changed.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

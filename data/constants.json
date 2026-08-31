@@ -1,0 +1,53 @@
+{
+  "saved": "2026-08-31",
+  "values": {
+    "baserate.SERIAL_MIN": 6,
+    "baserate.SINGLE_MAX": 2,
+    "catalyst.ADOPT_T": 3.0,
+    "catalyst.APPROVAL_MEAN": 2.92,
+    "catalyst.APPROVAL_MEDIAN": 0.1,
+    "catalyst.APPROVAL_N": 534,
+    "catalyst.APPROVAL_RANDOM": 0.29,
+    "catalyst.APPROVAL_T": 2.61,
+    "catalyst.APPROVAL_VS_RANDOM_PP": 2.63,
+    "catalyst.BASE_RATE_FIRST_CYCLE": 0.7,
+    "catalyst.CRL_MEAN": -20.3,
+    "catalyst.CRL_MEDIAN": -11.79,
+    "catalyst.CRL_N": 71,
+    "catalyst.CRL_P10": -61.27,
+    "catalyst.CRL_T": -6.83,
+    "catalyst.CRL_VS_RANDOM_PP": -20.6,
+    "catalyst.CRL_WORSE_THAN_18": 0.45,
+    "catalyst.CRL_WORSE_THAN_40": 0.24,
+    "catalyst.CRL_WORST": -74.95,
+    "catalyst.GAP_WARN": 0.15,
+    "fairvalue.DISAGREE_TOL": 0.4,
+    "fairvalue.DRIFT_TOL": 0.01,
+    "fairvalue.EVENT_MULT_CI": [
+      1.95,
+      3.0
+    ],
+    "fairvalue.EVENT_MULT_POINT": 2.45,
+    "fairvalue.N_EVENTS": 605,
+    "fairvalue.N_NAMES": 184,
+    "fairvalue.N_RANDOM": 7440,
+    "fairvalue.TAIL_TOL": 0.25,
+    "fairvalue.TERCILE_EDGES": [
+      1.96,
+      2.88
+    ],
+    "fairvalue.TERCILE_MDE": 1.09,
+    "fairvalue.TERCILE_OBSERVED": {
+      "high": 2.82,
+      "low": 2.09,
+      "mid": 2.09
+    },
+    "resolved.LOOK_DAYS": 21,
+    "sanity.MAX_DAILY_GAP": 6,
+    "sanity.MAX_PUT_PCT": 100.0,
+    "sanity.MAX_SANE_PUT_PCT": 60.0,
+    "sanity.MAX_VOL": 6.0,
+    "validate_catalyst.LOOKBACK_DAYS": 3600,
+    "validate_catalyst.MAX_GAP_DAYS": 4
+  }
+}

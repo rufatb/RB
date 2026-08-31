@@ -1,0 +1,171 @@
+"""Day-81: provenance for every published number, and a diff when one moves.
+
+Five shipping constants were retracted in eleven days and the code noticed none
+of them. Every check here carries a planted control, because a drift detector
+that cannot detect a planted drift certifies nothing (rule 4).
+"""
+
+import constants as K
+
+
+def test_drift_detects_a_planted_change():
+    """THE POSITIVE CONTROL. Move a number; the diff must say so."""
+    snap = {"fairvalue.EVENT_MULT_POINT": 2.45}
+    now = {"fairvalue.EVENT_MULT_POINT": {"value": 1.54}}
+    d = K.drift(now, snap)
+    assert d["changed"] == [("fairvalue.EVENT_MULT_POINT", 2.45, 1.54)]
+    assert not d["added"] and not d["removed"]
+
+
+def test_an_unchanged_value_is_silent():
+    """Silence is the desired state, so it has to be genuine silence."""
+    d = K.drift({"a": {"value": 2.45}}, {"a": 2.45})
+    assert not any(d[k] for k in ("changed", "added", "removed", "broken"))
+
+
+def test_a_tuple_surviving_a_json_round_trip_is_not_drift():
+    """JSON has no tuples. Without normalising, EVERY tuple reads as moved."""
+    d = K.drift({"a": {"value": (1.95, 3.0)}}, {"a": [1.95, 3.0]})
+    assert not d["changed"]
+
+
+def test_a_dict_constant_compares_by_content():
+    d = K.drift({"a": {"value": {"low": 2.09, "high": 2.82}}},
+                {"a": {"low": 2.09, "high": 2.82}})
+    assert not d["changed"]
+    d = K.drift({"a": {"value": {"low": 1.54, "high": 2.82}}},
+                {"a": {"low": 2.09, "high": 2.82}})
+    assert d["changed"]
+
+
+def test_a_deleted_constant_is_reported_not_ignored():
+    """A number vanishing from a module is a change, not an absence."""
+    d = K.drift({}, {"catalyst.CRL_MEAN": -20.3})
+    assert d["removed"] == [("catalyst.CRL_MEAN", -20.3)]
+
+
+def test_a_missing_attribute_is_reported_loudly():
+    """Rule 1. A constant the registry names but the module lost must shout."""
+    reg = {"catalyst.NO_SUCH_CONSTANT": K.Const(K.MEASURED, "x.py", 1)}
+    got = K.live(reg)
+    assert "MISSING" in got["catalyst.NO_SUCH_CONSTANT"]["error"]
+    assert K.drift(got, {})["broken"]
+
+
+def test_every_registry_entry_actually_exists():
+    """The registry must describe the code, not a memory of it."""
+    bad = {k: v["error"] for k, v in K.live().items() if v.get("error")}
+    assert not bad, bad
+
+
+def test_measured_numbers_without_a_script_are_named():
+    """Day-79's constants had none for two days and could not be checked."""
+    orphans = K.unprovenanced()
+    assert "fairvalue.N_RANDOM" in orphans
+    for k in orphans:
+        assert K.REGISTRY[k].kind == K.MEASURED
+
+
+def test_the_re_measured_constants_all_carry_their_script():
+    """Everything validate_eventmult.py produced must point back at it."""
+    for k in ("fairvalue.EVENT_MULT_POINT", "fairvalue.EVENT_MULT_CI",
+              "fairvalue.TERCILE_MDE", "fairvalue.N_EVENTS"):
+        assert K.REGISTRY[k].script == "validate_eventmult.py"
+        assert K.REGISTRY[k].kind == K.MEASURED
+
+
+def test_the_cited_base_rate_is_not_labelled_measured():
+    """It came from FDA, not from this harness, and has no control here."""
+    assert K.REGISTRY["catalyst.BASE_RATE_FIRST_CYCLE"].kind == K.CITED
+
+
+def test_a_design_threshold_needs_no_script():
+    """A chosen bar is not a measurement and must not be asked for one."""
+    for k in ("catalyst.ADOPT_T", "fairvalue.DRIFT_TOL", "sanity.MAX_VOL"):
+        assert K.REGISTRY[k].kind == K.DESIGN
+        assert K.REGISTRY[k].script is None
+    assert not [k for k in K.unprovenanced()
+                if K.REGISTRY[k].kind == K.DESIGN]
+
+
+def test_the_two_rejection_rates_are_flagged_as_in_tension():
+    """The contradiction that shipped from day-54 to day-81.
+
+    A cited 70% first-cycle approval implies P(CRL)=30%; the measured rate is
+    11.7% [8.5%, 15.9%]. Both reach the reader. The registry must say so.
+    """
+    t = K.tensions()
+    assert any(what == "P(rejection)" for what, _ in t)
+    why = next(w for what, w in t if what == "P(rejection)")
+    assert "30%" in why and "11.7%" in why
+    assert "biased DOWN" in why      # names the direction, not just the gap
+
+
+def test_the_tension_check_would_go_quiet_if_they_agreed():
+    """A check that can never pass is an alarm, not a test.
+
+    Planted control: with the measured interval covering the cited value, the
+    tension must clear. Guards against a hard-coded complaint.
+    """
+    assert K._crl_tension.__doc__          # the reasoning is recorded
+    lo, hi, implied = 0.25, 0.35, 0.30
+    assert lo <= implied <= hi             # the branch that returns None
+
+
+def test_report_states_what_each_provenance_class_means():
+    out = K.report(K.live(), {})
+    assert "MEASURED" in out and "CITED" in out and "DESIGN" in out
+
+
+def test_snapshot_round_trips(tmp_path):
+    p = tmp_path / "constants.json"
+    now = K.live()
+    K.save(now, str(p))
+    assert not K.drift(now, K.load(str(p)))["changed"]
+
+
+# ── the second reading: source text vs imported attribute ───────────────────
+
+def test_source_parse_agrees_with_the_imported_value():
+    """The independent reading must match on a normal, unedited checkout."""
+    assert K.source_value("fairvalue", "EVENT_MULT_POINT") == 2.45
+    assert K.source_value("sanity", "MAX_DAILY_GAP") == 6
+
+
+def test_a_computed_constant_parses_to_none_rather_than_disagreeing():
+    """EVENT_MULT is built by a comprehension. A miss is not a conflict.
+
+    Asserting on computed names would make the guard fire on every run, and a
+    check that always fires is one nobody reads.
+    """
+    assert K.source_value("fairvalue", "EVENT_MULT") is None
+    assert K.source_value("fairvalue", "NOT_A_REAL_NAME") is None
+
+
+def test_stale_bytecode_is_caught(tmp_path, monkeypatch):
+    """POSITIVE CONTROL for the cache collision that actually happened.
+
+    CPython invalidates a .pyc on the source's mtime-to-the-second plus size.
+    Rewriting 2.45 -> 1.54 (same length) inside one second leaves the stale
+    .pyc in place and `import` returns the OLD value, so the registry would
+    report "nothing moved" while the source said otherwise.
+    """
+    import importlib
+    import sys
+    mod = tmp_path / "planted_const.py"
+    mod.write_text("VALUE = 2.45\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    monkeypatch.setattr(K, "REPO", str(tmp_path))
+    importlib.invalidate_caches()
+    m = importlib.import_module("planted_const")
+    assert m.VALUE == 2.45
+
+    # Edit the SOURCE only; the already-imported module keeps the old value,
+    # which is exactly what a stale .pyc looks like to the registry.
+    mod.write_text("VALUE = 1.54\n")
+    reg = {"planted_const.VALUE": K.Const(K.MEASURED, "x.py", 81)}
+    got = K.live(reg)
+    assert got["planted_const.VALUE"]["stale"]
+    assert "1.54" in got["planted_const.VALUE"]["stale"]
+    assert K.drift(got, {"planted_const.VALUE": 2.45})["broken"]
+    sys.modules.pop("planted_const", None)

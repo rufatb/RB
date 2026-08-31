@@ -636,6 +636,14 @@ def main(argv=None) -> int:
     print(build(a.config, a.shadow, a.offline, a.days_back))
     if warn:
         print("\n".join(sanity.render(warn)))
+
+    # WHAT MOVED, and where each number came from. Five shipping constants were
+    # retracted in eleven days and nothing announced any of them; this prints
+    # after the report so a changed basis is read alongside the conclusions it
+    # changed, not buried above them.
+    import constants
+    print()
+    print(constants.report())
     return 0
 
 
