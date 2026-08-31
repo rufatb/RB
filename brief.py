@@ -99,7 +99,8 @@ def render_positions(book: dict, today: dt.date,
 
 
 def render_catalyst_detail(legs: list, today: dt.date,
-                           priced: dict | None = None) -> str:
+                           priced: dict | None = None,
+                           settled_out: dict | None = None) -> str:
     """For every binary position: what the market is paying NOW, versus what
     was assumed at entry.
 
@@ -135,6 +136,8 @@ def render_catalyst_detail(legs: list, today: dt.date,
             try:
                 import resolved as _rs
                 settled = _rs.check(l["ticker"], l["event_date"], today)
+                if settled_out is not None:
+                    settled_out[l["ticker"]] = settled
                 out += _rs.render(settled, l)
             except Exception as e:
                 out.append(f"      ⚠ could not check whether the decision "
@@ -363,12 +366,21 @@ def render_record(rows: list) -> str:
 
 # ───────────────────────────────────────────────────────────────── compose
 def build(cfg_path: str, shadow: bool, no_net: bool = False,
-          days_back: int = 4) -> str:
+          days_back: int = 4, digest: dict = None) -> str:
+    """The full morning page. Pass `digest` to also collect the decision view.
+
+    ONE COMPUTATION, TWO RENDERINGS. `view.py` draws the short page from the
+    dict this fills in — it never recomputes anything. A summary derived from a
+    second pass could disagree with the page below it, and a top line that
+    contradicts the detail is worse than no top line.
+    """
     from dashboard import load_config
     cfg = load_config(cfg_path)
     tz = ZoneInfo(cfg.get("exchange_tz", "America/Toronto"))
     now = dt.datetime.now(tz)
     today = now.date()
+    d = digest if digest is not None else {}
+    d.update({"now": now, "today": today, "tz": str(tz), "offline": no_net})
 
     parts = [f"═" * 74,
              f"MORNING BRIEF — {now:%a %Y-%m-%d %H:%M} {now.tzname()}",
@@ -394,6 +406,9 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                 mark_errors[t] = type(e).__name__
     book = pos.mark_book(prows, marks, today)
     parts.append(render_positions(book, today, mark_errors))
+    d["book"] = book
+    d["mark_errors"] = mark_errors
+    d["closing"], d["upcoming"] = pos.due_today(book["legs"], today)
 
     # 4 intraday (computed before actions, which cite it)
     pair_note, intraday = "nothing — engine not run", ""
@@ -422,6 +437,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                          f"({st['pair']} pair / {st['picks']-st['pair']} board); "
                          "score after close with `python ledger.py --score`]")
 
+    d["pair_note"] = pair_note
     parts.append(render_actions(book, today, pair_note))
 
     ac_data = None
@@ -461,8 +477,12 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
                      f"failed ({screen_fail}) — every catalyst reading below "
                      "is UNPRICED, not clean")
     priced = {r["ticker"]: r for r in screen_rows}
+    d["cal"], d["screen_rows"], d["priced"] = cal, screen_rows, priced
+    d["votes"] = votes
 
-    cat_detail = render_catalyst_detail(book['legs'], today, priced)
+    d["settled"] = {}
+    cat_detail = render_catalyst_detail(book['legs'], today, priced,
+                                        settled_out=d["settled"])
     if cat_detail:
         parts.append(cat_detail)
 
@@ -608,7 +628,8 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
             except Exception as ex:
                 parts.append(f"\u258e EARNINGS NEARBY\n   \u26a0 unavailable "
                              f"({type(ex).__name__}) — unknown, not clear")
-    parts.append(render_record(ledger.load()))
+    d["ledger_rows"] = ledger.load()
+    parts.append(render_record(d["ledger_rows"]))
     parts.append("Read-only. Nothing here placed, sized, or cancelled an order.")
     return "\n\n".join(parts)
 
@@ -622,6 +643,9 @@ def main(argv=None) -> int:
                     help="lookback for the WHAT CHANGED filing scan")
     ap.add_argument("--offline", action="store_true",
                     help="positions/record only; no network")
+    ap.add_argument("--full", action="store_true",
+                    help="the complete page (~460 lines) instead of the "
+                         "one-screen decision view")
     a = ap.parse_args(argv)
 
     # THE PLAUSIBILITY GATE, before a single number is rendered. These are
@@ -633,17 +657,29 @@ def main(argv=None) -> int:
     import sanity
     warn = sanity.gate(sanity.check_catalyst_constants)
 
-    print(build(a.config, a.shadow, a.offline, a.days_back))
-    if warn:
-        print("\n".join(sanity.render(warn)))
+    # ALWAYS the same computation, whichever view is drawn. The full page is
+    # built either way -- it is what publishes the day's permanent record via
+    # r945.publish(), so a short view that skipped it would silently stop the
+    # ledger accruing. The choice is what gets PRINTED, never what gets run.
+    digest: dict = {}
+    full = build(a.config, a.shadow, a.offline, a.days_back, digest=digest)
 
-    # WHAT MOVED, and where each number came from. Five shipping constants were
-    # retracted in eleven days and nothing announced any of them; this prints
-    # after the report so a changed basis is read alongside the conclusions it
-    # changed, not buried above them.
-    import constants
-    print()
-    print(constants.report())
+    if a.full:
+        print(full)
+        if warn:
+            print("\n".join(sanity.render(warn)))
+        # WHAT MOVED, and where each number came from. Five shipping constants
+        # were retracted in eleven days and nothing announced any of them; this
+        # prints after the report so a changed basis is read alongside the
+        # conclusions it changed, not buried above them.
+        import constants
+        print()
+        print(constants.report())
+    else:
+        import view
+        print(view.render(digest))
+        if warn:
+            print("\n".join(sanity.render(warn)))
     return 0
 
 

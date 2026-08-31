@@ -292,6 +292,12 @@ def _crl_tension() -> tuple | None:
         lo, hi, p = float(s["lo"]), float(s["hi"]), float(s["p"])
         if lo <= implied <= hi:
             return None
+        # `short` carries the same numbers, computed, for the one-screen view.
+        # Retyping them there as literals would put an uncheckable copy of a
+        # measured value in a second file — the defect this module exists for.
+        short = (f"cited {implied:.0%} vs measured {p:.1%} "
+                 f"[{lo:.1%}–{hi:.1%}]; different populations, and the "
+                 f"measured leg is biased DOWN")
         return ("P(rejection)",
                 f"CITED first-cycle base rate implies {implied:.0%}, but the "
                 f"MEASURED rate is {p:.1%} with 95% [{lo:.1%}, {hi:.1%}] "
@@ -299,9 +305,10 @@ def _crl_tension() -> tuple | None:
                 "populations (all first-cycle NME reviews vs decisions "
                 "announced in an 8-K), and the measured leg is biased DOWN "
                 "because rejections are announced less readily than "
-                "approvals. Do not mix them in one argument.")
+                "approvals. Do not mix them in one argument.", short)
     except Exception as e:
-        return ("P(rejection)", f"tension check failed: {type(e).__name__}: {e}")
+        return ("P(rejection)", f"tension check failed: {type(e).__name__}: {e}",
+                f"tension check failed: {type(e).__name__}")
 
 
 TENSIONS = [_crl_tension]
@@ -370,7 +377,7 @@ def report(now: dict = None, snap: dict = None) -> str:
         for k in orphans:
             L.append(f"       {k} — {REGISTRY[k].note or 'no note'}")
 
-    for what, why in tensions():
+    for what, why, _short in tensions():
         L.append(f"   ⚠ TENSION on {what}:")
         for line in _wrap(why):
             L.append(f"       {line}")

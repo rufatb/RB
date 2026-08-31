@@ -95,10 +95,23 @@ def test_the_two_rejection_rates_are_flagged_as_in_tension():
     11.7% [8.5%, 15.9%]. Both reach the reader. The registry must say so.
     """
     t = K.tensions()
-    assert any(what == "P(rejection)" for what, _ in t)
-    why = next(w for what, w in t if what == "P(rejection)")
+    assert any(what == "P(rejection)" for what, _, _ in t)
+    why = next(w for what, w, _ in t if what == "P(rejection)")
     assert "30%" in why and "11.7%" in why
     assert "biased DOWN" in why      # names the direction, not just the gap
+
+
+def test_the_short_form_computes_its_numbers_rather_than_retyping_them():
+    """The one-screen view prints `short`; it must not carry literals.
+
+    A second file repeating "30%" and "11.7%" as text would be an uncheckable
+    copy of a measured value — the exact defect this module exists to catch.
+    """
+    import baserate as B
+    short = next(s for what, _, s in K.tensions() if what == "P(rejection)")
+    p = B.summary()["p"]
+    assert f"{p:.1%}" in short          # derived from the live measurement
+    assert "biased DOWN" in short
 
 
 def test_the_tension_check_would_go_quiet_if_they_agreed():

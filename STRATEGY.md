@@ -3643,6 +3643,48 @@ a check that always fires is one nobody reads.
 into `brief.py` after the report so a changed basis is read next to the
 conclusions it changed.
 
+## Day-81 (cont.): the report gets a front page — 461 lines to 44
+
+The full brief had grown to 461 lines with **77% of them in one section**. A
+page that long is not read every morning; it is skimmed once and then trusted,
+which is the worst of both — every caveat present, none of them seen. That is
+how the day-79 fair-value defect survived two weeks of daily reading.
+
+`view.py` draws the same run in ~44 lines, ordered by decision rather than by
+topic: BOOK / DO TODAY / COMING UP / WATCH / RECORD. It is now the default;
+`--full` prints the long page.
+
+**It recomputes nothing.** `brief.build()` fills a digest as it goes and the
+view draws from it. A summary built from a second pass is a second opinion, and
+a top line that contradicts the detail below it is worse than no top line. The
+full page is still BUILT either way, because it is what publishes the day's
+permanent record via `r945.publish()` — a short view that skipped the
+computation would silently stop the ledger accruing.
+
+**The rule the tests enforce: concision may drop DETAIL, never DOUBT.** A fair
+value flagged unreliable in the long page is marked `~` here, an unmarkable
+position is still EXCLUDED and says why, and the live 45% record prints beside
+the advice as always. What concision *is* allowed to do is collapse five
+identical warnings into one line — five copies of the same caveat push the
+things that differ off the screen, which is the failure being fixed.
+
+**Two data gaps the short page immediately made visible**, both invisible in
+the long one:
+
+- **Bristol Myers Squibb's 2027-05-13 PDUFA resolves to no ticker at all**, so
+  it cannot be priced by anything. The long page rendered it as a blank column,
+  which reads like a name whose quote failed — a different and much smaller
+  problem. Now reported as unpriceable, by filer name.
+- 4 of 13 calendar names have no usable option quote, named rather than counted.
+
+**Timing.** The only 9:46-dependent section is the intraday pair — the engine
+with no measured edge. Positions, catalysts, calendar, fair value and the record
+are all time-independent, so the report can be run at any hour and only the pair
+block will say "too early".
+
+**Shipped:** `view.py`, `brief.py --full`, a digest hook through `build()`,
+16 tests (605 -> 622).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
