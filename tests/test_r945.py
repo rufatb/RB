@@ -131,7 +131,29 @@ def test_a_leg_absent_from_the_record_is_blanked_not_left_stale():
     assert picks[0]["shares"] is None and picks[0]["alloc"] is None
 
 
-def test_shares_are_stored_in_the_ledger_schema():
-    """Without this the published board cannot be reproduced at all."""
+def test_shares_survive_a_write_and_read(tmp_path):
+    """SCHEMA IS NOT BEHAVIOUR, and asserting the former missed the bug.
+
+    The first version of this test checked `"shares" in ledger.FIELDS`. That
+    passed while `append_picks` -- which builds its row dict key by key --
+    dropped the value, so the header carried a column that was never once
+    populated and the very next board published without it. Round-trip it.
+    """
     import ledger
-    assert "shares" in ledger.FIELDS
+    p = str(tmp_path / "ledger.csv")
+    ledger.append_picks([{"ticker": "SU.TO", "side": "LONG", "p_sided": 0.556,
+                          "confidence": "sparse", "p945": 93.36,
+                          "role": "pair", "weight": 0.2523, "shares": 135}],
+                        "2026-09-01", p)
+    back = ledger.load(p)[0]
+    assert back["shares"] == "135"
+
+
+def test_a_board_row_without_shares_writes_blank_not_none(tmp_path):
+    """'None' as text would parse back as a size. Blank is the honest value."""
+    import ledger
+    p = str(tmp_path / "ledger.csv")
+    ledger.append_picks([{"ticker": "X.TO", "side": "LONG", "p_sided": 0.51,
+                          "confidence": "n/a", "p945": 10.0, "role": "board",
+                          "weight": None, "shares": None}], "2026-09-01", p)
+    assert ledger.load(p)[0]["shares"] == ""

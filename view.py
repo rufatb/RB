@@ -507,6 +507,15 @@ def _record(d: dict) -> list:
                        f"({type(e).__name__}){C.RESET}")
     else:
         out.append(f"    {C.DIM}no scored pair legs yet{C.RESET}")
+    if d.get("scored_now"):
+        out.append(f"    {C.DIM}+{d['scored_now']} leg(s) scored this morning "
+                   f"from the previous session{C.RESET}")
+    if d.get("held_back"):
+        out.append(f"    {C.DIM}{d['held_back']} held back — their session has "
+                   f"not closed{C.RESET}")
+    if d.get("score_error"):
+        out.append(f"    {C.YELLOW}⚠ scoring failed ({d['score_error']}) — the "
+                   f"record below is STALE{C.RESET}")
     try:
         import advice as A
         rec = A.report(A.load()).split("\n")

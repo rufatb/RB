@@ -3721,6 +3721,36 @@ exit, a pair, and a full ranking. Live output: 50 lines, zero over-width.
 **Shipped:** `_opportunities` in `view.py`, verdict tags, tides through the
 digest, 13 tests (629 -> 642).
 
+## Day-81 (cont.): the record was a session stale, and said nothing about it
+
+Running the report on a NEW trading day exposed two defects, both mine from the
+day before.
+
+**1. The `shares` column was declared but never written.** Day-81 added it to
+`ledger.FIELDS` and set it in `r945`'s `lrows`, but `append_picks` builds its
+row dict key by key and silently dropped it — the CSV header gained a column
+that was never once populated, so the very next board published without it and
+still restores at ±1 share. The test that was meant to cover this asserted
+`"shares" in ledger.FIELDS`, which is the SCHEMA, not the behaviour. It now
+round-trips a real value through a write and a read.
+
+**2. The hit rate printed beside the advice was a session out of date.** The
+page said "score after close: `python ledger.py --score`" and nobody ran it, so
+on 2026-09-01 it printed 38/85 next to the day's picks while four legs from
+08-31 sat unscored — and nothing on the page indicated the number was stale.
+This is exactly the day-80 finding about the catalyst ledger, which carried the
+identical instruction and reached 9 events logged and 0 scored: **a record that
+requires a human to remember is not a record.**
+
+`ledger.autoscore` is extracted from `main` and now runs every morning before
+the record prints. Both day-24 guards still apply inside `score_rows` — an open
+session is HELD BACK rather than stamped with a live mid-session price, and
+closes are looked up by the row's own date. First run: **11 legs scored, 14
+held back** (today's, correctly), and the record moved 38/85 → 40/89. A scoring
+failure now says the record is STALE rather than printing an old number quietly.
+
+**Shipped:** `ledger.autoscore`, the `shares` write, 5 tests (642 -> 646).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

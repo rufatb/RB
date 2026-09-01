@@ -128,10 +128,18 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
         if key in seen:
             continue
         w = p.get("weight")
+        # DAY-81: `shares` is written HERE, not only declared in FIELDS. The
+        # first attempt added the column to the schema and set it in r945's
+        # lrows, but this dict is built key by key and silently dropped it --
+        # the header gained a column that was never once populated. The test
+        # that was supposed to cover it asserted `"shares" in FIELDS`, which is
+        # the schema, not the behaviour. It now round-trips a real value.
+        sh = p.get("shares")
         rows.append({"date": date, "ticker": p["ticker"], "side": p["side"],
                      "p_sided": f"{p['p_sided']:.3f}", "confidence": p.get("confidence", "n/a"),
                      "p945": f"{p['p945']:.4f}", "role": p.get("role", "board"),
                      "weight": f"{w:.4f}" if w is not None else "",
+                     "shares": str(int(sh)) if sh else "",
                      "r1": "", "hit": ""})
         added += 1
     save(rows, path)
@@ -447,37 +455,57 @@ def report(rows: list) -> str:
     return "\n".join(out)
 
 
+def autoscore(rows: list) -> tuple:
+    """Score every closed session that is still blank. (rows, scored, held)
+
+    EXTRACTED FROM `main` ON DAY-81 so the morning report can call it. The
+    report printed "score after close: python ledger.py --score" and nobody
+    ran it -- on 2026-09-01 the page showed the record as 38/85 while four
+    legs from the previous session sat unscored, so the hit rate printed
+    beside the day's advice was a session out of date and said nothing about
+    being so.
+
+    This is precisely the day-80 finding about the catalyst ledger, which
+    carried the same instruction and reached 9 events logged and 0 scored: a
+    record that requires a human to remember is not a record. The two guards
+    from day-24 are inside `score_rows` and still apply -- an open session is
+    HELD BACK rather than stamped with a live price, and closes are looked up
+    by the row's own date.
+    """
+    from zoneinfo import ZoneInfo
+
+    from adapters import YahooDirectAdapter
+    from dashboard import load_config, parse_hhmm
+    cfg = load_config(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "config.yaml"))
+    tz = cfg.get("exchange_tz", "America/Toronto")
+    close_t = parse_hhmm(cfg.get("market_close", "16:00"))
+    a = YahooDirectAdapter(exchange_tz=tz)
+    # DATE-SPECIFIC closes from daily bars, cached per ticker. Never
+    # get_quote().last -- that is the LATEST price and silently scores the
+    # wrong session whenever this runs on a later day (day-24 bug #2).
+    _cache: dict = {}
+
+    def close_fn(t, date):
+        if t not in _cache:
+            try:
+                bars = a.get_daily_bars(t, 90)
+                _cache[t] = {str(i.date()): float(c)
+                             for i, c in bars["Close"].items()}
+            except Exception:
+                _cache[t] = {}
+        return _cache[t].get(date)
+    return score_rows(rows, close_fn, now=dt.datetime.now(ZoneInfo(tz)),
+                      close_time=close_t)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="Score the pick ledger and print cumulative learning")
     p.add_argument("--score", action="store_true")
     args = p.parse_args(argv)
     rows = load()
     if args.score:
-        from zoneinfo import ZoneInfo
-
-        from adapters import YahooDirectAdapter
-        from dashboard import load_config, parse_hhmm
-        cfg = load_config(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                       "config.yaml"))
-        tz = cfg.get("exchange_tz", "America/Toronto")
-        close_t = parse_hhmm(cfg.get("market_close", "16:00"))
-        a = YahooDirectAdapter(exchange_tz=tz)
-        # DATE-SPECIFIC closes from daily bars, cached per ticker. Never
-        # get_quote().last — that is the LATEST price and silently scores the
-        # wrong session whenever --score runs on a later day (day-24 bug #2).
-        _cache: dict = {}
-        def close_fn(t, date):
-            if t not in _cache:
-                try:
-                    bars = a.get_daily_bars(t, 90)
-                    _cache[t] = {str(i.date()): float(c)
-                                 for i, c in bars["Close"].items()}
-                except Exception:
-                    _cache[t] = {}
-            return _cache[t].get(date)
-        rows, n, held = score_rows(rows, close_fn,
-                                   now=dt.datetime.now(ZoneInfo(tz)),
-                                   close_time=close_t)
+        rows, n, held = autoscore(rows)
         save(rows)
         print(f"scored {n} new rows")
         if held:

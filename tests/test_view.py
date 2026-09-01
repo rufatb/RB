@@ -369,3 +369,27 @@ def test_the_tilde_hint_names_a_name_actually_shown():
     m = re.search(r"fairvalue\.py (\w+)", out)
     assert m, "no hint printed"
     assert f"~{m.group(1)}" in out, f"{m.group(1)} is not marked ~ on the page"
+
+
+# ── the record must not go stale in silence ─────────────────────────────────
+
+def test_legs_scored_this_morning_are_reported():
+    """On 2026-09-01 the page showed 38/85 while four legs sat unscored.
+
+    The report told the reader to run `ledger.py --score` after the close and
+    nobody did — the day-80 finding about the catalyst ledger, repeated.
+    """
+    out = V.render(digest(scored_now=4))
+    assert "4 leg(s) scored this morning" in out
+
+
+def test_a_failed_scoring_run_says_the_record_is_stale():
+    """Rule 1. A silent failure here leaves a stale hit rate beside advice."""
+    out = V.render(digest(score_error="HTTPError: 429"))
+    assert "scoring failed" in out and "STALE" in out
+
+
+def test_legs_held_back_for_an_open_session_are_reported():
+    """Day-24: scoring mid-session writes live prices in as outcomes."""
+    out = V.render(digest(held_back=4))
+    assert "held back" in out and "not closed" in out

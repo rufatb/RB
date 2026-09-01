@@ -650,6 +650,19 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
             except Exception as ex:
                 parts.append(f"\u258e EARNINGS NEARBY\n   \u26a0 unavailable "
                              f"({type(ex).__name__}) — unknown, not clear")
+    # SCORE THE PREVIOUS SESSION BEFORE PRINTING THE RECORD. The page told the
+    # reader to run `ledger.py --score` after the close and nobody did, so on
+    # 2026-09-01 it printed 38/85 beside the day's advice while four legs from
+    # 08-31 sat unscored. A record that requires a human to remember is not a
+    # record -- exactly the day-80 finding about the catalyst ledger.
+    d["scored_now"], d["score_error"] = 0, None
+    if not no_net:
+        try:
+            _lr, d["scored_now"], d["held_back"] = ledger.autoscore(ledger.load())
+            if d["scored_now"]:
+                ledger.save(_lr)
+        except Exception as e:              # never silently (rule 1)
+            d["score_error"] = f"{type(e).__name__}: {e}"
     d["ledger_rows"] = ledger.load()
     # ONE tide computation, shared. `_tides_for_report` downloads 120 days of
     # bars for every ticker in universe_prints -- about 12 seconds -- and the
