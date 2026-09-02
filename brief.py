@@ -405,12 +405,24 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
             # last trade. Getting this wrong marked every position STALE, which
             # the fail-closed path reported honestly rather than hiding, but a
             # brief where nothing can be marked is a brief nobody will read.
-            try:
-                q = a.get_quote(t)
-                if q.last is not None:
-                    marks[t] = float(q.last)
-            except Exception as e:
-                mark_errors[t] = type(e).__name__
+            # RETRY ONCE. On 2026-09-02 a single transient RuntimeError left
+            # the only open position unmarked and the whole book unpriced; the
+            # same ticker quoted fine seconds later. Failing closed is right,
+            # but failing closed on a blip that a one-second retry survives is
+            # just noise, and noise is what teaches a reader to ignore the
+            # warning. A REAL outage still fails, and still says so.
+            import time as _t
+            for attempt in (1, 2):
+                try:
+                    q = a.get_quote(t)
+                    if q.last is not None:
+                        marks[t] = float(q.last)
+                    mark_errors.pop(t, None)
+                    break
+                except Exception as e:
+                    mark_errors[t] = type(e).__name__
+                    if attempt == 1:
+                        _t.sleep(1.0)
     book = pos.mark_book(prows, marks, today)
     parts.append(render_positions(book, today, mark_errors))
     d["book"] = book

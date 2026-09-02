@@ -43,8 +43,11 @@ LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
 # but not the share count -- the original divisor was the live price at publish
 # and is not recoverable -- so a re-read could not reproduce the board it
 # claimed to be showing. Rows written before day-81 leave it blank.
+# DAY-81: `leg` distinguishes the PRIMARY pick from the second leg that splits
+# the same half. Without it a re-read cannot tell which name the board actually
+# instructed, only that both were on it.
 FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role",
-          "weight", "shares", "r1", "hit"]
+          "leg", "weight", "shares", "r1", "hit"]
 
 
 PRINTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universe_prints.csv")
@@ -138,6 +141,7 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
         rows.append({"date": date, "ticker": p["ticker"], "side": p["side"],
                      "p_sided": f"{p['p_sided']:.3f}", "confidence": p.get("confidence", "n/a"),
                      "p945": f"{p['p945']:.4f}", "role": p.get("role", "board"),
+                     "leg": p.get("leg", ""),
                      "weight": f"{w:.4f}" if w is not None else "",
                      "shares": str(int(sh)) if sh else "",
                      "r1": "", "hit": ""})

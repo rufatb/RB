@@ -842,14 +842,27 @@ def render(res, book=False):
         for side in ("long", "short"):
             lg = pair[side]
             if lg["status"] == "NONE":
-                print(f"  {side.upper():<6}: ⛔ {lg['note']}")
+                print(f"  {side.upper():<6}: ⛔ "
+                      f"{lg.get('note') or 'no leg on the published board'}")
                 continue
             r = lg["pick"]
-            print(f"  {side.upper():<6}: {r['t']}  sided-P {lg['sided']:.2f}  "
-                  f"[estimate: {lg['status']}]  9:45 px {r['p945']:.2f}  last {r['last']:.2f}")
-            print(f"          first-15m {r['r0']:+.2f}% · gap {r['gap']:+.2f}% · "
-                  f"board rank by P: #{lg.get('rank_by_p', '?')} "
-                  "(tie-broken by DENSITY — a CALMNESS sort, not an edge: day-47)")
+            # A RESTORED board carries only what was PUBLISHED. `last`, `r0`
+            # and `gap` are live intraday measurements that the ledger does not
+            # store, and filling them from the fresh run would print today's
+            # tape beside yesterday's instruction -- the two-sources mixing
+            # this restore exists to stop. Say unavailable instead.
+            sided = f"{lg['sided']:.2f}" if lg.get("sided") is not None else "n/a"
+            print(f"  {side.upper():<6}: {r['t']}  sided-P {sided}  "
+                  f"[estimate: {lg['status']}]  9:45 px {r['p945']:.2f}"
+                  + (f"  last {r['last']:.2f}" if r.get("last") is not None
+                     else "  last n/a (restored board)"))
+            if r.get("r0") is not None and r.get("gap") is not None:
+                print(f"          first-15m {r['r0']:+.2f}% · gap {r['gap']:+.2f}% · "
+                      f"board rank by P: #{lg.get('rank_by_p', '?')} "
+                      "(tie-broken by DENSITY — a CALMNESS sort, not an edge: day-47)")
+            else:
+                print("          intraday diagnostics not stored on the "
+                      "published board — re-read, not a fresh computation")
             stale = late > res.get("stale_after_min", 20)
             if res.get("shadow"):
                 # Day-26: PAPER mode. The prediction is still published and
@@ -1059,53 +1072,82 @@ def main(argv=None):
     _write_html(res, args, book=args.book)
 
 
-def _restore_published(pair_picks: list, todays: list,
+def _restore_published(res: dict, pair_picks: list, todays: list,
                        book_cap: float) -> tuple:
-    """Put the PUBLISHED sizing back onto the picks for a re-read.
+    """Replace the displayed pair with the one the board actually PUBLISHED.
 
-    The board published at 9:46 is the instruction and the ledger is the record
-    of it. A later run must show that board, not a fresh one sized against a
-    price that has since moved. Where a row cannot be restored the size is
-    CLEARED rather than left as the re-computation — a blank is honest, a
-    silently different number is not (rule 2).
+    DAY-81, SECOND PASS. The first version patched published SHARE COUNTS onto
+    whatever the fresh run had picked, which fixed the sizes and left the names
+    wrong. Run at 10:40 the engine published SHORT CP.TO; run again at 10:43 it
+    picked SHORT RY.TO, and the page printed RY.TO -- a name the ledger will
+    never score, because the board is written once and RY.TO is not on it.
 
-    `shares` is stored from day-81 on. Boards published before that carry only
-    `weight`, from which the ALLOCATION is exact (weight x book_cap) but the
-    share count is not, because the original divisor was the live price at
-    publish and is gone. Those say so instead of guessing.
+    The 9:46 board IS the instruction. Everything about it is fixed at publish:
+    the names, the sides, the sizes. A later run reads it back; it does not get
+    a vote. So the pair structure is rebuilt from the ledger rows and the fresh
+    computation is discarded for display purposes.
+
+    Where a row cannot be restored the size is CLEARED rather than left as the
+    re-computation -- a blank is honest, a silently different number is not.
+
+    `shares` and `leg` are stored from day-81 on. Older boards carry only
+    `weight`: the ALLOCATION is exact (weight x book_cap) but the share count is
+    not, because the original divisor was the live price at publish and is
+    gone, and the primary leg is inferred from ledger order. Those say so.
     """
-    by = {r["ticker"]: r for r in todays}
-    exact, approx, missing = 0, 0, 0
-    for p in pair_picks:
-        row = by.get(p.get("t"))
-        if not row:
-            p["shares"], p["alloc"] = None, None
-            missing += 1
+    rows = [r for r in todays if r.get("role") == "pair"]
+    if not rows:
+        return False, "no pair legs on the published board"
+    approx = any(not (r.get("shares") or "").strip() for r in rows)
+    inferred = any(not (r.get("leg") or "").strip() for r in rows)
+
+    by_side: dict = {}
+    for r in rows:
+        by_side.setdefault((r.get("side") or "").upper(), []).append(r)
+
+    rebuilt: dict = {}
+    for side, key in (("LONG", "long"), ("SHORT", "short")):
+        legs = by_side.get(side) or []
+        if not legs:
+            rebuilt[key] = {"status": "NONE", "pick": None, "extra": []}
             continue
-        try:
-            w = float(row.get("weight") or 0) or None
-        except ValueError:
-            w = None
-        p["alloc"] = round(w * book_cap) if w else None
-        sh = (row.get("shares") or "").strip()
-        if sh:
-            p["shares"] = int(sh)
-            exact += 1
-        elif w and row.get("p945"):
-            # Best available: the allocation is exact, the divisor is the 9:45
-            # print rather than the live price the original board used.
-            p["shares"] = int(w * book_cap // float(row["p945"]))
-            approx += 1
-        else:
-            p["shares"] = None
-            missing += 1
-    if missing:
-        return False, (f"{missing} leg(s) could not be restored from the "
-                       "published board — size shown as blank, not re-computed")
+        # Explicit when stored; otherwise the first row for the side, which is
+        # publish order and was the top-ranked name.
+        prim = next((r for r in legs if (r.get("leg") or "") == "primary"),
+                    legs[0])
+        made = []
+        for r in legs:
+            try:
+                w = float(r.get("weight") or 0) or None
+            except ValueError:
+                w = None
+            sh = (r.get("shares") or "").strip()
+            p945 = float(r.get("p945") or 0) or None
+            alloc = round(w * book_cap) if w else None
+            if sh:
+                shares = int(sh)
+            elif w and p945:
+                shares = int(w * book_cap // p945)
+            else:
+                shares = None
+            made.append({"t": r["ticker"], "p945": p945, "shares": shares,
+                         "alloc": alloc, "confidence": r.get("confidence"),
+                         "restored": True})
+        pick = next(m for m, r in zip(made, legs) if r is prim)
+        rebuilt[key] = {"status": "OK", "pick": pick,
+                        "extra": [m for m in made if m is not pick],
+                        "sided": float(prim.get("p_sided") or 0) or None}
+    res["pair"] = rebuilt
+    # Keep the caller's list pointing at what is now displayed.
+    pair_picks[:] = [rebuilt[k]["pick"] for k in ("long", "short")
+                     if rebuilt[k].get("pick")]
+
+    if approx and inferred:
+        return True, ("board predates day-81: sizes re-derived from the "
+                      "published allocation (±1 sh) and the primary leg "
+                      "inferred from ledger order")
     if approx:
-        return True, ("share counts re-derived from the published allocation "
-                      "and the 9:45 print (this board predates day-81, which "
-                      "began storing them)")
+        return True, "board predates day-81: sizes re-derived (±1 sh)"
     return True, "restored exactly from the published board"
 
 
@@ -1138,8 +1180,12 @@ def publish(res: dict, cfg: dict) -> dict:
     pair_picks = []
     for side in ("long", "short"):
         lg = pair.get(side) or {}
-        for r in ([lg["pick"]] if lg.get("pick") else []) + (lg.get("extra") or []):
+        prim = [lg["pick"]] if lg.get("pick") else []
+        for i, r in enumerate(prim + (lg.get("extra") or [])):
             r["side_hint"] = side.upper()
+            # Which name the board INSTRUCTED, versus the leg that splits the
+            # same half. A re-read cannot reconstruct the order without it.
+            r["leg_hint"] = "primary" if (prim and i == 0) else "extra"
             pair_picks.append(r)
     allocate_book(pair_picks, rcfg.get("account_equity", 0),
                   rcfg.get("max_position_pct", 50),
@@ -1166,7 +1212,7 @@ def publish(res: dict, cfg: dict) -> dict:
         # note was false, and a reader acting on the later number would have
         # traded a size the ledger does not score.
         out["restored"], out["restore_note"] = _restore_published(
-            pair_picks, todays, book_cap)
+            res, pair_picks, todays, book_cap)
         return out
 
     pair_ids = {id(r) for r in pair_picks}
@@ -1176,6 +1222,7 @@ def publish(res: dict, cfg: dict) -> dict:
               "confidence": r.get("confidence", "n/a"),
               "p945": r["p945"],
               "role": "pair" if id(r) in pair_ids else "board",
+              "leg": (r.get("leg_hint", "") if id(r) in pair_ids else ""),
               "weight": ((r.get("alloc") or 0) / book_cap
                          if (id(r) in pair_ids and book_cap) else None),
               # Stored so a re-read can show THIS board rather than a fresh

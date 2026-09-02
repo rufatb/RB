@@ -82,12 +82,18 @@ def test_a_clean_fair_value_is_not_marked():
 
 
 def test_an_unmarkable_position_is_surfaced_not_hidden():
-    """Rule 2: absence of a mark is not absence of movement."""
+    """Rule 2: absence of a mark is not absence of movement.
+
+    The leg must be visible as unpriced AND the reason named. Which wording
+    carries it depends on whether ANY leg could be marked -- see the two tests
+    at the end of this file -- so this asserts the surfacing, not the phrasing.
+    """
     d = digest(book={"legs": [leg(mark=None, pnl_pct=None, pnl_usd=None)],
                      "net_pct": 0.0, "net_usd": 0.0, "gross": 0, "stale": 1},
                mark_errors={"ZYME": "HTTPError"})
     out = V.render(d)
-    assert "EXCLUDED" in out and "HTTPError" in out
+    assert "stale" in out and "HTTPError" in out
+    assert "+0.00%" not in out
 
 
 def test_a_decision_with_no_ticker_is_reported_as_unpriceable():
@@ -393,3 +399,43 @@ def test_legs_held_back_for_an_open_session_are_reported():
     """Day-24: scoring mid-session writes live prices in as outcomes."""
     out = V.render(digest(held_back=4))
     assert "held back" in out and "not closed" in out
+
+
+# ── an unpriced book must not read as a flat one ────────────────────────────
+
+def test_a_book_with_no_markable_leg_says_unpriced_not_zero():
+    """Seen live 2026-09-02: one transient quote failure blanked the book.
+
+    `mark_book` totals only what it could price, so a fully-unmarked book
+    returns +0.00% on $0 — which at a glance reads as a flat, fully-priced
+    book. It is the opposite: nothing is known. Rule 2.
+    """
+    d = digest(book={"legs": [leg(mark=None, pnl_pct=None, pnl_usd=None)],
+                     "net_pct": 0.0, "net_usd": 0.0, "gross": 0.0, "stale": 1},
+               mark_errors={"ZYME": "RuntimeError"})
+    out = V.render(d)
+    assert "UNPRICED" in out
+    assert "not zero" in out
+    assert "+0.00%" not in out
+
+
+def test_a_partly_marked_book_still_shows_its_total_and_the_exclusion():
+    """Only the ALL-unmarked case is unknowable; a partial book still totals,
+    and must still say that the stale leg is excluded from that total."""
+    d = digest(book={"legs": [leg()], "net_pct": 13.53, "net_usd": 1348.0,
+                     "gross": 9960, "stale": 1})
+    out = V.render(d)
+    assert "UNPRICED" not in out and "+13.53%" in out
+    assert "EXCLUDED" in out
+
+
+def test_an_unpriced_book_still_lists_its_positions():
+    """The first fix split the header into two branches and left the leg rows
+    inside only one, so an unpriced book showed no positions at all — the
+    failure hid the very thing it was reporting."""
+    d = digest(book={"legs": [leg(mark=None, pnl_pct=None, pnl_usd=None)],
+                     "net_pct": 0.0, "net_usd": 0.0, "gross": 0.0, "stale": 1},
+               mark_errors={"ZYME": "RuntimeError"})
+    out = V.render(d)
+    assert "UNPRICED" in out
+    assert "ZYME" in out and "24.90" in out      # the row itself

@@ -92,43 +92,77 @@ def test_density_label():
 
 # ── day-81: a re-read must restore the published board, never re-size ───────
 
-def test_restore_puts_the_published_shares_back_on_the_picks():
-    """The record is authoritative; the live tape is not."""
-    import r945
-    picks = [{"t": "SU.TO", "shares": 136, "alloc": 12625},
-             {"t": "BMO.TO", "shares": 55, "alloc": 13041}]
-    todays = [{"ticker": "SU.TO", "weight": "0.2523", "p945": "93.3600",
-               "shares": "135"},
-              {"ticker": "BMO.TO", "weight": "0.2608", "p945": "239.0400",
-               "shares": "55"}]
-    ok, note = r945._restore_published(picks, todays, 50000.0)
-    assert ok and "exactly" in note
-    assert picks[0]["shares"] == 135, "the re-computation must not survive"
-    assert picks[0]["alloc"] == round(0.2523 * 50000)
+def _todays(**over):
+    rows = [{"ticker": "SLF.TO", "side": "LONG", "role": "pair",
+             "leg": "primary", "weight": "0.2630", "shares": "120",
+             "p945": "109.05", "p_sided": "0.56", "confidence": "sparse"},
+            {"ticker": "TD.TO", "side": "LONG", "role": "pair", "leg": "extra",
+             "weight": "0.2344", "shares": "70", "p945": "120.00",
+             "p_sided": "0.54", "confidence": "dense"},
+            {"ticker": "CP.TO", "side": "SHORT", "role": "pair",
+             "leg": "primary", "weight": "0.2256", "shares": "91",
+             "p945": "123.09", "p_sided": "0.57", "confidence": "dense"}]
+    for r in rows:
+        r.update(over)
+    return rows
 
 
-def test_a_pre_day81_board_re_derives_shares_and_says_so():
-    """Rows written before day-81 carry weight but no share count.
+def test_a_re_read_shows_the_PUBLISHED_names_not_a_fresh_pick():
+    """THE DEFECT. At 10:40 the board published SHORT CP.TO; at 10:43 the
+    engine picked SHORT RY.TO and the page printed RY.TO -- a name the ledger
+    will never score, because the board is written once and RY.TO is not on it.
 
-    The ALLOCATION is exact; the divisor the original board used was the live
-    price at publish and is gone. That is stated, not papered over.
+    The 9:46 board is the instruction. A later run reads it back.
     """
     import r945
-    picks = [{"t": "SU.TO", "shares": 136, "alloc": 12625}]
-    todays = [{"ticker": "SU.TO", "weight": "0.2523", "p945": "93.3600",
-               "shares": ""}]
-    ok, note = r945._restore_published(picks, todays, 50000.0)
-    assert ok and "re-derived" in note
-    assert picks[0]["shares"] == 135
+    res = {"pair": {"long": {"pick": {"t": "SLF.TO", "shares": 999}},
+                    "short": {"pick": {"t": "RY.TO", "shares": 88}}}}
+    picks = [res["pair"]["long"]["pick"], res["pair"]["short"]["pick"]]
+    ok, note = r945._restore_published(res, picks, _todays(), 50000.0)
+    assert ok and "exactly" in note
+    assert res["pair"]["short"]["pick"]["t"] == "CP.TO", "fresh pick survived"
+    assert res["pair"]["long"]["pick"]["shares"] == 120
+    assert [p["t"] for p in picks] == ["SLF.TO", "CP.TO"]
 
 
-def test_a_leg_absent_from_the_record_is_blanked_not_left_stale():
-    """Rule 2: fail closed. A blank is honest, a wrong size is not."""
+def test_the_second_leg_is_restored_as_an_extra_not_as_the_instruction():
     import r945
-    picks = [{"t": "GHOST.TO", "shares": 999, "alloc": 99999}]
-    ok, note = r945._restore_published(picks, [], 50000.0)
-    assert not ok and "could not be restored" in note
-    assert picks[0]["shares"] is None and picks[0]["alloc"] is None
+    res = {"pair": {}}
+    ok, _ = r945._restore_published(res, [], _todays(), 50000.0)
+    assert res["pair"]["long"]["pick"]["t"] == "SLF.TO"
+    assert [e["t"] for e in res["pair"]["long"]["extra"]] == ["TD.TO"]
+
+
+def test_a_side_absent_from_the_board_restores_as_none():
+    """A board with no short leg must not acquire one on a re-read."""
+    import r945
+    res = {"pair": {"short": {"pick": {"t": "RY.TO", "shares": 88}}}}
+    rows = [r for r in _todays() if r["side"] == "LONG"]
+    r945._restore_published(res, [], rows, 50000.0)
+    assert res["pair"]["short"]["pick"] is None
+    assert res["pair"]["short"]["status"] == "NONE"
+
+
+def test_a_pre_day81_board_re_derives_and_says_so():
+    """Rows without `shares`/`leg`: the allocation is exact, the share count is
+    not (the original divisor was the live price at publish and is gone), and
+    the primary leg is inferred from ledger order."""
+    import r945
+    rows = _todays()
+    for r in rows:
+        r["shares"], r["leg"] = "", ""
+    res = {"pair": {}}
+    ok, note = r945._restore_published(res, [], rows, 50000.0)
+    assert ok and "predates day-81" in note and "inferred" in note
+    assert res["pair"]["long"]["pick"]["t"] == "SLF.TO"      # ledger order
+    assert res["pair"]["long"]["pick"]["shares"] == int(0.2630 * 50000 // 109.05)
+
+
+def test_a_board_with_no_pair_legs_restores_nothing_and_says_so():
+    import r945
+    res = {"pair": {"long": {"pick": {"t": "X", "shares": 1}}}}
+    ok, note = r945._restore_published(res, [], [], 50000.0)
+    assert not ok and "no pair legs" in note
 
 
 def test_shares_survive_a_write_and_read(tmp_path):

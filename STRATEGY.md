@@ -3751,6 +3751,53 @@ failure now says the record is STALE rather than printing an old number quietly.
 
 **Shipped:** `ledger.autoscore`, the `shares` write, 5 tests (642 -> 646).
 
+## Day-81 (cont.): the board drifted between re-reads, names and all
+
+Yesterday's fix restored published SHARE COUNTS onto a re-read. It fixed the
+sizes and left the names wrong.
+
+Run at 10:40 on 2026-09-02 the engine published **SHORT CP.TO**. Run again at
+10:43 it picked **SHORT RY.TO**, and the page printed RY.TO — a name the ledger
+will never score, because the board is written once and RY.TO is not on it. The
+restore noticed only that it could not size RY.TO; it never asked why RY.TO was
+there at all.
+
+**The 9:46 board IS the instruction.** Names, sides and sizes are all fixed at
+publish. A later run reads it back; it does not get a vote. `_restore_published`
+now rebuilds the whole pair structure from the ledger rows and discards the
+fresh computation for display. A side absent from the board no longer acquires
+one on a re-read.
+
+**A new `leg` column** distinguishes the primary pick from the second leg that
+splits the same half — without it a re-read can tell that both names were on
+the board but not which one it instructed. Boards published before today infer
+it from ledger order (which was publish order, top-ranked first) and say so.
+
+**The `--book` renderer degrades honestly.** It read `last`, `r0` and `gap` —
+live intraday measurements the ledger does not store. Filling them from the
+fresh run would print today's tape beside yesterday's instruction, which is the
+two-sources mixing this restore exists to stop, so a restored board prints
+"intraday diagnostics not stored — re-read, not a fresh computation".
+
+### Two smaller live findings the same run produced
+
+**A book with no markable leg read as +0.00% on $0.** `mark_book` totals only
+what it could price, so a fully-unmarked book returns zero — which at a glance
+is a flat, fully-priced book rather than one where nothing is known. It now
+reads UNPRICED and says "the total is unknown, not zero". The first attempt at
+this split the header into two branches and left the position rows inside only
+one, so an unpriced book listed no positions at all; the failure hid the thing
+it was reporting. Tested both ways.
+
+**One transient quote error blanked the whole book.** ZYME failed with a
+RuntimeError and quoted fine seconds later. Failing closed is right; failing
+closed on a blip a one-second retry survives is noise, and noise is what
+teaches a reader to ignore the warning. One retry, then it still fails and
+still says so.
+
+**Shipped:** the pair rebuild, `ledger.leg`, the UNPRICED headline, a quote
+retry, 10 tests (646 -> 651).
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

@@ -127,11 +127,29 @@ def render(d: dict) -> str:
          rule("═"), ""]
 
     # ── BOOK ────────────────────────────────────────────────────────────
-    if legs:
-        L.append(f"  {head('BOOK')}   {pct(book.get('net_pct'))}   "
-                 f"{money(book.get('net_usd'))} on "
-                 f"${book.get('gross', 0):,.0f}   "
-                 f"{C.DIM}{len(legs)} position(s){C.RESET}")
+    if not legs:
+        L.append(f"  {head('BOOK')}   {C.DIM}flat — nothing to manage{C.RESET}")
+    else:
+        if not book.get("gross"):
+            # EVERY LEG UNMARKED. `mark_book` totals only what it could price,
+            # so a book with no usable marks returns +0.00% on $0 — which at a
+            # glance reads as a flat, fully-priced book. It is the opposite:
+            # nothing is known. Seen live on 2026-09-02 when one transient
+            # quote failure blanked a single-position book. Absence of a mark
+            # is not absence of movement (rule 2), and it is not zero.
+            L.append(f"  {head('BOOK')}   {C.YELLOW}UNPRICED{C.RESET}   "
+                     f"{C.DIM}{len(legs)} position(s), none markable — the "
+                     f"total is unknown,{C.RESET}")
+            L.append(f"           {C.DIM}not zero. Price by hand before "
+                     f"acting.{C.RESET}")
+        else:
+            L.append(f"  {head('BOOK')}   {pct(book.get('net_pct'))}   "
+                     f"{money(book.get('net_usd'))} on "
+                     f"${book.get('gross', 0):,.0f}   "
+                     f"{C.DIM}{len(legs)} position(s){C.RESET}")
+        # The rows render either way. Splitting the header into two branches
+        # once left them inside only one, so an unpriced book listed no
+        # positions at all -- the failure hid the thing it was reporting.
         L.append("")
         for l in legs:
             settled = (d.get("settled") or {}).get(l["ticker"])
@@ -148,11 +166,9 @@ def render(d: dict) -> str:
             L.append(f"    {l['ticker']:<6}{l['side']:<6}{l['entry_px']:>8.2f} "
                      f"→{mark}  {pct(l.get('pnl_pct'))}  "
                      f"{bar(l.get('pnl_pct'))}{tag}")
-        if book.get("stale"):
+        if book.get("stale") and book.get("gross"):
             L.append(f"    {C.YELLOW}⚠ {book['stale']} leg(s) unmarked and "
                      f"EXCLUDED from the total — price by hand{C.RESET}")
-    else:
-        L.append(f"  {head('BOOK')}   {C.DIM}flat — nothing to manage{C.RESET}")
     L.append("")
 
     # ── DO TODAY ────────────────────────────────────────────────────────
