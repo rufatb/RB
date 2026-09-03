@@ -451,7 +451,11 @@ def _watch(d: dict) -> list:
     if unp:
         out.append(f"    {C.YELLOW}⚠{C.RESET} {len(unp)} calendar name(s) "
                    f"unpriced — quotes failed their checks:")
-        out += _wrap(", ".join(unp[:8]), 6, dim=True)
+        # A count of 9 over a list of 8 is a report contradicting itself in
+        # adjacent lines. If the list is trimmed, say by how much.
+        shown, extra = unp[:8], max(0, len(unp) - 8)
+        txt = ", ".join(shown) + (f" +{extra} more" if extra else "")
+        out += _wrap(txt, 6, dim=True)
 
     # The `~` in OPPORTUNITIES already carries this per name. Repeating the
     # roster here was five lines saying what one mark says, and repetition is
