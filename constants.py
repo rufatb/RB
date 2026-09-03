@@ -121,6 +121,16 @@ REGISTRY = {
         CITED, None, 54, None,
         "FDA first-cycle review data, NOT measured here — see TENSIONS"),
 
+    # advisory-committee base rates — EXTERNAL, published in the report
+    # (day-82: these reach the reader and were unregistered).
+    "adcom.EXT_POSITIVE_APPROVED": Const(
+        CITED, None, 82, 147,
+        "142/147 approved after a favourable vote; Cannizzaro et al., JAMA "
+        "Health Forum 2023 — measured elsewhere, no control here"),
+    "adcom.EXT_NEGATIVE_REJECTED": Const(
+        CITED, None, 82, 60,
+        "40/60 not approved after an unfavourable vote; same source"),
+
     # accuracy definitions — day-82, ACCURACY.md
     "ledger.DECISIVE_PCT": Const(
         DESIGN, None, 82, None,
@@ -128,9 +138,9 @@ REGISTRY = {
         "rate and counted (ACCURACY.md §1); sets the number printed beside "
         "every pick"),
     "cost.TYPICAL_MOVE_PCT": Const(
-        MEASURED, None, 72, None,
-        "typical intraday move used to express spread as a share of it; NO "
-        "SCRIPT re-derives it"),
+        MEASURED, "validate_typicalmove.py", 70, None,
+        "day-70 measured 0.97% (non-event) on this universe; re-derived on "
+        "the live ledger it is 0.69% [0.58, 0.79] — see TENSIONS"),
 
     # the measured base rate — day-71
     "baserate.SERIAL_MIN": Const(DESIGN, None, 71, None),
@@ -322,7 +332,57 @@ def _crl_tension() -> tuple | None:
                 f"tension check failed: {type(e).__name__}")
 
 
-TENSIONS = [_crl_tension]
+def _typical_move_tension() -> tuple | None:
+    """The shipped typical move against its own re-derivation.
+
+    `cost.TYPICAL_MOVE_PCT` is the denominator of every "spread is N% of the
+    typical move" line the report prints. Day-70 measured 0.97% on a sample
+    that cannot now be reconstructed; re-derived on the live ledger — 343
+    scored legs, 39 sessions, session-clustered — the median |capture| is
+    0.69% and the interval excludes 0.97%.
+
+    The direction matters and is NOT self-flattering: too large a denominator
+    makes the spread look like a SMALLER share of a normal day's move than it
+    is, so the cost line has been understating the drag.
+
+    It is reported rather than silently corrected. The two figures may describe
+    different populations (day-70's universe and window are not recoverable),
+    and changing a measured constant on the strength of an unregistered study
+    is the thing this file exists to prevent.
+    """
+    try:
+        import cost
+        import ledger as _lg
+        import validate_typicalmove as V
+        rows = _lg.load()
+        if not rows:
+            return None
+        r = V.run(rows)
+        lo, hi = r["ci"]
+        shipped = float(cost.TYPICAL_MOVE_PCT)
+        if lo is None or lo <= shipped <= hi:
+            return None
+        short = (f"shipped {shipped:.2f}% vs re-derived {r['median']:.2f}% "
+                 f"[{lo:.2f}, {hi:.2f}] on {r['n']} legs; too large a "
+                 f"denominator UNDERSTATES the spread")
+        return ("typical intraday move",
+                f"cost.TYPICAL_MOVE_PCT is {shipped:.2f}% but re-deriving it "
+                f"from the live ledger gives a median |capture| of "
+                f"{r['median']:.2f}% with 95% [{lo:.2f}%, {hi:.2f}%] over "
+                f"{r['n']} legs in {r['sessions']} sessions — the interval "
+                "excludes the shipped value. Every 'spread as a share of the "
+                "typical move' line divides by it, so the cost of trading has "
+                "been reported as a smaller fraction of a normal day than it "
+                "is. Not corrected here: day-70's sample cannot be "
+                "reconstructed and the two may describe different "
+                "populations.", short)
+    except Exception as e:
+        return ("typical intraday move",
+                f"tension check failed: {type(e).__name__}: {e}",
+                f"tension check failed: {type(e).__name__}")
+
+
+TENSIONS = [_crl_tension, _typical_move_tension]
 
 
 def tensions() -> list:

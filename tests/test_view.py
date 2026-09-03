@@ -249,8 +249,11 @@ def test_a_re_read_says_it_is_a_re_read():
                     "restore_note": "restored exactly from the published board"}
     out = V.render(d)
     assert "re-read of the 9:46 board" in out
-    # Restored exactly -> no "re-derived" caveat; the caveat must be earned.
-    assert "re-derived" not in out
+    # Restored exactly -> no caveat ON THAT LINE. Asserting "re-derived" is
+    # absent from the whole page was too broad: an unrelated tension about a
+    # re-derived constant now legitimately uses the same word.
+    line = next(l for l in out.split("\n") if "re-read of the 9:46 board" in l)
+    assert "re-derived" not in line
 
 
 def test_a_re_read_whose_sizes_were_re_derived_says_so():

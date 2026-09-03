@@ -94,7 +94,14 @@ H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
 # found (see catalyst.py), so both thresholds moved with it. They are anchored
 # to a measurement precisely so that correcting the measurement corrects them,
 # rather than leaving two stale round numbers behind.
-_CRL = 11.79                      # day-77 median, n=71, explicit-range daily bars
+# DERIVED, not copied (day-82). This was the literal `11.79`, an uncheckable
+# duplicate of catalyst.CRL_MEDIAN: re-measuring the median -- which has already
+# happened twice, -15.20 -> -8.97 -> -11.79 -- would have moved the measurement
+# and silently left both thresholds below anchored to a retired number. The
+# whole point of anchoring them to a measurement is that correcting the
+# measurement corrects them.
+import catalyst as _cat  # noqa: E402
+_CRL = abs(_cat.CRL_MEDIAN)       # day-77 median, n=71, explicit-range daily bars
 IMMATERIAL_MOVE = _CRL / 2 / 100          # 0.076
 RICH_MOVE = _CRL * 3 / 100                # 0.456
 CHEAP_MOVE = IMMATERIAL_MOVE              # name kept: callers outside this file

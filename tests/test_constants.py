@@ -182,3 +182,62 @@ def test_stale_bytecode_is_caught(tmp_path, monkeypatch):
     assert "1.54" in got["planted_const.VALUE"]["stale"]
     assert K.drift(got, {"planted_const.VALUE": 2.45})["broken"]
     sys.modules.pop("planted_const", None)
+
+
+# ── day-82: a measured value must exist in exactly one place ────────────────
+
+def test_the_screen_thresholds_derive_from_the_measurement_not_a_copy():
+    """`_CRL` was the literal 11.79 — an uncheckable duplicate of
+    catalyst.CRL_MEDIAN. That median has already been re-measured twice
+    (-15.20 -> -8.97 -> -11.79); each time, the copy would have silently kept
+    a retired number while claiming to be anchored to the measurement."""
+    import catalyst as C
+    import screen as S
+    assert S._CRL == abs(C.CRL_MEDIAN)
+    assert abs(S.IMMATERIAL_MOVE - abs(C.CRL_MEDIAN) / 2 / 100) < 1e-12
+    assert abs(S.RICH_MOVE - abs(C.CRL_MEDIAN) * 3 / 100) < 1e-12
+
+
+def test_the_screen_thresholds_move_when_the_measurement_moves(monkeypatch):
+    """POSITIVE CONTROL for the derivation: if re-measuring the median did not
+    move the thresholds, the anchor would be decorative."""
+    import importlib
+    import catalyst as C
+    monkeypatch.setattr(C, "CRL_MEDIAN", -20.0)
+    import screen as S
+    importlib.reload(S)
+    try:
+        assert S._CRL == 20.0
+        assert abs(S.IMMATERIAL_MOVE - 0.10) < 1e-12
+    finally:
+        monkeypatch.undo()
+        importlib.reload(S)
+
+
+def test_the_external_adcom_rates_are_registered_as_cited():
+    """They are printed in the report beside FDA outcomes and had no
+    provenance entry at all — a number the reader takes as measured here."""
+    for k in ("adcom.EXT_POSITIVE_APPROVED", "adcom.EXT_NEGATIVE_REJECTED"):
+        assert K.REGISTRY[k].kind == K.CITED
+        assert "Cannizzaro" in K.REGISTRY[k].note or K.REGISTRY[k].note
+
+
+def test_the_typical_move_tension_names_the_direction_of_the_error():
+    """A denominator that is too large makes the spread look like a smaller
+    share of a normal day than it is, so the cost line UNDERSTATES the drag.
+    Naming the direction is what makes the tension actionable."""
+    t = [x for x in K.tensions() if x[0] == "typical intraday move"]
+    if not t:                      # only fires while the two disagree
+        import cost
+        import validate_typicalmove as V
+        r = V.run()
+        lo, hi = r["ci"]
+        assert lo <= cost.TYPICAL_MOVE_PCT <= hi, "disagrees but was not flagged"
+        return
+    what, why, short = t[0]
+    assert "UNDERSTATES" in short
+    assert "0.97" in why and "cannot be reconstructed" in why
+
+
+def test_the_typical_move_constant_now_names_its_re_derivation_script():
+    assert K.REGISTRY["cost.TYPICAL_MOVE_PCT"].script == "validate_typicalmove.py"

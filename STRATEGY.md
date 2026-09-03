@@ -3931,6 +3931,57 @@ forward: when the feed is shut the answer is that it is shut.
 remaining genuine gaps are one decision with no resolvable ticker (Bristol
 Myers Squibb, 2027-05-13) and names outside the pricing horizon.
 
+## Day-82: the cost line has been dividing by the wrong number
+
+§7 requires `python constants.py` to report no unprovenanced measured values.
+Two remained. Writing the missing re-derivation script for one of them found a
+number that had been wrong in the report for twelve days.
+
+`cost.TYPICAL_MOVE_PCT = 0.97` is MEASURED — day-70 put |r1| on this universe
+at 0.97% (non-event) and 1.11% (after a filing), taking the lower so the drag
+is never flattered — but **no script re-derived it**, so it sat in the registry
+as a claim wearing a measurement's clothes. It is the denominator of every
+"spread is N% of the typical move" line the report prints.
+
+`validate_typicalmove.py` re-derives it from the ledger over the same window
+and universe: **median |capture| 0.69%, 95% [0.58%, 0.79%], 343 legs across 39
+sessions, session-clustered.** The interval **excludes** the shipped 0.97%.
+
+**The direction is not self-flattering, which is why it survived.** Too large a
+denominator makes the spread look like a *smaller* share of a normal day's move
+than it is, so the report has been **understating** what trading costs. A
+spread quoted as "5% of the typical move" is nearer 7%.
+
+**It was not corrected.** Day-70's sample cannot be reconstructed and the two
+figures may describe different populations — the same rule-7 trap as
+P(rejection). Changing a measured constant on the strength of an unregistered
+study is what this machinery exists to prevent, so it is registered as a second
+standing TENSION and prints on every run until someone decides it deliberately.
+
+The re-derivation script is also forbidden from assigning the constant it
+checks, asserted by a test: a checker that edits its own subject is not a check.
+
+### Also cleaned up under §2
+
+**A measured value existed in two places.** `screen._CRL = 11.79` was a literal
+copy of `catalyst.CRL_MEDIAN = -11.79`, and that median has already been
+re-measured twice (-15.20 → -8.97 → -11.79). Each time, the copy would have
+kept a retired number while the file's own docstring claimed the thresholds
+were anchored to the measurement precisely so that correcting it corrects them.
+Now derived, with a positive control asserting the thresholds move when the
+median moves.
+
+**The advisory-committee base rates were unregistered.** `EXT_POSITIVE_APPROVED
+= 0.97` and `EXT_NEGATIVE_REJECTED = 0.67` are printed beside FDA outcomes and
+had no provenance entry, so a reader could take them as measured here. Both are
+now CITED, with the source named.
+
+**A mechanical literal scan does not work and is not kept.** Matching
+constants by VALUE flagged every `2`, `6` and `0.1` in the repo — the same
+false-positive failure as the earlier `get` matcher, and a check that fires on
+correct code is one that gets deleted rather than obeyed. Only distinctive
+values were pursued, by hand.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

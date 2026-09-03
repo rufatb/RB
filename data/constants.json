@@ -1,6 +1,8 @@
 {
-  "saved": "2026-08-31",
+  "saved": "2026-09-03",
   "values": {
+    "adcom.EXT_NEGATIVE_REJECTED": 0.67,
+    "adcom.EXT_POSITIVE_APPROVED": 0.97,
     "baserate.SERIAL_MIN": 6,
     "baserate.SINGLE_MAX": 2,
     "catalyst.ADOPT_T": 3.0,
@@ -21,6 +23,7 @@
     "catalyst.CRL_WORSE_THAN_40": 0.24,
     "catalyst.CRL_WORST": -74.95,
     "catalyst.GAP_WARN": 0.15,
+    "cost.TYPICAL_MOVE_PCT": 0.97,
     "fairvalue.DISAGREE_TOL": 0.4,
     "fairvalue.DRIFT_TOL": 0.01,
     "fairvalue.EVENT_MULT_CI": [
@@ -42,6 +45,7 @@
       "low": 2.09,
       "mid": 2.09
     },
+    "ledger.DECISIVE_PCT": 0.1,
     "resolved.LOOK_DAYS": 21,
     "sanity.MAX_DAILY_GAP": 6,
     "sanity.MAX_PUT_PCT": 100.0,

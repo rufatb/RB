@@ -503,8 +503,11 @@ def _watch(d: dict) -> list:
         # becomes wallpaper and stops being read, which is how the long page
         # lost its caveats. Two lines and a command that prints the reasoning.
         for what, _why, short in K.tensions():
-            out.append(f"    {C.YELLOW}⚠{C.RESET} {what}: two published "
-                       f"numbers disagree, both reach this page")
+            # WRAPPED. A fixed header assumed a short name; "typical
+            # intraday move" pushed it to 81 columns and broke the layout the
+            # width test exists to protect.
+            out += _wrap(f"⚠ {what}: two published numbers disagree, both "
+                         f"reach this page", 4)
             out += _wrap(f"{short}; never mix them (`python constants.py`)",
                          6, dim=True)
     except Exception as e:                       # never silently (rule 1)
