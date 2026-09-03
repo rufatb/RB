@@ -135,6 +135,20 @@ REGISTRY = {
         CITED, None, 82, 60,
         "40/60 not approved after an unfavourable vote; same source"),
 
+    # the one measured intraday effect — day-70, sixk.py
+    "sixk.WIDER_PP": Const(
+        MEASURED, "validate_sixk.py", 70, 52919,
+        "sessions after a 6-K move +0.140pp further either way (1.11% vs "
+        "0.97%); z=+6.35, session-clustered. DIRECTION on the same rows was "
+        "rejection #36. Shipped as a risk warning, never a signal"),
+    "sixk.WIDER_Z": Const(
+        MEASURED, "validate_sixk.py", 70, 52919,
+        "z on the magnitude lift; the direction leg scored z=+0.72"),
+    "validate_straddle.COST_BAR_FRACTION": Const(
+        DESIGN, None, 83, None,
+        "pre-registered in PREREGISTER_day83.md: a round-trip straddle must "
+        "cost under half the magnitude lift or the study is rejected on cost"),
+
     # accuracy definitions — day-82, ACCURACY.md
     "ledger.DECISIVE_PCT": Const(
         DESIGN, None, 82, None,
