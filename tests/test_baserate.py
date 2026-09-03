@@ -344,3 +344,49 @@ def test_the_report_distinguishes_the_two_questions_the_ends_answer():
     assert "not two estimates of one quantity" in flat
     assert "was ANNOUNCED in an 8-K" in flat
     assert "including every routine approval nobody announced" in flat
+
+
+# ── day-82: the capture audit joins two different populations ───────────────
+
+def test_the_matcher_is_not_the_problem_it_joins_real_pairs():
+    """Diagnosed wrongly at first. Raw string equality matched 11 of 334
+    sponsors, which looked like a broken join — but that is not what the code
+    uses. `same_company` joins the standard case correctly."""
+    import baserate as B
+    assert B.same_company("AADI BIOSCIENCE, INC.", "AADI")
+    assert B.same_company("60 DEGREES PHARMACEUTICALS, INC.",
+                          "60 DEGREES PHARMS")
+    assert B.same_company("ZYMEWORKS INC.", "ZYMEWORKS")
+
+
+def test_the_matcher_still_refuses_a_near_miss():
+    """A join loose enough to match everything would manufacture capture."""
+    import baserate as B
+    assert not B.same_company("GENENTECH INC", "GENELABS TECHNOLOGIES INC")
+    assert not B.same_company("INC", "CORP")        # furniture only
+    assert not B.same_company("", "ZYMEWORKS")
+
+
+def test_the_floor_docstring_states_it_cannot_be_interpreted():
+    """It is retained so the record of the attempt survives, but a reader must
+    not take it as a bound. The numerator counts label expansions, supplements,
+    device clearances and partner approvals; the denominator counts original
+    approvals only."""
+    import baserate as B
+    doc = " ".join((B.corrected.__doc__ or "").split())   # unwrap
+    assert "DIFFERENT POPULATIONS" in doc
+    assert "not a lower bound on anything" in doc
+    assert "DOES NOT REACH THE MORNING REPORT" in doc
+
+
+def test_the_report_uses_the_raw_stratum_not_the_floor():
+    """Both legs of the raw ratio come from one harvest, one classifier and
+    one window — rule 7 satisfied. The floor does not, so it must not be what
+    the morning page divides by."""
+    import baserate as B
+    s = B.summary()
+    if s is None:
+        return
+    assert 0.05 < s["p"] < 0.20, s["p"]
+    assert s["lo"] <= s["p"] <= s["hi"]
+    assert s["population"] == "single-asset sponsors"

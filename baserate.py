@@ -416,7 +416,33 @@ def capture_rate(my_appr: list, fda: list, registrants: list,
 
 
 def corrected(raw: dict, capture: float) -> dict:
-    """The FLOOR: P(CRL) if every approval the audit says is missing belongs.
+    """The FLOOR — and DAY-82 established it cannot be interpreted at all.
+
+    THE DEFECT, and it is rule 7 inside the audit rather than in the headline.
+    The capture rate this scales by compares two DIFFERENT POPULATIONS:
+
+        numerator    8-K approval ANNOUNCEMENTS from the harvest. A company
+                     files one for a label expansion, a supplemental
+                     indication, a device clearance, or the approval of a
+                     PARTNER's application.
+        denominator  Drugs@FDA ORIGINAL approvals (AP/TA on ORIG submissions)
+                     granted to public domestic filers. None of the above is
+                     in it.
+
+    Measured: 47% of the harvest's 334 approval sponsors match a Drugs@FDA
+    sponsor by `same_company`. The matcher is not the problem — it correctly
+    joins AADI BIOSCIENCE to AADI and correctly refuses GENENTECH/GENELABS —
+    the EVENT CLASSES differ. A "capture rate" across that mismatch is not an
+    announcement rate, so the floor it produces (P(CRL) = 1.26%) is not a lower
+    bound on anything.
+
+    IT DOES NOT REACH THE MORNING REPORT: `summary()` returns the raw
+    single-asset stratum, 11.7% [8.5%, 15.9%], whose two legs DO come from one
+    harvest, one classifier and one window. This function is retained because
+    deleting it would delete the record of why the correction was attempted,
+    and the docstring now says what it is worth.
+
+    The original reasoning, kept:
 
     THIS WAS CALLED "CORRECTED" AND THAT WAS THE WRONG WORD, which mattered
     because the word was doing the arguing. Scaling the approval leg by 1/capture

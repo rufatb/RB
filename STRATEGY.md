@@ -3982,6 +3982,60 @@ false-positive failure as the earlier `get` matcher, and a check that fires on
 correct code is one that gets deleted rather than obeyed. Only distinctive
 values were pursued, by hand.
 
+## Day-82: the P(rejection) contradiction — BLOCKED, and the blocker is named
+
+§5b asked for the announcement bias to be measured directly: do companies
+announce CRLs less readily than approvals? If they do, the measured 11.7%
+understates the truth and the cited 30% is the better number for a PDUFA date.
+
+**It cannot be measured with the data here, and the reason is rule 7 sitting
+inside the capture audit rather than in the headline ratio.**
+
+`baserate.capture_rate` reports that the harvest finds 50 of 499 FDA approvals
+granted to public domestic filers — a 10% capture rate, from which
+`corrected()` derives a FLOOR of P(CRL) = 1.26%. That 10% is not an
+announcement rate, because the two sides count different events:
+
+| | counts |
+|---|---|
+| numerator (harvest) | every 8-K announcing an FDA approval — label expansions, supplemental indications, device clearances, and approvals of a **partner's** application |
+| denominator (Drugs@FDA) | **original** approvals only (AP/TA on ORIG submissions) |
+
+A company announcing a label expansion produces a numerator event with no
+denominator counterpart. The rate across that mismatch measures the difference
+between two event classes, not how readily anyone announces anything, so **the
+floor it produces is not a lower bound on anything.**
+
+### I diagnosed this wrongly first, and the correction matters
+
+The first pass tested sponsor names with raw string equality and found **11 of
+334** matching, which looked like a broken join and would have been reported as
+one. That is not what the code does. Measured with `same_company`, the matcher
+the audit actually uses, **156 of 334 (47%)** match — and it joins
+`AADI BIOSCIENCE, INC.` to `AADI` and `60 DEGREES PHARMACEUTICALS, INC.` to
+`60 DEGREES PHARMS` while correctly refusing `GENENTECH` / `GENELABS`.
+
+A second suspicion — that Drugs@FDA's sponsor list is polluted by industrial
+gas registrants like `A G L WELDING SUPPLY CO INC` — was measured rather than
+asserted: **12 sponsors, 16 of 1,556 records, 1%.** Immaterial. Both wrong
+guesses were cheap to check and expensive to publish.
+
+### Where this leaves the contradiction
+
+**Open, and honestly so.** The raw measured rate stands: 11.7% [8.5%, 15.9%]
+over 291 single-asset decisions, both legs from one harvest, one classifier and
+one window. `summary()` returns that stratum, so **the broken floor never
+reached the morning report** — which was already correct, not luck.
+
+What would unblock it is a ground-truth set of DECISIONS including rejections.
+FDA did not publish complete response letters historically, which is the whole
+reason this repo had to infer P(CRL) from announcements in the first place.
+Until such a set exists, the two numbers describe different populations and the
+report must keep saying so rather than reconciling them.
+
+`corrected()` is retained — deleting it would delete the record of why the
+correction was attempted — with a docstring that now states what it is worth.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
