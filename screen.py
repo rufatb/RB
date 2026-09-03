@@ -638,6 +638,13 @@ def hold_window(days: int, date: str) -> str:
 def screen(cal: list, today: dt.date, horizon: int = 120,
            max_names: int = 12, votes: dict | None = None) -> list:
     y, out, votes = Yahoo(), [], votes or {}
+    # PRICE THE CONTROL FIRST. A failed check on a name means nothing until we
+    # know the feed is serving bid/ask at all: at 06:47 ET every name on the
+    # board failed, and so did SPY, whose ATM put quoted 0.00/0.00. Reporting
+    # that as "these names failed their checks" told the PM half the calendar
+    # was illiquid when the options market was simply shut. See quotes.py.
+    import quotes as _q
+    feed_live, feed_why = _q.feed_is_live(y.chain)
     for c in cal:
         d = (dt.date.fromisoformat(c["date"]) - today).days
         if not (0 <= d <= horizon) or not c.get("ticker"):
@@ -663,8 +670,22 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
                 row["px_source"] = option_price(pa)[1] if pa else "none"
                 row["parity"] = parity_gap(ca, pa, row["spot"])
                 row["put_oi"] = (pa or {}).get("openInterest")
+                row["_puts"], row["_atm_put"] = o.get("puts", []), pa
+            row["_expiries"] = r.get("expirationDates", [])
         except Exception as ex:
             row["error"] = type(ex).__name__
+            row["reason"] = _q.CHAIN_ERROR
+            row["reason_detail"] = type(ex).__name__
+        # TYPED, not a class name. The old `error` recorded only the exception
+        # type and the silent paths -- no expiry, no spot, no puts -- recorded
+        # nothing, so every distinct cause reached the report as one sentence.
+        if "reason" not in row:
+            row["reason"] = _q.classify(
+                row.get("spot"), row.get("_expiries"), row.get("expiry"),
+                row.get("_puts"), row.get("_atm_put"), row.get("parity"),
+                PARITY_TOL, feed_live=feed_live)
+        row["reason_why"] = _q.EXPLAIN.get(row["reason"], row["reason"])
+        row["feed_live"] = feed_live
         row["stance"], row["why"] = stance(row["move"], row["skew"], d,
                                            c.get("signals", []))
         # The balance sheet is the only hard-ish floor a pre-revenue name has,

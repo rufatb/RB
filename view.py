@@ -448,23 +448,44 @@ def _watch(d: dict) -> list:
         out.append(f"    {C.YELLOW}⚠{C.RESET} {len(noticker)} scheduled "
                    f"decision(s) with NO ticker — unpriceable:")
         out += _wrap(names, 6, dim=True)
-    if unp:
+    # IS THIS ABOUT THE NAMES, OR ABOUT THE FEED? Run before the options market
+    # opens, every check fails for every name AND for SPY, whose ATM put quotes
+    # 0.00/0.00. Printing that as "N names failed their checks" told the PM half
+    # the calendar was illiquid when the market was shut. quotes.py prices a
+    # control first so the two can be told apart.
+    feed_live = next((r.get("feed_live") for r in priced.values()
+                      if r.get("feed_live") is not None), None)
+    if unp and feed_live is False:
+        out.append(f"    {C.YELLOW}⚠ OPTIONS FEED NOT LIVE{C.RESET} — "
+                   f"{len(unp)} name(s) unpriced for that reason alone")
+        out += _wrap("the control (SPY) has no two-sided quote either, so "
+                     "nothing here says a name is illiquid. Re-run in market "
+                     "hours.", 6, dim=True)
+    elif unp:
+        # Group by the TYPED reason. "failed its checks" was one sentence for
+        # six distinct causes, and the reader could act on none of them.
+        by: dict = {}
+        for t in unp:
+            r = priced.get(t) or {}
+            by.setdefault(r.get("reason_why") or "quote failed its checks",
+                          []).append(t)
         out.append(f"    {C.YELLOW}⚠{C.RESET} {len(unp)} calendar name(s) "
-                   f"unpriced — quotes failed their checks:")
-        # A count of 9 over a list of 8 is a report contradicting itself in
-        # adjacent lines. If the list is trimmed, say by how much.
-        shown, extra = unp[:8], max(0, len(unp) - 8)
-        txt = ", ".join(shown) + (f" +{extra} more" if extra else "")
-        out += _wrap(txt, 6, dim=True)
+                   f"unpriced:")
+        for why, names in sorted(by.items()):
+            shown, extra = sorted(names)[:6], max(0, len(names) - 6)
+            txt = (", ".join(shown) + (f" +{extra} more" if extra else "")
+                   + f" — {why}")
+            out += _wrap(txt, 6, dim=True)
 
     # The `~` in OPPORTUNITIES already carries this per name. Repeating the
     # roster here was five lines saying what one mark says, and repetition is
     # what pushed the things that differ off the screen in the first place.
     shaky = sorted(t for t, r in priced.items()
                    if (((r.get("fv") or {}).get("cross")) or {}).get("faults"))
-    # Point at a name the reader can SEE marked, not one excluded from the
-    # ranking entirely -- it named COGT, which never appears with a ~.
-    seen = d.get("_shown_shaky") or shaky
+    # Point at a name the reader can SEE marked. Falling back to the full
+    # shaky roster printed the hint on a page with no ~ anywhere -- when the
+    # feed is down nothing is ranked, so nothing carries the mark it explains.
+    seen = d.get("_shown_shaky") or []
     if seen:
         out.append(f"      {C.DIM}why a name is marked ~: "
                    f"`python fairvalue.py {seen[0]} --days 60`{C.RESET}")

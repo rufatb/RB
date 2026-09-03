@@ -439,3 +439,14 @@ def test_an_unpriced_book_still_lists_its_positions():
     out = V.render(d)
     assert "UNPRICED" in out
     assert "ZYME" in out and "24.90" in out      # the row itself
+
+
+def test_the_tilde_hint_is_absent_when_nothing_is_marked():
+    """Pre-market nothing ranks, so nothing carries a ~ — and the hint
+    explaining the mark was still printing, pointing at a name not on the
+    page."""
+    d = digest(priced={"COGT": {"ticker": "COGT", "feed_live": False,
+                                "fv": {"fair": 5.0, "cross": {
+                                    "faults": [("LOGNORMAL", "x")]}}}})
+    out = V.render(d)
+    assert "fairvalue.py" not in out

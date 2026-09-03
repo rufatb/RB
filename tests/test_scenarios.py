@@ -171,13 +171,17 @@ def test_a_scoring_failure_says_the_record_is_stale_not_nothing():
 
 def test_a_trimmed_list_says_how_many_it_trimmed():
     """It printed '9 calendar name(s) unpriced' above a list of 8 — a report
-    contradicting itself in adjacent lines."""
+    contradicting itself in adjacent lines.
+
+    Names are now grouped by their TYPED reason, so the trim applies per group;
+    the invariant asserted is unchanged — a trimmed list states the remainder.
+    """
     cal = [{"date": f"2026-10-{d:02d}", "ticker": f"T{d}", "company": "X"}
            for d in range(1, 13)]
     out = V.render(base(cal=cal))
     assert_clean(out)
     assert "12 calendar name(s)" in out
-    assert "+4 more" in out
+    assert "+6 more" in out          # 12 names, 6 shown per reason group
 
 
 @pytest.mark.parametrize("missing", [
@@ -235,3 +239,41 @@ def test_build_offline_mode_renders_without_touching_the_network():
     out = V.render(d)
     assert_clean(out)
     assert "MORNING BRIEF" in out
+
+
+# ── a feed outage is not fourteen illiquid companies ────────────────────────
+
+def test_a_dead_options_feed_is_reported_once_not_per_name():
+    """At 06:47 ET every name on the board failed its checks — and so did SPY,
+    whose ATM put quoted 0.00/0.00. Reporting that per name told the PM half
+    the calendar was illiquid when the options market was simply shut."""
+    priced = {f"T{i}": {"ticker": f"T{i}", "feed_live": False}
+              for i in range(1, 7)}
+    cal = [{"date": f"2026-10-0{i}", "ticker": f"T{i}", "company": "X"}
+           for i in range(1, 7)]
+    out = V.render(base(cal=cal, priced=priced))
+    assert_clean(out)
+    assert "OPTIONS FEED NOT LIVE" in out
+    # the sentence is wrapped, so compare on normalised whitespace rather than
+    # weakening the assertion to a fragment
+    flat = " ".join(out.split())
+    assert "nothing here says a name is illiquid" in flat
+    assert "failed its checks" not in out
+
+
+def test_with_a_live_feed_names_are_grouped_by_their_typed_reason():
+    """'failed its checks' was one sentence for six distinct causes, and the
+    reader could act on none of them."""
+    priced = {
+        "AAA": {"ticker": "AAA", "feed_live": True,
+                "reason_why": "no listed expiry covers the decision date"},
+        "BBB": {"ticker": "BBB", "feed_live": True,
+                "reason_why": "no open interest on the at-the-money strike"},
+    }
+    cal = [{"date": "2026-10-01", "ticker": "AAA", "company": "X"},
+           {"date": "2026-10-02", "ticker": "BBB", "company": "Y"}]
+    out = V.render(base(cal=cal, priced=priced))
+    assert_clean(out)
+    flat = " ".join(out.split())
+    assert "no listed expiry covers the decision date" in flat
+    assert "no open interest on the at-the-money strike" in flat

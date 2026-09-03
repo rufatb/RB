@@ -3876,6 +3876,61 @@ what selection costs in spread — is not measurable on this sample at all,
 because spreads were never stored before day-82; it is now accruing
 prospectively via `ledger.spread_bps` and will be answerable later.
 
+## Day-82: "half the calendar is unpriceable" was the market being shut
+
+§5b said fix coverage first — roughly half the scheduled decisions were coming
+back unpriceable. Diagnosing it per name reversed the conclusion.
+
+**Every chain fetch succeeded.** Every in-horizon name returned a spot, a set
+of expiries and a put chain. Nothing failed to fetch. What failed was the
+quality checks, and the failure was universal:
+
+    IONS  19d  OK spot=61.33  put=5.2   | FAILS: px_source=last, oi=0
+    CYTK  72d  OK spot=71.93  put=5.4   | FAILS: px_source=last, oi=0
+    PRAX 115d  OK spot=357.50 put=52.5  | FAILS: px_source=last, parity, oi=0
+
+Seven of seven with no two-sided quote and zero open interest, including large
+liquid biotechs. That is not a market fact, so the obvious next step was a
+control — price something whose liquidity is not in question:
+
+    SPY   ATM put  bid=0.0  ask=0.0  openInterest=0  volume=7488
+    AAPL  ATM put  bid=0.0  ask=0.0  openInterest=0  volume=2139
+
+**SPY options are the most liquid contracts in existence.** A zero two-sided
+quote on SPY is a fact about the FEED, not about SPY: Yahoo's free chain zeroes
+bid/ask and open interest outside market hours, and the run was at 06:47 ET.
+Volume comes through, which is why the outage is invisible without a control.
+
+So the report had been telling the portfolio manager that half the calendar was
+unpriceable — a sentence that reads as *these companies are illiquid* — when
+what had happened was that the options market was closed. During market hours
+the same names price normally, which the 10:40 and 10:49 runs on 2026-09-02
+confirm.
+
+### What shipped
+
+`quotes.py`: one option path with **typed** failure reasons (NO_TICKER,
+CHAIN_ERROR, NO_SPOT, NO_EXPIRIES, NO_EXPIRY_AFTER_EVENT, NO_PUTS,
+NO_TWO_SIDED, ZERO_OI, PARITY_BREAK, FEED_CLOSED) replacing a single
+`except Exception` that recorded the exception CLASS, plus silent paths that
+recorded nothing at all.
+
+The design idea is the one this repo already applies to statistics: **a
+positive control.** `feed_is_live()` prices SPY first, and reasons are split
+into those that are properties of the NAME and those that are properties of the
+FEED. `NO_TWO_SIDED` and `ZERO_OI` are deliberately ambiguous in isolation —
+they mean opposite things depending on the control, which is exactly why the
+control exists.
+
+The report now prints **one line** for an outage instead of a roster of
+companies, and groups genuine failures by their typed cause so the reader can
+act on them. No fallback pricing, no synthetic bid/ask, no stale quote carried
+forward: when the feed is shut the answer is that it is shut.
+
+**Coverage during market hours was never the problem it appeared to be.** The
+remaining genuine gaps are one decision with no resolvable ticker (Bristol
+Myers Squibb, 2027-05-13) and names outside the pricing horizon.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
