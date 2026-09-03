@@ -127,9 +127,9 @@ densest_stats(walk_forward_norm(df61, cfg, normalize=True),  "\n61-name PER-NAME
 
 # year-long 20-name data: does normalization preserve the validated edge?
 rows = []
-for f in sorted(os.listdir(vd.DATA_DIR)):
+for f in sorted(os.listdir(vd.require_data())):
     if f.endswith(".json"):
-        tsx, bars = vd.load_bars(os.path.join(vd.DATA_DIR, f))
+        tsx, bars = vd.load_bars(os.path.join(vd.require_data(), f))
         rows += r945.session_rows(bars, tsx)
 dfyear = pd.DataFrame(rows)
 densest_stats(walk_forward_norm(dfyear, cfg, normalize=True), "\nYEAR/20-name NORMALIZED (4 quarters — must stay >=50% in all)")

@@ -52,6 +52,38 @@ DATA_DIR = os.environ.get(
     "/tmp/claude-0/-home-user-RB/d95b4cd3-d26b-5086-a494-1dd8151521a7/scratchpad/td_data")
 
 
+def require_data(where: str = None) -> str:
+    """The bar cache, or an actionable message. Never a bare FileNotFoundError.
+
+    DAY-82. The default above is a SCRATCHPAD path belonging to a session that
+    ended long ago, and the container is reset between sessions — so this
+    harness and the three that import it could not re-run at all, and said so
+    only as `FileNotFoundError: .../td_data`. The inventory claimed these files
+    were the reproducibility layer; for four of them that claim was false.
+
+    The data is not recoverable from this repo (it was never committed — the
+    5-minute bar cache is large and came from a paid feed). Point TD_DATA_DIR
+    at a rebuilt cache to re-run. Saying that plainly is the difference between
+    a harness that is BLOCKED and one that is broken.
+    """
+    d = where or DATA_DIR
+    if not os.path.isdir(d):
+        raise SystemExit(
+            f"{os.path.basename(sys.argv[0]) or 'this harness'} needs the "
+            f"5-minute bar cache and it is not present.\n"
+            f"  looked in : {d}\n"
+            f"  fix       : set TD_DATA_DIR to a directory of session JSON "
+            f"files, e.g.\n"
+            f"              TD_DATA_DIR=/path/to/td_data python "
+            f"{os.path.basename(sys.argv[0])}\n"
+            f"  note      : the default path is a scratchpad from an earlier "
+            f"session and is gone.\n"
+            f"              The cache was never committed, so this study "
+            f"cannot be re-derived\n"
+            f"              from this repository alone. See INVENTORY.md.")
+    return d
+
+
 def load_bars(path):
     d = json.load(open(path))
     rows = d["values"]

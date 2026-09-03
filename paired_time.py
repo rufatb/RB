@@ -9,7 +9,7 @@ import validate_deep as vd, validate_pair as vp, validate_time_deep as vtd
 from dashboard import load_config
 
 cfg = load_config("/home/user/RB/config.yaml")
-raw=[vd.load_bars(os.path.join(vd.DATA_DIR,f)) for f in sorted(os.listdir(vd.DATA_DIR)) if f.endswith(".json")]
+raw=[vd.load_bars(os.path.join(vd.require_data(),f)) for f in sorted(os.listdir(vd.require_data())) if f.endswith(".json")]
 
 def legs_at(i):
     rows=[]

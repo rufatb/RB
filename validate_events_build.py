@@ -60,10 +60,29 @@ def one(s):
     df = df.reset_index().rename(columns={"index": "date"})
     return df
 
-with ThreadPoolExecutor(max_workers=12) as ex:
-    rows = [d for d in ex.map(one, UNIVERSE) if d is not None]
-print(f"fetched {len(rows)}/{len(UNIVERSE)} names")
-all_df = pd.concat(rows, ignore_index=True)
-all_df.to_csv(f"{OUT}/daily.csv", index=False)
-print(f"\ndaily set: {len(all_df):,} ticker-days, {all_df.t.nunique()} names, "
-      f"{all_df.date.nunique()} sessions ({all_df.date.min()}..{all_df.date.max()})")
+def build():
+    """Harvest the panel. CALLED FROM __main__ ONLY (day-82).
+
+    This ran at MODULE LEVEL: importing this file fired 133 threaded HTTP
+    requests and wrote a 38MB csv. An inventory pass that merely imported every
+    module to see which ones still load therefore triggered a full ten-year
+    harvest as a side effect. Importing a module must never do that -- and a
+    harness whose data appears by accident is one whose provenance nobody can
+    state afterwards.
+    """
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        rows = [d for d in ex.map(one, UNIVERSE) if d is not None]
+    print(f"fetched {len(rows)}/{len(UNIVERSE)} names")
+    if not rows:
+        raise SystemExit("no names fetched — refusing to write an empty panel")
+    all_df = pd.concat(rows, ignore_index=True)
+    out = f"{OUT}/daily.csv"
+    all_df.to_csv(out, index=False)
+    print(f"\ndaily set: {len(all_df):,} ticker-days, {all_df.t.nunique()} names, "
+          f"{all_df.date.nunique()} sessions ({all_df.date.min()}..{all_df.date.max()})")
+    print(f"wrote {out}")
+    return all_df
+
+
+if __name__ == "__main__":
+    build()

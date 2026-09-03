@@ -10,3 +10,6 @@ brief.log
 
 # transient run logs — these mutate on every run and are not history
 .runlogs/
+
+# large rebuildable data panels — regenerate with validate_events_build.py
+daily.csv

@@ -40,7 +40,24 @@ Usage:
 """
 
 import pandas as pd, numpy as np
-df=pd.read_csv("daily.csv")
+def _require_daily(path="daily.csv"):
+    """The daily-bar panel, or an actionable message (day-82).
+
+    This harness read `daily.csv` from the CURRENT WORKING DIRECTORY at import
+    time and the file is not committed, so the study could not re-run and said
+    so only as `FileNotFoundError: daily.csv`. It is rebuildable, unlike the
+    5-minute cache, so the message names the command that rebuilds it.
+    """
+    import os
+    if not os.path.exists(path):
+        raise SystemExit(
+            f"this study needs {path}, which is not committed.\n"
+            f"  rebuild : python validate_events_build.py\n"
+            f"  then    : re-run this script from the same directory\n"
+            f"  see     : INVENTORY.md")
+    return path
+
+df=pd.read_csv(_require_daily())
 df=df.sort_values(["t","date"]).reset_index(drop=True)
 g=df.groupby("t",group_keys=False)
 df["prev_c"]=g["c"].shift(1)
