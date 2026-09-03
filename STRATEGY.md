@@ -4036,6 +4036,66 @@ report must keep saying so rather than reconciling them.
 `corrected()` is retained — deleting it would delete the record of why the
 correction was attempted — with a docstring that now states what it is worth.
 
+## Day-83b: post-announcement drift in SHARES — UNDERPOWERED both arms
+
+The portfolio manager trades shares only, long or short, on a morning
+recommendation with a hold duration. That withdrew the option expression
+(`PREREGISTER_day83.md`) **unrun**, and forced the question back onto ground
+day-51 had already rejected (#32).
+
+Day-51's closing sentence is what made a re-ask legitimate:
+
+> *A duration field cannot manufacture event awareness out of OHLCV bars.*
+
+The engine now has the event feed it lacked then. With 1,097 dated FDA
+decisions carrying a known OUTCOME, **the duration is a fact** (it runs from
+the announcement) and **the direction is known at entry** (the 8-K has already
+said approved or rejected). This is not predicting a binary — the binary has
+resolved and is public. It is the classic post-announcement drift question,
+and it is expressible in shares.
+
+**Disclosed before running:** `validate_catalyst` has computed an `after5`
+column since day-68, so this is a re-analysis of an existing column, not a
+virgin test. It had never been written up and no result from it had been
+quoted, but any adoption would have been provisional pending prospective
+confirmation.
+
+### Result — 611 usable events, 195 names, 5 sessions from the first tradable close
+
+| arm | n | raw | vs market | verdict |
+|---|---:|---:|---:|---|
+| **CRL** | 72 | −0.60% | **−0.84%** [−3.04, +1.46] | UNDERPOWERED, MDE 3.44% |
+| **APPROVAL** | 539 | −0.09% | **−0.41%** [−1.32, +0.51] | UNDERPOWERED, MDE 1.40% |
+
+**Both observed values sit INSIDE their placebo** (random dates, same names:
+CRL [−2.69, +4.46]; approval [−0.94, +3.50]). The positive controls settle it:
+a planted **1.00%** drift registers at only **z=0.8** on the CRL arm and
+**z=2.1** on the approval arm — neither reaches the bar.
+
+**How much data would settle it:** ~908 CRL events (have 72) and ~1,076
+approval events (have 539). The repo holds 120 CRLs in total, so the rejection
+arm needs roughly **12x more decisions than exist in the harvest**. That arm is
+not going to become answerable by waiting.
+
+Net of a 0.10% round-trip share spread both arms are negative (−0.94% and
+−0.51%), and neither is distinguishable from zero.
+
+**VERDICT: UNDERPOWERED, not refuted (rule 10).** There is no visible
+post-announcement drift to trade in either direction, and the data cannot
+resolve one below 1.4% (approvals) or 3.4% (rejections). **Nothing adopted; the
+morning report continues to make no multi-day directional recommendation.**
+
+### A defect found while proving the report never errors
+
+The dead-network scenario test regressed. Under a total feed outage
+`hist_rows` is empty, so `pd.DataFrame([])` has no columns and
+`train.groupby("t")` raised **`KeyError: 't'`** — propagating straight out of
+`r945.run` and out of `brief.build`, which is the one path the report is
+guaranteed never to show the portfolio manager. A total fetch failure is a
+**coverage failure**, a thing this engine already knows how to report, not an
+exception. Now fails closed with a stated reason that distinguishes a data
+outage from a judgement about the names.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

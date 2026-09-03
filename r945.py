@@ -670,6 +670,25 @@ def run(cfg, workers=8):
                          "r0": (p945 / o - 1) * 100, "gap": gap,
                          "vp": (v15 / med_v) if med_v else None})
     train = pd.DataFrame(hist_rows)
+    # NO TRAINING DATA AT ALL. Under a dead feed `hist_rows` is empty, so this
+    # is a DataFrame with no columns and `groupby("t")` raises KeyError: 't'.
+    # DAY-83: that propagated out of `run()` and out of `brief.build()` -- the
+    # one path the report is guaranteed never to show the PM. A total fetch
+    # failure is a coverage failure, which this file already knows how to
+    # report; it is not an exception (rule 1, rule 2).
+    if train.empty or "t" not in train.columns:
+        # `live` is the rows fetched for TODAY; `out` is built further down and
+        # is not in scope yet.
+        return {"now": now.isoformat(timespec="seconds"), "n_names": len(live),
+                "longs": [], "shorts": [], "excluded": [], "pair": None,
+                "min_p": min_p, "too_early": False,
+                "coverage_fail": (
+                    f"NO TRAINING HISTORY could be fetched for any of the "
+                    f"{len(uni)} names — the model cannot be fitted, so no "
+                    f"board is published. This is a data outage, not a "
+                    f"judgement about the names."),
+                "source": src, "source_note": src_note,
+                "fetch_errors": fetch_errors}
     train["vp"] = train.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
 
     # Pooled path expectations: the normal worst swing AGAINST each side

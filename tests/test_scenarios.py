@@ -277,3 +277,21 @@ def test_with_a_live_feed_names_are_grouped_by_their_typed_reason():
     flat = " ".join(out.split())
     assert "no listed expiry covers the decision date" in flat
     assert "no open interest on the at-the-money strike" in flat
+
+
+def test_a_total_history_outage_is_a_coverage_failure_not_an_exception():
+    """DAY-83. Under a dead feed `hist_rows` is empty, so `pd.DataFrame([])`
+    has no columns and `groupby("t")` raised KeyError: 't' — straight out of
+    r945.run and out of brief.build, the one path the report is guaranteed
+    never to show the PM. A total fetch failure is a coverage failure, which
+    this engine already knows how to report."""
+    import pandas as pd
+    import r945
+    assert pd.DataFrame([]).empty          # the shape that caused it
+    flat = " ".join(open(r945.__file__).read().split())
+    # fragments, because the message is assembled across f-string literals
+    assert "NO TRAINING HISTORY" in flat
+    assert "the model cannot be fitted" in flat
+    assert "data outage" in flat
+    # and the guard must precede the groupby it protects
+    assert flat.index("NO TRAINING HISTORY") < flat.index('train.groupby("t")')
