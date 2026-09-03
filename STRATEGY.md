@@ -3798,6 +3798,84 @@ still says so.
 **Shipped:** the pair rebuild, `ledger.leg`, the UNPRICED headline, a quote
 retry, 10 tests (646 -> 651).
 
+## Day-82: does the SELECTION rule earn its place? — UNDERPOWERED (not a rejection)
+
+Pre-registered in `PREREGISTER_day82.md` **before any result was computed**,
+including the expectation that it would come back underpowered.
+
+### The experiment was already in the ledger
+
+`r945.publish` has been recording every candidate that qualified at the bar,
+not only the two it traded:
+
+    role="pair"    the legs the density rule SELECTED, and traded
+    role="board"   qualified the same day, same universe, same bar, NOT selected
+
+Both are scored against the same 15:59 close, which makes the board rows a
+ready-made counterfactual — *a qualifying name we did not pick* — and turns
+38 sessions of accrued record into an out-of-sample test of the SELECTION RULE
+rather than of the model. No new data was needed.
+
+**Sample: 93 selected legs vs 215 qualified-but-not-selected, 38 sessions,
+21 names, 2026-07-08 to 2026-09-01.**
+
+### Result
+
+| | selected (density) | not selected |
+|---|---:|---:|
+| decisive hit rate | **44.7%** | **53.1%** |
+| mean capture/leg | **−0.108%** | **+0.088%** |
+
+    hit rate      −8.28pp   95% [−21.95, +5.88]   placebo [−14.77, +7.08]
+    mean capture  −0.20%    95% [−0.52, +0.11]    placebo [−0.35, +0.13]
+
+**VERDICT: UNDERPOWERED.** Both point estimates run against density selection
+— the legs the rule chose did worse than the ones it passed over — but both
+intervals cover zero and **both observed values sit inside the placebo
+distribution**, so a random split of the same legs reproduces the effect. The
+positive control settles it: a planted 10pp lift registers at only **z=1.4**,
+so this harness cannot see an effect two and a half times larger than the one
+observed.
+
+Reporting this as a refutation of density selection would violate rule 10, and
+it is not one. It is a bound.
+
+**When it stops being a bound: ~182 sessions.** z grows as √n, so reaching
+|t| ≥ 3 at this effect size needs about 4.8× the current sample. At one session
+a day that is roughly seven more months, and the question answers itself
+without anyone doing anything except letting the ledger accrue.
+
+### Context that makes the bound worth having
+
+Density selection was adopted on day-9 from a walk-forward replay scoring
+**68.0% discovery / 69.2% confirm** (n=89, p≈0.0007). The live record on the
+same rule is **47%**. This study cannot say the day-9 result was wrong; it can
+say that after 38 sessions there is no visible trace of a 20-point advantage,
+and it can say exactly how long until that is answerable.
+
+### Two methodological corrections made during the study
+
+**The placebo was shuffling the wrong thing.** It permuted the pair/board label
+across the pooled sample, but `r945` assigns it *within* each session — exactly
+k legs out of that day's qualifiers. Pooling mixes sessions, destroys the
+within-day structure and returns an interval that is too narrow, which would
+make the observed difference look more surprising than it is. Shuffling within
+session widened it from [−10.98, +10.90] to [−14.77, +7.08].
+
+**A test asserted a null interval must cover zero, and failed on seed 4.** That
+is not a harness bug — a 95% interval is *supposed* to miss 5% of the time — so
+the test was flaky by construction and the obvious "fix" of changing the seed
+would have buried the fact that nobody had measured the rate. Replaced with a
+calibration check across 40 independent nulls: **5% false positives, exactly
+nominal**, difference centred at +0.003.
+
+### What shipped
+
+`validate_selection.py` and 15 tests. **No change to the selection rule.** H2 —
+what selection costs in spread — is not measurable on this sample at all,
+because spreads were never stored before day-82; it is now accruing
+prospectively via `ledger.spread_bps` and will be answerable later.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
