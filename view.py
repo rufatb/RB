@@ -500,6 +500,20 @@ def _record(d: dict) -> list:
         out.append(f"    intraday pair  {col}{hits}/{len(pair)} "
                    f"({rate:.0f}%){C.RESET}   "
                    f"{C.DIM}a coin flip, and expected to stay one{C.RESET}")
+        # Never the hit rate alone (ACCURACY.md §2).
+        try:
+            import ledger as _lg
+            a = _lg.accuracy(pair)
+            if a["mean"] is not None:
+                net = (f"net {a['net_mean']:+.3f}% on {a['net_n']}"
+                       if a["net_mean"] is not None
+                       else f"net n/a ({a['net_unpriced']} legs predate the "
+                            f"spread column)")
+                out.append(f"    {C.DIM}mean {a['mean']:+.3f}%/leg  ·  {net}"
+                           f"{C.RESET}")
+        except Exception as e:
+            out.append(f"    {C.YELLOW}⚠ accuracy unavailable "
+                       f"({type(e).__name__}){C.RESET}")
         try:
             import ledger
             # From the digest: computed once by build(), never re-downloaded.

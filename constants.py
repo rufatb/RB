@@ -121,6 +121,17 @@ REGISTRY = {
         CITED, None, 54, None,
         "FDA first-cycle review data, NOT measured here — see TENSIONS"),
 
+    # accuracy definitions — day-82, ACCURACY.md
+    "ledger.DECISIVE_PCT": Const(
+        DESIGN, None, 82, None,
+        "|capture| below this is a scratch, excluded from the decisive hit "
+        "rate and counted (ACCURACY.md §1); sets the number printed beside "
+        "every pick"),
+    "cost.TYPICAL_MOVE_PCT": Const(
+        MEASURED, None, 72, None,
+        "typical intraday move used to express spread as a share of it; NO "
+        "SCRIPT re-derives it"),
+
     # the measured base rate — day-71
     "baserate.SERIAL_MIN": Const(DESIGN, None, 71, None),
     "baserate.SINGLE_MAX": Const(DESIGN, None, 71, None),

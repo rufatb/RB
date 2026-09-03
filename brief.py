@@ -362,6 +362,11 @@ def render_record(rows: list, tides: dict | None = None) -> str:
     hits = sum(int(r["hit"]) for r in pair)
     L = ["▎RECORD", f"   pair legs {hits}/{len(pair)} "
                     f"({hits/len(pair)*100:.0f}%)"]
+    # ACCURACY.md §2: hit rate, mean capture and mean NET of spread, together.
+    # Any one of them can move without the others, so reporting one at a time
+    # is how a change that raised the hit rate while paying more spread would
+    # read as an improvement.
+    L.append("   " + ledger.accuracy_line(pair).strip())
     L.append("   " + ledger.decisive_line(pair).strip())
     tides = ledger._tides_for_report() if tides is None else tides
     if tides:

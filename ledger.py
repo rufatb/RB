@@ -46,8 +46,12 @@ LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
 # DAY-81: `leg` distinguishes the PRIMARY pick from the second leg that splits
 # the same half. Without it a re-read cannot tell which name the board actually
 # instructed, only that both were on it.
+# DAY-82: `spread_bps` is the round-trip cost measured AT PUBLISH. Net-of-cost
+# accuracy (ACCURACY.md §2) is otherwise uncomputable after the fact: the spread
+# on the day a leg was published is not recoverable later, and substituting a
+# current quote would describe one day with another day's data.
 FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945", "role",
-          "leg", "weight", "shares", "r1", "hit"]
+          "leg", "weight", "shares", "spread_bps", "r1", "hit"]
 
 
 PRINTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "universe_prints.csv")
@@ -142,6 +146,8 @@ def append_picks(picks: list, date: str, path: str = LEDGER) -> int:
                      "p_sided": f"{p['p_sided']:.3f}", "confidence": p.get("confidence", "n/a"),
                      "p945": f"{p['p945']:.4f}", "role": p.get("role", "board"),
                      "leg": p.get("leg", ""),
+                     "spread_bps": (f"{p['spread_bps']:.1f}"
+                                    if p.get("spread_bps") is not None else ""),
                      "weight": f"{w:.4f}" if w is not None else "",
                      "shares": str(int(sh)) if sh else "",
                      "r1": "", "hit": ""})
@@ -277,7 +283,90 @@ def live_summary(rows: list, last_n: int = 20) -> dict | None:
             "short_n": len(shorts), "short_hits": sum(int(r["hit"]) for r in shorts)}
 
 
-def decisive_line(pair_rows: list, threshold: float = 0.10) -> str:
+# DESIGN, registered in constants.py (day-82). It sets which legs count as
+# decisive and therefore the hit rate the report prints beside every pick, so
+# it is not allowed to sit as an unnamed default argument. See ACCURACY.md §1.
+DECISIVE_PCT = 0.10
+
+
+def capture(row: dict) -> float | None:
+    """Signed capture for one leg, in percent. LONG keeps sign, SHORT flips."""
+    if row.get("r1") in (None, ""):
+        return None
+    try:
+        return float(row["r1"]) * (1 if row["side"] == "LONG" else -1)
+    except (ValueError, KeyError):
+        return None
+
+
+def accuracy(pair_rows: list, threshold: float = None) -> dict:
+    """The three figures ACCURACY.md §1-2 requires be reported TOGETHER.
+
+    A hit rate alone is not a P&L claim, and a gross return alone is not a cost
+    claim. Every one of the three can move without the others, and reporting
+    one at a time is how a change that raised the hit rate while paying more
+    spread would look like an improvement.
+
+    `net` uses ONLY the spread stored on each leg at publish (day-82). Rows
+    predating that column are excluded from the net figure and counted in
+    `net_unpriced`, never back-filled from a current quote -- the spread on the
+    day a leg was published is not recoverable, and substituting today's would
+    describe one session with another session's data.
+    """
+    threshold = DECISIVE_PCT if threshold is None else threshold
+    caps = [(r, capture(r)) for r in pair_rows]
+    caps = [(r, c) for r, c in caps if c is not None]
+    out = {"n": len(caps), "hits": 0, "rate": None, "mean": None,
+           "decisive_n": 0, "decisive_hits": 0, "decisive_rate": None,
+           "scratches": 0, "net_mean": None, "net_n": 0, "net_unpriced": 0,
+           "threshold": threshold}
+    if not caps:
+        return out
+    out["hits"] = sum(1 for _, c in caps if c > 0)
+    out["rate"] = out["hits"] / len(caps)
+    out["mean"] = sum(c for _, c in caps) / len(caps)
+
+    big = [(r, c) for r, c in caps if abs(c) >= threshold]
+    out["scratches"] = len(caps) - len(big)
+    out["decisive_n"] = len(big)
+    if big:
+        out["decisive_hits"] = sum(1 for _, c in big if c > 0)
+        out["decisive_rate"] = out["decisive_hits"] / len(big)
+
+    nets = []
+    for r, c in caps:
+        sp = (r.get("spread_bps") or "").strip()
+        if not sp:
+            out["net_unpriced"] += 1
+            continue
+        try:
+            nets.append(c - float(sp) / 100.0)   # bps -> percent
+        except ValueError:
+            out["net_unpriced"] += 1
+    out["net_n"] = len(nets)
+    if nets:
+        out["net_mean"] = sum(nets) / len(nets)
+    return out
+
+
+def accuracy_line(pair_rows: list) -> str:
+    """One line carrying all three. Never one figure without the others."""
+    a = accuracy(pair_rows)
+    if not a["n"]:
+        return "  accuracy            : no scored legs yet"
+    parts = [f"{a['hits']}/{a['n']} ({a['rate']*100:.0f}%)",
+             f"mean {a['mean']:+.3f}%/leg"]
+    if a["net_mean"] is not None:
+        parts.append(f"net of spread {a['net_mean']:+.3f}% "
+                     f"(on {a['net_n']} of {a['n']})")
+    else:
+        parts.append(f"net of spread: not computable — {a['net_unpriced']} "
+                     "leg(s) predate the spread column")
+    return "  accuracy            : " + "  ·  ".join(parts)
+
+
+
+def decisive_line(pair_rows: list, threshold: float = None) -> str:
     """Hit rate EXCLUDING economic scratches (day-35).
 
     The `hit` column is a pure sign test, so a leg that finishes +0.015%% counts
@@ -288,6 +377,7 @@ def decisive_line(pair_rows: list, threshold: float = 0.10) -> str:
     A coin landing on its edge is not a win. This line reports the hit rate over
     legs that actually moved, and it is deliberately the LESS flattering number:
     it exists to remove an artifact, not to add one. Pure + testable."""
+    threshold = DECISIVE_PCT if threshold is None else threshold
     scored = [r for r in pair_rows if r.get("r1") not in (None, "")]
     if len(scored) < 10:
         return "  decisive legs       : (needs more scored legs)"
