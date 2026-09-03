@@ -453,3 +453,13 @@ def test_the_tilde_hint_is_absent_when_nothing_is_marked():
                                     "faults": [("LOGNORMAL", "x")]}}}})
     out = V.render(d)
     assert "fairvalue.py" not in out
+
+
+def test_wrapped_lines_indent_their_continuations():
+    """Every line shared one pad, so a wrapped warning read as two bullets at
+    the same level and hid where one item ended and the next began."""
+    V.C.setup(force=False)
+    lines = V._wrap("a " * 60, 4)
+    assert len(lines) > 1
+    assert lines[0].startswith("    ") and lines[0][4] != " "
+    assert all(l.startswith("      ") for l in lines[1:])

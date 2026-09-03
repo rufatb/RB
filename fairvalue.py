@@ -50,8 +50,11 @@ defensible, so ONE multiplier is used, the name's tercile is still printed, and
 the unresolved question is printed beside it rather than folded into the price.
 
 WHAT IS MEASURED AND WHAT IS NOT, stated plainly because the distinction is the
-whole value of this file. The fair values ARE measured: 605 events and 7,440
-random windows. Whether TRADING the gap between fair value and market price
+whole value of this file. The fair values ARE measured: 605 events across 184
+names, 240 resampled windows per name, 2,000 name-clustered bootstrap
+replicates. (This paragraph said "7,440 random windows" until day-82, a figure
+no committed script produces — the module was asserting a measurement that no
+longer existed.) Whether TRADING the gap between fair value and market price
 makes money is NOT backtested and cannot be with free data — there is no
 historical option price series available without paying for one. This prints a
 comparison, not a track record.
@@ -100,7 +103,15 @@ TERCILE_OBSERVED = {"low": 2.09, "mid": 2.09, "high": 2.82}
 TERCILE_EDGES = (1.96, 2.88)
 TERCILE_MDE = 1.09                    # smallest difference this data resolves
 N_EVENTS, N_NAMES = 605, 184
-N_RANDOM = 7440
+# RETIRED day-82. This was `N_RANDOM = 7440`, printed in the report as
+# "measured on ... 7,440 random windows" — and nothing could re-derive it. The
+# committed script draws 240 resampled windows per name inside put_fair_value
+# and 2,000 name-clustered bootstrap replicates; there is no construction in it
+# that yields 7,440. It was a day-79 figure from a study whose script was never
+# committed, so the sentence asserted a measurement that no longer existed.
+# These two ARE what validate_eventmult.py does, and both are re-derivable.
+RESAMPLES_PER_NAME = 240
+BOOT_REPLICATES = 2000
 SAMPLE_TRADING_DAYS = 3               # the event window this was measured on
 
 # Back-compat for callers that indexed by bucket. Every bucket now returns the
@@ -393,7 +404,9 @@ def render(actual_pct: float | None, fv: dict | None, days: int) -> list:
                "priced in — shown as an open question, not an adjustment.",
                lead="          ", cont="          ")
     L += _wrap(f"measured on {N_EVENTS} decisions across {N_NAMES} names and "
-               f"{N_RANDOM:,} random windows. The FAIR VALUE is measured; "
+               f"{RESAMPLES_PER_NAME} resampled windows per name and "
+               f"{BOOT_REPLICATES:,} name-clustered bootstrap replicates. "
+               "The FAIR VALUE is measured; "
                "whether trading the gap pays is NOT backtested — no free "
                "historical option prices exist.",
                lead="          ", cont="          ")

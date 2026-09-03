@@ -86,9 +86,13 @@ REGISTRY = {
         "smallest tercile gap this sample can resolve"),
     "fairvalue.N_EVENTS": Const(MEASURED, "validate_eventmult.py", 81, 605),
     "fairvalue.N_NAMES": Const(MEASURED, "validate_eventmult.py", 81, 184),
-    "fairvalue.N_RANDOM": Const(
-        MEASURED, None, 79, 7440,
-        "NO SCRIPT re-derives this; day-79's random-window count"),
+    "fairvalue.RESAMPLES_PER_NAME": Const(
+        DESIGN, "validate_eventmult.py", 82, None,
+        "windows resampled per name inside put_fair_value; replaced the "
+        "unprovenanced N_RANDOM=7440, which no committed script produced"),
+    "fairvalue.BOOT_REPLICATES": Const(
+        DESIGN, "validate_eventmult.py", 82, None,
+        "name-clustered bootstrap replicates"),
     "fairvalue.DISAGREE_TOL": Const(
         DESIGN, None, 81, None, "pre-registered, PREREGISTER_day81.md"),
     "fairvalue.DRIFT_TOL": Const(

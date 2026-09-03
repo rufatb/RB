@@ -24,6 +24,7 @@
     "catalyst.CRL_WORST": -74.95,
     "catalyst.GAP_WARN": 0.15,
     "cost.TYPICAL_MOVE_PCT": 0.97,
+    "fairvalue.BOOT_REPLICATES": 2000,
     "fairvalue.DISAGREE_TOL": 0.4,
     "fairvalue.DRIFT_TOL": 0.01,
     "fairvalue.EVENT_MULT_CI": [
@@ -33,7 +34,7 @@
     "fairvalue.EVENT_MULT_POINT": 2.45,
     "fairvalue.N_EVENTS": 605,
     "fairvalue.N_NAMES": 184,
-    "fairvalue.N_RANDOM": 7440,
+    "fairvalue.RESAMPLES_PER_NAME": 240,
     "fairvalue.TAIL_TOL": 0.25,
     "fairvalue.TERCILE_EDGES": [
       1.96,

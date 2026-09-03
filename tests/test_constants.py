@@ -59,11 +59,24 @@ def test_every_registry_entry_actually_exists():
 
 
 def test_measured_numbers_without_a_script_are_named():
-    """Day-79's constants had none for two days and could not be checked."""
+    """Day-79's constants had none for two days and could not be checked.
+
+    This asserted that a SPECIFIC gap existed (fairvalue.N_RANDOM), so closing
+    that gap broke the test — a test that penalises fixing the thing it exists
+    to detect. It now checks the MECHANISM against a synthetic registry, and
+    separately that the live one is clean.
+    """
+    reg = {"catalyst.CRL_N": K.Const(K.MEASURED, None, 77),        # no script
+           "catalyst.CRL_T": K.Const(K.MEASURED, "validate_catalyst.py", 77),
+           "catalyst.ADOPT_T": K.Const(K.DESIGN, None, 54)}
+    assert K.unprovenanced(reg) == ["catalyst.CRL_N"]
+
+
+def test_the_live_registry_has_no_unprovenanced_measured_values():
+    """§7's Definition of Done. A measured number with no script that
+    re-derives it is a claim wearing a measurement's clothes."""
     orphans = K.unprovenanced()
-    assert "fairvalue.N_RANDOM" in orphans
-    for k in orphans:
-        assert K.REGISTRY[k].kind == K.MEASURED
+    assert orphans == [], f"unprovenanced: {orphans}"
 
 
 def test_the_re_measured_constants_all_carry_their_script():

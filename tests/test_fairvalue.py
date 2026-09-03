@@ -151,11 +151,44 @@ def test_verdict_boundaries_and_the_unpriced_fallback():
 
 
 def test_render_says_what_is_measured_and_what_is_not():
-    out = "\n".join(F.render(4.0, F.fair_put(CLEAN, 21), 21))
+    # normalised: the sentence wraps, and where it wraps changed when the
+    # sample description was corrected on day-82
+    out = " ".join(" ".join(F.render(4.0, F.fair_put(CLEAN, 21), 21)).split())
     assert "NOT backtested" in out
+    assert "FAIR VALUE is measured" in out
 
 
 def test_render_warns_on_a_planted_crash():
     fv = F.fair_put(CRASHED, 21)
     out = "\n".join(F.render(4.0, fv, 21))
     assert "⚠" in out and "lognormal" in out.lower()
+
+
+def test_the_sample_description_matches_what_the_script_actually_draws():
+    """`N_RANDOM = 7440` was printed as "measured on ... 7,440 random windows"
+    and no committed script produced it — a day-79 figure from a study whose
+    code was never committed, asserted long after it stopped being derivable.
+    """
+    import validate_eventmult as V
+    assert not hasattr(F, "N_RANDOM"), "the unprovenanced figure came back"
+    assert F.BOOT_REPLICATES == V.BOOT
+    assert F.RESAMPLES_PER_NAME == 240      # put_fair_value's default
+    out = "\n".join(F.render(4.0, F.fair_put(CLEAN, 21), 21))
+    assert "7,440" not in out
+    assert "bootstrap replicates" in out
+
+
+def test_the_module_docstring_retracts_the_figure_rather_than_asserting_it():
+    """A docstring asserting what the code does not do is the same defect one
+    layer up, and it is where the claim survived longest.
+
+    The number may still APPEAR — saying "this said 7,440 until day-82" is how
+    the record is kept — but only inside the retraction. Asserting its mere
+    absence would have forced deleting the explanation along with the claim.
+    """
+    doc = " ".join((F.__doc__ or "").split())
+    if "7,440" in doc:
+        i = doc.index("7,440")
+        context = doc[max(0, i - 120):i + 160]
+        assert "until day-82" in context, "the figure is asserted, not retracted"
+        assert "no committed script produces" in context

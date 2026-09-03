@@ -587,9 +587,19 @@ def _record(d: dict) -> list:
 
 
 def _wrap(text: str, indent: int, width: int = None, dim: bool = False) -> list:
+    """Wrapped, with CONTINUATION lines indented past the first.
+
+    Every line used the same pad, so a wrapped warning read as two separate
+    bullets at the same level:
+
+        ⚠ P(rejection): two published numbers disagree, both reach
+        this page
+
+    which is a layout that hides where one item ends and the next begins.
+    """
     import textwrap
     width = width or (W - indent)
-    pad = " " * indent
+    pad, cont = " " * indent, " " * (indent + 2)
     lines = textwrap.wrap(text, width=width) or [text]
-    return [(C.DIM if dim else "") + pad + x + (C.RESET if dim else "")
-            for x in lines]
+    out = [pad + lines[0]] + [cont + x for x in lines[1:]]
+    return [(C.DIM if dim else "") + x + (C.RESET if dim else "") for x in out]
