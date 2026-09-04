@@ -97,3 +97,46 @@ def test_render_names_an_unknown_spread_as_unknown_in_the_report():
 
 def test_render_is_silent_with_nothing_to_price():
     assert C.render([]) == []
+
+
+# ── day-87: a post-close spread is not a tradeable spread ──────────────────
+
+def _et(y, mo, d, h, mi):
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+    return dt.datetime(y, mo, d, h, mi, tzinfo=ZoneInfo("America/New_York"))
+
+
+def test_the_9_46_run_is_inside_trading_hours():
+    assert not C.outside_trading_hours(_et(2026, 9, 4, 9, 46))
+
+
+def test_an_after_close_run_is_flagged():
+    """On 2026-09-04 the same two-leg book costed $24.39 at 09:46 and $94 at
+    17:33. The second is last posted bid/ask, not a tradeable spread."""
+    assert C.outside_trading_hours(_et(2026, 9, 4, 17, 33))
+
+
+def test_the_boundaries_are_the_session_not_the_hour():
+    assert C.outside_trading_hours(_et(2026, 9, 4, 9, 29))
+    assert not C.outside_trading_hours(_et(2026, 9, 4, 9, 30))
+    assert not C.outside_trading_hours(_et(2026, 9, 4, 15, 59))
+    assert C.outside_trading_hours(_et(2026, 9, 4, 16, 0))
+
+
+def test_a_weekend_is_outside_regardless_of_the_clock():
+    assert C.outside_trading_hours(_et(2026, 9, 5, 12, 0))    # Sat
+    assert C.outside_trading_hours(_et(2026, 9, 6, 12, 0))    # Sun
+
+
+def test_a_naive_datetime_is_read_as_eastern_not_utc():
+    import datetime as dt
+    assert not C.outside_trading_hours(dt.datetime(2026, 9, 4, 10, 0))
+
+
+def test_it_labels_rather_than_gates():
+    """A missing warning is the acceptable failure; a blocked order is not.
+    It cannot see holidays, and the docstring says so."""
+    flat = " ".join(C.outside_trading_hours.__doc__.split())
+    assert "not holidays" in flat
+    assert "never a gate" in flat

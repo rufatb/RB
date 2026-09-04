@@ -160,6 +160,36 @@ def live_record() -> tuple:
     return FALLBACK_HITS, FALLBACK_N
 
 
+def outside_trading_hours(now=None) -> bool:
+    """Is this run outside 09:30-16:00 ET on a weekday?
+
+    A spread quoted after the close is the last posted bid/ask, which is far
+    wider than anything tradeable — on 2026-09-04 the same two-leg book costed
+    $24.39 at 09:46 and $94 at 17:33. Printing the second as though it were the
+    first tells the reader the book is four times more expensive to express
+    than it is.
+
+    This detects HOURS, not holidays: a weekday holiday reads as open and its
+    spreads will be stale. It is a label on a number, never a gate on an
+    action, so the failure mode is a missing warning rather than a blocked
+    order.
+    """
+    import datetime as _dt
+    try:
+        from zoneinfo import ZoneInfo
+        now = now or _dt.datetime.now(ZoneInfo("America/New_York"))
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=ZoneInfo("America/New_York"))
+        else:
+            now = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:
+        return False
+    if now.weekday() >= 5:
+        return True
+    m = now.hour * 60 + now.minute
+    return not (9 * 60 + 30 <= m < 16 * 60)
+
+
 def assess(picks: list) -> list:
     """picks: [{ticker, shares, price}] -> the same rows with cost attached."""
     if not picks:

@@ -36,6 +36,10 @@ import os
 import sys
 
 W = 66
+# Below this many spread-priced legs the net figure is noise and is labelled
+# as such. spread_bps only began recording on day-82, so it starts tiny and
+# grows; printing it to three decimals before then invites the wrong read.
+NET_MIN_LEGS = 20
 
 
 def _tty() -> bool:
@@ -210,6 +214,11 @@ def render(d: dict) -> str:
                  f"risk is a normal morning.{C.RESET}")
     L.append("")
 
+    # ── ALSO QUALIFIED ──────────────────────────────────────────────────
+    # What the engine saw and the book did not take. Shown so the reader can
+    # see the whole shortlist; unsized so it cannot be mistaken for an order.
+    L += _board_lines(d)
+
     # ── OPPORTUNITIES ───────────────────────────────────────────────────
     L += _opportunities(d)
 
@@ -360,6 +369,47 @@ def _opportunities(d: dict) -> list:
     return out
 
 
+def _board_lines(d: dict) -> list:
+    """Everything that QUALIFIED but is not in the book — shown, never sized.
+
+    These are recorded in the ledger as the untraded control: they are how the
+    record answers "does the traded subset beat the pool it is drawn from".
+    Day-87 answered that on 34 paired sessions at -0.003%/leg, |t|=0.02 — dead
+    zero — so they are printed to show what the engine saw, and deliberately
+    without a share count, because a size is an instruction.
+    """
+    res = d.get("res") or {}
+    pair = res.get("pair") or {}
+    in_book = set()
+    for side in ("long", "short"):
+        lg = pair.get(side) or {}
+        for r in ([lg.get("pick") or {}] + list(lg.get("extra") or [])):
+            if r.get("t"):
+                in_book.add(r["t"])
+    out, any_row = [], False
+    for side, key, col in (("LONG", "longs", C.GREEN),
+                           ("SHORT", "shorts", C.RED)):
+        rest = [r for r in (res.get(key) or []) if r.get("t") not in in_book]
+        if not rest:
+            continue
+        any_row = True
+        bits = []
+        for r in rest[:6]:
+            p = r.get("p_up")
+            sided = (p if side == "LONG" else 1 - p) if p is not None else None
+            bits.append(f"{r['t']}" + (f" {sided:.2f}" if sided else ""))
+        more = f" +{len(rest) - 6} more" if len(rest) > 6 else ""
+        out += _wrap(f"{col}{side:<6}{C.RESET} " + " · ".join(bits) + more, 4)
+    if not any_row:
+        return []
+    return ([f"  {head('ALSO QUALIFIED')}   {C.DIM}recorded, NOT sized — "
+             f"these are the control{C.RESET}"] + out
+            + [f"    {C.DIM}trading these instead of the book measured "
+               f"-0.003%/leg (|t|=0.02){C.RESET}",
+               f"    {C.DIM}over 34 paired sessions — no better, and one "
+               f"more spread each.{C.RESET}", ""])
+
+
 def _order_tail(d: dict, res: dict, side: str, p: dict) -> str:
     """Size and fill bound for one leg, or the 9:45 price when unsized.
 
@@ -436,6 +486,20 @@ def _pair_lines(d: dict, note: str) -> list:
     known = [r for r in rows if (r.get("cost") or {}).get("usd")]
     if known:
         total = sum(r["cost"]["usd"] for r in known)
+        stale = False
+        try:
+            import cost as _ck
+            stale = _ck.outside_trading_hours(d.get("now"))
+        except Exception:
+            stale = False
+        if stale:
+            # A post-close bid/ask is not a tradeable spread. Say so rather
+            # than printing a number four times the morning's.
+            out.append(f"      {C.YELLOW}spread not live — outside trading "
+                       f"hours{C.RESET}{C.DIM}; the ~${total:,.0f} below is"
+                       f"{C.RESET}")
+            out.append(f"      {C.DIM}last posted bid/ask, which is far wider "
+                       f"than the 9:46 quote.{C.RESET}")
         out.append(f"      {C.YELLOW}starts ~${total:,.0f} behind on spread"
                    f"{C.RESET}{C.DIM} — the edge is zero, so this{C.RESET}")
         out.append(f"      {C.DIM}is not a cost on top of the edge, it IS "
@@ -550,10 +614,17 @@ def _record(d: dict) -> list:
             import ledger as _lg
             a = _lg.accuracy(pair)
             if a["mean"] is not None:
-                net = (f"net {a['net_mean']:+.3f}% on {a['net_n']}"
-                       if a["net_mean"] is not None
-                       else f"net n/a ({a['net_unpriced']} legs predate the "
-                            f"spread column)")
+                # A 4-leg net figure printed to three decimals beside a
+                # 105-leg gross one reads as though the book were up. Say how
+                # thin it is, in the same breath as the number.
+                if a["net_mean"] is None:
+                    net = (f"net n/a ({a['net_unpriced']} legs predate the "
+                           f"spread column)")
+                elif a["net_n"] < NET_MIN_LEGS:
+                    net = (f"net {a['net_mean']:+.2f}% on {a['net_n']} legs "
+                           f"— too few to read")
+                else:
+                    net = f"net {a['net_mean']:+.3f}% on {a['net_n']}"
                 out.append(f"    {C.DIM}mean {a['mean']:+.3f}%/leg  ·  {net}"
                            f"{C.RESET}")
         except Exception as e:

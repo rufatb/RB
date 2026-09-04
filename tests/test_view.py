@@ -530,3 +530,76 @@ def test_shadow_mode_shows_the_extra_without_a_size():
     out = "\n".join(V._pair_lines(_two_leg_digest(shadow=True), "open"))
     assert "CM.TO" in out and "AEM.TO" in out
     assert " sh" not in out
+
+
+# ── day-87: the untraded board is shown, and cannot read as an order ───────
+
+def _board_digest():
+    return {"res": {
+        "pair": {"long": {"pick": {"t": "ABX.TO", "p945": 40.0, "shares": 199},
+                          "extra": []},
+                 "short": {"pick": {"t": "SLF.TO", "p945": 111.75,
+                                    "shares": 126},
+                           "extra": [{"t": "CM.TO", "p945": 163.55,
+                                      "shares": 65}]}},
+        "longs": [{"t": "ABX.TO", "p_up": 0.60}],
+        "shorts": [{"t": "SLF.TO", "p_up": 0.40}, {"t": "CM.TO", "p_up": 0.35},
+                   {"t": "CP.TO", "p_up": 0.35}, {"t": "TD.TO", "p_up": 0.45}]}}
+
+
+def test_qualified_names_outside_the_book_are_shown():
+    """The PM asked why four qualified shorts never reached the page."""
+    out = "\n".join(V._board_lines(_board_digest()))
+    assert "CP.TO" in out and "TD.TO" in out
+
+
+def test_names_already_in_the_book_are_not_repeated_as_board():
+    """A leg cannot be both an order and a control."""
+    out = "\n".join(V._board_lines(_board_digest()))
+    assert "SLF.TO" not in out and "CM.TO" not in out and "ABX.TO" not in out
+
+
+def test_the_board_carries_no_share_count():
+    """A size is an instruction. These are recorded, not traded."""
+    out = "\n".join(V._board_lines(_board_digest()))
+    assert " sh" not in out and "fill" not in out
+
+
+def test_the_board_states_that_trading_it_measured_zero():
+    """Showing the control without its measurement invites trading it."""
+    out = " ".join("\n".join(V._board_lines(_board_digest())).split())
+    assert "-0.003%/leg" in out and "|t|=0.02" in out
+
+
+def test_an_empty_board_renders_nothing_at_all():
+    d = {"res": {"pair": {"long": {"pick": {"t": "ABX.TO"}},
+                          "short": {"pick": {"t": "SLF.TO"}}},
+                 "longs": [{"t": "ABX.TO"}], "shorts": [{"t": "SLF.TO"}]}}
+    assert V._board_lines(d) == []
+
+
+# ── day-87: a thin net sample must say it is thin ──────────────────────────
+
+def _rec(net_n, net_mean=0.376):
+    rows = [{"role": "pair", "hit": "1", "date": "2026-09-04"}] * 40
+    return {"ledger_rows": rows,
+            "_acc": {"mean": -0.06, "net_mean": net_mean, "net_n": net_n,
+                     "net_unpriced": 0}}
+
+
+def test_a_tiny_net_sample_is_labelled_too_few_to_read(monkeypatch):
+    """+0.376% on 4 legs printed beside a 105-leg gross figure reads as though
+    the book were up. The sample size has to travel with the number."""
+    import ledger as _lg
+    monkeypatch.setattr(_lg, "accuracy", lambda rows: _rec(4)["_acc"])
+    out = "\n".join(V._record(_rec(4)))
+    assert "too few to read" in out
+    assert "+0.38%" in out or "+0.376%" not in out
+
+
+def test_a_sufficient_net_sample_prints_normally(monkeypatch):
+    import ledger as _lg
+    monkeypatch.setattr(_lg, "accuracy", lambda rows: _rec(40)["_acc"])
+    out = "\n".join(V._record(_rec(40)))
+    assert "too few to read" not in out
+    assert "on 40" in out

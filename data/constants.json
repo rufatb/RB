@@ -1,5 +1,5 @@
 {
-  "saved": "2026-09-03",
+  "saved": "2026-09-04",
   "values": {
     "adcom.EXT_NEGATIVE_REJECTED": 0.67,
     "adcom.EXT_POSITIVE_APPROVED": 0.97,
@@ -23,7 +23,7 @@
     "catalyst.CRL_WORSE_THAN_40": 0.24,
     "catalyst.CRL_WORST": -74.95,
     "catalyst.GAP_WARN": 0.15,
-    "cost.TYPICAL_MOVE_PCT": 0.97,
+    "cost.TYPICAL_MOVE_PCT": 0.69,
     "fairvalue.BOOT_REPLICATES": 2000,
     "fairvalue.DISAGREE_TOL": 0.4,
     "fairvalue.DRIFT_TOL": 0.01,
@@ -52,7 +52,10 @@
     "sanity.MAX_PUT_PCT": 100.0,
     "sanity.MAX_SANE_PUT_PCT": 60.0,
     "sanity.MAX_VOL": 6.0,
+    "sixk.WIDER_PP": 0.14,
+    "sixk.WIDER_Z": 6.35,
     "validate_catalyst.LOOKBACK_DAYS": 3600,
-    "validate_catalyst.MAX_GAP_DAYS": 4
+    "validate_catalyst.MAX_GAP_DAYS": 4,
+    "validate_straddle.COST_BAR_FRACTION": 0.5
   }
 }
