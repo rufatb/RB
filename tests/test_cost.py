@@ -33,9 +33,29 @@ def test_the_cost_is_a_full_spread_because_both_crossings_are_certain():
 
 
 def test_the_spread_is_expressed_against_the_measured_typical_move():
+    # Against the CONSTANT, not a copy of its value. This assertion held a
+    # literal 0.97 and so had to be edited when day-87 adopted the ledger
+    # re-derivation — a test that breaks on a legitimate change is testing the
+    # number rather than the arithmetic.
     d = C.drag(25.0, shares=None, price=None)
-    assert abs(d["share_of_move"] - 0.25 / 0.97) < 1e-9
+    assert abs(d["share_of_move"] - 0.25 / C.TYPICAL_MOVE_PCT) < 1e-9
     assert d["usd"] is None                 # no size given, none invented
+
+
+def test_the_typical_move_is_the_ledger_re_derivation_not_the_universe_one():
+    """Pins the day-87 decision so the value cannot drift back silently.
+
+    0.69% is the median |capture| over the ledger's own scored legs. 0.97% was
+    day-70's figure for the whole universe, which is the wrong population for a
+    denominator whose numerators are a pick's spread and the picks' hit rate.
+    The change is AGAINST us — the old number understated the drag.
+    """
+    assert C.TYPICAL_MOVE_PCT == 0.69
+    import validate_typicalmove as V
+    lo, hi = V.run()["ci"]
+    assert lo <= C.TYPICAL_MOVE_PCT <= hi, (
+        f"the shipped constant {C.TYPICAL_MOVE_PCT} is outside its own "
+        f"re-derivation [{lo}, {hi}] — re-open DECISION_day87.md")
 
 
 def test_an_unknown_spread_produces_no_dollar_figure():

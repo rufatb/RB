@@ -52,9 +52,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120 Safari/537.36")
 H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
-# Day-70 measured |r1| on this universe at 0.97% (non-event) to 1.11% (after a
-# filing). The lower figure is used so the drag is never flattered.
-TYPICAL_MOVE_PCT = 0.97
+# Day-87 (DECISION_day87.md): re-derived from the LEDGER at 0.69% [0.59, 0.80],
+# median |capture| over 363 scored legs / 41 sessions, session-clustered.
+#
+# It replaces day-70's 0.97%, which measured |r1| across the whole 21-name
+# UNIVERSE. That is the wrong population for this constant, and the reason is
+# rule 7 rather than a judgement about which study was better run: this number
+# is a DENOMINATOR whose numerators are a pick's spread and the picks' own hit
+# rate, so it has to describe picks. Selection is not neutral with respect to
+# volatility (day-47: the density tag sorts by volatility), so universe prints
+# are not a stand-in for selected legs.
+#
+# The correction goes AGAINST us. Too large a denominator makes the spread look
+# like a smaller share of a normal day than it is, so every cost line printed
+# before today UNDERSTATED the drag: a 5bp spread read as 5.2% of a typical
+# move and is really 7.2%.
+TYPICAL_MOVE_PCT = 0.69
 # The live record. Kept here so no line can quote an edge the ledger does not
 # show; refreshed from ledger.py when it is available.
 FALLBACK_HITS, FALLBACK_N = 34, 70

@@ -156,9 +156,13 @@ REGISTRY = {
         "rate and counted (ACCURACY.md §1); sets the number printed beside "
         "every pick"),
     "cost.TYPICAL_MOVE_PCT": Const(
-        MEASURED, "validate_typicalmove.py", 70, None,
-        "day-70 measured 0.97% (non-event) on this universe; re-derived on "
-        "the live ledger it is 0.69% [0.58, 0.79] — see TENSIONS"),
+        MEASURED, "validate_typicalmove.py", 87, 363,
+        "day-87 (DECISION_day87.md) adopted the ledger re-derivation, 0.69% "
+        "[0.59, 0.80] over 363 scored legs / 41 sessions. It replaces "
+        "day-70's 0.97%, which measured the whole UNIVERSE — the wrong "
+        "population for a denominator whose numerators are a pick's spread "
+        "and the picks' hit rate (rule 7). The change is against us: every "
+        "cost line before day-87 understated the drag"),
 
     # the measured base rate — day-71
     "baserate.SERIAL_MIN": Const(DESIGN, None, 71, None),
