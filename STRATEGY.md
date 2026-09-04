@@ -4096,6 +4096,145 @@ guaranteed never to show the portfolio manager. A total fetch failure is a
 exception. Now fails closed with a stated reason that distinguishes a data
 outage from a judgement about the names.
 
+## Day-84: short interest as a selection input — NOT ADOPTED, and one arm is a real bound
+
+Pre-registered in `PREREGISTER_day84.md`, bar fixed before any outcome was
+computed: **|t| >= 3 on tide-relative capture AND the same sign in all four
+quarters**, session-clustered, outside a placebo band. Both, not either.
+
+This came from the direct question "what else would raise the hit rate". The
+answer day-43 had already established is that `r0`/`gap`/`vp` are exhausted —
+gradient boosting reached AUC 0.5022 on 122,234 rows — so accuracy can only
+come from **new information**, and day-43's own shortlist named short interest
+as one of four candidates never acquired. This is that acquisition.
+
+### The feed, and why the US line is the right line HERE
+
+FINRA's consolidated bi-weekly short interest: free, unauthenticated, 22,482
+symbols per file, history to 2017-12-29. **4,134 reports across the 20 twins.**
+
+The live book trades `.TO` and for the live book this is a proxy — that is
+disclosed in the pre-registration and does not go away. But the study panel is
+`validate_twins`, which prices the **US dual-listing**, so within the study the
+short position and the return come from the same listing line (rule 7). CIRO's
+Canadian report — the correct line, which would remove the proxy gap entirely —
+returned **HTTP 403** on both the index and a direct media URL. Two failed
+requests, counted, not routed around.
+
+### A ticker is not a company, and this nearly ruined the join
+
+The issuer check was written expecting to catch one fault and caught three:
+
+| symbol | issuer | settlement span |
+|---|---|---|
+| `B` | Barnes Group Inc. | 2017-12-29 .. 2025-01-15 |
+| `B` | **Barrick Mining Corporation** | 2025-05-15 .. 2026-08-14 |
+| `GOLD` | Randgold Resources | 2017-12-29 .. 2018-12-31 |
+| `GOLD` | **Barrick Gold Corp.** | 2019-01-15 .. 2025-04-30 |
+| `GOLD` | Gold.com, Inc. | 2025-12-15 .. 2026-08-14 |
+
+`ABX.TO` maps to `B` in the twins table. A join on the ticker alone would have
+paired **Barnes Group's** short interest with **Barrick's** returns across most
+of the panel, and this repo's own feasibility probe did exactly that — it
+reported Barrick at days-to-cover 8.00 when the true figure is 1.70, because it
+reached for `GOLD` and got Gold.com.
+
+The fix is that **the issuer name, not a rename date, is the point-in-time
+authority**. Rows are kept or dropped on what FINRA says the company is. It
+reconstructs Barrick automatically and cleanly — `GOLD` to 2025-04-30, `B` from
+2025-05-15, no gap and no overlap — while excluding all three impostors.
+**212 rows dropped for ABX.TO, counted and printed.**
+
+The same check initially produced a FALSE rejection: TransCanada renamed to TC
+Energy in 2019 and 33 legitimate reports were being thrown away. A rename must
+be accepted and a reassignment refused; they are indistinguishable from the
+ticker, which is the whole argument for reading the issuer name.
+
+### Point-in-time, which is where a fake edge would have come from
+
+Settlement date is not publication date. FINRA disseminates on the 8th business
+day after settlement; the join uses a **9-business-day** lag so the rounding is
+against us, uses `publish_date` and never `settlement_date`, and a shipping
+test fails if any session sees a report published after it. **3,877 legs, 0
+UNKNOWN, latest report used 2026-08-27.** Every verdict below was re-run at a
+**15-day** lag and none of them moved.
+
+### The feasibility gate, which looks only at the feature
+
+Registered in advance: if days-to-cover ranks are >= 0.90 persistent across
+consecutive reports, the sort is a permanent name label and only the
+name-demeaned form may proceed. Measured **rho = 0.840** — below the gate, so
+both forms were admissible and the level arm ran as registered.
+
+This gate is also where a prior of mine was refuted before any outcome was
+touched. I had argued this universe of large-cap Canadian names would show no
+dispersion in short positioning and so offer no sort to make. Days-to-cover on
+2026-08-14 spans **1.12 (SHOP) to 17.29 (CM)**, roughly fifteen-fold. That
+refutation is the only reason the study was written rather than declined.
+
+### Results — 3,877 legs, 491 sessions, 20 names
+
+| arm | side | effect %/leg | quarters | placebo | verdict |
+|---|---|---|---|---|---|
+| H1 level | LONG | −0.027 | SIGN FLIPS | inside | UNDERPOWERED < 0.150 |
+| H1 level | SHORT | −0.059 | SIGN FLIPS | inside | UNDERPOWERED < 0.193 |
+| H3 flow | LONG | +0.064 | SIGN FLIPS | inside | UNDERPOWERED < 0.152 |
+| H3 flow | SHORT | −0.071 | SIGN FLIPS | inside | UNDERPOWERED < 0.169 |
+| H2 exclusion | SHORT | **+0.032** | **consistent** | **inside** | see below |
+
+H1 and H3 are uninformative and say so: the harness cannot resolve below
+~0.15–0.20%/leg and the observed effects are a third of that. A planted
+0.10%/leg edge registers at only z≈1.6–2.0 on these arms; the bar would need
+~690–1,050 sessions against 237–347 held. **That is UNDERPOWERED, not a null**
+(rule 10), and H3 was the arm I had given the better odds to in advance.
+
+### H2 is the one that says something, and what it says is a bound
+
+Dropping the most-shorted name from the short side gives **+0.032%/leg, 95%
+[−0.001, +0.067], positive in all four quarters** (+0.036/+0.058/+0.026/+0.009).
+Four-quarter consistency is the thing this project normally requires, so it is
+worth being explicit about why this is still not an adoption:
+
+1. **It is INSIDE the placebo band.** Dropping a *random* short leg produces
+   [−0.036, +0.038]. The observed +0.032 sits near the top of that but within
+   it. Removing any leg from a small side moves the mean; that is arithmetic,
+   not selection, and the four-quarter consistency is a property of the
+   arithmetic rather than of short interest.
+2. **The interval touches zero**, so it fails the bar on its own terms.
+3. **It is smaller than the cost it would have to clear.** The measured
+   round-trip is ~8bps; the whole effect is 3.2bps.
+
+But unlike H1 and H3, this arm is **well powered**: a planted 0.10%/leg edge
+registers at **z=5.43**, needing ~93 sessions against 304 held. So H2 is not a
+shrug — it is a genuine bounded negative:
+
+> **An improvement of 0.10%/leg or more from excluding the most-shorted short
+> leg is EXCLUDED. Only an effect below 0.052%/leg remains unresolvable, and
+> anything in that range is smaller than the spread it must pay.**
+
+That is the difference between "we could not see it" and "it is not there at a
+size that would matter", and this study produced one of each.
+
+### REJECTION #38 — short interest as a selection input
+
+Nothing is adopted. The morning report is unchanged: no short-interest field,
+no exclusion rule, no new claim. `build_shortinterest.py` and
+`validate_shortinterest.py` are committed and re-runnable, `data/short_interest.csv`
+is kept, and the day-43 shortlist now has one of its four candidates measured
+and closed rather than merely named. Three remain: L1/L2 depth and true volume
+pace, point-in-time overnight news, and index futures state at 9:45.
+
+**Expected outcome recorded in advance** (PREREGISTER_day84.md): "UNDERPOWERED
+on H1 and H2, on the cadence argument. H3 is the only arm I would give better
+than negligible odds, and I would not put those above one in five." H1 was
+underpowered as predicted; H3 produced nothing and was the wrong horse; H2 was
+better powered than expected and returned a usable bound. Recording the guess
+first is what makes it possible to say that the guess was half wrong.
+
+**Scope, not to be stripped:** this is the twins panel with entry at 10:30. It
+is a MECHANISM sample. It can refute a rule and it certifies nothing about live
+9:45 levels, and the ledger's PAIR line remains the arbiter.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

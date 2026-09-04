@@ -13,3 +13,9 @@ brief.log
 
 # large rebuildable data panels — regenerate with validate_events_build.py
 daily.csv
+
+# the twins price panel: a rolling 720-day window, so it changes on every
+# rebuild and is a cache, not history. Regenerate with validate_twins.py.
+# data/short_interest.csv is NOT here — it is an acquired feed whose issuer
+# filtering is part of the record.
+data/twins_panel.csv

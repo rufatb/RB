@@ -15,7 +15,7 @@ After the close: `python ledger.py --score`.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **37 rejections, 3
+It is the running record of every change tested — **38 rejections, 3
 adoptions**. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
