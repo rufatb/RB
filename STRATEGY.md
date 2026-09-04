@@ -4573,6 +4573,69 @@ weekly reversal (tail-carried), 52-week proximity (**rejected #39**), overnight
 **the intraday window carries roughly half the drift of the overnight one, and
 neither survives a realistic spread as a long-only basket.**
 
+## Day-87 close: five of six right, and the book still lost money
+
+**Tide 0.000%.** The universe median was flat, so nothing today can be blamed
+on or credited to the tape. This was selection, cleanly measured.
+
+| pick | role | r1 | rel capture | |
+|---|---|---|---|---|
+| CM.TO | pair (extra) | −0.489% | +0.489% | HIT |
+| SLF.TO | **pair (primary)** | **+0.304%** | **−0.304%** | **MISS** |
+| CP.TO | board | −0.330% | +0.330% | HIT |
+| CNR.TO | board | −0.536% | +0.536% | HIT |
+| SHOP.TO | board | −1.511% | +1.511% | HIT |
+| TD.TO | board | −0.714% | +0.714% | HIT |
+
+All six calls were shorts; five fell. **The direction read was right and the
+book still lost.**
+
+```
+CM.TO    65sh @ 163.55 = $10,631   +$51.98 gross   spread −$15.52
+SLF.TO  126sh @ 111.75 = $14,080   −$42.80 gross   spread − $8.87
+                                    +$ 9.18 gross   cost   −$24.39
+                                                    NET    −$15.21
+```
+
+**The spread was 2.7x the gross gain.** This is the day-82 sentence made
+literal: *spread is not a cost on top of the edge — it IS the outcome.* The
+morning report predicted SLF would start "~$9 behind"; it was $8.87.
+
+Two structural facts, neither of them bad luck:
+
+1. **The miss was the biggest position.** SLF was the primary leg at $14,080
+   against CM's $10,631. Equal-risk weighting (day-22) sizes UP the calmer
+   name, and the calmer name is the one that went wrong. That is the rule
+   behaving exactly as designed — it shrinks bad days, it does not pick better.
+2. **CM's spread was 14.6bps** against SLF's 6.3. The winning leg paid 2.3x the
+   toll of the losing one.
+
+### The obvious inference from today, tested and refused
+
+Board 4/4 at +0.773%/leg while the traded pair went 1/2 at +0.092%/leg. Across
+the whole record the same pattern appears in the aggregates:
+
+| | hit | Wilson | rel capture |
+|---|---|---|---|
+| PAIR (traded) | 47/97 (48.5%) | [38.8, 58.3] | −0.077%/leg |
+| BOARD (untraded) | 105/198 (53.0%) | [46.1, 59.9] | −0.010%/leg |
+
+A 4.5pp gap, and it is tempting. **It is an artefact of comparing unpaired
+aggregates.** Legs on one day share that day's move, so the comparison has to
+be paired by session. Paired:
+
+**board minus pair = −0.003%/leg, 95% [−0.266, +0.254], |t| = 0.02**, board
+better in 19 of 34 sessions.
+
+Dead zero. The densest-leg selection is neither better nor worse than the board
+it draws from — which is exactly what day-21 found on 809 deep-panel legs
+(densest 50.1%, random 50.2%) and what day-47 concluded when it refused the
+density gate. MDE here is 0.399%/leg, so this is UNDERPOWERED for anything
+smaller, but the point estimate has no sign to chase.
+
+**Nothing to do.** The idea today's session suggests is the one the record
+already refuses.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
