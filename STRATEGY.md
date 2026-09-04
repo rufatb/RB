@@ -4636,6 +4636,80 @@ smaller, but the point estimate has no sign to chase.
 **Nothing to do.** The idea today's session suggests is the one the record
 already refuses.
 
+## Day-88: the earnings gate — CLOSED by arithmetic, not by a null
+
+Pre-registered in `PREREGISTER_day88.md`. This answers a question `earnings.py`
+has carried since day-53 and could never test:
+
+> *"there is no free source of historical announcement dates for TSX names, and
+> therefore no way to measure whether excluding these rows would have helped."*
+
+Panel: **123,772 ticker-sessions, 258 US names, 490 sessions**, hourly bars,
+engine walk-forward identical to `validate_twins`. **50,779 qualified legs**
+joined against **60,922 Item 2.02 announcements** timestamped to the minute.
+
+### The placebo is silent, so the study is valid
+
+An announcement accepted after 16:00 cannot move a leg that is flat by 15:55.
+Excluding those days moved the number by **+0.0003%/leg, |t| = 0.23** — nothing.
+Dropping rows per se does not manufacture an effect here. That control is
+exact rather than statistical, and it is what makes the rest readable.
+
+### The direction is right and the statistics do not support it
+
+| group | n | hit | Wilson | rel capture |
+|---|---|---|---|---|
+| in-window (before open / in session) | 396 | 46.5% | [41.6, 51.4] | **−0.1539%** |
+| after-close (reports tonight) | 263 | 45.6% | [39.7, 51.7] | −0.0334% |
+| clean (no announcement) | 50,120 | 49.7% | [49.3, 50.2] | −0.0155% |
+
+Earnings-day legs look **ten times worse in capture** and 3.2pp worse in hit
+rate. Session-clustered, that difference is **−0.1383%/leg, |t| = 1.59, blocks
+−0.256 / −0.218 / **+0.076** / −0.136 — SIGN FLIPS**. Both Wilson intervals
+contain 50%. **UNDERPOWERED** (rule 10), needing ~1,409 in-window legs against
+396 held, which is 3.6x this panel.
+
+### What actually closes it is arithmetic, and no amount of data changes it
+
+In-window legs are **0.78% of all legs**. Taking their penalty entirely at face
+value — the point estimate the statistics do not support — removing them moves
+the book average by:
+
+```
+0.0078 x 0.1384%/leg  =  +0.00108%/leg  =  +0.108 bps/leg
+```
+
+**One round-trip spread on the live book is ~8bps.** The entire filter effect,
+granted its most flattering reading, is **1.3% of a single spread crossing.**
+
+That is the answer, and it does not depend on power. A gate on an event that
+occurs on 0.78% of ticker-sessions cannot move a book-level average, however
+bad those sessions are. Waiting for 3.6x the data would let us measure the
+penalty precisely; it would not make the gate worth having.
+
+### REJECTED as a gate — and `earnings.py` was right to warn rather than block
+
+The module's day-53 instinct is vindicated: warn, never block. The warning is
+worth keeping for the reason it was written — a name reporting inside the
+window hands you the same coin flip with a bigger stake on it, and the reader
+is entitled to know before sizing. What is now measured is that turning that
+warning into a gate buys **0.1 bps/leg**, which is indistinguishable from
+nothing next to an 8bp spread.
+
+**This is a better outcome than a null.** A null would have said "we could not
+find an effect". This says "the effect can be granted in full and still cannot
+matter", which closes the question permanently rather than deferring it to a
+larger sample.
+
+### Scored against the prediction
+
+`PREREGISTER_day88.md` recorded: *"I expect H1 to be POSITIVE but small, and
+probably underpowered… I expect H2 to show the dropped rows are genuinely
+worse… I expect H3 to show nothing."* H1 +0.0042%/leg, underpowered — correct.
+H2 directionally worse but underpowered — half right, the direction held and
+the significance did not. H3 silent — correct. What I did not anticipate was
+that the frequency argument would settle it independently of all three.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).

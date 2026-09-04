@@ -12,13 +12,36 @@ information arriving inside the holding period.
 
 WHAT THIS IS, AND WHAT IT IS EXPLICITLY NOT.
 
-It is a WARNING, not a gate, and NOT a backtested improvement. Yahoo serves the
-NEXT earnings date free, but its `earningsHistory` returns fiscal QUARTER-END
-dates rather than announcement dates — RY's Q3 ends 31 July and it reports four
-weeks later — so there is no free source of historical announcement dates for
-TSX names, and therefore no way to measure whether excluding these rows would
-have helped. Claiming an accuracy benefit here would be exactly the unbacked
-assertion this repo has spent 35 rejections removing.
+It is a WARNING, not a gate. Yahoo serves the NEXT earnings date free, but its
+`earningsHistory` returns fiscal QUARTER-END dates rather than announcement
+dates — RY's Q3 ends 31 July and it reports four weeks later — so for TSX names
+there is still no free source of historical announcement dates.
+
+DAY-88 MEASURED THE GATE ON US DATA AND CLOSED THE QUESTION. That measurement
+was impossible when this module was written; SEC 8-K Item 2.02 supplied it —
+60,922 announcements timestamped to the minute, against 50,779 qualified legs
+over 490 sessions (PREREGISTER_day88.md, validate_earnfilter.py).
+
+The result vindicates warning rather than blocking, and does so by arithmetic
+rather than by a null:
+
+    in-window legs are 0.78% of all legs
+    their penalty, at the point estimate the statistics do NOT support,
+      is -0.138%/leg against clean legs
+    removing them moves the book average by +0.108 BPS PER LEG
+    one round-trip spread on the live book is ~8 bps
+
+So the whole gate, granted its most flattering reading, is worth 1.3% of a
+single spread crossing. The penalty itself is UNDERPOWERED (|t|=1.59, blocks
+flip sign) and would need 3.6x the panel to resolve — but resolving it would
+not make the gate worth having, because the frequency argument is independent
+of the effect size. An exact placebo confirms the harness: excluding
+announcements that land AFTER the leg is flat moves nothing (|t|=0.23).
+
+The warning stays for the reason it was written. A name reporting inside the
+window hands you the same coin flip with a bigger stake on it, and the reader
+is entitled to know that before sizing. What is settled is that BLOCKING on it
+buys nothing measurable.
 
 The argument for printing it anyway is the extrapolation guard's argument, not
 a prediction one: a name reporting after today's close has a return
