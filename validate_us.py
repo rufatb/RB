@@ -29,8 +29,20 @@ and narrows every interval.
 
 SURVIVORSHIP, which cannot be removed with free data. The universe is TODAY's
 listing, so names that fell and delisted are absent. This inflates loser-side
-results — H4 ranks INTO that hole, which is why it carries day-32's three
-dissolving tests as an extra hurdle and H5 does not.
+results, and the pre-registration assigned the extra hurdle — day-32's three
+dissolving tests — to whichever arm BUYS LOSERS.
+
+That was registered as H4 only, on the assumption that H5's momentum effect
+would be positive. It is not: H5 comes out NEGATIVE, so its profitable
+orientation is long the names FARTHEST from their 52-week high, which is the
+loser-buying direction. The registered rule therefore attaches to H5 as well,
+and it is applied to both. The rule has not changed; the arm it lands on was
+decided by the sign, and the sign was not what was expected.
+
+OVERLAPPING WINDOWS. Every weekly arm computes a forward return on every date,
+so consecutive observations share most of their window. Resampling single
+dates would treat those as independent and inflate |t|. All forward-return arms
+use a block bootstrap with block = horizon.
 """
 
 from __future__ import annotations
@@ -78,8 +90,19 @@ def load_earnings() -> pd.DataFrame:
 # ── statistics ─────────────────────────────────────────────────────────────
 
 def boot(rows: list, field: str, cluster: str, n: int = BOOT,
-         seed: int = SEED) -> tuple:
-    """Mean with a CLUSTERED 95% interval. `cluster` is 'date' or 't'."""
+         seed: int = SEED, block: int = 1) -> tuple:
+    """Mean with a CLUSTERED 95% interval. `cluster` is 'date' or 't'.
+
+    `block` > 1 resamples CONTIGUOUS RUNS of clusters instead of single ones,
+    and it is mandatory for any overlapping-window statistic.
+
+    WHY. A 20-session forward return computed on every date shares 19 of its 20
+    sessions with the next date's. Resampling dates one at a time treats those
+    as independent draws, which shrinks the interval and inflates |t| — the
+    effect can look decisive purely because the estimator ignores the overlap.
+    Setting block = horizon keeps overlapping observations together so the
+    interval reflects how much independent information the sample really holds.
+    """
     by: dict = {}
     for r in rows:
         v = r.get(field)
@@ -91,10 +114,17 @@ def boot(rows: list, field: str, cluster: str, n: int = BOOT,
         return (None, None, None)
     flat = [v for k in keys for v in by[k]]
     rng = np.random.default_rng(seed)
+    block = max(1, int(block))
+    n_blocks = max(1, len(keys) // block)
     draws = []
     for _ in range(n):
-        pick = rng.integers(0, len(keys), size=len(keys))
-        d = [v for i in pick for v in by[keys[i]]]
+        if block == 1:
+            pick = rng.integers(0, len(keys), size=len(keys))
+            d = [v for i in pick for v in by[keys[i]]]
+        else:
+            starts = rng.integers(0, max(1, len(keys) - block + 1),
+                                  size=n_blocks)
+            d = [v for s in starts for k in keys[s:s + block] for v in by[k]]
         if d:
             draws.append(float(np.mean(d)))
     if not draws:
@@ -107,9 +137,9 @@ def se_of(lo, hi):
     return None if lo is None else (hi - lo) / (2 * 1.96)
 
 
-def power(rows, field, cluster, edge, seed=SEED + 7):
+def power(rows, field, cluster, edge, seed=SEED + 7, block=1):
     """POSITIVE CONTROL. edge / sd, never (mean + edge) / sd — the day-56 error."""
-    _, lo, hi = boot(rows, field, cluster, n=800, seed=seed)
+    _, lo, hi = boot(rows, field, cluster, n=800, seed=seed, block=block)
     sd = se_of(lo, hi)
     return None if not sd else edge / sd
 
@@ -154,7 +184,14 @@ def net_of_cost(m, spread_bps: float):
     return float(np.sign(m) * max(0.0, abs(m) - cost))
 
 
-def verdict(m, lo, hi, bs, plo, phi, net) -> str:
+def verdict(m, lo, hi, bs, plo, phi, net, dissolved: list = None) -> str:
+    """`dissolved` names any of day-32's three tests this arm FAILED.
+
+    The pre-registration requires a loser-buying arm to clear all three on top
+    of the bar. Printing them beside a "CLEARS" verdict, as the first draft
+    did, leaves the reader to enforce the rule the study registered — so the
+    verdict enforces it here instead.
+    """
     if m is None:
         return "NOT COMPUTABLE"
     se = se_of(lo, hi)
@@ -174,16 +211,22 @@ def verdict(m, lo, hi, bs, plo, phi, net) -> str:
     if net is not None and net == 0.0 and m != 0.0:
         return (f"CLEARS gross (|t|={abs(t):.2f}) but is ERASED by cost — "
                 f"the whole effect is smaller than the round trip")
+    if dissolved:
+        return (f"CLEARS the bar (|t|={abs(t):.2f}) but DISSOLVES on "
+                + " and ".join(dissolved)
+                + " — the registered extra hurdle for a loser-buying arm")
     return f"CLEARS the bar (|t|={abs(t):.2f}, consistent, outside placebo)"
 
 
 def report(title: str, rows: list, field: str, cluster: str,
            placebo: tuple = (None, None), control_edge: float = 0.10,
-           spread_bps: float = SPREAD_BPS, extra: list = None) -> str:
-    m, lo, hi = boot(rows, field, cluster)
+           spread_bps: float = SPREAD_BPS, extra: list = None,
+           block: int = 1, dissolved: list = None) -> str:
+    m, lo, hi = boot(rows, field, cluster, block=block)
     L = [f"▎{title}", f"   n={len(rows):,}  clustered by "
          f"{'session' if cluster == 'date' else 'name'} "
-         f"({len({r[cluster] for r in rows}):,} clusters)"]
+         f"({len({r[cluster] for r in rows}):,} clusters)"
+         + (f", block={block} for the overlapping window" if block > 1 else "")]
     if m is None:
         return "\n".join(L + ["   not computable on this sample"])
     wr, nw = win_rate(rows, field)
@@ -198,7 +241,7 @@ def report(title: str, rows: list, field: str, cluster: str,
     if plo is not None:
         L.append(f"   placebo    [{plo:+.3f}, {phi:+.3f}] — observed is "
                  f"{'INSIDE it' if plo <= m <= phi else 'OUTSIDE it'}")
-    z = power(rows, field, cluster, control_edge)
+    z = power(rows, field, cluster, control_edge, block=block)
     if z:
         L.append(f"   control    a planted {control_edge:.2f}% edge registers "
                  f"at z={z:.2f}")
@@ -206,7 +249,7 @@ def report(title: str, rows: list, field: str, cluster: str,
         L.append(f"   net        {net:+.3f}% after {spread_bps:.0f}bps round trip")
     for line in (extra or []):
         L.append(f"   {line}")
-    L.append(f"   -> {verdict(m, lo, hi, bs, plo, phi, net)}")
+    L.append(f"   -> {verdict(m, lo, hi, bs, plo, phi, net, dissolved)}")
     return "\n".join(L)
 
 
@@ -396,6 +439,23 @@ def placebo_xs(df: pd.DataFrame, key: str, horizon: int, long_high: bool,
     return (float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975)))
 
 
+def failed_tests(lines: list) -> list:
+    """Which of day-32's three an arm FAILED, read off its own output.
+
+    NOT COMPUTABLE is not a failure — a thin quartile is missing evidence, not
+    adverse evidence, and must not dissolve an arm on its own.
+    """
+    out = []
+    for line in lines or []:
+        if "TAIL-CARRIED" in line:
+            out.append("the tail test")
+        elif "BETA, NOT SELECTION" in line:
+            out.append("the beta test")
+        elif "NOT SIZE-ROBUST" in line:
+            out.append("the size test")
+    return out
+
+
 def dissolving_tests(df: pd.DataFrame, key: str, horizon: int,
                      long_high: bool) -> list:
     """Day-32's three. A cross-sectional sort that survives the bar but fails
@@ -467,7 +527,7 @@ def main(argv=None) -> int:
         print(report(f"H2 post-earnings drift, {h}-session hold "
                      f"(signed by the reaction)", sub, f"pead{h}", "t",
                      placebo=placebo_event(df, sub, f"pead{h}", h),
-                     spread_bps=a.spread))
+                     spread_bps=a.spread, block=h))
     h3 = [r for r in erows if np.isfinite(r.get("h3", np.nan))]
     if h3:
         print()
@@ -479,11 +539,12 @@ def main(argv=None) -> int:
     df["rev"] = df["rev"] - df.groupby("date")["rev"].transform("mean")
     r4 = decile_rows(df, "rev", 5, long_high=False)
     if r4:
+        d4 = dissolving_tests(df, "rev", 5, False)
         print(report("H4 weekly reversal — long losers, short winners, 5d",
                      r4, "spread", "date",
                      placebo=placebo_xs(df, "rev", 5, False),
-                     spread_bps=a.spread * 2,
-                     extra=dissolving_tests(df, "rev", 5, False)))
+                     spread_bps=a.spread * 2, extra=d4, block=5,
+                     dissolved=failed_tests(d4)))
 
     print("\n" + "=" * 68)
     df["hi252"] = df.groupby("t", sort=False)["close"].transform(
@@ -493,11 +554,13 @@ def main(argv=None) -> int:
         r5 = decile_rows(df, "prox", h, long_high=True)
         if not r5:
             continue
+        d5 = dissolving_tests(df, "prox", h, True)
         print()
         print(report(f"H5 52-week-high proximity — long near highs, {h}d",
                      r5, "spread", "date",
                      placebo=placebo_xs(df, "prox", h, True),
-                     spread_bps=a.spread * 2))
+                     spread_bps=a.spread * 2, extra=d5, block=h,
+                     dissolved=failed_tests(d5)))
 
     print("\n" + "=" * 68)
     print("   ── survivorship: the universe is TODAY's listing. Delisted names")

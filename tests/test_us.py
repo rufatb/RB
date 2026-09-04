@@ -267,3 +267,92 @@ def test_a_missing_panel_refuses_instead_of_defaulting():
             U.load_panel()
     finally:
         U.DATA = real
+
+
+# ── the block bootstrap: overlapping windows must not inflate |t| ───────────
+
+def overlapping(n_dates=400, horizon=20, effect=0.0, seed=0):
+    """Forward returns computed on EVERY date, so neighbours share a window.
+
+    Built the way the real arms are: a random walk of daily moves, with each
+    row holding the sum of the next `horizon` of them.
+    """
+    rng = np.random.default_rng(seed)
+    daily = rng.normal(effect / horizon, 1.0, size=n_dates + horizon)
+    return [{"date": f"d{i:05d}", "t": "XS",
+             "x": float(daily[i:i + horizon].sum())}
+            for i in range(n_dates)]
+
+
+def test_the_block_bootstrap_widens_the_interval_on_overlapping_windows():
+    """THE FAILURE THIS ARM WAS BUILT TO HAVE. A 20-session forward return
+    shares 19 sessions with its neighbour; resampling single dates treats those
+    as independent and shrinks the interval."""
+    rows = overlapping(horizon=20, seed=1)
+    _, lo1, hi1 = U.boot(rows, "x", "date", block=1)
+    _, lo20, hi20 = U.boot(rows, "x", "date", block=20)
+    assert (hi20 - lo20) > 1.5 * (hi1 - lo1), (
+        f"block bootstrap did not widen it: {hi1 - lo1:.3f} -> {hi20 - lo20:.3f}")
+
+
+def test_the_naive_bootstrap_manufactures_significance_on_pure_noise():
+    """With no planted effect, the single-date bootstrap should reject zero far
+    more often than 5% of the time; the block bootstrap should not."""
+    naive = block = 0
+    for s in range(40):
+        rows = overlapping(horizon=20, effect=0.0, seed=100 + s)
+        _, l1, h1 = U.boot(rows, "x", "date", n=400, block=1)
+        _, l2, h2 = U.boot(rows, "x", "date", n=400, block=20)
+        naive += not (l1 < 0 < h1)
+        block += not (l2 < 0 < h2)
+    assert naive > block, (naive, block)
+    assert block <= 8, f"block bootstrap still over-rejects: {block}/40"
+
+
+def test_block_of_one_matches_the_plain_bootstrap():
+    rows = overlapping(horizon=5, seed=3)
+    a = U.boot(rows, "x", "date", block=1)
+    b = U.boot(rows, "x", "date")
+    assert a == b
+
+
+def test_the_block_bootstrap_still_sees_a_real_planted_effect():
+    """Rule 4: widening the interval must not blind the harness."""
+    rows = overlapping(horizon=20, effect=8.0, seed=4)
+    m, lo, hi = U.boot(rows, "x", "date", block=20)
+    assert m > 4 and lo > 0, f"planted effect lost: {m} [{lo}, {hi}]"
+
+
+# ── the registered extra hurdle is ENFORCED, not merely printed ─────────────
+
+def test_failed_tests_reads_the_three_verdicts():
+    assert U.failed_tests(["tail test   … TAIL-CARRIED"]) == ["the tail test"]
+    assert U.failed_tests(["beta test   … BETA, NOT SELECTION"]) == ["the beta test"]
+    assert U.failed_tests(["size test   … NOT SIZE-ROBUST"]) == ["the size test"]
+    assert U.failed_tests(["tail test   … not tail-carried",
+                           "beta test   … same sign",
+                           "size test   … size-robust"]) == []
+
+
+def test_not_computable_is_not_counted_as_a_failure():
+    """Missing evidence is not adverse evidence."""
+    assert U.failed_tests(
+        ["size test   +nan   NOT COMPUTABLE — a liquidity quartile is too "
+         "thin for a decile sort"]) == []
+
+
+def test_an_arm_that_clears_the_bar_but_dissolves_says_so():
+    """H4 clears |t|>=3 with consistent blocks and still fails the tail test;
+    the verdict must not read CLEARS on its own."""
+    v = U.verdict(0.24, 0.12, 0.36, [0.18, 0.36, 0.19, 0.24], -0.02, 0.02,
+                  0.14, ["the tail test"])
+    assert "DISSOLVES on the tail test" in v
+    # It may say it cleared the statistical bar — that is true and worth
+    # printing. What it must never do is END there, reading as a clean pass.
+    assert not v.endswith("outside placebo)")
+
+
+def test_an_arm_that_clears_everything_still_says_clears():
+    v = U.verdict(0.24, 0.12, 0.36, [0.18, 0.36, 0.19, 0.24], -0.02, 0.02,
+                  0.14, [])
+    assert v.startswith("CLEARS the bar")
