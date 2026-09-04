@@ -356,3 +356,37 @@ def test_an_arm_that_clears_everything_still_says_clears():
     v = U.verdict(0.24, 0.12, 0.36, [0.18, 0.36, 0.19, 0.24], -0.02, 0.02,
                   0.14, [])
     assert v.startswith("CLEARS the bar")
+
+
+# ── day-86: the size test must catch CONCENTRATION, not just sign flips ────
+
+def test_an_effect_concentrated_in_small_caps_fails_even_sharing_a_sign():
+    """The held-out universe produced -15.235 / -2.118 / -1.378 / -0.609 — all
+    four quartiles negative, so day-32's sign-only criterion passed it while
+    the effect was 25x larger in the smallest. Concentration that extreme is
+    the survivorship signature whatever the signs do."""
+    rng = np.random.default_rng(20)
+    rows_ = []
+    for d in range(150):
+        mkt = rng.normal(0, 1.0)
+        for i in range(160):
+            key = rng.normal()
+            e = 6.0 if i < 40 else 0.25          # same sign, 24x apart
+            rows_.append({"t": f"T{i}", "date": f"2026-{1 + d // 28:02d}-"
+                                                f"{1 + d % 28:02d}",
+                          "key": key, "rel5": -key * e + mkt + rng.normal(),
+                          "close": 100.0, "volume": 1e6 * (1 + i), "daily": mkt})
+    df = pd.DataFrame(rows_)
+    df["rel5"] = df["rel5"] - df.groupby("date")["rel5"].transform("mean")
+    size = [x for x in U.dissolving_tests(df, "key", 5, False)
+            if x.startswith("size test")][0]
+    assert "NOT SIZE-ROBUST" in size, size
+    assert "larger in the smallest quartile" in size, size
+
+
+def test_an_evenly_spread_effect_still_passes_the_size_test():
+    """The strengthened test must not reject a genuinely uniform effect."""
+    size = [x for x in U.dissolving_tests(panel(n_names=160, effect=0.8,
+                                                seed=8), "key", 5, False)
+            if x.startswith("size test")][0]
+    assert size.endswith("size-robust"), size

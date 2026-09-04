@@ -63,6 +63,10 @@ SEED = 0
 ADOPT_T = 3.0
 BLOCKS = 4
 SPREAD_BPS = 5.0          # round-trip, US large caps; both gross and net shown
+# Day-86: an effect this much larger in the smallest liquidity quartile than
+# the largest is concentrated in exactly the names survivorship removes, and
+# fails the size test even when all four quartiles share a sign.
+SIZE_RATIO_MAX = 2.0
 
 
 # ── loading ────────────────────────────────────────────────────────────────
@@ -486,13 +490,24 @@ def dissolving_tests(df: pd.DataFrame, key: str, horizon: int,
         qs.append(float(np.mean([x["spread"] for x in r])) if r else float("nan"))
     # A quartile too thin for a decile sort yields nan. That is NOT COMPUTABLE
     # and must never print as NOT SIZE-ROBUST — a data limit is not a finding.
+    #
+    # DAY-86 STRENGTHENED THIS. Day-32's criterion is SIGN-based, and on the
+    # held-out universe it passed an effect that was 25x larger in the smallest
+    # liquidity quartile than the largest — all four shared a sign, so the sign
+    # test saw nothing wrong. Concentration that extreme is the survivorship
+    # signature whatever the signs do, so the magnitude ratio is now part of
+    # the test. No day-85 verdict changes: every arm there was already
+    # UNDERPOWERED.
     if not all(np.isfinite(q) for q in qs):
         tag = ("NOT COMPUTABLE — a liquidity quartile is too thin for a "
                "decile sort")
-    elif all(q > 0 for q in qs) or all(q < 0 for q in qs):
-        tag = "size-robust"
-    else:
+    elif not (all(q > 0 for q in qs) or all(q < 0 for q in qs)):
         tag = "NOT SIZE-ROBUST"
+    elif abs(qs[0]) / max(abs(qs[3]), 1e-9) >= SIZE_RATIO_MAX:
+        tag = (f"NOT SIZE-ROBUST — {abs(qs[0]) / max(abs(qs[3]), 1e-9):.1f}x "
+               f"larger in the smallest quartile than the largest")
+    else:
+        tag = "size-robust"
     L.append("size test   " + "  ".join(f"{q:+.3f}" for q in qs) + f"   {tag}")
     return L
 

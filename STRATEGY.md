@@ -4378,6 +4378,98 @@ dissolving — correct, and it dissolved on the exact test predicted. H5 "weak
 but honest" — wrong in an interesting way: it was the strongest arm and the
 wrong sign, which flipped its survivorship exposure.
 
+## Day-86: REJECTION #39 — H5 replicates its sign and fails on concentration
+
+Pre-registered in `PREREGISTER_day86.md`, bar inherited from day-85 unchanged.
+Day-85 left H5 (52-week-high proximity) as the only arm passing every
+qualitative check and missing only on `|t| = 2.46` against a bar of 3. This
+resolves it.
+
+### The test had to be out-of-sample, and that is most of the work
+
+The obvious move — fetch more names, re-run — would have been **wrong in a way
+that looks like success**. The original 578 would sit inside the wider
+universe, so the re-run would report a tighter interval around the same numbers
+and read as confirmation while re-reading the draw that produced the
+hypothesis. Day-52 handled this correctly by taking a TSX-generated hypothesis
+to 500 S&P names, and that is the shape used here.
+
+**The day-85 names are excluded and `load_split()` raises `SampleLeak` if even
+one reaches the replication set.** A test plants a leaked name and asserts the
+run stops. Held-out sample: **2,876,380 ticker-days, 1,279 names, zero
+overlap** — roughly twice the sample that generated the hypothesis.
+
+### The sign replicates. Everything else says why that does not matter.
+
+| | day-85 (578 names) | held-out (1,279 names) |
+|---|---|---|
+| 5d effect | −0.371% | **−1.339%** |
+| 20d effect | −1.165% | **−5.099%** |
+| 5d tail test | not tail-carried | **TAIL-CARRIED** (median −0.271%) |
+| 20d tail test | not tail-carried | **TAIL-CARRIED** (median −1.394%) |
+| small-vs-large ratio, 5d | 2.4x | **13.1x** |
+| small-vs-large ratio, 20d | 3.9x | **25.0x** |
+
+The sign is day-85's, so the replication succeeds on the one thing that was
+pre-committed. The effect also got **3.6x bigger**. Both facts are what a
+survivorship artefact looks like, and the rule that says so was registered
+before the data was fetched:
+
+> *if the effect GROWS as the universe extends into smaller names, that is the
+> survivorship signature and is to be read as evidence against H5, not for it.*
+
+### H5b, the registered decider, and the liquid quartile that settles it
+
+| quartile | 5d | \|t\| | 20d | \|t\| |
+|---|---|---|---|---|
+| smallest | −4.060% | 2.30 | −15.235% | 1.91 |
+| 2nd | −0.481% | 2.87 | −2.118% | 2.61 |
+| 3rd | −0.382% | 2.18 | −1.378% | 2.27 |
+| **largest** | **−0.310%** | **1.52** | **−0.609%** | **0.86** |
+
+The largest quartile is the only one a portfolio manager could trade at size,
+and there the effect is **−0.310% at |t| = 1.52** and **−0.609% at |t| = 0.86**.
+Nothing. Everything H5 has lives in the smallest quartile — which is exactly
+where the delisted names that were removed from the universe used to be.
+
+The block profile says the same thing from another direction: 5d blocks ran
+−0.306 / **−3.493** / −0.669 / −0.888, and 20d ran −0.603 / **−14.308** /
+−2.181 / −3.298. One block carries an order of magnitude more than its
+neighbours. Consistent in sign, yes — and driven by one period and a few tails.
+
+**REJECTED (#39).** Not underpowered: the registered gradient rule fails
+decisively at 13x and 25x, both horizons are tail-carried, and in liquid names
+there is no effect to be underpowered about.
+
+### A methodological finding worth more than the hypothesis
+
+**Day-32's size test passed all of this.** Its criterion is SIGN-based — all
+four quartiles negative, so it printed `size-robust` on an effect **25x larger
+in the smallest quartile than the largest**. The three dissolving tests have
+been this repo's standard defence since day-32, and one of them was too weak to
+catch the exact failure it exists for.
+
+`dissolving_tests` now fails an arm whose smallest quartile exceeds the largest
+by **2x or more**, whatever the signs do. Checked against the record: no day-85
+verdict changes, because every arm there was already UNDERPOWERED — but H5's
+own day-85 ratios (2.4x and 3.9x) would have failed it at the time, which is
+the point.
+
+### Scored against the prediction
+
+`PREREGISTER_day86.md` recorded: *"The point estimate replicates in sign — that
+much I expect… What I expect to decide it is H5b: I expect the effect to be
+materially larger in the small-cap quartiles… I do not expect a clean pass."*
+All three correct. The one thing not anticipated was that day-32's own size
+test would wave it through.
+
+### Where this leaves the five
+
+Day-85's five arms are now: H1 underpowered (and its executable form pays the
+spread twice), H2 dead at −0.000%, H3 underpowered, H4 tail-carried, **H5
+rejected**. The honest answer to "which strategy gives the highest hit rate"
+remains **none of them**, and it is now a firmer none than it was yesterday.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
