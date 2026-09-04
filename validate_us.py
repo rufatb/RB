@@ -565,7 +565,9 @@ def main(argv=None) -> int:
     print("\n" + "=" * 68)
     print("   ── survivorship: the universe is TODAY's listing. Delisted names")
     print("      are absent, which inflates loser-side results. H4 ranks into")
-    print("      that hole; H5 leans the other way.")
+    print("      that hole, and so does H5 once its sign is read — its")
+    print("      profitable orientation is long the names FARTHEST from their")
+    print("      52-week high. Both carry the three dissolving tests.")
     print("   ── all five arms are reported whatever they did, per the")
     print("      pre-registration. None was dropped and none was promoted.")
     return 0

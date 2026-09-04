@@ -4235,6 +4235,149 @@ first is what makes it possible to say that the guess was half wrong.
 is a MECHANISM sample. It can refute a rule and it certifies nothing about live
 9:45 levels, and the ledger's PAIR line remains the arbiter.
 
+## Day-85: five US strategies, 1.39M ticker-days — ALL FIVE UNDERPOWERED
+
+Pre-registered in `PREREGISTER_day85.md`. Not rejections: rule 10, and day-82's
+precedent. Nothing is adopted and the morning report is unchanged.
+
+The portfolio manager lifted the Canadian restriction and asked for five new
+strategies tested on enough data to name the most accurate one. Two things that
+licenses, both real:
+
+- **Rejection #33's objection retires.** Day-52 threw out `scaled` even though
+  it cleared on 500 US names in 4 of 4 quarters, because it was dead on the TSX
+  — "a feature that measurably does nothing in the only market the book
+  touches." The book can touch US names now.
+- **The earnings blocker is gone.** `earnings.py` has said since day-53 that
+  Yahoo returns fiscal quarter-END dates, so there was "no way to measure
+  whether excluding these rows would have helped." **8-K Item 2.02** is the
+  announcement itself and `acceptanceDateTime` stamps it to the minute.
+
+### The panel
+
+**1,387,399 ticker-days, 578 names, 2016-08-30 to 2026-09-03** — 3.5x day-32's
+400,703. Plus **15,627 earnings announcements** across 439 names, split
+**BEFORE_OPEN 7,761 / AFTER_CLOSE 7,110 / IN_SESSION 756**. The in-session ones
+are excluded: daily bars cannot place an announcement that landed at 11am, and
+guessing is how an event study measures its own look-ahead.
+
+### THE CORRECTION THAT DECIDED THIS STUDY
+
+The first run produced two apparent winners: H4 at **|t|=3.79** and H5 at
+**|t|=7.15**, both consistent across four blocks and outside placebo. Both were
+artefacts of the estimator.
+
+Every weekly arm computes a forward return **on every date**, so a 20-session
+observation shares 19 sessions with its neighbour. Resampling single dates
+treats those as independent draws. The interval shrinks, `|t|` inflates, and an
+effect looks decisive because of how it was measured rather than what it is.
+
+All forward-return arms now use a **block bootstrap with block = horizon**:
+
+| arm | \|t\| naive | \|t\| block | verdict |
+|---|---|---|---|
+| H4 reversal 5d | 3.79 | **2.24** | UNDERPOWERED |
+| H5 proximity 5d | 4.35 | **2.46** | UNDERPOWERED |
+| H5 proximity 20d | 7.15 | **2.14** | UNDERPOWERED |
+
+A test pins the failure rather than asserting it: on pure noise with
+20-session overlap the single-date bootstrap rejects zero far more often than
+nominal while the block bootstrap does not, and a planted effect is still
+detected so the wider interval is not simply blindness.
+
+**Every "finding" in this study existed only under the wrong estimator.**
+
+### Two more corrections, both caught by tests before any number was quoted
+
+**Cost was reversing effects instead of erasing them.** `m - cost * sign(m)`
+overshoots: +0.016% gross printed as −0.034% net, which reads as a reversed
+edge rather than an erased one. An effect smaller than its cost is worth zero.
+
+**A data limit was printing as a finding.** When a liquidity quartile was too
+thin for a decile sort the size test returned nan and reported NOT SIZE-ROBUST.
+That is NOT COMPUTABLE. Missing evidence is not adverse evidence.
+
+### The registered hurdle was printed but not enforced — and it moved arms
+
+The pre-registration requires a loser-buying arm to clear day-32's three
+dissolving tests ON TOP of the bar. The first draft printed them beside a
+verdict that still read CLEARS, leaving the reader to apply the study's own
+rule. The verdict now names any test the arm failed.
+
+It was registered for H4 only, on my assumption that momentum would come out
+POSITIVE. **It came out negative.** H5's profitable orientation is therefore
+long the names FARTHEST from their 52-week high — the loser-buying direction
+the rule exists for. The rule did not change; the arm it lands on was decided
+by the sign, and the sign was not what was expected.
+
+### Results — all five, none dropped, none promoted
+
+| arm | horizon | effect | \|t\| | blocks | win | verdict |
+|---|---|---|---|---|---|---|
+| H1 overnight−intraday | 1d | +0.023% | 0.97 | FLIPS | 52.9% | UNDERPOWERED |
+| H2 PEAD | 5d | −0.000% | 0.00 | FLIPS | 50.5% | UNDERPOWERED |
+| H2 PEAD | 10d | +0.075% | 1.36 | FLIPS | 50.8% | UNDERPOWERED |
+| H3 earnings gap | 1d | +0.016% | 0.43 | FLIPS | 50.0% | UNDERPOWERED |
+| H4 weekly reversal | 5d | +0.241% | 2.24 | consistent | 51.8% | UNDERPOWERED, TAIL-CARRIED |
+| H5 52w proximity | 5d | −0.371% | 2.46 | consistent | 47.0% | UNDERPOWERED |
+| H5 52w proximity | 20d | −1.165% | 2.14 | consistent | 46.0% | UNDERPOWERED |
+
+**H1 confirms the documented split but cannot trade it.** Overnight
+**+0.0487%/session (~+12.3%/yr, 57.2% of sessions)** against intraday
+**+0.0259%/session (~+6.5%/yr, 54.5%)**, with SPY itself at +9.4%/yr overnight
+versus +4.8%/yr intraday. The direction matches the literature and the level
+matters — **the 9:46->close window the engine trades is the flatter half of the
+day** — but the DIFFERENCE flips sign across blocks and is underpowered, and an
+overnight expression pays the spread twice and inherits day-24's measured 2x
+volatility and 2.3x worse tail.
+
+**H2 is the disappointment.** The strongest published prior in the anomaly
+literature, a proper point-in-time feed, 13,743 announcements — and the 5-day
+arm is dead level at −0.000% with signs flipping. I had recorded it in advance
+as "the most likely genuine strategy to survive". It was not.
+
+**H4 fails its own registered hurdle** independently of the estimator: mean
++0.241% against a **median of +0.094%**, which is day-32's TAIL-CARRIED
+signature exactly. Registered in advance: "if H4 is the only survivor I will
+treat that as evidence of survivorship rather than a finding."
+
+**H5 is the one worth keeping open.** It is the only arm that passes every
+qualitative check — consistent in all four blocks, outside placebo, NOT
+tail-carried (median −0.187% against mean −0.371%), same sign on market-up and
+market-down days, and size-robust across all four liquidity quartiles. It fails
+on one thing only: `|t|` of 2.46 against a bar of 3. That is what UNDERPOWERED
+is supposed to mean, and it says what it needs:
+
+| arm | \|t\| | sessions for \|t\|=3 | have | ~years |
+|---|---|---|---|---|
+| H5 5d | 2.46 | 3,449 | 2,313 | 13.7 |
+| H5 20d | 2.14 | 4,529 | 2,298 | 18.0 |
+| H4 5d | 2.24 | 4,481 | 2,507 | 17.8 |
+
+Ten years is not enough for any of them. The cheaper route is **more names per
+date** rather than more dates — the statistic is date-clustered, so widening
+578 names to several thousand tightens each date's estimate without waiting
+another decade. That is the one concrete next step this study earns.
+
+**And H5's honest caveat stays attached:** its profitable direction buys the
+most beaten-down decile, which is exactly where the absent delisted names would
+have been. A survivorship-driven effect would look like this.
+
+### Nothing adopted
+
+No arm cleared. The answer to "which is the highest-accuracy strategy" is
+**none of these five at this sample size**, with each arm's MDE printed so the
+reader knows what could still be hiding. `build_us.py`, `validate_us.py` and
+`data/us_earnings.csv` are committed and re-runnable; the 188MB price panel
+rebuilds in one command.
+
+**Expected outcomes, recorded in advance and scored honestly:** H1 confirming
+the split but dying on execution — correct. H2 the most likely survivor —
+wrong, it was the deadest arm. H3 underpowered — correct. H4 looking good then
+dissolving — correct, and it dissolved on the exact test predicted. H5 "weak
+but honest" — wrong in an interesting way: it was the strongest arm and the
+wrong sign, which flipped its survivorship exposure.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
