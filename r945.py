@@ -1239,13 +1239,22 @@ def publish(res: dict, cfg: dict) -> dict:
     # uncomputable and every reported hit rate stays gross of a cost that is
     # paid with certainty. Never fatal: a leg with no quote stores blank and is
     # excluded from the net figure rather than defaulting to zero cost.
+    # EVERY QUALIFIED NAME, not just the ones the book took. Day-82's H2 asks
+    # what SELECTION costs in spread: the chosen leg's spread minus the
+    # cheapest qualified alternative's. Measuring only the chosen legs -- which
+    # is what this did from day-82 to day-88 -- means the question can never be
+    # answered no matter how many sessions accrue. It is one wider quote call,
+    # and it is the difference between a study that resolves and one that does
+    # not. A name with no quote still stores blank, never zero (rule 2).
     try:
         import cost as _cost
+        _all = pair_picks + [r for r in (res["longs"] + res["shorts"])
+                             if id(r) not in {id(x) for x in pair_picks}]
         _sp = {r["ticker"]: (r.get("cost") or {}).get("bps")
                for r in _cost.assess([{"ticker": p["t"], "shares": p.get("shares"),
                                        "price": p.get("p945")}
-                                      for p in pair_picks if p.get("t")])}
-        for p in pair_picks:
+                                      for p in _all if p.get("t")])}
+        for p in _all:
             p["spread_bps"] = _sp.get(p.get("t"))
     except Exception as e:
         out["errors"].append(
@@ -1260,7 +1269,10 @@ def publish(res: dict, cfg: dict) -> dict:
               "p945": r["p945"],
               "role": "pair" if id(r) in pair_ids else "board",
               "leg": (r.get("leg_hint", "") if id(r) in pair_ids else ""),
-              "spread_bps": (r.get("spread_bps") if id(r) in pair_ids else None),
+              # Stored for BOARD rows too (day-88): without the alternatives'
+              # spreads, day-82's H2 -- what selection costs in spread -- is
+              # not computable from this ledger at any sample size.
+              "spread_bps": r.get("spread_bps"),
               "weight": ((r.get("alloc") or 0) / book_cap
                          if (id(r) in pair_ids and book_cap) else None),
               # Stored so a re-read can show THIS board rather than a fresh

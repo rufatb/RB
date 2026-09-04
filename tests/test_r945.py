@@ -191,3 +191,57 @@ def test_a_board_row_without_shares_writes_blank_not_none(tmp_path):
                           "confidence": "n/a", "p945": 10.0, "role": "board",
                           "weight": None, "shares": None}], "2026-09-01", p)
     assert ledger.load(p)[0]["shares"] == ""
+
+
+# ── day-88: H2 needs the ALTERNATIVES' spreads, not just the chosen legs' ──
+
+def test_spreads_are_measured_for_every_qualified_name(monkeypatch, tmp_path):
+    """REGRESSION. From day-82 to day-88 `publish` costed only the pair legs,
+    so day-82's H2 -- the chosen leg's spread minus the cheapest qualified
+    alternative's -- could never be computed however many sessions accrued.
+    The data collection has to match the registered question."""
+    import r945 as R
+    asked = {}
+
+    class _FakeCost:
+        @staticmethod
+        def assess(rows):
+            asked["tickers"] = {r["ticker"] for r in rows}
+            return [{"ticker": r["ticker"], "cost": {"bps": 5.0}} for r in rows]
+
+    import sys as _s
+    monkeypatch.setitem(_s.modules, "cost", _FakeCost)
+    monkeypatch.setitem(_s.modules, "ledger", _StubLedger(tmp_path))
+
+    longs = [{"t": "ABX.TO", "p_up": 0.62, "p945": 40.0, "nd": 1.0},
+             {"t": "AEM.TO", "p_up": 0.58, "p945": 290.0, "nd": 1.1}]
+    shorts = [{"t": "SLF.TO", "p_up": 0.38, "p945": 111.0, "nd": 1.0},
+              {"t": "CM.TO", "p_up": 0.36, "p945": 163.0, "nd": 1.2},
+              {"t": "TD.TO", "p_up": 0.44, "p945": 169.0, "nd": 1.3}]
+    res = {"now": "2026-09-07T09:46", "longs": longs, "shorts": shorts,
+           "pair": {"long": {"pick": longs[0], "extra": []},
+                    "short": {"pick": shorts[0], "extra": [shorts[1]]}}}
+    R.publish(res, {"risk": {"account_equity": 25000, "max_position_pct": 50},
+                    "pair": {}})
+    assert asked["tickers"] == {"ABX.TO", "AEM.TO", "SLF.TO", "CM.TO", "TD.TO"}, \
+        f"only costed {asked['tickers']} — the alternatives were skipped"
+
+
+class _StubLedger:
+    """Captures the rows publish would write, without touching the real file."""
+    FIELDS = ["date", "ticker", "side", "p_sided", "confidence", "p945",
+              "role", "leg", "weight", "shares", "spread_bps", "r1", "hit"]
+
+    def __init__(self, tmp):
+        self.rows = []
+        self.tmp = tmp
+
+    def load(self, *a, **k):
+        return []
+
+    def append_picks(self, rows, *a, **k):
+        self.rows.extend(rows)
+        return len(rows)
+
+    def append_universe_prints(self, *a, **k):
+        return 0
