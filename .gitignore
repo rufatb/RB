@@ -26,3 +26,4 @@ data/twins_panel.csv
 # record, and it is small.
 data/us_daily.csv
 data/us_daily_holdout.csv
+data/us_hourly.csv
