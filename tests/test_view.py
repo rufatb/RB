@@ -463,3 +463,70 @@ def test_wrapped_lines_indent_their_continuations():
     assert len(lines) > 1
     assert lines[0].startswith("    ") and lines[0][4] != " "
     assert all(l.startswith("      ") for l in lines[1:])
+
+
+# ── day-87: the page must show the WHOLE book, not the primary leg only ────
+
+def _two_leg_digest(shadow=False):
+    """A two-leg-a-side book, which is what config ships (legs_per_side: 2)."""
+    return {
+        "shadow": shadow,
+        "publish": {},
+        "cost": [],
+        "res": {"max_chase_pct": 0.04,
+                "pair": {
+                    "long": {"pick": {"t": "ABX.TO", "p945": 40.0,
+                                      "shares": 199, "alloc": 7960.0},
+                             "extra": [{"t": "AEM.TO", "p945": 290.0,
+                                        "shares": 27, "alloc": 7830.0}]},
+                    "short": {"pick": {"t": "SLF.TO", "p945": 111.75,
+                                       "shares": 126, "alloc": 14080.0},
+                              "extra": [{"t": "CM.TO", "p945": 163.55,
+                                         "shares": 65, "alloc": 10631.0}]}}}}
+
+
+def test_the_extra_legs_reach_the_page():
+    """REGRESSION. Between day-81 and day-87 this page read only `pick`, so a
+    sized, published, scored leg never appeared. On 2026-09-04 the book held
+    SLF 126sh AND CM 65sh; the page showed SLF alone, and CM was the leg that
+    won. The page and the ledger must describe the same book."""
+    out = "\n".join(V._pair_lines(_two_leg_digest(), "open"))
+    for t in ("ABX.TO", "AEM.TO", "SLF.TO", "CM.TO"):
+        assert t in out, f"{t} missing from the order block:\n{out}"
+
+
+def test_every_displayed_leg_carries_its_size_and_fill_bound():
+    """A leg printed without a size is a headline pretending to be an order."""
+    out = "\n".join(V._pair_lines(_two_leg_digest(), "open"))
+    for shares in ("199", "27", "126", "65"):
+        assert f"{shares} sh" in out, f"{shares} sh missing:\n{out}"
+    assert out.count("fill") == 4
+
+
+def test_the_extra_leg_takes_the_side_of_its_parent():
+    out = "\n".join(V._pair_lines(_two_leg_digest(), "open"))
+    long_block = out.split("SHORT")[0]
+    assert "AEM.TO" in long_block, "the long extra was rendered on the wrong side"
+    assert "CM.TO" not in long_block, "the short extra leaked into the long side"
+
+
+def test_a_side_with_no_extra_still_renders_its_primary():
+    d = _two_leg_digest()
+    d["res"]["pair"]["short"]["extra"] = []
+    out = "\n".join(V._pair_lines(d, "open"))
+    assert "SLF.TO" in out and "CM.TO" not in out
+
+
+def test_an_extra_without_a_ticker_is_skipped_not_printed_blank():
+    d = _two_leg_digest()
+    d["res"]["pair"]["short"]["extra"] = [{"p945": 1.0, "shares": 5}]
+    out = "\n".join(V._pair_lines(d, "open"))
+    assert "SLF.TO" in out
+    assert "SHORT  " not in out.replace("SHORT SLF.TO", "")
+
+
+def test_shadow_mode_shows_the_extra_without_a_size():
+    """Shadow mode never prints share counts — for any leg."""
+    out = "\n".join(V._pair_lines(_two_leg_digest(shadow=True), "open"))
+    assert "CM.TO" in out and "AEM.TO" in out
+    assert " sh" not in out

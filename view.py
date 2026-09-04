@@ -360,6 +360,25 @@ def _opportunities(d: dict) -> list:
     return out
 
 
+def _order_tail(d: dict, res: dict, side: str, p: dict) -> str:
+    """Size and fill bound for one leg, or the 9:45 price when unsized.
+
+    Shared by the primary and the extra legs so the two can never drift into
+    printing different things about the same book.
+    """
+    if p.get("shares") and not d.get("shadow"):
+        try:
+            import r945 as _r
+            b = _r.fill_bound(side.upper(), p["p945"],
+                              res.get("max_chase_pct", 0.04))
+            return (f"{p['shares']:>5} sh  ~${p.get('alloc', 0):,.0f}"
+                    f"   {C.DIM}fill "
+                    f"{'≤' if side == 'long' else '≥'} {b:.2f}{C.RESET}")
+        except Exception:
+            return f"{p['shares']:>5} sh"
+    return f"  {C.DIM}9:45 ${p.get('p945', 0):.2f}{C.RESET}"
+
+
 def _pair_lines(d: dict, note: str) -> list:
     """The pair as an ORDER, plus what it costs to express.
 
@@ -400,20 +419,18 @@ def _pair_lines(d: dict, note: str) -> list:
                               f"published board — do not size from here"
                               f"{C.RESET}")
             continue
-        if p.get("shares") and not d.get("shadow"):
-            try:
-                import r945 as _r
-                b = _r.fill_bound(side.upper(), p["p945"],
-                                  res.get("max_chase_pct", 0.04))
-                line += (f"{p['shares']:>5} sh  ~${p.get('alloc', 0):,.0f}"
-                         f"   {C.DIM}fill "
-                         f"{'≤' if side == 'long' else '≥'} "
-                         f"{b:.2f}{C.RESET}")
-            except Exception:
-                line += f"{p['shares']:>5} sh"
-        else:
-            line += f"  {C.DIM}9:45 ${p.get('p945', 0):.2f}{C.RESET}"
-        out.append(line)
+        out.append(line + _order_tail(d, res, side, p))
+        # THE EXTRA LEGS. Day-31 adopted legs_per_side=2 and these are SIZED,
+        # PUBLISHED and SCORED exactly like the primary — `r945 --book` has
+        # always printed them. This page did not read `extra` at all between
+        # day-81 and day-87, so it showed a one-leg-a-side book while the
+        # ledger recorded two. Concision may drop detail; it may not drop
+        # half the order.
+        for x in (lg.get("extra") or []):
+            if not x.get("t"):
+                continue
+            xline = f"    {col}▸ {verb} {x['t']:<8}{C.RESET}"
+            out.append(xline + _order_tail(d, res, side, x))
     # The whole expected outcome, in one line.
     rows = d.get("cost") or []
     known = [r for r in rows if (r.get("cost") or {}).get("usd")]

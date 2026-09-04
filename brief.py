@@ -321,13 +321,21 @@ def render_intraday(res: dict, cfg: dict, shadow: bool,
         # expectation. It had never appeared in the report at all.
         try:
             import cost as _c
+            # EVERY leg the book holds, primary AND extra. Day-31 ships
+            # legs_per_side=2, and costing only the primaries understated what
+            # the book pays: on 2026-09-04 this printed "~$9 behind" when the
+            # two legs actually cost $24.39, and the session lost $15.21 to
+            # exactly that spread. A cost line that omits half the book is
+            # worse than none, because it reads as a measured reassurance.
             rows = []
             for side in ("long", "short"):
                 lg = pair.get(side) or {}
-                p_ = lg.get("pick") or {}
-                if p_.get("t"):
-                    rows.append({"ticker": p_["t"], "shares": p_.get("shares"),
-                                 "price": p_.get("p945")})
+                for p_ in ([lg.get("pick") or {}]
+                           + list(lg.get("extra") or [])):
+                    if p_.get("t"):
+                        rows.append({"ticker": p_["t"],
+                                     "shares": p_.get("shares"),
+                                     "price": p_.get("p945")})
             assessed = _c.assess(rows)
             L += _c.render(assessed)
             # Carried to the short view too. The engine's edge is measured at

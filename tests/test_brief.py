@@ -195,3 +195,40 @@ def test_shadow_mode_prints_no_share_counts():
     r["pair"]["long"]["pick"]["alloc"] = 15042
     out, _ = brief.render_intraday(r, {}, shadow=True)
     assert "BUY" not in out and "160 sh" not in out
+
+
+# ── day-87: the cost line must cost the WHOLE book ─────────────────────────
+
+def test_the_cost_line_counts_extra_legs_not_just_primaries(monkeypatch):
+    """REGRESSION. On 2026-09-04 the page printed "starts ~$9 behind on
+    spread" for a book whose two legs actually cost $24.39, because this loop
+    read only `pick`. The session then lost $15.21 — to the spread the line
+    had understated by 2.7x. A cost line that omits half the book reads as a
+    measured reassurance and is worse than printing nothing."""
+    import brief as B
+    seen = {}
+
+    class _FakeCost:
+        @staticmethod
+        def assess(rows):
+            seen["rows"] = rows
+            return [{"ticker": r["ticker"], "cost": {"usd": 10.0}}
+                    for r in rows]
+
+        @staticmethod
+        def render(assessed):
+            return []
+
+    monkeypatch.setitem(__import__("sys").modules, "cost", _FakeCost)
+    res = {"max_chase_pct": 0.04, "longs": [], "shorts": [], "pair": {
+        "long": {"status": "OK", "sided": 0.6,
+                 "pick": {"t": "ABX.TO", "p945": 40.0, "shares": 199},
+                 "extra": [{"t": "AEM.TO", "p945": 290.0, "shares": 27}]},
+        "short": {"status": "OK", "sided": 0.6,
+                  "pick": {"t": "SLF.TO", "p945": 111.75, "shares": 126},
+                  "extra": [{"t": "CM.TO", "p945": 163.55, "shares": 65}]}}}
+    out = []
+    B.render_intraday(res, {}, False, False, "2026-09-04", cost_out=out)
+    got = {r["ticker"] for r in seen.get("rows", [])}
+    assert got == {"ABX.TO", "AEM.TO", "SLF.TO", "CM.TO"}, got
+    assert len(out) == 4, f"cost_out carried {len(out)} legs, expected 4"
