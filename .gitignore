@@ -19,3 +19,9 @@ daily.csv
 # data/short_interest.csv is NOT here — it is an acquired feed whose issuer
 # filtering is part of the record.
 data/twins_panel.csv
+
+# the US daily panel: 188MB and rebuildable in one command. Regenerate with
+# build_us.py. data/us_earnings.csv is NOT here -- it is an acquired SEC feed
+# whose Item 2.02 filtering and before-open/after-close timing are part of the
+# record, and it is small.
+data/us_daily.csv
