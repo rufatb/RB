@@ -4470,6 +4470,109 @@ spread twice), H2 dead at −0.000%, H3 underpowered, H4 tail-carried, **H5
 rejected**. The honest answer to "which strategy gives the highest hit rate"
 remains **none of them**, and it is now a firmer none than it was yesterday.
 
+## Day-87: three items closed — a constant corrected, a blocker re-probed, a window rejected
+
+### 1. TYPICAL_MOVE_PCT: 0.97% -> 0.69%, and the correction is against us
+
+Decided on **population**, not on which study was better run — day-70's sample
+cannot be reconstructed, so that question is unanswerable and had kept this open
+for weeks. It does not need answering. The constant is a DENOMINATOR:
+
+```
+cost.share_of_move = spread(this pick) / TYPICAL_MOVE_PCT
+cost.edge_bps      = (p - 1/2) x 2 x E|move|      # p is the PICKS' hit rate
+```
+
+Both numerators are drawn from picks. Day-70 measured the whole 21-name
+universe, which includes names the engine never selects — and selection is not
+neutral with respect to volatility, since day-47 established that the density
+tag sorts by volatility. So universe prints are the wrong leg (rule 7). The
+ledger's **363 scored legs over 41 sessions** give a median |capture| of
+**0.69% [0.59, 0.80]**, and that is the population the report describes.
+
+**Direction, stated plainly: this makes the book look worse, not better.**
+Every cost line printed before today understated the drag. A 5bp spread was
+reading as 5.2% of a typical move; it is really **7.2%**.
+
+`validate_typicalmove.py` was NOT edited — changing a constant inside the
+script that checks it defeats the check, and a test enforces that. The tension
+check stays armed and now falls silent because 0.69 sits inside its own
+interval. Silence earned by agreement, not by deleting the check.
+
+A test held a literal `0.97` and broke on a legitimate change, which means it
+was testing the number rather than the arithmetic. It now references the
+constant, with a separate assertion pinning day-87's value against a live
+re-derivation so it cannot drift back silently.
+
+### 2. P(rejection): still open, and the blocker was re-probed rather than inherited
+
+Day-82 named the unblocker — published complete response letters. FDA has moved
+toward releasing them, so this was worth re-testing.
+
+**It is not there.** `fda.gov/.../complete-response-letters` returns **HTTP
+404**; openFDA's `drugsfda` responds but carries approvals only. One dead
+endpoint, one live-but-wrong one, both recorded rather than routed around.
+
+No change. **Cited 30%** (first-cycle NME) anchors `catalyst.assess`'s
+guardrails; **measured 11.7%** [8.5, 15.9] (291 single-asset decisions, one
+harvest, one classifier, one window) divides every breakeven in the screen.
+Different populations, neither substitutable, and the measured leg is biased
+DOWN for two named reasons. The report keeps printing both and keeps saying
+they must never be mixed. Third direct probe of this blocker.
+
+### 3. The overnight window: REJECTED on cost, at 4.87bps
+
+Pre-registered in `PREREGISTER_day87.md` with the expected outcome recorded:
+*"I expect H1c to FAIL on cost… I am running it because that arithmetic
+deserves to be on the record with the tail numbers beside it."*
+
+| | gross | net 5bps | net 10bps | net 20bps |
+|---|---|---|---|---|
+| overnight | **+0.0487%** \|t\|=3.12 | −0.0013% | **−0.0513%** \|t\|=3.28 | −0.1513% |
+| intraday | +0.0259% \|t\|=1.53 | −0.0241% | −0.0741% \|t\|=4.39 | −0.1741% |
+
+**The overnight window clears the bar GROSS** — +0.0487%/session, |t|=3.12,
+consistent across all four blocks, 57.2% of sessions. It is a real effect.
+
+**Its entire edge is 4.87 basis points.** That is the break-even round trip.
+At 5bps it is already zero; at the registered deciding cost of 10bps it is
+**negative with |t|=3.28**, which is to say reliably losing. Both windows carry
+the identical cost model, because costing one and not the other would settle
+the question by construction.
+
+**REJECTED.** The answer to "is the engine trading the wrong half of the day"
+is: yes, the flatter half — and no, moving to the better half does not help,
+because the gap between them (2.3bps) is smaller than the cost of acting on it.
+
+### The tail refines a day-24 claim, and half of it does not replicate
+
+Day-24 concluded that one night "doubles volatility, 2.3x worse tail."
+
+| | overnight | intraday | ratio |
+|---|---|---|---|
+| std dev | 0.777 | 0.829 | **0.94x** |
+| 5th percentile | −0.990 | −1.307 | 0.76x |
+| worst day | **−11.712** | −4.728 | **2.48x** |
+
+On 2,517 US sessions the volatility half is **wrong** — overnight is slightly
+*less* volatile (0.94x), and its 5th percentile is *better*. The tail half is
+**right, and almost exactly**: day-24 said 2.3x, this says 2.48x.
+
+So the overnight penalty is not general volatility. It is a pure extreme-tail
+effect: nothing unusual on a normal night, and a −11.7% day when it goes wrong
+against a −4.7% worst intraday day. That is a sharper and more useful statement
+than the one it replaces, and it is the shape a gap-risk argument should have
+had all along.
+
+### Where the eleven arms now stand
+
+Days 84-87 tested eleven arms across three markets and 4.3M ticker-days. Every
+one is closed or bounded: short interest (bounded null), PEAD, earnings gap,
+weekly reversal (tail-carried), 52-week proximity (**rejected #39**), overnight
+(**rejected, on cost**). The one durable finding is negative and structural —
+**the intraday window carries roughly half the drift of the overnight one, and
+neither survives a realistic spread as a long-only basket.**
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
