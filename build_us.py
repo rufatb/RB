@@ -64,8 +64,14 @@ MIN_SESSIONS = 500          # a name needs real history to enter the panel
 MAX_DAY_GAP = 6             # day-81: real daily bars top out near a 4-day gap
 
 
-def sec_tickers(n_top: int = 1200) -> list:
-    """Ticker -> CIK for US filers, in SEC's own order (roughly by size)."""
+def sec_tickers(n_top: int = 1200, skip: int = 0) -> list:
+    """Ticker -> CIK for US filers, in SEC's own order (roughly by size).
+
+    `skip` drops the first N usable names, so a HELD-OUT universe can be built
+    that shares no name with an earlier one. Day-86 needs that: re-running a
+    hypothesis on a superset of the sample that produced it is a re-read, not a
+    replication.
+    """
     r = requests.get(SEC_TICKERS, headers=UA, timeout=45)
     r.raise_for_status()
     rows = list(json.loads(r.text).values())
@@ -77,9 +83,9 @@ def sec_tickers(n_top: int = 1200) -> list:
         seen.add(t)
         out.append({"ticker": t, "cik": int(row["cik_str"]),
                     "name": row.get("title", "")})
-        if len(out) >= n_top:
+        if len(out) >= n_top + skip:
             break
-    return out
+    return out[skip:]
 
 
 # ── daily bars ─────────────────────────────────────────────────────────────
@@ -217,11 +223,18 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--names", type=int, default=600)
     ap.add_argument("--years", type=int, default=10)
+    ap.add_argument("--skip", type=int, default=0,
+                    help="drop the first N usable names — builds a HELD-OUT "
+                         "universe disjoint from an earlier build")
+    ap.add_argument("--tag", default="",
+                    help="suffix for the output files, e.g. _holdout")
     a = ap.parse_args(argv)
     os.makedirs(DATA, exist_ok=True)
 
-    print(f"universe: SEC company_tickers, first {a.names} usable US filers")
-    uni = sec_tickers(a.names)
+    where = (f"names {a.skip + 1}..{a.skip + a.names}" if a.skip
+             else f"first {a.names}")
+    print(f"universe: SEC company_tickers, {where} usable US filers")
+    uni = sec_tickers(a.names, skip=a.skip)
     print(f"  {len(uni)} names")
 
     print(f"\ndaily bars ({a.years}y, granularity asserted per name)")
@@ -234,7 +247,7 @@ def main(argv=None) -> int:
           f"{px['date'].min()} .. {px['date'].max()}")
     print(f"  dropped {bad['fetch']} on fetch, {bad['granularity_or_short']} "
           f"for short history or non-daily bars (rule 9)")
-    px.to_csv(os.path.join(DATA, "us_daily.csv"), index=False)
+    px.to_csv(os.path.join(DATA, f"us_daily{a.tag}.csv"), index=False)
 
     print(f"\nearnings: 8-K Item {EARNINGS_ITEM}, timestamped")
     uni_kept = [u for u in uni if u["ticker"] in set(kept)]
@@ -243,7 +256,7 @@ def main(argv=None) -> int:
         print("  NO EARNINGS fetched — the event arms cannot run.")
     else:
         ern = ern.sort_values(["t", "date"]).reset_index(drop=True)
-        ern.to_csv(os.path.join(DATA, "us_earnings.csv"), index=False)
+        ern.to_csv(os.path.join(DATA, f"us_earnings{a.tag}.csv"), index=False)
         by = ern["when"].value_counts().to_dict()
         print(f"  {len(ern):,} announcements across {ern['t'].nunique()} names, "
               f"{ern['date'].min()} .. {ern['date'].max()}")

@@ -25,3 +25,4 @@ data/twins_panel.csv
 # whose Item 2.02 filtering and before-open/after-close timing are part of the
 # record, and it is small.
 data/us_daily.csv
+data/us_daily_holdout.csv
