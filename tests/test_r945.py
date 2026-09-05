@@ -218,7 +218,7 @@ def test_spreads_are_measured_for_every_qualified_name(monkeypatch, tmp_path):
     shorts = [{"t": "SLF.TO", "p_up": 0.38, "p945": 111.0, "nd": 1.0},
               {"t": "CM.TO", "p_up": 0.36, "p945": 163.0, "nd": 1.2},
               {"t": "TD.TO", "p_up": 0.44, "p945": 169.0, "nd": 1.3}]
-    res = {"now": "2026-09-07T09:46", "longs": longs, "shorts": shorts,
+    res = {"now": "2026-09-08T09:46", "longs": longs, "shorts": shorts,
            "pair": {"long": {"pick": longs[0], "extra": []},
                     "short": {"pick": shorts[0], "extra": [shorts[1]]}}}
     R.publish(res, {"risk": {"account_equity": 25000, "max_position_pct": 50},
@@ -245,3 +245,56 @@ class _StubLedger:
 
     def append_universe_prints(self, *a, **k):
         return 0
+
+
+def test_publish_refuses_on_a_non_trading_day(monkeypatch, tmp_path):
+    """FAIL CLOSED ON THE WRITE PATH (rule 2). `too_early` guards the clock;
+    nothing guarded the calendar. On a holiday this would fetch stale quotes,
+    build a board and write it into the permanent record dated a day that
+    never traded — rows that can never be scored, because there is no close.
+
+    2026-09-07 is Labour Day: TSX and NYSE both shut.
+    """
+    import sys as _s
+
+    import r945 as R
+    called = {"assess": False}
+
+    class _FakeCost:
+        @staticmethod
+        def assess(rows):
+            called["assess"] = True
+            return []
+
+    stub = _StubLedger(tmp_path)
+    monkeypatch.setitem(_s.modules, "cost", _FakeCost)
+    monkeypatch.setitem(_s.modules, "ledger", stub)
+    res = {"now": "2026-09-07T09:46", "longs": [], "shorts": [],
+           "pair": {"long": {"pick": None}, "short": {"pick": None}}}
+    out = R.publish(res, {"risk": {"account_equity": 25000}, "pair": {}})
+
+    assert out["not_trading"] is True
+    assert out["picks"] == 0 and out["prints"] == 0
+    assert stub.rows == [], "rows were written on a closed exchange"
+    assert not called["assess"], "quotes were fetched for a shut market"
+    assert any("NOT a trading day" in e for e in out["errors"])
+    assert any("Labour" in e or "Monday" in e for e in out["errors"])
+
+
+def test_publish_proceeds_normally_on_a_trading_day(monkeypatch, tmp_path):
+    """The guard must not block an ordinary session."""
+    import sys as _s
+
+    import r945 as R
+
+    class _FakeCost:
+        @staticmethod
+        def assess(rows):
+            return [{"ticker": r["ticker"], "cost": {"bps": 5.0}} for r in rows]
+
+    monkeypatch.setitem(_s.modules, "cost", _FakeCost)
+    monkeypatch.setitem(_s.modules, "ledger", _StubLedger(tmp_path))
+    res = {"now": "2026-09-08T09:46", "longs": [], "shorts": [],
+           "pair": {"long": {"pick": None}, "short": {"pick": None}}}
+    assert R.publish(res, {"risk": {"account_equity": 25000},
+                           "pair": {}})["not_trading"] is False

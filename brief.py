@@ -55,6 +55,10 @@ from validate_exit import SCRATCH  # noqa: E402
 RULE = "─" * 74
 
 
+class _SkipAdvice(Exception):
+    """Not an error: a deliberate, reported reason not to record advice."""
+
+
 def _fmt_pct(x, w=7):
     return f"{x:+{w}.2f}%" if x is not None else f"{'stale':>{w}} "
 
@@ -441,6 +445,43 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
     d["book"] = book
     d["mark_errors"] = mark_errors
     d["closing"], d["upcoming"] = pos.due_today(book["legs"], today)
+
+    # RECORD THE ADVICE, so it can be judged later (day-88).
+    #
+    # advice.py was built for exactly this and nothing ever called it: the
+    # report said "EXIT ZYME" on several mornings and no record anywhere
+    # captured that it had said so. An adviser whose recommendations are not
+    # written down cannot be evaluated, and cannot be wrong in a way that
+    # shows up later. record() is idempotent per (day, ticker, action), so a
+    # re-read of the same morning does not multiply the record.
+    #
+    # Never fatal: failing to LOG advice must not suppress the advice itself.
+    try:
+        import advice as _adv
+        import dashboard as _db2
+        # Only on a trading day. Advice issued on a closed exchange cannot be
+        # acted on, and its px_at_advice is a stale mark or blank -- so it can
+        # never be judged against its horizon. An unfalsifiable row in a record
+        # built to make advice falsifiable is worse than no row.
+        if not _db2.is_trading_day(today):
+            raise _SkipAdvice(f"{today} is not a trading day")
+        _rows = _adv.load()
+        _n = 0
+        for _l in d["closing"]:
+            _rows, _k = _adv.record(
+                _rows, _l["ticker"], "EXIT",
+                basis=(_l.get("exit_condition") or "exit rule reached"),
+                horizon_days=5, px=_l.get("mark"), today=today,
+                note=f"{_l.get('event_kind') or 'event'} "
+                     f"{_l.get('event_date') or ''}".strip())
+            _n += _k
+        if _n:
+            _adv.save(_rows)
+        d["advice_written"] = _n
+    except _SkipAdvice as _e:
+        d["advice_skipped"] = str(_e)
+    except Exception as _e:                       # noqa: BLE001 — reported
+        d["advice_error"] = f"{type(_e).__name__}: {_e}"
 
     # 4 intraday (computed before actions, which cite it)
     pair_note, intraday = "nothing — engine not run", ""

@@ -56,14 +56,24 @@ ACTIONS = ("BUY", "SELL", "SHORT", "COVER", "HOLD", "EXIT", "HEDGE",
            "STAND ASIDE", "SIZE DOWN")
 
 
-def load(path: str = PATH) -> list:
+def load(path: str | None = None) -> list:
+    """Read the record. `path` resolves at CALL time — see save()."""
+    path = path or PATH
     if not os.path.exists(path):
         return []
     with open(path, newline="") as f:
         return list(csv.DictReader(f))
 
 
-def save(rows: list, path: str = PATH) -> None:
+def save(rows: list, path: str | None = None) -> None:
+    """Write the record. `path` resolves at CALL time, not import time.
+
+    A default of `path=PATH` binds the production path when the module is
+    imported, so `monkeypatch.setattr(advice, "PATH", tmp)` has no effect and a
+    test writes into the real ledger. That happened on day-88 and put a
+    fabricated ZYME row into data/advice.csv.
+    """
+    path = path or PATH
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")

@@ -232,3 +232,80 @@ def test_the_cost_line_counts_extra_legs_not_just_primaries(monkeypatch):
     got = {r["ticker"] for r in seen.get("rows", [])}
     assert got == {"ABX.TO", "AEM.TO", "SLF.TO", "CM.TO"}, got
     assert len(out) == 4, f"cost_out carried {len(out)} legs, expected 4"
+
+
+# ── day-88: the system's ADVICE is recorded so it can be judged ────────────
+
+def test_exit_advice_is_written_to_the_advice_ledger(monkeypatch, tmp_path):
+    """REGRESSION. advice.py was built for exactly this and nothing ever
+    called it: the report said "EXIT ZYME" on several mornings and no record
+    anywhere captured that it had said so. An adviser whose recommendations
+    are not written down cannot be evaluated."""
+    import datetime as dt
+
+    import advice as A
+    monkeypatch.setattr(A, "PATH", str(tmp_path / "advice.csv"))
+    rows, n = A.record([], "ZYME", "EXIT", basis="PDUFA settled APPROVED",
+                       horizon_days=5, px=29.19, today=dt.date(2026, 9, 4))
+    A.save(rows)
+    back = A.load()
+    assert n == 1 and len(back) == 1
+    assert back[0]["ticker"] == "ZYME" and back[0]["action"] == "EXIT"
+    assert back[0]["px_at_advice"].startswith("29.19")
+
+
+def test_the_same_advice_twice_in_one_day_is_one_recommendation(monkeypatch,
+                                                                tmp_path):
+    """A re-read of the morning must not multiply the record."""
+    import datetime as dt
+
+    import advice as A
+    monkeypatch.setattr(A, "PATH", str(tmp_path / "advice.csv"))
+    rows, n1 = A.record([], "ZYME", "EXIT", basis="b", horizon_days=5,
+                        px=29.19, today=dt.date(2026, 9, 4))
+    rows, n2 = A.record(rows, "ZYME", "EXIT", basis="b", horizon_days=5,
+                        px=29.30, today=dt.date(2026, 9, 4))
+    assert n1 == 1 and n2 == 0 and len(rows) == 1
+
+
+def test_a_failure_to_LOG_advice_never_suppresses_the_advice(monkeypatch):
+    """The recording is bookkeeping. If it breaks, the reader must still be
+    told to exit."""
+    import brief as B
+    src = __import__("inspect").getsource(B.build)
+    i = src.index("RECORD THE ADVICE")
+    block = src[i:i + 2400]
+    assert "except Exception" in block
+    assert "advice_error" in block
+
+
+def test_advice_is_not_recorded_on_a_non_trading_day(monkeypatch):
+    """Advice issued on a closed exchange cannot be acted on and its
+    px_at_advice is blank or a stale mark, so it can never be judged against
+    its horizon. An unfalsifiable row in a record built to make advice
+    falsifiable is worse than no row."""
+    import brief as B
+    src = __import__("inspect").getsource(B.build)
+    i = src.index("RECORD THE ADVICE")
+    block = src[i:i + 1800]
+    assert "is_trading_day" in block
+    assert "_SkipAdvice" in block
+
+
+def test_skipping_advice_is_reported_not_silent():
+    import brief as B
+    src = __import__("inspect").getsource(B.build)
+    assert "advice_skipped" in src
+
+
+def test_advice_save_resolves_its_path_at_call_time(tmp_path, monkeypatch):
+    """A `path=PATH` default binds the production file at import time, so
+    monkeypatching the module global silently does nothing and a test writes
+    into the real ledger. That happened on day-88."""
+    import advice as A
+    monkeypatch.setattr(A, "PATH", str(tmp_path / "a.csv"))
+    A.save([{"issued": "2026-09-08", "ticker": "X", "action": "EXIT",
+             "basis": "b", "horizon_days": "5", "px_at_advice": "1.0",
+             "px_at_horizon": "", "move_pct": "", "judged": "", "note": ""}])
+    assert (tmp_path / "a.csv").exists(), "save ignored the redirected PATH"
+    assert len(A.load()) == 1

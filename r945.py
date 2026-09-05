@@ -1193,7 +1193,36 @@ def publish(res: dict, cfg: dict) -> dict:
     import ledger
     rcfg = cfg.get("risk", {})
     pcfg = cfg.get("pair") or {}
-    out = {"already": False, "picks": 0, "pair": 0, "prints": 0, "errors": []}
+    out = {"already": False, "picks": 0, "pair": 0, "prints": 0, "errors": [],
+           "not_trading": False}
+
+    # NON-TRADING DAY — fail closed on the WRITE path (rule 2).
+    #
+    # `too_early` guards the clock but nothing guarded the calendar, so on a
+    # holiday this would fetch stale quotes, build a board and write it into
+    # the permanent record dated a day that never traded. Those rows can never
+    # be scored -- there is no close to score them against -- so they would sit
+    # in the ledger forever as unresolvable picks, and `missing_sessions`
+    # would keep reporting a gap that cannot be filled.
+    #
+    # Found before 2026-09-07, which is Labour Day: TSX and NYSE both shut.
+    try:
+        import datetime as _dt
+
+        import dashboard as _db
+        _day = _dt.date.fromisoformat(str(res.get("now", ""))[:10])
+        if not _db.is_trading_day(_day):
+            out["not_trading"] = True
+            out["errors"].append(
+                f"{_day} ({_day:%A}) is NOT a trading day — the exchange is "
+                f"closed. Nothing was published: a board built from stale "
+                f"quotes and dated a day that never traded could never be "
+                f"scored. Re-run on the next session.")
+            return out
+    except Exception as _e:                      # noqa: BLE001 — reported
+        out["errors"].append(
+            f"trading-day check unavailable ({type(_e).__name__}) — proceeding, "
+            f"but verify the exchange is open before acting")
 
     pair = res.get("pair") or {}
     pair_picks = []

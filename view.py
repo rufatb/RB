@@ -178,6 +178,17 @@ def render(d: dict) -> str:
     # ── DO TODAY ────────────────────────────────────────────────────────
     L.append(f"  {head('DO TODAY')}")
     acted = False
+    # A CLOSED EXCHANGE IS NOT A QUIET MORNING. Without this the page would
+    # print a board built from the previous session's quotes and read exactly
+    # like a normal day. Say it once, at the top of the only section that asks
+    # for an action.
+    if (d.get("publish") or {}).get("not_trading"):
+        L.append(f"    {C.YELLOW}▸ MARKET CLOSED{C.RESET} — not a trading day. "
+                 f"No board was published.")
+        L += _wrap("Any prices shown below are the previous session's and are "
+                   "not actionable. Positions still carry risk; the engine "
+                   "simply has nothing to add today.", 6, dim=True)
+        acted = True
     for l in d.get("closing") or []:
         settled = (d.get("settled") or {}).get(l["ticker"])
         why = l.get("exit_condition") or "exit rule reached"
@@ -202,7 +213,12 @@ def render(d: dict) -> str:
         L.append("      during the gap is not a decision.")
         acted = True
     note = (d.get("pair_note") or "").strip()
-    if "nothing" not in note.lower():
+    if (d.get("publish") or {}).get("not_trading"):
+        # "none qualified — not forced" says the engine LOOKED and declined.
+        # On a closed exchange it did not look. Saying the wrong thing about
+        # why there is no board is worse than saying nothing.
+        pass
+    elif "nothing" not in note.lower():
         L += _pair_lines(d, note)
         acted = True
     else:

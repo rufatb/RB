@@ -603,3 +603,40 @@ def test_a_sufficient_net_sample_prints_normally(monkeypatch):
     out = "\n".join(V._record(_rec(40)))
     assert "too few to read" not in out
     assert "on 40" in out
+
+
+# ── day-88: a closed exchange must not look like a quiet morning ───────────
+
+def test_a_non_trading_day_is_announced_in_do_today():
+    """Without this the page prints a board built from the previous session's
+    quotes and reads exactly like a normal morning. 2026-09-07 is Labour Day."""
+    out = V.render({"publish": {"not_trading": True}, "res": {}, "book": None})
+    assert "MARKET CLOSED" in out
+    assert "not a trading day" in out
+
+
+def test_it_says_the_prices_shown_are_stale_and_not_actionable():
+    out = V.render({"publish": {"not_trading": True}, "res": {}, "book": None})
+    flat = " ".join(out.split())
+    assert "previous session's" in flat and "not actionable" in flat
+
+
+def test_it_does_not_pretend_positions_are_risk_free_that_day():
+    """The exchange being shut does not close the book."""
+    out = " ".join(V.render({"publish": {"not_trading": True}, "res": {},
+                             "book": None}).split())
+    assert "still carry risk" in out
+
+
+def test_a_trading_day_says_nothing_about_closure():
+    out = V.render({"publish": {"not_trading": False}, "res": {}, "book": None})
+    assert "MARKET CLOSED" not in out
+
+
+def test_a_closed_day_does_not_claim_the_engine_declined():
+    """"none qualified — not forced" says the engine looked and passed. On a
+    holiday it never looked, and claiming otherwise misreports the reason."""
+    out = V.render({"publish": {"not_trading": True}, "res": {}, "book": None,
+                    "pair_note": "open"})
+    assert "MARKET CLOSED" in out
+    assert "none qualified" not in out
