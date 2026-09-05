@@ -1,0 +1,61 @@
+fetching 1h bars for 200 names (720d window)
+    50/200 … 50 usable
+    100/200 … 100 usable
+    150/200 … 150 usable
+    200/200 … 200 usable
+  200 usable, 0 failed
+  median 7 bars/session
+  entry 10:30: 38,120 qualified legs
+  entry 11:30: 38,626 qualified legs
+  entry 12:30: 38,962 qualified legs
+  entry 13:30: 39,677 qualified legs
+
+==========================================================================
+▎H1 — ENTRY TIME (exit at same-day close)
+   cell                    n legs  sessions    capture    |t|    hit  blocks
+   entry 10:30              38120       487    -0.0146   1.67  49.6%  -0.013  -0.036  -0.009  -0.000
+   entry 11:30              38626       486    -0.0010   0.17  49.1%  -0.001  -0.004  -0.019  +0.020
+   entry 12:30              38962       488    -0.0031   0.52  49.4%  +0.001  -0.016  -0.018  +0.021
+   entry 13:30              39677       488    -0.0021   0.32  49.6%  +0.003  -0.008  -0.011  +0.008
+
+   placebo max over 200 shuffles of the SAME grid: median +0.0071%, 95th +0.0161%, max +0.0220%
+   best cell: entry 11:30 at -0.0010%/leg
+   -> REJECTED — the best cell entry 11:30 (-0.0010%/leg) does NOT beat the placebo's 95th percentile (+0.0161%). A grid this size produces a winner that large by chance.
+
+==========================================================================
+▎H3 — THE JOINT GRID (entry x hold duration)
+   cell                    n legs  sessions    capture    |t|    hit  blocks
+   10:30 +0d                38120       487    -0.0094   0.57  49.6%  -0.024  -0.017  -0.010  +0.013
+   10:30 +1d                38026       486    -0.0050   0.17  50.3%  -0.058  +0.068  -0.002  -0.028
+   10:30 +2d                37947       485    -0.0527   0.98  50.2%  -0.112  +0.098  -0.188  -0.008
+   10:30 +3d                37855       484    -0.0262   0.44  50.2%  -0.114  +0.147  -0.184  +0.046
+   10:30 +5d                37652       482    +0.0217   0.30  50.2%  -0.124  +0.271  -0.140  +0.080
+   11:30 +0d                38626       486    -0.0040   0.21  49.1%  -0.017  +0.013  -0.024  +0.012
+   11:30 +1d                38498       485    +0.0543   1.07  49.6%  -0.045  +0.137  +0.121  +0.006
+   11:30 +2d                38411       484    +0.0841   1.13  49.5%  -0.106  +0.112  +0.318  +0.012
+   11:30 +3d                38308       483    +0.0815   1.04  49.4%  -0.164  +0.163  +0.293  +0.033
+   11:30 +5d                38089       481    +0.0711   0.86  49.5%  -0.195  +0.243  +0.311  -0.072
+   12:30 +0d                38962       488    -0.0038   0.24  49.4%  -0.011  -0.000  -0.030  +0.026
+   12:30 +1d                38857       487    -0.0110   0.40  49.3%  -0.070  +0.028  -0.045  +0.043
+   12:30 +2d                38774       486    -0.0684   1.55  49.2%  -0.124  -0.112  -0.065  +0.028
+   12:30 +3d                38679       485    -0.0926   1.74  49.2%  -0.221  -0.146  -0.070  +0.067
+   12:30 +5d                38494       483    -0.0809   1.14  49.5%  -0.251  +0.016  -0.215  +0.127
+   13:30 +0d                39677       488    -0.0083   0.65  49.6%  +0.005  -0.012  -0.032  +0.005
+   13:30 +1d                39569       487    -0.0659   1.27  49.8%  -0.023  -0.061  -0.220  +0.041
+   13:30 +2d                39487       486    -0.0629   1.06  50.1%  -0.067  -0.017  -0.224  +0.056
+   13:30 +3d                39406       485    -0.1102   1.44  49.5%  -0.106  -0.071  -0.352  +0.089
+   13:30 +5d                39219       483    -0.0162   0.17  49.9%  -0.065  +0.081  -0.199  +0.120
+
+   placebo max over 200 shuffles of the SAME grid: median +0.1153%, 95th +0.1848%, max +0.2491%
+   best cell: 11:30 +2d at +0.0841%/leg
+   -> REJECTED — the best cell 11:30 +2d (+0.0841%/leg) does NOT beat the placebo's 95th percentile (+0.1848%). A grid this size produces a winner that large by chance.
+
+   cost note: every +Nd cell holds overnight. Day-24 measured
+   2x volatility and day-87 a 2.48x worse worst-day. None of
+   that is in the capture figures above.
+
+==========================================================================
+   ── the deciding statistic is the BEST CELL against the PLACEBO'S
+      BEST CELL, never against zero. A 35-cell grid produces a high
+      winner by chance; day-39's 09:50 was beaten by its own
+      placebo median.

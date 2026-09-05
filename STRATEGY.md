@@ -4710,6 +4710,100 @@ H2 directionally worse but underpowered — half right, the direction held and
 the significance did not. H3 silent — correct. What I did not anticipate was
 that the frequency argument would settle it independently of all three.
 
+## Day-89: REJECTION #40 — entry time × hold duration, jointly, on 200 names
+
+Pre-registered in `PREREGISTER_day89.md`. Asked directly by the portfolio
+manager, who wanted the question re-tested rather than the record re-cited.
+
+Day-39 rejected entry times (#29) and day-51 rejected hold duration (#32),
+**separately**, on 21 TSX / 20 twins names. The joint grid had never been run,
+and entry and duration push in opposite directions — a later entry gives a
+longer momentum window but leaves less session to capture — so one-at-a-time
+testing cannot find an interaction.
+
+### The rule that decides, and why it is not any cell's |t|
+
+A grid of entry times × durations is 20-30 cells, and **the best of that many
+noisy cells is high by construction.** Day-39 was nearly taken by exactly this:
+its apparent 09:50 winner at +0.1034%/leg was beaten by its own placebo's
+MEDIAN winner at +0.1212%.
+
+So the registered statistic is **best real cell against the placebo's best
+cell**, at the 95th percentile, plus |t| >= 3 and four-block consistency. The
+placebo reshuffles the sign of each session's contribution within every cell,
+preserving cell shapes and sample sizes while destroying any real effect, and
+records the grid maximum.
+
+The machinery behaved as designed: the **20-cell** joint grid's placebo bar
+(+0.1848%) is **eleven times** the **4-cell** entry grid's (+0.0161%). More
+chances taken, higher bar to clear.
+
+### Panel A — hourly, 200 names, 487 sessions, ~38,000 legs per cell
+
+| entry | capture/leg | \|t\| | hit |
+|---|---|---|---|
+| 10:30 | −0.0146% | 1.67 | 49.6% |
+| 11:30 | −0.0010% | 0.17 | 49.1% |
+| 12:30 | −0.0031% | 0.52 | 49.4% |
+| 13:30 | −0.0021% | 0.32 | 49.6% |
+
+**Every entry time is negative.** The best cell (−0.0010%) is below the
+placebo's own MEDIAN (+0.0071%) — the real grid performs worse than its noise.
+Hit rates sit in a 49.1–49.6% band across 155,000 legs.
+
+Joint grid best: **11:30 +2d at +0.0841%**, |t| = 1.13, blocks
+−0.106 / +0.112 / **+0.318** / +0.012 — sign flips. Against a placebo 95th of
+**+0.1848%**. Less than half the bar. REJECTED.
+
+### Panel B — 5-minute, the only arm that can see 09:46
+
+Hourly cannot start before 10:30, so the question actually asked — is some
+time near the open better than 09:46? — needs 5m bars, which Yahoo caps at 58
+days. Registered in advance as **refute-only**: 60-day windows have
+manufactured six separate mirages here.
+
+| entry | capture/leg | \|t\| | hit |
+|---|---|---|---|
+| 09:35 | −0.0318% | 0.64 | 49.0% |
+| 09:40 | −0.0148% | 0.33 | 48.4% |
+| **09:45 (shipped)** | **−0.0446%** | **1.42** | **48.5%** |
+| 09:50 | −0.0472% | 1.38 | 48.3% |
+| 10:00 | −0.0286% | 0.99 | 48.6% |
+| 10:30 | −0.0228% | 0.89 | 50.6% |
+
+Again **every entry time negative**, best (−0.0148%) far below the placebo 95th
+(+0.0849%). Joint grid best 09:35 +5d at +0.1986% against a placebo 95th of
++0.4601%. REJECTED on both.
+
+**Day-39's 09:50 is now the WORST same-day cell** (−0.0472%). The apparent
+winner that its own placebo already beat does not survive on new data, which is
+what a mirage does.
+
+**Stated limit:** at 38 sessions Panel B cannot even compute four-block
+consistency (the guard requires 40), so its blocks column is empty by design.
+It refutes; it establishes nothing. Registered before running.
+
+### What this settles, and what it costs to say
+
+**09:46 is not special — nothing is.** Ten entry times across two panels, two
+independent samples, 200 names, and every same-day cell is negative before
+costs. The shipped time is mid-pack among options that are all bad, and it is
+kept for the reason it was always kept: it is the earliest moment the features
+exist, and nothing later improves on it.
+
+**Longer holds are worse, not better.** The 09:50 / 10:00 / 10:30 five-day
+cells run −0.26% / −0.35% / −0.36%, and none of that carries day-24's overnight
+penalty or day-87's 2.48x worse worst-day.
+
+**One pattern worth keeping.** Multi-day cells show hit rates creeping ABOVE
+50% (up to 52.0% at 10:30 +1d) while tide-relative capture stays negative.
+That is the day-38 / day-51 signature exactly — raw hit rate rising on market
+drift while the market-relative figure does not move. It is the reason capture
+decides here and hit rate does not, and it is how a "better" hold duration
+would sell itself to a reader watching the wrong number.
+
+**REJECTED (#40).** The run time stays 09:46 and the hold stays to-the-close.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
