@@ -215,3 +215,95 @@ def event_concentration(legs: list) -> list:
         by[d] = (gross + l["entry_px"] * l["shares"], names + [l["ticker"]])
     return sorted(((d, g, n) for d, (g, n) in by.items() if len(n) > 1),
                   key=lambda x: -x[1])
+
+
+# ── CLI ────────────────────────────────────────────────────────────────────
+# DAY-88: this module has always held the full open/close API and had no way to
+# reach it. CLAUDE.md states the contract -- "positions.py records what the
+# user says they did" -- and there was no command with which to say it, so a
+# position could only be recorded by hand-editing the CSV.
+#
+# It mattered immediately: the morning page has been printing "EXIT ZYME" for
+# several sessions, and acting on that advice left no way to record the close.
+# The book would have shown ZYME open forever and re-issued the same advice
+# every morning.
+#
+# READ-ONLY REMAINS READ-ONLY. This records what the portfolio manager reports
+# having done. It places, sizes and cancels nothing.
+
+def main(argv=None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="Record what YOU did. This never places an order.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    s = sub.add_parser("list", help="show positions")
+    s.add_argument("--all", action="store_true", help="include closed")
+
+    o = sub.add_parser("open", help="record a position you opened")
+    o.add_argument("ticker")
+    o.add_argument("side", choices=["LONG", "SHORT"])
+    o.add_argument("shares", type=float)
+    o.add_argument("entry_px", type=float)
+    o.add_argument("--date", default=dt.date.today().isoformat())
+    o.add_argument("--source", default="manual")
+    o.add_argument("--exit-condition", required=True,
+                   help="REQUIRED — written at entry, the only moment it can "
+                        "be chosen without knowing the answer")
+    o.add_argument("--thesis", default="")
+    o.add_argument("--event-date", default="")
+    o.add_argument("--event-kind", default="")
+    o.add_argument("--upside", type=float)
+    o.add_argument("--downside", type=float)
+
+    c = sub.add_parser("close", help="record a position you closed")
+    c.add_argument("pos_id")
+    c.add_argument("exit_px", type=float)
+    c.add_argument("--date", default=dt.date.today().isoformat())
+
+    a = ap.parse_args(argv)
+    rows = load()
+
+    if a.cmd == "list":
+        show = rows if a.all else [r for r in rows if r["status"] == OPEN]
+        if not show:
+            print("no positions" + ("" if a.all else " open"))
+            return 0
+        print(f"{'id':<4}{'ticker':<9}{'side':<6}{'shares':>9}{'entry':>10}"
+              f"{'opened':>12}  {'status':<8}exit condition")
+        for r in show:
+            print(f"{r['id']:<4}{r['ticker']:<9}{r['side']:<6}"
+                  f"{float(r['shares']):>9g}{float(r['entry_px']):>10.2f}"
+                  f"{r['entry_date']:>12}  {r['status']:<8}"
+                  f"{r['exit_condition'][:34]}")
+        return 0
+
+    if a.cmd == "open":
+        rows = open_position(rows, a.ticker, a.side, a.shares, a.entry_px,
+                             a.date, a.source, a.exit_condition, a.thesis,
+                             a.event_date, a.event_kind, a.upside, a.downside)
+        save(rows)
+        print(f"recorded OPEN {a.side} {a.shares:g} {a.ticker.upper()} "
+              f"@ {a.entry_px:.2f} (id {rows[-1]['id']})")
+        print(f"  exit written at entry: {a.exit_condition}")
+        return 0
+
+    if a.cmd == "close":
+        try:
+            rows = close_position(rows, a.pos_id, a.exit_px, a.date)
+        except KeyError as e:
+            print(f"⚠ {e}")
+            print("  `python positions.py list` shows the open ids")
+            return 2
+        save(rows)
+        r = next(x for x in rows if x["id"] == str(a.pos_id))
+        pct, usd = pnl(r["side"], float(r["entry_px"]), a.exit_px,
+                       float(r["shares"]))
+        print(f"recorded CLOSE {r['ticker']} @ {a.exit_px:.2f}  "
+              f"{pct:+.2f}%  {usd:+,.0f}")
+        return 0
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -83,3 +83,38 @@ def test_every_recommendation_carries_the_measurement_it_rests_on():
     assert "approval leg" in rows[0]["basis"]
     assert rows[0]["horizon_days"] == "5"
     assert rows[0]["px_at_advice"] == "28.6000"
+
+
+# ── day-88: the record must not fill with rows that can never be judged ────
+
+def test_unmarkable_advice_is_not_recorded():
+    """`due()` skips a row with no px_at_advice forever, so recording one
+    creates permanent dead weight in a file whose purpose is falsifiability.
+    brief counts them instead."""
+    import inspect
+
+    import brief as B
+    src = inspect.getsource(B.build)
+    block = src[src.index("RECORD THE ADVICE"):]
+    assert 'if _l.get("mark") is None' in block
+    assert "advice_unpriced" in src
+
+
+def test_due_skips_rows_with_no_price_rather_than_crashing():
+    import datetime as dt
+
+    import advice as A
+    rows = [{"issued": "2026-08-20", "ticker": "X", "action": "EXIT",
+             "basis": "b", "horizon_days": "5", "px_at_advice": "",
+             "px_at_horizon": "", "move_pct": "", "judged": "", "note": ""}]
+    assert A.due(rows, dt.date(2026, 9, 8)) == []
+    marked, n = A.mark(rows, lambda t: 10.0, dt.date(2026, 9, 8))
+    assert n == 0
+
+
+def test_marking_happens_before_recording_so_today_is_not_judged_today():
+    import inspect
+
+    import brief as B
+    src = inspect.getsource(B.build)
+    assert src.index("_adv.mark") < src.index("_adv.record")

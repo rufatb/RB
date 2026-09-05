@@ -466,8 +466,39 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         if not _db2.is_trading_day(today):
             raise _SkipAdvice(f"{today} is not a trading day")
         _rows = _adv.load()
-        _n = 0
+
+        # JUDGE WHAT IS DUE, BEFORE RECORDING ANYTHING NEW (day-88).
+        #
+        # Recording advice without ever scoring it is the same half-wired
+        # state one step later: the file fills with recommendations that can
+        # never be wrong. advice.mark was only reachable from advice.py's own
+        # CLI, so nothing in the daily flow judged a horizon that had passed.
+        # Marked FIRST so a row issued today cannot be judged today.
+        try:
+            from adapters import YahooDirectAdapter as _YA
+            _ad = _YA(exchange_tz="America/Toronto")
+
+            def _px(t):
+                try:
+                    q = _ad.get_quote(t)
+                    return float(q.last) if q.last else None
+                except Exception:
+                    return None
+            _rows, _judged = _adv.mark(_rows, _px, today)
+            d["advice_judged"] = _judged
+            if _judged:
+                _adv.save(_rows)
+        except Exception as _me:                  # noqa: BLE001 — reported
+            d["advice_mark_error"] = f"{type(_me).__name__}: {_me}"
+
+        _n, _unpriced = 0, 0
         for _l in d["closing"]:
+            # A row with no price can never be judged: `due()` skips it
+            # forever, so it would accumulate as permanent dead weight in a
+            # record whose whole purpose is falsifiability. Count it instead.
+            if _l.get("mark") is None:
+                _unpriced += 1
+                continue
             _rows, _k = _adv.record(
                 _rows, _l["ticker"], "EXIT",
                 basis=(_l.get("exit_condition") or "exit rule reached"),
@@ -478,6 +509,7 @@ def build(cfg_path: str, shadow: bool, no_net: bool = False,
         if _n:
             _adv.save(_rows)
         d["advice_written"] = _n
+        d["advice_unpriced"] = _unpriced
     except _SkipAdvice as _e:
         d["advice_skipped"] = str(_e)
     except Exception as _e:                       # noqa: BLE001 — reported

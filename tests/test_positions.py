@@ -142,3 +142,72 @@ def test_positions_without_an_event_date_never_cluster():
     rows = P.open_position(rows, "SU.TO", "LONG", 160, 94.10, "2026-08-20",
                            "intraday", "flat by 3:55")
     assert P.event_concentration(P.mark_book(rows, {}, TODAY)["legs"]) == []
+
+
+# ── day-88: the API had no door ────────────────────────────────────────────
+
+def test_the_module_exposes_a_cli():
+    """CLAUDE.md states 'positions.py records what the user says they did' and
+    for 88 days there was no command with which to say it — open_position and
+    close_position were defined and unreachable, so a position could only be
+    recorded by hand-editing the CSV. It mattered immediately: the page had
+    been printing "EXIT ZYME" with no way to record the close."""
+    import positions as P
+    assert callable(getattr(P, "main", None))
+    src = open(P.__file__).read()
+    assert '__name__ == "__main__"' in src, "defined but not runnable"
+    for cmd in ("open", "close", "list"):
+        assert f'add_parser("{cmd}"' in src
+
+
+def test_open_then_close_round_trips_through_the_cli(tmp_path, monkeypatch):
+    import positions as P
+    f = str(tmp_path / "p.csv")
+    monkeypatch.setattr(P, "POSITIONS", f)
+    _load, _save = P.load, P.save
+    monkeypatch.setattr(P, "load", lambda path=f: _load(f))
+    monkeypatch.setattr(P, "save", lambda rows, path=f: _save(rows, f))
+
+    assert P.main(["open", "zyme", "LONG", "400", "24.90",
+                   "--exit-condition", "close on PDUFA outcome"]) == 0
+    rows = _load(f)
+    assert len(rows) == 1 and rows[0]["ticker"] == "ZYME"
+    assert rows[0]["status"] == P.OPEN
+
+    assert P.main(["close", rows[0]["id"], "29.19"]) == 0
+    rows = _load(f)
+    assert rows[0]["status"] == P.CLOSED
+    assert rows[0]["exit_px"].startswith("29.19")
+
+
+def test_an_exit_condition_is_required_to_open(tmp_path, monkeypatch):
+    """A position without a written exit is how a day trade becomes an
+    investment. The CLI must not offer a way around that."""
+    import positions as P
+    f = str(tmp_path / "p.csv")
+    monkeypatch.setattr(P, "POSITIONS", f)
+    with pytest.raises(SystemExit):
+        P.main(["open", "ZYME", "LONG", "400", "24.90"])
+
+
+def test_closing_an_unknown_id_fails_loudly_and_points_at_list(tmp_path,
+                                                               monkeypatch,
+                                                               capsys):
+    import positions as P
+    f = str(tmp_path / "p.csv")
+    monkeypatch.setattr(P, "POSITIONS", f)
+    _load = P.load
+    monkeypatch.setattr(P, "load", lambda path=f: _load(f))
+    assert P.main(["close", "99", "10.0"]) == 2
+    out = capsys.readouterr().out
+    assert "no OPEN position with id 99" in out
+    assert "positions.py list" in out
+
+
+def test_the_cli_never_places_an_order():
+    """Read-only, always. It records what the PM says they did."""
+    src = open(__import__("positions").__file__).read()
+    flat = " ".join(src.split())
+    assert "places, sizes and cancels nothing" in flat
+    for word in ("submit_order", "place_order", "broker", "api_key"):
+        assert word not in src
