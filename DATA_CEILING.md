@@ -47,6 +47,23 @@ equivalents. This is a paid dataset, and it is the single highest-value
 acquisition on this list because it converts an entire family of hypotheses
 from untestable to testable.
 
+### 1b. Sub-hourly HISTORY DEPTH — added day-93, and it blocks the engine's own third feature
+
+Distinct from the depth-of-book problem below: this is about how far BACK
+sub-hourly bars go, not what they contain.
+
+`vp` is computable only on sub-hourly bars — 0.0% zero-volume entry bars at
+5 minutes, against 86% at 1 hour, which is why day-43's hourly study dropped it
+and measured two features while claiming three. Closing that gap needs ~145
+sessions of 5-minute history. **Yahoo caps 5-minute data at ~2 months (41
+sessions).** The same pool fails the requirement without `vp` too, so the
+window itself is the constraint.
+
+**What fixes it:** any vendor selling more than ~7 months of 5-minute equity
+bars. This is the CHEAPEST of the three constraints listed here and it is the
+only one blocking a question about the engine's OWN inputs rather than about
+new information.
+
 ### 2. Intraday depth — the feature the engine has never actually had
 
 Day-43 settled that `r0`/`gap`/`vp` are exhausted: gradient boosting with ~100x

@@ -4811,6 +4811,80 @@ would sell itself to a reader watching the wrong number.
 
 **REJECTED (#40).** The run time stays 09:46 and the hold stays to-the-close.
 
+## Day-93: the ceiling test WITH volume pace — UNRUNNABLE on free data
+
+Pre-registered in `PREREGISTER_day93.md`. This exists because day-91's audit
+found that the claim governing this whole engine was never tested as stated.
+
+### The hole, stated precisely
+
+`CLAUDE.md` cited day-43 as proving "`r0`/`gap`/`vp` carry no usable signal",
+AUC 0.5022 on 122,234 rows. **That study omitted `vp`**, and the reason is
+exact: Yahoo zeroes the volume on **~86% of the FIRST hourly bar** of a
+session, and the hourly pool's entry IS the first bar. Day-43 measured **two
+features, not three**, and the sentence used to close every accuracy question
+for fifty days named a feature that was not in it.
+
+Day-91 caught this, called it "too categorical", and fixed the harness. Nobody
+had run the corrected version on a panel where `vp` exists.
+
+### The panel where it does exist
+
+Built a 5-minute pool: **15,971 rows, 394 names, 41 sessions**, entry at the
+third 5-minute bar (09:45), which is the live entry.
+
+**Zero-volume entry bars: 0.0%**, against 86% on the hourly panel. `vp` is
+genuinely computable here. The registered drop-threshold check passed
+decisively — the feature is real at this granularity and was only ever an
+artefact of hourly bars.
+
+### And then the harness refused
+
+| | sessions |
+|---|---|
+| 5-minute history Yahoo serves (58d) | 41 |
+| consumed by the leak-free `vp` warm-up | −20 |
+| left for the study | **21** |
+| the harness requires (min_train 120 + 5 folds) | **125** |
+| shortfall | **104** |
+
+A vp-inclusive ceiling test needs roughly **145 sessions of 5-minute history —
+about seven months. Yahoo provides two.**
+
+**The control is what makes this conclusive rather than a tuning complaint.**
+The identical pool with `v15` forced to zero — dropping `vp`, leaving the
+two features day-43 actually used — gives 39 sessions and fails the same
+requirement. So this is not the warm-up's fault and not `vp`'s fault: **the
+5-minute window itself is too short for this harness at any feature count.**
+
+### The verdict, which is a bound rather than a null
+
+**NOT RUNNABLE.** Not underpowered, not rejected — unrunnable. And the bar was
+not lowered to manufacture a result: relaxing `min_train` to fit 21 sessions
+would be exactly the "move the bar afterwards" this repo's rule 3 forbids.
+
+What is now established:
+
+1. The **two-feature** ceiling is measured and stands (day-43, 122,234 rows).
+2. The **three-feature** question is open and **cannot be closed with free
+   data** — the binding constraint is sub-hourly HISTORY DEPTH, which is new
+   and is now a third entry in `DATA_CEILING.md`.
+3. The live record is unaffected: 52/107, and nothing here suggests otherwise.
+
+### What it costs to be wrong in each direction
+
+If `vp` carries nothing, this changes no behaviour at all. If it carries
+something, the engine has been evaluated for fifty days on two of its three
+inputs — and the only way to find out is roughly seven months of 5-minute
+history, which is a paid dataset and a smaller one than the survivorship-free
+universe already recommended.
+
+**Expected outcome, scored:** `PREREGISTER_day93.md` predicted "small
+difference, interval containing zero, UNDERPOWERED". Wrong — the study could
+not produce a difference at all. The registered zero-volume check was aimed at
+the wrong failure; the one that bit was history depth, which the registration
+named as a constraint but did not treat as potentially fatal.
+
 ## The checklist the tool now enforces before a name is "actionable"
 
 1. **Data verified live** (integrity guard passes).
