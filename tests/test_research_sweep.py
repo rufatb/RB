@@ -106,7 +106,10 @@ def write_inputs(tmp_path):
         d=p['frames'][t].copy()
         d['c']=100+np.arange(len(d))*(j+1)*.01
         d['o']=d.c-.01; d['h']=d.c+1; d['l']=d.o-1
-        d['t']=(d.index.tz_localize('America/New_York').tz_convert('UTC').asi8//10**6)
+        # pandas 3 may store indexes in microseconds. Exercise that resolution
+        # locally too, then explicitly serialize the provider's millisecond unit.
+        dates=d.index.as_unit('us').tz_localize('America/New_York').tz_convert('UTC')
+        d['t']=dates.as_unit('ms').asi8
         d.to_csv(folder/f'{t}.csv',index=False)
     pd.DataFrame(columns=['id','ticker','currency','ex_dividend_date','split_adjusted_cash_amount']).to_csv(folder/'dividends.csv',index=False)
     request=dict(start='2025-01-01',end='2025-12-31',tickers=list(rs.ALL_TICKERS),pagination_exhausted=True,
