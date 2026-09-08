@@ -1,17 +1,22 @@
 # Working notes for this repo
 
-## "run report" means one command
+## "run report" means one computation
 
 ```bash
-TZ=America/Toronto python brief.py      # 09:46 ET, once per trading day
+python brief.py                         # preview; does not publish
+python daily_job.py --send               # scheduled 09:46 ET, freeze + render + email
+python brief.py --publish --format json  # publication without email
+python brief.py --offline                # diagnostic; no network or ledger writes
 ```
 
-When the user says **"run report"**, run `brief.py`. It renders the whole
-morning page AND writes the day's permanent record via `r945.publish()`.
-Do not run `r945.py --book` instead — it publishes the same rows but prints
-only the pair, without positions, the FDA calendar, or catalyst arithmetic.
+`brief.compute` owns acquisition, calculation and publication. Renderers consume
+its frozen schema-v2 output and never fetch, select, score, allocate or persist.
+The full intraday board and objective Top-2 biotech monitor are separate engines.
+Read `RUNBOOK.md`, `BIOTECH_DATA.md` and `AUDIT_day90.md` for operational details.
 
-After the close: `python ledger.py --score`.
+At 15:30, 15:45 and 15:59, `collect_execution.py` records exact-window quotes;
+unknown costs remain unscored. `ledger.py --score` is the **legacy official-close
+proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
@@ -26,7 +31,7 @@ The three adopted changes were all VARIANCE results. None improved accuracy.
 `r0`/`gap`/`vp` carry no usable signal. Gradient boosting with ~100x the
 shipped k-NN's capacity reaches **AUC 0.5022 on 122,234 out-of-sample rows**,
 while the identical harness detects a planted 52% coin at **z=15** (day-43).
-The live record is a coin flip and is expected to stay one.
+The current evidence does not establish usable directional skill; it does not prove that skill can never improve.
 
 Do not promise better accuracy from this engine. Do not present its picks as
 predictions. The report prints its own record beside every pick for this
@@ -70,5 +75,13 @@ reason.
 
 ## Read-only, always
 
-Nothing in this repo places, sizes, or cancels an order. `positions.py` records
+Nothing in this repo submits, modifies, or cancels a brokerage order. Hypothetical allocation is a research calculation. `positions.py` records
 what the user says they did. Keep it that way.
+
+## Day-90 operating contract
+
+`PREREGISTER_day90.md` was committed before analysis. H1 spread abstention, H2
+cost sizing and H3 fixed earlier exits are shadow-only; no baseline tuning or
+overnight adoption. Always print missing-data coverage and MDE. Preserve rejected
+research even when unreachable from the daily entrypoint. New FDA transparency
+sources do not authorise mixing numerator and denominator populations.

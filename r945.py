@@ -935,16 +935,16 @@ def render(res, book=False):
                     med, worse = ps[side]
                     print(f"      normal swing AGAINST this leg before close: median {med:+.1f}% / "
                           f"worse-quartile {worse:+.1f}% (n={ps['n']} sessions).")
-                    print("      A mid-day move of that size is the ROAD, not the verdict — hold to 3:55.")
+                    print("      A mid-day move of that size is the ROAD, not the verdict — hold to 3:59.")
                 dpct = res.get("disaster_stop_pct")
                 if dpct:
                     dl_px = disaster_level(side.upper(), r["p945"], dpct)
                     print(f"      disaster line {dl_px:.2f} ({'-' if side == 'long' else '+'}{dpct}% from print): "
                           "beyond it the day is a tail event. Year-tested: exiting")
                     print("      there cost ~nothing in EV and capped the worst leg at -2.6% vs -3.9%.")
-                    print("      OPTIONAL circuit-breaker — the validated default is still hold to 3:55.")
+                    print("      OPTIONAL circuit-breaker; historical tests use official close, current contract is 3:59.")
             else:
-                print(f"      entry ~now · flat by 3:55")
+                print(f"      entry ~now · flat by 3:59")
             for x in (lg.get("extra") or []):
                 sd = 1 if side == "long" else -1
                 px = x.get("last") or x.get("p945")
@@ -991,11 +991,11 @@ def render(res, book=False):
         print("  THE SHARE COUNTS ARE THE RISK MODEL: trading a larger size multiplies")
         print("  every loss by the same factor and voids the stated risk numbers")
         print("  (day-13: 4x the printed size turned a ~$425 day into -$1,669).")
-        print("  CLOSE EVERY LEG BY 3:55.")
+        print("  CLOSE EVERY LEG BY 3:59.")
         # Day-24: the temptation to hold a losing pair overnight arrives on the
         # exact days the numbers are worst, so the measurement belongs HERE,
         # next to the order — not in a document nobody opens at 3:50.
-        print("\n  WHY 3:55 AND NOT TOMORROW (439 legs, walk-forward, per quarter):")
+        print("\n  HISTORICAL CLOSE VS OVERNIGHT PROXIES (439 legs, walk-forward, per quarter):")
         print("    hold to close : capture +0.094%  hit 54.4%  std 1.09%  worst leg -3.9%")
         print("    hold 1 night  : capture +0.143%  hit 53.4%  std 2.07%  worst leg -8.8%")
         print("  One night nearly DOUBLES volatility and worsens the tail 2.3x. At 5")
@@ -1037,8 +1037,8 @@ def _make_output_safe() -> None:
             try:
                 setattr(_sys, name, io.TextIOWrapper(
                     stream.buffer, encoding="utf-8", errors="replace", line_buffering=True))
-            except Exception:
-                pass
+            except Exception as exc:
+                __import__('logging').getLogger(__name__).warning('Console encoding fallback unavailable: %s', type(exc).__name__)
 
 
 def main(argv=None):
@@ -1047,7 +1047,7 @@ def main(argv=None):
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--book", action="store_true",
-                   help="once-daily workflow: exact share counts, enter at market now, flat by 3:55")
+                   help="once-daily workflow: exact share counts, enter at market now, flat by 3:59")
     p.add_argument("--html", metavar="PATH",
                    help="also write the visual board to PATH. Rendered from the "
                         "same result object the terminal prints, so the two can "
@@ -1170,7 +1170,7 @@ def _restore_published(res: dict, pair_picks: list, todays: list,
     return True, "restored exactly from the published board"
 
 
-def publish(res: dict, cfg: dict) -> dict:
+def publish(res: dict, cfg: dict, assessed_costs=None) -> dict:
     """Size the pair and write the day's permanent record. ONE publish path.
 
     DAY-59. This was inline in `main()`, which was fine while `--book` was the
@@ -1221,8 +1221,8 @@ def publish(res: dict, cfg: dict) -> dict:
             return out
     except Exception as _e:                      # noqa: BLE001 — reported
         out["errors"].append(
-            f"trading-day check unavailable ({type(_e).__name__}) — proceeding, "
-            f"but verify the exchange is open before acting")
+            f"trading-day check unavailable ({type(_e).__name__}) — publication refused")
+        return out
 
     pair = res.get("pair") or {}
     pair_picks = []
@@ -1239,6 +1239,7 @@ def publish(res: dict, cfg: dict) -> dict:
                   rcfg.get("max_position_pct", 50),
                   risk_weight=pcfg.get("risk_weight", True),
                   weight_cap=pcfg.get("weight_cap", 0.35))
+    res["_allocation_done"] = True
     out["pair"] = len(pair_picks)
 
     picks = res["longs"] + res["shorts"]
@@ -1279,10 +1280,10 @@ def publish(res: dict, cfg: dict) -> dict:
         import cost as _cost
         _all = pair_picks + [r for r in (res["longs"] + res["shorts"])
                              if id(r) not in {id(x) for x in pair_picks}]
-        _sp = {r["ticker"]: (r.get("cost") or {}).get("bps")
-               for r in _cost.assess([{"ticker": p["t"], "shares": p.get("shares"),
-                                       "price": p.get("p945")}
-                                      for p in _all if p.get("t")])}
+        if assessed_costs is None:
+            assessed_costs = _cost.assess([{"ticker": p["t"], "shares": p.get("shares"),
+                                           "price": p.get("p945")} for p in _all if p.get("t")])
+        _sp = {r["ticker"]: (r.get("cost") or {}).get("bps") for r in assessed_costs}
         for p in _all:
             p["spread_bps"] = _sp.get(p.get("t"))
     except Exception as e:
@@ -1336,8 +1337,8 @@ def _write_html(res: dict, args, book: bool) -> None:
             rows = ledger.load()
             line = ledger.decisive_line([r for r in rows if r.get("role") == "pair"])
             line = line.split(":", 1)[1].strip() if ":" in line else line
-        except Exception:
-            pass
+        except Exception as exc:
+            line = 'Record unavailable: ' + type(exc).__name__
         with open(args.html, "w", encoding="utf-8") as fh:
             fh.write(report_html.render_html(res, book=book, record_line=line))
         print(f"\n  [visual board written to {args.html}]")

@@ -142,7 +142,7 @@ def feed_is_live(chain_fn, control: str = CONTROL_TICKER) -> tuple:
         return False, f"control {control} has no puts"
     near = min(puts, key=lambda p: abs((p.get("strike") or 0) - spot))
     bid, ask = near.get("bid") or 0, near.get("ask") or 0
-    if bid > 0 and ask > 0:
+    if two_sided(near):
         return True, f"control {control} quotes {bid:.2f}/{ask:.2f}"
     return False, (f"control {control} ATM put has no two-sided quote "
                    f"(bid={bid}, ask={ask}) — the feed is not serving bid/ask, "
@@ -156,7 +156,7 @@ def classify(spot, expiries, expiry, puts, atm_put, parity, tol,
     Ordered so the earliest and most specific cause wins: a name with no expiry
     covering its decision date is not also 'no two-sided quote'.
     """
-    if not spot:
+    if number(spot, positive=True) is None:
         return NO_SPOT
     if not expiries:
         return NO_EXPIRIES
@@ -167,10 +167,10 @@ def classify(spot, expiries, expiry, puts, atm_put, parity, tol,
     if not atm_put:
         return NO_PUTS
     bid, ask = atm_put.get("bid") or 0, atm_put.get("ask") or 0
-    if not (bid > 0 and ask > 0):
+    if not two_sided(atm_put):
         # The control decides whether this is the name or the plumbing.
         return NO_TWO_SIDED if feed_live else FEED_CLOSED
-    if parity is not None and parity > tol:
+    if parity is not None and (number(parity) is None or parity > tol):
         return PARITY_BREAK
     if not (atm_put.get("openInterest") or 0):
         return ZERO_OI if feed_live else FEED_CLOSED
@@ -204,6 +204,263 @@ def summarise(quotes: list, feed_live: bool, feed_why: str) -> list:
                    + (f" +{len(names)-6} more" if len(names) > 6 else ""))
     return out
 
+
+
+# Shared transport and validation for the daily report and legacy diagnostics.
+# A last-trade timestamp does NOT certify the timestamp of a bid/ask quote.
+import math
+import json
+import logging
+import http.cookiejar
+import urllib.error
+import urllib.parse
+import urllib.request
+from zoneinfo import ZoneInfo
+
+log = logging.getLogger(__name__)
+
+
+def number(value, *, positive=False):
+    """Finite numeric value, excluding booleans; None means invalid/missing."""
+    if isinstance(value, bool):
+        return None
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return None
+    return x if math.isfinite(x) and (x > 0 if positive else True) else None
+
+
+def two_sided(row):
+    """Strict positive, finite, uncrossed BBO. Last trades are never a fallback."""
+    bid, ask = number(row.get("bid"), positive=True), number(row.get("ask"), positive=True)
+    if bid is None or ask is None or ask < bid:
+        return None
+    return bid, ask
+
+
+def stamp(value):
+    """Parse a timezone-aware timestamp or epoch; reject naive datetimes."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if not math.isfinite(value):
+            raise ValueError("nonfinite timestamp")
+        value = dt.datetime.fromtimestamp(value, dt.timezone.utc)
+    elif isinstance(value, str):
+        value = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if not isinstance(value, dt.datetime) or value.tzinfo is None:
+        raise ValueError("missing or naive timestamp")
+    return value.astimezone(dt.timezone.utc)
+
+
+def fresh(value, now, max_age=120):
+    try:
+        age = (stamp(now) - stamp(value)).total_seconds()
+        return 0 <= age <= max_age
+    except (ValueError, TypeError, OverflowError, OSError):
+        return False
+
+
+class YahooMarketData:
+    """One authenticated transport, bounded timeouts, per-run response cache.
+
+    Yahoo may supply historical last-trade times without BBO timestamps. Such
+    data can mark a fresh trade, but cannot pass validate_equity's BBO gate.
+    HTTP failures are raised to the caller; the expected cookie-seeding HTTP
+    status is logged. Credentials/cookies/crumbs never appear in log messages.
+    """
+    def __init__(self, timeout=8):
+        self.op = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.crumb = None
+        self.timeout = timeout
+        self.cache = {}
+
+    def _get(self, url):
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                      "Accept": "application/json"})
+        return self.op.open(request, timeout=self.timeout).read()
+
+    def auth(self):
+        if self.crumb:
+            return
+        try:
+            self._get("https://fc.yahoo.com")
+        except urllib.error.HTTPError as exc:
+            log.warning("Yahoo cookie bootstrap HTTP %s; trying crumb endpoint", exc.code)
+        crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb").decode().strip()
+        if not crumb or "<" in crumb or len(crumb) > 256:
+            raise ValueError("invalid Yahoo authentication response")
+        self.crumb = crumb
+
+    def _json(self, path, params):
+        self.auth()
+        key = (path, tuple(sorted(params.items())))
+        if key not in self.cache:
+            url = "https://query2.finance.yahoo.com" + path + "?" + urllib.parse.urlencode(
+                {**params, "crumb": self.crumb})
+            self.cache[key] = json.loads(self._get(url))
+        return self.cache[key]
+
+    def get(self, tickers):
+        if not tickers:
+            return {}
+        result = self._json("/v7/finance/quote", {"symbols": ",".join(sorted(set(tickers)))})
+        envelope = result.get("quoteResponse") or {}
+        if envelope.get("error"):
+            raise ValueError("Yahoo quote response reported an error")
+        return {r["symbol"]: r for r in envelope.get("result", [])}
+
+    def chain(self, ticker, expiry=None):
+        params = {} if expiry is None else {"date": int(expiry)}
+        result = self._json("/v7/finance/options/" + urllib.parse.quote(ticker, safe=""), params)
+        envelope = result.get("optionChain") or {}
+        if envelope.get("error") or not envelope.get("result"):
+            raise ValueError("Yahoo returned no option chain")
+        return envelope["result"][0]
+
+
+
+class SnapshotMarketData:
+    """External authenticated BBO publisher's JSON snapshot; validated downstream.
+
+    Schema: {quotes: {symbol: raw_equity}, chains: {symbol: {initial: {...},
+    expiries: {epoch: {...}}}}}. No interpolation, field renaming or freshness
+    assumptions. This allows a licensed feed to replace Yahoo without changes
+    to selection, costs, renderers or monitoring rules.
+    """
+    def __init__(self,path):
+        from pathlib import Path
+        self.data=json.loads(Path(path).read_text())
+    def get(self,tickers):
+        return {t:self.data.get('quotes',{}).get(t,{}) for t in tickers}
+    def chain(self,ticker,expiry=None):
+        entry=self.data['chains'][ticker]
+        return entry['initial'] if expiry is None else entry['expiries'][str(expiry)]
+
+
+def market_client():
+    path=os.environ.get('RB_QUOTES_JSON')
+    return SnapshotMarketData(path) if path else YahooMarketData()
+
+def validate_equity(row, ticker, now, *, currency=None, max_age=120):
+    """Validate last trade and BBO independently; a fresh trade is not a fresh BBO."""
+    out = {"ticker": ticker, "mark": None, "bid": None, "ask": None,
+           "spread_bps": None, "quote_time": None, "status": "UNAVAILABLE",
+           "reason": "missing quote", "currency": row.get("currency")}
+    if row.get("symbol") != ticker:
+        out["reason"] = "symbol mismatch or missing"
+        return out
+    if currency and row.get("currency") != currency:
+        out["reason"] = "currency mismatch or missing"
+        return out
+    px = number(row.get("regularMarketPrice"), positive=True)
+    if px is not None and fresh(row.get("regularMarketTime"), now, max_age):
+        out["mark"] = px
+    bbo = two_sided(row)
+    if bbo is None:
+        out["reason"] = "missing, nonfinite, nonpositive or crossed BBO"
+        return out
+    ts = row.get("bidAskTimestamp", row.get("quoteTime"))
+    if not fresh(ts, now, max_age):
+        out["reason"] = "BBO timestamp missing, stale or future; last trade is not quote time"
+        return out
+    out.update(status="OK", reason="validated BBO", bid=bbo[0], ask=bbo[1],
+               mark=(bbo[0]+bbo[1])/2, quote_time=stamp(ts).isoformat(),
+               spread_bps=(bbo[1]-bbo[0])/((bbo[0]+bbo[1])/2)*10000)
+    return out
+
+
+def matched_pair(calls, puts, spot):
+    """Nearest common strike, deterministic; never combine different contracts."""
+    if number(spot, positive=True) is None:
+        return None, None
+    c = {number(r.get("strike"), positive=True): r for r in calls}
+    p = {number(r.get("strike"), positive=True): r for r in puts}
+    if len(c) != len(calls) or len(p) != len(puts):
+        return None, None  # Ambiguous duplicate contracts cannot overwrite evidence.
+    strikes = (c.keys() & p.keys()) - {None}
+    if not strikes:
+        return None, None
+    k = min(strikes, key=lambda k: (abs(k-spot), k))
+    return c[k], p[k]
+
+
+def option_mid(row):
+    bbo = two_sided(row)
+    return ((bbo[0]+bbo[1])/2, "mid") if bbo else (None, "none")
+
+
+def option_metrics(calls, puts, spot):
+    """Pure diagnostic arithmetic on a matched BBO pair; not a freshness claim."""
+    c, p = matched_pair(calls, puts, spot)
+    empty = {"move": None, "call_pct": None, "put_pct": None, "skew": None,
+             "iv": None, "parity": None, "strike": None}
+    if not c or not p:
+        return empty
+    cm, pm = option_mid(c)[0], option_mid(p)[0]
+    if cm is None or pm is None:
+        return empty
+    ci, pi = number(c.get("impliedVolatility"), positive=True), number(p.get("impliedVolatility"), positive=True)
+    return {"move": (cm+pm)/spot, "call_pct": cm/spot, "put_pct": pm/spot,
+            "strike": float(c["strike"]), "parity": abs(cm-pm-(spot-float(c["strike"])))/spot,
+            "skew": pi-ci if ci is not None and pi is not None else None,
+            "iv": (ci+pi)/2 if ci is not None and pi is not None else None}
+
+
+def event_quote(client, ticker, event_end, now, *, max_age=120):
+    """One fail-closed event option snapshot. Missing fields never become prices."""
+    out = {"ticker": ticker, "status": "UNAVAILABLE", "reason": None,
+           "move": None, "iv": None, "put_pct": None, "call_pct": None,
+           "skew": None, "parity": None, "spot": None, "expiry": None}
+    try:
+        initial = client.chain(ticker)
+        q = initial.get("quote") or {}
+        if q.get("symbol") != ticker or q.get("currency") != "USD":
+            raise ValueError("underlying symbol/currency mismatch or missing")
+        if not fresh(q.get("regularMarketTime"), now, max_age):
+            raise ValueError("underlying timestamp missing, stale or future")
+        spot = number(q.get("regularMarketPrice"), positive=True)
+        if spot is None:
+            raise ValueError("invalid underlying price")
+        expiries = [e for e in initial.get("expirationDates", [])
+                    if stamp(e).date() > event_end]
+        if not expiries:
+            raise ValueError("no expiry covers the entire event window")
+        expiry = min(expiries)
+        chain = client.chain(ticker, expiry)
+        if chain.get('quote') and chain['quote'].get('symbol') != ticker:
+            raise ValueError('expiry chain underlying symbol mismatch')
+        options = chain.get("options") or []
+        if len(options) != 1 or options[0].get("expirationDate") != expiry:
+            raise ValueError("expiry response mismatch")
+        c, p = matched_pair(options[0].get("calls", []), options[0].get("puts", []), spot)
+        if not c or not p:
+            raise ValueError("no matched call/put strike")
+        for leg in (c, p):
+            if leg.get("expiration") != expiry or leg.get("currency") != "USD":
+                raise ValueError("contract expiry/currency mismatch")
+            if not two_sided(leg):
+                raise ValueError("invalid contract BBO")
+            if not fresh(leg.get("bidAskTimestamp", leg.get("quoteTime")), now, max_age):
+                raise ValueError("contract BBO timestamp missing, stale or future")
+            if number(leg.get("openInterest"), positive=True) is None:
+                raise ValueError("contract has no verified open interest")
+        metrics = option_metrics([c], [p], spot)
+        # Consistency screen, not exact European parity for American contracts.
+        if metrics["parity"] is None or metrics["parity"] > 0.03:
+            raise ValueError("call/put/underlying consistency gap exceeds 3%")
+        if metrics["iv"] is None:
+            raise ValueError("missing or nonfinite implied volatility")
+        out.update(metrics, status="OK", reason="validated matched contracts",
+                   spot=spot, expiry=stamp(expiry).date().isoformat(),
+                   put_oi=p['openInterest'], call_oi=c['openInterest'],
+                   as_of=min(stamp(q['regularMarketTime']),
+                             *(stamp(l.get('bidAskTimestamp',l.get('quoteTime'))) for l in (c,p))).isoformat())
+    except Exception as exc:
+        # Report the class and controlled validation text, never URLs with crumbs.
+        out["reason"] = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+        log.warning("Option snapshot %s unavailable: %s", ticker, out["reason"])
+    return out
 
 def main(argv=None) -> int:
     """Diagnose the feed and the current board, for a human."""

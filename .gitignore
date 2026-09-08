@@ -27,3 +27,10 @@ data/twins_panel.csv
 data/us_daily.csv
 data/us_daily_holdout.csv
 data/us_hourly.csv
+
+# Durable operational state belongs on the report host, not in this public repo.
+.rb-state/
+# Rebuildable current-market snapshots; version reviewed event evidence separately.
+data/biotech_snapshot.json
+
+data/biotech_candidates.json

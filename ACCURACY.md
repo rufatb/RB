@@ -9,8 +9,10 @@ it is harder to notice.
 
 ## 1. Intraday hit
 
-A leg is **entered at the 9:46 print** (`p945`, the price the board publishes)
-and **marked at the 15:59 close** of the same session. It is a HIT when the
+The legacy ledger uses **the 09:45 bar-close reference** (`p945`) and
+**the official daily close** of the same session. Earlier versions called these
+09:46/15:59 prints; the code did not establish those timestamps. This is a
+label correction, not a change to historical rows or sign-test definitions. It is a HIT when the
 close is on the side the call named:
 
     LONG   hit  ⇔  close > p945
@@ -94,3 +96,21 @@ Only one of these, stated explicitly, with its pre-registered bar:
 Not permitted as evidence: a higher hit rate on a subset chosen after the fact,
 an improvement that moves TIDE rather than SELECTION, or any figure gross of
 the spread when a net figure is computable.
+
+
+## Day-90 exact-window record (separate version)
+
+The schema-v2 report persists true 09:46 BBO observations separately from p945.
+`collect_execution.py` requires quotes from the registered 15:30/15:45/15:59
+minute and a matched index entry/exit (XIU.TO for TSX; SPY in a supplied US panel).
+Net return subtracts both half-spread crossings, converted to entry-mid notional,
+plus explicit commissions, slippage and holding-period short borrow. Missing
+costs or timestamps are INCOMPLETE, never zero. These are BBO crossing proxies,
+not broker-confirmed fills. Record net hits, decisive net hits (|net| >=0.10%),
+weighted net return, tide and selection return separately. The universe median
+remains a separate historical diagnostic, not an index.
+
+Report net leg accuracy on all valid baseline observations with missing counts;
+report book returns only on complete sessions. Abstention overlays retain original
+capacity and no-trade zeros. This preserves matched populations. Exact-window
+MDE and promotion requirements are fixed in `PREREGISTER_day90.md`.

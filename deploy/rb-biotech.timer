@@ -1,0 +1,8 @@
+[Unit]
+Description=RB biotech preparation at 08:45 ET
+[Timer]
+OnCalendar=Mon..Fri *-*-* 08:45:00 America/New_York
+Persistent=false
+AccuracySec=1s
+[Install]
+WantedBy=timers.target

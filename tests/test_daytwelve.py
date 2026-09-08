@@ -68,7 +68,7 @@ def test_render_prints_path_expectation_on_pair_legs(capsys):
     r945.render(res, book=True)
     out = capsys.readouterr().out
     assert "normal swing AGAINST this leg" in out
-    assert "-0.6%" in out and "-1.1%" in out and "hold to 3:55" in out
+    assert "-0.6%" in out and "-1.1%" in out and "hold to 3:59" in out
 
 
 def test_render_omits_path_line_when_stats_unavailable(capsys):

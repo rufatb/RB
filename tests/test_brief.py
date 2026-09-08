@@ -164,20 +164,14 @@ def test_non_binary_positions_produce_no_catalyst_block():
     assert brief.render_catalyst_detail([leg], TODAY) == ""
 
 
-def test_the_brief_publishes_before_it_renders():
-    """Day-59: brief.py replaces `r945.py --book` as the morning command, so it
-    inherits the obligation to write the day's permanent record. A board printed
-    but never recorded would stop the ledger accruing on the day this shipped —
-    silently, which is the day-29/day-42 failure mode. Locked at the source so
-    a refactor cannot drop it."""
-    import inspect
-
-    import brief as B
-    src = inspect.getsource(B.build)
-    assert "r945.publish(res, cfg)" in src, \
-        "the brief must publish the board it prints"
-    assert src.index("r945.publish(res, cfg)") < src.index("render_intraday"), \
-        "publish must happen BEFORE rendering, not after"
+def test_the_brief_publishes_before_it_renders(tmp_path, monkeypatch):
+    # Functional replacement for a source-string assertion after consolidation.
+    from test_daily_pipeline import NOW, services
+    from report_store import Store
+    monkeypatch.setattr('r945.publish', lambda *a, **k: {'errors': []})
+    report = brief.compute(now=NOW, publish=True, state_dir=tmp_path, services=services())
+    assert Store(tmp_path).get('2026-09-08') == report
+    assert 'AAA.TO' in brief.render_text(report)
 
 
 def test_publish_and_main_share_one_implementation():
@@ -200,38 +194,17 @@ def test_shadow_mode_prints_no_share_counts():
 # ── day-87: the cost line must cost the WHOLE book ─────────────────────────
 
 def test_the_cost_line_counts_extra_legs_not_just_primaries(monkeypatch):
-    """REGRESSION. On 2026-09-04 the page printed "starts ~$9 behind on
-    spread" for a book whose two legs actually cost $24.39, because this loop
-    read only `pick`. The session then lost $15.21 — to the spread the line
-    had understated by 2.7x. A cost line that omits half the book reads as a
-    measured reassurance and is worse than printing nothing."""
-    import brief as B
-    seen = {}
-
-    class _FakeCost:
-        @staticmethod
-        def assess(rows):
-            seen["rows"] = rows
-            return [{"ticker": r["ticker"], "cost": {"usd": 10.0}}
-                    for r in rows]
-
-        @staticmethod
-        def render(assessed):
-            return []
-
-    monkeypatch.setitem(__import__("sys").modules, "cost", _FakeCost)
-    res = {"max_chase_pct": 0.04, "longs": [], "shorts": [], "pair": {
-        "long": {"status": "OK", "sided": 0.6,
-                 "pick": {"t": "ABX.TO", "p945": 40.0, "shares": 199},
-                 "extra": [{"t": "AEM.TO", "p945": 290.0, "shares": 27}]},
-        "short": {"status": "OK", "sided": 0.6,
-                  "pick": {"t": "SLF.TO", "p945": 111.75, "shares": 126},
-                  "extra": [{"t": "CM.TO", "p945": 163.55, "shares": 65}]}}}
-    out = []
-    B.render_intraday(res, {}, False, False, "2026-09-04", cost_out=out)
-    got = {r["ticker"] for r in seen.get("rows", [])}
-    assert got == {"ABX.TO", "AEM.TO", "SLF.TO", "CM.TO"}, got
-    assert len(out) == 4, f"cost_out carried {len(out)} legs, expected 4"
+    from test_daily_pipeline import NOW, services, res
+    s=services(); r=res()
+    for side in ('long','short'):
+        pick=r['pair'][side]['pick']
+        extra={**pick,'t':('CCC.TO' if side=='long' else 'DDD.TO')}
+        r['pair'][side]['extra']=[extra]
+        r[side+'s'].append(extra)
+    s['intraday']=lambda cfg:r
+    d=brief.compute(now=NOW,services=s)
+    assert {l['ticker'] for l in d['intraday']['legs']}=={'AAA.TO','BBB.TO','CCC.TO','DDD.TO'}
+    assert all(l['estimated_round_trip_spread_usd'] is not None for l in d['intraday']['legs'])
 
 
 # ── day-88: the system's ADVICE is recorded so it can be judged ────────────
@@ -268,35 +241,27 @@ def test_the_same_advice_twice_in_one_day_is_one_recommendation(monkeypatch,
     assert n1 == 1 and n2 == 0 and len(rows) == 1
 
 
-def test_a_failure_to_LOG_advice_never_suppresses_the_advice(monkeypatch):
-    """The recording is bookkeeping. If it breaks, the reader must still be
-    told to exit."""
-    import brief as B
-    # Assert on position, not on a fixed window. A character count breaks
-    # every time the block legitimately grows — it did three times on day-88
-    # and each break was noise rather than a finding.
-    src = __import__("inspect").getsource(B.build)
-    i = src.index("RECORD THE ADVICE")
-    assert src.index("advice_error", i) > i
-    assert "except Exception" in src[i:]
+def test_factual_monitor_does_not_write_directional_advice(tmp_path, monkeypatch):
+    import advice
+    from test_daily_pipeline import NOW, services
+    monkeypatch.setattr(advice,'PATH',str(tmp_path/'advice.csv'))
+    d=brief.compute(now=NOW,services=services())
+    assert not (tmp_path/'advice.csv').exists()
+    assert 'Factual monitoring only' in brief.render_text(d)
 
 
-def test_advice_is_not_recorded_on_a_non_trading_day(monkeypatch):
-    """Advice issued on a closed exchange cannot be acted on and its
-    px_at_advice is blank or a stale mark, so it can never be judged against
-    its horizon. An unfalsifiable row in a record built to make advice
-    falsifiable is worse than no row."""
-    import brief as B
-    src = __import__("inspect").getsource(B.build)
-    i = src.index("RECORD THE ADVICE")
-    assert src.index("is_trading_day", i) > i
-    assert src.index("_SkipAdvice", i) > i
+def test_closed_exchange_never_publishes_intraday(tmp_path, monkeypatch):
+    from test_daily_pipeline import NOW, services
+    s=services(); s['clock']=lambda now: {'session':'2026-09-08','status':'CLOSED','eligible':False}
+    monkeypatch.setattr('r945.publish',lambda *a,**k: __import__('pytest').fail('closed exchange published picks'))
+    d=brief.compute(now=NOW,publish=True,state_dir=tmp_path,services=s)
+    assert not d['intraday']['legs']
 
 
-def test_skipping_advice_is_reported_not_silent():
-    import brief as B
-    src = __import__("inspect").getsource(B.build)
-    assert "advice_skipped" in src
+def test_engine_unavailability_is_reported_not_silent():
+    from test_daily_pipeline import NOW, services
+    d=brief.compute(now=NOW,no_net=True,services=services())
+    assert 'OFFLINE' in brief.render_text(d)
 
 
 def test_advice_save_resolves_its_path_at_call_time(tmp_path, monkeypatch):

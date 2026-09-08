@@ -226,7 +226,7 @@ def test_build_survives_a_dead_network_end_to_end(monkeypatch, tmp_path):
     brief.build("config.yaml", False, False, 4, digest=d)   # must not raise
     out = V.render(d)
     assert_clean(out)
-    assert "MORNING BRIEF" in out
+    assert "RB Daily Report" in out
     # It must still say what it could not do, rather than looking healthy.
     assert "UNPRICED" in out or "unpriced" in out or "stale" in out
 
@@ -238,7 +238,7 @@ def test_build_offline_mode_renders_without_touching_the_network():
     brief.build("config.yaml", False, True, 4, digest=d)
     out = V.render(d)
     assert_clean(out)
-    assert "MORNING BRIEF" in out
+    assert "RB Daily Report" in out
 
 
 # ── a feed outage is not fourteen illiquid companies ────────────────────────

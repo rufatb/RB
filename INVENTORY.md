@@ -1,3 +1,12 @@
+> Day-90 update: this inventory describes the earlier static import graph.
+> `brief.py` now orchestrates `execution.py`, `biotech.py`, `quotes.py`,
+> `report_store.py` and pure `daily_render.py`. `legacy_brief.py` preserves
+> compatibility formatters. `build_biotech.py`, `discover_biotech_events.py`,
+> `collect_execution.py`, `daily_job.py`, and `deliver_report.py` are operational
+> entrypoints; `validate_execution.py` is preregistered research. No rejected
+> study was deleted. Unreachable-from-brief and rejected research are different
+> classifications; see [AUDIT_day90.md](AUDIT_day90.md).
+
 # INVENTORY — every module, what it does, and whether it may be deleted
 
 Built mechanically (AST import graph from `brief.py`, plus the test suite),

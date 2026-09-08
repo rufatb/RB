@@ -26,10 +26,12 @@ import argparse
 import csv
 import datetime as dt
 import os
+import math
+import logging
 
 LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
-# `role` (day-9): "pair" = a leg of THE PAIR (the picks actually executed under
-# the one-long-one-short workflow), "board" = qualified-but-not-traded context
+# `role` (day-9): "pair" = a published baseline leg, not broker-confirmed fills.
+# "board" = qualified-but-unselected context
 # kept for instrumentation. Pre-day-9 rows have role "" (whole-board era).
 # `weight` (day-23): the leg's share of the BOOK CAPACITY at publish time.
 # WHY: since day-22 the two pair legs are sized by equal-RISK, not equal
@@ -46,7 +48,8 @@ LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ledger.csv")
 # DAY-81: `leg` distinguishes the PRIMARY pick from the second leg that splits
 # the same half. Without it a re-read cannot tell which name the board actually
 # instructed, only that both were on it.
-# DAY-82: `spread_bps` is the round-trip cost measured AT PUBLISH. Net-of-cost
+# DAY-82: `spread_bps` is the entry spread captured AT PUBLISH, used as a
+# same-spread-at-exit proxy. Actual round-trip cost is not known at publication. Net-of-cost
 # accuracy (ACCURACY.md §2) is otherwise uncomputable after the fact: the spread
 # on the day a leg was published is not recoverable later, and substituting a
 # current quote would describe one day with another day's data.
@@ -294,8 +297,13 @@ def capture(row: dict) -> float | None:
     if row.get("r1") in (None, ""):
         return None
     try:
-        return float(row["r1"]) * (1 if row["side"] == "LONG" else -1)
-    except (ValueError, KeyError):
+        value = float(row["r1"])
+        if not math.isfinite(value) or row["side"] not in ("LONG", "SHORT"):
+            logging.getLogger(__name__).warning("Invalid ledger capture for %s", row.get("ticker"))
+            return None
+        return value * (1 if row["side"] == "LONG" else -1)
+    except (ValueError, KeyError, TypeError):
+        logging.getLogger(__name__).warning("Unparseable ledger capture for %s", row.get("ticker"))
         return None
 
 
@@ -319,7 +327,8 @@ def accuracy(pair_rows: list, threshold: float = None) -> dict:
     out = {"n": len(caps), "hits": 0, "rate": None, "mean": None,
            "decisive_n": 0, "decisive_hits": 0, "decisive_rate": None,
            "scratches": 0, "net_mean": None, "net_n": 0, "net_unpriced": 0,
-           "threshold": threshold}
+           "threshold": threshold, "net_hits": 0, "net_rate": None,
+           "net_decisive_n": 0, "net_decisive_hits": 0, "net_decisive_rate": None}
     if not caps:
         return out
     out["hits"] = sum(1 for _, c in caps if c > 0)
@@ -335,17 +344,26 @@ def accuracy(pair_rows: list, threshold: float = None) -> dict:
 
     nets = []
     for r, c in caps:
-        sp = (r.get("spread_bps") or "").strip()
+        sp = str(r.get("spread_bps") if r.get("spread_bps") is not None else "").strip()
         if not sp:
             out["net_unpriced"] += 1
             continue
         try:
-            nets.append(c - float(sp) / 100.0)   # bps -> percent
+            value = float(sp)
+            if not math.isfinite(value) or value < 0:
+                raise ValueError("invalid spread")
+            nets.append(c - value / 100.0)   # bps -> percent
         except ValueError:
             out["net_unpriced"] += 1
     out["net_n"] = len(nets)
     if nets:
         out["net_mean"] = sum(nets) / len(nets)
+        out["net_hits"] = sum(v > 0 for v in nets)
+        out["net_rate"] = out["net_hits"] / len(nets)
+        decisive = [v for v in nets if abs(v) >= threshold]
+        out["net_decisive_n"] = len(decisive)
+        out["net_decisive_hits"] = sum(v > 0 for v in decisive)
+        out["net_decisive_rate"] = (out["net_decisive_hits"] / len(decisive)) if decisive else None
     return out
 
 
@@ -486,26 +504,25 @@ def _tides_for_report() -> dict:
                 try:
                     b = a.get_daily_bars(t, 120)
                     cache[t] = {str(i.date()): float(c) for i, c in b["Close"].items()}
-                except Exception:
+                except Exception as exc:
+                    logging.getLogger(__name__).warning("Tide close unavailable for %s: %s", t, type(exc).__name__)
                     cache[t] = {}
             return cache[t].get(date)
         return tide_by_date(prints, close_fn)
-    except Exception:
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Tide computation unavailable: %s", type(exc).__name__)
         return {}
 
 
-def report(rows: list) -> str:
+def report(rows: list, tides=None, session_gap=None) -> str:
+    """Pure legacy ledger renderer; optional tide and gap evidence is supplied."""
+    tides = tides or {}
     done = [r for r in rows if r["hit"] != ""]
     if not done:
         return "ledger: no scored rows yet"
     out = ["=" * 60, f"LEDGER REPORT — {len(done)} scored picks (live, no hindsight)", "=" * 60]
-    try:
-        import dashboard
-        g = gap_line(missing_sessions(rows, dt.date.today(), dashboard.is_trading_day))
-        if g:
-            out.append(g)
-    except Exception as e:                       # calendar unavailable, never fatal
-        out.append(f"  (session-gap check unavailable: {type(e).__name__})")
+    if session_gap:
+        out.append(session_gap)
 
     def line(label, sub):
         if not sub:
@@ -525,7 +542,6 @@ def report(rows: list) -> str:
         out.append(line("board (untraded)", [r for r in done if r.get("role") == "board"]))
         out.append(book_return_line(pair_sub))
         out.append(decisive_line(pair_sub))
-        tides = _tides_for_report()
         out.append(relative_line(pair_sub, tides))
         out.append(attribution_line(pair_sub, tides))
     out.append("  — density buckets (hypothesis DECIDED day-47: NO gate — "
@@ -586,7 +602,8 @@ def autoscore(rows: list) -> tuple:
                 bars = a.get_daily_bars(t, 90)
                 _cache[t] = {str(i.date()): float(c)
                              for i, c in bars["Close"].items()}
-            except Exception:
+            except Exception as exc:
+                logging.getLogger(__name__).warning("Scoring data unavailable for %s: %s", t, type(exc).__name__)
                 _cache[t] = {}
         return _cache[t].get(date)
     return score_rows(rows, close_fn, now=dt.datetime.now(ZoneInfo(tz)),
@@ -607,7 +624,12 @@ def main(argv=None):
                   f"({close_t.strftime('%H:%M')} {tz}). Scoring mid-session would "
                   "write live\n     prices into the permanent record as outcomes. "
                   "Re-run after the close.")
-    print(report(rows))
+    try:
+        import dashboard
+        gap = gap_line(missing_sessions(rows, dt.date.today(), dashboard.is_trading_day))
+    except Exception as exc:
+        gap = 'Session-gap check unavailable: ' + type(exc).__name__
+    print(report(rows, tides=_tides_for_report(), session_gap=gap))
 
 
 if __name__ == "__main__":

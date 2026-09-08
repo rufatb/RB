@@ -1,0 +1,8 @@
+[Unit]
+Description=RB event options refresh at 09:45 ET
+[Timer]
+OnCalendar=Mon..Fri *-*-* 09:45:00 America/New_York
+Persistent=false
+AccuracySec=1s
+[Install]
+WantedBy=timers.target

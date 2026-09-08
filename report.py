@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-report.py — THE single 9:31 entry point.
+report.py — Legacy standalone (not the daily pipeline): the 9:31 entry point.
 
 One command runs the whole pipeline in working order and prints a clean,
 interpretable morning report for an open-to-close intraday trader:

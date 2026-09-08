@@ -234,7 +234,7 @@ def test_printed_contract_matches_the_configured_leg_count():
     assert "one long + one short" not in out
     assert "up to 2 per side" in out
     assert "equal-weight" not in out and "equal-RISK" in out
-    assert "CLOSE EVERY LEG BY 3:55" in out
+    assert "CLOSE EVERY LEG BY 3:59" in out
 
 
 # ── day-35: hit rate excluding economic scratches ───────────────────────────

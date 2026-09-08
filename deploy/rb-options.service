@@ -1,0 +1,13 @@
+[Unit]
+Description=RB validated event options refresh
+After=network-online.target
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python build_biotech.py --refresh-options
+TimeoutStartSec=45
+UMask=0077
+NoNewPrivileges=true

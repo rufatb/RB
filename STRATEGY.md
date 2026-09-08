@@ -1,3 +1,10 @@
+> **Current day-90 contract (2026-09-08):** see [AUDIT_day90.md](AUDIT_day90.md),
+> [PREREGISTER_day90.md](PREREGISTER_day90.md), and [RUNBOOK.md](RUNBOOK.md).
+> The chronological entries below are retained historical decisions, including
+> rejected claims; they are not permission to revive them. No day-90 strategy
+> or overnight edge was adopted. Report timing is 09:46 ET; exact entry/exit
+> observations are separate from historical bar/official-close proxies.
+
 # Strategy & Lessons Learned
 
 A living record of what went wrong in live trading and the rules now **encoded in
@@ -4817,3 +4824,21 @@ would sell itself to a reader watching the wrong number.
    lean, not a prediction.
 
 If a setup fails any of these, the honest output is **WAIT / STAND DOWN**.
+
+
+## Day 90 — report integrity, independent biotech monitor, no alpha adoption
+
+Audited CLAUDE/STRATEGY before changes and froze the preregistration in GitHub
+before analysing outcomes. Replaced repeated report-time acquisition with one
+frozen computation; consolidated cost/options validation; preserved all research
+harnesses and baseline selection/allocation. Added complete-universe ADV20 biotech
+ranking, sourced event review, tri-state priced-in suppression and five factual
+bullets per Monitor issuer (at most two). No directional biotech calls enter the
+new daily report.
+
+Historical pair accuracy is 52/107 gross (48.60%); only six legs contain a stored
+spread. Two complete session proxies have 80%-power MDE 64.10bps against a 5bps
+target: UNDERPOWERED. Exact H1/H2/H3 studies are BLOCKED by absent historical
+BBO/index/alternative-exit data. `data/day90_results.json` records all arms and
+input hash. No accuracy, P&L or overnight improvement is claimed. See the audit
+for FDA-source corrections and current live-data/deployment limitations.

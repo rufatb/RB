@@ -11,9 +11,9 @@ anthropic>=0.40
 pyyaml>=6.0
 rich>=13.0
 
-# Scheduling + market holidays (optional but recommended)
+# Scheduling + market holidays (calendar required by daily report)
 schedule>=1.2
-pandas_market_calendars>=4.0   # optional: dashboard.tsx_holidays is a verified built-in fallback
+pandas_market_calendars>=4.0   # required: exact report contract fails closed without it
 
 # Testing
 pytest>=7.0

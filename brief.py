@@ -1,828 +1,250 @@
 #!/usr/bin/env python3
+"""One daily computation feeding text, HTML and JSON renderers.
+
+Part 1 retains the full intraday board, baseline research record and hypothetical
+allocation. The 09:45 signal reference is distinct from the 09:46 execution
+quote. Part 2 is an independent factual biotech monitor. No renderer fetches,
+re-picks, sizes, scores or persists anything. No component submits orders.
+
+Use --publish once at 09:46 ET; publication persists even on zero-pick days.
+Offline/preview runs never write ledgers or query the network. Source errors
+are data in the report, not absent observations interpreted as clean evidence.
 """
-brief.py — the single morning page. One command, four layers, honest labels.
-
-WHY ONE PAGE. Until now "run report" printed a fresh intraday pair and nothing
-else: no memory of what you were holding, no view of what was coming, and the
-pair presented first as though it were the most important thing on the screen.
-It is the least. This composes the four layers in the order a decision actually
-needs them —
-
-    1  POSITIONS    what you hold, marked, with the exit written at entry
-    2  ACTIONS      what closes today, what enters a binary window soon
-    3  CALENDAR     scheduled FDA decisions (facts, from company filings)
-    4  INTRADAY     the 9:46 pair, printed WITH its own record
-
-— and each layer states what it may claim, because they are not equal:
-
-    positions   fact. no prediction at all.
-    calendar    fact. a date a company disclosed; no probability implied.
-    intraday    MEASURED, NO EDGE. 36 rejections; gradient boosting reaches
-                AUC 0.5022 on 122,234 rows where the same harness detects a
-                planted 52% coin at z=15. It prints its live record next to
-                every pick so the number is never out of sight.
-
-THE POINT OF THE REDESIGN is that this page can say "nothing to do today".
-The old report could not — it manufactured a pair every session, which trains
-a reader to trade a coin flip. Most mornings the honest output is a position
-review and no new risk.
-
-WHAT THE INTRADAY SECTION ADDS. Its hit rate cannot be improved; that is
-measured and settled. What can improve is how much it tells you about WHY a
-name was chosen and WHAT WOULD INVALIDATE it — the runner-up it beat and by
-how much, whether its side is crowded into one sector, and its expectation
-stated tide-relative rather than absolute. A pick you can interrogate is worth
-more than a probability you cannot.
-
-Read-only throughout. Nothing here places, sizes, or cancels an order.
-"""
-
 from __future__ import annotations
-
 import argparse
 import datetime as dt
 import json
+import hashlib
 import os
-import sys
+from pathlib import Path
 from zoneinfo import ZoneInfo
+from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import biotech
+import execution
+import ledger
+import positions
+from quotes import market_client, YahooMarketData, validate_equity, event_quote, stamp
+from report_store import Store, encode
 
-import ledger  # noqa: E402
-import positions as pos  # noqa: E402
-from validate_exit import SCRATCH  # noqa: E402
-
-RULE = "─" * 74
-
-
-class _SkipAdvice(Exception):
-    """Not an error: a deliberate, reported reason not to record advice."""
+ROOT = Path(__file__).resolve().parent
 
 
-def _fmt_pct(x, w=7):
-    return f"{x:+{w}.2f}%" if x is not None else f"{'stale':>{w}} "
+def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
+            publish=False, state_dir=None, services=None):
+    """Acquire and compute once. Inject providers/clock for deterministic tests.
 
-
-# ──────────────────────────────────────────────────────────── 1. POSITIONS
-def render_positions(book: dict, today: dt.date,
-                     mark_errors: dict | None = None) -> str:
-    legs = book["legs"]
-    if not legs:
-        return ("▎OPEN POSITIONS — none\n"
-                "   Flat. Nothing to mark, nothing to manage.")
-    x = pos.net_exposure(legs)
-    tag = ("hedged" if abs(x) < 0.25 else
-           f"DIRECTIONAL {'long' if x > 0 else 'short'}")
-    L = [f"▎OPEN POSITIONS ({len(legs)})".ljust(46) +
-         f"net exposure {x:+.2f} ({tag})", "   " + RULE,
-         f"   {'id':<3}{'ticker':<8}{'side':<6}{'entry':>9}{'mark':>9}"
-         f"{'P&L':>9}{'$':>10}{'held':>6}  waiting on"]
-    for l in legs:
-        ev = (f"{l['event_kind'] or 'event'} {l['event_date']}"
-              if l["event_date"] else l["exit_condition"][:26])
-        mark = f"{l['mark']:>9.2f}" if l["mark"] is not None else f"{'—':>9}"
-        usd = f"{l['pnl_usd']:>+10.0f}" if l["pnl_usd"] is not None else f"{'—':>10}"
-        L.append(f"   {l['id']:<3}{l['ticker']:<8}{l['side']:<6}"
-                 f"{l['entry_px']:>9.2f}{mark}{_fmt_pct(l['pnl_pct'])}{usd}"
-                 f"{l['days']:>5}d  {ev}")
-    L.append("   " + RULE)
-    L.append(f"   book {book['net_pct']:+.2f}% on ${book['gross']:,.0f} "
-             f"deployed  ·  {book['net_usd']:+,.0f}")
-    for d, gross, names in pos.event_concentration(legs):
-        L.append(f"   ⚠ ${gross:,.0f} resolves on ONE date ({d}): "
-                 f"{', '.join(names)}.\n     Binaries settling together are "
-                 "perfectly correlated that morning, however\n     balanced the "
-                 "book looks by side.")
-    if book["stale"]:
-        why = (f" ({', '.join(sorted(set(mark_errors.values())))})"
-               if mark_errors else "")
-        L.append(f"   ⚠ {book['stale']} position(s) could not be marked{why} and "
-                 "are EXCLUDED from the total.\n     A stale leg is not a flat "
-                 "leg — price it by hand before acting.")
-    return "\n".join(L)
-
-
-def render_catalyst_detail(legs: list, today: dt.date,
-                           priced: dict | None = None,
-                           settled_out: dict | None = None) -> str:
-    """For every binary position: what the market is paying NOW, versus what
-    was assumed at entry.
-
-    THE FAILURE THIS EXISTS TO PREVENT. A catalyst thesis is written once, at a
-    price, with a probability attached. The price then moves — and the implied
-    probability moves with it, silently. The ZYME matrix was written at $25
-    against a $36/$20.50 bracket, implying the market held 29% while the thesis
-    asserted 85%. At $28.67 the market implies 53%. The 56-point disagreement
-    that WAS the trade has shrunk to 32 points, and nothing in a static matrix
-    would ever tell you that.
-
-    So the number is recomputed every morning from the live mark. If the market
-    has come to agree with you, the edge you entered for is gone whether or not
-    the position is profitable — and profit makes that easier to miss, not
-    harder.
-    """
-    import catalyst
-    out = []
-    for l in legs:
-        if not (l.get("upside") and l.get("downside") and l["event_date"]):
-            continue
-        up, dn = float(l["upside"]), float(l["downside"])
-        d = (dt.date.fromisoformat(l["event_date"]) - today).days
-        out.append(f"   {l['ticker']} — {l['event_kind']} in {d}d "
-                   f"({l['event_date']})")
-        # HAS IT ALREADY HAPPENED? Everything below prices a PENDING binary,
-        # and on 2026-08-27 all of it ran on a decision settled two days
-        # earlier -- quoting $1,027 of rejection risk on a position whose
-        # rejection risk was zero. A negative day count was printed and
-        # nothing acted on it.
-        settled = None
-        if d <= 0:
-            try:
-                import resolved as _rs
-                settled = _rs.check(l["ticker"], l["event_date"], today)
-                if settled_out is not None:
-                    settled_out[l["ticker"]] = settled
-                out += _rs.render(settled, l)
-            except Exception as e:
-                out.append(f"      ⚠ could not check whether the decision "
-                           f"landed ({type(e).__name__}) — the numbers below "
-                           "assume it is still pending")
-        if settled and settled["outcome"] in ("APPROVED", "REJECTED"):
-            continue          # do not price a binary that has already settled
-        if l["thesis"]:
-            out.append(f"      thesis at entry : {l['thesis']}")
-        out.append(f"      bracket         : ${dn:,.2f} (fail) → ${up:,.2f} (pass)")
-        p_entry = catalyst.implied_probability(l["entry_px"], up, dn)
-        out.append(f"      implied P at your ${l['entry_px']:,.2f} entry: "
-                   f"{p_entry:.0%}")
-        if l["mark"] is None:
-            out.append("      implied P now   : unavailable (mark is stale)")
-            continue
-        p_now = catalyst.implied_probability(l["mark"], up, dn)
-        out.append(f"      implied P NOW at ${l['mark']:,.2f}       : "
-                   f"{p_now:.0%}   ({(p_now-p_entry)*100:+.0f} pts since entry)")
-        # what is still on the table versus what is at risk
-        to_up = (up / l["mark"] - 1) * 100
-        to_dn = (dn / l["mark"] - 1) * 100
-        out.append(f"      from here       : {to_up:+.1f}% if approved, "
-                   f"{to_dn:+.1f}% if not  →  risk/reward "
-                   f"{abs(to_up/to_dn):.2f}:1" if to_dn else "")
-        if p_now > 0.65:
-            out.append("      ⚠ the market has largely come to agree with you. "
-                       "Most of the\n        disagreement you entered for is "
-                       "priced; the remaining upside is\n        thin against "
-                       "an unchanged downside.")
-        # Check the floor against the balance sheet rather than repeating the
-        # thesis's own assumption back at the reader.
-        try:
-            import fundamentals as _f
-            from build_catalyst import ticker_map
-            cik = ticker_map(SCRATCH).get(l["ticker"], "")
-            fs = _f.summarise(cik, today) if cik else None
-            if fs and fs.get("cash_per_share"):
-                out += _f.render(fs, l["mark"])
-                if dn > fs["cash_per_share"] * 2:
-                    out.append(f"      \u26a0 the ${dn:,.2f} floor is "
-                               f"{dn/fs['cash_per_share']:.0f}x cash per share — "
-                               "a cash argument does not support it.")
-        except Exception:
-            pass
-        import catalyst as _cat
-        out.append(f"      MEASURED downside (day-72, n={_cat.CRL_N} verified CRLs, "
-                   f"daily bars): median "
-                   f"{_cat.CRL_MEDIAN:.1f}%, "
-                   f"{_cat.CRL_WORSE_THAN_18:.0%} worse than -18%, "
-                   f"{_cat.CRL_WORSE_THAN_40:.0%} worse than -40%, worst "
-                   f"{_cat.CRL_WORST:.0f}%.")
-        if l["mark"]:
-            implied_floor = l["mark"] * (1 + _cat.CRL_MEDIAN / 100)
-            out.append(f"      At the median that is ${implied_floor:,.2f} from "
-                       f"today's ${l['mark']:,.2f} — compare with the "
-                       f"${dn:,.2f} the thesis assumes.")
-        out.append(f"      Approvals DO separate, but below the bar: "
-                   f"+{_cat.APPROVAL_VS_RANDOM_PP:.1f}pp over random windows "
-                   f"(t=+{_cat.APPROVAL_T:.2f},\n        n="
-                   f"{_cat.APPROVAL_N}) against a required "
-                   f"|t|>={_cat.ADOPT_T:.0f}. The rejection leg separates at "
-                   f"t={_cat.CRL_T:.2f}\n        by comparison — the asymmetry "
-                   "is real, the long side is not yet actionable.")
-        # The routes out, priced. Without this the section ends on a
-        # description of the risk and never names what to DO about it.
-        try:
-            import screen as _scr
-            out += _scr.position_verdict(l, (priced or {}).get(l["ticker"]),
-                                         today)
-        except Exception as e:
-            out.append(f"      \u26a0 the routes out could not be priced "
-                       f"({type(e).__name__}) — the reading above stands")
-    if not out:
-        return ""
-    return "▎CATALYST POSITIONS — what the market is paying now\n" + "\n".join(out)
-
-
-# ────────────────────────────────────────────────────────────── 2. ACTIONS
-def render_actions(book: dict, today: dt.date, pair_note: str) -> str:
-    closing, upcoming = pos.due_today(book["legs"], today)
-    L = ["▎TODAY'S ACTIONS"]
-    if closing:
-        for l in closing:
-            L.append(f"   ⏰ CLOSE-OUT DUE  {l['ticker']} — {l['event_kind']} "
-                     f"was {l['event_date']}. Exit rule: {l['exit_condition']}")
-    else:
-        L.append("   CLOSE   nothing due")
-    L.append(f"   OPEN    {pair_note}")
-    for l, d in upcoming:
-        L.append(f"   ⚠ {l['ticker']} enters its {l['event_kind']} window in "
-                 f"{d}d ({l['event_date']}).")
-        L.append("     Decide NOW whether to hold through the binary or exit "
-                 "before it —\n     a decision taken during the gap is not a "
-                 "decision.")
-    return "\n".join(L)
-
-
-# ───────────────────────────────────────────────────────────── 4. INTRADAY
-def pair_reasoning(res: dict, side: str, cfg: dict) -> list:
-    """Why THIS name and not the runner-up — the part that lets you overrule it.
-
-    The old board printed a probability and a density tag. Neither tells you
-    whether the choice was close. A leg picked over a near-identical rival is a
-    coin flip inside a coin flip; a leg with a clear margin at least reflects
-    the rule the engine claims to follow.
-    """
-    lg = (res.get("pair") or {}).get(side) or {}
-    if lg.get("status") == "NONE" or not lg.get("pick"):
-        return []
-    pick = lg["pick"]
-    pool = res["longs"] if side == "long" else res["shorts"]
-    rivals = [r for r in pool if r["t"] != pick["t"]]
-    out = []
-    if rivals:
-        nxt = min(rivals, key=lambda r: r.get("nd", 9e9))
-        margin = nxt.get("nd", 0) - pick.get("nd", 0)
-        close = abs(margin) < 0.02
-        out.append(f"      chosen over {nxt['t']} on density "
-                   f"(nd {pick.get('nd', 0):.3f} vs {nxt.get('nd', 0):.3f}"
-                   f"{', a near tie — treat as arbitrary' if close else ''})")
-    groups = cfg.get("peer_groups") or {}
-    sector = next((g for g, names in groups.items() if pick["t"] in names), None)
-    if sector:
-        same = [r for r in pool if r["t"] in groups.get(sector, [])]
-        if len(same) > 1:
-            out.append(f"      {len(same)} of this side's candidates are "
-                       f"{sector} — the side is concentrated, not diversified")
-    out.append(f"      invalidated if: filled worse than the bound, or the "
-               f"9:45 print is stale by >20 min")
-    return out
-
-
-def render_intraday(res: dict, cfg: dict, shadow: bool,
-                    no_net: bool = False, today: dt.date | None = None,
-                    cost_out: list | None = None) -> tuple:
-    lr = res.get("live_record") or {}
-    L = ["▎INTRADAY PAIR — the 9:46 book"]
-    if res.get("too_early"):
-        return "\n".join(L + [f"   ⏰ too early; ready {res.get('ready_at')}"]), \
-               "nothing — engine not ready"
-    if res.get("coverage_fail"):
-        return "\n".join(L + ["   ⛔ INSUFFICIENT COVERAGE — no board today",
-                              f"   {res['coverage_fail']}"]), \
-               "nothing — coverage gate failed"
-    if lr.get("pair_n"):
-        L.append(f"   live record: PAIR {lr['pair_hits']}/{lr['pair_n']} "
-                 f"({lr['pair_hits']/lr['pair_n']*100:.0f}%) — a coin flip, "
-                 "measured 34 ways")
-    pair = res.get("pair") or {}
-    opened = []
-    for side in ("long", "short"):
-        lg = pair.get(side) or {}
-        if lg.get("status") == "NONE" or not lg.get("pick"):
-            L.append(f"   {side.upper():<6}: ⛔ none qualified — do not force one")
-            continue
-        p = lg["pick"]
-        L.append(f"   {side.upper():<6}: {p['t']:<9} sided-P {lg['sided']:.2f}  "
-                 f"[{p.get('confidence','?')}]  9:45 ${p['p945']:.2f}")
-        if p.get("shares") and not shadow:
-            import r945 as _r
-            b = _r.fill_bound(side.upper(), p["p945"],
-                              res.get("max_chase_pct", 0.04))
-            L.append(f"      ➤ {'BUY' if side == 'long' else 'SELL SHORT'} "
-                     f"{p['shares']} sh (~${p.get('alloc', 0):,.0f})  "
-                     f"fill bound {'<=' if side == 'long' else '>='} {b:.2f}")
-        L += pair_reasoning(res, side, cfg)
-        for x in (lg.get("extra") or []):
-            sh = (f" — {x['shares']} sh (~${x.get('alloc', 0):,.0f})"
-                  if x.get("shares") and not shadow else "")
-            L.append(f"      + {x['t']}{sh} (second leg — SPLITS the same half, "
-                     "does not add exposure)")
-        opened.append(p["t"])
-    # The one thing day-70 measured about this universe. It cannot improve the
-    # direction call -- nothing can, that is settled -- but a name that filed a
-    # 6-K yesterday hands you the same coin flip with a bigger stake on it, and
-    # the reader is entitled to know that before sizing.
-    if opened and not no_net:
-        # What the pair COSTS. The engine's directional edge is measured at
-        # zero, so this is not a footnote on the expectation -- it is the
-        # expectation. It had never appeared in the report at all.
-        try:
-            import cost as _c
-            # EVERY leg the book holds, primary AND extra. Day-31 ships
-            # legs_per_side=2, and costing only the primaries understated what
-            # the book pays: on 2026-09-04 this printed "~$9 behind" when the
-            # two legs actually cost $24.39, and the session lost $15.21 to
-            # exactly that spread. A cost line that omits half the book is
-            # worse than none, because it reads as a measured reassurance.
-            rows = []
-            for side in ("long", "short"):
-                lg = pair.get(side) or {}
-                for p_ in ([lg.get("pick") or {}]
-                           + list(lg.get("extra") or [])):
-                    if p_.get("t"):
-                        rows.append({"ticker": p_["t"],
-                                     "shares": p_.get("shares"),
-                                     "price": p_.get("p945")})
-            assessed = _c.assess(rows)
-            L += _c.render(assessed)
-            # Carried to the short view too. The engine's edge is measured at
-            # zero, so this IS the expectation, not a footnote on it — the one
-            # number the reader most needs beside a BUY.
-            if cost_out is not None:
-                cost_out.extend(assessed)
-        except Exception as e:
-            L.append(f"   ⚠ cost to express unavailable ({type(e).__name__}) "
-                     "— the spread is being paid whether or not it is shown")
-        try:
-            import sixk as _sk
-            L += _sk.render(_sk.check(opened, today or dt.date.today()),
-                            today or dt.date.today())
-        except Exception as e:
-            L.append(f"   ⚠ 6-K filing check unavailable ({type(e).__name__}) "
-                     "— treat the picks as UNCHECKED, not as clean")
-    if shadow:
-        L.append("   ⛔ SHADOW — published and scored, NO capital. The record "
-                 "keeps accruing at zero cost.")
-        return "\n".join(L), "nothing — intraday running in shadow"
-    return "\n".join(L), (", ".join(opened) if opened else
-                          "nothing — no leg qualified")
-
-
-# ─────────────────────────────────────────────────────────────── 5. RECORD
-def render_record(rows: list, tides: dict | None = None) -> str:
-    done = [r for r in rows if r.get("hit") not in ("", None)]
-    pair = [r for r in done if r.get("role") == "pair"]
-    if not pair:
-        return "▎RECORD — no scored pair legs yet"
-    hits = sum(int(r["hit"]) for r in pair)
-    L = ["▎RECORD", f"   pair legs {hits}/{len(pair)} "
-                    f"({hits/len(pair)*100:.0f}%)"]
-    # ACCURACY.md §2: hit rate, mean capture and mean NET of spread, together.
-    # Any one of them can move without the others, so reporting one at a time
-    # is how a change that raised the hit rate while paying more spread would
-    # read as an improvement.
-    L.append("   " + ledger.accuracy_line(pair).strip())
-    L.append("   " + ledger.decisive_line(pair).strip())
-    tides = ledger._tides_for_report() if tides is None else tides
-    if tides:
-        L.append("   " + ledger.relative_line(pair, tides).strip())
-        L.append("   " + ledger.attribution_line(pair, tides)
-                 .strip().replace("\n", "\n   "))
-    return "\n".join(L)
-
-
-# ───────────────────────────────────────────────────────────────── compose
-def build(cfg_path: str, shadow: bool, no_net: bool = False,
-          days_back: int = 4, digest: dict = None) -> str:
-    """The full morning page. Pass `digest` to also collect the decision view.
-
-    ONE COMPUTATION, TWO RENDERINGS. `view.py` draws the short page from the
-    dict this fills in — it never recomputes anything. A summary derived from a
-    second pass could disagree with the page below it, and a top line that
-    contradicts the detail is worse than no top line.
+    Published re-reads return the frozen report before any provider is called.
+    Expensive biotech discovery is staged by build_biotech.py before the open.
+    An absent/stale snapshot is explicitly unavailable, never a partial top 2.
     """
     from dashboard import load_config
-    cfg = load_config(cfg_path)
-    tz = ZoneInfo(cfg.get("exchange_tz", "America/Toronto"))
-    now = dt.datetime.now(tz)
-    today = now.date()
-    d = digest if digest is not None else {}
-    d.update({"now": now, "today": today, "tz": str(tz), "offline": no_net})
-
-    parts = [f"═" * 74,
-             f"MORNING BRIEF — {now:%a %Y-%m-%d %H:%M} {now.tzname()}",
-             "═" * 74]
-
-    # 1 positions
-    prows = pos.load()
-    marks: dict = {}
-    mark_errors: dict = {}
-    if not no_net:
-        from adapters import YahooDirectAdapter
-        a = YahooDirectAdapter(exchange_tz=str(tz))
-        for t in {r["ticker"] for r in prows if r.get("status") == pos.OPEN}:
-            # `Quote.last`, not `.price` — the field is named for what it is, a
-            # last trade. Getting this wrong marked every position STALE, which
-            # the fail-closed path reported honestly rather than hiding, but a
-            # brief where nothing can be marked is a brief nobody will read.
-            # RETRY ONCE. On 2026-09-02 a single transient RuntimeError left
-            # the only open position unmarked and the whole book unpriced; the
-            # same ticker quoted fine seconds later. Failing closed is right,
-            # but failing closed on a blip that a one-second retry survives is
-            # just noise, and noise is what teaches a reader to ignore the
-            # warning. A REAL outage still fails, and still says so.
-            import time as _t
-            for attempt in (1, 2):
-                try:
-                    q = a.get_quote(t)
-                    if q.last is not None:
-                        marks[t] = float(q.last)
-                    mark_errors.pop(t, None)
-                    break
-                except Exception as e:
-                    mark_errors[t] = type(e).__name__
-                    if attempt == 1:
-                        _t.sleep(1.0)
-    book = pos.mark_book(prows, marks, today)
-    parts.append(render_positions(book, today, mark_errors))
-    d["book"] = book
-    d["mark_errors"] = mark_errors
-    d["closing"], d["upcoming"] = pos.due_today(book["legs"], today)
-
-    # RECORD THE ADVICE, so it can be judged later (day-88).
-    #
-    # advice.py was built for exactly this and nothing ever called it: the
-    # report said "EXIT ZYME" on several mornings and no record anywhere
-    # captured that it had said so. An adviser whose recommendations are not
-    # written down cannot be evaluated, and cannot be wrong in a way that
-    # shows up later. record() is idempotent per (day, ticker, action), so a
-    # re-read of the same morning does not multiply the record.
-    #
-    # Never fatal: failing to LOG advice must not suppress the advice itself.
+    import r945
+    services = services or {}
+    cfg = load_config(str(cfg_path))
+    live_clock = now is None
+    now = now or dt.datetime.now(ZoneInfo('America/New_York'))
+    now = stamp(now).astimezone(ZoneInfo('America/New_York'))
+    state_dir = state_dir or os.environ.get('RB_STATE_DIR', str(ROOT/'.rb-state'))
+    store = Store(state_dir) if publish and not no_net else None
+    if store:
+        prior = store.get(now.date().isoformat())
+        if prior:
+            return prior
+    errors = []
+    def error(layer, exc):
+        errors.append({'layer': layer, 'error': type(exc).__name__, 'detail': str(exc)[:240]})
     try:
-        import advice as _adv
-        import dashboard as _db2
-        # Only on a trading day. Advice issued on a closed exchange cannot be
-        # acted on, and its px_at_advice is a stale mark or blank -- so it can
-        # never be judged against its horizon. An unfalsifiable row in a record
-        # built to make advice falsifiable is worse than no row.
-        if not _db2.is_trading_day(today):
-            raise _SkipAdvice(f"{today} is not a trading day")
-        _rows = _adv.load()
-
-        # JUDGE WHAT IS DUE, BEFORE RECORDING ANYTHING NEW (day-88).
-        #
-        # Recording advice without ever scoring it is the same half-wired
-        # state one step later: the file fills with recommendations that can
-        # never be wrong. advice.mark was only reachable from advice.py's own
-        # CLI, so nothing in the daily flow judged a horizon that had passed.
-        # Marked FIRST so a row issued today cannot be judged today.
-        try:
-            from adapters import YahooDirectAdapter as _YA
-            _ad = _YA(exchange_tz="America/Toronto")
-
-            def _px(t):
-                try:
-                    q = _ad.get_quote(t)
-                    return float(q.last) if q.last else None
-                except Exception:
-                    return None
-            _rows, _judged = _adv.mark(_rows, _px, today)
-            d["advice_judged"] = _judged
-            if _judged:
-                _adv.save(_rows)
-        except Exception as _me:                  # noqa: BLE001 — reported
-            d["advice_mark_error"] = f"{type(_me).__name__}: {_me}"
-
-        _n, _unpriced = 0, 0
-        for _l in d["closing"]:
-            # A row with no price can never be judged: `due()` skips it
-            # forever, so it would accumulate as permanent dead weight in a
-            # record whose whole purpose is falsifiability. Count it instead.
-            if _l.get("mark") is None:
-                _unpriced += 1
-                continue
-            _rows, _k = _adv.record(
-                _rows, _l["ticker"], "EXIT",
-                basis=(_l.get("exit_condition") or "exit rule reached"),
-                horizon_days=5, px=_l.get("mark"), today=today,
-                note=f"{_l.get('event_kind') or 'event'} "
-                     f"{_l.get('event_date') or ''}".strip())
-            _n += _k
-        if _n:
-            _adv.save(_rows)
-        d["advice_written"] = _n
-        d["advice_unpriced"] = _unpriced
-    except _SkipAdvice as _e:
-        d["advice_skipped"] = str(_e)
-    except Exception as _e:                       # noqa: BLE001 — reported
-        d["advice_error"] = f"{type(_e).__name__}: {_e}"
-
-    # 4 intraday (computed before actions, which cite it)
-    pair_note, intraday = "nothing — engine not run", ""
-    if not no_net:
-        import r945
-        res = r945.run(cfg, workers=12)
-        try:
-            res["live_record"] = ledger.live_summary(ledger.load())
-        except Exception:
-            res["live_record"] = None
-        # PUBLISH before rendering. The brief replaces `r945.py --book` as the
-        # morning command, so it inherits the obligation to write the day's
-        # permanent record — a board printed but never recorded would stop the
-        # ledger accruing on the day this shipped, silently.
-        st = r945.publish(res, cfg)
-        # THE ONE LINE THAT ASKS FOR AN ACTION has to carry the action. The
-        # short view first shipped "OPEN SU.TO, BMO.TO" — no side, no size, no
-        # fill bound, and no mention that the pair starts behind by the spread.
-        d["res"], d["cfg"], d["shadow"] = res, cfg, shadow
-        d["publish"] = st
-        d["cost"] = []
-        intraday, pair_note = render_intraday(res, cfg, shadow,
-                                              no_net, today,
-                                              cost_out=d["cost"])
-        for e in st["errors"]:
-            intraday += f"\n   ⚠ {e}"
-        if st["already"]:
-            # The note used to ASSERT that share counts came from the published
-            # board. They did not — `allocate_book` re-sized against the live
-            # price on every re-read. It now reports what actually happened.
-            intraday += ("\n   [already published today — this is a re-read; "
-                         "the first board of the day stands.\n    "
-                         + str(st.get("restore_note") or
-                               "restore status unknown") + "]")
-        elif st["picks"]:
-            intraday += (f"\n   [recorded {st['picks']} picks "
-                         f"({st['pair']} pair / {st['picks']-st['pair']} board); "
-                         "score after close with `python ledger.py --score`]")
-
-    d["pair_note"] = pair_note
-    parts.append(render_actions(book, today, pair_note))
-
-    ac_data = None
-    if not no_net:
-        try:
-            import adcom as _ac
-            ac_path = os.path.join(SCRATCH, "adcom.json")
-            ac_data = (json.load(open(ac_path)) if os.path.exists(ac_path)
-                       else _ac.build(5, today, ac_path))
-        except Exception:
-            ac_data = None                # rendered as UNKNOWN further down
-    votes = {}
-    for v in (ac_data or {}).get("votes", []):
-        if v.get("ticker") and v.get("direction") in ("favourable",
-                                                      "unfavourable"):
-            votes[v["ticker"]] = v
-
-    # PRICE EVERY CALENDAR NAME, held or not, and split afterwards. The screen
-    # used to skip held names as "not opportunities", which had it backwards:
-    # the one position with money on it got less analysis than seven with none.
-    cal, screen_rows = [], []
+        clock = services.get('clock', execution.clock_status)(now)
+    except Exception as exc:
+        error('calendar',exc)
+        clock = {'session':now.date().isoformat(),'status':'CALENDAR UNAVAILABLE',
+                 'eligible':False,'entry_time':'09:46','exit_time':'15:59','close_at':None}
+    rows = services.get('ledger',ledger.load)()
+    # Do not grade today's partial session or display future-dated rows.
+    past_rows = [r for r in rows if r['date'] < now.date().isoformat()]
+    pair_rows = [r for r in past_rows if r.get('role')=='pair']
+    record = ledger.accuracy(pair_rows)
+    record['label'] = 'Historical 09:45-bar to official-close PROXY; not exact 09:46–15:59 fills'
+    record['benchmark_label'] = 'Historical universe median is not an index; exact index record starts with this version'
+    record['future_rows_excluded'] = sum(r['date'] > now.date().isoformat() for r in rows)
     try:
-        import pdufa
-        cal_path = os.path.join(SCRATCH, "pdufa_calendar.json")
-        cal = (json.load(open(cal_path)) if os.path.exists(cal_path)
-               else (pdufa.build(6, today, cal_path) if not no_net else []))
-        if not no_net and cal:
-            import screen as _scr
-            screen_rows = _scr.screen(cal, today, 130, 14, votes)
-    except Exception as e:
-        # NEVER a bare pass here. An earlier version of this block swallowed a
-        # NameError and the held position silently reported "no usable put
-        # quote" for a name the screen had priced at 13.6% of spot. A layer
-        # that fails quietly reports absence as cleanliness -- the day-29 rule.
-        screen_fail = type(e).__name__
-        parts.append(f"\u258e CATALYST PRICING\n   \u26a0 the options layer "
-                     f"failed ({screen_fail}) — every catalyst reading below "
-                     "is UNPRICED, not clean")
-    priced = {r["ticker"]: r for r in screen_rows}
-    d["cal"], d["screen_rows"], d["priced"] = cal, screen_rows, priced
-    d["votes"] = votes
-
-    d["settled"] = {}
-    cat_detail = render_catalyst_detail(book['legs'], today, priced,
-                                        settled_out=d["settled"])
-    if cat_detail:
-        parts.append(cat_detail)
-
-    # 3 calendar
-    #
-    # The AdCom vote is loaded BEFORE the screen, not after, because the screen
-    # now needs it: a favourable vote changes what protection is worth on that
-    # name (adcom.py's EXTERNAL base rates), and a verdict written without it
-    # would price a binary whose first half has already resolved in public.
-    try:
-        import pdufa
-        parts.append(pdufa.render(cal, today, 120))
-        # The calendar says WHAT is scheduled; the screen says what the market
-        # has already paid for it. A date without price context is a diary
-        # entry, not an opportunity.
-        if not no_net and cal:
-            try:
-                import screen as _scr
-                held = {l["ticker"] for l in book["legs"]}
-                rows = [r for r in screen_rows if r["ticker"] not in held]
-                # THE SHORT LIST FIRST. The full screen is ordered by date,
-                # which is the order the FDA's diary has and not the order a
-                # decision has. A PM asking for their two best pharma trades
-                # this month should not have to rank eight names by eye across
-                # four inputs.
-                # The RESEARCH OUTPUT. It lived only in the long page, so the
-                # cheapest name on the board (PRAX at 0.44x) never appeared in
-                # the default view — the short page listed catalysts in DATE
-                # order, which is the FDA's diary, not a ranking.
-                d["ranked"] = _scr.rank_opportunities(rows, top=3)
-                parts.append(_scr.render_ranked(d["ranked"], today, top=3))
-                parts.append(_scr.render(rows, today))
-                # LOG every surfaced catalyst, traded or not. Recording only
-                # the trades taken would measure the trader, not the screen —
-                # and without this the catalyst layer would still have zero
-                # scored outcomes in six months (day-64).
-                try:
-                    import catledger as _cl
-                    lrows, added = _cl.log_screen(_cl.load(), rows, today,
-                                                  {l["ticker"] for l in book["legs"]})
-                    # SCORE BEFORE LOGGING, every morning, automatically.
-                    # The report used to print "score with `catledger.py
-                    # --score`" and nobody ever did -- 9 events logged, 0
-                    # scored. A record that requires a human to remember is
-                    # not a record, and six months of that leaves us exactly
-                    # where we started.
-                    try:
-                        import resolved as _rs
-                        from adapters import YahooDirectAdapter as _YA
-                        _ad = _YA(exchange_tz="America/New_York")
-
-                        def _px(t):
-                            try:
-                                q = _ad.get_quote(t)
-                                return float(q.last) if q.last else None
-                            except Exception:
-                                return None
-
-                        lrows, nsc = _cl.score(lrows, _px, today,
-                                               outcome_fn=_rs.check)
-                        if nsc:
-                            parts[-1] += (f"\n   [scored {nsc} resolved "
-                                          "catalyst event(s) — outcome read "
-                                          "from the 8-K, not the tape]")
-                    except Exception as e:
-                        parts[-1] += (f"\n   \u26a0 catalyst scoring failed "
-                                      f"({type(e).__name__}) — the record is "
-                                      "NOT accruing, which is the one thing "
-                                      "it must do")
-                    if added or True:
-                        _cl.save(lrows)
-                        parts[-1] += (f"\n   [logged {added} new event(s) to the "
-                                      "catalyst record — score with "
-                                      "`python catledger.py --score`]")
-                except Exception as e:
-                    parts[-1] += (f"\n   \u26a0 catalyst record NOT written "
-                                  f"({type(e).__name__}) — the screen ran but "
-                                  "nothing was learned from it")
-            except Exception as e:
-                parts.append(f"▎CATALYST OPPORTUNITIES\n   ⚠ pricing "
-                             f"unavailable ({type(e).__name__}) — the calendar "
-                             "above stands, the pricing does not")
-    except Exception as e:
-        parts.append(f"▎FDA DECISION CALENDAR\n   ⚠ unavailable "
-                     f"({type(e).__name__}) — the rest of the brief stands")
-
-    # ADVISORY COMMITTEES — the public expert vote, which usually moves the
-    # stock more than the decision that follows it.
-    if not no_net:
-        try:
-            import adcom as _ac
-            if ac_data is None:
-                raise RuntimeError("adcom harvest failed earlier in this run")
-            parts.append(_ac.render(ac_data, today, 120))
-        except Exception as e:
-            parts.append(f"\u258e ADVISORY COMMITTEES\n   \u26a0 unavailable "
-                         f"({type(e).__name__}) — treat as UNKNOWN, not as "
-                         "nothing scheduled")
-
-    # WHAT CHANGED — filings since the last brief, for held and watched names.
-    # A position waiting weeks on a decision is not static; the company keeps
-    # filing, and some of those filings matter more than the decision.
-    if not no_net:
-        try:
-            import newsflow as _nf
-            from build_catalyst import ticker_map
-            # ticker_map is CIK -> ticker (that is what the SEC file provides);
-            # invert it for lookups by symbol. The calendar already carries a
-            # CIK per row, so prefer that and fall back to the inverted map.
-            by_ticker = {v: k for k, v in ticker_map(SCRATCH).items()}
-            watch = {}
-            for l in book["legs"]:
-                watch[l["ticker"]] = by_ticker.get(l["ticker"], "")
-            for c in (cal or []):
-                t = c.get("ticker")
-                if not t:
-                    continue
-                if 0 <= (dt.date.fromisoformat(c["date"]) - today).days <= 45:
-                    watch[t] = c.get("cik") or by_ticker.get(t, "")
-            pairs = sorted(watch.items())
-            if pairs:
-                since = today - dt.timedelta(days=days_back)
-                parts.append(_nf.render(_nf.gather(pairs, since), since, today))
-        except Exception as e:
-            parts.append(f"\u258e WHAT CHANGED\n   \u26a0 filing check "
-                         f"unavailable ({type(e).__name__}) — treat this as "
-                         "UNKNOWN, not as quiet")
-
-    if intraday:
-        parts.append(intraday)
-        # Earnings proximity for the names actually picked. The 9:45 model has
-        # no earnings feed (its own header says so), and next week every
-        # Canadian bank reports -- a universe that is a third financials.
-        if not no_net:
-            try:
-                import earnings as _e
-                uni = (cfg.get("scan") or {}).get("universe") or []
-                picks = set()
-                for side in ("long", "short"):
-                    lg = (res.get("pair") or {}).get(side) or {}
-                    if lg.get("pick"):
-                        picks.add(lg["pick"]["t"])
-                    picks |= {x["t"] for x in (lg.get("extra") or [])}
-                blk = _e.render(_e.gather(uni), today, picks)
-                if blk:
-                    parts.append(blk)
-            except Exception as ex:
-                parts.append(f"\u258e EARNINGS NEARBY\n   \u26a0 unavailable "
-                             f"({type(ex).__name__}) — unknown, not clear")
-    # SCORE THE PREVIOUS SESSION BEFORE PRINTING THE RECORD. The page told the
-    # reader to run `ledger.py --score` after the close and nobody did, so on
-    # 2026-09-01 it printed 38/85 beside the day's advice while four legs from
-    # 08-31 sat unscored. A record that requires a human to remember is not a
-    # record -- exactly the day-80 finding about the catalyst ledger.
-    d["scored_now"], d["score_error"] = 0, None
-    if not no_net:
-        try:
-            _lr, d["scored_now"], d["held_back"] = ledger.autoscore(ledger.load())
-            if d["scored_now"]:
-                ledger.save(_lr)
-        except Exception as e:              # never silently (rule 1)
-            d["score_error"] = f"{type(e).__name__}: {e}"
-    d["ledger_rows"] = ledger.load()
-    # ONE tide computation, shared. `_tides_for_report` downloads 120 days of
-    # bars for every ticker in universe_prints -- about 12 seconds -- and the
-    # short view was calling it a SECOND time, doubling the network on every
-    # run. Two renderings, one computation; that was the rule and this broke it.
-    try:
-        d["tides"] = ledger._tides_for_report()
-    except Exception as e:
-        d["tides"], d["tides_error"] = {}, f"{type(e).__name__}: {e}"
-    parts.append(render_record(d["ledger_rows"], d["tides"]))
-    parts.append("Read-only. Nothing here placed, sized, or cancelled an order.")
-    return "\n\n".join(parts)
-
-
-def main(argv=None) -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="config.yaml")
-    ap.add_argument("--shadow", action="store_true",
-                    help="print the pair but claim no capital")
-    ap.add_argument("--days-back", type=int, default=4,
-                    help="lookback for the WHAT CHANGED filing scan")
-    ap.add_argument("--offline", action="store_true",
-                    help="positions/record only; no network")
-    ap.add_argument("--full", action="store_true",
-                    help="the complete page (~460 lines) instead of the "
-                         "one-screen decision view")
-    a = ap.parse_args(argv)
-
-    # THE PLAUSIBILITY GATE, before a single number is rendered. These are
-    # module-level literals that nothing else would notice a typo in, and every
-    # breakeven in the report is built on their signs. Deliberately NOT wrapped
-    # in a try/except: an Impossible here means a published constant is
-    # arithmetically impossible, and the report must stop rather than print it.
-    # Fail closed (rule 2) — a wrong number acted on costs more than no report.
-    import sanity
-    warn = sanity.gate(sanity.check_catalyst_constants)
-
-    # ALWAYS the same computation, whichever view is drawn. The full page is
-    # built either way -- it is what publishes the day's permanent record via
-    # r945.publish(), so a short view that skipped it would silently stop the
-    # ledger accruing. The choice is what gets PRINTED, never what gets run.
-    digest: dict = {}
-    full = build(a.config, a.shadow, a.offline, a.days_back, digest=digest)
-
-    if a.full:
-        print(full)
-        if warn:
-            print("\n".join(sanity.render(warn)))
-        # WHAT MOVED, and where each number came from. Five shipping constants
-        # were retracted in eleven days and nothing announced any of them; this
-        # prints after the report so a changed basis is read alongside the
-        # conclusions it changed, not buried above them.
-        import constants
-        print()
-        print(constants.report())
+        prows = services.get('positions',positions.load)()
+    except Exception as exc:
+        prows=[]; error('positions',exc)
+    res = {'now':now.isoformat(),'longs':[],'shorts':[], 'pair':{}, 'evaluated':[],
+           'coverage_fail':None,'fetch_errors':{},'n_names':0}
+    if no_net:
+        res['coverage_fail']='OFFLINE — market data not fetched'
+    elif clock['status'] == 'CLOSED' or clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
+        res['coverage_fail']=clock['status']
     else:
-        import view
-        print(view.render(digest))
-        if warn:
-            print("\n".join(sanity.render(warn)))
+        try:
+            res = services.get('intraday',r945.run)(cfg)
+            for ticker, why in res.get('fetch_errors',{}).items():
+                errors.append({'layer':'intraday','error':'DATA_UNAVAILABLE','detail':f'{ticker}: {why}'})
+        except Exception as exc:
+            res['coverage_fail']='intraday computation unavailable'; error('intraday',exc)
+    res['live_record'] = ledger.live_summary(past_rows)
+    try:
+        client = services.get('market') or market_client()
+    except Exception as exc:
+        client = None
+        error('market_client',exc)
+    # One equity call for the full board, open positions and independent index.
+    tickers = {r['t'] for r in res.get('longs',[])+res.get('shorts',[])}
+    tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
+    tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
+    tickers.add('XIU.TO')
+    quotes = {}
+    if not no_net and clock['status'] != 'CLOSED':
+        try:
+            raw = client.get(sorted(tickers))
+            if live_clock:
+                now = dt.datetime.now(ZoneInfo('America/New_York'))
+            quotes = {t:validate_equity(raw.get(t,{}),t,now,
+                                        currency='CAD' if t.endswith('.TO') else 'USD') for t in tickers}
+        except Exception as exc:
+            # Provider exception text can contain authentication URLs: record class only.
+            error('equity_quotes',RuntimeError(type(exc).__name__))
+    for t in tickers:
+        quotes.setdefault(t, {'ticker':t,'status':'UNAVAILABLE','reason':'quote unavailable',
+                              'mark':None,'spread_bps':None})
+    book = positions.mark_book(prows, {t:q['mark'] for t,q in quotes.items() if q.get('mark') is not None},now.date())
+    assessed = [{'ticker':p['t'],'shares':p.get('shares'),'price':p.get('p945'),
+                 'cost':{'bps':quotes.get(p['t'],{}).get('spread_bps')}}
+                for p in res.get('longs',[])+res.get('shorts',[])]
+    # Neither biotech data nor results can enter r945 selection/allocation.
+    try:
+        inputs = services.get('biotech_inputs',biotech.load_inputs)
+        snap, events = inputs()
+        option_rows = {}
+        # Source a pre-open options snapshot where supplied; freshness is still
+        # checked by biotech.option_percentile against the report's clock.
+        option_rows.update(snap.get('options',{}))
+        bio = biotech.scan(snap,events,option_rows,now)
+    except Exception as exc:
+        bio={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
+             'errors':[f'{type(exc).__name__}: {exc}'],'universe_n':0,'screened_events':0,'top_limit':2}
+    # Deadline checked after acquisition, not just when the process started.
+    if live_clock:
+        now = dt.datetime.now(ZoneInfo('America/New_York'))
+        try:
+            clock = execution.clock_status(now)
+        except Exception as exc:
+            clock['eligible'] = False
+            error('calendar_final_check',exc)
+    # Baseline ledger preserved separately; exact execution measurements live
+    # in Store. A late report never creates a retrospectively chosen board.
+    pub = {'picks':0,'pair':0,'already':False,'errors':[]}
+    if store and clock['eligible'] and not res.get('coverage_fail'):
+        try:
+            pub = r945.publish(res,cfg,assessed_costs=assessed)
+            for why in pub['errors']:
+                errors.append({'layer':'baseline_publication','error':'PUBLISH_ERROR','detail':why})
+        except Exception as exc:
+            error('baseline_publication',exc)
+    legs = execution.evaluate_legs(res,cfg,quotes,clock,shadow)
+    from report_store import read_observations
+    try:
+        past_reports, outcomes = services.get('observations',lambda:read_observations(state_dir))()
+        past_reports = [r for r in past_reports if r['session'] < now.date().isoformat()]
+        exact_record = execution.observed_performance(past_reports,outcomes)
+    except Exception as exc:
+        error('execution_record',exc)
+        exact_record = execution.observed_performance([],[])
+    benchmark = quotes['XIU.TO']
+    report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
+              'provenance':{'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
+                            'r945_sha256':hashlib.sha256((ROOT/'r945.py').read_bytes()).hexdigest(),
+                            'ledger_snapshot_sha256':hashlib.sha256(encode(rows).encode()).hexdigest(),
+                            'universe':cfg.get('scan',{}).get('universe',[]),
+                            'biotech_source':'independent staged evidence feed'},
+              'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
+              'intraday':{'res':res,'legs':legs,'record':record,'publish':pub,
+                          'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
+                          'contract':'09:46 entry / 15:59 exit, same session',
+                          'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.'},
+              'biotech':bio,'positions':book,
+              'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
+                          'mde':'See data/day90_results.json; insufficient exact observations means unavailable, not zero'},
+              'report_status':'OFFLINE' if no_net else ('ON_TIME' if clock['eligible'] else 'INFORMATIONAL')}
+    if store and now.strftime('%H:%M') == '09:46':
+        return store.publish(report['session'],report)
+    return json.loads(encode(report))
+
+
+
+def compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
+            publish=False, state_dir=None, services=None):
+    """Serialize the entire publication, including the legacy CSV side effects.
+
+    POSIX file locking is appropriate for the supplied Linux/systemd host.
+    Previews and offline calls do not create state or acquire write locks.
+    """
+    if not publish or no_net:
+        return _compute(cfg_path,shadow,no_net,now=now,publish=False,
+                        state_dir=state_dir,services=services)
+    import fcntl
+    directory=Path(state_dir or os.environ.get('RB_STATE_DIR',str(ROOT/'.rb-state')))
+    directory.mkdir(parents=True,exist_ok=True)
+    with (directory/'publication.lock').open('a') as handle:
+        fcntl.flock(handle.fileno(),fcntl.LOCK_EX)
+        try:
+            return _compute(cfg_path,shadow,no_net,now=now,publish=True,
+                            state_dir=directory,services=services)
+        finally:
+            fcntl.flock(handle.fileno(),fcntl.LOCK_UN)
+
+def render_text(report):
+    """Pure: rendering consumes only the computed snapshot."""
+    import daily_render
+    return daily_render.text(report)
+
+
+def render_html(report):
+    """Pure HTML over exactly the same model as terminal/email/JSON."""
+    import daily_render
+    return daily_render.html(report)
+
+
+def build(cfg_path='config.yaml', shadow=True, no_net=False, days_back=4, digest=None):
+    """Compatibility facade. Preview only; use --publish for durable publication."""
+    report=compute(cfg_path,shadow,no_net)
+    if digest is not None:
+        digest.update(report)
+    return render_text(report)
+
+
+def main(argv=None):
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config',default=str(ROOT/'config.yaml'))
+    parser.add_argument('--offline',action='store_true')
+    parser.add_argument('--publish',action='store_true')
+    parser.add_argument('--shadow',action='store_true',default=True)
+    parser.add_argument('--full',action='store_true',help='compatibility: full intraday board is always included')
+    parser.add_argument('--days-back',type=int,default=4,help=argparse.SUPPRESS)
+    parser.add_argument('--format',choices=('text','html','json'),default='text')
+    parser.add_argument('--output')
+    parser.add_argument('--state-dir')
+    args=parser.parse_args(argv)
+    report=compute(args.config,args.shadow,args.offline,publish=args.publish,state_dir=args.state_dir)
+    value=encode(report) if args.format=='json' else render_html(report) if args.format=='html' else render_text(report)
+    if args.output:
+        Path(args.output).write_text(value)
+    else:
+        print(value)
     return 0
 
 
-if __name__ == "__main__":
+def __getattr__(name):
+    # Backward-compatible formatting helpers. They are not the daily pipeline.
+    if name in {'render_positions','render_actions','render_catalyst_detail','render_intraday',
+                'render_record','pair_reasoning'}:
+        import legacy_brief
+        return getattr(legacy_brief,name)
+    raise AttributeError(name)
+
+
+if __name__=='__main__':
     raise SystemExit(main())
