@@ -18,13 +18,12 @@ import hashlib
 import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from concurrent.futures import ThreadPoolExecutor
 
 import biotech
 import execution
 import ledger
 import positions
-from quotes import market_client, YahooMarketData, validate_equity, event_quote, stamp
+from quotes import market_client, validate_equity, stamp
 from report_store import Store, encode
 
 ROOT = Path(__file__).resolve().parent
@@ -40,6 +39,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     """
     from dashboard import load_config
     import r945
+    injected = services is not None
     services = services or {}
     cfg = load_config(str(cfg_path))
     live_clock = now is None
@@ -64,6 +64,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     # Do not grade today's partial session or display future-dated rows.
     past_rows = [r for r in rows if r['date'] < now.date().isoformat()]
     pair_rows = [r for r in past_rows if r.get('role')=='pair']
+    recorded_today = [r for r in rows if r['date']==now.date().isoformat()]
     record = ledger.accuracy(pair_rows)
     record['label'] = 'Historical 09:45-bar to official-close PROXY; not exact 09:46–15:59 fills'
     record['benchmark_label'] = 'Historical universe median is not an index; exact index record starts with this version'
@@ -72,15 +73,40 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         prows = services.get('positions',positions.load)()
     except Exception as exc:
         prows=[]; error('positions',exc)
+    # Fetch the configured universe once, concurrently with model acquisition.
+    # Position marks and biotech evidence must survive an intraday timeout.
+    section_status = {}
+    raw_live = None
+    if not no_net and not injected and clock['status'] != 'CLOSED':
+        from bounded import acquire
+        tickers = set(cfg.get('scan',{}).get('universe',[])) | {'XIU.TO'}
+        tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
+        tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
+        tasks = {'equity_quotes': (lambda: market_client().get(sorted(tickers)), 10)}
+        if not recorded_today and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
+            tasks['intraday'] = (lambda: r945.run(cfg), 22)
+        section_status = acquire(tasks)
+        raw_live = section_status['equity_quotes']['value'] or {}
+        for name, result in section_status.items():
+            if result['error']:
+                errors.append({'layer': name, 'error': result['error'],
+                               'detail': f"Independent section failed after {result['seconds']}s; other sections retained."})
     res = {'now':now.isoformat(),'longs':[],'shorts':[], 'pair':{}, 'evaluated':[],
            'coverage_fail':None,'fetch_errors':{},'n_names':0}
-    if no_net:
+    if recorded_today:
+        res['coverage_fail']='RECORDED BOARD — original selections retained; fresh selection intentionally not rerun'
+        res['source']='published baseline ledger'
+    elif no_net:
         res['coverage_fail']='OFFLINE — market data not fetched'
     elif clock['status'] == 'CLOSED' or clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
         res['coverage_fail']=clock['status']
     else:
         try:
-            res = services.get('intraday',r945.run)(cfg)
+            if 'intraday' in section_status:
+                res = section_status['intraday']['value'] or {**res, 'coverage_fail':
+                    'NOT EVALUATED — intraday acquisition unavailable; not a zero-opportunity result'}
+            else:
+                res = services.get('intraday',r945.run)(cfg)
             for ticker, why in res.get('fetch_errors',{}).items():
                 errors.append({'layer':'intraday','error':'DATA_UNAVAILABLE','detail':f'{ticker}: {why}'})
         except Exception as exc:
@@ -99,7 +125,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     quotes = {}
     if not no_net and clock['status'] != 'CLOSED':
         try:
-            raw = client.get(sorted(tickers))
+            raw = raw_live if raw_live is not None else client.get(sorted(tickers))
             if live_clock:
                 now = dt.datetime.now(ZoneInfo('America/New_York'))
             quotes = {t:validate_equity(raw.get(t,{}),t,now,
@@ -111,6 +137,21 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         quotes.setdefault(t, {'ticker':t,'status':'UNAVAILABLE','reason':'quote unavailable',
                               'mark':None,'spread_bps':None})
     book = positions.mark_book(prows, {t:q['mark'] for t,q in quotes.items() if q.get('mark') is not None},now.date())
+    book['verification'] = 'Recorded ledger only — holdings have not been reconciled with a brokerage account.'
+    try:
+        reference_path = os.getenv('RB_REFERENCE_CLOSES_JSON')
+        references = json.loads(Path(reference_path).read_text()) if reference_path else {}
+        from quotes import reference_close
+        for leg in book['legs']:
+            leg['quote_reason'] = quotes.get(leg['ticker'],{}).get('reason','quote unavailable')
+            leg['event_overdue'] = bool(leg.get('event_date') and leg['event_date'] < now.date().isoformat())
+            ref = reference_close(references.get(leg['ticker'],{}), leg['ticker'], now)
+            leg['reference'] = ref
+            if ref['status']=='OK':
+                pct, dollars = positions.pnl(leg['side'],leg['entry_px'],ref['close'],leg['shares'])
+                leg['reference'] = {**ref, 'pnl_pct':pct,'pnl_usd':dollars}
+    except Exception as exc:
+        error('position_references',exc)
     assessed = [{'ticker':p['t'],'shares':p.get('shares'),'price':p.get('p945'),
                  'cost':{'bps':quotes.get(p['t'],{}).get('spread_bps')}}
                 for p in res.get('longs',[])+res.get('shorts',[])]
@@ -123,9 +164,16 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         # checked by biotech.option_percentile against the report's clock.
         option_rows.update(snap.get('options',{}))
         bio = biotech.scan(snap,events,option_rows,now)
+        calendar = biotech.research_calendar(events,now)
     except Exception as exc:
         bio={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
              'errors':[f'{type(exc).__name__}: {exc}'],'universe_n':0,'screened_events':0,'top_limit':2}
+        # A missing universe file does not invalidate independently reviewed dates.
+        try:
+            path = os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json')
+            calendar = biotech.research_calendar(json.loads(Path(path).read_text())['events'],now)
+        except Exception as event_exc:
+            calendar = {'events':[], 'gaps':[type(event_exc).__name__]}
     # Deadline checked after acquisition, not just when the process started.
     if live_clock:
         now = dt.datetime.now(ZoneInfo('America/New_York'))
@@ -161,14 +209,20 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
                             'universe':cfg.get('scan',{}).get('universe',[]),
                             'biotech_source':'independent staged evidence feed'},
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
+              'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
-                          'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.'},
-              'biotech':bio,'positions':book,
+                          'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
+                          'recorded_today':recorded_today},
+              'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
-                          'mde':'See data/day90_results.json; insufficient exact observations means unavailable, not zero'},
+                          'mde':'Historical 2-session proxy MDE80: 64.10 bps versus 5 bps target (UNDERPOWERED). Exact-arm MDE unavailable without matched BBO/cost/index observations.'},
               'report_status':'OFFLINE' if no_net else ('ON_TIME' if clock['eligible'] else 'INFORMATIONAL')}
+    from readiness import assess
+    report['readiness'] = assess(report)
+    if not no_net and report['readiness']['gaps']:
+        report['report_status'] += ' — PARTIAL DATA; consult section status'
     if store and now.strftime('%H:%M') == '09:46':
         return store.publish(report['session'],report)
     return json.loads(encode(report))

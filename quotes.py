@@ -342,6 +342,30 @@ def market_client():
     path=os.environ.get('RB_QUOTES_JSON')
     return SnapshotMarketData(path) if path else YahooMarketData()
 
+
+def reference_close(row, ticker, now):
+    """Dated prior-session context only; never passed into execution or live marks."""
+    out = {'status':'UNAVAILABLE'}
+    if not row: return out
+    try:
+        import pandas_market_calendars as mcal
+        from urllib.parse import urlparse
+        from zoneinfo import ZoneInfo
+        today=stamp(now).astimezone(ZoneInfo('America/New_York')).date()
+        calendar=mcal.get_calendar('TSX' if ticker.endswith('.TO') else 'NYSE')
+        days=calendar.valid_days(start_date=today-dt.timedelta(days=12),end_date=today-dt.timedelta(days=1))
+        expected=days[-1].date().isoformat()
+        price=number(row.get('close'),positive=True)
+        url=urlparse(str(row.get('source_url','')))
+        if (row.get('ticker')!=ticker or row.get('currency')!=('CAD' if ticker.endswith('.TO') else 'USD')
+            or row.get('session')!=expected or price is None
+            or not fresh(row.get('retrieved_at'),now,36*3600)
+            or url.scheme!='https' or not url.hostname or url.username or url.password):
+            raise ValueError('reference identity/currency/session/source/freshness mismatch')
+        return {**row,'close':price,'status':'OK','label':'PRIOR SESSION CLOSE — not a live mark or fill'}
+    except (ValueError,KeyError,TypeError,IndexError) as exc:
+        return {**out,'reason':str(exc)}
+
 def validate_equity(row, ticker, now, *, currency=None, max_age=120):
     """Validate last trade and BBO independently; a fresh trade is not a fresh BBO."""
     out = {"ticker": ticker, "mark": None, "bid": None, "ask": None,

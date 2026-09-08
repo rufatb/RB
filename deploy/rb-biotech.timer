@@ -1,7 +1,7 @@
 [Unit]
-Description=RB biotech preparation at 08:45 ET
+Description=RB history and biotech preparation at 08:10 ET
 [Timer]
-OnCalendar=Mon..Fri *-*-* 08:45:00 America/New_York
+OnCalendar=Mon..Fri *-*-* 08:10:00 America/New_York
 Persistent=false
 AccuracySec=1s
 [Install]

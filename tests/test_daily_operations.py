@@ -74,13 +74,14 @@ def test_complete_exact_window_record_has_matched_net_and_tide(tmp_path):
     assert result['mean_selection_net_pct']==result['mean_net_pct']
 
 
-def test_deadline_timeout_emits_one_frozen_outage(tmp_path,monkeypatch):
+def test_catastrophic_assembly_failure_emits_one_frozen_outage(tmp_path,monkeypatch):
     d=brief.compute(now=NOW,services=services(),no_net=True)
-    def timeout(*a,**k):raise subprocess.TimeoutExpired('brief',38)
-    monkeypatch.setattr(daily_job.subprocess,'run',timeout)
-    monkeypatch.setattr(daily_job.brief,'compute',lambda **kw:copy.deepcopy(d))
+    def compute(**kw):
+        if not kw.get('no_net'): raise ValueError('bad assembly')
+        return copy.deepcopy(d)
+    monkeypatch.setattr(daily_job.brief,'compute',compute)
     report=daily_job.run(tmp_path/'state',tmp_path/'output')
-    assert any(e['error']=='TimeoutExpired' for e in report['errors'])
+    assert any(e['error']=='ValueError' for e in report['errors'])
     frozen=Store(tmp_path/'state').get(NOW.date().isoformat())
     assert frozen['report_status'].startswith('DATA OUTAGE')
     assert (tmp_path/'output'/'report.html').read_text().count('Part 2')==1

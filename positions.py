@@ -139,7 +139,7 @@ def mark_book(rows: list, marks: dict, today: dt.date) -> dict:
         sh, ep = float(r["shares"]), float(r["entry_px"])
         mark = marks.get(r["ticker"])
         leg = {"id": r["id"], "ticker": r["ticker"], "side": r["side"],
-               "shares": sh, "entry_px": ep,
+               "shares": sh, "entry_px": ep, "entry_date":r['entry_date'],
                "days": days_held(r["entry_date"], today),
                "exit_condition": r.get("exit_condition", ""),
                "event_date": r.get("event_date", ""),

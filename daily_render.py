@@ -32,7 +32,22 @@ def text(d):
                      f"{fmt(l['entry_reference'])} | {fmt(l['entry_spread_bps'])} bps | "
                      f"${l['baseline_alloc']:,.0f} / {l['baseline_shares']} shares | {l['status']} |")
     if not intra['legs']:
-        lines.append('| No qualifying baseline legs | — | — | — | — | — | NO TRADE |')
+        recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
+        for r in recorded:
+            lines.append(f"| {r['ticker']} | {r['side']} | {r.get('p945','unknown')} | unverified | "
+                         f"{r.get('spread_bps') or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares | RECORDED — not a fresh entry |")
+        if not recorded:
+            unavailable=res.get('coverage_fail') or not res.get('n_names')
+            lines.append('| '+('Scan not evaluated' if unavailable else 'No qualifying baseline legs')+
+                         ' | — | — | — | — | — | '+('DATA UNAVAILABLE' if unavailable else 'NO TRADE')+' |')
+    if intra.get('recorded_today'):
+        lines += ['', '### Already recorded session board',
+                  'Preserved published baseline selections; not new entries, confirmed holdings, or exact 09:46 fills.', '',
+                  '| Name | Side | Role | Recorded signal reference | Recorded shares | Stored spread proxy |',
+                  '|---|---|---|---:|---:|---:|']
+        for r in intra['recorded_today']:
+            lines.append(f"| {r['ticker']} | {r['side']} | {r.get('role','')} / {r.get('leg','')} | "
+                         f"{r.get('p945','unknown')} | {r.get('shares') or 'not allocated'} | {r.get('spread_bps') or 'unknown'} bps |")
     for l in intra['legs']:
         lines += ['', f"{l['ticker']}: {l['role']}, density {l['density_tag']}; diagnostic sided-P "
                   f"{l['p_sided']:.3f}. Fill bound {l['fill_bound']:.2f}; quote as of "
@@ -48,9 +63,13 @@ def text(d):
             lines.append(f"| {p['t']} | {'LONG' if side=='longs' else 'SHORT'} | {prob:.3f} | "
                          f"{p.get('confidence','unknown')} | {fmt(p.get('r0'),'+.2f')}% | "
                          f"{fmt(p.get('gap'),'+.2f')}% | {fmt(p.get('vp'))} |")
+    if not res.get('longs') and not res.get('shorts'):
+        for r in intra.get('recorded_today',[]):
+            lines.append(f"| {r['ticker']} | {r['side']} | {r.get('p_sided') or 'unknown'} | "
+                         f"{r.get('confidence') or 'unknown'} | not stored | not stored | not stored |")
     if res.get('coverage_fail'):
         lines += ['', 'Coverage: '+res['coverage_fail']]
-    lines += ['', f"Evaluated names: {res.get('n_names',0)}. Source: {res.get('source','unavailable')}."]
+    lines += ['', f"Freshly evaluated names: {res.get('n_names',0)}. Recorded qualifiers: {len(intra.get('recorded_today',[]))}. Source: {res.get('source','unavailable')}."]
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     exact=intra['exact_record']
@@ -63,12 +82,37 @@ def text(d):
               'Long-minus-short and net exposure are evaluated separately on original capacity.',
               '09:46→15:30 and 09:46→15:45 remain shadow experiments. Overnight remains unadopted.',
               '', biotech.render(d['biotech'])]
+    calendar=d.get('research_calendar',{})
+    lines += ['', '## Daily / weekly catalyst calendar',
+              calendar.get('label','Unranked research calendar — not certified Monitor picks.')]
+    for event in calendar.get('events',[]):
+        lines += ['', f"### {event['ticker']} — {event['horizon']}",
+                  f"{event['kind']}: {event['window_start']} to {event['window_end']}; {event['asset']} / {event['indication']} / {event['stage']}.",
+                  'New information: '+event['new_information'], 'Known: '+event['known_data'],
+                  '3–6 month read-through: '+event['read_throughs'],
+                  f"Source: {event['source_url']}"]
+    if not calendar.get('events'):
+        lines.append('No current reviewed calendar supplied — research coverage gap, not absence of catalysts.')
+    for gap in calendar.get('gaps',[]): lines.append('Calendar evidence gap: '+gap)
     book=d['positions']
     lines += ['', '## Existing position marks',
-              f"{len(book['legs'])} open positions; {book['stale']} unmarkable and excluded from totals."]
+              book.get('verification','Recorded ledger; current holdings not independently verified.'),
+              f"{len(book['legs'])} recorded open positions; {book['stale']} unmarkable and excluded from live totals."]
     for l in book['legs']:
-        lines.append(f"{l['ticker']} {l['side']}: mark {fmt(l.get('mark'))}; "
-                     f"P&L {fmt(l.get('pnl_pct'),'+.2f')}%; recorded exit: {l.get('exit_condition','unspecified')}.")
+        lines.append(f"{l['ticker']} {l['side']}: {l['shares']:g} recorded shares, entry {l['entry_px']:.2f} "
+                     f"on {l.get('entry_date','unknown')}, {l['days']} days held in ledger; live mark {fmt(l.get('mark'))}; "
+                     f"live P&L {fmt(l.get('pnl_pct'),'+.2f')}%; recorded exit: {l.get('exit_condition','unspecified')}.")
+        if l.get('event_overdue'):
+            lines.append('RECONCILE: recorded event/exit date has passed; no exit fill or continued holding verified.')
+        ref=l.get('reference',{})
+        if ref.get('status')=='OK':
+            lines.append(f"Dated reference only: {ref['session']} close {ref['close']:.2f}; "
+                         f"reference P&L {ref['pnl_pct']:+.2f}% / {ref['pnl_usd']:+.2f}, assuming unchanged recorded holding. "
+                         f"Not included in live totals. Source: {ref['source_url']}")
+        elif l.get('stale'):
+            lines.append('Price evidence gap: '+l.get('quote_reason','No validated live quote.'))
+    if d.get('readiness',{}).get('gaps'):
+        lines += ['', '## Readiness gaps']+d['readiness']['gaps']
     if d['errors']:
         lines += ['', '## Data and delivery diagnostics']
         lines += [f"{e['layer']}: {e['error']} — {e['detail']}" for e in d['errors']]

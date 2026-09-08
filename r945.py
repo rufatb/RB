@@ -632,7 +632,8 @@ def run(cfg, workers=8):
 
     def fetch(t):
         try:
-            return t, a._bars_df(a._chart(t, "5m", "60d"))
+            from bar_cache import get_bars
+            return t, get_bars(a, t, now)
         except Exception as e:
             # Day-25: never swallow silently — a missing name changes the
             # cross-sectional choice and must be visible and counted.

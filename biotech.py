@@ -272,6 +272,29 @@ def load_inputs(snapshot_path=None, events_path=None):
     return json.loads(Path(snapshot_path).read_text()), json.loads(Path(events_path).read_text())["events"]
 
 
+def research_calendar(events, now):
+    """Reviewed dates survive rank/feed outages; never label these opportunities.
+
+    A separate non-ranked calendar is not a relaxation of the Monitor universe
+    or crowding gates. Recheck daily and use Monday's report for weekly planning.
+    """
+    from collections import Counter
+    counts=Counter(e.get('event_id') for e in events)
+    today=stamp(now).astimezone(ZoneInfo('America/New_York')).date()
+    rows,gaps=[],[]
+    for event in events:
+        try:
+            validate_event(event,now)
+            if counts[event['event_id']]!=1: raise ValueError('duplicate event identity')
+            rows.append({k:event[k] for k in ('ticker','kind','window_start','window_end',
+                        'asset','indication','stage','new_information','known_data','read_throughs','source_url')})
+            rows[-1]['horizon']='WINDOW OVERLAPS NEXT 7 DAYS — timing may be broader' if event['window_start']<=(today+dt.timedelta(days=7)).isoformat() else 'FORWARD CALENDAR'
+        except (KeyError,ValueError,TypeError) as exc:
+            gaps.append(f"{event.get('ticker','unknown')}: {exc}")
+    return {'events':sorted(rows,key=lambda e:(e['window_end'],e['ticker'])), 'gaps':gaps,
+            'label':'Unranked factual calendar — universe eligibility and crowding NOT certified; not Monitor picks.'}
+
+
 def render(result):
     """Exactly five bullets per Monitor event; crowded appendix never promotes."""
     lines = ["## Part 2 — Small-Cap Biotech Catalyst Watch (3–6 months)",
@@ -280,7 +303,10 @@ def render(result):
         lines += ["Data unavailable: " + "; ".join(result["errors"])]
     lines.append(f"Verified universe: {result['universe_n']} names; Monitor: {len(result['monitor'])}/2.")
     if not result["monitor"]:
-        lines.append("No verified uncrowded setup passes today. No filler picks.")
+        if result['status']=='UNAVAILABLE' or not result.get('screened_events'):
+            lines.append('NOT EVALUATED — required universe or reviewed-event inputs unavailable. No conclusion about opportunities.')
+        else:
+            lines.append('No Monitor result among the evaluated events; review crowded/evidence-gap appendices.')
     for r in result["monitor"]:
         lines += ["", f"### {r['ticker']} — Monitor", ""]
         for i, (label, value) in enumerate(zip(LABELS, r["bullets"])):

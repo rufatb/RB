@@ -85,3 +85,14 @@ cost sizing and H3 fixed earlier exits are shadow-only; no baseline tuning or
 overnight adoption. Always print missing-data coverage and MDE. Preserve rejected
 research even when unreachable from the daily entrypoint. New FDA transparency
 sources do not authorise mixing numerator and denominator populations.
+
+## September 8 recovery
+
+Intraday and equity acquisition have independent process deadlines (22s/10s).
+Timeouts preserve recorded boards, position facts and reviewed calendars. Same-day
+published ledger rows win over a fresh selection; never replace them on a rerun.
+Pre-open history caching changes acquisition only, not baseline features or rules.
+`preflight.py` checks staged readiness; `sync_runtime.py` imports new Claude-published
+CSV records without merging code or overwriting earlier values. `state_bundle.py`
+preserves SQLite history safely. See RUNBOOK for the daily/weekly calendar,
+reference-close context, and unresolved live-data/holdings-verification gates.

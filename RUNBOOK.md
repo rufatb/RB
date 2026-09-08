@@ -14,7 +14,8 @@ python brief.py --offline --format html --output /tmp/rb-preview.html
 python validate_execution.py --as-of 2026-09-08 --output /tmp/day90-check.json
 ```
 
-Offline/preview computation does not write ledgers, publish, score or fetch.
+Offline computation does not write ledgers, publish, score or fetch. Live preview
+fetches with independent section deadlines, but does not publish or score.
 Explicit `--output` writes only the requested artifact. The old `build()` API
 is a preview facade. Legacy CLI reports remain available separately, but they
 are not the daily two-engine report. Do not concurrently schedule legacy
@@ -24,10 +25,10 @@ are not the daily two-engine report. Do not concurrently schedule legacy
 
 | ET clock | Action | Failure handling |
 |---|---|---|
-| 08:45 | Stage complete biotech universe; refresh/review primary-source event evidence | Partial rank/event coverage is explicitly unavailable |
+| 08:10 | Stage complete biotech universe; review primary-source event evidence and warm intraday history | Partial coverage blocks only its dependent section |
 | 09:40 | Prepare report environment and source review; inspect stored state and any delivery status | Signal is not final yet; never publish a hindsight-labelled 09:46 entry |
 | 09:45 | Refresh verified options snapshots | Stale or missing expectations remain unknown |
-| 09:46 | `daily_job.py --send` computes once, freezes, renders and sends | 38s computation budget; killed child produces an immutable data-outage report |
+| 09:46 | `daily_job.py --send` computes once, freezes, renders and sends | Intraday acquisition capped at 22s; equity acquisition at 10s, concurrently; completed siblings survive |
 | 15:30,15:45,15:59 | `collect_execution.py --exit HH:MM` captures prospective exit/index quotes | Wrong minute, missing quote or unspecified execution costs remain incomplete |
 
 The 09:45 completed five-minute bar only becomes available after it closes.
@@ -74,6 +75,49 @@ The SEC discovery queue is an optional review aid, not automatic promotion of
 filing dates. A recurring researcher must review issuer guidance, FDA notices,
 conference programs and financing disclosures before importing events. See
 `BIOTECH_DATA.md` for schema and objective thresholds.
+
+## Recovery contract (September 8)
+
+Do not call an unevaluated scan a zero-opportunity result. Already published
+baseline legs and the full recorded board must remain visible during outages,
+labelled recorded, never re-entered or re-sized. These are hypothetical baseline
+selections, not confirmed holdings. The holdings ledger is independently shown
+with shares, entry, holding age and overdue-event reconciliation warnings.
+Validated prior-session closes may be displayed as dated reference P&L, never
+inserted into live marks, execution quotes or aggregate live book P&L.
+
+Before the open, restore persistent operational state and run:
+
+```bash
+python sync_runtime.py --state-dir "$RB_STATE_DIR" --source-ref origin/claude/session-rw51c2
+python bar_cache.py --directory "$RB_STATE_DIR/intraday_cache"
+python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
+```
+
+Fetch the source ref first. `sync_runtime` only imports append-only CSV records;
+conflicting published values stop the import. It does not merge code or change
+strategies. Persist runtime_deltas.json alongside the database and staged inputs.
+Preserve new locally published rows by exporting deltas before discarding a
+temporary checkout. Use one operational-state writer with version-guarded saves.
+
+Set `RB_INTRADAY_CACHE_DIR` to the cache directory: pre-open 60-day five-minute
+history is combined with today's fresh five-minute bars using the same selection
+logic. Wrong-session/source or incomplete caches fail closed. Never run cache
+preparation after 09:30 and present it as pre-open evidence. No paid feed is
+declared usable until its exact endpoint and required market/timestamps pass.
+
+Set `RB_REFERENCE_CLOSES_JSON` to reviewed reference_closes.json. Each record
+requires ticker, currency, the immediately preceding exchange session, positive
+close, aware retrieved_at, and HTTPS source_url. Massive daily bars worked in the
+September 8 probe; tested NBBO and stock snapshot endpoints were NOT_ENTITLED.
+That does not establish unavailability of every Massive endpoint. US reference
+data does not solve the TSX intraday feed requirement.
+
+The daily report also carries an explicitly unranked source-reviewed calendar,
+reviewed daily and used for Monday week-ahead planning. It remains visible when
+strict universe/crowding certification fails; it never substitutes for Monitor
+or silently relaxes the $500m/top100/2-of-3 contract. Fewer than two eligible
+Monitor names is legitimate; failing to perform the research is a coverage gap.
 
 ## Delivery and duplicate handling
 

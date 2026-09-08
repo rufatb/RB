@@ -50,9 +50,10 @@ def test_ambiguous_send_is_not_blindly_retried(tmp_path,monkeypatch):
 
 def test_late_delivery_is_informational_without_mutating_frozen_report(tmp_path,monkeypatch):
     store=fixture(tmp_path,monkeypatch)
+    original=store.get('2026-09-08')
     D.send(store,'2026-09-08','s@e.org','r@e.org',smtp_factory=SMTP,now=NOW+dt.timedelta(minutes=30))
     assert 'INFORMATIONAL' in str(SMTP.sent[0]['Subject'])
-    assert store.get('2026-09-08')['report_status']=='ON_TIME'
+    assert store.get('2026-09-08')==original
 
 
 def test_missing_credentials_does_not_claim_a_delivery(tmp_path,monkeypatch):

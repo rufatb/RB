@@ -4842,3 +4842,15 @@ target: UNDERPOWERED. Exact H1/H2/H3 studies are BLOCKED by absent historical
 BBO/index/alternative-exit data. `data/day90_results.json` records all arms and
 input hash. No accuracy, P&L or overnight improvement is claimed. See the audit
 for FDA-source corrections and current live-data/deployment limitations.
+
+### September 8 operational recovery — no strategy adoption
+
+The first email used an older pinned ledger and an all-or-nothing 38-second
+fallback, omitting Claude's subsequently saved two-long/two-short board. Fixed
+record synchronization, independent acquisition deadlines, preserved position
+facts, explicit unevaluated status, same-session pre-open history caching, and
+an unranked evidence-reviewed daily/weekly calendar. This is report availability
+and fidelity work, not a prediction improvement. MDE for operational fixes is
+not an alpha statistic; the existing shadow-arm MDE/gates remain unchanged.
+No baseline features, selection thresholds, allocation rules or holding horizons
+are newly adopted. Same-day published selections remain authoritative.
