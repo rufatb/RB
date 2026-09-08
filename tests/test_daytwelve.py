@@ -83,3 +83,76 @@ def test_render_omits_path_line_when_stats_unavailable(capsys):
            "max_chase_pct": 0.15, "path_stats": None}
     r945.render(res, book=True)
     assert "normal swing AGAINST" not in capsys.readouterr().out
+
+
+# ── Day-22: host clock vs data session (the week-behind-clock incident) ─────
+def test_clock_behind_data_refuses():
+    ok, why = r945.clock_vs_data("2026-07-27", "2026-08-04")
+    assert not ok and "CLOCK IS BEHIND" in why and "2026-08-04" in why
+
+
+def test_stale_feed_refuses():
+    ok, why = r945.clock_vs_data("2026-08-04", "2026-07-31")
+    assert not ok and "FEED IS STALE" in why
+
+
+def test_matching_session_passes():
+    ok, why = r945.clock_vs_data("2026-08-04", "2026-08-04")
+    assert ok and why == ""
+
+
+def test_no_data_refuses():
+    ok, why = r945.clock_vs_data("2026-08-04", None)
+    assert not ok
+
+
+def test_render_refuses_and_prints_nothing_tradeable(capsys):
+    res = {"now": "2026-07-27T09:59:00", "n_names": 0, "longs": [], "shorts": [],
+           "excluded": [], "pair": None, "min_p": 0.55, "too_early": False,
+           "clock_error": "HOST CLOCK IS BEHIND: clock says 2026-07-27 but the "
+                          "feed's newest session is 2026-08-04.",
+           "latest_session": "2026-08-04"}
+    r945.render(res, book=True)
+    out = capsys.readouterr().out
+    assert "REFUSING TO PUBLISH" in out
+    assert "BUY" not in out and "SELL SHORT" not in out
+
+
+def test_publish_writes_nothing_on_a_clock_mismatch(monkeypatch, tmp_path):
+    """RECOVERED day-93, and extended. The original guard stopped run() and
+    render(); publish() did not exist in August. publish() is the only thing
+    that WRITES, and it is callable independently — a guard that lives only in
+    the caller is not a guard on the record.
+    """
+    import sys as _s
+
+    import r945 as R
+
+    class _NoCost:
+        @staticmethod
+        def assess(rows):
+            raise AssertionError("quotes fetched despite a clock mismatch")
+
+    class _Led:
+        FIELDS = []
+        rows = []
+
+        def load(self, *a, **k):
+            return []
+
+        def append_picks(self, rows, *a, **k):
+            raise AssertionError("ledger written despite a clock mismatch")
+
+        def append_universe_prints(self, *a, **k):
+            raise AssertionError("prints written despite a clock mismatch")
+
+    monkeypatch.setitem(_s.modules, "cost", _NoCost)
+    monkeypatch.setitem(_s.modules, "ledger", _Led())
+    res = {"now": "2026-07-27T09:46", "longs": [], "shorts": [],
+           "pair": {"long": {"pick": None}, "short": {"pick": None}},
+           "clock_error": "HOST CLOCK IS BEHIND: clock says 2026-07-27 but "
+                          "the feed's newest session is 2026-08-04."}
+    out = R.publish(res, {"risk": {"account_equity": 25000}, "pair": {}})
+    assert out["picks"] == 0 and out["prints"] == 0
+    assert any("NOTHING PUBLISHED" in e for e in out["errors"])
+    assert "CLOCK IS BEHIND" in out["clock_error"]
