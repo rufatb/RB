@@ -3,6 +3,7 @@ requests>=2.28          # yahoo_direct / stooq / finnhub / twelvedata adapters
 yfinance>=0.2.40        # optional fallback adapter (yahoo_yf)
 pandas>=2.0
 numpy>=1.24
+scipy>=1.10            # pandas Spearman correlation in retained research harnesses
 
 # Claude analysis layer (optional; activates when ANTHROPIC_API_KEY is set)
 anthropic>=0.40
