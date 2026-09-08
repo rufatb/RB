@@ -111,7 +111,7 @@ Changes here reach the morning report. Every one needs a test.
 | `validate_ceiling` | 284 | is the ceiling the MODEL or the FEATURES? | `validate_catalyst`, `validate_features`, `validate_scaled` |
 | `validate_exit` | 599 | is there a better exit than 15:59? (day-36) | `adcom`, `baserate`, `brief`, `build_catalyst` +20 |
 | `validate_twins` | 274 | the deep validation, rebuilt FREE and 2x bigger (day-22). | `validate_entry`, `validate_exit` |
-| `view` | 553 | the short page. One screen, ordered by what you have to decide. | `brief` |
+| `view` | 553 | the short page. One screen, ordered by what you have to decide. | CLI/tests only — `brief` renders via `daily_render`; nothing outside the test suite imports it |
 
 ## TEST — reached only by the test suite
 

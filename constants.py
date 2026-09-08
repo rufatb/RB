@@ -185,6 +185,14 @@ REGISTRY = {
 }
 
 
+# Distinct from None. None means "computed constant — legitimately not
+# double-read"; this sentinel means "the source could not be read or parsed at
+# all", which is a FAILURE of the independent double-read this module exists
+# to provide. Conflating the two silently downgraded a broken check into a
+# passing one.
+_SOURCE_UNREADABLE = object()
+
+
 def source_value(mod_name: str, attr: str):
     """The value as written in the SOURCE TEXT, parsed, never imported.
 
@@ -201,17 +209,20 @@ def source_value(mod_name: str, attr: str):
     claim is not left resting on the bytecode cache.
 
     Returns None when the name is not a module-level literal — a computed
-    constant is a legitimate miss, not a disagreement.
+    constant is a legitimate miss, not a disagreement. Returns
+    _SOURCE_UNREADABLE when the source file itself cannot be read or parsed,
+    so the caller can report the double-read as unavailable instead of
+    mistaking the failure for a computed constant.
     """
     import ast
     path = os.path.join(REPO, *mod_name.split(".")) + ".py"
     if not os.path.exists(path):
-        return None
+        return _SOURCE_UNREADABLE
     try:
         with open(path) as f:
             tree = ast.parse(f.read(), filename=path)
     except (OSError, SyntaxError):
-        return None
+        return _SOURCE_UNREADABLE
     found = None
     for node in tree.body:                      # module level only
         targets = (node.targets if isinstance(node, ast.Assign)
@@ -249,8 +260,12 @@ def live(registry: dict = None) -> dict:
         rec = {"value": val}
         src = source_value(mod_name, attr)
         # Only a disagreement counts. A computed constant parses to None and is
-        # simply not double-read; asserting on that would fire constantly.
-        if src is not None and _norm(src) != _norm(val):
+        # simply not double-read; asserting on that would fire constantly. An
+        # UNREADABLE source is neither: the double-read failed, say so.
+        if src is _SOURCE_UNREADABLE:
+            rec["error"] = ("source unreadable — independent double-read "
+                            "unavailable")
+        elif src is not None and _norm(src) != _norm(val):
             rec["stale"] = (f"source says {src!r} but the imported module says "
                             f"{val!r} — stale bytecode; delete __pycache__")
         out[key] = rec
