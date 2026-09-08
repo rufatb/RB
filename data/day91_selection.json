@@ -1,0 +1,95 @@
+{
+  "registration_commit": "48651ec161c691846783025e47c6a4a780216437",
+  "frozen_at_utc": "2026-09-08T18:25:05.477602+00:00",
+  "winner": "reversal_20_equal_weekly",
+  "development_result_sha256": "ddd1a1d8ba9a0f8e47ef6ce992bf16cdd173f121dcf9033447b867d52e8a44eb",
+  "evaluator_sha256": "722b9b8daf56c802066fd76c2adcfeebd0730f727cb04231be1b181111feb6e0",
+  "confirmation_end": "2026-09-04",
+  "confirmation_data_accessed": false,
+  "winner_summary": {
+    "id": "reversal_20_equal_weekly",
+    "direction": "reversal",
+    "lookback": 20,
+    "sizing": "equal",
+    "horizon": "weekly",
+    "slots": 36,
+    "legs": 144,
+    "missing_windows": 4,
+    "first_entry": "2025-04-02",
+    "last_exit": "2025-12-29",
+    "adoptable": false,
+    "gross_bps_per_occupied_session": 4.834294439348841,
+    "benchmark_bps_per_occupied_session": 11.045339142353711,
+    "long_minus_short_bps_per_occupied_session": 9.668588878697681,
+    "long_relative_bps_per_occupied_session": 0.3468980993082531,
+    "short_underlying_relative_bps_per_occupied_session": -9.32169077938943,
+    "gross_turnover_per_round_trip": 2.0,
+    "cost_scenarios": {
+      "5": {
+        "mean_bps_per_occupied_session": 3.316790634173802,
+        "net_leg_hit_rate": 0.5,
+        "decisive_net_hit_rate": 0.4928571428571429,
+        "decisive_legs": 140,
+        "endpoint_drawdown_pct": -2.763311741442842,
+        "compounded_endpoint_return_pct": 5.991856661450967,
+        "expected_shortfall5_bps_per_trade": -208.07042939714088
+      },
+      "10": {
+        "mean_bps_per_occupied_session": 2.316790634173801,
+        "net_leg_hit_rate": 0.4861111111111111,
+        "decisive_net_hit_rate": 0.4928571428571429,
+        "decisive_legs": 140,
+        "endpoint_drawdown_pct": -2.832863757547166,
+        "compounded_endpoint_return_pct": 4.103554536236964,
+        "expected_shortfall5_bps_per_trade": -213.07042939714088
+      },
+      "25": {
+        "mean_bps_per_occupied_session": -0.6832093658261971,
+        "net_leg_hit_rate": 0.4722222222222222,
+        "decisive_net_hit_rate": 0.46808510638297873,
+        "decisive_legs": 141,
+        "endpoint_drawdown_pct": -6.336676486159698,
+        "compounded_endpoint_return_pct": -1.3672106126540018,
+        "expected_shortfall5_bps_per_trade": -228.0704293971409
+      }
+    },
+    "primary": {
+      "n": 36,
+      "mean": 2.316790634173802,
+      "se": 1.897320899695995,
+      "ci95": [
+        -1.1600289426716541,
+        5.702511014201446
+      ],
+      "mde80": 8.237448705021796,
+      "z": 1.2210852863872517,
+      "p": 0.2220537300059955,
+      "positive_control_5bps_z": 2.6352948522314508,
+      "target_5bps_detectable": false,
+      "block_length": 20,
+      "status": "UNDERPOWERED"
+    },
+    "net_hit_inference_pp": {
+      "n": 36,
+      "mean": 48.61111111111111,
+      "se": 2.392257546817937,
+      "ci95": [
+        43.75,
+        53.47222222222222
+      ],
+      "mde80": 10.386276161439802,
+      "block_length": 20,
+      "status": "UNDERPOWERED"
+    },
+    "blocks_bps": [
+      3.6336497005624895,
+      -1.0685875396027968,
+      -0.7053775185667511,
+      7.407477894302266
+    ],
+    "placebo_centered_mean95_abs_bps": 0.04739631520739408,
+    "holm_p": 1.0
+  },
+  "adoptable": false
+}
+
