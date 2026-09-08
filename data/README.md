@@ -23,6 +23,7 @@ depended on by the report every single morning belongs in the repository.
 |---|---|---|
 | `catalyst_events.csv` | `python build_catalyst.py --start 2015 --end 2026` | every 8-K that ANNOUNCES an FDA rejection or approval, 2015-2026, verified by `classify.py` |
 | `baserate.json` | `python baserate.py` | P(CRL) with its coverage audit and sponsor strata |
+| `biotech_events.json` | `python discover_biotech_events.py --import-reviewed <reviewed.json> --output data/biotech_events.json` | the source-reviewed upcoming-biotech-event feed `brief.py` reads for the Part-2 monitor (override with `RB_BIOTECH_EVENTS_JSON`); an empty `events` list is evidence no reviewed catalysts exist, not a missing feed |
 
 ## Refreshing
 

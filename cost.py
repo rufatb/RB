@@ -14,13 +14,8 @@ import argparse
 import json
 import os
 import sys
-import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/120 Safari/537.36")
-H = {"User-Agent": UA, "Accept": "application/json,text/plain,*/*"}
 # Day-87 (DECISION_day87.md): re-derived from the LEDGER at 0.69% [0.59, 0.80],
 # median |capture| over 363 scored legs / 41 sessions, session-clustered.
 #

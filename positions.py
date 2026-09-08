@@ -37,6 +37,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import os
+import warnings
 
 POSITIONS = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "positions.csv")
@@ -186,6 +187,12 @@ def due_today(legs: list, today: dt.date, warn_days: int = 7) -> tuple:
         try:
             d = (dt.date.fromisoformat(ed) - today).days
         except ValueError:
+            # FAIL CLOSED ON RISK: a malformed event_date used to drop the
+            # holding from close-out/event-window warnings without a word.
+            # An unparseable date can support neither a warning nor silence,
+            # so it stays out of both lists — but it is NAMED.
+            warnings.warn(f"{l.get('ticker')}: unparseable event_date "
+                          f"{ed!r} — excluded from due-today warnings")
             continue
         if d <= 0:
             closing.append(l)
