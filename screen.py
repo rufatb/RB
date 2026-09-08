@@ -56,11 +56,9 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import http.cookiejar
 import json
 import os
 import sys
-import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
