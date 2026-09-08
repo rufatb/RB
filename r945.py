@@ -2,6 +2,13 @@
 """
 r945.py — the 9:45→close engine (run at/after 9:45 ET).
 
+CURRENT EVIDENCE — DAY91: no demonstrated directional edge. The dated research
+notes below preserve the sequence of claims and reversals, not current expected
+win probabilities. Old 53–55%, 52–56% and "real, thin edge" descriptions were
+superseded by later studies. Sided-P is a diagnostic score; density is a
+calmness/familiarity tag. p945 is a completed-bar reference, not an exact fill.
+Production scoring and selection arithmetic are unchanged by this clarification.
+
 WHY THIS EXISTS: the user's actual trade is "enter ~9:45, exit by close", so
 the prediction must be P(close > price@9:45) conditioned on what the first 15
 minutes DID — not open→close conditioned on yesterday. Built on 60 days of
@@ -18,8 +25,9 @@ validated WALK-FORWARD on a blind holdout before shipping:
     LOST to it in one). Do not quote a pool-level edge.
     WALKED BACK (day-6 replication): an early "≥0.60 signals hit ~67%" read
     did NOT replicate (n=9-18 bucket flipped 67%→44% across splits). There is
-    NO reliable hit-rate gradient above the 0.55 bar — treat every qualified
-    signal as the same ~53-55% lean; do not overweight the "strongest" pick.
+    NO reliable hit-rate gradient above the 0.55 bar. The then-stated 53-55%
+    lean was a historical estimate, superseded by later near-chance evidence;
+    do not overweight the "strongest" pick.
     Shorts hit slightly less often but capture ~2.7x more per win (asymmetric
     down-moves). DAY-22 CORRECTION: this asymmetry is NOT present at scale.
     On 809 walk-forward pair legs (2yr/20 US twin lines) the avg-win/avg-loss
@@ -55,8 +63,8 @@ validated WALK-FORWARD on a blind holdout before shipping:
     sample was far smaller than n=89. CONCLUSION (mirrors day-6): there is
     NO validated gradient among qualified picks. Densest is retained as the
     deterministic tie-break (some rule must pick the leg; its live PAIR
-    ledger record keeps accruing either way) — but the stated expectation
-    is the qualified-pick base rate ~52-56%, NOT 68%. Do not restore the
+    ledger record keeps accruing either way). The then-stated qualified-pick
+    base rate ~52-56% was later superseded; it is not a current forecast. Do not restore the
     old claim without it surviving a WINDOW-ROLL test, not just a split.
     CROWDING (>=3 same-group same-direction picks): 44%/33% on day-9 splits,
     44% (8/18) on the day-12 window, 61% (11/18) one session later (day-13)
@@ -69,9 +77,9 @@ validated WALK-FORWARD on a blind holdout before shipping:
     and max-P in ALL FOUR quarters: 54.7/54.3/56.0/52.9% hit, capture
     positive every quarter, pooled 239/439 = 54.4% (z=1.86, p≈0.03),
     weighted capture +0.094%/leg PRE-COST (≈$23/leg/day at $25k). That is
-    the honest ceiling of this machine on this data: a real, thin,
-    barely-significant edge that costs can plausibly halve. Everything
-    stronger that was ever claimed here is dead; do not resurrect it.
+    what day14 then called a real, thin edge. Later larger studies did not
+    establish it, and day91 identifies research-harness differences. Preserve
+    this result as history, not a current edge or a universal ceiling.
 
 HONESTY (do not strip): pooled k-NN + Beta smoothing, presentation bar
 inherited from report.min_sided_p, hard [0.35,0.65] clamp on stated numbers,
@@ -552,19 +560,19 @@ def sector_warning(ticker: str, same_side: list, opp_side: list, groups: dict,
 def pair_of_day(longs: list, shorts: list, groups: dict = None,
                 selector: str = "densest", crowd_warn: int = 3,
                 legs_per_side: int = 1) -> dict:
-    """THE PAIR — the single long + single short the daily workflow trades.
+    """Reproducible hypothetical legs, up to the configured count on each side.
 
     SELECTION: each leg is the DENSEST qualified pick (smallest k-NN
     neighbour distance). Day-12 honesty: the day-9 evidence for this
     (68%/69% both splits) did NOT survive a 3-session window roll (52.7%,
     z=0.21) — densest is now a deterministic TIE-BREAK among equivalent
-    ~52-56% leans, not a validated edge (see module header). It stays
+    diagnostic qualifiers, not calibrated win probabilities (see module header). It stays
     because a daily pair needs one reproducible rule and its live ledger
     record is accruing. Only 'densest' and 'max_p' are accepted — an
     unknown selector raises rather than silently picking something new.
 
-    Leg quality = the pick's density tag (DENSE/MID/SPARSE), NOT its P — a
-    P-based label would imply a gradient day-6/day-9 showed doesn't exist.
+    The density tag (DENSE/MID/SPARSE) describes familiarity/calmness, not
+    directional quality. Neither that tag nor sided-P is a calibrated win rate.
     A missing leg is stated as NONE — the tool never invents a leg to satisfy
     the habit. A leg with >= crowd_warn same-group same-direction picks gets
     a crowding warning (44%/33% hit in validation) — noted, not yet a gate."""
@@ -809,7 +817,7 @@ def render(res, book=False):
         print("   against each other, so a missing name silently changes the bet.")
         return
     print("Horizon: from the 9:45 price to the 4:00 close. Honest expectation: every")
-    print("qualified pick is a ~52-56% lean; no selector gradient survived validation.")
+    print("qualified pick is a research candidate; no validated win probability or selector edge.")
     lr = res.get("live_record")
     if lr:
         print(f"LIVE RECORD (no hindsight): all picks {lr['all_hits']}/{lr['all_n']} "
@@ -1015,7 +1023,7 @@ def render(res, book=False):
         print("  gave: there is no peak to exit at. Early exits that look good in small")
         print("  samples are one bad half-hour, not a decay curve — and a 0.03-0.06%")
         print("  'edge' is under the round-trip cost anyway.")
-    print("\n  Modest, measured edges: a qualified leg is a ~52-56% lean (day-12 reset —")
+    print("\n  Research candidates: old 52-56% claims were superseded (see module history —")
     print("  the 68% selector claim did not survive a window roll). The ledger's PAIR")
     print("  line is the arbiter. No 5-minute outlooks — this is close-horizon only.")
 

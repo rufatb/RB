@@ -38,6 +38,7 @@ the pre-registration per-hypothesis because the direction differs by arm.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import io
 import json
 import os
@@ -90,7 +91,35 @@ def sec_tickers(n_top: int = 1200, skip: int = 0) -> list:
 
 # ── daily bars ─────────────────────────────────────────────────────────────
 
-def fetch_daily(ticker: str, years: int = 10, tries: int = 3):
+def _failure_kind(exc: Exception) -> str:
+    """An actionable error class/status without request URLs or credentials."""
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    return (f"HTTP_{status}" if isinstance(status, int) and 100 <= status <= 599
+            else type(exc).__name__)
+
+
+def _failure_summary(failures) -> str:
+    return ", ".join(f"{k}={v}" for k, v in sorted(Counter(failures).items()))
+
+
+def fetch_daily(ticker: str, years: int = 10, tries: int = 3,
+                *, diagnostics: list | None = None):
+    """Fetch daily bars, retaining every failed attempt's safe reason.
+
+    Batched callers collect ``diagnostics`` and report their aggregate. Direct
+    callers get the same reasons on stdout, including retries that recovered.
+    """
+    if years < 1 or tries < 1:
+        raise ValueError("years and tries must be positive")
+    failures = [] if diagnostics is None else diagnostics
+
+    def finish(result):
+        if diagnostics is None and failures:
+            print(f"  daily fetch: {len(failures)} failed attempts "
+                  f"({_failure_summary(failures)}); "
+                  + ("recovered" if result is not None else "no data"), flush=True)
+        return result
+
     now = int(time.time())
     for host in ("query1", "query2"):
         for attempt in range(tries):
@@ -99,12 +128,17 @@ def fetch_daily(ticker: str, years: int = 10, tries: int = 3):
                     f"https://{host}.finance.yahoo.com/v8/finance/chart/{ticker}",
                     params={"interval": "1d", "period1": now - years * 366 * 86400,
                             "period2": now}, headers=YH, timeout=45)
-                res = (r.json().get("chart") or {}).get("result")
-                if res:
-                    return res[0]
-            except Exception:
+                r.raise_for_status()
+                chart = r.json().get("chart") or {}
+                res = chart.get("result")
+                if isinstance(res, list) and res and isinstance(res[0], dict):
+                    return finish(res[0])
+                failures.append("ProviderChartError" if chart.get("error")
+                                else "EmptyChartResult")
+            except Exception as exc:
+                failures.append(_failure_kind(exc))
                 time.sleep(1.0 * (attempt + 1))
-    return None
+    return finish(None)
 
 
 def is_daily(idx) -> bool:
@@ -140,23 +174,45 @@ def daily_rows(ticker: str, res: dict) -> list:
     return out.to_dict("records")
 
 
-def build_prices(tickers: list, workers: int = 12) -> tuple:
-    rows, bad = [], {"fetch": 0, "granularity_or_short": 0}
+def build_prices(tickers: list, workers: int = 12, *, years: int = 10) -> tuple:
+    rows, bad = [], {"fetch": 0, "granularity_or_short": 0, "parse": 0}
+    attempts, terminal = Counter(), Counter()
     def one(t):
-        res = fetch_daily(t)
+        errors = []
+        try:
+            res = fetch_daily(t, years=years, diagnostics=errors)
+        except Exception as exc:
+            reason = _failure_kind(exc)
+            errors.append(reason)
+            return t, None, errors, "fetch", reason
         if res is None:
-            return t, None
-        return t, daily_rows(t, res)
+            return t, None, errors, "fetch", errors[-1] if errors else "NoData"
+        try:
+            got = daily_rows(t, res)
+        except Exception as exc:
+            return t, None, errors, "parse", _failure_kind(exc)
+        return t, got, errors, None, None
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        for i, (t, got) in enumerate(ex.map(one, tickers), 1):
-            if got is None:
-                bad["fetch"] += 1
+        for i, (t, got, errors, failure, reason) in enumerate(ex.map(one, tickers), 1):
+            attempts.update(errors)
+            if failure:
+                bad[failure] += 1
+                terminal[reason] += 1
             elif not got:
                 bad["granularity_or_short"] += 1
             else:
                 rows += got
             if i % 100 == 0:
                 print(f"    {i}/{len(tickers)} … {len(rows):,} rows", flush=True)
+    bad["attempt_errors"] = dict(attempts)
+    bad["terminal_errors"] = dict(terminal)
+    print(f"  daily acquisition: {bad['fetch']} fetch failures, "
+          f"{bad['parse']} parse failures, {bad['granularity_or_short']} "
+          "short/non-daily series; "
+          f"{sum(attempts.values())} failed attempts"
+          + (f" ({_failure_summary(attempts)})" if attempts else "")
+          + (f"; terminal errors ({_failure_summary(terminal)})" if terminal else ""),
+          flush=True)
     return pd.DataFrame(rows), bad
 
 
@@ -195,7 +251,9 @@ def earnings_for(ticker: str, cik: int, tries: int = 3) -> list:
                 out.append({"t": ticker, "cik": cik, "date": fdate,
                             "acceptance": acc, "when": classify_time(acc)})
             return out
-        except Exception:
+        except Exception as exc:
+            print(f"  SEC acquisition: failed attempt {attempt + 1}/{tries} "
+                  f"({_failure_kind(exc)})", flush=True)
             time.sleep(1.0 * (attempt + 1))
     raise RuntimeError(f"{ticker}: submissions fetch failed")
 
@@ -206,16 +264,19 @@ def build_earnings(universe: list, workers: int = 6) -> tuple:
         try:
             return earnings_for(u["ticker"], u["cik"])
         except Exception as e:            # noqa: BLE001 — counted, never hidden
-            return e
+            return _failure_kind(e)
     with ThreadPoolExecutor(max_workers=workers) as ex:
         for i, got in enumerate(ex.map(one, universe), 1):
-            if isinstance(got, Exception):
-                failed.append(str(got))
+            if isinstance(got, str):
+                failed.append(got)
             else:
                 rows += got
             if i % 100 == 0:
                 print(f"    {i}/{len(universe)} … {len(rows):,} announcements",
                       flush=True)
+    if failed:
+        print(f"  SEC acquisition: {len(failed)} absent names "
+              f"({_failure_summary(failed)})", flush=True)
     return pd.DataFrame(rows), failed
 
 
@@ -229,6 +290,8 @@ def main(argv=None) -> int:
     ap.add_argument("--tag", default="",
                     help="suffix for the output files, e.g. _holdout")
     a = ap.parse_args(argv)
+    if a.years < 1:
+        ap.error("--years must be positive")
     os.makedirs(DATA, exist_ok=True)
 
     where = (f"names {a.skip + 1}..{a.skip + a.names}" if a.skip
@@ -238,7 +301,7 @@ def main(argv=None) -> int:
     print(f"  {len(uni)} names")
 
     print(f"\ndaily bars ({a.years}y, granularity asserted per name)")
-    px, bad = build_prices([u["ticker"] for u in uni])
+    px, bad = build_prices([u["ticker"] for u in uni], years=a.years)
     if px.empty:
         print("  NO PRICE DATA — refusing to write an empty panel.")
         return 2

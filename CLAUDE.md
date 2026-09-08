@@ -28,10 +28,16 @@ The three adopted changes were all VARIANCE results. None improved accuracy.
 
 ## The constraint that governs the intraday engine
 
-`r0`/`gap`/`vp` carry no usable signal. Gradient boosting with ~100x the
-shipped k-NN's capacity reaches **AUC 0.5022 on 122,234 out-of-sample rows**,
-while the identical harness detects a planted 52% coin at **z=15** (day-43).
-The current evidence does not establish usable directional skill; it does not prove that skill can never improve.
+The current studies have not established usable directional skill. Day43
+reported gradient-boosting **AUC 0.5022 on 122,234 out-of-sample rows** in an
+hourly proxy that dropped `vp`; the smaller five-minute panel included it.
+Day91 found that the historical comparator labelled shipped k-NN used different
+math, and the quoted z statistics treated same-session rows as independent.
+The original results, including the planted control's reported z=15, remain
+historical records, not corrected reruns or proof of a universal feature ceiling.
+`validate_ceiling.py` now matches the live scorer's arithmetic and reports
+session-clustered comparisons; full live-pipeline parity still requires matching
+the data, feature construction, training windows and execution contract.
 
 Do not promise better accuracy from this engine. Do not present its picks as
 predictions. The report prints its own record beside every pick for this

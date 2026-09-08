@@ -43,6 +43,12 @@ OVERLAPPING WINDOWS. Every weekly arm computes a forward return on every date,
 so consecutive observations share most of their window. Resampling single
 dates would treat those as independent and inflate |t|. All forward-return arms
 use a block bootstrap with block = horizon.
+
+HISTORICAL COST CAVEAT (day-91). ``net_of_cost`` preserves the original
+signed effect-magnitude cost proxy for reproducibility. It clips effects
+smaller than the assumed cost to zero and therefore hides below-cost losses.
+It is not executable net strategy P&L. The original numerical results and
+rejections remain unchanged; this proxy cannot establish net profitability.
 """
 
 from __future__ import annotations
@@ -62,7 +68,7 @@ BOOT = 2000
 SEED = 0
 ADOPT_T = 3.0
 BLOCKS = 4
-SPREAD_BPS = 5.0          # round-trip, US large caps; both gross and net shown
+SPREAD_BPS = 5.0          # assumed round trip for the historical effect proxy
 # Day-86: an effect this much larger in the smallest liquidity quartile than
 # the largest is concentrated in exactly the names survivorship removes, and
 # fails the size test even when all four quartiles share a sign.
@@ -175,12 +181,15 @@ def win_rate(rows: list, field: str) -> tuple:
 
 
 def net_of_cost(m, spread_bps: float):
-    """Cost moves an effect TOWARD zero and stops there.
+    """Historical signed effect-magnitude cost proxy; not executable net P&L.
 
-    The naive `m - cost * sign(m)` overshoots: a +0.016% gross effect became
-    -0.034% net against a 5bp round trip, which reads as a reversed edge rather
-    than an erased one. An effect smaller than its cost is worth zero, not
-    worth its own negative.
+    The legacy name and formula are retained to reproduce earlier research.
+    This diagnostic shrinks an effect's absolute magnitude by the assumed cost
+    and clips at zero. For example, +0.016% gross with a 5bp cost returns zero
+    here, whereas an executed position with that return and cost loses 0.034%.
+    Clipping hides losses; negative signed effects are not independently
+    specified reverse trades. New strategy P&L must subtract actual or stated
+    scenario costs from each fixed-orientation position without this clipping.
     """
     if m is None:
         return None
@@ -195,6 +204,9 @@ def verdict(m, lo, hi, bs, plo, phi, net, dissolved: list = None) -> str:
     of the bar. Printing them beside a "CLEARS" verdict, as the first draft
     did, leaves the reader to enforce the rule the study registered — so the
     verdict enforces it here instead.
+
+    ``net`` is the legacy signed effect-magnitude cost proxy, not executable
+    net P&L. These historical statistical verdicts do not certify profitability.
     """
     if m is None:
         return "NOT COMPUTABLE"
@@ -214,7 +226,8 @@ def verdict(m, lo, hi, bs, plo, phi, net, dissolved: list = None) -> str:
         return f"INSIDE the placebo band [{plo:+.3f}, {phi:+.3f}]"
     if net is not None and net == 0.0 and m != 0.0:
         return (f"CLEARS gross (|t|={abs(t):.2f}) but is ERASED by cost — "
-                f"the whole effect is smaller than the round trip")
+                f"the signed effect-magnitude cost proxy clips to zero; "
+                f"this is not executable net strategy P&L")
     if dissolved:
         return (f"CLEARS the bar (|t|={abs(t):.2f}) but DISSOLVES on "
                 + " and ".join(dissolved)
@@ -250,7 +263,10 @@ def report(title: str, rows: list, field: str, cluster: str,
         L.append(f"   control    a planted {control_edge:.2f}% edge registers "
                  f"at z={z:.2f}")
     if net is not None:
-        L.append(f"   net        {net:+.3f}% after {spread_bps:.0f}bps round trip")
+        L.append(f"   signed effect-magnitude cost proxy {net:+.3f}% "
+                 f"at {spread_bps:.0f}bps assumed round trip")
+        L.append("              not executable net strategy P&L; "
+                 "below-cost losses are clipped to zero")
     for line in (extra or []):
         L.append(f"   {line}")
     L.append(f"   -> {verdict(m, lo, hi, bs, plo, phi, net, dissolved)}")

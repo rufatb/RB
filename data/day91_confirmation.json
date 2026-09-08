@@ -1,0 +1,3941 @@
+{
+  "registration_commit": "48651ec161c691846783025e47c6a4a780216437",
+  "phase": "confirmation",
+  "mode": "SHORT_HISTORY_FEASIBILITY",
+  "source": "Massive split-adjusted daily bars and cash dividends",
+  "label": "SIMULATED COSTS; DAILY-BAR PROXY; NO PRODUCTION ADOPTION",
+  "dividend_accounting": "COMPLETE_REQUEST",
+  "missing_sessions": {
+    "XLB": 0,
+    "XLE": 0,
+    "XLF": 0,
+    "XLI": 0,
+    "XLK": 0,
+    "XLP": 0,
+    "XLU": 0,
+    "XLV": 0,
+    "XLY": 0,
+    "SPY": 0
+  },
+  "input_sha256": {
+    "development/XLB.csv": "22679ad5836f4b4987bb3500583656dfd6faeecd30f410dd473fe1c5f2edd591",
+    "confirmation/XLB.csv": "dca90a6db2b53598bb83d1e2f7fc45a8fcf275919a48c31e777d4cbdc70dcc8b",
+    "development/XLE.csv": "2fe35399f96e5e36934d5918e5e00c7b17e985319f36881befe08ce6212c0843",
+    "confirmation/XLE.csv": "29d3a96ce3190690fca744dda913602b1f5ff5d719216e6ef6eaed6554f900b4",
+    "development/XLF.csv": "746da6dc49c835dd90ffe4a6b545eb209f8353f85ad52bc151287d7863024491",
+    "confirmation/XLF.csv": "dc659c5fc9b29ac6105d02dbe952c9631c08d70e31121a224228ac7d7f9bdd4f",
+    "development/XLI.csv": "488290fd31f2204665beb0642fb9d58614fb5b2b43d40a3eb58a957d7cd667ed",
+    "confirmation/XLI.csv": "fe0af22e11de19da78e3fdea67ca119ad69f4a635adf7cf530fe2fdae11dd5a9",
+    "development/XLK.csv": "bb928a872f48d1b21fa248220bb0ed28e0c92e1aff7faaaf5929a1afb6cebbdc",
+    "confirmation/XLK.csv": "1672da0f0d7b5064f58a6104a1d347407d625f93c7082875dfb8f9a8b44b80e3",
+    "development/XLP.csv": "7fef904102cc1708b18247b820defcf325bba5a91aa02023648e5ca61f6ab711",
+    "confirmation/XLP.csv": "599ffdeba0df822d7f2502dbdafa1151968f4f9f9ba1ecf9cf81b6027b0c654e",
+    "development/XLU.csv": "b64d363aece70a97b6921eeff85602e1bf842d9ec1bfb581cdbb0f854ed3e0bd",
+    "confirmation/XLU.csv": "3b0fce4629debd1c9fb2a5ac4ecc6718b61036841a8c85b1e5129b716fff69c8",
+    "development/XLV.csv": "29b1bf5de3bf85bc0e5c0c494fb09028398da2cd8c2a6a999e09de189c848c8b",
+    "confirmation/XLV.csv": "ab2046467b803392e1f50b22d93601eb0858e9380d1be8292c2219fe0d76292e",
+    "development/XLY.csv": "a914998635dcdcff98616b9d72933609d9522824728446c41b73855bd3b96742",
+    "confirmation/XLY.csv": "721518b469223b335ad64bd96bb6cf572d7fd4c5c3b08f357febbb9e8525fd22",
+    "development/SPY.csv": "d900c44d27fac471b84f50fc872e111354de2adcb2d691670b220a16bf94359b",
+    "confirmation/SPY.csv": "5bb846f92512f93ad41ab218cc58b7875cbe7043fcbcfdaae69d89ff39aa4102",
+    "development/dividends.csv": "552562d16e1c81718a5187f2f4ca154c729e55814ba75d39de3ca5ac95380e40",
+    "confirmation/dividends.csv": "6840d193c8e3645a34f246ab35b9d33a7f2c2d7fd823cef018a955b8cc032e31"
+  },
+  "manifest_sha256": "0bec92d53f281962980fa61eca87ba18ba0ddb45bd9996bbddcdb834a0903e4d",
+  "evaluator_sha256": "722b9b8daf56c802066fd76c2adcfeebd0730f727cb04231be1b181111feb6e0",
+  "frozen_development_winner": "reversal_20_equal_weekly",
+  "arms": [
+    {
+      "id": "momentum_1_equal_intraday",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 4.125823244487989,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 8.251646488975979,
+      "long_relative_bps_per_occupied_session": 7.937990239572717,
+      "short_underlying_relative_bps_per_occupied_session": -0.3136562494032615,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -0.9854781253750311,
+          "net_leg_hit_rate": 0.49411764705882355,
+          "decisive_net_hit_rate": 0.4976,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -9.291581174291396,
+          "compounded_endpoint_return_pct": -1.9287269563595277,
+          "expected_shortfall5_bps_per_trade": -128.80104930517132
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -5.985478125375029,
+          "net_leg_hit_rate": 0.47352941176470587,
+          "decisive_net_hit_rate": 0.46740858505564387,
+          "decisive_legs": 629,
+          "endpoint_drawdown_pct": -11.91639452279194,
+          "compounded_endpoint_return_pct": -9.923246280366937,
+          "expected_shortfall5_bps_per_trade": -133.80104930517132
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -20.98547812537502,
+          "net_leg_hit_rate": 0.4088235294117647,
+          "decisive_net_hit_rate": 0.4057971014492754,
+          "decisive_legs": 621,
+          "endpoint_drawdown_pct": -30.376714731452402,
+          "compounded_endpoint_return_pct": -30.222644843935388,
+          "expected_shortfall5_bps_per_trade": -148.8010493051713
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -5.985478125375029,
+        "se": 5.116443043394914,
+        "ci95": [
+          -16.366378632281283,
+          3.639988898086251
+        ],
+        "mde80": 22.213657757569777,
+        "z": -1.1698514132981503,
+        "p": 0.24206076935308363,
+        "positive_control_5bps_z": 0.977241407280936,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 47.35294117647059,
+        "se": 2.4175368895941354,
+        "ci95": [
+          42.35294117647059,
+          51.911764705882355
+        ],
+        "mde80": 10.496029492807715,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -5.985478125375029
+      ],
+      "placebo_centered_mean95_abs_bps": 8.915408921417846,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_1_equal_overnight",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -6.552642121146256,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -13.105284242292512,
+      "long_relative_bps_per_occupied_session": -3.636859384052623,
+      "short_underlying_relative_bps_per_occupied_session": 9.468424858239889,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -12.037008255538735,
+          "net_leg_hit_rate": 0.4408284023668639,
+          "decisive_net_hit_rate": 0.4393162393162393,
+          "decisive_legs": 585,
+          "endpoint_drawdown_pct": -19.960337424503006,
+          "compounded_endpoint_return_pct": -18.58802150082304,
+          "expected_shortfall5_bps_per_trade": -129.2715355265725
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -17.037008255538733,
+          "net_leg_hit_rate": 0.4156804733727811,
+          "decisive_net_hit_rate": 0.39661016949152544,
+          "decisive_legs": 590,
+          "endpoint_drawdown_pct": -25.864779874784915,
+          "compounded_endpoint_return_pct": -25.194059826735337,
+          "expected_shortfall5_bps_per_trade": -134.2715355265725
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -32.03700825553874,
+          "net_leg_hit_rate": 0.3239644970414201,
+          "decisive_net_hit_rate": 0.30971993410214166,
+          "decisive_legs": 607,
+          "endpoint_drawdown_pct": -42.02230791799077,
+          "compounded_endpoint_return_pct": -41.98118386991706,
+          "expected_shortfall5_bps_per_trade": -149.2715355265725
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -17.037008255538733,
+        "se": 3.613561243586476,
+        "ci95": [
+          -24.57403037229085,
+          -10.410206114756084
+        ],
+        "mde80": 15.68871422397119,
+        "z": -4.714741803747437,
+        "p": 2.420174432439281e-06,
+        "positive_control_5bps_z": 1.3836765625251939,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 41.56804733727811,
+        "se": 2.6696702470256857,
+        "ci95": [
+          36.53846153846153,
+          46.89349112426036
+        ],
+        "mde80": 11.590697031124563,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -17.037008255538733
+      ],
+      "placebo_centered_mean95_abs_bps": 5.669866674725103,
+      "holm_p": 0.00011374819832464621
+    },
+    {
+      "id": "momentum_1_equal_weekly",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -3.1821550990491434,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -6.364310198098287,
+      "long_relative_bps_per_occupied_session": -0.12346568962439337,
+      "short_underlying_relative_bps_per_occupied_session": 6.240844508473892,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.649117226365825,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.4740740740740741,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -10.40551851382634,
+          "compounded_endpoint_return_pct": -7.98765188448648,
+          "expected_shortfall5_bps_per_trade": -362.0416627456731
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -5.649117226365827,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.4701492537313433,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -11.833001241425489,
+          "compounded_endpoint_return_pct": -9.542985052661024,
+          "expected_shortfall5_bps_per_trade": -367.0416627456731
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -8.649117226365826,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.45038167938931295,
+          "decisive_legs": 131,
+          "endpoint_drawdown_pct": -15.984500530179591,
+          "compounded_endpoint_return_pct": -14.057425195338569,
+          "expected_shortfall5_bps_per_trade": -382.04166274567314
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -5.649117226365826,
+        "se": 1.9037402466787585,
+        "ci95": [
+          -9.20418390569474,
+          -2.053471970326037
+        ],
+        "mde80": 8.265319078187835,
+        "z": -2.9673781579294785,
+        "p": 0.0030035129848823804,
+        "positive_control_5bps_z": 2.626408728146047,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 47.05882352941176,
+        "se": 2.2199216486607933,
+        "ci95": [
+          42.64705882352941,
+          51.470588235294116
+        ],
+        "mde80": 9.63805896669389,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -5.649117226365826
+      ],
+      "placebo_centered_mean95_abs_bps": 3.241965130235276,
+      "holm_p": 0.11413349342553045
+    },
+    {
+      "id": "momentum_1_inverse_vol_intraday",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 3.4187931744343785,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 6.837586348868756,
+      "long_relative_bps_per_occupied_session": 8.385254670839805,
+      "short_underlying_relative_bps_per_occupied_session": 1.5476683219710483,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -1.6925081954286385,
+          "net_leg_hit_rate": 0.49411764705882355,
+          "decisive_net_hit_rate": 0.4976,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -10.320455572103704,
+          "compounded_endpoint_return_pct": -3.0747669689788704,
+          "expected_shortfall5_bps_per_trade": -119.69014984476004
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -6.692508195428639,
+          "net_leg_hit_rate": 0.47352941176470587,
+          "decisive_net_hit_rate": 0.46740858505564387,
+          "decisive_legs": 629,
+          "endpoint_drawdown_pct": -13.48642713410938,
+          "compounded_endpoint_return_pct": -10.976375692102991,
+          "expected_shortfall5_bps_per_trade": -124.69014984476004
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -21.692508195428637,
+          "net_leg_hit_rate": 0.4088235294117647,
+          "decisive_net_hit_rate": 0.4057971014492754,
+          "decisive_legs": 621,
+          "endpoint_drawdown_pct": -31.05958122745045,
+          "compounded_endpoint_return_pct": -31.039635854576385,
+          "expected_shortfall5_bps_per_trade": -139.69014984476007
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -6.692508195428639,
+        "se": 5.258867436660465,
+        "ci95": [
+          -17.30323806472427,
+          3.0034326789540597
+        ],
+        "mde80": 22.832010527550235,
+        "z": -1.2726139755442434,
+        "p": 0.2031550568784376,
+        "positive_control_5bps_z": 0.9507750595012426,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 47.35294117647059,
+        "se": 2.4175368895941354,
+        "ci95": [
+          42.35294117647059,
+          51.911764705882355
+        ],
+        "mde80": 10.496029492807715,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -6.692508195428639
+      ],
+      "placebo_centered_mean95_abs_bps": 9.903815186501815,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_1_inverse_vol_overnight",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -6.432404267508487,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -12.864808535016975,
+      "long_relative_bps_per_occupied_session": -3.3675935222493623,
+      "short_underlying_relative_bps_per_occupied_session": 9.49721501276761,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -11.916770401900969,
+          "net_leg_hit_rate": 0.4408284023668639,
+          "decisive_net_hit_rate": 0.4393162393162393,
+          "decisive_legs": 585,
+          "endpoint_drawdown_pct": -18.94650635414312,
+          "compounded_endpoint_return_pct": -18.39040096940626,
+          "expected_shortfall5_bps_per_trade": -118.20888760411891
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -16.916770401900965,
+          "net_leg_hit_rate": 0.4156804733727811,
+          "decisive_net_hit_rate": 0.39661016949152544,
+          "decisive_legs": 590,
+          "endpoint_drawdown_pct": -25.047701044268422,
+          "compounded_endpoint_return_pct": -25.01236919433665,
+          "expected_shortfall5_bps_per_trade": -123.20888760411891
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -31.91677040190097,
+          "net_leg_hit_rate": 0.3239644970414201,
+          "decisive_net_hit_rate": 0.30971993410214166,
+          "decisive_legs": 607,
+          "endpoint_drawdown_pct": -41.840019772698845,
+          "compounded_endpoint_return_pct": -41.840019772698845,
+          "expected_shortfall5_bps_per_trade": -138.2088876041189
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -16.916770401900965,
+        "se": 3.065720970864943,
+        "ci95": [
+          -23.55030864322652,
+          -11.440033714709733
+        ],
+        "mde80": 13.310199263317005,
+        "z": -5.51803982249832,
+        "p": 3.428017631486149e-08,
+        "positive_control_5bps_z": 1.6309377296621133,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 41.56804733727811,
+        "se": 2.6696702470256857,
+        "ci95": [
+          36.53846153846153,
+          46.89349112426036
+        ],
+        "mde80": 11.590697031124563,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -16.916770401900965
+      ],
+      "placebo_centered_mean95_abs_bps": 4.8221572155671995,
+      "holm_p": 1.6454484631133517e-06
+    },
+    {
+      "id": "momentum_1_inverse_vol_weekly",
+      "direction": "momentum",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -2.849257664618027,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -5.698515329236056,
+      "long_relative_bps_per_occupied_session": 0.8609958522359477,
+      "short_underlying_relative_bps_per_occupied_session": 6.559511181472003,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.316219791934708,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.4740740740740741,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -9.957548384177917,
+          "compounded_endpoint_return_pct": -7.436627327028578,
+          "expected_shortfall5_bps_per_trade": -311.8052845009025
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -5.316219791934709,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.4701492537313433,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -11.391931080641882,
+          "compounded_endpoint_return_pct": -9.000988252431041,
+          "expected_shortfall5_bps_per_trade": -316.8052845009025
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -8.316219791934712,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.45038167938931295,
+          "decisive_legs": 131,
+          "endpoint_drawdown_pct": -15.56351878991541,
+          "compounded_endpoint_return_pct": -13.541659504249736,
+          "expected_shortfall5_bps_per_trade": -331.80528450090253
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -5.316219791934709,
+        "se": 1.9745915113093713,
+        "ci95": [
+          -9.079021835683127,
+          -1.4234539630061915
+        ],
+        "mde80": 8.572928433133596,
+        "z": -2.69231370715732,
+        "p": 0.007095816556770553,
+        "positive_control_5bps_z": 2.532169297478875,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 47.05882352941176,
+        "se": 2.2199216486607933,
+        "ci95": [
+          42.64705882352941,
+          51.470588235294116
+        ],
+        "mde80": 9.63805896669389,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -5.316219791934709
+      ],
+      "placebo_centered_mean95_abs_bps": 3.865709857666621,
+      "holm_p": 0.2412577629301988
+    },
+    {
+      "id": "reversal_1_equal_intraday",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -4.125823244487989,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -8.251646488975979,
+      "long_relative_bps_per_occupied_session": -0.3136562494032615,
+      "short_underlying_relative_bps_per_occupied_session": 7.937990239572717,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -9.23712461435101,
+          "net_leg_hit_rate": 0.46176470588235297,
+          "decisive_net_hit_rate": 0.45806451612903226,
+          "decisive_legs": 620,
+          "endpoint_drawdown_pct": -16.59235777647643,
+          "compounded_endpoint_return_pct": -14.77064174180196,
+          "expected_shortfall5_bps_per_trade": -119.92180734267531
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -14.237124614351007,
+          "net_leg_hit_rate": 0.43676470588235294,
+          "decisive_net_hit_rate": 0.43527508090614886,
+          "decisive_legs": 618,
+          "endpoint_drawdown_pct": -22.202254307992252,
+          "compounded_endpoint_return_pct": -21.72381965352145,
+          "expected_shortfall5_bps_per_trade": -124.92180734267531
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -29.237124614351004,
+          "net_leg_hit_rate": 0.38382352941176473,
+          "decisive_net_hit_rate": 0.3753943217665615,
+          "decisive_legs": 634,
+          "endpoint_drawdown_pct": -39.54917160957345,
+          "compounded_endpoint_return_pct": -39.376682384158336,
+          "expected_shortfall5_bps_per_trade": -139.9218073426753
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -14.237124614351007,
+        "se": 5.116443043394914,
+        "ci95": [
+          -23.862591637812297,
+          -3.85622410744477
+        ],
+        "mde80": 22.213657757569777,
+        "z": -2.7826215387524864,
+        "p": 0.005392166485418961,
+        "positive_control_5bps_z": 0.977241407280936,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 43.6764705882353,
+        "se": 2.5075073822819314,
+        "ci95": [
+          39.11764705882353,
+          48.8235294117647
+        ],
+        "mde80": 10.886647294256067,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -14.237124614351007
+      ],
+      "placebo_centered_mean95_abs_bps": 8.91540892141784,
+      "holm_p": 0.1941179934750826
+    },
+    {
+      "id": "reversal_1_equal_overnight",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 6.552642121146256,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 13.105284242292512,
+      "long_relative_bps_per_occupied_session": 9.468424858239889,
+      "short_underlying_relative_bps_per_occupied_session": -3.636859384052623,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 1.0682759867537754,
+          "net_leg_hit_rate": 0.47633136094674555,
+          "decisive_net_hit_rate": 0.48299319727891155,
+          "decisive_legs": 588,
+          "endpoint_drawdown_pct": -5.35672948732574,
+          "compounded_endpoint_return_pct": 1.6077341702551928,
+          "expected_shortfall5_bps_per_trade": -103.37179082476051
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -3.931724013246224,
+          "net_leg_hit_rate": 0.4452662721893491,
+          "decisive_net_hit_rate": 0.44908180300500833,
+          "decisive_legs": 599,
+          "endpoint_drawdown_pct": -9.833001508908335,
+          "compounded_endpoint_return_pct": -6.626698856216551,
+          "expected_shortfall5_bps_per_trade": -108.37179082476051
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -18.931724013246228,
+          "net_leg_hit_rate": 0.3831360946745562,
+          "decisive_net_hit_rate": 0.3605220228384992,
+          "decisive_legs": 613,
+          "endpoint_drawdown_pct": -27.787466844448282,
+          "compounded_endpoint_return_pct": -27.55635554486763,
+          "expected_shortfall5_bps_per_trade": -123.37179082476052
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -3.931724013246224,
+        "se": 3.6148128086101856,
+        "ci95": [
+          -10.59375294727299,
+          3.6128408220693484
+        ],
+        "mde80": 15.694148045253323,
+        "z": -1.087670156496398,
+        "p": 0.27674074703254936,
+        "positive_control_5bps_z": 1.38319748897935,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 44.52662721893491,
+        "se": 2.0480021706457823,
+        "ci95": [
+          40.680473372781066,
+          48.66863905325444
+        ],
+        "mde80": 8.891649710479147,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -3.931724013246224
+      ],
+      "placebo_centered_mean95_abs_bps": 5.64026408895938,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_1_equal_weekly",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 3.1821550990491434,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 6.364310198098287,
+      "long_relative_bps_per_occupied_session": 6.240844508473892,
+      "short_underlying_relative_bps_per_occupied_session": -0.12346568962439337,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 1.7151929717324632,
+          "net_leg_hit_rate": 0.5147058823529411,
+          "decisive_net_hit_rate": 0.5149253731343284,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -6.01616893123178,
+          "compounded_endpoint_return_pct": 2.539916999866376,
+          "expected_shortfall5_bps_per_trade": -254.44858867895573
+        },
+        "10": {
+          "mean_bps_per_occupied_session": 0.7151929717324615,
+          "net_leg_hit_rate": 0.5073529411764706,
+          "decisive_net_hit_rate": 0.5149253731343284,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -6.2538310838129885,
+          "compounded_endpoint_return_pct": 0.8121032761969182,
+          "expected_shortfall5_bps_per_trade": -259.44858867895573
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -2.284807028267537,
+          "net_leg_hit_rate": 0.49264705882352944,
+          "decisive_net_hit_rate": 0.49242424242424243,
+          "decisive_legs": 132,
+          "endpoint_drawdown_pct": -7.331814711757934,
+          "compounded_endpoint_return_pct": -4.203497342385809,
+          "expected_shortfall5_bps_per_trade": -274.44858867895573
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": 0.7151929717324622,
+        "se": 1.8876237765204193,
+        "ci95": [
+          -2.8619166675930203,
+          4.270848895393176
+        ],
+        "mde80": 8.195347469138145,
+        "z": 0.3788853375490026,
+        "p": 0.7047730128271594,
+        "positive_control_5bps_z": 2.6488329200942933,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 50.73529411764706,
+        "se": 1.9713510555576286,
+        "ci95": [
+          47.05882352941176,
+          54.41176470588235
+        ],
+        "mde80": 8.558859601635376,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        0.7151929717324622
+      ],
+      "placebo_centered_mean95_abs_bps": 3.3265506163233445,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_1_inverse_vol_intraday",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -3.4187931744343785,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -6.837586348868756,
+      "long_relative_bps_per_occupied_session": 1.5476683219710483,
+      "short_underlying_relative_bps_per_occupied_session": 8.385254670839805,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -8.530094544297395,
+          "net_leg_hit_rate": 0.46176470588235297,
+          "decisive_net_hit_rate": 0.45806451612903226,
+          "decisive_legs": 620,
+          "endpoint_drawdown_pct": -16.20396623227174,
+          "compounded_endpoint_return_pct": -13.716184138279896,
+          "expected_shortfall5_bps_per_trade": -111.9835845726229
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -13.530094544297397,
+          "net_leg_hit_rate": 0.43676470588235294,
+          "decisive_net_hit_rate": 0.43527508090614886,
+          "decisive_legs": 618,
+          "endpoint_drawdown_pct": -21.069447710464285,
+          "compounded_endpoint_return_pct": -20.75488834984023,
+          "expected_shortfall5_bps_per_trade": -116.98358457262293
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -28.530094544297395,
+          "net_leg_hit_rate": 0.38382352941176473,
+          "decisive_net_hit_rate": 0.3753943217665615,
+          "decisive_legs": 634,
+          "endpoint_drawdown_pct": -38.68528735145459,
+          "compounded_endpoint_return_pct": -38.62510427194904,
+          "expected_shortfall5_bps_per_trade": -131.9835845726229
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -13.530094544297397,
+        "se": 5.258867436660465,
+        "ci95": [
+          -23.226035418680095,
+          -2.919364675001772
+        ],
+        "mde80": 22.832010527550235,
+        "z": -2.572815289082359,
+        "p": 0.01008750284556635,
+        "positive_control_5bps_z": 0.9507750595012426,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 43.6764705882353,
+        "se": 2.5075073822819314,
+        "ci95": [
+          39.11764705882353,
+          48.8235294117647
+        ],
+        "mde80": 10.886647294256067,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -13.530094544297397
+      ],
+      "placebo_centered_mean95_abs_bps": 9.903815186501815,
+      "holm_p": 0.3228000910581232
+    },
+    {
+      "id": "reversal_1_inverse_vol_overnight",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 6.432404267508487,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 12.864808535016975,
+      "long_relative_bps_per_occupied_session": 9.49721501276761,
+      "short_underlying_relative_bps_per_occupied_session": -3.3675935222493623,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 0.9480381331160073,
+          "net_leg_hit_rate": 0.47633136094674555,
+          "decisive_net_hit_rate": 0.48299319727891155,
+          "decisive_legs": 588,
+          "endpoint_drawdown_pct": -4.889980701357899,
+          "compounded_endpoint_return_pct": 1.4411188005942988,
+          "expected_shortfall5_bps_per_trade": -90.33867722299343
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -4.051961866883993,
+          "net_leg_hit_rate": 0.4452662721893491,
+          "decisive_net_hit_rate": 0.44908180300500833,
+          "decisive_legs": 599,
+          "endpoint_drawdown_pct": -9.476043867984707,
+          "compounded_endpoint_return_pct": -6.779869739276457,
+          "expected_shortfall5_bps_per_trade": -95.33867722299344
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -19.051961866883993,
+          "net_leg_hit_rate": 0.3831360946745562,
+          "decisive_net_hit_rate": 0.3605220228384992,
+          "decisive_legs": 613,
+          "endpoint_drawdown_pct": -27.864533933221235,
+          "compounded_endpoint_return_pct": -27.675328903440754,
+          "expected_shortfall5_bps_per_trade": -110.33867722299344
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -4.051961866883993,
+        "se": 3.0679353918431684,
+        "ci95": [
+          -9.558075120207665,
+          2.620113903824705
+        ],
+        "mde80": 13.319813440456137,
+        "z": -1.3207455012439608,
+        "p": 0.1865862368934723,
+        "positive_control_5bps_z": 1.6297605266700472,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 44.52662721893491,
+        "se": 2.0480021706457823,
+        "ci95": [
+          40.680473372781066,
+          48.66863905325444
+        ],
+        "mde80": 8.891649710479147,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -4.051961866883993
+      ],
+      "placebo_centered_mean95_abs_bps": 4.812113823701773,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_1_inverse_vol_weekly",
+      "direction": "reversal",
+      "lookback": 1,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 2.8492576646180283,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 5.698515329236056,
+      "long_relative_bps_per_occupied_session": 6.559511181472003,
+      "short_underlying_relative_bps_per_occupied_session": 0.8609958522359477,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 1.3822955373013475,
+          "net_leg_hit_rate": 0.5147058823529411,
+          "decisive_net_hit_rate": 0.5149253731343284,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -5.61586032022463,
+          "compounded_endpoint_return_pct": 1.9897914684056994,
+          "expected_shortfall5_bps_per_trade": -271.10813743527433
+        },
+        "10": {
+          "mean_bps_per_occupied_session": 0.3822955373013472,
+          "net_leg_hit_rate": 0.5073529411764706,
+          "decisive_net_hit_rate": 0.5149253731343284,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -5.854332872035261,
+          "compounded_endpoint_return_pct": 0.2709911853350011,
+          "expected_shortfall5_bps_per_trade": -276.1081374352743
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -2.617704462698652,
+          "net_leg_hit_rate": 0.49264705882352944,
+          "decisive_net_hit_rate": 0.49242424242424243,
+          "decisive_legs": 132,
+          "endpoint_drawdown_pct": -8.730342443277351,
+          "compounded_endpoint_return_pct": -4.718419961415876,
+          "expected_shortfall5_bps_per_trade": -291.1081374352743
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": 0.38229553730134636,
+        "se": 1.968388777082849,
+        "ci95": [
+          -3.5531100502482387,
+          4.158949086320457
+        ],
+        "mde80": 8.545998510509518,
+        "z": 0.1942174949137376,
+        "p": 0.8460055847267122,
+        "positive_control_5bps_z": 2.540148601847851,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 50.73529411764706,
+        "se": 1.9713510555576286,
+        "ci95": [
+          47.05882352941176,
+          54.41176470588235
+        ],
+        "mde80": 8.558859601635376,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        0.38229553730134636
+      ],
+      "placebo_centered_mean95_abs_bps": 3.9502953437546897,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_5_equal_intraday",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.9990024350227513,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -3.9980048700455026,
+      "long_relative_bps_per_occupied_session": 3.7882751986471095,
+      "short_underlying_relative_bps_per_occupied_session": 7.786280068692612,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.110303804885771,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.4697452229299363,
+          "decisive_legs": 628,
+          "endpoint_drawdown_pct": -13.471528256164877,
+          "compounded_endpoint_return_pct": -11.608393539593632,
+          "expected_shortfall5_bps_per_trade": -124.21109449004751
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -12.110303804885774,
+          "net_leg_hit_rate": 0.4426470588235294,
+          "decisive_net_hit_rate": 0.4427001569858713,
+          "decisive_legs": 637,
+          "endpoint_drawdown_pct": -19.653373020227825,
+          "compounded_endpoint_return_pct": -18.818063322979906,
+          "expected_shortfall5_bps_per_trade": -129.21109449004751
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -27.110303804885767,
+          "net_leg_hit_rate": 0.38823529411764707,
+          "decisive_net_hit_rate": 0.38498402555910544,
+          "decisive_legs": 626,
+          "endpoint_drawdown_pct": -37.65323961922344,
+          "compounded_endpoint_return_pct": -37.122762640005355,
+          "expected_shortfall5_bps_per_trade": -144.2110944900475
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -12.110303804885774,
+        "se": 5.133079074301303,
+        "ci95": [
+          -23.09336948534193,
+          -3.3809809866749694
+        ],
+        "mde80": 22.285885102595334,
+        "z": -2.3592669486655407,
+        "p": 0.018311078282471447,
+        "positive_control_5bps_z": 0.9740742208769855,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 44.26470588235294,
+        "se": 2.7224172316444992,
+        "ci95": [
+          38.525735294117645,
+          48.970588235294116
+        ],
+        "mde80": 11.819704459552547,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -12.110303804885774
+      ],
+      "placebo_centered_mean95_abs_bps": 8.599242158465781,
+      "holm_p": 0.531021270191672
+    },
+    {
+      "id": "momentum_5_equal_overnight",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 0.5713118130322905,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 1.142623626064581,
+      "long_relative_bps_per_occupied_session": 1.0001714743425374,
+      "short_underlying_relative_bps_per_occupied_session": -0.14245215172204356,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.913054321360191,
+          "net_leg_hit_rate": 0.47928994082840237,
+          "decisive_net_hit_rate": 0.4819277108433735,
+          "decisive_legs": 581,
+          "endpoint_drawdown_pct": -11.875255659904704,
+          "compounded_endpoint_return_pct": -8.193240475506524,
+          "expected_shortfall5_bps_per_trade": -117.54396228601937
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.91305432136019,
+          "net_leg_hit_rate": 0.44970414201183434,
+          "decisive_net_hit_rate": 0.43781942078364566,
+          "decisive_legs": 587,
+          "endpoint_drawdown_pct": -16.151581719692054,
+          "compounded_endpoint_return_pct": -15.63768417817224,
+          "expected_shortfall5_bps_per_trade": -122.54396228601937
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.91305432136019,
+          "net_leg_hit_rate": 0.35355029585798814,
+          "decisive_net_hit_rate": 0.33889816360601,
+          "decisive_legs": 599,
+          "endpoint_drawdown_pct": -34.646787716813435,
+          "compounded_endpoint_return_pct": -34.557542286975185,
+          "expected_shortfall5_bps_per_trade": -137.54396228601937
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -9.91305432136019,
+        "se": 3.603228186522712,
+        "ci95": [
+          -16.425122433202038,
+          -2.4169626296792375
+        ],
+        "mde80": 15.64385200401543,
+        "z": -2.751159185099172,
+        "p": 0.0059384777973988355,
+        "positive_control_5bps_z": 1.3876445623681801,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 44.97041420118343,
+        "se": 1.5636306960098691,
+        "ci95": [
+          42.01183431952663,
+          48.07692307692308
+        ],
+        "mde80": 6.788692231262841,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.91305432136019
+      ],
+      "placebo_centered_mean95_abs_bps": 8.241744677126402,
+      "holm_p": 0.20784672290895925
+    },
+    {
+      "id": "momentum_5_equal_weekly",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -5.72082489265031,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -11.44164978530062,
+      "long_relative_bps_per_occupied_session": -2.1974883014310724,
+      "short_underlying_relative_bps_per_occupied_session": 9.244161483869549,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.187787019966992,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.45925925925925926,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -17.270226828648116,
+          "compounded_endpoint_return_pct": -11.848871920978521,
+          "expected_shortfall5_bps_per_trade": -367.0025269341898
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -8.187787019966992,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.45925925925925926,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -17.896446886674376,
+          "compounded_endpoint_return_pct": -13.340783608732698,
+          "expected_shortfall5_bps_per_trade": -372.0025269341898
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -11.187787019966992,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.44360902255639095,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -20.399058406099012,
+          "compounded_endpoint_return_pct": -17.67096096633267,
+          "expected_shortfall5_bps_per_trade": -387.0025269341898
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -8.187787019966992,
+        "se": 5.783014111469123,
+        "ci95": [
+          -18.92022210307092,
+          2.492526880772625
+        ],
+        "mde80": 25.107656860406145,
+        "z": -1.4158338302734934,
+        "p": 0.15682416206206864,
+        "positive_control_5bps_z": 0.8646010373870235,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 46.32352941176471,
+        "se": 5.262576170038013,
+        "ci95": [
+          36.76470588235294,
+          55.88235294117647
+        ],
+        "mde80": 22.848112443131857,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -8.187787019966992
+      ],
+      "placebo_centered_mean95_abs_bps": 7.1838934510408565,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_5_inverse_vol_intraday",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.1103337177390453,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -2.220667435478089,
+      "long_relative_bps_per_occupied_session": 4.268991224560109,
+      "short_underlying_relative_bps_per_occupied_session": 6.489658660038197,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -6.221635087602064,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.4697452229299363,
+          "decisive_legs": 628,
+          "endpoint_drawdown_pct": -12.59659558797831,
+          "compounded_endpoint_return_pct": -10.250968073787636,
+          "expected_shortfall5_bps_per_trade": -120.98117242732441
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -11.221635087602063,
+          "net_leg_hit_rate": 0.4426470588235294,
+          "decisive_net_hit_rate": 0.4427001569858713,
+          "decisive_legs": 637,
+          "endpoint_drawdown_pct": -18.3136245692998,
+          "compounded_endpoint_return_pct": -17.57072245437743,
+          "expected_shortfall5_bps_per_trade": -125.98117242732441
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -26.22163508760206,
+          "net_leg_hit_rate": 0.38823529411764707,
+          "decisive_net_hit_rate": 0.38498402555910544,
+          "decisive_legs": 626,
+          "endpoint_drawdown_pct": -36.568367208176866,
+          "compounded_endpoint_return_pct": -36.155193056913625,
+          "expected_shortfall5_bps_per_trade": -140.9811724273244
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -11.221635087602063,
+        "se": 4.773028184457914,
+        "ci95": [
+          -21.187335610386803,
+          -2.981110818209855
+        ],
+        "mde80": 20.722680514084452,
+        "z": -2.3510515031405657,
+        "p": 0.018720442475071826,
+        "positive_control_5bps_z": 1.0475530013171008,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 44.26470588235294,
+        "se": 2.7224172316444992,
+        "ci95": [
+          38.525735294117645,
+          48.970588235294116
+        ],
+        "mde80": 11.819704459552547,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -11.221635087602063
+      ],
+      "placebo_centered_mean95_abs_bps": 8.150939579507064,
+      "holm_p": 0.531021270191672
+    },
+    {
+      "id": "momentum_5_inverse_vol_overnight",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 0.7908028434504137,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 1.5816056869008275,
+      "long_relative_bps_per_occupied_session": 0.3157024910909216,
+      "short_underlying_relative_bps_per_occupied_session": -1.265903195809907,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.693563290942068,
+          "net_leg_hit_rate": 0.47928994082840237,
+          "decisive_net_hit_rate": 0.4819277108433735,
+          "decisive_legs": 581,
+          "endpoint_drawdown_pct": -11.081652288041688,
+          "compounded_endpoint_return_pct": -7.808699200758873,
+          "expected_shortfall5_bps_per_trade": -107.52302921954465
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.693563290942066,
+          "net_leg_hit_rate": 0.44970414201183434,
+          "decisive_net_hit_rate": 0.43781942078364566,
+          "decisive_legs": 587,
+          "endpoint_drawdown_pct": -15.460624054331607,
+          "compounded_endpoint_return_pct": -15.284127688758542,
+          "expected_shortfall5_bps_per_trade": -112.52302921954467
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.693563290942066,
+          "net_leg_hit_rate": 0.35355029585798814,
+          "decisive_net_hit_rate": 0.33889816360601,
+          "decisive_legs": 599,
+          "endpoint_drawdown_pct": -34.2828181836637,
+          "compounded_endpoint_return_pct": -34.2828181836637,
+          "expected_shortfall5_bps_per_trade": -127.52302921954464
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -9.693563290942066,
+        "se": 3.308481623155351,
+        "ci95": [
+          -15.909823470366293,
+          -2.880498522765064
+        ],
+        "mde80": 14.364174065977052,
+        "z": -2.929912991838583,
+        "p": 0.0033905692611398857,
+        "positive_control_5bps_z": 1.511267272880126,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 44.97041420118343,
+        "se": 1.5636306960098691,
+        "ci95": [
+          42.01183431952663,
+          48.07692307692308
+        ],
+        "mde80": 6.788692231262841,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.693563290942066
+      ],
+      "placebo_centered_mean95_abs_bps": 7.154094056638347,
+      "holm_p": 0.12545106266217576
+    },
+    {
+      "id": "momentum_5_inverse_vol_weekly",
+      "direction": "momentum",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -6.02148674125487,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -12.04297348250974,
+      "long_relative_bps_per_occupied_session": -4.316872176469349,
+      "short_underlying_relative_bps_per_occupied_session": 7.726101306040395,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.488448868571553,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.45925925925925926,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -16.011648135828604,
+          "compounded_endpoint_return_pct": -12.280944244398206,
+          "expected_shortfall5_bps_per_trade": -338.8751323380984
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -8.488448868571556,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.45925925925925926,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -16.753534751109513,
+          "compounded_endpoint_return_pct": -13.765746438262616,
+          "expected_shortfall5_bps_per_trade": -343.8751323380984
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -11.488448868571554,
+          "net_leg_hit_rate": 0.45588235294117646,
+          "decisive_net_hit_rate": 0.44360902255639095,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -19.518518751973456,
+          "compounded_endpoint_return_pct": -18.075269274572882,
+          "expected_shortfall5_bps_per_trade": -358.8751323380984
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -8.488448868571554,
+        "se": 4.967328229413379,
+        "ci95": [
+          -17.80164936337777,
+          0.7642698872689979
+        ],
+        "mde80": 21.566257714947277,
+        "z": -1.7088560442429237,
+        "p": 0.08747761835457778,
+        "positive_control_5bps_z": 1.0065773327385854,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 46.32352941176471,
+        "se": 5.262576170038013,
+        "ci95": [
+          36.76470588235294,
+          55.88235294117647
+        ],
+        "mde80": 22.848112443131857,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -8.488448868571554
+      ],
+      "placebo_centered_mean95_abs_bps": 5.844916658386745,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_5_equal_intraday",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.9990024350227513,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 3.9980048700455026,
+      "long_relative_bps_per_occupied_session": 7.786280068692612,
+      "short_underlying_relative_bps_per_occupied_session": 3.7882751986471095,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.1122989348402696,
+          "net_leg_hit_rate": 0.48676470588235293,
+          "decisive_net_hit_rate": 0.4918032786885246,
+          "decisive_legs": 610,
+          "endpoint_drawdown_pct": -11.583324794858573,
+          "compounded_endpoint_return_pct": -5.387966086398121,
+          "expected_shortfall5_bps_per_trade": -107.33823033724099
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -8.112298934840268,
+          "net_leg_hit_rate": 0.4602941176470588,
+          "decisive_net_hit_rate": 0.46405228758169936,
+          "decisive_legs": 612,
+          "endpoint_drawdown_pct": -16.111787700590853,
+          "compounded_endpoint_return_pct": -13.102047228848956,
+          "expected_shortfall5_bps_per_trade": -112.33823033724099
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -23.11229893484026,
+          "net_leg_hit_rate": 0.40294117647058825,
+          "decisive_net_hit_rate": 0.3987341772151899,
+          "decisive_legs": 632,
+          "endpoint_drawdown_pct": -32.90585982130708,
+          "compounded_endpoint_return_pct": -32.688691214853435,
+          "expected_shortfall5_bps_per_trade": -127.33823033724094
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -8.112298934840268,
+        "se": 5.133079074301303,
+        "ci95": [
+          -16.841621753051076,
+          2.8707667456158763
+        ],
+        "mde80": 22.285885102595334,
+        "z": -1.580396252895147,
+        "p": 0.11401614916175269,
+        "positive_control_5bps_z": 0.9740742208769855,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 46.02941176470588,
+        "se": 2.5363531325389967,
+        "ci95": [
+          41.76470588235294,
+          51.470588235294116
+        ],
+        "mde80": 11.011884616070484,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -8.112298934840268
+      ],
+      "placebo_centered_mean95_abs_bps": 8.599242158465781,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_5_equal_overnight",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -0.5713118130322905,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -1.142623626064581,
+      "long_relative_bps_per_occupied_session": -0.14245215172204356,
+      "short_underlying_relative_bps_per_occupied_session": 1.0001714743425374,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -6.055677947424771,
+          "net_leg_hit_rate": 0.4408284023668639,
+          "decisive_net_hit_rate": 0.4402730375426621,
+          "decisive_legs": 586,
+          "endpoint_drawdown_pct": -12.435847894555142,
+          "compounded_endpoint_return_pct": -9.95128265914278,
+          "expected_shortfall5_bps_per_trade": -123.8422529099285
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -11.05567794742477,
+          "net_leg_hit_rate": 0.40976331360946744,
+          "decisive_net_hit_rate": 0.398989898989899,
+          "decisive_legs": 594,
+          "endpoint_drawdown_pct": -18.321825708577265,
+          "compounded_endpoint_return_pct": -17.253971965583414,
+          "expected_shortfall5_bps_per_trade": -128.8422529099285
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -26.05567794742477,
+          "net_leg_hit_rate": 0.32840236686390534,
+          "decisive_net_hit_rate": 0.3125,
+          "decisive_legs": 608,
+          "endpoint_drawdown_pct": -35.85167925831614,
+          "compounded_endpoint_return_pct": -35.81321697326055,
+          "expected_shortfall5_bps_per_trade": -143.8422529099285
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -11.05567794742477,
+        "se": 3.6078774615001876,
+        "ci95": [
+          -18.56647641546951,
+          -4.534369339514188
+        ],
+        "mde80": 15.664037394978358,
+        "z": -3.0643163647879885,
+        "p": 0.0021816806610389285,
+        "positive_control_5bps_z": 1.3858563804772226,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 40.976331360946745,
+        "se": 1.370688265277718,
+        "ci95": [
+          38.16568047337278,
+          43.49112426035503
+        ],
+        "mde80": 5.951009277138963,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -11.05567794742477
+      ],
+      "placebo_centered_mean95_abs_bps": 8.271042220044636,
+      "holm_p": 0.08508554578051822
+    },
+    {
+      "id": "reversal_5_equal_weekly",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 5.72082489265031,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 11.44164978530062,
+      "long_relative_bps_per_occupied_session": 9.244161483869549,
+      "short_underlying_relative_bps_per_occupied_session": -2.1974883014310724,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 4.253862765333628,
+          "net_leg_hit_rate": 0.5294117647058824,
+          "decisive_net_hit_rate": 0.5263157894736842,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -8.656739660717616,
+          "compounded_endpoint_return_pct": 7.103409670416205,
+          "expected_shortfall5_bps_per_trade": -202.52974779982605
+        },
+        "10": {
+          "mean_bps_per_occupied_session": 3.2538627653336287,
+          "net_leg_hit_rate": 0.5147058823529411,
+          "decisive_net_hit_rate": 0.5263157894736842,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -9.479490852827489,
+          "compounded_endpoint_return_pct": 5.30101533459304,
+          "expected_shortfall5_bps_per_trade": -207.52974779982605
+        },
+        "25": {
+          "mean_bps_per_occupied_session": 0.2538627653336293,
+          "net_leg_hit_rate": 0.5,
+          "decisive_net_hit_rate": 0.5,
+          "decisive_legs": 132,
+          "endpoint_drawdown_pct": -11.90595356963502,
+          "compounded_endpoint_return_pct": 0.06869549677370745,
+          "expected_shortfall5_bps_per_trade": -222.52974779982608
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": 3.253862765333628,
+        "se": 5.781518976767383,
+        "ci95": [
+          -7.408383760193362,
+          14.005193900008855
+        ],
+        "mde80": 25.101165551838015,
+        "z": 0.5628041313033895,
+        "p": 0.5735682668215702,
+        "positive_control_5bps_z": 0.8648246282840444,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 51.470588235294116,
+        "se": 5.33162715863379,
+        "ci95": [
+          41.911764705882355,
+          61.029411764705884
+        ],
+        "mde80": 23.147905681418486,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        3.253862765333628
+      ],
+      "placebo_centered_mean95_abs_bps": 7.268478937128925,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_5_inverse_vol_intraday",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.1103337177390453,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 2.220667435478089,
+      "long_relative_bps_per_occupied_session": 6.489658660038197,
+      "short_underlying_relative_bps_per_occupied_session": 4.268991224560109,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.00096765212397,
+          "net_leg_hit_rate": 0.48676470588235293,
+          "decisive_net_hit_rate": 0.4918032786885246,
+          "decisive_legs": 610,
+          "endpoint_drawdown_pct": -11.746409944206738,
+          "compounded_endpoint_return_pct": -6.795712132346054,
+          "expected_shortfall5_bps_per_trade": -101.92180142134279
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.000967652123972,
+          "net_leg_hit_rate": 0.4602941176470588,
+          "decisive_net_hit_rate": 0.46405228758169936,
+          "decisive_legs": 612,
+          "endpoint_drawdown_pct": -16.17535510933483,
+          "compounded_endpoint_return_pct": -14.395651348701543,
+          "expected_shortfall5_bps_per_trade": -106.92180142134279
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.000967652123972,
+          "net_leg_hit_rate": 0.40294117647058825,
+          "decisive_net_hit_rate": 0.3987341772151899,
+          "decisive_legs": 632,
+          "endpoint_drawdown_pct": -33.94666277906679,
+          "compounded_endpoint_return_pct": -33.6922024419183,
+          "expected_shortfall5_bps_per_trade": -121.9218014213428
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -9.000967652123972,
+        "se": 4.773028184457914,
+        "ci95": [
+          -17.241491921516175,
+          0.9647328706607646
+        ],
+        "mde80": 20.722680514084452,
+        "z": -1.8857981357481208,
+        "p": 0.05932216226154833,
+        "positive_control_5bps_z": 1.0475530013171008,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 46.02941176470588,
+        "se": 2.5363531325389967,
+        "ci95": [
+          41.76470588235294,
+          51.470588235294116
+        ],
+        "mde80": 11.011884616070484,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.000967652123972
+      ],
+      "placebo_centered_mean95_abs_bps": 8.15093957950706,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_5_inverse_vol_overnight",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -0.7908028434504137,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -1.5816056869008275,
+      "long_relative_bps_per_occupied_session": -1.265903195809907,
+      "short_underlying_relative_bps_per_occupied_session": 0.3157024910909216,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -6.2751689778428945,
+          "net_leg_hit_rate": 0.4408284023668639,
+          "decisive_net_hit_rate": 0.4402730375426621,
+          "decisive_legs": 586,
+          "endpoint_drawdown_pct": -12.380288938792871,
+          "compounded_endpoint_return_pct": -10.242315925260037,
+          "expected_shortfall5_bps_per_trade": -112.31528179685948
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -11.275168977842895,
+          "net_leg_hit_rate": 0.40976331360946744,
+          "decisive_net_hit_rate": 0.398989898989899,
+          "decisive_legs": 594,
+          "endpoint_drawdown_pct": -18.269958979504576,
+          "compounded_endpoint_return_pct": -17.52151717222521,
+          "expected_shortfall5_bps_per_trade": -117.31528179685947
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -26.275168977842892,
+          "net_leg_hit_rate": 0.32840236686390534,
+          "decisive_net_hit_rate": 0.3125,
+          "decisive_legs": 608,
+          "endpoint_drawdown_pct": -36.02101949827957,
+          "compounded_endpoint_return_pct": -36.02101949827957,
+          "expected_shortfall5_bps_per_trade": -132.31528179685947
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -11.275168977842895,
+        "se": 3.3135311907215415,
+        "ci95": [
+          -18.07067576786995,
+          -5.044561712417213
+        ],
+        "mde80": 14.386097375742786,
+        "z": -3.4027653065150893,
+        "p": 0.0006670755495371458,
+        "positive_control_5bps_z": 1.5089642173886462,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 40.976331360946745,
+        "se": 1.370688265277718,
+        "ci95": [
+          38.16568047337278,
+          43.49112426035503
+        ],
+        "mde80": 5.951009277138963,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -11.275168977842895
+      ],
+      "placebo_centered_mean95_abs_bps": 7.173969804436978,
+      "holm_p": 0.02801717308056012
+    },
+    {
+      "id": "reversal_5_inverse_vol_weekly",
+      "direction": "reversal",
+      "lookback": 5,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 6.021486741254873,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 12.04297348250974,
+      "long_relative_bps_per_occupied_session": 7.726101306040395,
+      "short_underlying_relative_bps_per_occupied_session": -4.316872176469349,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 4.554524613938191,
+          "net_leg_hit_rate": 0.5294117647058824,
+          "decisive_net_hit_rate": 0.5263157894736842,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -6.800302623861343,
+          "compounded_endpoint_return_pct": 7.672863864051593,
+          "expected_shortfall5_bps_per_trade": -212.6818289691601
+        },
+        "10": {
+          "mean_bps_per_occupied_session": 3.554524613938191,
+          "net_leg_hit_rate": 0.5147058823529411,
+          "decisive_net_hit_rate": 0.5263157894736842,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -7.638840563367655,
+          "compounded_endpoint_return_pct": 5.861177087898306,
+          "expected_shortfall5_bps_per_trade": -217.6818289691601
+        },
+        "25": {
+          "mean_bps_per_occupied_session": 0.5545246139381913,
+          "net_leg_hit_rate": 0.5,
+          "decisive_net_hit_rate": 0.5,
+          "decisive_legs": 132,
+          "endpoint_drawdown_pct": -10.111908836043215,
+          "compounded_endpoint_return_pct": 0.6018536047401435,
+          "expected_shortfall5_bps_per_trade": -232.6818289691601
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": 3.5545246139381907,
+        "se": 4.96527992627009,
+        "ci95": [
+          -5.684828615887889,
+          12.819960043513612
+        ],
+        "mde80": 21.557364758527576,
+        "z": 0.7158759761221244,
+        "p": 0.4740679337549333,
+        "positive_control_5bps_z": 1.0069925712639511,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 51.470588235294116,
+        "se": 5.33162715863379,
+        "ci95": [
+          41.911764705882355,
+          61.029411764705884
+        ],
+        "mde80": 23.147905681418486,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        3.5545246139381907
+      ],
+      "placebo_centered_mean95_abs_bps": 5.929502144474817,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_20_equal_intraday",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.960827573991235,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 3.92165514798247,
+      "long_relative_bps_per_occupied_session": 7.6035665200802525,
+      "short_underlying_relative_bps_per_occupied_session": 3.6819113720977823,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.150473795871785,
+          "net_leg_hit_rate": 0.47205882352941175,
+          "decisive_net_hit_rate": 0.48717948717948717,
+          "decisive_legs": 624,
+          "endpoint_drawdown_pct": -10.971061762521362,
+          "compounded_endpoint_return_pct": -5.425884143129089,
+          "expected_shortfall5_bps_per_trade": -115.89588163903638
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -8.15047379587178,
+          "net_leg_hit_rate": 0.45294117647058824,
+          "decisive_net_hit_rate": 0.4592,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -16.12309643610528,
+          "compounded_endpoint_return_pct": -13.136880468060696,
+          "expected_shortfall5_bps_per_trade": -120.89588163903638
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -23.150473795871783,
+          "net_leg_hit_rate": 0.3941176470588235,
+          "decisive_net_hit_rate": 0.38562091503267976,
+          "decisive_legs": 612,
+          "endpoint_drawdown_pct": -33.287791790360075,
+          "compounded_endpoint_return_pct": -32.715688857696094,
+          "expected_shortfall5_bps_per_trade": -135.89588163903633
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -8.15047379587178,
+        "se": 3.481880673561739,
+        "ci95": [
+          -14.937596778841593,
+          -1.125890078741003
+        ],
+        "mde80": 15.117007065102806,
+        "z": -2.340825134462283,
+        "p": 0.019241176707341302,
+        "positive_control_5bps_z": 1.4360055581357196,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.294117647058826,
+        "se": 1.1575065899131167,
+        "ci95": [
+          43.231617647058826,
+          47.647058823529406
+        ],
+        "mde80": 5.025455188767363,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -8.15047379587178
+      ],
+      "placebo_centered_mean95_abs_bps": 5.751111882915306,
+      "holm_p": 0.531021270191672
+    },
+    {
+      "id": "momentum_20_equal_overnight",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 4.772725377645538,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 9.545450755291077,
+      "long_relative_bps_per_occupied_session": 6.26373764239618,
+      "short_underlying_relative_bps_per_occupied_session": -3.281713112894896,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -0.711640756746943,
+          "net_leg_hit_rate": 0.4911242603550296,
+          "decisive_net_hit_rate": 0.4906937394247039,
+          "decisive_legs": 591,
+          "endpoint_drawdown_pct": -5.922451703643938,
+          "compounded_endpoint_return_pct": -1.4330370288236138,
+          "expected_shortfall5_bps_per_trade": -133.58495882417432
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -5.711640756746943,
+          "net_leg_hit_rate": 0.45710059171597633,
+          "decisive_net_hit_rate": 0.45854483925549916,
+          "decisive_legs": 591,
+          "endpoint_drawdown_pct": -11.258397028973766,
+          "compounded_endpoint_return_pct": -9.422432374151779,
+          "expected_shortfall5_bps_per_trade": -138.58495882417432
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -20.71164075674694,
+          "net_leg_hit_rate": 0.371301775147929,
+          "decisive_net_hit_rate": 0.35451505016722407,
+          "decisive_legs": 598,
+          "endpoint_drawdown_pct": -29.7286677741024,
+          "compounded_endpoint_return_pct": -29.7286677741024,
+          "expected_shortfall5_bps_per_trade": -153.58495882417432
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -5.711640756746943,
+        "se": 3.799172527143287,
+        "ci95": [
+          -13.135335744199306,
+          1.8335835585715723
+        ],
+        "mde80": 16.494568113852164,
+        "z": -1.5033907294127806,
+        "p": 0.13273831579478207,
+        "positive_control_5bps_z": 1.3160760571617556,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 45.710059171597635,
+        "se": 2.303843238677563,
+        "ci95": [
+          41.42011834319527,
+          50.29585798816568
+        ],
+        "mde80": 10.002414723865897,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -5.711640756746943
+      ],
+      "placebo_centered_mean95_abs_bps": 6.969921582664788,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_20_equal_weekly",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.3353195394670285,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 2.670639078934057,
+      "long_relative_bps_per_occupied_session": 10.549418675061899,
+      "short_underlying_relative_bps_per_occupied_session": 7.878779596127842,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -0.13164258784965344,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.48148148148148145,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -12.735532546866901,
+          "compounded_endpoint_return_pct": -0.535896151129478,
+          "expected_shortfall5_bps_per_trade": -252.96725982617806
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -1.1316425878496543,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.48148148148148145,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -13.73952719267908,
+          "compounded_endpoint_return_pct": -2.2133265295437132,
+          "expected_shortfall5_bps_per_trade": -257.96725982617806
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -4.131642587849653,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.46616541353383456,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -16.68564847701104,
+          "compounded_endpoint_return_pct": -7.082532091426474,
+          "expected_shortfall5_bps_per_trade": -272.96725982617806
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -1.1316425878496537,
+        "se": 6.147820195854081,
+        "ci95": [
+          -12.204289116074587,
+          9.809493632865378
+        ],
+        "mde80": 26.69150670250847,
+        "z": -0.18407216733709975,
+        "p": 0.8539568406247955,
+        "positive_control_5bps_z": 0.8132963946102166,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 47.794117647058826,
+        "se": 5.590691671565357,
+        "ci95": [
+          36.76470588235294,
+          58.08823529411765
+        ],
+        "mde80": 24.2726656716274,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -1.1316425878496537
+      ],
+      "placebo_centered_mean95_abs_bps": 7.505033985107999,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_20_inverse_vol_intraday",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 2.2205625311971486,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 4.441125062394297,
+      "long_relative_bps_per_occupied_session": 7.328144878036805,
+      "short_underlying_relative_bps_per_occupied_session": 2.887019815642508,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -2.8907388386658677,
+          "net_leg_hit_rate": 0.47205882352941175,
+          "decisive_net_hit_rate": 0.48717948717948717,
+          "decisive_legs": 624,
+          "endpoint_drawdown_pct": -10.30096438217204,
+          "compounded_endpoint_return_pct": -4.995752533185216,
+          "expected_shortfall5_bps_per_trade": -110.18205062330227
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -7.890738838665868,
+          "net_leg_hit_rate": 0.45294117647058824,
+          "decisive_net_hit_rate": 0.4592,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -15.81619284047916,
+          "compounded_endpoint_return_pct": -12.741615724816702,
+          "expected_shortfall5_bps_per_trade": -115.18205062330227
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -22.890738838665868,
+          "net_leg_hit_rate": 0.3941176470588235,
+          "decisive_net_hit_rate": 0.38562091503267976,
+          "decisive_legs": 612,
+          "endpoint_drawdown_pct": -32.999113404474535,
+          "compounded_endpoint_return_pct": -32.4090424262623,
+          "expected_shortfall5_bps_per_trade": -130.18205062330227
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -7.890738838665868,
+        "se": 3.23126465586213,
+        "ci95": [
+          -14.129155079189632,
+          -1.2110461096199452
+        ],
+        "mde80": 14.028927241184698,
+        "z": -2.4419970751546347,
+        "p": 0.014606264960052136,
+        "positive_control_5bps_z": 1.547381763028617,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.294117647058826,
+        "se": 1.1575065899131167,
+        "ci95": [
+          43.231617647058826,
+          47.647058823529406
+        ],
+        "mde80": 5.025455188767363,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -7.890738838665868
+      ],
+      "placebo_centered_mean95_abs_bps": 5.163202104004866,
+      "holm_p": 0.4527942137616162
+    },
+    {
+      "id": "momentum_20_inverse_vol_overnight",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 4.154557203152509,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 8.309114406305017,
+      "long_relative_bps_per_occupied_session": 5.772356551600609,
+      "short_underlying_relative_bps_per_occupied_session": -2.536757854704411,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -1.3298089312399708,
+          "net_leg_hit_rate": 0.4911242603550296,
+          "decisive_net_hit_rate": 0.4906937394247039,
+          "decisive_legs": 591,
+          "endpoint_drawdown_pct": -6.401546330171193,
+          "compounded_endpoint_return_pct": -2.418678964970833,
+          "expected_shortfall5_bps_per_trade": -124.09486959953395
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -6.329808931239972,
+          "net_leg_hit_rate": 0.45710059171597633,
+          "decisive_net_hit_rate": 0.45854483925549916,
+          "decisive_legs": 591,
+          "endpoint_drawdown_pct": -11.660777069187677,
+          "compounded_endpoint_return_pct": -10.328615562191723,
+          "expected_shortfall5_bps_per_trade": -129.09486959953395
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -21.32980893123997,
+          "net_leg_hit_rate": 0.371301775147929,
+          "decisive_net_hit_rate": 0.35451505016722407,
+          "decisive_legs": 598,
+          "endpoint_drawdown_pct": -30.432706866168544,
+          "compounded_endpoint_return_pct": -30.432706866168544,
+          "expected_shortfall5_bps_per_trade": -144.09486959953395
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -6.329808931239972,
+        "se": 3.4718734183985873,
+        "ci95": [
+          -13.14048616443691,
+          0.6146189999803987
+        ],
+        "mde80": 15.073559353596684,
+        "z": -1.8231681194643372,
+        "p": 0.06827793198333845,
+        "positive_control_5bps_z": 1.440144670454681,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 45.710059171597635,
+        "se": 2.303843238677563,
+        "ci95": [
+          41.42011834319527,
+          50.29585798816568
+        ],
+        "mde80": 10.002414723865897,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -6.329808931239972
+      ],
+      "placebo_centered_mean95_abs_bps": 6.230795059388024,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_20_inverse_vol_weekly",
+      "direction": "momentum",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.5925399720433264,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 3.1850799440866533,
+      "long_relative_bps_per_occupied_session": 11.232435491937405,
+      "short_underlying_relative_bps_per_occupied_session": 8.047355547850753,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 0.12557784472664535,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.48148148148148145,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -11.453714503898349,
+          "compounded_endpoint_return_pct": -0.06526500124802714,
+          "expected_shortfall5_bps_per_trade": -240.1547843396653
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -0.874422155273355,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.48148148148148145,
+          "decisive_legs": 135,
+          "endpoint_drawdown_pct": -12.471807255379808,
+          "compounded_endpoint_return_pct": -1.750383265269817,
+          "expected_shortfall5_bps_per_trade": -245.1547843396653
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -3.874422155273353,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.46616541353383456,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -15.459340269780597,
+          "compounded_endpoint_return_pct": -6.641928918320062,
+          "expected_shortfall5_bps_per_trade": -260.1547843396653
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -0.8744221552733552,
+        "se": 5.616675053091256,
+        "ci95": [
+          -11.008309921179487,
+          8.96020431884872
+        ],
+        "mde80": 24.385475672580267,
+        "z": -0.15568323732598674,
+        "p": 0.8762827107271189,
+        "positive_control_5bps_z": 0.8902063859379126,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 47.794117647058826,
+        "se": 5.590691671565357,
+        "ci95": [
+          36.76470588235294,
+          58.08823529411765
+        ],
+        "mde80": 24.2726656716274,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -0.8744221552733552
+      ],
+      "placebo_centered_mean95_abs_bps": 6.909272088139765,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_20_equal_intraday",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.960827573991235,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -3.92165514798247,
+      "long_relative_bps_per_occupied_session": 3.6819113720977823,
+      "short_underlying_relative_bps_per_occupied_session": 7.6035665200802525,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.0721289438542545,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.47804878048780486,
+          "decisive_legs": 615,
+          "endpoint_drawdown_pct": -11.947709690295227,
+          "compounded_endpoint_return_pct": -11.528325770574055,
+          "expected_shortfall5_bps_per_trade": -112.00567559193408
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -12.072128943854256,
+          "net_leg_hit_rate": 0.45294117647058824,
+          "decisive_net_hit_rate": 0.44711538461538464,
+          "decisive_legs": 624,
+          "endpoint_drawdown_pct": -19.04891684975919,
+          "compounded_endpoint_return_pct": -18.744478889023796,
+          "expected_shortfall5_bps_per_trade": -117.0056755919341
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -27.072128943854253,
+          "net_leg_hit_rate": 0.38823529411764707,
+          "decisive_net_hit_rate": 0.3824,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -37.11328790383334,
+          "compounded_endpoint_return_pct": -37.06565943107898,
+          "expected_shortfall5_bps_per_trade": -132.00567559193405
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -12.072128943854256,
+        "se": 3.481880673561739,
+        "ci95": [
+          -19.096712660985038,
+          -5.285005960884452
+        ],
+        "mde80": 15.117007065102806,
+        "z": -3.467128852381161,
+        "p": 0.0005260496543694459,
+        "positive_control_5bps_z": 1.4360055581357196,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.294117647058826,
+        "se": 1.5000190387382821,
+        "ci95": [
+          42.5,
+          48.23529411764706
+        ],
+        "mde80": 6.5125145093497565,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -12.072128943854256
+      ],
+      "placebo_centered_mean95_abs_bps": 5.751111882915305,
+      "holm_p": 0.022620135137886174
+    },
+    {
+      "id": "reversal_20_equal_overnight",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -4.772725377645538,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -9.545450755291077,
+      "long_relative_bps_per_occupied_session": -3.281713112894896,
+      "short_underlying_relative_bps_per_occupied_session": 6.26373764239618,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -10.257091512038018,
+          "net_leg_hit_rate": 0.4378698224852071,
+          "decisive_net_hit_rate": 0.4302721088435374,
+          "decisive_legs": 588,
+          "endpoint_drawdown_pct": -18.155063888648115,
+          "compounded_endpoint_return_pct": -16.124766794581337,
+          "expected_shortfall5_bps_per_trade": -123.42988191864688
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -15.257091512038015,
+          "net_leg_hit_rate": 0.40532544378698226,
+          "decisive_net_hit_rate": 0.39327731092436974,
+          "decisive_legs": 595,
+          "endpoint_drawdown_pct": -23.582785634753755,
+          "compounded_endpoint_return_pct": -22.929542932936208,
+          "expected_shortfall5_bps_per_trade": -128.42988191864688
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -30.257091512038016,
+          "net_leg_hit_rate": 0.31952662721893493,
+          "decisive_net_hit_rate": 0.29850746268656714,
+          "decisive_legs": 603,
+          "endpoint_drawdown_pct": -40.22218968197342,
+          "compounded_endpoint_return_pct": -40.22218968197342,
+          "expected_shortfall5_bps_per_trade": -143.42988191864688
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -15.257091512038015,
+        "se": 3.8011216051021304,
+        "ci95": [
+          -22.807098189357028,
+          -7.823872329076214
+        ],
+        "mde80": 16.503030272104166,
+        "z": -4.013839360350609,
+        "p": 5.973901053398598e-05,
+        "positive_control_5bps_z": 1.315401220862982,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 40.532544378698226,
+        "se": 1.5642768941319047,
+        "ci95": [
+          37.426035502958584,
+          43.63905325443787
+        ],
+        "mde80": 6.791497778750568,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -15.257091512038015
+      ],
+      "placebo_centered_mean95_abs_bps": 6.969904795715634,
+      "holm_p": 0.002688255474029369
+    },
+    {
+      "id": "reversal_20_equal_weekly",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.3353195394670285,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -2.670639078934057,
+      "long_relative_bps_per_occupied_session": 7.878779596127842,
+      "short_underlying_relative_bps_per_occupied_session": 10.549418675061899,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -2.8022816667837085,
+          "net_leg_hit_rate": 0.5073529411764706,
+          "decisive_net_hit_rate": 0.5074626865671642,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -13.946437481567264,
+          "compounded_endpoint_return_pct": -4.95440229840074,
+          "expected_shortfall5_bps_per_trade": -263.67205566151625
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -3.8022816667837107,
+          "net_leg_hit_rate": 0.5,
+          "decisive_net_hit_rate": 0.5037593984962406,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -14.425053360477014,
+          "compounded_endpoint_return_pct": -6.559442369274304,
+          "expected_shortfall5_bps_per_trade": -268.67205566151625
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -6.802281666783707,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.4728682170542636,
+          "decisive_legs": 129,
+          "endpoint_drawdown_pct": -15.846417980421235,
+          "compounded_endpoint_return_pct": -11.21831013872251,
+          "expected_shortfall5_bps_per_trade": -283.67205566151625
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -3.8022816667837103,
+        "se": 6.1314456469584675,
+        "ci95": [
+          -14.648046211431057,
+          7.236911405564678
+        ],
+        "mde80": 26.620414613333097,
+        "z": -0.6201280881727868,
+        "p": 0.5351734611425019,
+        "positive_control_5bps_z": 0.8154683720437567,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 50.0,
+        "se": 6.364903771915816,
+        "ci95": [
+          38.23529411764706,
+          61.76470588235294
+        ],
+        "mde80": 27.634001365798035,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -3.8022816667837103
+      ],
+      "placebo_centered_mean95_abs_bps": 7.589619471196068,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_20_inverse_vol_intraday",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -2.2205625311971486,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -4.441125062394297,
+      "long_relative_bps_per_occupied_session": 2.887019815642508,
+      "short_underlying_relative_bps_per_occupied_session": 7.328144878036805,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.331863901060165,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.47804878048780486,
+          "decisive_legs": 615,
+          "endpoint_drawdown_pct": -12.350115161438834,
+          "compounded_endpoint_return_pct": -11.907794592259336,
+          "expected_shortfall5_bps_per_trade": -108.02281662138019
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -12.331863901060165,
+          "net_leg_hit_rate": 0.45294117647058824,
+          "decisive_net_hit_rate": 0.44711538461538464,
+          "decisive_legs": 624,
+          "endpoint_drawdown_pct": -19.419049217929118,
+          "compounded_endpoint_return_pct": -19.09316573951084,
+          "expected_shortfall5_bps_per_trade": -113.02281662138019
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -27.331863901060164,
+          "net_leg_hit_rate": 0.38823529411764707,
+          "decisive_net_hit_rate": 0.3824,
+          "decisive_legs": 625,
+          "endpoint_drawdown_pct": -37.401244779175045,
+          "compounded_endpoint_return_pct": -37.33611971582216,
+          "expected_shortfall5_bps_per_trade": -128.0228166213802
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -12.331863901060165,
+        "se": 3.2312646558621307,
+        "ci95": [
+          -19.011556630106092,
+          -6.093447660536401
+        ],
+        "mde80": 14.0289272411847,
+        "z": -3.8164202609302866,
+        "p": 0.00013540180552493232,
+        "positive_control_5bps_z": 1.5473817630286169,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.294117647058826,
+        "se": 1.5000190387382821,
+        "ci95": [
+          42.5,
+          48.23529411764706
+        ],
+        "mde80": 6.5125145093497565,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -12.331863901060165
+      ],
+      "placebo_centered_mean95_abs_bps": 5.163202104004868,
+      "holm_p": 0.005957679443097022
+    },
+    {
+      "id": "reversal_20_inverse_vol_overnight",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -4.154557203152509,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -8.309114406305017,
+      "long_relative_bps_per_occupied_session": -2.536757854704411,
+      "short_underlying_relative_bps_per_occupied_session": 5.772356551600609,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -9.63892333754499,
+          "net_leg_hit_rate": 0.4378698224852071,
+          "decisive_net_hit_rate": 0.4302721088435374,
+          "decisive_legs": 588,
+          "endpoint_drawdown_pct": -16.84862929421215,
+          "compounded_endpoint_return_pct": -15.209411984109478,
+          "expected_shortfall5_bps_per_trade": -114.68418756360765
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -14.63892333754499,
+          "net_leg_hit_rate": 0.40532544378698226,
+          "decisive_net_hit_rate": 0.39327731092436974,
+          "decisive_legs": 595,
+          "endpoint_drawdown_pct": -22.35728002253825,
+          "compounded_endpoint_return_pct": -22.088011701036603,
+          "expected_shortfall5_bps_per_trade": -119.68418756360765
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -29.638923337544995,
+          "net_leg_hit_rate": 0.31952662721893493,
+          "decisive_net_hit_rate": 0.29850746268656714,
+          "decisive_legs": 603,
+          "endpoint_drawdown_pct": -39.56845316540771,
+          "compounded_endpoint_return_pct": -39.56845316540771,
+          "expected_shortfall5_bps_per_trade": -134.68418756360765
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -14.63892333754499,
+        "se": 3.4733845102303595,
+        "ci95": [
+          -21.59262377187857,
+          -7.820832757938482
+        ],
+        "mde80": 15.080119941979385,
+        "z": -4.214599130740672,
+        "p": 2.5022223014344224e-05,
+        "positive_control_5bps_z": 1.4395181372155061,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 40.532544378698226,
+        "se": 1.5642768941319047,
+        "ci95": [
+          37.426035502958584,
+          43.63905325443787
+        ],
+        "mde80": 6.791497778750568,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -14.63892333754499
+      ],
+      "placebo_centered_mean95_abs_bps": 6.253119087412357,
+      "holm_p": 0.0011510222586598342
+    },
+    {
+      "id": "reversal_20_inverse_vol_weekly",
+      "direction": "reversal",
+      "lookback": 20,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.5925399720433264,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -3.1850799440866533,
+      "long_relative_bps_per_occupied_session": 8.047355547850753,
+      "short_underlying_relative_bps_per_occupied_session": 11.232435491937405,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.059502099360007,
+          "net_leg_hit_rate": 0.5073529411764706,
+          "decisive_net_hit_rate": 0.5074626865671642,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -13.07455500547221,
+          "compounded_endpoint_return_pct": -5.336973097219666,
+          "expected_shortfall5_bps_per_trade": -258.0063713102719
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -4.059502099360007,
+          "net_leg_hit_rate": 0.5,
+          "decisive_net_hit_rate": 0.5037593984962406,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -13.557578968589379,
+          "compounded_endpoint_return_pct": -6.935724612741511,
+          "expected_shortfall5_bps_per_trade": -263.0063713102719
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -7.059502099360007,
+          "net_leg_hit_rate": 0.47794117647058826,
+          "decisive_net_hit_rate": 0.4728682170542636,
+          "decisive_legs": 129,
+          "endpoint_drawdown_pct": -14.992047759356996,
+          "compounded_endpoint_return_pct": -11.576322251268534,
+          "expected_shortfall5_bps_per_trade": -278.0063713102719
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -4.0595020993600075,
+        "se": 5.6023809258909525,
+        "ci95": [
+          -13.798347423379818,
+          6.041233374444964
+        ],
+        "mde80": 24.32341598641204,
+        "z": -0.7246030130866942,
+        "p": 0.4686956099182116,
+        "positive_control_5bps_z": 0.8924776922777425,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 50.0,
+        "se": 6.364903771915816,
+        "ci95": [
+          38.23529411764706,
+          61.76470588235294
+        ],
+        "mde80": 27.634001365798035,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -4.0595020993600075
+      ],
+      "placebo_centered_mean95_abs_bps": 6.993857574227834,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_60_equal_intraday",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 0.3051999286686349,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 0.6103998573372698,
+      "long_relative_bps_per_occupied_session": 4.519580443357034,
+      "short_underlying_relative_bps_per_occupied_session": 3.9091805860197644,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.806101441194386,
+          "net_leg_hit_rate": 0.48676470588235293,
+          "decisive_net_hit_rate": 0.4952076677316294,
+          "decisive_legs": 626,
+          "endpoint_drawdown_pct": -12.009127426800815,
+          "compounded_endpoint_return_pct": -8.091554116827925,
+          "expected_shortfall5_bps_per_trade": -121.99273468556267
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.806101441194384,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.46656050955414013,
+          "decisive_legs": 628,
+          "endpoint_drawdown_pct": -17.964631870780135,
+          "compounded_endpoint_return_pct": -15.586434162624741,
+          "expected_shortfall5_bps_per_trade": -126.99273468556267
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.80610144119438,
+          "net_leg_hit_rate": 0.40294117647058825,
+          "decisive_net_hit_rate": 0.39344262295081966,
+          "decisive_legs": 610,
+          "endpoint_drawdown_pct": -34.98432142800593,
+          "compounded_endpoint_return_pct": -34.615972191835056,
+          "expected_shortfall5_bps_per_trade": -141.99273468556265
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -9.806101441194384,
+        "se": 4.441501591008935,
+        "ci95": [
+          -18.475760374948344,
+          -0.8575332893813457
+        ],
+        "mde80": 19.28331761647227,
+        "z": -2.20783472441959,
+        "p": 0.02725579649112836,
+        "positive_control_5bps_z": 1.125745403338738,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 47.05882352941176,
+        "se": 1.9899062161789791,
+        "ci95": [
+          43.23529411764706,
+          50.882352941176464
+        ],
+        "mde80": 8.639419080981389,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.806101441194384
+      ],
+      "placebo_centered_mean95_abs_bps": 7.526404481560432,
+      "holm_p": 0.6268833192959522
+    },
+    {
+      "id": "momentum_60_equal_overnight",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.6975722605819303,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -3.3951445211638607,
+      "long_relative_bps_per_occupied_session": -2.8474261009269686,
+      "short_underlying_relative_bps_per_occupied_session": 0.5477184202368924,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -7.181938394974411,
+          "net_leg_hit_rate": 0.4511834319526627,
+          "decisive_net_hit_rate": 0.45439469320066334,
+          "decisive_legs": 603,
+          "endpoint_drawdown_pct": -13.786800679462596,
+          "compounded_endpoint_return_pct": -11.647199714884849,
+          "expected_shortfall5_bps_per_trade": -133.5276158617933
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -12.18193839497441,
+          "net_leg_hit_rate": 0.4245562130177515,
+          "decisive_net_hit_rate": 0.42174629324546953,
+          "decisive_legs": 607,
+          "endpoint_drawdown_pct": -19.051889142086008,
+          "compounded_endpoint_return_pct": -18.813126427430827,
+          "expected_shortfall5_bps_per_trade": -138.5276158617933
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -27.18193839497441,
+          "net_leg_hit_rate": 0.3520710059171598,
+          "decisive_net_hit_rate": 0.34206219312602293,
+          "decisive_legs": 611,
+          "endpoint_drawdown_pct": -37.02446466324386,
+          "compounded_endpoint_return_pct": -37.02446466324386,
+          "expected_shortfall5_bps_per_trade": -153.5276158617933
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -12.18193839497441,
+        "se": 3.9462601444939103,
+        "ci95": [
+          -19.73913587060643,
+          -4.150845025351712
+        ],
+        "mde80": 17.133166836537278,
+        "z": -3.0869577648020687,
+        "p": 0.0020221632588971993,
+        "positive_control_5bps_z": 1.2670224001771244,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 42.455621301775146,
+        "se": 1.96328505435002,
+        "ci95": [
+          38.753698224852066,
+          46.30177514792899
+        ],
+        "mde80": 8.5238400795224,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -12.18193839497441
+      ],
+      "placebo_centered_mean95_abs_bps": 6.545013062225075,
+      "holm_p": 0.08088653035588797
+    },
+    {
+      "id": "momentum_60_equal_weekly",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 2.3473451530037868,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 4.6946903060075735,
+      "long_relative_bps_per_occupied_session": 10.348716898157784,
+      "short_underlying_relative_bps_per_occupied_session": 5.65402659215021,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 0.8803830256871057,
+          "net_leg_hit_rate": 0.5441176470588235,
+          "decisive_net_hit_rate": 0.5447761194029851,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -7.076393102843149,
+          "compounded_endpoint_return_pct": 1.174707258962271,
+          "expected_shortfall5_bps_per_trade": -244.59260921651483
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -0.11961697431289495,
+          "net_leg_hit_rate": 0.5367647058823529,
+          "decisive_net_hit_rate": 0.5447761194029851,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -7.958666710343021,
+          "compounded_endpoint_return_pct": -0.5307307184872267,
+          "expected_shortfall5_bps_per_trade": -249.59260921651486
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -3.119616974312895,
+          "net_leg_hit_rate": 0.5367647058823529,
+          "decisive_net_hit_rate": 0.5298507462686567,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -10.644942414582237,
+          "compounded_endpoint_return_pct": -5.481317037357858,
+          "expected_shortfall5_bps_per_trade": -264.59260921651486
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -0.11961697431289471,
+        "se": 2.9667266474271994,
+        "ci95": [
+          -5.939046727035278,
+          5.462409378731305
+        ],
+        "mde80": 12.880403406676512,
+        "z": -0.04031951323072814,
+        "p": 0.9678383971188744,
+        "positive_control_5bps_z": 1.685359183440811,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 53.67647058823529,
+        "se": 3.0385038301966087,
+        "ci95": [
+          47.794117647058826,
+          59.55882352941176
+        ],
+        "mde80": 13.192032747474226,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -0.11961697431289471
+      ],
+      "placebo_centered_mean95_abs_bps": 5.667326124147363,
+      "holm_p": 1.0
+    },
+    {
+      "id": "momentum_60_inverse_vol_intraday",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 0.3530700538906997,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": 0.7061401077813987,
+      "long_relative_bps_per_occupied_session": 3.9577795460573375,
+      "short_underlying_relative_bps_per_occupied_session": 3.251639438275939,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.758231315972318,
+          "net_leg_hit_rate": 0.48676470588235293,
+          "decisive_net_hit_rate": 0.4952076677316294,
+          "decisive_legs": 626,
+          "endpoint_drawdown_pct": -11.68334122598731,
+          "compounded_endpoint_return_pct": -8.002421167326201,
+          "expected_shortfall5_bps_per_trade": -119.59181328249365
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.758231315972319,
+          "net_leg_hit_rate": 0.47058823529411764,
+          "decisive_net_hit_rate": 0.46656050955414013,
+          "decisive_legs": 628,
+          "endpoint_drawdown_pct": -17.660739696745654,
+          "compounded_endpoint_return_pct": -15.504522208035587,
+          "expected_shortfall5_bps_per_trade": -124.59181328249366
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.758231315972317,
+          "net_leg_hit_rate": 0.40294117647058825,
+          "decisive_net_hit_rate": 0.39344262295081966,
+          "decisive_legs": 610,
+          "endpoint_drawdown_pct": -34.851544533257965,
+          "compounded_endpoint_return_pct": -34.552415084672795,
+          "expected_shortfall5_bps_per_trade": -139.59181328249366
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -9.758231315972319,
+        "se": 4.298964177426493,
+        "ci95": [
+          -18.192756260164686,
+          -1.2891322506421408
+        ],
+        "mde80": 18.66447415508418,
+        "z": -2.2699029145699767,
+        "p": 0.023213474246402122,
+        "positive_control_5bps_z": 1.1630708686186753,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 47.05882352941176,
+        "se": 1.9899062161789791,
+        "ci95": [
+          43.23529411764706,
+          50.882352941176464
+        ],
+        "mde80": 8.639419080981389,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.758231315972319
+      ],
+      "placebo_centered_mean95_abs_bps": 7.6722296961746945,
+      "holm_p": 0.580336856160053
+    },
+    {
+      "id": "momentum_60_inverse_vol_overnight",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.2041638495259606,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": -2.408327699051921,
+      "long_relative_bps_per_occupied_session": -1.9786909944562145,
+      "short_underlying_relative_bps_per_occupied_session": 0.4296367045957064,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -6.688529983918441,
+          "net_leg_hit_rate": 0.4511834319526627,
+          "decisive_net_hit_rate": 0.45439469320066334,
+          "decisive_legs": 603,
+          "endpoint_drawdown_pct": -12.642127088975874,
+          "compounded_endpoint_return_pct": -10.87264185151069,
+          "expected_shortfall5_bps_per_trade": -124.05850320292168
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -11.688529983918443,
+          "net_leg_hit_rate": 0.4245562130177515,
+          "decisive_net_hit_rate": 0.42174629324546953,
+          "decisive_legs": 607,
+          "endpoint_drawdown_pct": -18.16237215141847,
+          "compounded_endpoint_return_pct": -18.101016032276597,
+          "expected_shortfall5_bps_per_trade": -129.05850320292168
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -26.688529983918443,
+          "net_leg_hit_rate": 0.3520710059171598,
+          "decisive_net_hit_rate": 0.34206219312602293,
+          "decisive_legs": 611,
+          "endpoint_drawdown_pct": -36.471219060192894,
+          "compounded_endpoint_return_pct": -36.471219060192894,
+          "expected_shortfall5_bps_per_trade": -144.05850320292168
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -11.688529983918443,
+        "se": 3.5548713277233115,
+        "ci95": [
+          -18.364691234800937,
+          -4.372497730668551
+        ],
+        "mde80": 15.433904839063064,
+        "z": -3.2880318037852208,
+        "p": 0.001008904414600949,
+        "positive_control_5bps_z": 1.4065206695405794,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 42.455621301775146,
+        "se": 1.96328505435002,
+        "ci95": [
+          38.753698224852066,
+          46.30177514792899
+        ],
+        "mde80": 8.5238400795224,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -11.688529983918443
+      ],
+      "placebo_centered_mean95_abs_bps": 5.748270782788888,
+      "holm_p": 0.041365080998638906
+    },
+    {
+      "id": "momentum_60_inverse_vol_weekly",
+      "direction": "momentum",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.5876955056103998,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": 3.1753910112208015,
+      "long_relative_bps_per_occupied_session": 8.563195182309322,
+      "short_underlying_relative_bps_per_occupied_session": 5.387804171088523,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": 0.12073337829371898,
+          "net_leg_hit_rate": 0.5441176470588235,
+          "decisive_net_hit_rate": 0.5447761194029851,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -6.435350615651836,
+          "compounded_endpoint_return_pct": -0.11159900139480206,
+          "expected_shortfall5_bps_per_trade": -258.9608295460788
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -0.8792666217062808,
+          "net_leg_hit_rate": 0.5367647058823529,
+          "decisive_net_hit_rate": 0.5447761194029851,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -7.439195413052624,
+          "compounded_endpoint_return_pct": -1.7959774214252433,
+          "expected_shortfall5_bps_per_trade": -263.96082954607874
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -3.8792666217062797,
+          "net_leg_hit_rate": 0.5367647058823529,
+          "decisive_net_hit_rate": 0.5298507462686567,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -10.456713124342166,
+          "compounded_endpoint_return_pct": -6.685371580064558,
+          "expected_shortfall5_bps_per_trade": -278.96082954607874
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -0.8792666217062809,
+        "se": 2.4962452948181997,
+        "ci95": [
+          -5.749323132701277,
+          3.944010545087849
+        ],
+        "mde80": 10.837751576189174,
+        "z": -0.35223566511331866,
+        "p": 0.7246615318030256,
+        "positive_control_5bps_z": 2.003008282230592,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 53.67647058823529,
+        "se": 3.0385038301966087,
+        "ci95": [
+          47.794117647058826,
+          59.55882352941176
+        ],
+        "mde80": 13.192032747474226,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -0.8792666217062809
+      ],
+      "placebo_centered_mean95_abs_bps": 5.101867428318772,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_60_equal_intraday",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -0.3051999286686349,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -0.6103998573372698,
+      "long_relative_bps_per_occupied_session": 3.9091805860197644,
+      "short_underlying_relative_bps_per_occupied_session": 4.519580443357034,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -5.416501298531654,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.47208931419457734,
+          "decisive_legs": 627,
+          "endpoint_drawdown_pct": -11.255838758773763,
+          "compounded_endpoint_return_pct": -9.04070605922791,
+          "expected_shortfall5_bps_per_trade": -120.82458281991418
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -10.416501298531657,
+          "net_leg_hit_rate": 0.45,
+          "decisive_net_hit_rate": 0.44952681388012616,
+          "decisive_legs": 634,
+          "endpoint_drawdown_pct": -17.027188329485142,
+          "compounded_endpoint_return_pct": -16.458619333428327,
+          "expected_shortfall5_bps_per_trade": -125.8245828199142
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -25.41650129853165,
+          "net_leg_hit_rate": 0.40441176470588236,
+          "decisive_net_hit_rate": 0.39906103286384975,
+          "decisive_legs": 639,
+          "endpoint_drawdown_pct": -35.51251548390554,
+          "compounded_endpoint_return_pct": -35.292549097959366,
+          "expected_shortfall5_bps_per_trade": -140.82458281991416
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -10.416501298531657,
+        "se": 4.441501591008936,
+        "ci95": [
+          -19.365069450344702,
+          -1.7468423647777063
+        ],
+        "mde80": 19.283317616472274,
+        "z": -2.3452656911388012,
+        "p": 0.019013525091839307,
+        "positive_control_5bps_z": 1.1257454033387377,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.0,
+        "se": 2.2577628006677535,
+        "ci95": [
+          40.588235294117645,
+          49.411764705882355
+        ],
+        "mde80": 9.802350915750168,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -10.416501298531657
+      ],
+      "placebo_centered_mean95_abs_bps": 7.52640448156043,
+      "holm_p": 0.531021270191672
+    },
+    {
+      "id": "reversal_60_equal_overnight",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.6975722605819303,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 3.3951445211638607,
+      "long_relative_bps_per_occupied_session": 0.5477184202368924,
+      "short_underlying_relative_bps_per_occupied_session": -2.8474261009269686,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.78679387381055,
+          "net_leg_hit_rate": 0.47633136094674555,
+          "decisive_net_hit_rate": 0.4724137931034483,
+          "decisive_legs": 580,
+          "endpoint_drawdown_pct": -9.883290114930132,
+          "compounded_endpoint_return_pct": -6.426051211613471,
+          "expected_shortfall5_bps_per_trade": -120.27390335694724
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -8.786793873810549,
+          "net_leg_hit_rate": 0.4275147928994083,
+          "decisive_net_hit_rate": 0.4358108108108108,
+          "decisive_legs": 592,
+          "endpoint_drawdown_pct": -15.157998889172797,
+          "compounded_endpoint_return_pct": -14.012971566589815,
+          "expected_shortfall5_bps_per_trade": -125.27390335694724
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -23.786793873810545,
+          "net_leg_hit_rate": 0.3594674556213018,
+          "decisive_net_hit_rate": 0.3277591973244147,
+          "decisive_legs": 598,
+          "endpoint_drawdown_pct": -33.34146834573789,
+          "compounded_endpoint_return_pct": -33.29528674817565,
+          "expected_shortfall5_bps_per_trade": -140.27390335694722
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -8.786793873810549,
+        "se": 3.949346769147153,
+        "ci95": [
+          -16.827436769249903,
+          -1.220315373618271
+        ],
+        "mde80": 17.146567791671863,
+        "z": -2.2248727162816406,
+        "p": 0.026089784087355957,
+        "positive_control_5bps_z": 1.2660321547504252,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 42.75147928994083,
+        "se": 1.3886625425079004,
+        "ci95": [
+          39.94082840236686,
+          45.41420118343195
+        ],
+        "mde80": 6.02904678081965,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -8.786793873810549
+      ],
+      "placebo_centered_mean95_abs_bps": 6.525331563409512,
+      "holm_p": 0.6261548180965429
+    },
+    {
+      "id": "reversal_60_equal_weekly",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "equal",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -2.3473451530037868,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -4.6946903060075735,
+      "long_relative_bps_per_occupied_session": 5.65402659215021,
+      "short_underlying_relative_bps_per_occupied_session": 10.348716898157784,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.814307280320468,
+          "net_leg_hit_rate": 0.4485294117647059,
+          "decisive_net_hit_rate": 0.44029850746268656,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -10.172806304032267,
+          "compounded_endpoint_return_pct": -6.5936708220787015,
+          "expected_shortfall5_bps_per_trade": -295.89650211238745
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -4.814307280320469,
+          "net_leg_hit_rate": 0.4411764705882353,
+          "decisive_net_hit_rate": 0.43609022556390975,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -11.116171429146782,
+          "compounded_endpoint_return_pct": -8.1718368609636,
+          "expected_shortfall5_bps_per_trade": -300.89650211238745
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -7.8143072803204685,
+          "net_leg_hit_rate": 0.4117647058823529,
+          "decisive_net_hit_rate": 0.4122137404580153,
+          "decisive_legs": 131,
+          "endpoint_drawdown_pct": -13.8899846872649,
+          "compounded_endpoint_return_pct": -12.752620858574215,
+          "expected_shortfall5_bps_per_trade": -315.89650211238745
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -4.814307280320469,
+        "se": 2.968166437587007,
+        "ci95": [
+          -10.424827955024085,
+          1.0358044165791769
+        ],
+        "mde80": 12.886654430206224,
+        "z": -1.6219802297320953,
+        "p": 0.10480758134957315,
+        "positive_control_5bps_z": 1.6845416539595357,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 44.11764705882353,
+        "se": 3.525309214433959,
+        "ci95": [
+          37.5,
+          50.73529411764706
+        ],
+        "mde80": 15.305557340296724,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -4.814307280320469
+      ],
+      "placebo_centered_mean95_abs_bps": 5.7519116102354335,
+      "holm_p": 1.0
+    },
+    {
+      "id": "reversal_60_inverse_vol_intraday",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "intraday",
+      "slots": 170,
+      "legs": 680,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -0.35307005389069934,
+      "benchmark_bps_per_occupied_session": 2.9669591493045075,
+      "long_minus_short_bps_per_occupied_session": -0.7061401077813987,
+      "long_relative_bps_per_occupied_session": 3.251639438275939,
+      "short_underlying_relative_bps_per_occupied_session": 3.9577795460573375,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -5.464371423753714,
+          "net_leg_hit_rate": 0.4632352941176471,
+          "decisive_net_hit_rate": 0.47208931419457734,
+          "decisive_legs": 627,
+          "endpoint_drawdown_pct": -10.367766653803923,
+          "compounded_endpoint_return_pct": -9.100607088287793,
+          "expected_shortfall5_bps_per_trade": -120.04556775503877
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -10.464371423753716,
+          "net_leg_hit_rate": 0.45,
+          "decisive_net_hit_rate": 0.44952681388012616,
+          "decisive_legs": 634,
+          "endpoint_drawdown_pct": -17.161014094979265,
+          "compounded_endpoint_return_pct": -16.513656333849312,
+          "expected_shortfall5_bps_per_trade": -125.04556775503877
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -25.464371423753715,
+          "net_leg_hit_rate": 0.40441176470588236,
+          "decisive_net_hit_rate": 0.39906103286384975,
+          "decisive_legs": 639,
+          "endpoint_drawdown_pct": -35.54942911418626,
+          "compounded_endpoint_return_pct": -35.335227231861246,
+          "expected_shortfall5_bps_per_trade": -140.04556775503877
+        }
+      },
+      "primary": {
+        "n": 170,
+        "mean": -10.464371423753716,
+        "se": 4.298964177426493,
+        "ci95": [
+          -18.933470489083895,
+          -2.0298464795613556
+        ],
+        "mde80": 18.664474155084175,
+        "z": -2.4341611122747357,
+        "p": 0.014926349614215954,
+        "positive_control_5bps_z": 1.1630708686186755,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 170,
+        "mean": 45.0,
+        "se": 2.2577628006677535,
+        "ci95": [
+          40.588235294117645,
+          49.411764705882355
+        ],
+        "mde80": 9.802350915750168,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -10.464371423753716
+      ],
+      "placebo_centered_mean95_abs_bps": 7.672229696174691,
+      "holm_p": 0.4527942137616162
+    },
+    {
+      "id": "reversal_60_inverse_vol_overnight",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "overnight",
+      "slots": 169,
+      "legs": 676,
+      "missing_windows": 1,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": 1.2041638495259606,
+      "benchmark_bps_per_occupied_session": 4.562839581182302,
+      "long_minus_short_bps_per_occupied_session": 2.408327699051921,
+      "long_relative_bps_per_occupied_session": 0.4296367045957064,
+      "short_underlying_relative_bps_per_occupied_session": -1.9786909944562145,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -4.28020228486652,
+          "net_leg_hit_rate": 0.47633136094674555,
+          "decisive_net_hit_rate": 0.4724137931034483,
+          "decisive_legs": 580,
+          "endpoint_drawdown_pct": -9.840340844038076,
+          "compounded_endpoint_return_pct": -7.16796736236367,
+          "expected_shortfall5_bps_per_trade": -111.92878670575561
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -9.28020228486652,
+          "net_leg_hit_rate": 0.4275147928994083,
+          "decisive_net_hit_rate": 0.4358108108108108,
+          "decisive_legs": 592,
+          "endpoint_drawdown_pct": -15.266259803975146,
+          "compounded_endpoint_return_pct": -14.695057188729033,
+          "expected_shortfall5_bps_per_trade": -116.92878670575563
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -24.28020228486652,
+          "net_leg_hit_rate": 0.3594674556213018,
+          "decisive_net_hit_rate": 0.3277591973244147,
+          "decisive_legs": 598,
+          "endpoint_drawdown_pct": -33.85892065030113,
+          "compounded_endpoint_return_pct": -33.82517137311771,
+          "expected_shortfall5_bps_per_trade": -131.92878670575564
+        }
+      },
+      "primary": {
+        "n": 169,
+        "mean": -9.28020228486652,
+        "se": 3.557307441664502,
+        "ci95": [
+          -16.600498111279702,
+          -2.598939510112752
+        ],
+        "mde80": 15.444481523077542,
+        "z": -2.6087715040239017,
+        "p": 0.009086789540214765,
+        "positive_control_5bps_z": 1.4055574565858853,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "net_hit_inference_pp": {
+        "n": 169,
+        "mean": 42.75147928994083,
+        "se": 1.3886625425079004,
+        "ci95": [
+          39.94082840236686,
+          45.41420118343195
+        ],
+        "mde80": 6.02904678081965,
+        "block_length": 20,
+        "status": "EXPLORATORY"
+      },
+      "blocks_bps": [
+        -9.28020228486652
+      ],
+      "placebo_centered_mean95_abs_bps": 5.718668197023165,
+      "holm_p": 0.2998640548270872
+    },
+    {
+      "id": "reversal_60_inverse_vol_weekly",
+      "direction": "reversal",
+      "lookback": 60,
+      "sizing": "inverse_vol",
+      "horizon": "weekly",
+      "slots": 34,
+      "legs": 136,
+      "missing_windows": 0,
+      "first_entry": "2026-01-02",
+      "last_exit": "2026-09-04",
+      "adoptable": false,
+      "gross_bps_per_occupied_session": -1.5876955056104007,
+      "benchmark_bps_per_occupied_session": 4.399604191416972,
+      "long_minus_short_bps_per_occupied_session": -3.1753910112208015,
+      "long_relative_bps_per_occupied_session": 5.387804171088523,
+      "short_underlying_relative_bps_per_occupied_session": 8.563195182309322,
+      "gross_turnover_per_round_trip": 2.0,
+      "cost_scenarios": {
+        "5": {
+          "mean_bps_per_occupied_session": -3.054657632927081,
+          "net_leg_hit_rate": 0.4485294117647059,
+          "decisive_net_hit_rate": 0.44029850746268656,
+          "decisive_legs": 134,
+          "endpoint_drawdown_pct": -8.682732997269238,
+          "compounded_endpoint_return_pct": -5.366010005655308,
+          "expected_shortfall5_bps_per_trade": -286.6824789736332
+        },
+        "10": {
+          "mean_bps_per_occupied_session": -4.054657632927081,
+          "net_leg_hit_rate": 0.4411764705882353,
+          "decisive_net_hit_rate": 0.43609022556390975,
+          "decisive_legs": 133,
+          "endpoint_drawdown_pct": -9.64099998161021,
+          "compounded_endpoint_return_pct": -6.964303681308048,
+          "expected_shortfall5_bps_per_trade": -291.6824789736332
+        },
+        "25": {
+          "mean_bps_per_occupied_session": -7.054657632927082,
+          "net_leg_hit_rate": 0.4117647058823529,
+          "decisive_net_hit_rate": 0.4122137404580153,
+          "decisive_legs": 131,
+          "endpoint_drawdown_pct": -12.458674024826921,
+          "compounded_endpoint_return_pct": -11.603569343396192,
+          "expected_shortfall5_bps_per_trade": -306.6824789736332
+        }
+      },
+      "primary": {
+        "n": 34,
+        "mean": -4.054657632927081,
+        "se": 2.496090135815239,
+        "ci95": [
+          -8.829841606285182,
+          0.7813537531686395
+        ],
+        "mde80": 10.83707793456734,
+        "z": -1.6244035320474532,
+        "p": 0.10428971376138686,
+        "positive_control_5bps_z": 2.0031327908625256,
+        "target_5bps_detectable": false,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "net_hit_inference_pp": {
+        "n": 34,
+        "mean": 44.11764705882353,
+        "se": 3.525309214433959,
+        "ci95": [
+          37.5,
+          50.73529411764706
+        ],
+        "mde80": 15.305557340296724,
+        "block_length": 20,
+        "status": "UNDERPOWERED"
+      },
+      "blocks_bps": [
+        -4.054657632927081
+      ],
+      "placebo_centered_mean95_abs_bps": 5.186452914406842,
+      "holm_p": 1.0
+    }
+  ],
+  "adoptable": false,
+  "frozen_development_sha256": "ddd1a1d8ba9a0f8e47ef6ce992bf16cdd173f121dcf9033447b867d52e8a44eb",
+  "frozen_winner_research_gate_passed": false,
+  "conclusion": "NO_CONFIRMED_CANDIDATE"
+}

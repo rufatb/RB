@@ -4854,3 +4854,36 @@ and fidelity work, not a prediction improvement. MDE for operational fixes is
 not an alpha statistic; the existing shadow-arm MDE/gates remain unchanged.
 No baseline features, selection thresholds, allocation rules or holding horizons
 are newly adopted. Same-day published selections remain authoritative.
+
+## Day 91 — research correctness and a fixed 48-arm second pass
+
+The user requested broader simulated research. `PREREGISTER_day91.md` was
+published before price acquisition; development selection/hash was committed
+before confirmation data access. The ETF study is separate from the TSX
+baseline and day90 execution arms. No earlier rejection is deleted or reversed.
+
+Corrected research defects: the ceiling k-NN comparator differed from live
+arithmetic; its row-based AUC uncertainty ignored same-session dependence;
+entry-time research used a future-inclusive volume median; `build_us --years`
+did not reach acquisition. Failures now have safe explicit diagnostics in the
+modified loaders. The old signed cost-effect clipping function remains a
+historical diagnostic and is no longer described as executable net P&L.
+Active legacy 52–56% win-rate claims are removed. A finite proxy study is not
+proof that new information or another properly tested model can never work.
+
+New family: 48 fixed sector-ETF momentum/reversal × lookback × sizing × horizon
+arms, each evaluated at 5/10/25bps assumed round-trip friction plus 3% short
+borrow. Massive's returned price history was shorter than requested; the
+registered 2025 feasibility fallback and January–September 4, 2026 confirmation
+were used. Dividends and non-overlapping weekly positions are accounted for.
+All ten symbols have complete session coverage over the tested periods.
+
+At primary costs, five arms were positive in development and four in confirmation;
+none was positive in both. No positive result survived the 48-arm Holm correction.
+The frozen 20-session reversal/equal-size/weekly leader went from +2.32 to
+−3.80 bps per occupied session. Confirmation hit rate was 50%; MDE80 was 26.62 bps
+on 34 weekly trades: UNDERPOWERED for the 5 bps target. These simulations do not
+establish an improved predictor, exact execution result or adoption candidate.
+See `AUDIT_day91.md` and the complete `data/day91_*` results. Baseline strategy,
+biotech isolation, scheduled delivery pins and private publication state remain
+unchanged. Software validation is not a P&L claim.
