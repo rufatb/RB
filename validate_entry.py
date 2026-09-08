@@ -30,6 +30,12 @@ Agreement between them is the evidence; either alone is not.
 RESULTS (2026-08-13) -- 9:46 STANDS, and day-21's verdict is confirmed on
 rebuildable data with a calibrated null. REJECTED (#29).
 
+REPRODUCIBILITY CORRECTION (day-91): the results below are the original
+historical record, not results regenerated with the corrected scorer. Volume
+pace now uses a shifted expanding median with 20 prior observations; the old
+full-sample median leaked future volumes. No historical rejection is reversed
+and this research-only correction does not change production selection.
+
   TSX 5m, 35 test sessions          US twins 1h, ~288 test sessions, 2 years
     09:35  -0.0285%  t -0.25          10:30* -0.0212%  t -0.82
     09:40  +0.0802%  t +1.00          11:30  -0.0316%  t -1.39
@@ -71,6 +77,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -121,22 +128,53 @@ def rows_at(bars: pd.DataFrame, ticker: str, i: int, min_bars: int) -> list:
 
 def fetch_all(universe: list, interval: str, rng: str, tz: str,
               workers: int = 12) -> dict:
+    """Fetch the panel and explicitly count absent data and safe error kinds."""
     a = YahooDirectAdapter(exchange_tz=tz)
 
     def one(t):
         try:
-            return t, a._bars_df(a._chart(t, interval, rng))
-        except Exception:
-            return t, pd.DataFrame()
+            bars = a._bars_df(a._chart(t, interval, rng))
+            return t, bars, "EmptyBars" if bars.empty else None
+        except Exception as exc:
+            # Exception messages can contain a request URL or credentials.
+            # Keep only the class and numeric HTTP status, never its text.
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            reason = (f"HTTP_{status}" if isinstance(status, int)
+                      and 100 <= status <= 599 else type(exc).__name__)
+            return t, pd.DataFrame(), reason
 
+    fetched, failures = {}, Counter()
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        return dict(ex.map(one, universe))
+        for t, bars, reason in ex.map(one, universe):
+            fetched[t] = bars
+            if reason:
+                failures[reason] += 1
+    print(f"  acquisition: {sum(not b.empty for b in fetched.values())}/"
+          f"{len(universe)} names with bars; {sum(failures.values())} absent"
+          + (" (" + ", ".join(f"{k}={v}" for k, v in sorted(failures.items()))
+             + ")" if failures else ""), flush=True)
+    return fetched
+
+
+def add_past_volume_pace(feats: pd.DataFrame) -> pd.DataFrame:
+    """Normalize each entry volume by at least 20 strictly earlier sessions.
+
+    Current and future volumes never enter the denominator. An unavailable or
+    zero historical median leaves vp unknown rather than substituting one.
+    Duplicate ticker/session rows cannot form a strictly earlier history.
+    """
+    if feats.duplicated(["t", "date"]).any():
+        raise ValueError("duplicate ticker/session rows in entry research panel")
+    feats = feats.sort_values(["t", "date"], kind="stable").copy()
+    past_median = feats.groupby("t")["v15"].transform(
+        lambda s: s.shift(1).expanding(min_periods=20).median())
+    feats["vp"] = feats["v15"] / past_median.replace(0, np.nan)
+    return feats
 
 
 def scored(feats: pd.DataFrame, min_train: int) -> list:
     """Walk-forward: per-session arrays of p_up / nd / outcome. Past-only."""
-    feats = feats.copy()
-    feats["vp"] = feats.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
+    feats = add_past_volume_pace(feats)
     dates = sorted(feats["date"].unique())
     days = []
     for k, d in enumerate(dates):

@@ -10,7 +10,7 @@ every candidate that qualified at the bar, not only the two it traded:
     role="pair"    the legs the density rule SELECTED, and traded
     role="board"   qualified the same day, same universe, same bar, NOT selected
 
-Both are scored against the same 15:59 close. The board rows are therefore a
+Both are scored against the same official daily close (legacy proxy). The board rows are therefore a
 ready-made counterfactual — "a qualifying name we did not pick" — which makes
 this an out-of-sample test of the SELECTION RULE rather than of the model. No
 new data was needed; it had been accruing for 38 sessions.

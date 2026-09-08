@@ -1,3 +1,16 @@
+# RB daily tactical report
+
+Current entrypoint: `python brief.py`; scheduled publication: `python daily_job.py --send`
+at 09:46 America/New_York. One computation feeds text, HTML and JSON. The full
+intraday shadow board is separate from the objective small-cap biotech monitor.
+No demonstrated prediction improvement or overnight adoption is claimed.
+
+Start with [RUNBOOK.md](RUNBOOK.md), [BIOTECH_DATA.md](BIOTECH_DATA.md),
+[AUDIT_day90.md](AUDIT_day90.md) and [CLAUDE.md](CLAUDE.md). The historical
+09:31 single-ticker dashboard documentation below describes a retained legacy CLI.
+
+---
+
 # Pre-Open Brief — Intraday Decision-Support Dashboard
 
 A command-line tool that runs around **09:31 ET** each trading day and prints an
@@ -66,7 +79,7 @@ Python 3.11+ required (uses `zoneinfo`).
 > | RECORD | live hit rate, decisive legs, tide-relative capture, attribution |
 >
 > The intraday contract is unchanged: enter at market inside the printed
-> bounds, hold, **flat by 3:55**. Score after the close with
+> bounds, hold, **flat by 3:59** (official-close historical proxy). Score after the close with
 > `python ledger.py --score`.
 >
 > `brief.py` calls `r945.publish()` — the SAME publish path `r945.py --book`

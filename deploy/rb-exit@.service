@@ -1,0 +1,13 @@
+[Unit]
+Description=RB registered exit quote collection at %I ET
+After=network-online.target
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python collect_execution.py --exit %I --state-dir /var/lib/rb-report
+TimeoutStartSec=45
+UMask=0077
+NoNewPrivileges=true

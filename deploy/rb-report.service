@@ -1,0 +1,14 @@
+[Unit]
+Description=RB daily tactical report (one immutable publication)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+UMask=0077
+NoNewPrivileges=true
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python daily_job.py --state-dir /var/lib/rb-report --output-dir /var/lib/rb-report/latest --send
+TimeoutStartSec=65

@@ -119,6 +119,9 @@ def _days(d: dt.date, today: dt.date) -> int:
 
 
 def render(d: dict) -> str:
+    if d.get("schema_version") == 2:
+        from daily_render import text
+        return text(d)
     """The short page, from the digest `brief.build` filled in."""
     today = d.get("today") or dt.date.today()
     now = d.get("now")

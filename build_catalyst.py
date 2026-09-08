@@ -15,9 +15,10 @@ the PRIMARY source for this question and arguably better than a paid feed:
 
   CRL events        8-K containing "complete response letter". A CRL is a
                     material event, so a listed issuer must disclose it. The
-                    FDA itself never publishes CRLs — they are confidential by
-                    statute — so the issuer's own 8-K is the only public record
-                    and EDGAR is where it lives forever.
+                    FDA also publishes redacted CRLs in its transparency
+                    database (policy changed in 2025). EDGAR is retained here
+                    to match the approval denominator and historical harvest;
+                    see AUDIT_day90.md before adding a second source.
   APPROVAL events   8-K containing approval language. Cross-checkable against
                     openFDA's Drugs@FDA, which is free and authoritative for
                     approvals (but, again, silent on rejections).

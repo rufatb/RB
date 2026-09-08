@@ -13,9 +13,9 @@ import screen as S
 
 def _chain(spot, call_px, put_px, call_iv=0.8, put_iv=0.8):
     strikes = [spot * 0.9, spot, spot * 1.1]
-    calls = [{"strike": k, "lastPrice": call_px, "impliedVolatility": call_iv}
+    calls = [{"strike": k, "bid": call_px, "ask": call_px, "lastPrice": call_px, "impliedVolatility": call_iv}
              for k in strikes]
-    puts = [{"strike": k, "lastPrice": put_px, "impliedVolatility": put_iv}
+    puts = [{"strike": k, "bid": put_px, "ask": put_px, "lastPrice": put_px, "impliedVolatility": put_iv}
             for k in strikes]
     return calls, puts
 
@@ -285,14 +285,14 @@ def test_a_two_sided_quote_is_priced_at_the_mid_not_the_last_trade():
     assert px == 4.5 and src == "mid"
 
 
-def test_last_trade_is_used_only_as_a_fallback_and_is_labelled():
+def test_last_trade_is_not_an_executable_fallback():
     px, src = S.option_price({"bid": None, "ask": None, "lastPrice": 12.0})
-    assert px == 12.0 and src == "last"
+    assert px is None and src == "none"
     assert S.option_price({})[0] is None
 
 
-def test_a_crossed_or_empty_book_falls_back_rather_than_inventing_a_mid():
-    assert S.option_price({"bid": 9.0, "ask": 0.0, "lastPrice": 8.0})[1] == "last"
+def test_a_crossed_or_empty_book_is_unpriceable():
+    assert S.option_price({"bid": 9.0, "ask": 0.0, "lastPrice": 8.0})[1] == "none"
 
 
 def test_parity_holds_for_live_quotes_and_breaks_for_a_stale_leg():
@@ -302,7 +302,7 @@ def test_parity_holds_for_live_quotes_and_breaks_for_a_stale_leg():
     live_p = {"strike": 100.0, "bid": 7.9, "ask": 8.1}
     assert S.parity_gap(live_c, live_p, 100.0) < 0.005
     stale_p = {"strike": 100.0, "bid": None, "ask": None, "lastPrice": 2.0}
-    assert S.parity_gap(live_c, stale_p, 100.0) > S.PARITY_TOL
+    assert S.parity_gap(live_c, stale_p, 100.0) is None
 
 
 def test_parity_is_not_applied_across_different_strikes():

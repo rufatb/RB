@@ -358,7 +358,7 @@ def render_html(res: dict, book: bool = False, record_line: str = "") -> str:
         '<div class="card"><h2>The rules that do not change</h2><div class="rules">'
         '<div><b>The share counts are the risk model.</b> Trading larger '
         'multiplies every loss by the same factor and voids every number above.</div>'
-        '<div><b>Close every leg by 3:55.</b> One night nearly doubles volatility '
+        '<div><b>Current intraday contract: exit by 3:59.</b> One night nearly doubles volatility '
         'and worsens the tail 2.3×; 3- and 5-day holds collect market drift, not '
         'signal, at ten times the variance.</div>'
         '<div><b>Do not exit earlier either.</b> Across 944 legs the capture curve '

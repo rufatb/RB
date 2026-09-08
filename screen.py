@@ -107,43 +107,14 @@ RICH_MOVE = _CRL * 3 / 100                # 0.456
 CHEAP_MOVE = IMMATERIAL_MOVE              # name kept: callers outside this file
 
 
-class Yahoo:
-    """Options access needs a cookie + crumb since 2023; plain GETs return 401."""
-
-    def __init__(self):
-        self.cj = http.cookiejar.CookieJar()
-        self.op = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cj))
-        self.crumb = None
-
-    def _get(self, url: str) -> bytes:
-        return self.op.open(urllib.request.Request(url, headers=H),
-                            timeout=40).read()
-
-    def auth(self) -> None:
-        if self.crumb:
-            return
-        try:
-            self._get("https://fc.yahoo.com")
-        except Exception:
-            pass                      # seeds the cookie even on an error status
-        self.crumb = self._get(
-            "https://query2.finance.yahoo.com/v1/test/getcrumb").decode()
-
-    def chain(self, ticker: str, expiry: int | None = None) -> dict:
-        self.auth()
-        u = (f"https://query2.finance.yahoo.com/v7/finance/options/{ticker}"
-             f"?crumb={self.crumb}")
-        if expiry:
-            u += f"&date={expiry}"
-        return json.loads(self._get(u))["optionChain"]["result"][0]
+from quotes import YahooMarketData as Yahoo, option_mid, option_metrics, matched_pair
 
 
 def pick_expiry(expiries: list, after: dt.date) -> int | None:
     """The first expiry that still covers the event. An expiry BEFORE the
     decision prices a different question entirely."""
     for e in sorted(expiries):
-        if dt.datetime.utcfromtimestamp(e).date() >= after:
+        if dt.datetime.fromtimestamp(e, dt.timezone.utc).date() >= after:
             return e
     return None
 
@@ -154,23 +125,8 @@ def _atm(rows: list, spot: float) -> dict | None:
 
 
 def option_price(row: dict) -> tuple:
-    """(price, source). MID when a two-sided quote exists, LAST otherwise.
-
-    THE TRAP THIS AVOIDS, and it corrupts the one number the verdict turns on.
-    `lastPrice` is whenever that contract last traded — on an illiquid biotech
-    strike that can be days ago at a materially different spot. Run live, JAZZ
-    priced an ATM put at 3.7% of spot against a 10% implied move: the two legs
-    of one straddle disagreeing by more than the event they price. A breakeven
-    computed from that is not conservative or aggressive, it is fiction.
-
-    The mid of a live bid/ask is a real, current price. `lastPrice` is a
-    historical fact that may not be a price at all, so when it is all there is,
-    the source travels with it and the caller says so out loud."""
-    b, a = row.get("bid"), row.get("ask")
-    if b is not None and a is not None and float(a) > 0 and float(a) >= float(b):
-        return (float(b) + float(a)) / 2, "mid"
-    lp = row.get("lastPrice")
-    return (float(lp), "last") if lp is not None else (None, "none")
+    """Validated finite, positive BBO midpoint; no stale-last fallback."""
+    return option_mid(row)
 
 
 def parity_gap(call: dict, put: dict, spot: float) -> float | None:
@@ -199,45 +155,19 @@ PARITY_TOL = 0.03
 
 
 def implied_move(calls: list, puts: list, spot: float) -> float | None:
-    """ATM straddle over spot — the market's expected magnitude, either way."""
-    c, p = _atm(calls, spot), _atm(puts, spot)
-    if not c or not p or not spot:
-        return None
-    cp, _ = option_price(c)
-    pp, _ = option_price(p)
-    if cp is None or pp is None:
-        return None
-    return (cp + pp) / spot
+    """Matched-strike straddle midpoint/spot; diagnostic, not quote freshness."""
+    return option_metrics(calls, puts, spot)["move"]
 
 
 def leg_costs(calls: list, puts: list, spot: float) -> tuple:
-    """ATM call and ATM put, each as a fraction of spot.
-
-    The straddle is one number for a two-sided question. Day-68 measured the
-    two sides separately and found them nothing alike, so the cost of each side
-    has to be separable too — the put is priced against a MEASURED -15.2%
-    median rejection, the call against an approval leg that failed its placebo
-    gate. Averaging them into one 'implied move' hides exactly the asymmetry
-    that makes the decision."""
-    c, p = _atm(calls, spot), _atm(puts, spot)
-    if not c or not p or not spot:
-        return None, None
-    cp, _ = option_price(c)
-    pp, _ = option_price(p)
-    if cp is None or pp is None:
-        return None, None
-    return cp / spot, pp / spot
+    """Matched-strike call/put midpoint fractions; invalid BBO returns missing."""
+    m = option_metrics(calls, puts, spot)
+    return m["call_pct"], m["put_pct"]
 
 
 def skew(calls: list, puts: list, spot: float) -> float | None:
-    """ATM put IV minus ATM call IV. Positive = downside costs more."""
-    c, p = _atm(calls, spot), _atm(puts, spot)
-    if not c or not p:
-        return None
-    ci, pi = c.get("impliedVolatility"), p.get("impliedVolatility")
-    if ci is None or pi is None:
-        return None
-    return float(pi) - float(ci)
+    """Matched-strike put IV minus call IV; invalid/missing values stay missing."""
+    return option_metrics(calls, puts, spot)["skew"]
 
 
 def stance(move: float | None, sk: float | None, days: int,
@@ -657,40 +587,16 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
         if not (0 <= d <= horizon) or not c.get("ticker"):
             continue
         row = {**c, "days": d, "spot": None, "move": None, "skew": None}
-        try:
-            r = y.chain(c["ticker"])
-            row["spot"] = float(r["quote"].get("regularMarketPrice") or 0) or None
-            e = pick_expiry(r.get("expirationDates", []),
-                            dt.date.fromisoformat(c["date"]))
-            if e and row["spot"]:
-                rr = y.chain(c["ticker"], e)
-                o = (rr.get("options") or [{}])[0]
-                row["expiry"] = dt.datetime.utcfromtimestamp(e).date().isoformat()
-                row["move"] = implied_move(o.get("calls", []), o.get("puts", []),
-                                           row["spot"])
-                row["skew"] = skew(o.get("calls", []), o.get("puts", []),
-                                   row["spot"])
-                row["call_pct"], row["put_pct"] = leg_costs(
-                    o.get("calls", []), o.get("puts", []), row["spot"])
-                ca, pa = (_atm(o.get("calls", []), row["spot"]),
-                          _atm(o.get("puts", []), row["spot"]))
-                row["px_source"] = option_price(pa)[1] if pa else "none"
-                row["parity"] = parity_gap(ca, pa, row["spot"])
-                row["put_oi"] = (pa or {}).get("openInterest")
-                row["_puts"], row["_atm_put"] = o.get("puts", []), pa
-            row["_expiries"] = r.get("expirationDates", [])
-        except Exception as ex:
-            row["error"] = type(ex).__name__
-            row["reason"] = _q.CHAIN_ERROR
-            row["reason_detail"] = type(ex).__name__
-        # TYPED, not a class name. The old `error` recorded only the exception
-        # type and the silent paths -- no expiry, no spot, no puts -- recorded
-        # nothing, so every distinct cause reached the report as one sentence.
-        if "reason" not in row:
-            row["reason"] = _q.classify(
-                row.get("spot"), row.get("_expiries"), row.get("expiry"),
-                row.get("_puts"), row.get("_atm_put"), row.get("parity"),
-                PARITY_TOL, feed_live=feed_live)
+        from zoneinfo import ZoneInfo
+        current = dt.datetime.now(ZoneInfo("America/New_York"))
+        quote = _q.event_quote(y, c["ticker"], dt.date.fromisoformat(c["date"]), current)
+        row.update({k: quote.get(k) for k in
+                    ("spot", "move", "skew", "expiry", "call_pct", "put_pct", "parity", "put_oi", "call_oi")})
+        row["px_source"] = "mid" if quote["status"] == "OK" else "none"
+        row["reason"] = _q.OK if quote["status"] == "OK" else _q.CHAIN_ERROR
+        row["reason_detail"] = quote["reason"]
+        if quote["status"] != "OK":
+            row["error"] = quote["reason"]
         row["reason_why"] = _q.EXPLAIN.get(row["reason"], row["reason"])
         row["feed_live"] = feed_live
         row["stance"], row["why"] = stance(row["move"], row["skew"], d,
@@ -702,8 +608,9 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
         try:
             import fundamentals as _f
             row["fund"] = _f.summarise(c["cik"], today) if c.get("cik") else None
-        except Exception:
+        except Exception as exc:
             row["fund"] = None
+            row["fund_error"] = type(exc).__name__
         # The synthesis runs LAST, after every input it reads is on the row.
         # It must never be the reason a name drops out of the screen: a broken
         # verdict still leaves a real date and a real price worth seeing.
@@ -903,8 +810,8 @@ def render(rows: list, today: dt.date) -> str:
             import partners as _p
             sh = (r.get("fund") or {}).get("shares")
             L += _p.render(r.get("partner"), r.get("spot"), sh)
-        except Exception:
-            pass
+        except Exception as exc:
+            L.append('        Partner evidence unavailable: ' + type(exc).__name__)
         if r.get("error"):
             L.append(f"        ⚠ options unavailable ({r['error']}) — "
                      "the date stands, the pricing does not")

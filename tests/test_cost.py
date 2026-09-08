@@ -26,7 +26,7 @@ def test_a_crossed_book_is_unknown_rather_than_negative():
 
 
 def test_the_cost_is_a_full_spread_because_both_crossings_are_certain():
-    """The strategy is flat by 15:55 every day. There is no version of this
+    """The strategy is flat by 15:59 every day. There is no version of this
     trade that pays the spread once."""
     d = C.drag(20.0, shares=1000, price=50.0)
     assert abs(d["usd"] - 20.0 / 10000 * 1000 * 50.0) < 1e-9
@@ -85,7 +85,7 @@ def test_render_states_the_arithmetic_is_not_a_forecast():
              "cost": C.drag(30.0, 100, 30.0)}]
     out = " ".join(C.render(rows))
     assert "arithmetic, not a forecast" in out
-    assert "it IS the outcome" in out
+    assert "Hit rate alone does not determine P&L" in out
 
 
 def test_render_names_an_unknown_spread_as_unknown_in_the_report():

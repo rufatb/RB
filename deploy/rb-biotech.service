@@ -1,0 +1,16 @@
+[Unit]
+Description=RB pre-open history and biotech preparation
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStartPre=-/opt/RB/.venv/bin/python bar_cache.py --directory /var/lib/rb-report/intraday_cache
+ExecStart=-/opt/RB/.venv/bin/python build_biotech.py
+ExecStartPost=/opt/RB/.venv/bin/python preflight.py --state-dir /var/lib/rb-report --output /var/lib/rb-report/preflight.json
+TimeoutStartSec=1800
+UMask=0077
+NoNewPrivileges=true

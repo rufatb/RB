@@ -1,0 +1,3 @@
+# Reproduce optional model-comparison studies as well as the core ETF sweep.
+-r requirements.txt
+scikit-learn>=1.3

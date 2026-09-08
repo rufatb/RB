@@ -1,3 +1,10 @@
+> **Current day-90 contract (2026-09-08):** see [AUDIT_day90.md](AUDIT_day90.md),
+> [PREREGISTER_day90.md](PREREGISTER_day90.md), and [RUNBOOK.md](RUNBOOK.md).
+> The chronological entries below are retained historical decisions, including
+> rejected claims; they are not permission to revive them. No day-90 strategy
+> or overnight edge was adopted. Report timing is 09:46 ET; exact entry/exit
+> observations are separate from historical bar/official-close proxies.
+
 # Strategy & Lessons Learned
 
 A living record of what went wrong in live trading and the rules now **encoded in
@@ -4817,3 +4824,66 @@ would sell itself to a reader watching the wrong number.
    lean, not a prediction.
 
 If a setup fails any of these, the honest output is **WAIT / STAND DOWN**.
+
+
+## Day 90 — report integrity, independent biotech monitor, no alpha adoption
+
+Audited CLAUDE/STRATEGY before changes and froze the preregistration in GitHub
+before analysing outcomes. Replaced repeated report-time acquisition with one
+frozen computation; consolidated cost/options validation; preserved all research
+harnesses and baseline selection/allocation. Added complete-universe ADV20 biotech
+ranking, sourced event review, tri-state priced-in suppression and five factual
+bullets per Monitor issuer (at most two). No directional biotech calls enter the
+new daily report.
+
+Historical pair accuracy is 52/107 gross (48.60%); only six legs contain a stored
+spread. Two complete session proxies have 80%-power MDE 64.10bps against a 5bps
+target: UNDERPOWERED. Exact H1/H2/H3 studies are BLOCKED by absent historical
+BBO/index/alternative-exit data. `data/day90_results.json` records all arms and
+input hash. No accuracy, P&L or overnight improvement is claimed. See the audit
+for FDA-source corrections and current live-data/deployment limitations.
+
+### September 8 operational recovery — no strategy adoption
+
+The first email used an older pinned ledger and an all-or-nothing 38-second
+fallback, omitting Claude's subsequently saved two-long/two-short board. Fixed
+record synchronization, independent acquisition deadlines, preserved position
+facts, explicit unevaluated status, same-session pre-open history caching, and
+an unranked evidence-reviewed daily/weekly calendar. This is report availability
+and fidelity work, not a prediction improvement. MDE for operational fixes is
+not an alpha statistic; the existing shadow-arm MDE/gates remain unchanged.
+No baseline features, selection thresholds, allocation rules or holding horizons
+are newly adopted. Same-day published selections remain authoritative.
+
+## Day 91 — research correctness and a fixed 48-arm second pass
+
+The user requested broader simulated research. `PREREGISTER_day91.md` was
+published before price acquisition; development selection/hash was committed
+before confirmation data access. The ETF study is separate from the TSX
+baseline and day90 execution arms. No earlier rejection is deleted or reversed.
+
+Corrected research defects: the ceiling k-NN comparator differed from live
+arithmetic; its row-based AUC uncertainty ignored same-session dependence;
+entry-time research used a future-inclusive volume median; `build_us --years`
+did not reach acquisition. Failures now have safe explicit diagnostics in the
+modified loaders. The old signed cost-effect clipping function remains a
+historical diagnostic and is no longer described as executable net P&L.
+Active legacy 52–56% win-rate claims are removed. A finite proxy study is not
+proof that new information or another properly tested model can never work.
+
+New family: 48 fixed sector-ETF momentum/reversal × lookback × sizing × horizon
+arms, each evaluated at 5/10/25bps assumed round-trip friction plus 3% short
+borrow. Massive's returned price history was shorter than requested; the
+registered 2025 feasibility fallback and January–September 4, 2026 confirmation
+were used. Dividends and non-overlapping weekly positions are accounted for.
+All ten symbols have complete session coverage over the tested periods.
+
+At primary costs, five arms were positive in development and four in confirmation;
+none was positive in both. No positive result survived the 48-arm Holm correction.
+The frozen 20-session reversal/equal-size/weekly leader went from +2.32 to
+−3.80 bps per occupied session. Confirmation hit rate was 50%; MDE80 was 26.62 bps
+on 34 weekly trades: UNDERPOWERED for the 5 bps target. These simulations do not
+establish an improved predictor, exact execution result or adoption candidate.
+See `AUDIT_day91.md` and the complete `data/day91_*` results. Baseline strategy,
+biotech isolation, scheduled delivery pins and private publication state remain
+unchanged. Software validation is not a P&L claim.

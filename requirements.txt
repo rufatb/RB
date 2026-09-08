@@ -3,6 +3,7 @@ requests>=2.28          # yahoo_direct / stooq / finnhub / twelvedata adapters
 yfinance>=0.2.40        # optional fallback adapter (yahoo_yf)
 pandas>=2.0
 numpy>=1.24
+scipy>=1.10            # pandas Spearman correlation in retained research harnesses
 
 # Claude analysis layer (optional; activates when ANTHROPIC_API_KEY is set)
 anthropic>=0.40
@@ -11,9 +12,9 @@ anthropic>=0.40
 pyyaml>=6.0
 rich>=13.0
 
-# Scheduling + market holidays (optional but recommended)
+# Scheduling + market holidays (calendar required by daily report)
 schedule>=1.2
-pandas_market_calendars>=4.0   # optional: dashboard.tsx_holidays is a verified built-in fallback
+pandas_market_calendars>=4.0   # required: exact report contract fails closed without it
 
 # Testing
 pytest>=7.0

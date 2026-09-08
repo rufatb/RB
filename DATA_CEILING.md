@@ -1,5 +1,15 @@
 # The free-data ceiling — what it costs, and what it would buy
 
+> Day91 qualification (September 8, 2026): this is the preserved day87 assessment
+> of its datasets. Statements below about impossible improvement, only paid
+> routes, or survivorship-neutral comparisons are not universal findings. The
+> day43 hourly panel omitted volume pace, its k-NN comparator differed from live
+> math, and row-based significance overstated independence. Those research
+> defects are corrected in code, without rewriting the original results.
+> A fixed, predeclared ETF experiment is feasible with connected price and
+> distribution data; it still has instrument-selection bias and cannot establish
+> stock-selection alpha. See PREREGISTER_day91.md and AUDIT_day91.md.
+
 Written day-87, after eleven arms across three markets and 4.3M ticker-days
 produced no adoptable strategy. This is not a shrug. Two of those failures were
 caused by data limits rather than by absent effects, and both limits have a
