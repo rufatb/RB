@@ -15,7 +15,17 @@
 #   0  ran and published (or correctly re-read an already-published board)
 #   3  not a trading day / market shut — expected, not an error
 #   4  the engine REFUSED on an integrity guard (clock, feed, coverage)
+#   5  ran but MISSED THE PUBLICATION WINDOW — no board recorded
 #   1  something actually failed
+#
+# --publish IS REQUIRED. `brief.py` alone is a preview and writes nothing; a
+# wrapper that omitted the flag would run cleanly every morning, exit 0, and
+# record nothing at all. That is the silent failure this file exists to avoid.
+#
+# THE WINDOW IS 60 SECONDS: execution.clock_status marks a run LATE at 09:47:00
+# and the check happens AFTER acquisition, not at process start. So the job
+# must be scheduled early enough that fetching 21 names FINISHES inside the
+# 09:46 minute. Starting at 09:46:00 is already too late on a slow feed.
 #
 # Nothing here places, sizes or cancels an order. It runs a read-only report
 # and commits the record of what that report said.
@@ -56,7 +66,7 @@ fi
 
 # ── 3. THE REPORT ──────────────────────────────────────────────────────────
 log "running the report"
-out="$(TZ=America/Toronto python brief.py 2>&1)"; rc=$?
+out="$(TZ=America/Toronto python brief.py --publish 2>&1)"; rc=$?
 printf '%s\n' "$out"
 
 if [ $rc -ne 0 ]; then
@@ -70,6 +80,15 @@ if printf '%s' "$out" | grep -qiE "REFUSING TO PUBLISH|CLOCK IS BEHIND|FEED IS S
     log "the engine REFUSED to publish on an integrity guard — see the output above."
     log "  No orders, no ledger rows. Fix the cause and re-run; do not override."
     exit 4
+fi
+
+# MISSED THE WINDOW. A LATE run renders a full page and publishes NOTHING, so
+# without this it reads like an ordinary morning while the day goes unrecorded.
+if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
+    log "MISSED THE 09:46 PUBLICATION WINDOW — the page above is informational."
+    log "  No board was recorded for today. Schedule the job EARLIER: the clock"
+    log "  is checked after acquisition, so the fetch must finish before 09:47."
+    exit 5
 fi
 
 # ── 4. PUSH THE RECORD ─────────────────────────────────────────────────────

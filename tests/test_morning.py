@@ -129,3 +129,40 @@ def test_a_holiday_and_a_broken_check_are_distinguishable():
     c = code()
     assert '"$rc" -eq 3' in c
     assert '"$rc" -ne 0' in c
+
+
+# ── day-94: the publish contract changed under the wrapper ─────────────────
+
+def test_it_passes_publish_because_brief_alone_writes_nothing():
+    """REGRESSION. `brief.py` became a PREVIEW that persists nothing; a wrapper
+    omitting --publish runs cleanly every morning, exits 0, and records
+    NOTHING. Silent success is the worst available failure here."""
+    c = code()
+    assert "brief.py --publish" in c, "the wrapper would only preview"
+
+
+def test_a_missed_publication_window_is_not_reported_as_success():
+    """A LATE run renders a full page and publishes nothing. Without this it
+    reads like an ordinary morning while the day goes unrecorded."""
+    c = code()
+    assert "exit 5" in c
+    for marker in ("LATE — informational", "entry window missed"):
+        assert marker in c, f"{marker} would pass as a normal run"
+
+
+def test_the_sixty_second_window_is_documented_where_it_is_scheduled():
+    """execution.clock_status marks a run LATE at 09:47:00 and checks AFTER
+    acquisition, so the fetch must finish inside the 09:46 minute."""
+    s = src()
+    assert "60 SECONDS" in s or "60 seconds" in s
+    assert "after acquisition" in s.lower()
+
+
+def test_the_clock_window_is_actually_one_minute_wide():
+    """Pins the contract the wrapper is written against, so a change to
+    execution.py surfaces here rather than as a silent empty ledger."""
+    import datetime as dt
+
+    import execution
+    src_ = open(execution.__file__).read()
+    assert "dt.time(9,46)" in src_ and "dt.time(9,47)" in src_
