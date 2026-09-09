@@ -35,7 +35,7 @@ study that already returned a verdict.
 |------|------:|------:|---------|
 | LIVE  | 35 | 14,085 | reachable from `brief.py`; runs every morning |
 | TEST  | 12 |  3,212 | exercised only by the test suite |
-| STUDY | 23 |  3,885 | research harnesses; the reproducibility layer |
+| STUDY | 25 |  4,985 | research harnesses; the reproducibility layer |
 
 
 ## Verified, not asserted: can the STUDY layer actually re-run?
@@ -141,8 +141,10 @@ Not on the morning path. Candidates for consolidation, NOT deletion: several are
 | `build_insider` | 177 | open-market insider PURCHASES, from the SEC's bulk datasets. | — |
 | `build_pool` | 149 | fetch the wide TSX universe once and cache its feature tables. | `build_rich` |
 | `build_rich` | 221 | a WIDE feature panel from bars we already download for free. | — |
+| `build_social` | 397 | day-94 Arm A: attention FORWARD COLLECTION only (StockTwits/Trends snapshots into `data/social/`). Never in the daily path; coverage gate, no inference before 120 sessions. | — |
 | `paired_time` | 43 | PAIRED test: 9:40 vs 9:45 decision. Where both times pick the SAME | — |
 | `validate_adcom` | 199 | does an advisory-committee vote predict the FDA's decision? | — |
+| `validate_crossmarket` | 703 | day-94 Arm B: does prior-session US proxy state beat `[r0, gap]` on TSX open-to-close? DAILY-BAR PROXY, no adoption. | — |
 | `validate_deep` | 133 | the deep-data validation (day-13/14): ~1 year of 5-minute | `paired_time`, `validate_time_deep`, `validate_universe` |
 | `validate_density` | 167 | does the DENSITY selector systematically pick the names | — |
 | `validate_eventmult` | 269 | re-measure the event multiple, WITH per-tercile intervals. | — |
