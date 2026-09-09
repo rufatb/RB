@@ -1,0 +1,423 @@
+{
+  "block_sessions": 20,
+  "draws": 2000,
+  "fetch_failures": {
+    "ABX.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=abx.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=abx.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/ABX.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/ABX.TO"
+      }
+    ],
+    "AC.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=ac.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=ac.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/AC.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/AC.TO"
+      }
+    ],
+    "AEM.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=aem.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=aem.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/AEM.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/AEM.TO"
+      }
+    ],
+    "BCE.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=bce.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=bce.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/BCE.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BCE.TO"
+      }
+    ],
+    "BMO.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=bmo.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=bmo.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/BMO.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BMO.TO"
+      }
+    ],
+    "BNS.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=bns.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=bns.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/BNS.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BNS.TO"
+      }
+    ],
+    "CM.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=cm.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cm.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/CM.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CM.TO"
+      }
+    ],
+    "CNQ.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=cnq.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cnq.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/CNQ.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CNQ.TO"
+      }
+    ],
+    "CNR.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=cnr.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cnr.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/CNR.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CNR.TO"
+      }
+    ],
+    "CP.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=cp.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cp.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/CP.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CP.TO"
+      }
+    ],
+    "CVE.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=cve.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cve.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/CVE.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CVE.TO"
+      }
+    ],
+    "ENB.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=enb.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=enb.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/ENB.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/ENB.TO"
+      }
+    ],
+    "MFC.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=mfc.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=mfc.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/MFC.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/MFC.TO"
+      }
+    ],
+    "NTR.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=ntr.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=ntr.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/NTR.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/NTR.TO"
+      }
+    ],
+    "RY.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=ry.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=ry.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/RY.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/RY.TO"
+      }
+    ],
+    "SHOP.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=shop.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=shop.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/SHOP.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SHOP.TO"
+      }
+    ],
+    "SLF.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=slf.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=slf.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/SLF.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SLF.TO"
+      }
+    ],
+    "SPY": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=spy.us&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=spy.us&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/SPY",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY"
+      }
+    ],
+    "SU.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=su.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=su.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/SU.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SU.TO"
+      }
+    ],
+    "T.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=t.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=t.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/T.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/T.TO"
+      }
+    ],
+    "TD.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=td.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=td.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/TD.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TD.TO"
+      }
+    ],
+    "TRP.TO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=trp.to&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=trp.to&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/TRP.TO",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TRP.TO"
+      }
+    ],
+    "USDCAD": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=usdcad&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=usdcad&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/USDCAD=X",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/USDCAD=X"
+      }
+    ],
+    "USO": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=uso.us&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=uso.us&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/USO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/USO"
+      }
+    ],
+    "XLE": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=xle.us&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=xle.us&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/XLE",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/XLE"
+      }
+    ],
+    "XLF": [
+      {
+        "detail": "TIMEOUT after 2 tries: https://stooq.com/q/d/l/?s=xlf.us&d1=20150101&d2=20260904&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=xlf.us&d1=20150101&d2=20260904&i=d"
+      },
+      {
+        "detail": "HTTP_403 after 2 tries: https://query1.finance.yahoo.com/v8/finance/chart/XLF",
+        "error": "HTTP_403",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/XLF"
+      }
+    ]
+  },
+  "generated_at": "2026-09-09T01:13:43.052443+00:00",
+  "label": "DAILY-BAR PROXY; SHADOW RESEARCH; NO ADOPTION",
+  "missing_series": [
+    "ABX.TO",
+    "AC.TO",
+    "AEM.TO",
+    "BCE.TO",
+    "BMO.TO",
+    "BNS.TO",
+    "CM.TO",
+    "CNQ.TO",
+    "CNR.TO",
+    "CP.TO",
+    "CVE.TO",
+    "ENB.TO",
+    "MFC.TO",
+    "NTR.TO",
+    "RY.TO",
+    "SHOP.TO",
+    "SLF.TO",
+    "SPY",
+    "SU.TO",
+    "T.TO",
+    "TD.TO",
+    "TRP.TO",
+    "USDCAD",
+    "USO",
+    "XLE",
+    "XLF"
+  ],
+  "probe": {
+    "note": "stooq probe failed; recorded, fallback attempted",
+    "symbol_form": null,
+    "verified": false
+  },
+  "provenance": {},
+  "reason": "required series could not be fetched; fail closed (rule 2), nothing computed",
+  "registration": "PREREGISTER_day94.md",
+  "seed": 94,
+  "status": "BLOCKED",
+  "survivorship_disclosure": "the 21 names are today's surviving mega-caps; delisting bias is small but DISCLOSED, not removed",
+  "verdict": "BLOCKED",
+  "verdict_note": "data acquisition failed with the recorded error classes; no panel, no inference, no fabrication",
+  "window": {
+    "confirmation": [
+      "2026-01-01",
+      "2026-09-04"
+    ],
+    "development": [
+      "2015-01-01",
+      "2025-12-31"
+    ]
+  }
+}
