@@ -239,6 +239,11 @@ class _StubLedger:
     def load(self, *a, **k):
         return []
 
+    # DAY-95 (C5): publish's zero-pick branch checks today's prints before
+    # appending, mirroring the ledger publish-once guard.
+    def load_prints(self, *a, **k):
+        return []
+
     def append_picks(self, rows, *a, **k):
         self.rows.extend(rows)
         return len(rows)
