@@ -701,6 +701,9 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
 
 
 def run(cfg, workers=8):
+    import os
+    from bounded import progress
+    progress('intraday_started')
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
     # HARD too-early guard (bug found live at 9:38): between open+10 and
@@ -731,21 +734,32 @@ def run(cfg, workers=8):
         src_note = f"configured source '{src}' unusable ({e}); fell back to yahoo_direct"
         src = "yahoo_direct"
     uni = cfg.get("scan", {}).get("universe") or []
+    # Three waves of eight names must fit inside the enclosing 22s worker.
+    # Cached history leaves only small same-day responses on the network path.
+    # Two hosts at 2s each leave room for parsing and unchanged calibration.
+    # This is a socket timeout, not an SLA; the outer process remains killable.
+    if os.getenv('RB_INTRADAY_CACHE_DIR') and isinstance(a, YahooDirectAdapter):
+        a.timeout = min(a.timeout, 2)
+    progress('fetch_started', count=len(uni))
     min_p = (cfg.get("report") or {}).get("min_sided_p", 0.55)
     fetch_errors: dict = {}
 
     def fetch(t):
         try:
             from bar_cache import get_bars
-            return t, get_bars(a, t, now)
+            bars = get_bars(a, t, now)
+            progress('symbol_received', ticker=t, count=len(bars))
+            return t, bars
         except Exception as e:
             # Day-25: never swallow silently — a missing name changes the
             # cross-sectional choice and must be visible and counted.
             fetch_errors[t] = f"{type(e).__name__}"
+            progress('symbol_failed', ticker=t, error_class=type(e).__name__)
             return t, pd.DataFrame()
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
         fetched = dict(ex.map(fetch, uni))
+    progress('fetch_completed', count=sum(not bars.empty for bars in fetched.values()))
 
     # Pooled history EXCLUDING today (today's close is the future — no leakage).
     today_str = str(now.date())
@@ -762,6 +776,7 @@ def run(cfg, workers=8):
                 "min_p": min_p, "too_early": False, "clock_error": _why,
                 "latest_session": latest_session}
     hist_rows, live = [], []
+    progress('features_started')
     for t, bars in fetched.items():
         if bars.empty:
             continue
@@ -787,6 +802,7 @@ def run(cfg, workers=8):
                          "r0": (p945 / o - 1) * 100, "gap": gap,
                          "vp": (v15 / med_v) if med_v else None})
     train = pd.DataFrame(hist_rows)
+    progress('features_completed', count=len(train))
     # NO TRAINING DATA AT ALL. Under a dead feed `hist_rows` is empty, so this
     # is a DataFrame with no columns and `groupby("t")` raises KeyError: 't'.
     # DAY-83: that propagated out of `run()` and out of `brief.build()` -- the
@@ -828,7 +844,9 @@ def run(cfg, workers=8):
     # only — selection compares nd between live picks and is unaffected — but
     # the dense tag is the pre-registered candidate for a future gate, so a
     # biased label would corrupt the very evidence meant to decide it.
+    progress('density_started')
     cutoffs = density_cutoffs(train)
+    progress('density_completed')
 
     # Per-name trailing volatility of the entry->close move, from the training
     # window only (today is excluded upstream, so this cannot peek). Feeds the
