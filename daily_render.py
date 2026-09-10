@@ -98,6 +98,11 @@ def text(d):
            'Publication clock: '+d['clock']['status'],
            *([f"Dispatch checked {d['delivery']['checked_at']}: {d['delivery']['status']}. "
                + d['delivery']['note']] if d.get('delivery') else []),
+           *(['', '## Replacement requested by the recipient',
+              'INFORMATIONAL — original morning computation retained; no recovered or fresh entry signal is claimed.',
+              *d['replacement']['notes'],
+              'Review: '+d['replacement']['review_url']]
+             if d.get('replacement') else []),
            '', '## Part 1 — Intraday Opportunities',
            intra['contract']+'. Signal reference: 09:45 completed bar; execution quote is separate.',
            intra['model_claim'],
@@ -185,7 +190,8 @@ def text(d):
         lines.append('No current reviewed calendar supplied — research coverage gap, not absence of catalysts.')
     for gap in calendar.get('gaps',[]): lines.append('Calendar evidence gap: '+gap)
     book=d['positions']
-    lines += ['', '## Existing position marks',
+    lines += ['', ('## Original morning ledger snapshot — see replacement updates above'
+                   if d.get('replacement') else '## Existing position marks'),
               book.get('verification','Recorded ledger; current holdings not independently verified.'),
               f"{len(book['legs'])} recorded open positions; {book['stale']} unmarkable and excluded from live totals."]
     for l in book['legs']:

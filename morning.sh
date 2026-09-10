@@ -20,9 +20,8 @@
 #      run used code that is not the whole of main. Investigate same day.
 #   1  something actually failed
 #
-# --publish IS REQUIRED. `brief.py` alone is a preview and writes nothing; a
-# wrapper that omitted the flag would run cleanly every morning, exit 0, and
-# record nothing at all. That is the silent failure this file exists to avoid.
+# daily_job.py performs explicit publication and writes the three artifacts.
+# brief.py without --publish remains a preview.
 #
 # THE WINDOW IS 60 SECONDS: execution.clock_status marks a run LATE at 09:47:00
 # and the check happens AFTER acquisition, not at process start. So the job
@@ -88,10 +87,9 @@ elif [ "$rc" -ne 0 ]; then
 fi
 
 # ── 3. THE REPORT ──────────────────────────────────────────────────────────
-# daily_job, NOT brief.py --publish. They are not interchangeable: brief
-# publishes the ledger rows but never writes the immutable Store entry, so
-# there is nothing for deliver_report to send and no durable publication to
-# reconcile a delivery against. `deploy/rb-report.service` used to call
+# daily_job also writes the text, HTML and JSON artifacts. Both daily_job and
+# brief.py --publish use the immutable Store through brief.compute.
+# `deploy/rb-report.service` used to call
 # daily_job DIRECTLY, which is why the record never reached the repository --
 # it published into the state dir, emailed, and never pulled, never checked
 # provenance and never pushed a single CSV. Two sessions went unrecorded that
@@ -101,6 +99,20 @@ fi
 # SMTP result, and the LATE / refusal greps below would have nothing to read.
 # Sending is step 3b, after those guards have had their say.
 : "${RB_STATE_DIR:=.rb-state}"
+# A 09:45 service start is preparation only. daily_job rejects publication
+# before 09:46; it does not wait for the timer automatically.
+python runtime_check.py
+runtime_rc=$?
+if [ "$runtime_rc" -ne 0 ]; then
+    log "runtime imports failed before report acquisition"
+    exit 1
+fi
+python wait_for_publication.py
+wait_rc=$?
+if [ "$wait_rc" -ne 0 ]; then
+    log "publication clock preparation failed"
+    exit 1
+fi
 log "running the report"
 out="$(TZ=America/Toronto python daily_job.py \
         --state-dir "$RB_STATE_DIR" \
@@ -120,14 +132,13 @@ if printf '%s' "$out" | grep -qiE "REFUSING TO PUBLISH|CLOCK IS BEHIND|FEED IS S
     exit 4
 fi
 
-# MISSED THE WINDOW. A LATE run renders a full page and publishes NOTHING, so
-# without this it reads like an ordinary morning while the day goes unrecorded.
+# A late run still freezes an informational report. It cannot create a fresh
+# morning entry; preserve that distinction in the operational exit status.
 late=0
-if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
+if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed|outside 09:46 delivery minute"; then
     late=1
     log "MISSED THE 09:46 PUBLICATION WINDOW — the page above is informational."
-    log "  No board was recorded for today. Schedule the job EARLIER: the clock"
-    log "  is checked after acquisition, so the fetch must finish before 09:47."
+    log "  An informational publication is preserved; no fresh morning entry."
 fi
 
 # ── 3b. SEND IT ────────────────────────────────────────────────────────────

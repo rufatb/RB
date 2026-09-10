@@ -10,6 +10,7 @@ Group=rb-report
 UMask=0077
 NoNewPrivileges=true
 WorkingDirectory=/opt/RB
+Environment="PATH=/opt/RB/.venv/bin:/usr/local/bin:/usr/bin:/bin"
 EnvironmentFile=/etc/rb-report.env
 
 # morning.sh, NOT daily_job.py directly. The previous unit called daily_job
