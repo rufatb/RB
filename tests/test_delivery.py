@@ -105,3 +105,69 @@ def test_the_warning_precedes_any_ticker_in_the_rendered_page():
     legs = [{"ticker": t, "status": "ABSTAIN"} for t in ("TRP.TO", "ENB.TO")]
     head = "\n".join(R._leg_heading({"legs": legs}))
     assert "DO NOT TRADE" in head.splitlines()[0]
+
+
+# ── day-94: the day's shape and the book's concentration reach the page ────
+
+def test_the_expected_bad_day_frequency_is_on_the_page():
+    """2026-09-09 read as a malfunction and was a 1-in-2.9 draw. The PM had no
+    way to know that in advance, so an ordinary day arrived as a shock."""
+    import ledger
+    lines = ledger.day_shape_line(51, 107, 4)
+    assert lines
+    joined = " ".join(lines)
+    assert "1-or-fewer hits" in joined
+    assert "one in 2.9" in joined
+    assert "not a forecast" in joined
+
+
+def test_a_single_leg_day_says_nothing_about_shape():
+    import ledger
+    assert ledger.day_shape_line(51, 107, 1) == []
+    assert ledger.day_shape_line(0, 0, 4) == []
+
+
+def test_the_distribution_sums_to_one():
+    import ledger
+    d = ledger.day_shape(51, 107, 4)
+    assert abs(sum(d["dist"]) - 1.0) < 1e-12
+
+
+def test_two_same_sector_legs_on_one_side_are_disclosed():
+    """THE GAP THAT COST THE DAY. sector_warning fires on a fully-aligned
+    group or 4+ same-group picks; TRP and ENB were 2 of 5 energy names, both
+    long, both sized, and neither condition fired."""
+    import r945
+    groups = {"energy": ["CNQ.TO", "SU.TO", "CVE.TO", "ENB.TO", "TRP.TO"]}
+    legs = [{"t": "TRP.TO", "side_hint": "LONG"},
+            {"t": "ENB.TO", "side_hint": "LONG"}]
+    w = r945.book_concentration(legs, groups)
+    assert len(w) == 1
+    assert "BOTH LONG legs are energy" in w[0]
+    assert "one bet, not two" in w[0]
+
+
+def test_the_disclosure_states_that_the_gate_was_tested_and_refused():
+    """Day-34 rejection #23. Without this the next reader re-litigates it."""
+    import r945
+    groups = {"energy": ["ENB.TO", "TRP.TO"]}
+    w = r945.book_concentration([{"t": "TRP.TO", "side_hint": "LONG"},
+                                 {"t": "ENB.TO", "side_hint": "LONG"}], groups)
+    assert "0.517" in w[0] and "disclosure, not a rule" in w[0]
+
+
+def test_a_diversified_book_triggers_nothing():
+    import r945
+    groups = {"energy": ["TRP.TO"], "financials": ["RY.TO"]}
+    assert r945.book_concentration(
+        [{"t": "TRP.TO", "side_hint": "LONG"},
+         {"t": "RY.TO", "side_hint": "LONG"}], groups) == []
+
+
+def test_opposite_sides_in_one_sector_are_not_concentration():
+    """A long and a short in the same group is a hedge, not one bet."""
+    import r945
+    groups = {"energy": ["ENB.TO", "TRP.TO"]}
+    assert r945.book_concentration(
+        [{"t": "TRP.TO", "side_hint": "LONG"},
+         {"t": "ENB.TO", "side_hint": "SHORT"}], groups) == []

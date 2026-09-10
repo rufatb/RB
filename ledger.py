@@ -367,6 +367,47 @@ def accuracy(pair_rows: list, threshold: float = None) -> dict:
     return out
 
 
+def day_shape(hits: int, n: int, legs: int) -> dict:
+    """What a `legs`-leg day looks like at the record's own hit rate.
+
+    WHY THIS IS ON THE PAGE. On 2026-09-09 the book took four legs, one hit,
+    and the day read as a malfunction. It was not: at 47.7%/leg, one-or-fewer
+    hits out of four happens 34.8% of the time -- about one session in three.
+    The portfolio manager had no way to know that in advance, so an ordinary
+    third-percentile-of-nothing day arrived as a shock.
+
+    This is NOT a forecast (rule 8). It is the arithmetic of the record applied
+    to today's leg count: if the rate is what it has been, this is the shape of
+    the distribution you are drawing from. It says nothing about which names.
+    """
+    import math
+    if not n or legs < 1:
+        return {}
+    p = hits / n
+    dist = [math.comb(legs, k) * p ** k * (1 - p) ** (legs - k)
+            for k in range(legs + 1)]
+    bad = sum(dist[:2])                      # one or fewer hits
+    return {"p": p, "n": n, "legs": legs, "dist": dist,
+            "p_bad": bad,
+            "one_in_bad": (1 / bad) if bad else None,
+            "p_zero": dist[0],
+            "one_in_zero": (1 / dist[0]) if dist[0] else None}
+
+
+def day_shape_line(hits: int, n: int, legs: int) -> list:
+    """Two lines for the report. Empty when there is nothing to say."""
+    d = day_shape(hits, n, legs)
+    if not d or d["legs"] < 2:
+        return []
+    return [f"At {d['legs']} legs and the record's {d['p']:.1%} per-leg rate "
+            f"({hits}/{n}), expect 1-or-fewer hits about "
+            f"{d['p_bad']:.0%} of sessions — roughly one in "
+            f"{d['one_in_bad']:.1f} — and zero hits one in "
+            f"{d['one_in_zero']:.0f}.",
+            "That is the shape of the draw, not a forecast: a day like that is "
+            "the engine working as measured, not breaking."]
+
+
 def accuracy_line(pair_rows: list) -> str:
     """One line carrying all three. Never one figure without the others."""
     a = accuracy(pair_rows)

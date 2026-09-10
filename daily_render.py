@@ -12,6 +12,32 @@ def fmt(value, spec='.2f'):
     return 'unknown' if value is None else format(value,spec)
 
 
+def _day_shape(rec, intra):
+    """What a day at this leg count looks like at the record's own rate."""
+    try:
+        import ledger
+        legs = len(intra.get('legs') or intra.get('recorded_today') or [])
+        lines = ledger.day_shape_line(rec.get('hits') or 0, rec.get('n') or 0,
+                                      legs)
+    except Exception:
+        return []
+    return (['', '**Expected shape of a day like this**'] + lines) if lines else []
+
+
+def _concentration(intra):
+    """Peer-group concentration of the sized book. Disclosure, never a gate."""
+    try:
+        import r945
+        from dashboard import load_config
+        groups = (load_config('config.yaml').get('peer_groups') or {})
+        legs = [{'t': l.get('ticker'), 'side_hint': l.get('side')}
+                for l in (intra.get('legs') or [])]
+        warns = r945.book_concentration(legs, groups)
+    except Exception:
+        return []
+    return (['', '**Concentration**'] + [f'- {w}' for w in warns]) if warns else []
+
+
 def _leg_heading(intra):
     """Say what the legs below are, from their OWN statuses.
 
@@ -58,6 +84,7 @@ def text(d):
            f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
            f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; "
            f"unpriced {rec['net_unpriced']}.",rec['label'],rec['benchmark_label'],
+           *_day_shape(rec, intra), *_concentration(intra),
            '', *_leg_heading(intra), '',
            '| Name | Side | Signal reference | 09:46 quote | Spread | Baseline allocation | Status |',
            '|---|---|---:|---:|---:|---:|---|']

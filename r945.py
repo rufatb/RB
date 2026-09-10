@@ -552,6 +552,47 @@ def group_alignment(ticker: str, same_side: list, opp_side: list,
     return same, opp, len((groups or {}).get(g, []))
 
 
+def book_concentration(legs: list, groups: dict) -> list:
+    """Peer-group concentration of the SIZED BOOK, per side. Warning, never gate.
+
+    THE GAP THIS CLOSES, and it cost a real day. `sector_warning` measures the
+    QUALIFIED POOL's alignment: it fires when an entire group qualifies one way,
+    or on 4+ same-group picks. On 2026-09-09 the book's two longs were TRP.TO
+    and ENB.TO -- both in `energy`, which has five members -- so `same == size`
+    was false (2 of 5) and `same - 1 >= 3` was false (1). Neither condition
+    fired. The book held two pipelines on one side, they fell together
+    (-0.353% and -0.745%), and nothing on the page said they were the same bet.
+
+    The pool's alignment and the BOOK's concentration are different questions.
+    This asks the second one: of the legs actually sized, do any share a group?
+
+    NOT A GATE. Day-34 tested forcing the two legs of a side apart across
+    sectors (rejection #23) and it bought nothing: NET std unchanged at
+    0.517 -> 0.517, the mean got WORSE, and only 2 of 4 quarters improved. The
+    reason is visible once stated -- the book is long AND short, so a
+    same-sector long pair is still hedged by the short side. So this informs
+    and must never block. Telling the reader is not the rule day-34 refused.
+    """
+    g_of = {t: g for g, ms in (groups or {}).items() for t in ms}
+    out = []
+    for side in ("long", "short"):
+        names = [l["t"] for l in legs
+                 if (l.get("side_hint") or "").lower() == side and l.get("t")]
+        seen: dict = {}
+        for t in names:
+            g = g_of.get(t)
+            if g:
+                seen.setdefault(g, []).append(t)
+        for g, members in sorted(seen.items()):
+            if len(members) > 1:
+                out.append(
+                    f"BOTH {side.upper()} legs are {g}: {', '.join(members)} — "
+                    f"one bet, not two. Sizing treats them as independent. "
+                    f"Day-34 tested forcing them apart and it changed nothing "
+                    f"(std 0.517 -> 0.517), so this is disclosure, not a rule.")
+    return out
+
+
 def sector_warning(ticker: str, same_side: list, opp_side: list, groups: dict,
                    crowd_warn: int = 3) -> str | None:
     """Sector-concentration warning for a pair leg — WARNING ONLY, never a gate.
