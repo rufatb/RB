@@ -26,6 +26,8 @@ depended on by the report every single morning belongs in the repository.
 | `biotech_events.json` | `python discover_biotech_events.py --import-reviewed <reviewed.json> --output data/biotech_events.json` | the source-reviewed upcoming-biotech-event feed `brief.py` reads for the Part-2 monitor (override with `RB_BIOTECH_EVENTS_JSON`); an empty `events` list is evidence no reviewed catalysts exist, not a missing feed |
 | `social/YYYY-MM-DD.json` | `python build_social.py` (scheduled 09:20 ET, shadow research) | day-94 Arm A attention snapshots: per-name StockTwits message/sentiment counts with OK/UNMAPPED/ERROR status and a guarded Google Trends pull. Forward collection only; failed fetches are UNKNOWN, never zero. Nothing in the daily report reads these |
 | `day94_crossmarket_results.json` | `python validate_crossmarket.py` | day-94 Arm B cross-market proxy study record (DAILY-BAR PROXY; arms, intervals, MDE, control, placebo, provenance hashes, verdict) |
+| `day95_residual_results.json` | `python validate_residual.py` (host; sandbox is BLOCKED by network) | day-95b H2 registered harness record — status/verdict plus every registered statistic, or the BLOCKED error classes |
+| `shadow_vp.jsonl` | appended by `r945.publish` (via `shadow_vp.log`) each published session | day-95b H1 shadow A/B: pick divergence between the shipped full-window and trailing-only vp normalizations. Publish-once per session; divergence log ONLY, never an accuracy claim |
 
 ## Refreshing
 
