@@ -16,8 +16,21 @@ from report_store import Store
 from build_biotech import write_atomic
 
 
-def run(state_dir,output_dir):
-    now=dt.datetime.now(ZoneInfo('America/New_York'))
+def run(state_dir,output_dir,now=None):
+    """Freeze, render and write the day. `now` is injectable for tests.
+
+    WHY THE CLOCK IS A PARAMETER (day-94). This read the wall clock directly,
+    so `test_catastrophic_assembly_failure_emits_one_frozen_outage` could only
+    pass on 2026-09-08: it froze the report under the REAL date while the test
+    looked it up under its fixed NOW. The outage path itself was correct all
+    along -- it does write "DATA OUTAGE - informational only" -- but a test
+    that expires the day after it is written cannot guard anything, and this
+    one was already failing silently in the suite.
+
+    Production is unchanged: `now=None` reads the live clock exactly as before.
+    """
+    now_injected=now is not None
+    now=now or dt.datetime.now(ZoneInfo('America/New_York'))
     store=Store(state_dir);report=store.get(now.date().isoformat())
     failure=None
     if report is None:
@@ -33,7 +46,9 @@ def run(state_dir,output_dir):
                                      'detail':'Local report assembly failed; recorded state retained, live scan unavailable.'})
         # Also persist diagnostics/closed-session reports; zero picks is a result.
         report=store.publish(now.date().isoformat(),report)
-    end=dt.datetime.now(ZoneInfo('America/New_York'))
+    # Injected clock also governs the delivery-minute check, so a test can
+    # pin the whole job rather than half of it.
+    end=now if now_injected else dt.datetime.now(ZoneInfo('America/New_York'))
     if end.strftime('%H:%M')!='09:46' or end.date().isoformat()!=report['session']:
         report={**report,'report_status':'INFORMATIONAL — outside 09:46 delivery minute; '+report['report_status']}
     directory=Path(output_dir);directory.mkdir(parents=True,exist_ok=True)
