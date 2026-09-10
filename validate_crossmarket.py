@@ -104,6 +104,35 @@ SECTOR_PROXY = {
 ARMS = {"B1": ["r0", "gap", "x_spy"],
         "B2": ["r0", "gap", "x_sector"],
         "B3": ["r0", "gap", "x_usdcad", "x_uso"]}
+
+# The proxies each arm actually reads. Day-95 blocked the WHOLE study because
+# one series was unavailable, and that was too coarse in two separate ways:
+# B1 and B2 never touch USDCAD, and XLE is fetched but mapped by no arm at all
+# (SECTOR_PROXY only ever names XLF, USO, or the SPY default). Failing closed is
+# right; failing closed on arms whose inputs are all present is not a stricter
+# result, it is a missing one.
+ARM_PROXIES = {"B1": {"SPY"},
+               "B2": set(SECTOR_PROXY.values()) | {"SPY"},
+               "B3": {"USDCAD", "USO"}}
+
+# The registration fixed a family of three. A blocked arm does not shrink it:
+# correcting across 2 instead of 3 is a WEAKER correction, i.e. moving the bar
+# in our own favour after seeing which fetches failed (rule 3).
+REGISTERED_ARM_COUNT = 3
+
+
+def runnable_arms(available: set) -> tuple:
+    """(arms whose proxies are all present, {blocked arm: missing proxies})."""
+    ok, blocked = {}, {}
+    for arm, feats in ARMS.items():
+        need = ARM_PROXIES[arm] - set(available)
+        if need:
+            blocked[arm] = sorted(need)
+        else:
+            ok[arm] = feats
+    return ok, blocked
+
+
 BASELINE = ["r0", "gap"]
 
 UA = {"User-Agent": "Mozilla/5.0 (day-94 cross-market study; research)"}
@@ -464,10 +493,18 @@ def placebo_q95(session_vals: np.ndarray, seed=SEED, draws=DRAWS) -> float:
     return float(np.quantile(np.abs(signs @ x), PLACEBO_Q))
 
 
-def holm(pvals: list) -> list:
-    """Holm-adjusted p-values, input order preserved; None stays None."""
+def holm(pvals: list, family_size: int | None = None) -> list:
+    """Holm-adjusted p-values, input order preserved; None stays None.
+
+    `family_size` is the number of hypotheses the registration declared, which
+    is NOT necessarily the number that returned a p-value. When an arm is
+    blocked for missing data the family is still the registered one; shrinking
+    m to the arms that happened to run would loosen the correction exactly when
+    data problems already make the result weaker.
+    """
     order = sorted((p, i) for i, p in enumerate(pvals) if p is not None)
-    out, running, m = [None] * len(pvals), 0.0, len(order)
+    m = max(len(order), family_size or 0)
+    out, running = [None] * len(pvals), 0.0
     for rank, (p, i) in enumerate(order):
         running = max(running, min(1.0, (m - rank) * p))
         out[i] = running
@@ -490,7 +527,7 @@ def block_deltas(y, s_arm, s_base, dates, blocks=4) -> list:
 
 
 def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
-             folds=FOLDS, conf_start=CONF_START) -> dict:
+             folds=FOLDS, conf_start=CONF_START, arms=None) -> dict:
     """The full registered evaluation on a built panel. Pure given the panel."""
     df = add_arm_features(df)
     sessions = sorted(df["date"].unique())
@@ -502,7 +539,8 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
                           f"the harness requires >= {min_train + folds}"}
     scores = {"baseline": walk_forward(df, BASELINE, dev_sessions,
                                        conf_sessions, min_train, folds)}
-    for arm, feats in ARMS.items():
+    arms = ARMS if arms is None else arms
+    for arm, feats in arms.items():
         scores[arm] = walk_forward(df, feats, dev_sessions, conf_sessions,
                                    min_train, folds)
     ctrl_df = add_control(df, CONTROL_EDGE, seed=seed)
@@ -521,7 +559,7 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
         "development_oos": int(len(np.unique(scores['baseline']['dev'][2]))),
         "confirmation": int(len(conf_sessions))}}
     pvals = []
-    for arm in ARMS:
+    for arm in arms:
         delta, svals, _ = paired_in("dev", arm)
         boot = bootstrap(svals, delta, seed=seed, draws=draws)
         y, s, d = scores[arm]["dev"]
@@ -551,7 +589,7 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
                 'mde80_points':cboot['mde80'] * 100 if cboot['mde80'] is not None else None}
         pvals.append(boot["p"])
         result["arms"][arm] = entry
-    for arm, hp in zip(ARMS, holm(pvals)):
+    for arm, hp in zip(arms, holm(pvals, REGISTERED_ARM_COUNT)):
         result["arms"][arm]["holm_p"] = hp
 
     # Keep the registered feature plant, but never mislabel its parameter as
@@ -685,18 +723,31 @@ def main(argv=None) -> int:
               "probe": got["probe"], "provenance": got["provenance"],
               "fetch_failures": got["failures"]}
 
-    missing = sorted((set(names) | set(PROXIES)) - set(got["frames"]))
-    if missing:
+    have = set(got["frames"])
+    missing = sorted((set(names) | set(PROXIES)) - have)
+    missing_names = sorted(set(names) - have)
+    arms_ok, arms_blocked = runnable_arms(have)
+    record["arms_blocked"] = {a: {"missing_proxies": m,
+                                  "status": "BLOCKED",
+                                  "reason": "required proxy series unavailable"}
+                              for a, m in arms_blocked.items()}
+    record["arms_evaluated"] = sorted(arms_ok)
+    record["holm_family_size"] = REGISTERED_ARM_COUNT
+
+    # A missing TSX NAME is fatal: every arm reads the same panel. A missing
+    # PROXY blocks only the arms that read it -- see ARM_PROXIES.
+    if missing_names or not arms_ok:
         record.update(status="BLOCKED",
-                      reason="required series could not be fetched; fail "
-                             "closed (rule 2), nothing computed",
-                      missing_series=missing,
                       verdict="BLOCKED",
                       mde80_points=None,
+                      missing_series=missing,
                       mde_status='Unavailable: no paired outcome panel',
                       verdict_note="data acquisition failed with the recorded "
                                    "error classes; no panel, no inference, "
-                                   "no fabrication")
+                                   "no fabrication",
+                      reason=("required TSX name series could not be fetched"
+                              if missing_names else
+                              "no registered arm has all its proxies"))
         print(f"\n  BLOCKED — missing series: {', '.join(missing)}")
         print("  error classes:",
               {k: [f["source"] + ":" + f["error"] for f in v]
@@ -704,7 +755,7 @@ def main(argv=None) -> int:
     else:
         df, counters, rejected_examples = build_panel(
             {t: got["frames"][t] for t in names},
-            {p: got["frames"][p] for p in PROXIES},
+            {p: got["frames"][p] for p in PROXIES if p in got["frames"]},
             last_complete=last_complete)
         record["coverage"] = {**counters, "rejected_examples": rejected_examples}
         if a.panel_output:
@@ -715,7 +766,7 @@ def main(argv=None) -> int:
         print(f"panel: {counters['sessions']} sessions, {counters['rows']} rows; "
               f"rejected missing-name={counters['rejected_missing_name']} "
               f"missing-proxy={counters['rejected_missing_proxy']}")
-        res = evaluate(df, seed=a.seed, draws=a.draws)
+        res = evaluate(df, seed=a.seed, draws=a.draws, arms=arms_ok)
         record.update(res)
         print_report(res)
 

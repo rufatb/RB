@@ -5085,3 +5085,53 @@ The registration allows a shadow engine only on a result clearing all five bars.
 Four failed on TSX (placebo-max, |t|, four quarters, size ratio) and three on the
 US panel. **No pairs signal is wired into selection, sizing, the report or the
 email**, and the rejected research is preserved per the day-90 contract.
+
+---
+
+## Day-94 Arm B, finally RUN: cross-market overnight state — UNDERPOWERED, not null
+
+`PREREGISTER_day94.md`. The harness had reported BLOCKED twice (09-08 and again
+09-10 01:07 UTC) with nothing computed. The block was **data acquisition, not
+method**, and it was failing closed at the wrong granularity.
+
+**What was actually broken.** `missing = (names | PROXIES) - fetched`, so one
+unavailable series killed all three arms. Two of them never read it: B1 uses
+only SPY, B2 only SPY/XLF/USO. XLE was blocking too and is mapped by *no* arm —
+`SECTOR_PROXY` only ever names XLF, USO, or the SPY default. Stooq was timing
+out or serving an HTML block page for 8 series; the Yahoo fallback already
+handled 7 of them.
+
+**USDCAD stays blocked, and correctly.** Yahoo silently redirects `USDCAD=X` to
+`CAD=X`, and the harness refuses the series with *"FX bar completion times not
+authenticated; prior-session feature blocked"*. That guard is right: FX trades
+around the clock, so a daily FX bar has no session close that can be
+authenticated as complete before the TSX open, and B3 needs the PRIOR session.
+Arm B3 is recorded BLOCKED rather than run on an unauthenticated bar.
+
+**The Holm family stays at 3.** Correcting across the 2 arms that ran instead
+of the 3 registered would be a *weaker* correction — a bar moved in our own
+favour after seeing which fetches failed (rule 3). `holm()` now takes the
+registered family size.
+
+### Result
+
+| arm | dAUC (pts) | CI95 | SE | MDE80 | z | holm p | confirmation |
+|---|---|---|---|---|---|---|---|
+| B1 SPY | −0.282 | [−1.250, 0.706] | 0.515 | 2.237 | −0.55 | 1.000 | −0.897 |
+| B2 sector | −0.203 | [−1.153, 0.693] | 0.471 | 2.044 | −0.43 | 1.000 | −0.963 |
+| B3 USDCAD+USO | — | — | — | — | — | — | **BLOCKED** |
+
+2,180 sessions, 45,780 rows; 752 sessions rejected for a missing name bar
+(NTR.TO only exists from 2018, SHOP.TO from mid-2015) — counted, never bridged.
+
+**VERDICT: UNDERPOWERED.** The registered synthetic-feature control was NOT
+detected (edge/SE = 0.95), so rule 10 governs: *"a control that cannot detect a
+planted edge means UNDERPOWERED, not NULL."* MDE80 is ~2.0–2.2 AUC points and
+the observed differences are −0.2 to −0.3, roughly a tenth of what this sample
+can resolve. **This is not evidence that cross-market state carries no
+information.** Both point estimates and both confirmation blocks are negative,
+which is unsuggestive, and that is all that can be said.
+
+DAILY-BAR PROXY throughout: the label is same-day open→close, which contains
+09:30–09:46. Nothing here certifies the 09:46→15:59 contract, and nothing is
+adopted.
