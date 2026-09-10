@@ -12,6 +12,40 @@ def fmt(value, spec='.2f'):
     return 'unknown' if value is None else format(value,spec)
 
 
+def _leg_heading(intra):
+    """Say what the legs below are, from their OWN statuses.
+
+    2026-09-09 COST REAL MONEY HERE. All four legs were ABSTAIN because the
+    quote endpoint was returning HTTP 406 all session, so no spread could be
+    priced. The table still led with name, side, dollar allocation and share
+    count, with ABSTAIN as the last column under a heading that said "shadow
+    tracking" -- and it was read as an order sheet and traded. Two of the four
+    went the wrong way.
+
+    A status that has to be hunted for in the right-hand column is not a
+    guardrail. The heading now states the count and the consequence FIRST,
+    before any name, side or dollar figure appears.
+    """
+    legs = intra.get('legs') or []
+    if not legs:
+        return ['### Selected baseline legs']
+    ab = [l for l in legs if l.get('status') == 'ABSTAIN']
+    if len(ab) == len(legs):
+        return ['### ⛔ DO NOT TRADE — every leg below ABSTAINED',
+                f'All {len(legs)} legs failed an integrity check and are shown '
+                'for the record only. The allocations are what the baseline '
+                'WOULD have sized, not a recommendation. Acting on this table '
+                'is acting on picks the engine itself declined.']
+    if ab:
+        return [f'### ⚠ PARTIAL — {len(ab)} of {len(legs)} legs ABSTAINED',
+                f'{", ".join(l["ticker"] for l in ab)} failed an integrity '
+                'check; their rows are record-only. The remainder are shadow '
+                'observations, not orders.']
+    return ['### Selected baseline legs — shadow tracking',
+            'Shadow observations, not orders. The engine\'s live record is '
+            'printed above and is a coin flip.']
+
+
 def text(d):
     intra=d['intraday']; res=intra['res']; rec=intra['record']
     lines=[f"# RB Daily Report — {d['session']}",
@@ -24,7 +58,7 @@ def text(d):
            f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
            f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; "
            f"unpriced {rec['net_unpriced']}.",rec['label'],rec['benchmark_label'],
-           '', '### Selected baseline legs — shadow tracking', '',
+           '', *_leg_heading(intra), '',
            '| Name | Side | Signal reference | 09:46 quote | Spread | Baseline allocation | Status |',
            '|---|---|---:|---:|---:|---:|---|']
     for l in intra['legs']:

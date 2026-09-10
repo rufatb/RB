@@ -61,3 +61,47 @@ def test_missing_credentials_does_not_claim_a_delivery(tmp_path,monkeypatch):
     with pytest.raises(ValueError,match='missing'):
         D.send(store,'2026-09-08','s@e.org','r@e.org',smtp_factory=SMTP,now=NOW)
     assert store.delivery('2026-09-08') is None
+
+
+# ── day-94: an ABSTAIN table must not read as an order sheet ───────────────
+
+def test_all_abstaining_legs_lead_with_do_not_trade():
+    """2026-09-09 COST REAL MONEY HERE. All four legs ABSTAINED (the quote
+    endpoint returned HTTP 406 all session, so no spread could be priced), and
+    the table still led with name, side, dollar allocation and share count with
+    ABSTAIN as the last column under a heading reading "shadow tracking". It
+    was read as an order sheet and traded; two of the four went the wrong way.
+    """
+    import daily_render as R
+    legs = [{"ticker": t, "status": "ABSTAIN"}
+            for t in ("TRP.TO", "ENB.TO", "BCE.TO", "SLF.TO")]
+    head = "\n".join(R._leg_heading({"legs": legs}))
+    assert "DO NOT TRADE" in head
+    assert "every leg below ABSTAINED" in head
+    assert "not a recommendation" in head
+
+
+def test_a_partial_abstention_names_which_legs():
+    import daily_render as R
+    legs = [{"ticker": "TRP.TO", "status": "SHADOW"},
+            {"ticker": "ENB.TO", "status": "ABSTAIN"}]
+    head = "\n".join(R._leg_heading({"legs": legs}))
+    assert "1 of 2 legs ABSTAINED" in head
+    assert "ENB.TO" in head and "TRP.TO" not in head
+
+
+def test_clean_legs_still_say_they_are_not_orders():
+    import daily_render as R
+    legs = [{"ticker": "TRP.TO", "status": "SHADOW"}]
+    head = "\n".join(R._leg_heading({"legs": legs}))
+    assert "not orders" in head
+    assert "coin flip" in head
+
+
+def test_the_warning_precedes_any_ticker_in_the_rendered_page():
+    """A status in the right-hand column is not a guardrail. The consequence
+    has to appear before the first name, side or dollar figure."""
+    import daily_render as R
+    legs = [{"ticker": t, "status": "ABSTAIN"} for t in ("TRP.TO", "ENB.TO")]
+    head = "\n".join(R._leg_heading({"legs": legs}))
+    assert "DO NOT TRADE" in head.splitlines()[0]
