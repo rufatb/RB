@@ -27,13 +27,52 @@ def message(report, sender, recipient):
             raise ValueError('invalid email address')
     msg=EmailMessage()
     msg['From']=sender;msg['To']=recipient
-    prefix='' if report['report_status']=='ON_TIME' else 'INFORMATIONAL — '
+    # DAY-95b (C2): an unrecorded eligible day is the loudest subject this
+    # system sends -- it means the track record has a hole in it right now.
+    status=report['report_status']
+    if status.startswith('NOT RECORDED'):
+        prefix='NOT RECORDED — '
+    elif status=='ON_TIME':
+        prefix=''
+    else:
+        prefix='INFORMATIONAL — '
     msg['Subject']=f"RB Daily Report — {report['session']} — {prefix}Intraday + Biotech"
     msg['Message-ID']=f"<rb-daily-{report['session']}@rb-report.local>"
     msg['Date']=format_datetime(dt.datetime.fromisoformat(report['generated_at']))
-    msg.set_content(brief.render_text(report))
-    msg.add_alternative(brief.render_html(report),subtype='html')
+    text=brief.render_text(report)
+    html=brief.render_html(report)
+    if status.startswith('NOT RECORDED'):
+        warning=('⚠ NOT RECORDED: the publication window (09:46-09:50 ET) was '
+                 'eligible today but NO board was recorded — no ledger rows, '
+                 'no universe prints, no frozen report. Today is currently a '
+                 'GAP in the track record. Publish-once still applies: no '
+                 'late rerun may create a retrospectively chosen board.')
+        text=warning+'\n\n'+text
+        html=html.replace('<body>','<body><p><strong>'+warning+'</strong></p>',1)
+    msg.set_content(text)
+    msg.add_alternative(html,subtype='html')
     return msg
+
+
+def send_report(report, sender, recipient, *, smtp_factory=smtplib.SMTP_SSL):
+    """Send an UNFROZEN alarm report (day-95b NOT RECORDED path).
+
+    The NOT RECORDED day has deliberately no Store row (an informational
+    freeze would mask the miss behind publish-once), so the claim/finish
+    delivery machinery — keyed on a frozen report — cannot apply. A duplicate
+    alarm email is acceptable; a silent unrecorded day is not. Fail-closed on
+    missing credentials, same as `send`."""
+    msg=message(report,sender,recipient)
+    host=os.environ.get('RB_SMTP_HOST','smtp.gmail.com')
+    user=os.environ.get('RB_SMTP_USER');password=os.environ.get('RB_SMTP_PASSWORD')
+    if not user or not password:
+        raise ValueError('RB_SMTP_USER / RB_SMTP_PASSWORD missing; no email attempted')
+    with smtp_factory(host,465,context=ssl.create_default_context(),timeout=20) as smtp:
+        smtp.login(user,password)
+        refused=smtp.send_message(msg)
+        if refused:
+            raise RuntimeError('recipient refused')
+    return {'status':'SENT','message_id':msg['Message-ID'],'frozen':False}
 
 
 def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None):
