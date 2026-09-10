@@ -1,0 +1,14 @@
+[Unit]
+Description=RB day-94 attention forward collector (shadow research; one dated snapshot into data/social)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python /opt/RB/build_social.py
+TimeoutStartSec=300
+UMask=0077
+NoNewPrivileges=true
