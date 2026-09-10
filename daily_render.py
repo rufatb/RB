@@ -155,6 +155,11 @@ def text(d):
     if res.get('coverage_fail'):
         lines += ['', 'Coverage: '+res['coverage_fail']]
     lines += ['', f"Freshly evaluated names: {res.get('n_names',0)}. Recorded qualifiers: {len(intra.get('recorded_today',[]))}. Source: {res.get('source','unavailable')}."]
+    provider = intra.get('historical_provider',{})
+    if provider and provider.get('status') != 'NOT CONFIGURED':
+        lines += ['', '### Additional historical data — not a live signal',
+                  f"EODHD: {provider['status']}. Valid dated references: {provider['reference_count']}. "
+                  f"Five-minute history: {provider['intraday_status']}.", provider['note']]
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     exact=intra['exact_record']

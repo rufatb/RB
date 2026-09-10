@@ -30,6 +30,11 @@ data/us_hourly.csv
 
 # Durable operational state belongs on the report host, not in this public repo.
 .rb-state/
+*.private
+secrets/
+.env
+.env.*
+!.env.example
 # Rebuildable current-market snapshots; version reviewed event evidence separately.
 data/biotech_snapshot.json
 

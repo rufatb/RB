@@ -215,6 +215,8 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     except (subprocess.SubprocessError, OSError) as exc:
         error('release_identity',exc)
         release = None
+    import eodhd
+    provider_evidence = eodhd.load_prepared(state_dir, now)
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -228,7 +230,8 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
-                          'recorded_today':recorded_today, 'risk_evidence':risk},
+                          'recorded_today':recorded_today, 'risk_evidence':risk,
+                          'historical_provider':provider_evidence},
               'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
                           'mde':'Historical 2-session proxy MDE80: 64.10 bps versus 5 bps target (UNDERPOWERED). Exact-arm MDE unavailable without matched BBO/cost/index observations.'},
