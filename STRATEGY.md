@@ -4961,3 +4961,109 @@ establish an improved predictor, exact execution result or adoption candidate.
 See `AUDIT_day91.md` and the complete `data/day91_*` results. Baseline strategy,
 biotech isolation, scheduled delivery pins and private publication state remain
 unchanged. Software validation is not a P&L claim.
+
+---
+
+## Day-96: REJECTION #41 — intraday relative-value pairs, on the universe we actually trade
+
+Pre-registered `PREREGISTER_day96.md`, committed at `cac0666` before any outcome
+was computed. Never tested here before: a full-text search of this file for
+*cointegration, pairs trading, spread reversion, Ornstein-Uhlenbeck, Kalman,
+half-life, stat-arb* returned nothing across all 40 prior rejections. The shipped
+engine is cross-sectional and directional; this is relative-value mean reversion,
+a different mechanism. Rejections #17 and #23 tested the pairing of the board's
+legs, not a mean-reverting spread.
+
+Prior recorded in advance: Gatev/Goetzmann/Rouwenhorst (2006) established the
+canonical result; **Do & Faff (2010) found the distance method largely
+unprofitable after 2002 once trading costs are counted**.
+
+### The verdict on the TSX-21 — powered, sign-stable, and negative
+
+All six registered cells lose money, gross and net:
+
+| cell | n | gross% | net% | t | hit |
+|---|---|---|---|---|---|
+| distance@1.5 | 18,496 | −0.0329 | **−0.1329** | −10.42 | 43.6% |
+| distance@2.0 | 11,566 | −0.0281 | −0.1281 | −7.77 | 43.8% |
+| distance@2.5 | 6,725 | −0.0112 | −0.1112 | −4.67 | 44.3% |
+| cointegration@1.5 | 13,997 | −0.0806 | −0.1806 | −5.26 | 44.9% |
+| cointegration@2.0 | 8,243 | −0.0880 | −0.1880 | −3.69 | 45.5% |
+| cointegration@2.5 | 4,773 | −0.1121 | **−0.2121** | −2.61 | 46.1% |
+
+The best cell (−0.1112%) is **worse than the placebo** (p = 0.846): random
+pairing would have done better. All four chronological quarters are negative
+(−0.115, −0.131, −0.069, −0.125).
+
+**This is a POWERED result, not an underpowered shrug.** The planted +0.10%/trade
+control was DETECTED at t = 4.20, MDE = 0.0715%/trade, and the observed
+−0.1112% is well beyond it. Rule 10 is satisfied in the direction that matters:
+the harness could have seen an edge this size and there wasn't one.
+
+Gross is negative too, so on Canadian mega-caps this is not a cost story. An open
+spread divergence in these names **continues rather than reverting** over the
+session.
+
+### The US panel, and why its apparent edge is survivorship
+
+On 504 US names the best cell was *positive* (+0.0367%/trade) and beat both
+placebos at p = 0.000 — there is a real gross convergence effect, +0.1367%
+against a timing-scrambled +0.026%. It is not adoptable, and the reason is not
+only the 10bp round trip that eats 73% of it:
+
+| liquidity quartile | development (504) | holdout (913) |
+|---|---|---|
+| Q0 smallest | +0.0908% | **+0.9229%** |
+| Q3 largest | **−0.1316%** | **−0.1484%** |
+| size ratio | 2.16 (bar 2.0) | **8.76** |
+
+The entire positive effect lives in the smallest names and grows **10x** as the
+universe extends downward, while the largest quartile is negative in both
+independent panels. That is day-86's exact fingerprint, and `DATA_CEILING.md`
+already names the mechanism: pairs trading BUYS THE UNDERPERFORMING LEG, so
+survivorship points the same way as the hypothesis. The holdout "replicating" at
+7x the development effect is a warning, not a validation.
+
+The TSX-21 are all large caps — they *are* Q3 — and Q3 is negative everywhere.
+The two panels agree.
+
+Also underpowered where it looked best: the planted control FAILED on both US
+panels (t = 2.35 and 0.89), MDE 0.1275% against an observed 0.0367%. The US
+cointegration cells are **UNDERPOWERED, not null**.
+
+### What the standard public methodology reports on the same data
+
+`pairs.naive_public_recipe` implements the recipe the public repositories use —
+full-sample hedge ratio, select-and-test on the same data, no cost, compared to
+zero — and is kept in the repo so the gap is a measurement rather than an
+assertion:
+
+| | public recipe | honest measurement | overstatement |
+|---|---|---|---|
+| TSX-21 | **+0.1177%/trade, 53.3% hit, t = +3.1** | **−0.1880%** | +0.3057% |
+| US 504 | +0.3398%/trade, 56.0% hit, t = +6.0 | +0.0034% | +0.3364% |
+
+A significant, profitable-looking strategy on the exact 21 names in the config,
+which loses 0.19% per trade. The gap is method, not data.
+
+### What was built and kept
+
+`pairs.py` — point-in-time formation (hedge ratio and spread statistics from a
+window ending strictly BEFORE the traded session; a leakage test corrupts all
+future prices and asserts prior signals are bit-identical), the Engle–Granger
+DF(0) statistic for all 166,753 pairs in three matrix multiplies via a bilinear
+identity, cost subtracted rather than clipped, and two placebos. The registered
+one permutes whose returns the legs earn; it proved too easy a bar because it
+also destroys co-movement, so a stricter one was added and disclosed — same pair,
+same returns, only the session shifted. Both reject on TSX and both are cleared
+on US.
+
+`build_tsx.py` — 10 years of daily OHLC for the configured universe, with the
+day-72 granularity assertion. `validate_pairs.py` — the registered runner.
+
+### Nothing reaches the 09:46 email
+
+The registration allows a shadow engine only on a result clearing all five bars.
+Four failed on TSX (placebo-max, |t|, four quarters, size ratio) and three on the
+US panel. **No pairs signal is wired into selection, sizing, the report or the
+email**, and the rejected research is preserved per the day-90 contract.

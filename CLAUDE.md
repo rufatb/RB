@@ -108,6 +108,24 @@ coverage gate after 20 sessions, no inference before 120. `validate_crossmarket.
 is the registered test of prior-session US proxy state (SPY/XLF/USO/USDCAD) beyond
 `[r0, gap]`, a DAILY-BAR PROXY that cannot certify the 09:46 contract.
 
+## Pairs trading was tested and REJECTED (#41), on our own universe
+
+Day-96. `pairs.py` / `validate_pairs.py` / `build_tsx.py`, pre-registered at
+`cac0666`. On the TSX-21 all six cells lose money **gross and net** — best cell
+−0.111%/trade, worse than the placebo (p=0.846), negative in all four quarters —
+and the planted control DETECTED at t=4.20, so this is a POWERED negative, not
+an underpowered shrug. On US names the apparent edge is survivorship: it lives
+entirely in the smallest liquidity quartile, grows 10x as the universe extends
+down, and the largest quartile is negative in both panels. Pairs trading buys the
+underperforming leg, which is the family `DATA_CEILING.md` calls untestable on
+free data.
+
+`pairs.naive_public_recipe` keeps the standard public methodology beside the
+honest one: it reports **+0.1177%/trade at t=+3.1 on the TSX-21**, which really
+loses 0.188%. Do not re-litigate this family without reading day-96 first.
+
+Nothing from it is wired into selection, sizing, the report or the email.
+
 ## Is main everything? Run `provenance.py`
 
 Read AUDIT_day96_preflight.md before implementing PREREGISTER_day96.md.

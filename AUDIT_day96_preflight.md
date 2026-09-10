@@ -60,3 +60,44 @@ and record dates does not prove matching function bodies or same-date record
 values. Its clean verdict does not replace a diff review, tests or immutable
 runtime import conflict checks. A reviewed detached commit is intentional in
 the scheduled path; that path does not execute morning.sh or its git pushes.
+
+## Subsequent source review: 7628cef
+
+Claude published the completed pairs study while integration was underway.
+Its actual implementation already subtracts signed costs correctly. Its
+`gross = side * (ri - rj)` and 10 bps cost consistently use one leg's
+notional; the report now states that denominator explicitly. No cost change
+or rerun of the published result is needed for that accounting convention.
+
+The original study and rejection #41 remain intact. They are not proof about
+all pairs strategies or an attainable 09:46 entry. The open-derived signal
+and same-open fill assumption, full-history survivor selection, conditional
+return-reassignment placebo and late-added TOP_K/refit settings limit the
+claim that the design was followed exactly. A liquidity concentration is
+consistent with survivorship bias, not causal identification of that bias.
+
+The validator had certified replication using the holdout's own best cell.
+Future runs must instead pass the development-selected cell, with positive
+net return, the same t threshold and the holdout max-placebo threshold. They
+must also document disjoint issuer/date observations; unknown provenance
+or reused issuer/date samples cannot count as holdout evidence. Separate
+issuers can still share market shocks, so disjointness is not independence.
+
+The original 3*SE quantity is a significance threshold, not an 80%-power MDE.
+Future summaries show both it and the approximate (3+0.8416)*SE MDE80.
+Adding a constant to already realized trade returns checks statistical
+sensitivity; it does not prove that feature formation and selection recover a
+planted predictive mechanism. These corrections do not turn a rejection into
+adoption. Original result JSON and strategy history are not rewritten.
+
+The TSX history builder previously authenticated neither returned symbol,
+currency nor declared daily granularity, silently skipped invalid OHLC,
+treated missing volume as zero, used host-local date bounds, and wrote a
+partial universe after failures. Future acquisition validates those fields,
+ET dates and completed exchange sessions, rejects duplicate/unordered dates,
+and preserves the previous file when the requested universe is incomplete.
+This does not retroactively certify the already published daily panel.
+The pairs loader also checks finite, positive price inputs and verifies the
+stored percent return against its own open/close prices. The US development
+and holdout CSVs were not present in this checkout, so this review cannot
+independently reproduce their reported effects or assert that they overlap.
