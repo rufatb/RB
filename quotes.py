@@ -364,25 +364,64 @@ def market_client():
     return SnapshotMarketData(path) if path else YahooMarketData()
 
 
+# Which hosts may be cited as the SOURCE OF A PRICE, by declared provider.
+#
+# DAY-97, AND IT REACHED A REAL INBOX. The 2026-09-10 report printed a ZYME
+# reference price followed by
+#   "Source: https://massive.com/docs/rest/stocks/aggregates/previous-day-bar"
+# That is a documentation page, not a price feed, and the value originated in a
+# TEST FIXTURE (tests/test_recovery_pipeline.py). The old check asked only that
+# the URL be https with a hostname and no credentials, so ANY https string
+# passed and was then printed verbatim as a citation next to a number the
+# reader might act on. A citation that proves nothing is worse than no citation:
+# it borrows authority it has not got.
+#
+# biotech.validate_event already had this right — it requires an SEC source to
+# actually live on sec.gov. This applies the same rule to prices.
+REFERENCE_PROVIDERS = {
+    'EODHD': ('eodhd.com',),
+    'yahoo': ('query1.finance.yahoo.com', 'query2.finance.yahoo.com'),
+    'yahoo_direct': ('query1.finance.yahoo.com', 'query2.finance.yahoo.com'),
+    'stooq': ('stooq.com', 'stooq.pl'),
+}
+
+
+def reference_source_ok(row):
+    """Does this row's declared provider match the host it cites? Pure."""
+    from urllib.parse import urlparse
+    allowed = REFERENCE_PROVIDERS.get(str(row.get('provider') or ''))
+    if not allowed:
+        return False, ('reference declares no recognised provider; a price '
+                       'citation must name the feed it came from')
+    url = urlparse(str(row.get('source_url') or ''))
+    if url.scheme != 'https' or not url.hostname or url.username or url.password:
+        return False, 'reference source_url is not a credential-free https URL'
+    host = url.hostname.lower()
+    if not any(host == a or host.endswith('.' + a) for a in allowed):
+        return False, (f'reference cites {host}, which is not a data host for '
+                       f'provider {row["provider"]}')
+    return True, None
+
+
 def reference_close(row, ticker, now):
     """Dated prior-session context only; never passed into execution or live marks."""
     out = {'status':'UNAVAILABLE'}
     if not row: return out
     try:
         import pandas_market_calendars as mcal
-        from urllib.parse import urlparse
         from zoneinfo import ZoneInfo
         today=stamp(now).astimezone(ZoneInfo('America/New_York')).date()
         calendar=mcal.get_calendar('TSX' if ticker.endswith('.TO') else 'NYSE')
         days=calendar.valid_days(start_date=today-dt.timedelta(days=12),end_date=today-dt.timedelta(days=1))
         expected=days[-1].date().isoformat()
         price=number(row.get('close'),positive=True)
-        url=urlparse(str(row.get('source_url','')))
+        source_ok,source_reason=reference_source_ok(row)
+        if not source_ok:
+            raise ValueError(source_reason)
         if (row.get('ticker')!=ticker or row.get('currency')!=('CAD' if ticker.endswith('.TO') else 'USD')
             or row.get('session')!=expected or price is None
-            or not fresh(row.get('retrieved_at'),now,36*3600)
-            or url.scheme!='https' or not url.hostname or url.username or url.password):
-            raise ValueError('reference identity/currency/session/source/freshness mismatch')
+            or not fresh(row.get('retrieved_at'),now,36*3600)):
+            raise ValueError('reference identity/currency/session/freshness mismatch')
         return {**row,'close':price,'status':'OK','label':'PRIOR SESSION CLOSE — not a live mark or fill'}
     except (ValueError,KeyError,TypeError,IndexError) as exc:
         return {**out,'reason':str(exc)}

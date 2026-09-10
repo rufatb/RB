@@ -54,11 +54,62 @@ def test_unavailable_is_not_a_zero_opportunity_result():
 
 def test_reference_close_is_never_live_mark():
     row={'ticker':'ZYME','currency':'USD','session':'2026-09-04','close':29.19,
-         'retrieved_at':NOW.isoformat(),'source_url':'https://massive.com/docs/rest/stocks/aggregates/previous-day-bar'}
+         'retrieved_at':NOW.isoformat(),'provider':'EODHD',
+         'source_url':'https://eodhd.com/api/eod/ZYME'}
     assert reference_close(row,'ZYME',NOW)['status']=='OK'
     for field,value in [('currency','CAD'),('session','2026-09-03'),('close',float('nan')),
                         ('ticker','OTHER'),('retrieved_at',(NOW+dt.timedelta(minutes=1)).isoformat())]:
         assert reference_close({**row,field:value},'ZYME',NOW)['status']=='UNAVAILABLE'
+
+
+def test_a_price_citation_must_come_from_the_provider_it_names():
+    """THE CITATION THAT REACHED A REAL INBOX. This fixture's own URL --
+    https://massive.com/docs/rest/... -- was printed in the 2026-09-10 email as
+    the Source for a ZYME price. It is a documentation page, not a feed, and it
+    originated HERE, in this test file. The old check asked only for https + a
+    hostname, so any string passed and was then quoted as authority beside a
+    number the reader might act on."""
+    base={'ticker':'ZYME','currency':'USD','session':'2026-09-04','close':29.19,
+          'retrieved_at':NOW.isoformat()}
+    doc_url='https://massive.com/docs/rest/stocks/aggregates/previous-day-bar'
+
+    # no provider named at all
+    r=reference_close({**base,'source_url':doc_url},'ZYME',NOW)
+    assert r['status']=='UNAVAILABLE' and 'recognised provider' in r['reason']
+
+    # provider named, but the URL points somewhere else entirely
+    r=reference_close({**base,'provider':'EODHD','source_url':doc_url},'ZYME',NOW)
+    assert r['status']=='UNAVAILABLE' and 'not a data host' in r['reason']
+
+    # an unknown provider cannot authorise its own host
+    r=reference_close({**base,'provider':'Massive',
+                       'source_url':doc_url},'ZYME',NOW)
+    assert r['status']=='UNAVAILABLE'
+
+
+def test_a_recognised_provider_on_its_own_host_passes():
+    base={'ticker':'RY.TO','currency':'CAD','session':'2026-09-04','close':285.5,
+          'retrieved_at':NOW.isoformat()}
+    for provider,url in (('EODHD','https://eodhd.com/api/eod/RY.TO'),
+                         ('yahoo_direct','https://query2.finance.yahoo.com/v8/finance/chart/RY.TO'),
+                         ('stooq','https://stooq.com/q/d/l/?s=ry.to')):
+        r=reference_close({**base,'provider':provider,'source_url':url},'RY.TO',NOW)
+        assert r['status']=='OK', f'{provider} rejected: {r.get("reason")}'
+
+
+def test_a_lookalike_host_does_not_pass_as_the_provider():
+    """Suffix matching must be on a dot boundary: eodhd.com.evil.test and
+    notquery2.finance.yahoo.com are not the provider."""
+    base={'ticker':'ZYME','currency':'USD','session':'2026-09-04','close':29.19,
+          'retrieved_at':NOW.isoformat(),'provider':'EODHD'}
+    for bad in ('https://eodhd.com.evil.test/api/eod/ZYME',
+                'https://notedohd.com/api/eod/ZYME',
+                'http://eodhd.com/api/eod/ZYME',
+                'https://user:pw@eodhd.com/api/eod/ZYME'):
+        assert reference_close({**base,'source_url':bad},'ZYME',NOW)['status']=='UNAVAILABLE', bad
+    # a real subdomain of the provider IS the provider
+    assert reference_close({**base,'source_url':'https://api.eodhd.com/api/eod/ZYME'},
+                           'ZYME',NOW)['status']=='OK'
 
 
 def test_position_known_fields_survive_missing_mark():

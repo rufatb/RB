@@ -17,6 +17,17 @@ def unit(name):
     return open(os.path.join(DEPLOY, name)).read()
 
 
+def directives(name):
+    """The unit with comments stripped.
+
+    Assertions about what a unit DOES must read its directives, not the
+    comments explaining why a directive was removed — a test that greps the
+    whole file fires on its own explanation. The same trap as morning.sh's
+    `code()` helper."""
+    return "\n".join(l for l in unit(name).splitlines()
+                      if not l.lstrip().startswith("#"))
+
+
 def test_the_report_timer_starts_before_the_publication_minute():
     """THE BUG. execution.clock_status marks a run LATE at 09:47:00 and checks
     AFTER acquisition. Acquisition budgets are 22s + 10s, and the pull and
@@ -134,3 +145,52 @@ def test_the_report_still_starts_after_the_cache_job():
         m = re.search(r"OnCalendar=.*?(\d{2}):(\d{2}):(\d{2})", unit(name))
         return dt.time(*(int(g) for g in m.groups()))
     assert at("rb-prepare.timer") < at("rb-report.timer")
+
+
+# ── day-97: systemd's "-" prefix is a silent except: pass ──────────────────
+
+def test_no_unit_ignores_the_exit_status_of_work_that_must_succeed():
+    """`ExecStart=-...` tells systemd to IGNORE the exit status. rb-biotech
+    carried it on BOTH bar_cache (exits 2 on an incomplete universe) and
+    build_biotech (exits 2 the same way), so the unit reported success while
+    staging nothing. That is house rule 1 -- "never swallow an exception
+    silently" -- violated one level below the Python.
+
+    A "-" is allowed only on genuinely advisory steps, and only ExecStopPost
+    ones, whose job is to record state after the fact."""
+    for name in os.listdir(DEPLOY):
+        if not name.endswith(".service"):
+            continue
+        for line in directives(name).splitlines():
+            if line.startswith(("ExecStart=", "ExecStartPre=")):
+                assert not line.split("=", 1)[1].lstrip().startswith("-"), \
+                    f"{name}: {line} ignores its exit status"
+
+
+def test_readiness_is_recorded_even_when_the_build_fails():
+    """ExecStartPost does not run when ExecStart fails -- and that is exactly
+    the run whose readiness you most want written down."""
+    s = directives("rb-biotech.service")
+    assert "preflight.py" in s
+    assert "ExecStopPost" in s
+    assert "ExecStartPost=" not in s
+
+
+def test_the_intraday_cache_has_exactly_one_owner():
+    """It was staged inside rb-biotech as an ignored ExecStartPre. The report
+    needs it, biotech does not, and a shared owner meant a biotech change could
+    silently cost the report its cache."""
+    owners = [n for n in os.listdir(DEPLOY)
+              if n.endswith(".service") and "bar_cache.py" in directives(n)]
+    assert owners == ["rb-prepare.service"], owners
+
+
+def test_the_cache_is_staged_before_the_unit_that_checks_it():
+    """rb-biotech runs preflight, which checks the cache rb-prepare stages.
+    Staged afterwards it would report NOT READY every morning."""
+    def at(name):
+        m = re.search(r"OnCalendar=.*?(\d{2}):(\d{2}):(\d{2})", unit(name))
+        return dt.time(*(int(g) for g in m.groups()))
+    assert at("rb-prepare.timer") < at("rb-biotech.timer")
+    assert "After=" in directives("rb-biotech.service")
+    assert "rb-prepare.service" in directives("rb-biotech.service")

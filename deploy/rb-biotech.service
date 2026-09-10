@@ -1,16 +1,37 @@
 [Unit]
-Description=RB pre-open history and biotech preparation
-After=network-online.target
+Description=RB pre-open biotech universe and readiness snapshot
+After=network-online.target rb-prepare.service
 Wants=network-online.target
+
 [Service]
 Type=oneshot
 User=rb-report
 Group=rb-report
-WorkingDirectory=/opt/RB
-EnvironmentFile=/etc/rb-report.env
-ExecStartPre=-/opt/RB/.venv/bin/python bar_cache.py --directory /var/lib/rb-report/intraday_cache
-ExecStart=-/opt/RB/.venv/bin/python build_biotech.py
-ExecStartPost=/opt/RB/.venv/bin/python preflight.py --state-dir /var/lib/rb-report --output /var/lib/rb-report/preflight.json
-TimeoutStartSec=1800
 UMask=0077
 NoNewPrivileges=true
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+
+# THE INTRADAY CACHE IS NO LONGER STAGED HERE. It used to run as
+#   ExecStartPre=-... bar_cache.py ...
+# and that leading "-" tells systemd to IGNORE THE EXIT STATUS. bar_cache
+# exits 2 on an incomplete universe, so it could fail every single morning
+# while this unit reported success -- house rule 1 ("never swallow an
+# exception silently") violated at the unit level, which is precisely why
+# nobody noticed. The report needs that cache, not biotech, so rb-prepare.service
+# owns it now and fails loudly.
+#
+# The "-" is gone from build_biotech too. It exits 2 when the universe is
+# incomplete, which is exactly the YFRateLimitError case that put
+# "universe discovery: YFRateLimitError: Too Many Requests" in the 2026-09-10
+# email. A red unit gets noticed; a green unit with no data does not.
+ExecStart=/opt/RB/.venv/bin/python build_biotech.py
+
+# ExecStopPost, not ExecStartPost: readiness must be written even when the
+# build above failed. That is the run whose readiness you most want recorded.
+ExecStopPost=-/opt/RB/.venv/bin/python preflight.py --state-dir /var/lib/rb-report --output /var/lib/rb-report/preflight.json
+
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
