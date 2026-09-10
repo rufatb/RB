@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
+import email_render
 from report_store import Store
 
 ET = ZoneInfo('America/New_York')
@@ -39,19 +40,11 @@ def view(report, now=None):
 
 
 def subject_state(report):
-    """The one thing the SUBJECT LINE must carry: is there anything to act on?
+    """Expose the most severe computed execution status in the inbox subject.
 
-    2026-09-09 cost real money because every leg had ABSTAINed on an
-    integrity check and the page still read like an order sheet. The body was
-    fixed that day (daily_render._leg_heading), but the body is not what a
-    phone shows at 09:46 — the subject is. An inbox line reading
-    "RB Daily Report — 2026-09-09 — Intraday + Biotech" is indistinguishable
-    from a tradeable morning, and that is the line the user actually saw.
-
-    Returns a prefix, most severe first. A missing/empty leg list is NOT
-    treated as "all clear": no legs means nothing was selected, which is also
-    not a tradeable board (rule 2 — absence of data is not absence of a
-    problem).
+    Missing acquisition, recorded selections and a fully evaluated empty board
+    are distinct states. None establishes a fresh validated entry. This pure
+    summary does not infer the cause of a user's trading outcome.
     """
     intraday = report.get('intraday') or {}
     legs = intraday.get('legs') or []
@@ -74,6 +67,15 @@ def subject_state(report):
     return ''
 
 
+def subject(report):
+    prefix=subject_state(report).strip(' —')
+    pieces=[f"RB Daily Report — {report['session']}"]
+    if report['report_status']!='ON_TIME':pieces.append('INFORMATIONAL')
+    if prefix and prefix!='INFORMATIONAL':pieces.append(prefix)
+    elif not prefix:pieces.append('Intraday + Biotech')
+    return ' — '.join(pieces)
+
+
 def artifacts(report, directory, now=None):
     out = view(report, now)
     directory = Path(directory)
@@ -81,14 +83,15 @@ def artifacts(report, directory, now=None):
     # Same guard as the SMTP path (deliver_report imports this function), so
     # the Gmail automation cannot ship a neutral-looking subject for a board
     # nobody should act on.
-    subject = f"RB Daily Report — {out['session']} — {subject_state(out)}".rstrip(' —')
-    if out['report_status'] != 'ON_TIME':
-        subject += ' — ' + out['report_status']
-    payload = dict(subject=subject, text=brief.render_text(out), html=brief.render_html(out),
+    title=subject(out)
+    full_html=brief.render_html(out)
+    payload = dict(subject=title, text=email_render.text(out), html=email_render.html(out),
+                   attachments=[dict(filename=f"RB-Full-Report-{out['session']}.html",mime_type='text/html',content=full_html)],
                    session=out['session'], checked_at=out['delivery']['checked_at'])
     (directory/'report.json').write_text(json.dumps(out, indent=2, allow_nan=False))
     (directory/'report.txt').write_text(payload['text'])
     (directory/'report.html').write_text(payload['html'])
+    (directory/'full_report.html').write_text(full_html)
     (directory/'gmail_payload.json').write_text(json.dumps(payload, indent=2, allow_nan=False))
     return payload
 

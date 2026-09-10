@@ -207,6 +207,11 @@ def text(d):
                          f"Not included in live totals. Source: {ref['source_url']}")
         elif l.get('stale'):
             lines.append('Price evidence gap: '+l.get('quote_reason','No validated live quote.'))
+    if book.get('recent_closed'):
+        lines += ['', '### Recently closed — recorded, not brokerage-reconciled']
+        for p in book['recent_closed']:
+            lines.append(f"{p['ticker']} {p['side']}: {p['shares']:g} shares, entry {p['entry_px']:.2f}, "
+                         f"exit {p['exit_px']:.2f} on {p['exit_date']}; gross P&L {p['pnl_usd']:+.2f} / {p['pnl_pct']:+.2f}% before costs.")
     if d.get('readiness',{}).get('gaps'):
         lines += ['', '## Readiness gaps']+d['readiness']['gaps']
     if d['errors']:
@@ -219,6 +224,10 @@ def text(d):
 
 
 def html(d):
+    return markdown_html(text(d))
+
+
+def markdown_html(body):
     # Small renderer for our controlled Markdown subset; escape ALL source
     # content. No raw HTML/script from filings, symbols or issuer notes survives.
     import re
@@ -233,7 +242,7 @@ def html(d):
         parts.append(escape(value[last:]))
         return re.sub(r'\*\*([^*]+)\*\*',r'<strong>\1</strong>',''.join(parts))
     rendered=[]; table=False; bullet=False
-    for line in text(d).splitlines():
+    for line in body.splitlines():
         if not line.startswith('|') and table:
             rendered.append('</tbody></table></div>');table=False
         if not line.startswith('- ') and bullet:

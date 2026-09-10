@@ -17,7 +17,8 @@ import ssl
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
-from prepare_delivery import subject_state, view
+import email_render
+from prepare_delivery import subject_state, subject, view
 from report_store import Store
 
 
@@ -27,12 +28,13 @@ def message(report, sender, recipient):
             raise ValueError('invalid email address')
     msg=EmailMessage()
     msg['From']=sender;msg['To']=recipient
-    prefix=subject_state(report)
-    msg['Subject']=f"RB Daily Report — {report['session']} — {prefix}Intraday + Biotech"
+    msg['Subject']=subject(report)
     msg['Message-ID']=f"<rb-daily-{report['session']}@rb-report.local>"
     msg['Date']=format_datetime(dt.datetime.fromisoformat(report['generated_at']))
-    msg.set_content(brief.render_text(report))
-    msg.add_alternative(brief.render_html(report),subtype='html')
+    msg.set_content(email_render.text(report))
+    msg.add_alternative(email_render.html(report),subtype='html')
+    msg.add_attachment(brief.render_html(report),subtype='html',
+                       filename=f"RB-Full-Report-{report['session']}.html")
     return msg
 
 

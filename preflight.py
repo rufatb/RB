@@ -11,10 +11,10 @@ from build_biotech import write_atomic
 def check(state,now=None):
     now=now or dt.datetime.now(ZoneInfo('America/New_York'));state=Path(state)
     checks={}
-    try:
-        manifest=json.loads((state/'intraday_cache'/'manifest.json').read_text())
-        checks['intraday_history']='READY' if manifest['complete'] and manifest['session']==now.date().isoformat() else 'NOT READY'
-    except (OSError,ValueError,KeyError): checks['intraday_history']='NOT READY — no same-session complete history cache'
+    from bar_cache import inspect_cache
+    from dashboard import load_config
+    history=inspect_cache(load_config(str(Path(__file__).resolve().parent/'config.yaml')),state/'intraday_cache',now)
+    checks['intraday_history']=history['status']+' — '+f"{history['verified']}/{history['expected']} history files verified"
     try:
         snap=json.loads((state/'biotech_snapshot.json').read_text())
         eligible=biotech.select_universe(snap,now)
@@ -29,7 +29,7 @@ def check(state,now=None):
     except (OSError,ValueError,KeyError,TypeError): checks['reviewed_calendar']='NOT READY — reviewed event feed missing'
     import eodhd
     provider = eodhd.load_prepared(state,now)
-    return {'checked_at':now.isoformat(),'checks':checks,
+    return {'checked_at':now.isoformat(),'checks':checks,'intraday_cache':history,
             'optional_historical_provider':provider,
             'status':'PARTIAL' if any(v.startswith('NOT READY') for v in checks.values()) else 'PREPARED',
             'note':'Preparation status only; live BBO and final signal are checked at publication.'}

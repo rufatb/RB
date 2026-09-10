@@ -23,6 +23,16 @@ are not the daily two-engine report. Do not concurrently schedule legacy
 
 ## Morning lifecycle
 
+The email body is a concise view from `email_render.py`: selected/recorded
+legs, positions and recent recorded closures, certified biotech Monitor entries,
+the unranked calendar, and key evidence/gaps. It attaches the full HTML report
+with all board rows, source details, MDE and diagnostics. Both views consume the
+same immutable computation; neither acquires data or promotes shadow research.
+`prepare_delivery.py` emits an `attachments` array in `gmail_payload.json`.
+The Gmail sender must send one multipart/mixed message containing the
+text/plain + text/html alternative and each returned attachment. Do not omit
+the full report or send it as a second email.
+
 Before the report window, verify the exact interpreter and checkout:
 `/absolute/checkout/.venv/bin/python /absolute/checkout/runtime_check.py`.
 Create/install that checkout's environment early if the interpreter is missing
@@ -47,10 +57,12 @@ must never invoke this exception automatically or reset an original claim.
 
 | ET clock | Action | Failure handling |
 |---|---|---|
-| 08:10 | Stage complete biotech universe; review primary-source event evidence and warm intraday history | Partial coverage blocks only its dependent section |
+| 08:05 | Prepare intraday history; validate all expected cache files and their pre-open session identity | Missing/invalid files remain NOT READY |
+| 08:10 | Stage complete biotech universe and review primary-source event evidence | Bounded workers checkpoint successes; rate limits stop further batches; independent calendar remains available |
 | 09:20 | `rb-social.timer`: day-94 shadow attention snapshot into `data/social/` (`build_social.py`; feeds nothing in the report). **PRE-OPEN BY DESIGN** — a snapshot after 09:46 holds the market's reaction to the open and is marked `decision_usable: false`; never move this into `morning.sh` | Failed fetches are recorded per name in the snapshot, never counted as zero attention. A missing snapshot is a permanently missing session — forward collection has no history endpoint, and `morning.sh` says so at 09:46 |
 | 09:39 | `provenance.py`: is main everything, and is this checkout main? | WARNS, never blocks — a day's record outweighs a tidy branch list. `morning.sh` exits 6: published, but not on the whole of main |
 | 09:40 | Prepare report environment and source review; inspect stored state and any delivery status | Signal is not final yet; never publish a hindsight-labelled 09:46 entry |
+| 09:44 | Standalone service prepares imports/provenance, then explicitly waits | The designated Gmail task remains a separate sender; do not enable SMTP in parallel |
 | 09:45 | Refresh verified options snapshots | Stale or missing expectations remain unknown |
 | 09:46 | `daily_job.py --send` computes once, freezes, renders and sends | Intraday acquisition capped at 22s; equity acquisition at 10s, concurrently; completed siblings survive |
 | 15:30,15:45,15:59 | `collect_execution.py --exit HH:MM` captures prospective exit/index quotes | Wrong minute, missing quote or unspecified execution costs remain incomplete |
@@ -80,7 +92,7 @@ extract or reuse connector tokens.
 ```bash
 sudo cp deploy/*.service deploy/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now rb-biotech.timer rb-options.timer rb-report.timer
+sudo systemctl enable --now rb-prepare.timer rb-biotech.timer rb-options.timer rb-report.timer
 sudo systemctl enable --now rb-exit@15:30.timer rb-exit@15:45.timer rb-exit@15:59.timer
 systemctl list-timers 'rb-*'
 journalctl -u rb-report.service
@@ -199,6 +211,19 @@ scheduled task is also best effort: task start is not email arrival. For a hard
 live feed and measure end-to-end delivery latency before claiming the SLA.
 
 ## Execution-cost evidence and research
+
+For observed US daily references from the connected Massive tool, retain the
+actual returned CSV and retrieval clock, then run `import_massive_reference.py`
+with `--response`, `--ticker`, `--state-dir` and `--retrieved-at`. It requires an
+existing report database, validates the prior exchange session and exact US
+ticker, stores the raw receipt, and refuses conflicts. The data endpoint is the
+price source; a documentation link alone is insufficient. Never substitute US
+daily bars for TSX live quotes. See `AUDIT_day97_concise_delivery.md` for the
+observed cache/provenance evidence and remaining live-acquisition limits.
+
+The Gmail automation is a separate execution path from these systemd examples.
+Update its reviewed commit and attachment instructions as well; do not start
+a second SMTP sender for a mailbox already served by that automation.
 
 Optional EODHD qualification is documented in `EODHD_DATA.md`. Run
 `prepare_eodhd.py` only before 09:30 with private credentials and restored state.

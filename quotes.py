@@ -369,8 +369,9 @@ def market_client():
 # DAY-97, AND IT REACHED A REAL INBOX. The 2026-09-10 report printed a ZYME
 # reference price followed by
 #   "Source: https://massive.com/docs/rest/stocks/aggregates/previous-day-bar"
-# That is a documentation page, not a price feed, and the value originated in a
-# TEST FIXTURE (tests/test_recovery_pipeline.py). The old check asked only that
+# That is a documentation page, not a price observation. The saved September
+# 10 record and a fresh connected Massive response both contain 27.15; there
+# is no evidence that a fixture supplied that price. The old check asked only that
 # the URL be https with a hostname and no credentials, so ANY https string
 # passed and was then printed verbatim as a citation next to a number the
 # reader might act on. A citation that proves nothing is worse than no citation:
@@ -379,6 +380,7 @@ def market_client():
 # biotech.validate_event already had this right — it requires an SEC source to
 # actually live on sec.gov. This applies the same rule to prices.
 REFERENCE_PROVIDERS = {
+    'Massive': ('api.massive.com',),
     'EODHD': ('eodhd.com',),
     'yahoo': ('query1.finance.yahoo.com', 'query2.finance.yahoo.com'),
     'yahoo_direct': ('query1.finance.yahoo.com', 'query2.finance.yahoo.com'),
@@ -388,7 +390,7 @@ REFERENCE_PROVIDERS = {
 
 def reference_source_ok(row):
     """Does this row's declared provider match the host it cites? Pure."""
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, parse_qs, unquote
     allowed = REFERENCE_PROVIDERS.get(str(row.get('provider') or ''))
     if not allowed:
         return False, ('reference declares no recognised provider; a price '
@@ -400,6 +402,35 @@ def reference_source_ok(row):
     if not any(host == a or host.endswith('.' + a) for a in allowed):
         return False, (f'reference cites {host}, which is not a data host for '
                        f'provider {row["provider"]}')
+    query = parse_qs(url.query, keep_blank_values=True)
+    if any(k.lower() in {'apikey','api_key','api_token','token','crumb','password',
+                         'authorization','access_token'} for k in query):
+        return False, 'reference URL must not contain authentication parameters'
+    ticker = str(row.get('ticker') or '')
+    path = unquote(url.path)
+    declared = row.get('provider_endpoint')
+    if declared and declared != path:
+        return False, 'reference endpoint does not match its source URL'
+    provider = row['provider']
+    expected = {
+        'Massive': {f'/v2/aggs/ticker/{ticker}/prev'},
+        'EODHD': {f'/api/eod/{ticker}', f'/api/eod/{ticker}.US'} if not ticker.endswith('.TO') else {f'/api/eod/{ticker}'},
+        'yahoo': {f'/v8/finance/chart/{ticker}'},
+        'yahoo_direct': {f'/v8/finance/chart/{ticker}'},
+        'stooq': {'/q/d/l/'},
+    }[provider]
+    if not ticker or path not in expected or (provider == 'stooq' and query.get('s') != [ticker.lower()]):
+        return False, 'reference source is not the declared ticker data endpoint'
+    if provider == 'Massive':
+        obs = row.get('observation') or {}
+        try:
+            day = stamp(obs['timestamp_ms']/1000).astimezone(ZoneInfo('America/New_York')).date().isoformat()
+        except (KeyError, TypeError, ValueError, OverflowError, OSError):
+            return False, 'Massive reference lacks its returned bar timestamp'
+        if (ticker.endswith('.TO') or row.get('currency') != 'USD'
+            or obs.get('ticker') != ticker or day != row.get('session')
+            or number(obs.get('close'),positive=True) != number(row.get('close'),positive=True)):
+            return False, 'Massive returned observation differs from reference identity/date/price'
     return True, None
 
 
