@@ -168,7 +168,11 @@ def test_the_brief_publishes_before_it_renders(tmp_path, monkeypatch):
     # Functional replacement for a source-string assertion after consolidation.
     from test_daily_pipeline import NOW, services
     from report_store import Store
-    monkeypatch.setattr('r945.publish', lambda *a, **k: {'errors': []})
+    # DAY-95 (C2): the stub must report a REAL publication -- an eligible
+    # session that records nothing is now deliberately NOT frozen, so a
+    # bare {'errors': []} stub would leave the Store empty by design.
+    monkeypatch.setattr('r945.publish', lambda *a, **k:
+                        {'errors': [], 'picks': 2, 'prints': 21, 'already': False})
     report = brief.compute(now=NOW, publish=True, state_dir=tmp_path, services=services())
     assert Store(tmp_path).get('2026-09-08') == report
     assert 'AAA.TO' in brief.render_text(report)
