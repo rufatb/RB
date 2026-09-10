@@ -70,7 +70,7 @@ def test_all_abstaining_legs_lead_with_do_not_trade():
     endpoint returned HTTP 406 all session, so no spread could be priced), and
     the table still led with name, side, dollar allocation and share count with
     ABSTAIN as the last column under a heading reading "shadow tracking". It
-    was read as an order sheet and traded; two of the four went the wrong way.
+    was read as an order sheet and traded; three of the four went the wrong way.
     """
     import daily_render as R
     legs = [{"ticker": t, "status": "ABSTAIN"}
@@ -110,8 +110,7 @@ def test_the_warning_precedes_any_ticker_in_the_rendered_page():
 # ── day-94: the day's shape and the book's concentration reach the page ────
 
 def test_the_expected_bad_day_frequency_is_on_the_page():
-    """2026-09-09 read as a malfunction and was a 1-in-2.9 draw. The PM had no
-    way to know that in advance, so an ordinary day arrived as a shock."""
+    """A binomial illustration must disclose its unverified independence assumption."""
     import ledger
     lines = ledger.day_shape_line(51, 107, 4)
     assert lines
@@ -119,6 +118,7 @@ def test_the_expected_bad_day_frequency_is_on_the_page():
     assert "1-or-fewer hits" in joined
     assert "one in 2.9" in joined
     assert "not a forecast" in joined
+    assert 'Assumes independent legs' in joined
 
 
 def test_a_single_leg_day_says_nothing_about_shape():
@@ -144,7 +144,7 @@ def test_two_same_sector_legs_on_one_side_are_disclosed():
     w = r945.book_concentration(legs, groups)
     assert len(w) == 1
     assert "BOTH LONG legs are energy" in w[0]
-    assert "one bet, not two" in w[0]
+    assert "one bet, not two" in w[0]  # legacy text; daily report uses risk_evidence
 
 
 def test_the_disclosure_states_that_the_gate_was_tested_and_refused():
@@ -165,7 +165,10 @@ def test_a_diversified_book_triggers_nothing():
 
 
 def test_opposite_sides_in_one_sector_are_not_concentration():
-    """A long and a short in the same group is a hedge, not one bet."""
+    """Opposite sides are not the same-direction concentration this helper counts.
+
+    This does not establish an effective hedge or remove residual risk.
+    """
     import r945
     groups = {"energy": ["ENB.TO", "TRP.TO"]}
     assert r945.book_concentration(

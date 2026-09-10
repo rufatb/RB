@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """validate_pairs.py — day-96. The registered test of intraday pairs.
 
-Runs PREREGISTER_day96.md exactly: six cells (2 formation methods x 3 entry
+Evaluates the six cells in PREREGISTER_day96.md (2 formation methods x 3 entry
 thresholds), placebo-max over the pair grid, session-clustered block bootstrap,
 four chronological quarters, holdout replication, liquidity-quartile size test,
 MDE always, planted-edge control measured as edge/sd.
+
+Read AUDIT_day96_preflight.md for deviations and interpretation limits.
+Replication must test the development-selected cell, not a new holdout winner.
 
 THE STATISTIC IS NOT "IS THE BEST PAIR PROFITABLE". Of course the best of
 166,753 candidates looks profitable -- that is what "best of" means. The
@@ -56,6 +59,7 @@ def summarise(trades: list, label: str) -> dict:
             "gross": gross, "net": b["mean"], "lo": b["lo"], "hi": b["hi"],
             "se": b["se"], "t": b["t"],
             "mde": P.mde(b["se"]) if b["se"] else None,
+            "mde80": (P.ADOPT_T + 0.8416212335729143) * b["se"] if b["se"] else None,
             "hit_rate": (hits / len(trades)) if trades else None}
 
 
@@ -83,7 +87,8 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
                   f"net={r['net']:+.4f}%  t={r['t'] or float('nan'):+.2f}",
                   flush=True)
 
-    best_key = max(real, key=lambda k: real[k]["net"] or -9e9)
+    best_key = max(real, key=lambda k: real[k]["net"]
+                   if real[k]["net"] is not None else -np.inf)
     best = real[best_key]
 
     # ── placebo-max over the SAME grid ─────────────────────────────────────
@@ -103,7 +108,8 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
 
     pb = np.array(placebo_best, dtype=float)
     p95 = float(np.percentile(pb, 95))
-    p_value = float((pb >= (best["net"] or -9e9)).mean())
+    observed = best["net"] if best["net"] is not None else -np.inf
+    p_value = float((1 + (pb >= observed).sum()) / (len(pb) + 1))
 
     # ── the rest of the registered bars ────────────────────────────────────
     best_trades = P.attribute(signals[best_key], intra)
@@ -124,6 +130,9 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
         size_ratio = None
 
     return {"panel": os.path.basename(panel), "names": N,
+            "sample": {"tickers": wide["tickers"].tolist(),
+                       "first_date": str(wide["dates"][0]),
+                       "last_date": str(wide["dates"][-1])},
             "sessions": len(wide["dates"]),
             "dropped_incomplete": wide["dropped_incomplete"],
             "cells": real, "best_cell": best_key, "best": best,
@@ -138,6 +147,33 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
 
 
 # ── verdict ────────────────────────────────────────────────────────────────
+
+def assess_replication(development: dict, holdout: dict) -> dict:
+    """Freeze the selected cell and require disjoint issuer/date observations.
+
+    Disjoint observations are necessary, not proof of independent market
+    shocks. Unknown sample provenance cannot certify a holdout. These checks
+    apply to future runs; original published study artifacts remain intact.
+    """
+    key = development["best_cell"]
+    cell = holdout.get("cells", {}).get(key) or {}
+    net, t = cell.get("net"), cell.get("t")
+    p95 = holdout.get("placebo", {}).get("p95")
+    selected_passes = bool(net is not None and t is not None and p95 is not None
+                           and np.isfinite([net, t, p95]).all()
+                           and net > 0 and net > p95 and t >= P.ADOPT_T)
+    a, b = development.get("sample", {}), holdout.get("sample", {})
+    fields = ("tickers", "first_date", "last_date")
+    known = all(a.get(k) and b.get(k) for k in fields)
+    shared = sorted(set(a.get("tickers", [])) & set(b.get("tickers", [])))
+    overlap = (max(a["first_date"], b["first_date"]) <=
+               min(a["last_date"], b["last_date"])) if known else None
+    disjoint = bool(known and not (shared and overlap))
+    return {"selected_cell": key, "selected_cell_passes": selected_passes,
+            "sample_provenance_known": bool(known),
+            "shared_issuers": len(shared), "date_ranges_overlap": overlap,
+            "disjoint_observations": disjoint,
+            "replicates": selected_passes and disjoint}
 
 def verdict(res: dict) -> dict:
     """The five registered bars. Any failure is a rejection; the bars were
@@ -165,6 +201,9 @@ def report(res: dict, hold: dict | None = None) -> str:
     A("Pre-registered PREREGISTER_day96.md @ cac0666, before any outcome.")
     A("DAILY-BAR PROXY: entry is the OPEN, not 09:46. Nothing here certifies")
     A("the 09:46->15:59 contract.")
+    A("Open-derived signals assume same-open fills: an idealized proxy, not an executable entry.")
+    A("Returns and 10bp costs use ONE LEG'S notional; divide both by two for gross-book returns.")
+    A("The fixed-signal return-reassignment placebo is conditional, not a full selection re-fit.")
     A("")
     A(f"panel {res['panel']}: {res['names']} names, {res['sessions']} sessions")
     A(f"  {res['dropped_incomplete']} names dropped for incomplete history —")
@@ -192,6 +231,9 @@ def report(res: dict, hold: dict | None = None) -> str:
     A("")
     A("POWER (rule 10 — a null without this is an unlabelled UNDERPOWERED)")
     A(f"  SE {b['se']:.4f}%   MDE at |t|>=3.0: {b['mde']:.4f}%/trade")
+    if b.get("mde80") is not None:
+        A(f"  Approximate MDE at 80% power: {b['mde80']:.4f}% on one-leg notional")
+    A("  The planted-return diagnostic measures SE sensitivity, not end-to-end strategy detection.")
     c = res["control"]
     A(f"  planted +{c['edge']:.2f}%/trade control: t={c['t']:.2f} "
       f"{'DETECTED' if c['detected'] else 'NOT DETECTED — harness underpowered'}")
@@ -244,9 +286,8 @@ def main(argv=None) -> int:
     if not a.no_holdout and os.path.exists(a.holdout):
         print("\n--- holdout ---", flush=True)
         hold = run(a.holdout, draws=max(a.draws // 5, 50))
-        hb = hold["best"]
-        res["holdout_replicates"] = bool(
-            hb["net"] is not None and hb["net"] > hold["placebo"]["p95"])
+        res["replication"] = assess_replication(res, hold)
+        res["holdout_replicates"] = res["replication"]["replicates"]
     print("\n" + report(res, hold))
     if a.json:
         with open(a.json, "w") as f:

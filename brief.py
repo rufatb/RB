@@ -202,8 +202,22 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         error('execution_record',exc)
         exact_record = execution.observed_performance([],[])
     benchmark = quotes['XIU.TO']
+    import risk_evidence
+    try:
+        risk = risk_evidence.assess(pair_rows, legs, recorded_today, cfg)
+    except Exception as exc:
+        error('risk_evidence', exc)
+        risk = {}
+    import subprocess
+    try:
+        release = subprocess.run(['git','rev-parse','--verify','HEAD'],cwd=ROOT,
+            capture_output=True,text=True,check=True,timeout=2).stdout.strip()
+    except (subprocess.SubprocessError, OSError) as exc:
+        error('release_identity',exc)
+        release = None
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
-              'provenance':{'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
+              'provenance':{'code_commit':release,
+                            'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
                             'r945_sha256':hashlib.sha256((ROOT/'r945.py').read_bytes()).hexdigest(),
                             'ledger_snapshot_sha256':hashlib.sha256(encode(rows).encode()).hexdigest(),
                             'universe':cfg.get('scan',{}).get('universe',[]),
@@ -214,7 +228,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
-                          'recorded_today':recorded_today},
+                          'recorded_today':recorded_today, 'risk_evidence':risk},
               'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
                           'mde':'Historical 2-session proxy MDE80: 64.10 bps versus 5 bps target (UNDERPOWERED). Exact-arm MDE unavailable without matched BBO/cost/index observations.'},

@@ -97,8 +97,10 @@ sources do not authorise mixing numerator and denominator populations.
 Day-93 (`PREREGISTER_day93.md`): the ceiling test WITH `vp` is UNRUNNABLE on
 free data — Yahoo's ~41 sessions of 5-minute history cannot meet the corrected
 harness's 125-session floor at any feature count, and the bar was not lowered.
-The two-feature ceiling stands (day-43); the three-feature question is OPEN and
-the binding constraint is sub-hourly history depth (see `DATA_CEILING.md`).
+The old two-feature study did not establish usable skill, but its comparator
+and uncertainty defects prevent treating it as a universal feature ceiling.
+The three-feature question remains OPEN; tested free-history depth was
+insufficient for the registered study (see `DATA_CEILING.md`).
 
 Day-94 (`PREREGISTER_day94.md`, shadow research, no adoption): `build_social.py`
 forward-collects StockTwits/Trends attention snapshots into `data/social/` —
@@ -126,6 +128,11 @@ Nothing from it is wired into selection, sizing, the report or the email.
 
 ## Is main everything? Run `provenance.py`
 
+Read AUDIT_day96_preflight.md before implementing PREREGISTER_day96.md.
+The clamped statistical-effect helper is not signed net trading P&L; the
+amendment fixes the cost denominator and identifies timing/formation choices
+that must be frozen before inference. No pairs result is adopted here.
+
 `git status` clean does not mean main is complete. `clock_vs_data` sat finished
 on another branch for **five weeks** and every morning ran without it;
 `build_social.py`, a forward collector whose missed days cannot be back-filled,
@@ -149,3 +156,18 @@ Pre-open history caching changes acquisition only, not baseline features or rule
 CSV records without merging code or overwriting earlier values. `state_bundle.py`
 preserves SQLite history safely. See RUNBOOK for the daily/weekly calendar,
 reference-close context, and unresolved live-data/holdings-verification gates.
+
+## Day 95 integration
+
+Read `AUDIT_day95.md`, `STRATEGY_day95.md` and `PREREGISTER_day95.md`. Claude's quote-authentication
+fix and Kimi's day94 research are integrated; no new predictor or sizing rule
+is adopted. `brief.compute` freezes empirical session risk, clustered hit-rate
+uncertainty, analog-score reliability and common exposure. Renderers never
+reread config. An analog score is not a calibrated success probability.
+
+For Gmail, run `daily_job.py` WITHOUT `--send`. After the durable delivery claim
+is saved, run `prepare_delivery.py` immediately before transmission and use
+its exact subject/text/html. Late dispatch labels the body as well as subject;
+the original publication stays immutable. The existing preparation and daily
+tasks must pin the same reviewed main commit; fetch moving main for CSV record
+imports only, never for executing unreviewed code during a scheduled run.

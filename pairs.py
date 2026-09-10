@@ -95,6 +95,15 @@ def load_wide(path: str) -> dict:
     for field in ("close", "open", "intraday", "volume"):
         m = df.pivot(index="date", columns="t", values=field).sort_index()
         out[field] = m[full].to_numpy(dtype=float)
+    if not len(full) or not len(out["dates"]):
+        raise ValueError("no complete price history")
+    if any(not np.isfinite(out[f]).all() for f in ("close", "open", "intraday", "volume")):
+        raise ValueError("nonfinite OHLC/return/volume in retained panel")
+    if (out["open"] <= 0).any() or (out["close"] <= 0).any() or (out["volume"] < 0).any():
+        raise ValueError("invalid price or volume in retained panel")
+    expected = (out["close"] / out["open"] - 1.0) * 100.0
+    if not np.allclose(out["intraday"], expected, atol=1e-4, rtol=1e-6):
+        raise ValueError("intraday percent returns disagree with open/close prices")
     return out
 
 

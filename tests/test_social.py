@@ -14,6 +14,13 @@ import pytest
 import requests
 
 import build_social as S
+NOW = dt.datetime.fromisoformat('2026-09-09T09:20:00-04:00')
+
+
+def sessions(n):
+    import pandas_market_calendars as mcal
+    return [str(d.date()) for d in mcal.get_calendar('TSX').schedule(
+        start_date='2026-08-01', end_date='2026-09-08').index[:n]]
 
 
 def stream(symbol="RY", title="Royal Bank of Canada", messages=None):
@@ -63,21 +70,21 @@ def cfg_two_names():
 
 
 def test_parse_stream_counts_sentiment_and_max_ts():
-    out = S.parse_stream(stream(), "RY")
+    out = S.parse_stream(stream(), "RY", now=NOW)
     assert out["messages"] == 4 and out["bullish"] == 1 and out["bearish"] == 1
     assert out["max_message_ts"] == "2026-09-08T20:15:00+00:00"
     assert out["rejected_messages"] == 0
     assert out["symbol_title"] == "Royal Bank of Canada"
 
 
-def test_parse_stream_rejects_bad_timestamps_but_keeps_the_message_count():
+def test_parse_stream_rejects_bad_timestamps_before_counting_sentiment():
     s = stream(messages=[{"id": 1, "created_at": "not-a-date",
                           "entities": {"sentiment": {"basic": "Bullish"}}},
                          {"id": 2, "created_at": "2026-09-08T10:00:00Z"}])
-    out = S.parse_stream(s, "RY")
-    assert out["messages"] == 2 and out["bullish"] == 1
+    out = S.parse_stream(s, "RY", now=NOW)
+    assert out["msgs_24h"] == 0 and out["messages"] == 2 and out["bullish"] == 0
     assert out["rejected_messages"] == 1
-    assert out["max_message_ts"] == "2026-09-08T10:00:00+00:00"
+    assert out["max_message_ts"] == "2026-09-08T10:00:00+00:00" and out["older_messages"] == 1
 
 
 def test_parse_stream_asserts_the_response_is_for_the_requested_symbol():
@@ -129,23 +136,17 @@ def test_snapshot_write_is_atomic_and_dated(tmp_path):
 
 
 def snapshot(date, counts):
-    """counts: {tsx: messages in the 24h window}; every entry OK.
-
-    `msgs_24h` is what the gate reads, not `messages`. `messages` is the
-    endpoint's page size and saturates at 30 for every name -- see
-    parse_stream's docstring. The page figure is carried here at its real
-    saturated value precisely so a gate that read it would score every name
-    identically and the arithmetic tests below would stop discriminating.
-    """
-    return {"date": date, "names": {
-        t: {"status": "OK", "msgs_24h": n, "censored_24h": False,
-            "messages": 30, "page_size": 30}
-        for t, n in counts.items()}}
+    """counts: {tsx: message count}; every entry OK."""
+    return {"schema_version":2, "date": date,
+            'collected_at':date+'T09:20:00-04:00',
+            'completed_at':date+'T09:20:01-04:00', "names": {
+        t: {"status": "OK", "messages": 30, "page_size": 30,
+            "msgs_24h": n, "censored_24h": False} for t, n in counts.items()}}
 
 
 def test_coverage_gate_arithmetic_7_fails_8_passes():
     names21 = [f"N{i:02d}.TO" for i in range(21)]
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]  # 20 sessions
+    days = sessions(20)
     counts7 = {t: (3 if i < 7 else 0) for i, t in enumerate(names21)}
     counts8 = {t: (3 if i < 8 else 0) for i, t in enumerate(names21)}
     gate7 = S.coverage_gate([snapshot(d, counts7) for d in days])
@@ -156,13 +157,12 @@ def test_coverage_gate_arithmetic_7_fails_8_passes():
 
 
 def test_coverage_gate_excludes_failed_fetches_from_medians():
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
+    days = sessions(20)
     snaps = []
     for d in days:
-        snaps.append({"date": d, "names": {
-            "RY.TO": {"status": "OK", "msgs_24h": 5, "messages": 30},
-            "TD.TO": {"status": "ERROR", "msgs_24h": None,
-                      "messages": None}}})
+        snap = snapshot(d, {'RY.TO':5})
+        snap['names']['TD.TO'] = {'status':'ERROR','messages':None}
+        snaps.append(snap)
     gate = S.coverage_gate(snaps)
     assert gate["names"]["RY.TO"]["median_messages_per_day"] == 5.0
     assert gate["names"]["TD.TO"]["ok_sessions"] == 0
@@ -176,7 +176,7 @@ def test_empty_snapshot_dir_is_collecting_not_a_crash(tmp_path):
 
 
 def test_gate_not_decidable_before_20_sessions():
-    snaps = [snapshot(f"2026-08-{d:02d}", {"RY.TO": 9}) for d in range(1, 8)]
+    snaps = [snapshot(d, {"RY.TO": 9}) for d in sessions(7)]
     gate = S.coverage_gate(snaps)
     assert gate["sessions_collected"] == 7 and gate["gate"] == "COLLECTING"
 
@@ -191,10 +191,10 @@ def _msg(ts, sentiment=None):
 def _page(stamps):
     return {"response": {"status": 200},
             "symbol": {"symbol": "RY", "title": "Royal Bank of Canada"},
-            "messages": [_msg(t) for t in stamps]}
+            "messages": [dict(_msg(t), id=i) for i, t in enumerate(stamps)]}
 
 
-NOW = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
+WINDOW_NOW = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
 
 
 def test_two_names_with_identical_page_sizes_have_different_attention():
@@ -203,11 +203,11 @@ def test_two_names_with_identical_page_sizes_have_different_attention():
     hours old and SLF's was 23 DAYS old. Stored as `messages` both were 30,
     so the registered feature would have had zero variance and 120 sessions
     of collection would have produced a null about a constant."""
-    busy = _page([(NOW - dt.timedelta(hours=h)).isoformat() for h in range(30)])
-    quiet = _page([(NOW - dt.timedelta(days=23 + d)).isoformat() for d in range(30)])
+    busy = _page([(WINDOW_NOW - dt.timedelta(hours=h)).isoformat() for h in range(30)])
+    quiet = _page([(WINDOW_NOW - dt.timedelta(days=23 + d)).isoformat() for d in range(30)])
 
-    b = S.parse_stream(busy, "RY", now=NOW)
-    q = S.parse_stream(quiet, "RY", now=NOW)
+    b = S.parse_stream(busy, "RY", now=WINDOW_NOW)
+    q = S.parse_stream(quiet, "RY", now=WINDOW_NOW)
 
     assert b["messages"] == q["messages"] == 30      # the trap
     # 25, not 24: hours 0..24, and the message landing exactly ON the cutoff
@@ -220,15 +220,15 @@ def test_a_page_that_runs_out_inside_the_window_is_flagged_not_guessed():
     """30 messages all inside 24h means the true count is >= 30, unknown-but-
     larger. Rule 2: say so and mark it, never store the lower bound as if it
     were the figure."""
-    saturated = _page([(NOW - dt.timedelta(minutes=10 * i)).isoformat()
+    saturated = _page([(WINDOW_NOW - dt.timedelta(minutes=10 * i)).isoformat()
                        for i in range(30)])
-    p = S.parse_stream(saturated, "RY", now=NOW)
+    p = S.parse_stream(saturated, "RY", now=WINDOW_NOW)
     assert p["msgs_24h"] == 30
     assert p["censored_24h"] is True, "a saturated page must announce itself"
 
-    roomy = _page([(NOW - dt.timedelta(hours=6)).isoformat(),
-                   (NOW - dt.timedelta(days=4)).isoformat()])
-    r = S.parse_stream(roomy, "RY", now=NOW)
+    roomy = _page([(WINDOW_NOW - dt.timedelta(hours=6)).isoformat(),
+                   (WINDOW_NOW - dt.timedelta(days=4)).isoformat()])
+    r = S.parse_stream(roomy, "RY", now=WINDOW_NOW)
     assert r["msgs_24h"] == 1 and r["censored_24h"] is False
     assert r["msgs_7d"] == 2 and r["censored_7d"] is True
 
@@ -241,10 +241,8 @@ def test_the_gate_reads_the_registered_quantity_not_the_page_size():
     assert S.GATE_MIN_NAMES == 8
     assert S.GATE_MIN_MEDIAN == 1.0
 
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
-    silent = [{"date": d, "names": {
-        "RY.TO": {"status": "OK", "messages": 30, "page_size": 30,
-                  "msgs_24h": 0, "censored_24h": False}}} for d in days]
+    days = sessions(20)
+    silent = [snapshot(d, {"RY.TO": 0}) for d in days]
     gate = S.coverage_gate(silent)
     assert gate["names"]["RY.TO"]["median_messages_per_day"] == 0.0
     assert gate["names"]["RY.TO"]["usable"] is False, \
@@ -255,9 +253,10 @@ def test_snapshots_written_before_the_fix_are_skipped_not_backfilled():
     """A pre-fix snapshot has only the page size. Reading 30 out of it would
     resurrect the exact defect being corrected, so those sessions are counted
     and excluded (rule 2: absence of the measurement is not a measurement)."""
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
-    old = [{"date": d, "names": {"RY.TO": {"status": "OK", "messages": 30}}}
-           for d in days]
+    days = sessions(20)
+    old = [snapshot(d, {"RY.TO": 0}) for d in days]
+    for snap in old:
+        del snap["names"]["RY.TO"]["msgs_24h"]
     gate = S.coverage_gate(old)
     n = gate["names"]["RY.TO"]
     assert n["pre_fix_sessions"] == 20 and n["ok_sessions"] == 0

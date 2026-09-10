@@ -34,7 +34,7 @@ chronological walk-forward folds, paired AUC influence differences aggregated
 within session (day-91 correction), deterministic circular block bootstrap
 (20-session blocks, 2,000 draws, seed 94), MDE80 = (3.5 + 0.8416212336) * SE in
 AUC points printed ALWAYS (rule 10), four chronological development blocks all
-printed, Holm across the 3 arms, a planted +2 AUC-point control measured as
+printed, Holm across the 3 arms, a weak synthetic-feature control measured as
 edge/SE against the SAME arm unplanted (never (mean+edge)/SE), a zero-mean
 session sign-flip placebo the estimate must beat at its 95th percentile, and a
 confirmation block 2026-01-01 -> last complete session.
@@ -80,7 +80,7 @@ DEV_END = "2025-12-31"
 CONF_START = "2026-01-01"
 MIN_TRAIN = 120                 # sessions before the first OOS fold
 FOLDS = 5                       # development walk-forward folds
-CONTROL_EDGE = 0.02             # planted +2 AUC-point synthetic edge
+CONTROL_EDGE = 0.02             # normal-feature shift parameter, not learned AUC uplift
 MDE_Z = 3.5                     # registered one-sided critical value
 POWER_Z = 0.8416212336          # z(80% power)
 PLACEBO_Q = 0.95
@@ -191,6 +191,13 @@ def parse_yahoo(payload: dict, symbol: str) -> pd.DataFrame:
     returned = ((res.get("meta") or {}).get("symbol") or "").upper()
     if returned != symbol.upper():
         raise ValueError(f"asked for {symbol}, yahoo returned {returned!r}")
+    if symbol.upper().endswith('=X'):
+        # Yahoo's FX daily bar label is not an authenticated availability time.
+        # Normalizing a UTC-midnight start to ET can move it to the previous
+        # date while its close is still in the future at that date's next open.
+        raise ValueError(f'{symbol}: FX bar completion times not authenticated; prior-session feature blocked')
+    if res.get('meta', {}).get('dataGranularity') != '1d':
+        raise GranularityError(f'{symbol}: daily granularity not authenticated')
     ts = res.get("timestamp") or []
     q = (res.get("indicators", {}).get("quote") or [{}])[0]
     adj = (res.get("indicators", {}).get("adjclose") or [{}])[0].get("adjclose")
@@ -201,9 +208,11 @@ def parse_yahoo(payload: dict, symbol: str) -> pd.DataFrame:
                            .tz_localize(None))
     df = pd.DataFrame({"open": q.get("open"), "high": q.get("high"),
                        "low": q.get("low"), "close": q.get("close"),
-                       "adj": adj}, index=idx).dropna()
-    df = df.groupby(level=0).last().sort_index()
+                       "adj": adj}, index=idx).sort_index()
     _check_daily(df.index, symbol)
+    invalid = int((~np.isfinite(df.to_numpy()).all(axis=1)).sum())
+    if invalid:
+        raise ValueError(f'{symbol}: {invalid} incomplete/nonfinite daily bars')
     factor = df["adj"] / df["close"]
     out = df[["open", "high", "low", "close"]].multiply(factor, axis=0)
     if not np.isfinite(out.to_numpy()).all() or (out <= 0).any().any():
@@ -520,10 +529,11 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
         pq95 = placebo_q95(svals, seed=seed, draws=draws)
         entry = {"delta_auc": boot["point"],
                  "delta_points": boot["point"] * 100,
-                 "se_points": (boot["se"] or float("nan")) * 100,
+                 "se_points": boot['se'] * 100 if boot['se'] is not None else None,
                  "ci95_points": [v * 100 for v in boot["ci95"]]
                  if boot["ci95"] else None,
-                 "mde80_points": (boot["mde80"] or float("nan")) * 100,
+                 "mde80_points": boot['mde80'] * 100 if boot['mde80'] is not None else None,
+                 'inference_status':boot['status'],
                  "z": boot["z"], "p": boot["p"],
                  "placebo_q95_points": pq95 * 100,
                  "beats_placebo": bool(boot["ci95"]
@@ -537,14 +547,15 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
                 "delta_points": cboot["point"] * 100,
                 "ci95_points": [v * 100 for v in cboot["ci95"]]
                 if cboot["ci95"] else None,
-                "se_points": (cboot["se"] or float("nan")) * 100}
+                "se_points": cboot['se'] * 100 if cboot['se'] is not None else None,
+                'mde80_points':cboot['mde80'] * 100 if cboot['mde80'] is not None else None}
         pvals.append(boot["p"])
         result["arms"][arm] = entry
     for arm, hp in zip(ARMS, holm(pvals)):
         result["arms"][arm]["holm_p"] = hp
 
-    # Positive control: planted +2 AUC-point edge on B1's features, measured
-    # as edge/SE against the SAME arm unplanted — never (mean+edge)/SE.
+    # Keep the registered feature plant, but never mislabel its parameter as
+    # a guaranteed +2-point change in the fitted learner's AUC.
     cdelta_c, cvals_c, _ = paired_in("dev", "B1+ctrl")
     cdelta_b, cvals_b, _ = paired_in("dev", "B1")
     control_edge = cdelta_c - cdelta_b
@@ -553,13 +564,16 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
     # interval must exclude zero. The measured size is printed beside the
     # plant so dilution by the parity k-NN is visible, not hidden.
     detected = bool(cboot["ci95"] and cboot["ci95"][0] > 0)
-    result["control"] = {"planted_points": CONTROL_EDGE * 100,
+    result["control"] = {"feature_shift_parameter": CONTROL_EDGE,
+                         'standalone_population_auc':float(norm.cdf(math.sqrt(2)*2.5*CONTROL_EDGE)),
+                         'learned_auc_uplift_guaranteed':False,
                          "measured_points": cboot["point"] * 100,
+                         'mde80_points':cboot['mde80'] * 100 if cboot['mde80'] is not None else None,
                          "edge_over_se": cboot["z"], "detected": detected,
                          "form": "edge/SE vs the same arm unplanted"}
     if not detected:
         result["verdict"] = "UNDERPOWERED"
-        result["verdict_note"] = ("the planted +2 AUC-point control was not "
+        result["verdict_note"] = ("the registered synthetic-feature control was not "
                                   "detected as edge/SE; no null here is "
                                   "evidence of no signal (rule 10)")
         return result
@@ -567,6 +581,7 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
     for arm, e in result["arms"].items():
         screen = (e["ci95_points"] and e["ci95_points"][0] > 0
                   and e["holm_p"] is not None and e["holm_p"] < 0.05
+                  and e['z'] is not None and e['z'] >= MDE_Z
                   and e["beats_placebo"])
         conf = e.get("confirmation")
         replicated = bool(screen and conf and conf["ci95_points"]
@@ -589,11 +604,14 @@ def evaluate(df: pd.DataFrame, seed=SEED, draws=DRAWS, min_train=MIN_TRAIN,
     return result
 
 
-def default_last_complete() -> str:
-    today = dt.datetime.now(ZoneInfo("America/New_York")).date()
+def default_last_complete(now=None) -> str:
+    now = now or dt.datetime.now(ZoneInfo('America/New_York'))
+    if now.tzinfo is None:
+        raise ValueError('aware clock required')
+    today = now.astimezone(ZoneInfo('America/New_York')).date()
     sched = mcal.get_calendar("TSX").schedule(
         start_date=str(today - dt.timedelta(days=10)), end_date=str(today))
-    days = [d.date() for d in pd.DatetimeIndex(sched.index) if d.date() < today]
+    days = [d.date() for d, row in sched.iterrows() if row['market_close'] < now]
     if not days:
         raise ValueError("no completed TSX session in the last 10 days")
     return str(days[-1])
@@ -614,7 +632,8 @@ def print_report(res: dict) -> None:
         ci = e["ci95_points"] or [float("nan"), float("nan")]
         hp = e.get("holm_p")
         print(f"  {arm:<5}{e['delta_points']:>11.3f}{ci[0]:>9.3f}{ci[1]:>9.3f}"
-              f"{e['se_points']:>7.3f}{e['mde80_points']:>8.3f}"
+              f"{(e['se_points'] if e['se_points'] is not None else float('nan')):>7.3f}"
+              f"{(e['mde80_points'] if e['mde80_points'] is not None else float('nan')):>8.3f}"
               f"{(e['z'] if e['z'] is not None else float('nan')):>7.2f}"
               f"{(hp if hp is not None else float('nan')):>9.3f}"
               f"{e['placebo_q95_points']:>11.3f}")
@@ -622,8 +641,8 @@ def print_report(res: dict) -> None:
               + (f"  confirmation dAUC={e['confirmation']['delta_points']:.3f} pts"
                  if e.get("confirmation") else ""))
     c = res["control"]
-    print(f"\n  CONTROL: planted +{c['planted_points']:.0f} pts, measured "
-          f"{c['measured_points']:+.3f} pts, edge/SE={c['edge_over_se']:.2f} "
+    print(f"\n  CONTROL: feature shift parameter {c['feature_shift_parameter']}, measured "
+          f"{c['measured_points']:+.3f} pts, edge/SE={c['edge_over_se']} "
           f"-> {'DETECTED' if c['detected'] else 'NOT DETECTED'}")
     print(f"  VERDICT: {res['verdict']} — {res['verdict_note']}")
     print("  DAILY-BAR PROXY: not evidence about the 09:46 execution contract. "
@@ -644,6 +663,7 @@ def main(argv=None) -> int:
     ap.add_argument("--draws", type=int, default=DRAWS)
     ap.add_argument("--timeout", type=float, default=30.0)
     ap.add_argument("--tries", type=int, default=3)
+    ap.add_argument('--panel-output', help='Optional reproducible research panel CSV.gz; no operational state')
     a = ap.parse_args(argv)
 
     last_complete = a.as_of or default_last_complete()
@@ -660,8 +680,8 @@ def main(argv=None) -> int:
               "window": {"development": [DEV_START, DEV_END],
                          "confirmation": [CONF_START, last_complete]},
               "label": "DAILY-BAR PROXY; SHADOW RESEARCH; NO ADOPTION",
-              "survivorship_disclosure": "the 21 names are today's surviving "
-              "mega-caps; delisting bias is small but DISCLOSED, not removed",
+              "survivorship_disclosure": "Current configured TSX names: "
+              "survivorship and universe-selection bias are not quantified or removed.",
               "probe": got["probe"], "provenance": got["provenance"],
               "fetch_failures": got["failures"]}
 
@@ -672,6 +692,8 @@ def main(argv=None) -> int:
                              "closed (rule 2), nothing computed",
                       missing_series=missing,
                       verdict="BLOCKED",
+                      mde80_points=None,
+                      mde_status='Unavailable: no paired outcome panel',
                       verdict_note="data acquisition failed with the recorded "
                                    "error classes; no panel, no inference, "
                                    "no fabrication")
@@ -685,6 +707,11 @@ def main(argv=None) -> int:
             {p: got["frames"][p] for p in PROXIES},
             last_complete=last_complete)
         record["coverage"] = {**counters, "rejected_examples": rejected_examples}
+        if a.panel_output:
+            os.makedirs(os.path.dirname(os.path.abspath(a.panel_output)), exist_ok=True)
+            df.to_csv(a.panel_output, index=False)
+            with open(a.panel_output, 'rb') as handle:
+                record['panel_sha256'] = hashlib.sha256(handle.read()).hexdigest()
         print(f"panel: {counters['sessions']} sessions, {counters['rows']} rows; "
               f"rejected missing-name={counters['rejected_missing_name']} "
               f"missing-proxy={counters['rejected_missing_proxy']}")
@@ -694,7 +721,7 @@ def main(argv=None) -> int:
 
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w") as f:
-        json.dump(record, f, indent=2, sort_keys=True)
+        json.dump(record, f, indent=2, sort_keys=True, allow_nan=False)
     print(f"\n  wrote {a.out}")
     return 3 if record.get("verdict") == "BLOCKED" or record.get("status") == "BLOCKED" else 0
 

@@ -141,6 +141,8 @@ def test_the_job_clock_is_injectable_so_this_suite_cannot_expire(tmp_path,
     monkeypatch.setattr(daily_job.brief, 'compute',
                         lambda **kw: copy.deepcopy(d))
     far = dt.datetime(2027, 3, 15, 9, 46, 20, tzinfo=ZoneInfo('America/New_York'))
+    d['session'] = far.date().isoformat()
+    d['generated_at'] = far.isoformat()
     report = daily_job.run(tmp_path / 's', tmp_path / 'o', now=far)
     assert Store(tmp_path / 's').get(far.date().isoformat()) is not None, \
         "an injected clock did not govern the session key"
@@ -151,8 +153,15 @@ def test_a_live_run_still_uses_the_wall_clock(tmp_path, monkeypatch):
     import datetime as dt
     from zoneinfo import ZoneInfo
     d = brief.compute(now=NOW, services=services(), no_net=True)
+    # Stub the wall-clock provider, not a report with a conflicting old date.
+    # The test remains deterministic before the open and across midnight.
+    class WallClock(dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW.astimezone(tz) if tz else NOW.replace(tzinfo=None)
+    monkeypatch.setattr(daily_job.dt, 'datetime', WallClock)
     monkeypatch.setattr(daily_job.brief, 'compute',
                         lambda **kw: copy.deepcopy(d))
     daily_job.run(tmp_path / 's', tmp_path / 'o')
-    today = dt.datetime.now(ZoneInfo('America/New_York')).date().isoformat()
+    today = NOW.date().isoformat()
     assert Store(tmp_path / 's').get(today) is not None

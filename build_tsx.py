@@ -20,6 +20,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import math
 import os
 import sys
 import time
@@ -28,6 +29,9 @@ import urllib.parse
 import urllib.request
 
 import yaml
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
@@ -46,8 +50,8 @@ class GranularityError(ValueError):
 
 def fetch(ticker: str, start: dt.date, end: dt.date, timeout: float = 30.0):
     url = CHART.format(t=urllib.parse.quote(ticker, safe=""),
-                       p1=int(dt.datetime.combine(start, dt.time()).timestamp()),
-                       p2=int(dt.datetime.combine(end, dt.time()).timestamp()))
+                       p1=int(dt.datetime.combine(start, dt.time(), ET).timestamp()),
+                       p2=int(dt.datetime.combine(end, dt.time(), ET).timestamp()))
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         payload = json.loads(r.read())
@@ -55,12 +59,28 @@ def fetch(ticker: str, start: dt.date, end: dt.date, timeout: float = 30.0):
     if not res:
         raise ValueError("no chart result")
     r0 = res[0]
+    meta = r0.get("meta") or {}
+    if meta.get("symbol") != ticker or meta.get("currency") != "CAD":
+        raise ValueError(f"unauthenticated symbol/currency for {ticker}")
+    if meta.get("dataGranularity") != "1d":
+        raise GranularityError("provider did not authenticate daily granularity")
     stamps = r0.get("timestamp") or []
     q = ((r0.get("indicators") or {}).get("quote") or [{}])[0]
     if not stamps:
         raise ValueError("no timestamps")
 
-    days = [dt.datetime.fromtimestamp(s, dt.timezone.utc).date() for s in stamps]
+    days = [dt.datetime.fromtimestamp(s, ET).date() for s in stamps]
+    if len(set(days)) != len(days) or days != sorted(days):
+        raise ValueError("duplicate or unordered daily sessions")
+    if any(not start <= d < end for d in days):
+        raise ValueError("bar outside requested session range")
+    import pandas_market_calendars as mcal
+    schedule = mcal.get_calendar("TSX").schedule(start_date=start, end_date=end)
+    closes = {d.date(): r["market_close"].to_pydatetime()
+              for d, r in schedule.iterrows()}
+    now = dt.datetime.now(dt.timezone.utc)
+    if any(d not in closes or closes[d] > now for d in days):
+        raise ValueError("non-session or incomplete-session daily bar")
     gaps = sorted((days[i + 1] - days[i]).days for i in range(len(days) - 1))
     median_gap = gaps[len(gaps) // 2] if gaps else 999
     if median_gap > MAX_MEDIAN_SPACING_DAYS:
@@ -70,10 +90,11 @@ def fetch(ticker: str, start: dt.date, end: dt.date, timeout: float = 30.0):
     rows = []
     for i, d in enumerate(days):
         o, c, v = q.get("open", [])[i], q.get("close", [])[i], q.get("volume", [])[i]
-        if o is None or c is None or not o or not c:
-            continue
+        if (any(x is None or not math.isfinite(float(x)) for x in (o, c, v))
+                or float(o) <= 0 or float(c) <= 0 or float(v) < 0):
+            raise ValueError(f"invalid OHLC/volume for {ticker} on {d}")
         rows.append({"date": d.isoformat(), "open": float(o), "close": float(c),
-                     "volume": float(v or 0)})
+                     "volume": float(v)})
     return rows, median_gap
 
 
@@ -112,8 +133,10 @@ def build(tickers, start, end, out, delay=0.4):
         if i + 1 < len(tickers):
             time.sleep(delay)
 
-    if not panel:
-        raise SystemExit("no usable rows — refusing to write an empty panel")
+    if not panel or stats["ok"] != len(tickers):
+        raise SystemExit("incomplete TSX universe — preserving any previous panel; "
+                         f"{stats['ok']}/{len(tickers)} names passed, "
+                         f"{stats['error']} data errors, {stats['granularity']} granularity errors")
     cols = ["t", "date", "open", "close", "prev_close", "volume",
             "overnight", "intraday", "daily"]
     tmp = out + ".tmp"
@@ -136,8 +159,8 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     with open(a.config) as f:
         cfg = yaml.safe_load(f)
-    tickers = sorted(cfg["scan"]["universe"])
-    end = dt.date.today()
+    tickers = sorted(set(cfg["scan"]["universe"]) | {cfg["ticker"]})
+    end = dt.datetime.now(ET).date()
     start = end - dt.timedelta(days=365 * a.years + 10)
     print(f"TSX daily bars, {len(tickers)} names, {start} -> {end}")
     build(tickers, start, end, a.out)

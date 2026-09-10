@@ -33,3 +33,8 @@ Both are append-mostly: new events arrive as companies file. Re-run the
 harvester when the newest event is more than a month old, then re-run
 `baserate.py` and commit both together — they must not drift apart, since the
 second is computed entirely from the first.
+# Day95 audit artifacts
+
+- Session-specific postmortems and observed intraday panels stay private.
+- `day95_crossmarket_results.json`: separate corrected attempt of Kimi day94;
+  data-contract failures block inference and MDE. Original artifacts retained.

@@ -13,29 +13,44 @@ def fmt(value, spec='.2f'):
 
 
 def _day_shape(rec, intra):
-    """What a day at this leg count looks like at the record's own rate."""
-    try:
-        import ledger
-        legs = len(intra.get('legs') or intra.get('recorded_today') or [])
-        lines = ledger.day_shape_line(rec.get('hits') or 0, rec.get('n') or 0,
-                                      legs)
-    except Exception:
-        return []
-    return (['', '**Expected shape of a day like this**'] + lines) if lines else []
+    """Render frozen empirical counts; never fit an independence model here."""
+    risk = intra.get('risk_evidence', {})
+    shape = risk.get('day_shape', {})
+    rate = risk.get('rate', {})
+    lines = ['', '### How reliable is the record?']
+    if not risk:
+        return lines + ['Risk diagnostics were not saved in this older publication.']
+    ci = rate.get('ci95')
+    lines += [f"Gross hit-rate interval, clustered by {rate['sessions']} sessions: "
+              + (f"{ci[0]:.1%}–{ci[1]:.1%}." if ci else 'unavailable.'),
+              f"Approximate MDE80: {fmt(rate.get('mde80_pp'))} percentage points. "
+              'Small score differences are not established probability differences; serial dependence can widen uncertainty.']
+    if shape.get('sessions'):
+        lines.append(f"Observed {shape['legs']}-leg days: {shape['bad_days']}/{shape['sessions']} "
+                     'had one or fewer gross hits. These are historical session counts, not a forecast for today.')
+    else:
+        lines.append('No fully scored historical sessions match this board size; bad-day frequency is unknown.')
+    lines += ['Correlated legs can lose together. Gross hit counts do not measure loss size or profitability.',
+              '', '| Historical analog-score band | Gross hits | Sessions | Observed hit rate |',
+              '|---|---:|---:|---:|']
+    for bucket in risk.get('calibration', []):
+        lines.append(f"| {bucket['score_band']} | {bucket['hits']}/{bucket['n']} | "
+                     f"{bucket['sessions']} | {fmt(bucket['rate'], '.1%')} |")
+    return lines
 
 
 def _concentration(intra):
-    """Peer-group concentration of the sized book. Disclosure, never a gate."""
-    try:
-        import r945
-        from dashboard import load_config
-        groups = (load_config('config.yaml').get('peer_groups') or {})
-        legs = [{'t': l.get('ticker'), 'side_hint': l.get('side')}
-                for l in (intra.get('legs') or [])]
-        warns = r945.book_concentration(legs, groups)
-    except Exception:
-        return []
-    return (['', '**Concentration**'] + [f'- {w}' for w in warns]) if warns else []
+    """Disclosure computed from the publication's own config and allocations."""
+    risk = intra.get('risk_evidence', {})
+    groups = risk.get('concentration', [])
+    lines = ['', '### Common exposure'] if groups else []
+    for group in groups:
+        lines.append(f"- {', '.join(group['tickers'])}: {group['side']} {group['group']}; "
+                     f"{fmt(group['gross_share'], '.1%')} of hypothetical gross allocation. "
+                     'Shared exposure; distinct names do not establish independent bets.')
+    if groups:
+        lines.append('A dollar-neutral book can retain sector and factor risk. The prior forced-diversification rejection remains in STRATEGY.md; no new sizing rule is adopted.')
+    return lines + ['Risk evidence gap: ' + gap for gap in risk.get('gaps', [])]
 
 
 def _leg_heading(intra):
@@ -45,7 +60,7 @@ def _leg_heading(intra):
     quote endpoint was returning HTTP 406 all session, so no spread could be
     priced. The table still led with name, side, dollar allocation and share
     count, with ABSTAIN as the last column under a heading that said "shadow
-    tracking" -- and it was read as an order sheet and traded. Two of the four
+    tracking" -- and it was read as an order sheet and traded. Three of the four
     went the wrong way.
 
     A status that has to be hunted for in the right-hand column is not a
@@ -54,8 +69,11 @@ def _leg_heading(intra):
     """
     legs = intra.get('legs') or []
     if not legs:
+        if any(r.get('role') == 'pair' for r in intra.get('recorded_today', [])):
+            return ['### Recorded baseline legs — no fresh entry validation',
+                    'Preserved original names, sides and shares; hypothetical selections, not confirmed positions.']
         return ['### Selected baseline legs']
-    ab = [l for l in legs if l.get('status') == 'ABSTAIN']
+    ab = [l for l in legs if l.get('status') not in ('SHADOW', 'ELIGIBLE')]
     if len(ab) == len(legs):
         return ['### ⛔ DO NOT TRADE — every leg below ABSTAINED',
                 f'All {len(legs)} legs failed an integrity check and are shown '
@@ -74,11 +92,17 @@ def _leg_heading(intra):
 
 def text(d):
     intra=d['intraday']; res=intra['res']; rec=intra['record']
+    leg_count = len(intra['legs']) or sum(r.get('role')=='pair' for r in intra.get('recorded_today',[]))
     lines=[f"# RB Daily Report — {d['session']}",
-           f"As of {d['generated_at']} · {d['report_status']} · {d['clock']['status']}",
+           f"Signal snapshot {d['generated_at']} · {d['report_status']}",
+           'Publication clock: '+d['clock']['status'],
+           *([f"Dispatch checked {d['delivery']['checked_at']}: {d['delivery']['status']}. "
+               + d['delivery']['note']] if d.get('delivery') else []),
            '', '## Part 1 — Intraday Opportunities',
            intra['contract']+'. Signal reference: 09:45 completed bar; execution quote is separate.',
-           intra['model_claim'], '',
+           intra['model_claim'],
+           f"Execution-verified research observations: {sum(l.get('status') in ('SHADOW','ELIGIBLE') and l.get('quote',{}).get('status')=='OK' for l in intra['legs'])}/{leg_count} selected or recorded legs at publication. "
+           'This count verifies data, not predictive accuracy.', '',
            f"Historical baseline: {rec['hits']}/{rec['n']} gross hits ({fmt(rec['rate'],'.1%')}); "
            f"mean capture {fmt(rec['mean'],'+.3f')}%.",
            f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
@@ -86,17 +110,17 @@ def text(d):
            f"unpriced {rec['net_unpriced']}.",rec['label'],rec['benchmark_label'],
            *_day_shape(rec, intra), *_concentration(intra),
            '', *_leg_heading(intra), '',
-           '| Name | Side | Signal reference | 09:46 quote | Spread | Baseline allocation | Status |',
-           '|---|---|---:|---:|---:|---:|---|']
+           '| Status | Name | Baseline side | Signal reference | 09:46 quote | Spread | Hypothetical allocation |',
+           '|---|---|---|---:|---:|---:|---:|']
     for l in intra['legs']:
-        lines.append(f"| {l['ticker']} | {l['side']} | {l['signal_reference']:.2f} | "
+        lines.append(f"| {l['status']} | {l['ticker']} | {l['side']} | {l['signal_reference']:.2f} | "
                      f"{fmt(l['entry_reference'])} | {fmt(l['entry_spread_bps'])} bps | "
-                     f"${l['baseline_alloc']:,.0f} / {l['baseline_shares']} shares | {l['status']} |")
+                     f"CAD {l['baseline_alloc']:,.0f} / {l['baseline_shares']} shares |")
     if not intra['legs']:
         recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
         for r in recorded:
-            lines.append(f"| {r['ticker']} | {r['side']} | {r.get('p945','unknown')} | unverified | "
-                         f"{r.get('spread_bps') or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares | RECORDED — not a fresh entry |")
+            lines.append(f"| RECORDED — not a fresh entry | {r['ticker']} | {r['side']} | {r.get('p945','unknown')} | unverified | "
+                         f"{r.get('spread_bps') or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares |")
         if not recorded:
             unavailable=res.get('coverage_fail') or not res.get('n_names')
             lines.append('| '+('Scan not evaluated' if unavailable else 'No qualifying baseline legs')+
@@ -116,7 +140,7 @@ def text(d):
                   f"Research only: spread/vol {fmt(l['spread_density'],'.1%')}; "
                   f"H1 {'keep' if l['h1_keep'] else 'abstain'}; H2 allocation multiplier {l['h2_scale']:.3f}."]
     lines += ['', '### Full intraday opportunity board', '',
-              '| Name | Side | Sided-P (diagnostic) | Density | First 15m | Gap | Volume ratio |',
+              '| Name | Side | Analog score (not calibrated probability) | Density | First 15m | Gap | Volume ratio |',
               '|---|---|---:|---|---:|---:|---:|']
     for side in ('longs','shorts'):
         for p in res.get(side,[]):
@@ -178,6 +202,7 @@ def text(d):
         lines += ['', '## Data and delivery diagnostics']
         lines += [f"{e['layer']}: {e['error']} — {e['detail']}" for e in d['errors']]
     lines += ['', f"Research: {d['research']['registration']} — {d['research']['status']}. {d['research']['mde']}",
+              'Code revision: '+str(d.get('provenance',{}).get('code_commit') or 'not saved in this publication'),
               'No order was placed. Hypothetical baseline allocation is for comparison; the strategy overlays are not adopted.']
     return '\n'.join(lines)
 
@@ -199,7 +224,7 @@ def html(d):
     rendered=[]; table=False; bullet=False
     for line in text(d).splitlines():
         if not line.startswith('|') and table:
-            rendered.append('</tbody></table>');table=False
+            rendered.append('</tbody></table></div>');table=False
         if not line.startswith('- ') and bullet:
             rendered.append('</ul>');bullet=False
         if line.startswith('|'):
@@ -207,23 +232,29 @@ def html(d):
             if all(re.fullmatch(r'[-:]+',x) for x in cells):
                 continue
             if not table:
-                rendered.append('<table><tbody>');table=True
-            rendered.append('<tr>'+''.join('<td>'+x+'</td>' for x in cells)+'</tr>')
+                rendered.append('<div style="overflow-x:auto"><table role="table" style="width:100%;border-collapse:collapse;background:#fff;font-size:13px"><tbody>')
+                rendered.append('<tr>'+''.join('<th scope="col" style="padding:11px 9px;background:#e9f0f5;border-bottom:2px solid #b9cdda;text-align:left">'+x+'</th>' for x in cells)+'</tr>')
+                table=True
+            else:
+                rendered.append('<tr>'+''.join('<td style="padding:10px 9px;border-bottom:1px solid #d9e2eb;text-align:left">'+x+'</td>' for x in cells)+'</tr>')
         elif line.startswith('- '):
             if not bullet:
                 rendered.append('<ul>');bullet=True
             rendered.append('<li>'+inline(line[2:])+'</li>')
         elif line.startswith('#'):
             level=min(3,len(line)-len(line.lstrip('#')))
-            rendered.append(f'<h{level}>'+escape(line.lstrip('# '))+f'</h{level}>')
+            style = {1:'margin:0 -24px 24px;padding:30px 24px;background:#12334b;color:#fff;font-size:27px',
+                     2:'border-top:3px solid #267a85;padding-top:22px;margin-top:34px;font-size:22px;color:#12334b',
+                     3:'margin-top:26px;font-size:18px;color:#245b6c'}[level]
+            rendered.append(f'<h{level} style="{style}">'+escape(line.lstrip('# '))+f'</h{level}>')
         elif line:
-            rendered.append('<p>'+escape(line)+'</p>')
-    if table: rendered.append('</tbody></table>')
+            rendered.append('<p style="line-height:1.6;margin:12px 0">'+inline(line)+'</p>')
+    if table: rendered.append('</tbody></table></div>')
     if bullet: rendered.append('</ul>')
     return ('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             '<title>RB Daily Report</title><style>body{font:15px system-ui,sans-serif;color:#182437;background:#f5f7fa;'
             'max-width:1180px;margin:32px auto;padding:0 24px}h1{color:#0a3658}h2{border-top:3px solid #23627e;'
             'padding-top:20px;margin-top:36px}table{width:100%;border-collapse:collapse;background:white;font-size:13px}'
             'td{padding:9px;border-bottom:1px solid #d9e2eb;text-align:left}tr:first-child{font-weight:700;background:#e9f0f5}'
-            'p,li{line-height:1.55}li{margin-bottom:10px}h3{color:#315b70}</style></head><body>'
+            'p,li{line-height:1.55}li{margin-bottom:10px}h3{color:#315b70}</style></head><body style="font-family:Arial,sans-serif;color:#182437;background:#f5f7fa;max-width:1120px;margin:24px auto;padding:0 24px 24px">'
             +''.join(rendered)+'</body></html>')

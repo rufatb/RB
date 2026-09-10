@@ -163,3 +163,13 @@ Not on the morning path. Candidates for consolidation, NOT deletion: several are
 | `validate_time` | 139 | is 9:45 the right decision time, or does another time | — |
 | `validate_time_deep` | 133 | is 9:45 the right decision time? (YEAR data version) | `paired_time` |
 | `validate_universe` | 135 | day-14: should the universe grow from 21 to 61 names? | — |
+# Day95 integration additions
+
+`risk_evidence.py`: active helper called only by brief.compute; prior-session
+descriptive uncertainty, score reliability and common exposure, no selection.
+`prepare_delivery.py`: active Gmail dispatch renderer; frozen model plus actual
+send-time annotation, no acquisition/state mutation/send.
+`PREREGISTER_day95.md`: research registration and contributor audit corrections.
+`STRATEGY_day95.md`: technical research addendum; session postmortems stay private.
+`data/day95_crossmarket_results.json`: corrected day94 attempt; BLOCKED by
+source/contract failures, not a null or an adopted improvement.
