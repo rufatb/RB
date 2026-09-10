@@ -39,6 +39,36 @@ def _day_shape(rec, intra):
     return lines
 
 
+def _record_gaps(intra):
+    """RECORD-section warning for missing sessions (day-95, C3).
+
+    Printed whenever the today-anchored record-gap check is non-empty. A
+    MISSED publication (no ledger rows, no universe prints) is distinguished
+    from a zero-pick day (prints written, nothing qualified) — the two look
+    identical in the pick ledger alone, which is how 2026-09-09 became an
+    invisible gap."""
+    gaps = intra.get('record_gaps') or {}
+    missing = gaps.get('missing') or []
+    zero_pick = gaps.get('zero_pick') or []
+    lines = []
+    if missing:
+        shown = ', '.join(missing[:6]) + ('…' if len(missing) > 6 else '')
+        lines += ['', f'**⚠ RECORD MAY BE INCOMPLETE — missing sessions: {shown}**',
+                  'No ledger rows AND no universe prints exist for those '
+                  'trading days: either the run never happened or it ran and '
+                  'recorded nothing. Percentages here cover only what was '
+                  'actually recorded.',
+                  'This is distinct from a zero-pick day: since day-95 a day '
+                  'that ran and qualified nothing still writes its universe '
+                  'prints, so a missed publication and a quiet day are no '
+                  'longer indistinguishable.']
+    if zero_pick:
+        shown = ', '.join(zero_pick[:6]) + ('…' if len(zero_pick) > 6 else '')
+        lines.append(f'Zero-pick sessions on record (ran, nothing qualified; '
+                     f'universe prints written — NOT missed publications): {shown}.')
+    return lines
+
+
 def _concentration(intra):
     """Disclosure computed from the publication's own config and allocations."""
     risk = intra.get('risk_evidence', {})
@@ -108,6 +138,7 @@ def text(d):
            f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
            f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; "
            f"unpriced {rec['net_unpriced']}.",rec['label'],rec['benchmark_label'],
+           *_record_gaps(intra),
            *_day_shape(rec, intra), *_concentration(intra),
            '', *_leg_heading(intra), '',
            '| Status | Name | Baseline side | Signal reference | 09:46 quote | Spread | Hypothetical allocation |',
@@ -120,7 +151,7 @@ def text(d):
         recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
         for r in recorded:
             lines.append(f"| RECORDED — not a fresh entry | {r['ticker']} | {r['side']} | {r.get('p945','unknown')} | unverified | "
-                         f"{r.get('spread_bps') or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares |")
+                         f"{r.get('spread or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares |")
         if not recorded:
             unavailable=res.get('coverage_fail') or not res.get('n_names')
             lines.append('| '+('Scan not evaluated' if unavailable else 'No qualifying baseline legs')+
