@@ -13,6 +13,47 @@ def key(ticker):
     return hashlib.sha256(ticker.encode()).hexdigest()+'.json'
 
 
+def inspect_cache(cfg, directory, now=None):
+    """Verify persisted bytes, not just a manifest claiming completeness."""
+    from quotes import stamp
+    import pandas_market_calendars as mcal
+    now=now or dt.datetime.now(ZoneInfo('America/New_York'))
+    now=stamp(now).astimezone(ZoneInfo('America/New_York'))
+    expected_tickers=cfg['scan']['universe']
+    out={'status':'NOT READY','session':now.date().isoformat(),
+         'verified':0,'expected':len(expected_tickers),'errors':[]}
+    try:
+        root=Path(directory)
+        manifest=json.loads((root/'manifest.json').read_text())
+        prepared=stamp(manifest['prepared_at']).astimezone(ZoneInfo('America/New_York'))
+        if (not manifest.get('complete') or manifest.get('session')!=out['session']
+            or prepared.date()!=now.date() or prepared.time()>=dt.time(9,30) or prepared>now
+            or manifest.get('source')!=cfg.get('data_sources',{}).get('primary','yahoo_direct')
+            or sorted(manifest.get('tickers',[]))!=sorted(expected_tickers)):
+            raise ValueError('cache session/source/universe/pre-open identity mismatch')
+        prior=mcal.get_calendar('TSX').valid_days(start_date=now.date()-dt.timedelta(days=12),
+              end_date=now.date()-dt.timedelta(days=1))[-1].date()
+        for ticker in expected_tickers:
+            item=json.loads((root/key(ticker)).read_text())
+            frame=json.loads(item['frame'])
+            index=pd.to_datetime(frame['index'],utc=True).tz_convert(cfg['exchange_tz'])
+            if (item['ticker']!=ticker or item['session']!=out['session'] or len(index)==0
+                or len(index)!=len(frame['data']) or index.has_duplicates or not index.is_monotonic_increasing
+                or index[-1].date()!=prior or any(i.date()>=now.date() for i in index)
+                or not {'Open','High','Low','Close','Volume'}.issubset(frame['columns'])):
+                raise ValueError('missing/invalid cached history: '+ticker)
+            values=pd.DataFrame(frame['data'],columns=frame['columns'])
+            import numpy as np
+            if (not np.isfinite(values[['Open','High','Low','Close','Volume']].to_numpy(dtype=float)).all()
+                or (values[['Open','High','Low','Close']]<=0).any().any() or (values['Volume']<0).any()):
+                raise ValueError('invalid cached OHLCV: '+ticker)
+            out['verified']+=1
+        out['status']='READY'
+    except (OSError,ValueError,KeyError,TypeError,IndexError) as exc:
+        out['errors'].append(type(exc).__name__+': '+str(exc)[:160])
+    return out
+
+
 def get_bars(adapter, ticker, now):
     directory=os.getenv('RB_INTRADAY_CACHE_DIR')
     if not directory:

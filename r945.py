@@ -700,10 +700,13 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
     return {"long": leg(longs, "LONG", shorts), "short": leg(shorts, "SHORT", longs)}
 
 
-def run(cfg, workers=8):
+def run(cfg, workers=8, *, require_cache=False):
     import os
     from bounded import progress
     progress('intraday_started')
+    if require_cache and not os.getenv('RB_INTRADAY_CACHE_DIR'):
+        progress('cache_unavailable')
+        raise ValueError('scheduled intraday path requires a prepared cache directory')
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
     # HARD too-early guard (bug found live at 9:38): between open+10 and
@@ -774,7 +777,8 @@ def run(cfg, workers=8):
         return {"now": now.isoformat(timespec="seconds"), "n_names": 0,
                 "longs": [], "shorts": [], "excluded": [], "pair": None,
                 "min_p": min_p, "too_early": False, "clock_error": _why,
-                "latest_session": latest_session}
+                "latest_session": latest_session, "coverage_fail": _why,
+                "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
     hist_rows, live = [], []
     progress('features_started')
     for t, bars in fetched.items():

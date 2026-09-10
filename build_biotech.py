@@ -90,26 +90,34 @@ def fetch_security(row, now):
             'source':'Yahoo Finance via yfinance; captured metadata and completed daily bars'}
 
 
-def build(now=None,workers=8):
+def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budget=20):
     now=now or dt.datetime.now(ZoneInfo('America/New_York'))
     out={'as_of':now.isoformat(),'universe_complete':False,'universe_count':0,
          'securities':[],'errors':[],'options':{}}
-    try:
-        raw=discover_universe()
-    except Exception as exc:
-        out['errors'].append('universe discovery: '+type(exc).__name__+': '+str(exc)[:160])
+    from bounded import acquire
+    discovered=acquire({'universe':(discover_universe,discovery_budget)})['universe']
+    if discovered['status']!='OK':
+        out['errors'].append('universe discovery: '+discovered['error'])
+        if checkpoint: checkpoint(out)
         return out
+    raw=discovered['value']
     out['universe_count']=len(raw)
-    def fetch(row):
-        try:
-            return fetch_security(row,now),None
-        except Exception as exc:
-            return None,f"{row.get('symbol')}: {type(exc).__name__}: {str(exc)[:160]}"
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        for row,err in pool.map(fetch,raw):
-            if err: out['errors'].append(err)
-            else: out['securities'].append(row)
+    if checkpoint: checkpoint(out)
+    for offset in range(0,len(raw),workers):
+        batch=raw[offset:offset+workers]
+        results=acquire({row['symbol']:(lambda row=row:fetch_security(row,now),security_budget) for row in batch})
+        stop=False
+        for ticker,result in results.items():
+            if result['status']=='OK': out['securities'].append(result['value'])
+            else:
+                out['errors'].append(ticker+': '+result['error'])
+                stop |= result['error'] in {'YFRateLimitError','TimeoutExpired'}
+        if checkpoint: checkpoint(out)
+        if stop:
+            out['errors'].append('provider unavailable; remaining symbols not requested')
+            break
     out['universe_complete']=bool(raw) and not out['errors']
+    if checkpoint: checkpoint(out)
     return out
 
 
@@ -144,7 +152,7 @@ def main(argv=None):
         events=json.loads(Path(a.events).read_text())['events']
         snap=refresh_options(snap,events,now)
     else:
-        snap=build(now)
+        snap=build(now,checkpoint=lambda value:write_atomic(a.output,value))
     write_atomic(a.output,snap)
     print(f"Universe {len(snap['securities'])}/{snap['universe_count']}; complete={snap['universe_complete']}; errors={len(snap['errors'])}")
     for error in snap['errors'][:12]: print(error)

@@ -7,7 +7,7 @@ quote. Part 2 is an independent factual biotech monitor. No renderer fetches,
 re-picks, sizes, scores or persists anything. No component submits orders.
 
 Use --publish once at 09:46 ET; publication persists even on zero-pick days.
-Offline/preview runs never write ledgers or query the network. Source errors
+Previews never write ledgers; offline runs also avoid network acquisition. Source errors
 are data in the report, not absent observations interpreted as clean evidence.
 """
 from __future__ import annotations
@@ -84,7 +84,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
         tasks = {'equity_quotes': (lambda: market_client().get(sorted(tickers)), 10)}
         if not recorded_today and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
-            tasks['intraday'] = (lambda: r945.run(cfg), 22)
+            tasks['intraday'] = (lambda: r945.run(cfg,require_cache=publish), 22)
         section_status = acquire(tasks)
         raw_live = section_status['equity_quotes']['value'] or {}
         for name, result in section_status.items():
@@ -139,6 +139,21 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                               'mark':None,'spread_bps':None})
     book = positions.mark_book(prows, {t:q['mark'] for t,q in quotes.items() if q.get('mark') is not None},now.date())
     book['verification'] = 'Recorded ledger only — holdings have not been reconciled with a brokerage account.'
+    book['recent_closed']=[]
+    from quotes import number
+    for row in prows:
+        if row.get('status')!=positions.CLOSED: continue
+        try:
+            day=dt.date.fromisoformat(row['exit_date'])
+            if not 0 <= (now.date()-day).days <= 7: continue
+            shares,entry,exit_px=(number(row.get(k),positive=True) for k in ('shares','entry_px','exit_px'))
+            if None in (shares,entry,exit_px) or row.get('side') not in ('LONG','SHORT'):
+                raise ValueError('invalid recorded closed position')
+            pct,dollars=positions.pnl(row['side'],entry,exit_px,shares)
+            book['recent_closed'].append(dict(ticker=row['ticker'],side=row['side'],shares=shares,
+                entry_px=entry,exit_px=exit_px,exit_date=row['exit_date'],pnl_pct=pct,pnl_usd=dollars))
+        except (ValueError,KeyError,TypeError) as exc:
+            error('closed_position',exc)
     try:
         reference_path = os.getenv('RB_REFERENCE_CLOSES_JSON')
         references = json.loads(Path(reference_path).read_text()) if reference_path else {}

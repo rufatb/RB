@@ -63,12 +63,11 @@ def test_reference_close_is_never_live_mark():
 
 
 def test_a_price_citation_must_come_from_the_provider_it_names():
-    """THE CITATION THAT REACHED A REAL INBOX. This fixture's own URL --
-    https://massive.com/docs/rest/... -- was printed in the 2026-09-10 email as
-    the Source for a ZYME price. It is a documentation page, not a feed, and it
-    originated HERE, in this test file. The old check asked only for https + a
-    hostname, so any string passed and was then quoted as authority beside a
-    number the reader might act on."""
+    """A documentation URL alone does not support a specific price.
+
+    The connected Massive response independently confirms the recorded price;
+    sharing a documentation URL with a fixture does not show fixture leakage.
+    """
     base={'ticker':'ZYME','currency':'USD','session':'2026-09-04','close':29.19,
           'retrieved_at':NOW.isoformat()}
     doc_url='https://massive.com/docs/rest/stocks/aggregates/previous-day-bar'
@@ -81,7 +80,7 @@ def test_a_price_citation_must_come_from_the_provider_it_names():
     r=reference_close({**base,'provider':'EODHD','source_url':doc_url},'ZYME',NOW)
     assert r['status']=='UNAVAILABLE' and 'not a data host' in r['reason']
 
-    # an unknown provider cannot authorise its own host
+    # Even a supported provider needs its data endpoint and returned observation.
     r=reference_close({**base,'provider':'Massive',
                        'source_url':doc_url},'ZYME',NOW)
     assert r['status']=='UNAVAILABLE'
