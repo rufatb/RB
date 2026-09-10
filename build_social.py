@@ -92,13 +92,35 @@ def error_class(exc: BaseException) -> str:
     return type(exc).__name__.upper()
 
 
-def parse_stream(payload: dict, requested_symbol: str) -> dict:
+def parse_stream(payload: dict, requested_symbol: str,
+                 now: dt.datetime | None = None) -> dict:
     """Counts from one StockTwits symbol-stream response. Pure given a payload.
 
     Asserts the response is for the requested symbol (rule 9). Sentiment tags
     are author-applied `entities.sentiment.basic` values; messages without one
     are counted in `messages` but in neither sentiment bucket. Messages with an
     unparseable timestamp are rejected and COUNTED, never silently kept.
+
+    `messages` IS NOT AN ATTENTION MEASURE, AND MUST NEVER BE USED AS ONE.
+    Day-94 collection, first live run: all 18 mappable names returned EXACTLY
+    30 — the endpoint's page size. The stream serves one page of most-recent
+    messages, so `len(messages)` saturates and carries zero variance across
+    names and across days. It is the page size, not the traffic.
+
+    The page's TIMESTAMPS still hold the signal, and the same run showed how
+    much: ENB's newest message was hours old while SLF's was 23 DAYS old, and
+    both stored `messages = 30`. So attention is measured here as a count in a
+    fixed lookback window (rule 9 -- verify the data you GOT):
+
+        msgs_24h / msgs_7d   messages in that window before `now`
+        censored_24h/_7d     True when the WHOLE page falls inside the window,
+                             so the count is a LOWER BOUND (>= page_size) and
+                             the true rate is unknown-but-larger
+        page_size            what the endpoint actually returned
+
+    A censored window is not a bad reading, it is a partial one, and it is
+    flagged rather than folded in (rule 2, and rule 7's habit of showing a
+    correction beside a raw figure instead of merging them).
     """
     if not isinstance(payload, dict):
         raise StreamContractError("stream payload is not an object")
@@ -111,8 +133,13 @@ def parse_stream(payload: dict, requested_symbol: str) -> dict:
         raise StreamContractError(
             f"asked for {requested_symbol}, got stream for {returned!r}")
     messages = payload.get("messages") or []
+    if now is None:
+        now = dt.datetime.now(dt.timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dt.timezone.utc)
     bullish = bearish = rejects = 0
-    max_ts = None
+    max_ts = min_ts = None
+    stamps = []
     for m in messages:
         if not isinstance(m, dict):
             rejects += 1
@@ -128,12 +155,30 @@ def parse_stream(payload: dict, requested_symbol: str) -> dict:
         except (ValueError, TypeError):
             rejects += 1
             continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=dt.timezone.utc)
+        stamps.append(ts)
         if max_ts is None or ts > max_ts:
             max_ts = ts
+        if min_ts is None or ts < min_ts:
+            min_ts = ts
+
+    page_size = len(messages)
+    windows = {}
+    for label, hours in (("24h", 24), ("7d", 24 * 7)):
+        cutoff = now - dt.timedelta(hours=hours)
+        n = sum(1 for ts in stamps if ts >= cutoff)
+        # Censored when EVERY dated message on the page is inside the window:
+        # the page ran out before the window did, so `n` is a lower bound.
+        windows["msgs_" + label] = n
+        windows["censored_" + label] = bool(stamps) and n == len(stamps)
+
     return {"us": requested_symbol, "symbol_title": sym.get("title"),
-            "messages": len(messages), "bullish": bullish, "bearish": bearish,
+            "messages": page_size, "page_size": page_size,
+            "bullish": bullish, "bearish": bearish,
             "max_message_ts": max_ts.isoformat() if max_ts else None,
-            "rejected_messages": rejects}
+            "min_message_ts": min_ts.isoformat() if min_ts else None,
+            "rejected_messages": rejects, **windows}
 
 
 def verify_mapping(tsx: str, symbol_title: str | None) -> bool:
@@ -267,7 +312,17 @@ def collect(cfg: dict, session=None, trends_session=None,
                     counts["error"] += 1
         names[tsx] = entry
         state = entry["status"]
-        extra = f" msgs={entry['messages']}" if state == "OK" else f" ({entry['error']})"
+        if state == "OK":
+            # page= is the endpoint's page size and saturates at 30; 24h= is
+            # the attention measure. Printing both is what made the censoring
+            # visible in the first place -- do not collapse them.
+            extra = (f" 24h={entry.get('msgs_24h')}"
+                     f"{'+' if entry.get('censored_24h') else ''}"
+                     f" 7d={entry.get('msgs_7d')}"
+                     f"{'+' if entry.get('censored_7d') else ''}"
+                     f" page={entry['page_size']}")
+        else:
+            extra = f" ({entry['error']})"
         print(f"  [{i + 1:2d}/{len(universe)}] {tsx:9s}<-{str(us):6s} {state}{extra}",
               flush=True)
         if i + 1 < len(universe):
@@ -320,20 +375,47 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
                   min_median: float = GATE_MIN_MEDIAN) -> dict:
     """The registered 20-session coverage gate. Failed fetches are EXCLUDED
     from a name's medians — never counted as zero attention (Forbidden list).
+
+    THE BAR HAS NOT MOVED (rule 3). GATE_SESSIONS, GATE_MIN_NAMES and
+    GATE_MIN_MEDIAN are exactly as registered. What changed day-94 is that the
+    gate now reads the quantity the registration NAMED -- "median messages/day"
+    -- instead of `len(messages)`, which is the endpoint's page size and was 30
+    for every name on every name's first live pull. Taking a median of a
+    constant returned "18/21 usable" while measuring nothing at all, and 120
+    sessions later a constant feature would have produced a zero AUC difference
+    that read as a null about attention rather than a broken instrument.
+
+    Reading the registered quantity makes the gate HARDER to pass, not easier,
+    which is the only safe direction for a correction like this. The
+    registration's own expected outcome was that most TSX names fail it.
+
+    Snapshots written before the fix have no `msgs_24h` and are skipped for
+    that name with `pre_fix_sessions` counted, never back-filled from the
+    page-size figure.
     """
     per_name: dict = {}
     for snap in snapshots:
         for tsx, e in (snap.get("names") or {}).items():
-            rec = per_name.setdefault(tsx, {"ok_sessions": 0, "counts": []})
-            if e.get("status") == "OK" and e.get("messages") is not None:
-                rec["ok_sessions"] += 1
-                rec["counts"].append(int(e["messages"]))
+            rec = per_name.setdefault(
+                tsx, {"ok_sessions": 0, "counts": [], "censored": 0,
+                      "pre_fix_sessions": 0})
+            if e.get("status") != "OK":
+                continue
+            if e.get("msgs_24h") is None:
+                rec["pre_fix_sessions"] += 1
+                continue
+            rec["ok_sessions"] += 1
+            rec["counts"].append(int(e["msgs_24h"]))
+            if e.get("censored_24h"):
+                rec["censored"] += 1
     names = {}
     for tsx, rec in sorted(per_name.items()):
         med = (float(statistics.median(rec["counts"]))
                if rec["counts"] else None)
         names[tsx] = {"ok_sessions": rec["ok_sessions"],
                       "median_messages_per_day": med,
+                      "censored_sessions": rec["censored"],
+                      "pre_fix_sessions": rec["pre_fix_sessions"],
                       "usable": bool(med is not None and med >= min_median)}
     usable = sum(1 for n in names.values() if n["usable"])
     sessions = len(snapshots)
@@ -370,9 +452,15 @@ def main(argv=None) -> int:
               f"snapshots in {a.outdir}")
         for tsx, n in result["names"].items():
             med = n["median_messages_per_day"]
+            flags = []
+            if n["censored_sessions"]:
+                flags.append(f"{n['censored_sessions']} censored(>=)")
+            if n["pre_fix_sessions"]:
+                flags.append(f"{n['pre_fix_sessions']} pre-fix skipped")
             print(f"  {tsx:9s} ok={n['ok_sessions']:3d} median_msgs/day="
                   f"{med if med is not None else 'n/a':>6} "
-                  f"{'USABLE' if n['usable'] else '-'}")
+                  f"{'USABLE' if n['usable'] else '-':7s}"
+                  f"{'  ' + ', '.join(flags) if flags else ''}")
         print(f"  usable names: {result['usable_names']} "
               f"(registered bar >= {result['min_names']} of 21)")
         print(f"  GATE: {result['gate']} — {result['note']}")

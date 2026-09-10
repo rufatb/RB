@@ -127,9 +127,18 @@ def test_snapshot_write_is_atomic_and_dated(tmp_path):
 
 
 def snapshot(date, counts):
-    """counts: {tsx: message count}; every entry OK."""
+    """counts: {tsx: messages in the 24h window}; every entry OK.
+
+    `msgs_24h` is what the gate reads, not `messages`. `messages` is the
+    endpoint's page size and saturates at 30 for every name -- see
+    parse_stream's docstring. The page figure is carried here at its real
+    saturated value precisely so a gate that read it would score every name
+    identically and the arithmetic tests below would stop discriminating.
+    """
     return {"date": date, "names": {
-        t: {"status": "OK", "messages": n} for t, n in counts.items()}}
+        t: {"status": "OK", "msgs_24h": n, "censored_24h": False,
+            "messages": 30, "page_size": 30}
+        for t, n in counts.items()}}
 
 
 def test_coverage_gate_arithmetic_7_fails_8_passes():
@@ -149,8 +158,9 @@ def test_coverage_gate_excludes_failed_fetches_from_medians():
     snaps = []
     for d in days:
         snaps.append({"date": d, "names": {
-            "RY.TO": {"status": "OK", "messages": 5},
-            "TD.TO": {"status": "ERROR", "messages": None}}})
+            "RY.TO": {"status": "OK", "msgs_24h": 5, "messages": 30},
+            "TD.TO": {"status": "ERROR", "msgs_24h": None,
+                      "messages": None}}})
     gate = S.coverage_gate(snaps)
     assert gate["names"]["RY.TO"]["median_messages_per_day"] == 5.0
     assert gate["names"]["TD.TO"]["ok_sessions"] == 0
@@ -167,3 +177,86 @@ def test_gate_not_decidable_before_20_sessions():
     snaps = [snapshot(f"2026-08-{d:02d}", {"RY.TO": 9}) for d in range(1, 8)]
     gate = S.coverage_gate(snaps)
     assert gate["sessions_collected"] == 7 and gate["gate"] == "COLLECTING"
+
+
+# ── day-94 live-run correction: the page size is not the traffic ────────────
+
+def _msg(ts, sentiment=None):
+    ent = {"sentiment": {"basic": sentiment}} if sentiment else {}
+    return {"created_at": ts, "entities": ent}
+
+
+def _page(stamps):
+    return {"response": {"status": 200},
+            "symbol": {"symbol": "RY", "title": "Royal Bank of Canada"},
+            "messages": [_msg(t) for t in stamps]}
+
+
+NOW = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
+
+
+def test_two_names_with_identical_page_sizes_have_different_attention():
+    """THE CASE THIS EXISTS FOR. On the first live run all 18 mappable names
+    returned exactly 30 -- the page size -- while ENB's newest message was
+    hours old and SLF's was 23 DAYS old. Stored as `messages` both were 30,
+    so the registered feature would have had zero variance and 120 sessions
+    of collection would have produced a null about a constant."""
+    busy = _page([(NOW - dt.timedelta(hours=h)).isoformat() for h in range(30)])
+    quiet = _page([(NOW - dt.timedelta(days=23 + d)).isoformat() for d in range(30)])
+
+    b = S.parse_stream(busy, "RY", now=NOW)
+    q = S.parse_stream(quiet, "RY", now=NOW)
+
+    assert b["messages"] == q["messages"] == 30      # the trap
+    # 25, not 24: hours 0..24, and the message landing exactly ON the cutoff
+    # is inside the window (`ts >= cutoff`). Stated rather than rounded off.
+    assert b["msgs_24h"] == 25 and q["msgs_24h"] == 0   # the measurement
+    assert b["msgs_7d"] == 30 and q["msgs_7d"] == 0
+
+
+def test_a_page_that_runs_out_inside_the_window_is_flagged_not_guessed():
+    """30 messages all inside 24h means the true count is >= 30, unknown-but-
+    larger. Rule 2: say so and mark it, never store the lower bound as if it
+    were the figure."""
+    saturated = _page([(NOW - dt.timedelta(minutes=10 * i)).isoformat()
+                       for i in range(30)])
+    p = S.parse_stream(saturated, "RY", now=NOW)
+    assert p["msgs_24h"] == 30
+    assert p["censored_24h"] is True, "a saturated page must announce itself"
+
+    roomy = _page([(NOW - dt.timedelta(hours=6)).isoformat(),
+                   (NOW - dt.timedelta(days=4)).isoformat()])
+    r = S.parse_stream(roomy, "RY", now=NOW)
+    assert r["msgs_24h"] == 1 and r["censored_24h"] is False
+    assert r["msgs_7d"] == 2 and r["censored_7d"] is True
+
+
+def test_the_gate_reads_the_registered_quantity_not_the_page_size():
+    """Rule 3: the bar did not move. GATE_MIN_MEDIAN is still 1.0 and
+    GATE_MIN_NAMES still 8. The gate now reads "messages/day", which is what
+    the registration always said -- and which the page size never was."""
+    assert S.GATE_SESSIONS == 20
+    assert S.GATE_MIN_NAMES == 8
+    assert S.GATE_MIN_MEDIAN == 1.0
+
+    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
+    silent = [{"date": d, "names": {
+        "RY.TO": {"status": "OK", "messages": 30, "page_size": 30,
+                  "msgs_24h": 0, "censored_24h": False}}} for d in days]
+    gate = S.coverage_gate(silent)
+    assert gate["names"]["RY.TO"]["median_messages_per_day"] == 0.0
+    assert gate["names"]["RY.TO"]["usable"] is False, \
+        "a name with no traffic must fail the gate even though its page is full"
+
+
+def test_snapshots_written_before_the_fix_are_skipped_not_backfilled():
+    """A pre-fix snapshot has only the page size. Reading 30 out of it would
+    resurrect the exact defect being corrected, so those sessions are counted
+    and excluded (rule 2: absence of the measurement is not a measurement)."""
+    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
+    old = [{"date": d, "names": {"RY.TO": {"status": "OK", "messages": 30}}}
+           for d in days]
+    gate = S.coverage_gate(old)
+    n = gate["names"]["RY.TO"]
+    assert n["pre_fix_sessions"] == 20 and n["ok_sessions"] == 0
+    assert n["median_messages_per_day"] is None and n["usable"] is False
