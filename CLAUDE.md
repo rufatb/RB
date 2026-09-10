@@ -114,10 +114,18 @@ Day-96. `pairs.py` / `validate_pairs.py` / `build_tsx.py`, pre-registered at
 `cac0666`. On the TSX-21 all six cells lose money **gross and net** — best cell
 −0.111%/trade, worse than the placebo (p=0.846), negative in all four quarters —
 and the planted control DETECTED at t=4.20, so this is a POWERED negative, not
-an underpowered shrug. On US names the apparent edge is survivorship: it lives
-entirely in the smallest liquidity quartile, grows 10x as the universe extends
-down, and the largest quartile is negative in both panels. Pairs trading buys the
-underperforming leg, which is the family `DATA_CEILING.md` calls untestable on
+an underpowered shrug.
+
+On US names the apparent +0.0367% edge is **selection luck**, established by
+`pairs.reselection_placebo`, which re-runs formation and pair choice on a null
+panel where nothing is cointegrated: 124 of 200 null draws BEAT the real result
+(p=0.62), and for the selected cell the null returns MORE than the real panel
+(+0.0388% vs +0.0367%). Cell by cell, real minus null averages +0.0036%/trade.
+The conditional placebos in the original write-up could not see this because
+they hold pair selection fixed; that claim was withdrawn. What survives as
+description only: the apparent effect sat entirely in the smallest liquidity
+quartile and the largest quartile is negative in both panels — pairs trading
+buys the underperforming leg, the family `DATA_CEILING.md` calls untestable on
 free data.
 
 `pairs.naive_public_recipe` keeps the standard public methodology beside the

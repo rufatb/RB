@@ -5006,10 +5006,11 @@ session.
 
 ### The US panel, and why its apparent edge is survivorship
 
-On 504 US names the best cell was *positive* (+0.0367%/trade) and beat both
-placebos at **p ≤ 0.002** — there is a gross convergence effect, +0.1367%
-against a timing-scrambled +0.026%. It is not adoptable, and the reason is not
-only the 10bp round trip that eats 73% of it:
+On 504 US names the best cell was *positive* (+0.0367%/trade). **Under the
+correct placebo it is not an effect at all — it is selection luck, and the
+original claim of "a real gross convergence effect" is WITHDRAWN.** See the
+box below; the survivorship table that follows describes where the *apparent*
+effect sat and is superseded as evidence of anything real.
 
 > **Two corrections to this section, day-96 audit (`AUDIT_day96_preflight.md`).**
 > Both were found by review of this study and both are upheld.
@@ -5025,9 +5026,33 @@ only the 10bp round trip that eats 73% of it:
 >    claimed of them. That claim is withdrawn. `pairs.reselection_placebo`
 >    re-runs formation, the DF statistic, the top-K choice and the trade on a
 >    null panel built from independent circular shifts, and is the bar that
->    actually answers the selection question. On the TSX-21 the rejection holds
->    under it (real −0.1112% against a −0.0123% bar, p = 0.59), so the verdict
->    below is unaffected there.
+>    actually answers the selection question.
+>
+> **The re-selection placebo has now been run on both panels, and it dissolves
+> the US result.** In this null every name's series is circularly shifted by its
+> own independent offset, so no pair is genuinely cointegrated; formation, the
+> DF statistic, the top-K choice and the trade are re-run from scratch.
+>
+> | | real best cell | null best-of-6 mean | null p95 | p |
+> |---|---|---|---|---|
+> | TSX-21 | −0.1112% | −0.0939% | −0.0123% | 0.59 |
+> | US 504 | **+0.0367%** | **+0.0750%** | +0.2546% | **0.62** |
+>
+> On the US panel **124 of 200 null draws beat the real result**, which sits
+> BELOW the mean of a panel containing no genuine cointegration whatsoever.
+>
+> Sharper still, and needing none of the max-of-six machinery: for the very cell
+> that was selected, `cointegration@2.5`, the real panel returns **+0.0367%** and
+> the null returns **+0.0388%**. Cell by cell across all six, real minus null
+> averages **+0.0036%/trade** with 4 of 6 above — a coin flip. So the null is not
+> being inflated by the circular shift's wrap discontinuity; the real data simply
+> has no advantage over noise.
+>
+> **What this changes.** Rejection #41 is now clean on BOTH panels rather than
+> "TSX rejected, US positive but unadoptable". The +0.1367% gross figure was
+> measured against CONDITIONAL placebos and is not evidence of convergence. The
+> survivorship finding below stands as a description of where the apparent effect
+> concentrated — and is now doubly moot, since there was no effect to concentrate.
 
 | liquidity quartile | development (504) | holdout (913) |
 |---|---|---|

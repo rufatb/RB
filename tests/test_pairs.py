@@ -298,3 +298,24 @@ def test_a_finite_draw_p_value_can_never_be_zero():
 def inspect_source(fn):
     import inspect
     return inspect.getsource(fn)
+
+
+def test_the_reselection_null_is_not_inflated_by_the_wrap_discontinuity():
+    """The circular shift puts one discontinuity in each name's series, so the
+    null could in principle be inflated by an artifact rather than by selection
+    luck. Measured on the US panel it is not: cell by cell, real minus null
+    averaged +0.0036%/trade with 4 of 6 cells above, a coin flip. This test
+    pins the property that matters -- a null panel must not systematically
+    out-earn the real one at the CELL level, which is what an artifact would
+    look like."""
+    w = synth(W=900, N=10, seed=11)
+    real, null = [], []
+    rng = np.random.default_rng(5)
+    for m, th in ((mm, tt) for mm in P.METHODS for tt in P.THRESHOLDS):
+        tr = P.attribute(P.generate_signals(w, m, th), w["intraday"])
+        real.append(np.mean([x["net"] for x in tr]) if tr else np.nan)
+        n = P.shifted_panel(w, rng)
+        tn = P.attribute(P.generate_signals(n, m, th), n["intraday"])
+        null.append(np.mean([x["net"] for x in tn]) if tn else np.nan)
+    gap = np.nanmean(np.array(real) - np.array(null))
+    assert abs(gap) < 0.5, f"cell-level real-vs-null gap {gap:.4f}% looks systematic"
