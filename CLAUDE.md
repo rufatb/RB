@@ -108,6 +108,26 @@ coverage gate after 20 sessions, no inference before 120. `validate_crossmarket.
 is the registered test of prior-session US proxy state (SPY/XLF/USO/USDCAD) beyond
 `[r0, gap]`, a DAILY-BAR PROXY that cannot certify the 09:46 contract.
 
+## Is main everything? Run `provenance.py`
+
+Read AUDIT_day96_preflight.md before implementing PREREGISTER_day96.md.
+The clamped statistical-effect helper is not signed net trading P&L; the
+amendment fixes the cost denominator and identifies timing/formation choices
+that must be frozen before inference. No pairs result is adopted here.
+
+`git status` clean does not mean main is complete. `clock_vs_data` sat finished
+on another branch for **five weeks** and every morning ran without it;
+`build_social.py`, a forward collector whose missed days cannot be back-filled,
+sat unmerged for two. Both were invisible to `git status` and to a fully green
+suite, which passes perfectly on an incomplete main.
+
+`provenance.py` asks the three questions that matter, by CONTENT — a branch-only
+file, a top-level symbol main has nowhere, or a record date main has never seen.
+It does not use commit counts as evidence: a fully-merged branch showed "2
+commits ahead" and a rename read as lost work on the first run. `morning.sh`
+runs it at 09:39, WARNS without blocking, and exits **6** — published, but not
+on the whole of main.
+
 ## September 8 recovery
 
 Intraday and equity acquisition have independent process deadlines (22s/10s).

@@ -84,7 +84,7 @@ def test_social_excludes_stale_future_duplicate_and_naive_messages():
           dict(id=4,created_at='2026-09-09T12:00:00')]
     rows.append(rows[0])
     r=S.parse_stream(stream(messages=rows),'RY',now=now)
-    assert (r['messages'],r['bullish'],r['duplicate_messages'],r['older_messages'],
+    assert (r['msgs_24h'],r['bullish'],r['duplicate_messages'],r['older_messages'],
             r['future_messages'],r['rejected_messages'])==(1,1,1,1,1,1)
 
 

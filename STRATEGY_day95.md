@@ -26,3 +26,7 @@ Session-specific postmortems and account allocations remain private.
 Software changes address misleading allocations, late body labels, render-time
 recomputation and contributor integration. They improve correctness and
 reporting, not measured prediction accuracy. See AUDIT_day95.md.
+
+The subsequent day96 pairs preregistration is preserved. Read its execution
+contract correction in AUDIT_day96_preflight.md before implementing or
+evaluating it. Clipped statistical effects are not signed net trading P&L.

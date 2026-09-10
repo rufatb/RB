@@ -94,12 +94,15 @@ def error_class(exc: BaseException) -> str:
 
 
 def parse_stream(payload: dict, requested_symbol: str, *, now=None) -> dict:
-    """Counts from one StockTwits symbol-stream response. Pure given a payload.
+    """Validate an issuer stream and count unique observations in fixed windows.
 
-    Asserts the response is for the requested symbol (rule 9). Sentiment tags
-    are author-applied `entities.sentiment.basic` values; messages without one
-    are counted in `messages` but in neither sentiment bucket. Messages with an
-    unparseable timestamp are rejected and COUNTED, never silently kept.
+    ``messages`` and ``page_size`` are raw page sizes, NEVER attention rates.
+    ``msgs_24h`` / ``msgs_7d`` count dated, unique messages at or before the
+    aware observation clock, including the window's lower boundary. A window
+    containing every accepted message is censored: its count is a lower bound,
+    not total traffic. Invalid, duplicate, future and older rows remain counted
+    separately. Bullish/bearish are author tags in the valid 24-hour window.
+    No timezone, issuer identity or missing observation is guessed.
     """
     if not isinstance(payload, dict):
         raise StreamContractError("stream payload is not an object")
@@ -113,50 +116,53 @@ def parse_stream(payload: dict, requested_symbol: str, *, now=None) -> dict:
             f"asked for {requested_symbol}, got stream for {returned!r}")
     now = now or dt.datetime.now(dt.timezone.utc)
     if now.tzinfo is None or now.utcoffset() is None:
-        raise StreamContractError('aware observation clock required')
+        raise StreamContractError("aware observation clock required")
     start = now - dt.timedelta(hours=24)
     messages = payload.get("messages")
     if not isinstance(messages, list):
-        raise StreamContractError('messages must be a list')
-    bullish = bearish = rejects = old = future = duplicate = count = 0
-    seen = set()
-    max_ts = None
+        raise StreamContractError("messages must be a list")
+    bullish = bearish = rejects = old = future = duplicate = 0
+    seen, stamps = set(), []
     for m in messages:
         if not isinstance(m, dict):
             rejects += 1
             continue
-        raw = m.get("created_at")
         try:
-            ts = dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-            if ts.tzinfo is None or ts.utcoffset() is None or not isinstance(m.get('id'), int):
-                raise ValueError('aware timestamp and integer message id required')
+            ts = dt.datetime.fromisoformat(str(m.get("created_at")).replace("Z", "+00:00"))
+            if ts.tzinfo is None or ts.utcoffset() is None or type(m.get("id")) is not int:
+                raise ValueError("aware timestamp and integer message id required")
         except (ValueError, TypeError):
             rejects += 1
             continue
-        if m['id'] in seen:
+        if m["id"] in seen:
             duplicate += 1
             continue
-        seen.add(m['id'])
+        seen.add(m["id"])
         if ts > now:
             future += 1
             continue
-        if ts <= start:
+        stamps.append(ts)
+        if ts < start:
             old += 1
             continue
-        count += 1
         basic = ((m.get("entities") or {}).get("sentiment") or {}).get("basic")
-        bullish += basic == 'Bullish'
-        bearish += basic == 'Bearish'
-        if max_ts is None or ts > max_ts:
-            max_ts = ts
+        bullish += basic == "Bullish"
+        bearish += basic == "Bearish"
+    windows = {}
+    for label, hours in (("24h", 24), ("7d", 168)):
+        n = sum(ts >= now - dt.timedelta(hours=hours) for ts in stamps)
+        windows["msgs_" + label] = n
+        windows["censored_" + label] = bool(stamps) and n == len(stamps)
     return {"us": requested_symbol, "symbol_title": sym.get("title"),
-            "messages": count, "bullish": bullish, "bearish": bearish,
-            "max_message_ts": max_ts.isoformat() if max_ts else None,
-            "rejected_messages": rejects, 'older_messages':old,
-            'future_messages':future, 'duplicate_messages':duplicate,
-            'raw_messages':len(messages), 'window_start':start.isoformat(),
-            'window_end':now.isoformat(),
-            'count_basis':'unique observed messages in preceding 24h; capped stream, not total traffic'}
+            "messages": len(messages), "page_size": len(messages),
+            "raw_messages": len(messages), "bullish": bullish, "bearish": bearish,
+            "max_message_ts": max(stamps).isoformat() if stamps else None,
+            "min_message_ts": min(stamps).isoformat() if stamps else None,
+            "rejected_messages": rejects, "older_messages": old,
+            "future_messages": future, "duplicate_messages": duplicate,
+            "window_start": start.isoformat(), "window_end": now.isoformat(),
+            "count_basis": "unique observed messages; capped stream, not total traffic",
+            **windows}
 
 
 def verify_mapping(tsx: str, symbol_title: str | None) -> bool:
@@ -282,6 +288,7 @@ def collect(cfg: dict, session=None, trends_session=None,
                         # The stream is another company's attention. Null the
                         # counts: under the TSX name they are UNKNOWN, not data.
                         entry.update(status="UNMAPPED", messages=None,
+                                     msgs_24h=None, msgs_7d=None,
                                      bullish=None, bearish=None,
                                      max_message_ts=None, rejected_messages=0,
                                      error="title does not authenticate "
@@ -293,7 +300,17 @@ def collect(cfg: dict, session=None, trends_session=None,
                     counts["error"] += 1
         names[tsx] = entry
         state = entry["status"]
-        extra = f" msgs={entry['messages']}" if state == "OK" else f" ({entry['error']})"
+        if state == "OK":
+            # page= is the endpoint's page size and saturates at 30; 24h= is
+            # the attention measure. Printing both is what made the censoring
+            # visible in the first place -- do not collapse them.
+            extra = (f" 24h={entry.get('msgs_24h')}"
+                     f"{'+' if entry.get('censored_24h') else ''}"
+                     f" 7d={entry.get('msgs_7d')}"
+                     f"{'+' if entry.get('censored_7d') else ''}"
+                     f" page={entry['page_size']}")
+        else:
+            extra = f" ({entry['error']})"
         print(f"  [{i + 1:2d}/{len(universe)}] {tsx:9s}<-{str(us):6s} {state}{extra}",
               flush=True)
         if i + 1 < len(universe):
@@ -304,15 +321,50 @@ def collect(cfg: dict, session=None, trends_session=None,
         print(f"  Google Trends: {trends['status']} "
               f"({trends.get('failures') or trends.get('error')}) — "
               "recorded, continuing with StockTwits only", flush=True)
+    completed_at = now if injected_clock else dt.datetime.now(dt.timezone.utc)
     return {"schema_version":2, "date": now.astimezone(ZoneInfo('America/New_York')).date().isoformat(),
             "collected_at": now.isoformat(),
-            'completed_at':(now if injected_clock else dt.datetime.now(dt.timezone.utc)).isoformat(),
+            'completed_at':completed_at.isoformat(),
             'trends_qualification':'Unverified search terms; not authenticated issuer sentiment.',
             "source": "stocktwits+google_trends(unofficial)",
             "registration": "PREREGISTER_day94.md",
             "names": names, "trends": trends,
+            **decision_usability(completed_at),
             "coverage": {"total": len(universe), **counts,
                          "sessions_in_file": 1}}
+
+
+DECISION_ET = dt.time(9, 46)
+
+
+def decision_usability(collected_at: dt.datetime) -> dict:
+    """Was this snapshot knowable at the 09:46 decision, or is it look-ahead?
+
+    The registration collects at 09:20 ET -- PRE-OPEN, and therefore knowable
+    when the board is selected. That timing is not cosmetic. A snapshot taken
+    at 09:48 contains the market's REACTION to the open, so a feature built
+    from it would predict a 09:46 decision using information from after it.
+    That is the look-ahead this repo exists to exclude, and it would arrive
+    disguised as a scheduling convenience -- run the collector from the
+    morning wrapper, after the report, and every row is quietly poisoned.
+
+    So the snapshot carries the verdict rather than the reader inferring it
+    from a timestamp. `decision_usable` false does not make a snapshot
+    worthless; it makes it unusable AS A FEATURE for that session's board,
+    which is a different and narrower thing.
+    """
+    if collected_at.tzinfo is None or collected_at.utcoffset() is None:
+        raise ValueError("aware completion timestamp required")
+    et = collected_at.astimezone(ZoneInfo("America/New_York"))
+    usable = et.time() < DECISION_ET
+    return {"collected_at_et": et.isoformat(),
+            "decision_usable": usable,
+            "decision_note": (
+                "collected before the 09:46 ET decision — knowable at "
+                "selection time" if usable else
+                f"COLLECTED AT {et.strftime('%H:%M')} ET, AFTER the 09:46 "
+                "decision — contains the market's reaction to the open and "
+                "MUST NOT be used as a feature for this session's board")}
 
 
 def write_snapshot(snapshot: dict, outdir: str) -> str:
@@ -351,6 +403,7 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
                   min_median: float = GATE_MIN_MEDIAN) -> dict:
     """The registered 20-session coverage gate. Failed fetches are EXCLUDED
     from a name's medians — never counted as zero attention (Forbidden list).
+    Reads msgs_24h, never raw page size. Censored counts are lower bounds.
     Day95 additionally requires 20 OK sessions per usable name and verifies
     dated pre-open exchange sessions; duplicates/late files do not add evidence.
     """
@@ -381,16 +434,26 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
             rejected.append(dict(date=snap.get('date'), error=str(exc)))
     for snap in qualified:
         for tsx, e in (snap.get("names") or {}).items():
-            rec = per_name.setdefault(tsx, {"ok_sessions": 0, "counts": []})
-            if e.get("status") == "OK" and e.get("messages") is not None:
-                rec["ok_sessions"] += 1
-                rec["counts"].append(int(e["messages"]))
+            rec = per_name.setdefault(
+                tsx, {"ok_sessions": 0, "counts": [], "censored": 0,
+                      "pre_fix_sessions": 0})
+            if e.get("status") != "OK":
+                continue
+            if e.get("msgs_24h") is None:
+                rec["pre_fix_sessions"] += 1
+                continue
+            rec["ok_sessions"] += 1
+            rec["counts"].append(int(e["msgs_24h"]))
+            if e.get("censored_24h"):
+                rec["censored"] += 1
     names = {}
     for tsx, rec in sorted(per_name.items()):
         med = (float(statistics.median(rec["counts"]))
                if rec["counts"] else None)
         names[tsx] = {"ok_sessions": rec["ok_sessions"],
                       "median_messages_per_day": med,
+                      "censored_sessions": rec["censored"],
+                      "pre_fix_sessions": rec["pre_fix_sessions"],
                       "usable": bool(rec['ok_sessions'] >= min_sessions and med is not None and med >= min_median)}
     usable = sum(1 for n in names.values() if n["usable"])
     sessions = len(qualified)
@@ -428,9 +491,15 @@ def main(argv=None) -> int:
               f"snapshots in {a.outdir}")
         for tsx, n in result["names"].items():
             med = n["median_messages_per_day"]
+            flags = []
+            if n["censored_sessions"]:
+                flags.append(f"{n['censored_sessions']} censored(>=)")
+            if n["pre_fix_sessions"]:
+                flags.append(f"{n['pre_fix_sessions']} pre-fix skipped")
             print(f"  {tsx:9s} ok={n['ok_sessions']:3d} median_msgs/day="
                   f"{med if med is not None else 'n/a':>6} "
-                  f"{'USABLE' if n['usable'] else '-'}")
+                  f"{'USABLE' if n['usable'] else '-':7s}"
+                  f"{'  ' + ', '.join(flags) if flags else ''}")
         print(f"  usable names: {result['usable_names']} "
               f"(registered bar >= {result['min_names']} of 21)")
         print(f"  GATE: {result['gate']} — {result['note']}")

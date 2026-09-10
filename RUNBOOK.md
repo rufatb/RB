@@ -26,7 +26,8 @@ are not the daily two-engine report. Do not concurrently schedule legacy
 | ET clock | Action | Failure handling |
 |---|---|---|
 | 08:10 | Stage complete biotech universe; review primary-source event evidence and warm intraday history | Partial coverage blocks only its dependent section |
-| 09:20 | `rb-social.timer`: day-94 shadow attention snapshot into `data/social/` (`build_social.py`; feeds nothing in the report) | Failed fetches are recorded per name in the snapshot, never counted as zero attention |
+| 09:20 | `rb-social.timer`: day-94 shadow attention snapshot into `data/social/` (`build_social.py`; feeds nothing in the report). **PRE-OPEN BY DESIGN** — a snapshot after 09:46 holds the market's reaction to the open and is marked `decision_usable: false`; never move this into `morning.sh` | Failed fetches are recorded per name in the snapshot, never counted as zero attention. A missing snapshot is a permanently missing session — forward collection has no history endpoint, and `morning.sh` says so at 09:46 |
+| 09:39 | `provenance.py`: is main everything, and is this checkout main? | WARNS, never blocks — a day's record outweighs a tidy branch list. `morning.sh` exits 6: published, but not on the whole of main |
 | 09:40 | Prepare report environment and source review; inspect stored state and any delivery status | Signal is not final yet; never publish a hindsight-labelled 09:46 entry |
 | 09:45 | Refresh verified options snapshots | Stale or missing expectations remain unknown |
 | 09:46 | `daily_job.py --send` computes once, freezes, renders and sends | Intraday acquisition capped at 22s; equity acquisition at 10s, concurrently; completed siblings survive |

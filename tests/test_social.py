@@ -8,6 +8,8 @@ import datetime as dt
 import json
 import os
 
+from zoneinfo import ZoneInfo
+
 import pytest
 import requests
 
@@ -80,9 +82,9 @@ def test_parse_stream_rejects_bad_timestamps_before_counting_sentiment():
                           "entities": {"sentiment": {"basic": "Bullish"}}},
                          {"id": 2, "created_at": "2026-09-08T10:00:00Z"}])
     out = S.parse_stream(s, "RY", now=NOW)
-    assert out["messages"] == 0 and out["bullish"] == 0
+    assert out["msgs_24h"] == 0 and out["messages"] == 2 and out["bullish"] == 0
     assert out["rejected_messages"] == 1
-    assert out["max_message_ts"] is None and out['older_messages'] == 1
+    assert out["max_message_ts"] == "2026-09-08T10:00:00+00:00" and out["older_messages"] == 1
 
 
 def test_parse_stream_asserts_the_response_is_for_the_requested_symbol():
@@ -138,7 +140,8 @@ def snapshot(date, counts):
     return {"schema_version":2, "date": date,
             'collected_at':date+'T09:20:00-04:00',
             'completed_at':date+'T09:20:01-04:00', "names": {
-        t: {"status": "OK", "messages": n} for t, n in counts.items()}}
+        t: {"status": "OK", "messages": 30, "page_size": 30,
+            "msgs_24h": n, "censored_24h": False} for t, n in counts.items()}}
 
 
 def test_coverage_gate_arithmetic_7_fails_8_passes():
@@ -176,3 +179,120 @@ def test_gate_not_decidable_before_20_sessions():
     snaps = [snapshot(d, {"RY.TO": 9}) for d in sessions(7)]
     gate = S.coverage_gate(snaps)
     assert gate["sessions_collected"] == 7 and gate["gate"] == "COLLECTING"
+
+
+# ── day-94 live-run correction: the page size is not the traffic ────────────
+
+def _msg(ts, sentiment=None):
+    ent = {"sentiment": {"basic": sentiment}} if sentiment else {}
+    return {"created_at": ts, "entities": ent}
+
+
+def _page(stamps):
+    return {"response": {"status": 200},
+            "symbol": {"symbol": "RY", "title": "Royal Bank of Canada"},
+            "messages": [dict(_msg(t), id=i) for i, t in enumerate(stamps)]}
+
+
+WINDOW_NOW = dt.datetime(2026, 9, 10, 12, 0, tzinfo=dt.timezone.utc)
+
+
+def test_two_names_with_identical_page_sizes_have_different_attention():
+    """THE CASE THIS EXISTS FOR. On the first live run all 18 mappable names
+    returned exactly 30 -- the page size -- while ENB's newest message was
+    hours old and SLF's was 23 DAYS old. Stored as `messages` both were 30,
+    so the registered feature would have had zero variance and 120 sessions
+    of collection would have produced a null about a constant."""
+    busy = _page([(WINDOW_NOW - dt.timedelta(hours=h)).isoformat() for h in range(30)])
+    quiet = _page([(WINDOW_NOW - dt.timedelta(days=23 + d)).isoformat() for d in range(30)])
+
+    b = S.parse_stream(busy, "RY", now=WINDOW_NOW)
+    q = S.parse_stream(quiet, "RY", now=WINDOW_NOW)
+
+    assert b["messages"] == q["messages"] == 30      # the trap
+    # 25, not 24: hours 0..24, and the message landing exactly ON the cutoff
+    # is inside the window (`ts >= cutoff`). Stated rather than rounded off.
+    assert b["msgs_24h"] == 25 and q["msgs_24h"] == 0   # the measurement
+    assert b["msgs_7d"] == 30 and q["msgs_7d"] == 0
+
+
+def test_a_page_that_runs_out_inside_the_window_is_flagged_not_guessed():
+    """30 messages all inside 24h means the true count is >= 30, unknown-but-
+    larger. Rule 2: say so and mark it, never store the lower bound as if it
+    were the figure."""
+    saturated = _page([(WINDOW_NOW - dt.timedelta(minutes=10 * i)).isoformat()
+                       for i in range(30)])
+    p = S.parse_stream(saturated, "RY", now=WINDOW_NOW)
+    assert p["msgs_24h"] == 30
+    assert p["censored_24h"] is True, "a saturated page must announce itself"
+
+    roomy = _page([(WINDOW_NOW - dt.timedelta(hours=6)).isoformat(),
+                   (WINDOW_NOW - dt.timedelta(days=4)).isoformat()])
+    r = S.parse_stream(roomy, "RY", now=WINDOW_NOW)
+    assert r["msgs_24h"] == 1 and r["censored_24h"] is False
+    assert r["msgs_7d"] == 2 and r["censored_7d"] is True
+
+
+def test_the_gate_reads_the_registered_quantity_not_the_page_size():
+    """Rule 3: the bar did not move. GATE_MIN_MEDIAN is still 1.0 and
+    GATE_MIN_NAMES still 8. The gate now reads "messages/day", which is what
+    the registration always said -- and which the page size never was."""
+    assert S.GATE_SESSIONS == 20
+    assert S.GATE_MIN_NAMES == 8
+    assert S.GATE_MIN_MEDIAN == 1.0
+
+    days = sessions(20)
+    silent = [snapshot(d, {"RY.TO": 0}) for d in days]
+    gate = S.coverage_gate(silent)
+    assert gate["names"]["RY.TO"]["median_messages_per_day"] == 0.0
+    assert gate["names"]["RY.TO"]["usable"] is False, \
+        "a name with no traffic must fail the gate even though its page is full"
+
+
+def test_snapshots_written_before_the_fix_are_skipped_not_backfilled():
+    """A pre-fix snapshot has only the page size. Reading 30 out of it would
+    resurrect the exact defect being corrected, so those sessions are counted
+    and excluded (rule 2: absence of the measurement is not a measurement)."""
+    days = sessions(20)
+    old = [snapshot(d, {"RY.TO": 0}) for d in days]
+    for snap in old:
+        del snap["names"]["RY.TO"]["msgs_24h"]
+    gate = S.coverage_gate(old)
+    n = gate["names"]["RY.TO"]
+    assert n["pre_fix_sessions"] == 20 and n["ok_sessions"] == 0
+    assert n["median_messages_per_day"] is None and n["usable"] is False
+
+
+# ── the snapshot must not become a look-ahead feature by scheduling accident ─
+
+def test_a_preopen_snapshot_is_knowable_at_the_decision():
+    et = dt.datetime(2026, 9, 10, 9, 20, tzinfo=ZoneInfo("America/Toronto"))
+    d = S.decision_usability(et)
+    assert d["decision_usable"] is True
+    assert "knowable at selection time" in d["decision_note"]
+
+
+def test_a_snapshot_taken_after_0946_is_marked_unusable_as_a_feature():
+    """The registration collects at 09:20 ET. Running the collector from the
+    morning wrapper instead would put it at ~09:48 -- AFTER the board is
+    selected -- so every row would carry the market's reaction to the open.
+    That look-ahead would arrive disguised as a scheduling convenience, so
+    the snapshot states the verdict rather than leaving it to be inferred."""
+    et = dt.datetime(2026, 9, 10, 9, 48, tzinfo=ZoneInfo("America/Toronto"))
+    d = S.decision_usability(et)
+    assert d["decision_usable"] is False
+    assert "MUST NOT be used as a feature" in d["decision_note"]
+    assert "09:48" in d["decision_note"]
+
+
+def test_the_boundary_minute_is_not_usable():
+    """09:46 itself is the decision minute, not before it."""
+    et = dt.datetime(2026, 9, 10, 9, 46, tzinfo=ZoneInfo("America/Toronto"))
+    assert S.decision_usability(et)["decision_usable"] is False
+
+
+def test_usability_is_judged_in_EASTERN_not_in_whatever_the_host_uses():
+    """A UTC host would read 13:20 ET as an afternoon collection and mark a
+    perfectly good pre-open snapshot unusable -- or worse, the reverse."""
+    utc = dt.datetime(2026, 9, 10, 13, 20, tzinfo=dt.timezone.utc)  # 09:20 ET
+    assert S.decision_usability(utc)["decision_usable"] is True

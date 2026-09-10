@@ -6,6 +6,9 @@ The existing public strategy journal and account configuration are unchanged.
 
 Main already contained Codex day90/91 and Kimi day92. This release integrates
 Kimi's day94 research, then Claude's main quote-authentication and clock fixes.
+It also reconciles the subsequent page-censoring and provenance work through
+cac0666. AUDIT_day96_preflight.md records the pairs execution-cost correction
+and remaining research-contract requirements before any adoption.
 No new predictor, allocation, holding horizon or brokerage capability is adopted.
 
 ## Correctness and report changes
@@ -32,7 +35,7 @@ No new predictor, allocation, holding horizon or brokerage capability is adopted
 ## Research review
 
 The social collector counts unique valid messages within a stated 24-hour
-window, records exclusions, preserves first-write observations and verifies
+window (`msgs_24h`, with raw page size separate), records exclusions, preserves first-write observations and verifies
 pre-open ET exchange sessions. Capped streams are observed counts, not total
 traffic. Each usable name requires sufficient valid sessions. Unverified
 search terms cannot establish issuer sentiment. No inference is adopted.

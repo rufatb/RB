@@ -16,6 +16,8 @@
 #   3  not a trading day / market shut — expected, not an error
 #   4  the engine REFUSED on an integrity guard (clock, feed, coverage)
 #   5  ran but MISSED THE PUBLICATION WINDOW — no board recorded
+#   6  PUBLISHED, but provenance was not clean — the record is safe and the
+#      run used code that is not the whole of main. Investigate same day.
 #   1  something actually failed
 #
 # --publish IS REQUIRED. `brief.py` alone is a preview and writes nothing; a
@@ -42,6 +44,27 @@ if ! git pull --ff-only 2>&1 | tail -2; then
     log "  A board published from a stale clone can duplicate or contradict"
     log "  rows another machine already wrote. Resolve by hand, then re-run."
     exit 1
+fi
+
+# ── 1b. AM I RUNNING EVERYTHING THAT EXISTS? ───────────────────────────────
+# The pull above proves this clone matches origin/main. It says NOTHING about
+# whether main is the whole of the work: `clock_vs_data` sat finished on
+# another branch for five weeks and every morning ran without it, and
+# build_social.py -- a FORWARD collector, whose lost days cannot be back-filled
+# -- sat unmerged for two. Both looked perfect to `git status` and to the test
+# suite, which passes fine on an incomplete main.
+#
+# This DOES NOT BLOCK the report. A day's record is worth more than a tidy
+# branch list, and refusing to publish over an unmerged research branch would
+# trade a real loss for a bookkeeping one. It warns, and it colours the exit
+# code so the cron mail cannot be mistaken for an ordinary morning.
+provenance_clean=1
+if prov="$(python provenance.py 2>&1)"; then
+    log "provenance: clean — main is everything, and this is main"
+else
+    provenance_clean=0
+    log "PROVENANCE NOT CLEAN — the run below is not everything that exists:"
+    printf '%s\n' "$prov" | sed 's/^/    /'
 fi
 
 # ── 2. TRADING DAY? ────────────────────────────────────────────────────────
@@ -94,9 +117,36 @@ fi
 # ── 4. PUSH THE RECORD ─────────────────────────────────────────────────────
 # Only the record. Never code — an unattended job must not publish edits
 # nobody has read.
+# ── 4b. DID THE 09:20 ATTENTION COLLECTOR ACTUALLY FIRE? ───────────────────
+# Checked here, NOT run here. build_social.py is registered to collect at
+# 09:20 ET, pre-open, because a snapshot taken after 09:46 contains the
+# market's reaction to the open — running it from this wrapper would be
+# look-ahead wearing a scheduling convenience as a disguise, and every row so
+# collected is marked decision_usable:false for exactly that reason.
+#
+# Forward collection cannot be back-filled. A missed morning is a permanently
+# missing session, so silence is the wrong response to a missing snapshot.
+today_snap="data/social/$(TZ=America/Toronto date +%F).json"
+if [ -f "$today_snap" ]; then
+    if ! grep -q '"decision_usable": true' "$today_snap"; then
+        log "attention snapshot exists but was collected AFTER 09:46 — it is"
+        log "  marked unusable as a feature. Check the rb-social timer."
+    fi
+else
+    log "NO ATTENTION SNAPSHOT for today ($today_snap) — the 09:20 collector"
+    log "  did not run. This session cannot be recovered later; forward"
+    log "  collection has no history endpoint. Check rb-social.timer."
+fi
+
 git add -- ledger.csv universe_prints.csv positions.csv data/advice.csv 2>/dev/null
+# Only TODAY'S snapshot, by exact path — never the directory. A directory
+# stage would carry anything that happened to be sitting in it, which is the
+# same "publish edits nobody has read" failure this job stages narrowly to
+# avoid. The snapshot is a record: forward collection cannot re-derive it.
+git add -- "$today_snap" 2>/dev/null
 if git diff --cached --quiet; then
     log "no new record rows (already published today) — nothing to push"
+    [ "$provenance_clean" -eq 1 ] || exit 6
     exit 0
 fi
 
@@ -106,6 +156,7 @@ git commit -q -m "record: $(TZ=America/Toronto date +%F) board (automated 09:46 
 for attempt in 1 2 3 4; do
     if git push -q origin HEAD 2>&1; then
         log "record pushed"
+        [ "$provenance_clean" -eq 1 ] || exit 6
         exit 0
     fi
     log "push failed (attempt $attempt) — retrying"
