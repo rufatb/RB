@@ -53,11 +53,16 @@ def subject_state(report):
     not a tradeable board (rule 2 — absence of data is not absence of a
     problem).
     """
-    legs = ((report.get('intraday') or {}).get('legs')) or []
+    intraday = report.get('intraday') or {}
+    legs = intraday.get('legs') or []
     status = str(report.get('report_status') or '')
     if 'DATA OUTAGE' in status:
         return '⛔ DATA OUTAGE — DO NOT TRADE — '
     if not legs:
+        if any(r.get('role') == 'pair' for r in intraday.get('recorded_today', [])):
+            return 'RECORDED BOARD — no fresh entry validation — '
+        if (intraday.get('res') or {}).get('coverage_fail') or report.get('offline'):
+            return '⛔ SCAN UNAVAILABLE — no verified entries — '
         return '⛔ NO LEGS SELECTED — nothing to act on — '
     abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
     if len(abstained) == len(legs):

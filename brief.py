@@ -29,7 +29,7 @@ from report_store import Store, encode
 ROOT = Path(__file__).resolve().parent
 
 
-def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
+def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             publish=False, state_dir=None, services=None):
     """Acquire and compute once. Inject providers/clock for deterministic tests.
 
@@ -41,7 +41,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     import r945
     injected = services is not None
     services = services or {}
-    cfg = load_config(str(cfg_path))
+    cfg = load_config(str(cfg_path if cfg_path is not None else ROOT/'config.yaml'))
     live_clock = now is None
     now = now or dt.datetime.now(ZoneInfo('America/New_York'))
     now = stamp(now).astimezone(ZoneInfo('America/New_York'))
@@ -89,8 +89,9 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         raw_live = section_status['equity_quotes']['value'] or {}
         for name, result in section_status.items():
             if result['error']:
+                last_stage = (result.get('progress') or [{}])[-1].get('stage', 'not recorded')
                 errors.append({'layer': name, 'error': result['error'],
-                               'detail': f"Independent section failed after {result['seconds']}s; other sections retained."})
+                               'detail': f"Independent section failed after {result['seconds']}s; last stage: {last_stage}; other sections retained."})
     res = {'now':now.isoformat(),'longs':[],'shorts':[], 'pair':{}, 'evaluated':[],
            'coverage_fail':None,'fetch_errors':{},'n_names':0}
     if recorded_today:
@@ -246,7 +247,7 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
 
 
 
-def compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
+def compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             publish=False, state_dir=None, services=None):
     """Serialize the entire publication, including the legacy CSV side effects.
 

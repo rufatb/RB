@@ -66,3 +66,17 @@ def test_an_informational_run_still_says_so_when_legs_are_fine():
     s = D.subject_state(rep(status="INFORMATIONAL — PARTIAL DATA",
                             legs=[leg("SIZED")]))
     assert s == "INFORMATIONAL — "
+
+
+def test_failed_scan_is_not_a_zero_opportunity_result():
+    r = rep(status='INFORMATIONAL / PARTIAL DATA')
+    r['intraday']['res'] = {'coverage_fail': 'TimeoutExpired'}
+    assert 'SCAN UNAVAILABLE' in D.subject_state(r)
+    assert 'NO LEGS SELECTED' not in D.subject_state(r)
+
+
+def test_recorded_board_survives_subject_outage():
+    r = rep(status='INFORMATIONAL / PARTIAL DATA')
+    r['intraday'].update(res={'coverage_fail':'TimeoutExpired'},
+                         recorded_today=[{'ticker':'TRP.TO','role':'pair'}])
+    assert 'RECORDED BOARD' in D.subject_state(r)

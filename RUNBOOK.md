@@ -23,6 +23,28 @@ are not the daily two-engine report. Do not concurrently schedule legacy
 
 ## Morning lifecycle
 
+Before the report window, verify the exact interpreter and checkout:
+`/absolute/checkout/.venv/bin/python /absolute/checkout/runtime_check.py`.
+Create/install that checkout's environment early if the interpreter is missing
+or fails imports. Use the verified absolute interpreter and run commands with
+the checkout as working directory throughout; a venv copied from another
+temporary directory can contain broken symlinks. `brief.compute()` resolves
+its default configuration relative to its own source file.
+
+With a prepared intraday cache, each Yahoo host attempt has a two-second
+socket timeout instead of twenty seconds. The independent 22-second process
+deadline still bounds fetch, feature construction and calibration together;
+socket timeouts do not establish a delivery SLA. Fixed stage/ticker/count
+diagnostics survive termination without exposing provider URLs or credentials.
+If current bars cannot be acquired, cached history is not today's signal.
+
+An explicit recipient request can authorize a separate informational
+replacement through `replacement_report.Replacements`. It preserves the
+original report/delivery and records a new immutable body and atomic claim.
+Save that claim durably before Gmail; record its actual returned message ID
+after success. Unknown outcomes require Sent reconciliation. Scheduled jobs
+must never invoke this exception automatically or reset an original claim.
+
 | ET clock | Action | Failure handling |
 |---|---|---|
 | 08:10 | Stage complete biotech universe; review primary-source event evidence and warm intraday history | Partial coverage blocks only its dependent section |
