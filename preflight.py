@@ -27,7 +27,10 @@ def check(state,now=None):
         checks['reviewed_calendar']=f"{len(cal['events'])} current verified events; {len(cal['gaps'])} quarantined"
         if not cal['events']: checks['reviewed_calendar']='NOT READY — empty/currently unverified event feed'
     except (OSError,ValueError,KeyError,TypeError): checks['reviewed_calendar']='NOT READY — reviewed event feed missing'
+    import eodhd
+    provider = eodhd.load_prepared(state,now)
     return {'checked_at':now.isoformat(),'checks':checks,
+            'optional_historical_provider':provider,
             'status':'PARTIAL' if any(v.startswith('NOT READY') for v in checks.values()) else 'PREPARED',
             'note':'Preparation status only; live BBO and final signal are checked at publication.'}
 

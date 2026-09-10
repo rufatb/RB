@@ -1,5 +1,14 @@
 # Working notes for this repo
 
+## Day97 EODHD qualification
+
+Read `EODHD_DATA.md`, `AUDIT_day97.md` and `PREREGISTER_day97.md`. EODHD is
+an optional historical/reference provider, not a live source switch. Its free
+plan has not been proven to support Canadian intraday data. Private credentials
+and diagnostics stay outside git. The new opening-path harness is shadow-only;
+145 sessions are a runnable floor, not a statistically adequate test. The
+baseline selector and allocation remain unchanged on healthy data.
+
 ## "run report" means one computation
 
 ```bash
