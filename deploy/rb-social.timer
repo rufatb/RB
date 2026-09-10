@@ -1,0 +1,10 @@
+[Unit]
+Description=RB day-94 attention snapshot at 09:20 America/New_York on weekdays
+[Timer]
+OnCalendar=Mon..Fri *-*-* 09:20:00 America/New_York
+Persistent=false
+AccuracySec=1s
+RandomizedDelaySec=0
+Unit=rb-social.service
+[Install]
+WantedBy=timers.target

@@ -243,3 +243,38 @@ midday:
   soft_short: 48
   backed_long: 65
   backed_short: 35
+
+# Day-94 Arm A attention forward collector (build_social.py). SHADOW RESEARCH,
+# pre-registered in PREREGISTER_day94.md: one dated snapshot per session under
+# data/social/. Feeds NOTHING in the daily report, scan, selection or sizing.
+# Each TSX name maps to a US-listed StockTwits symbol below; every mapping is
+# verified against the symbol title the API returns and a mismatch is recorded
+# UNMAPPED, never guessed. Failed fetches are recorded by error class and are
+# never stored as zero attention.
+social:
+  enabled: true
+  request_delay_sec: 0.5    # polite pacing between symbol streams
+  retries: 3                # per symbol, with backoff; then recorded failure
+  timeout_sec: 30
+  us_symbol_map:
+    RY.TO: RY
+    TD.TO: TD
+    BNS.TO: BNS
+    BMO.TO: BMO
+    CM.TO: CM
+    ENB.TO: ENB
+    TRP.TO: TRP
+    CNQ.TO: CNQ
+    SU.TO: SU
+    CVE.TO: CVE
+    CP.TO: CP
+    CNR.TO: CNI
+    SHOP.TO: SHOP
+    ABX.TO: GOLD
+    AEM.TO: AEM
+    NTR.TO: NTR
+    MFC.TO: MFC
+    SLF.TO: SLF
+    BCE.TO: BCE
+    T.TO: T
+    AC.TO: ACDVF

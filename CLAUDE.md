@@ -92,6 +92,20 @@ overnight adoption. Always print missing-data coverage and MDE. Preserve rejecte
 research even when unreachable from the daily entrypoint. New FDA transparency
 sources do not authorise mixing numerator and denominator populations.
 
+## Day-93/94 outcomes
+
+Day-93 (`PREREGISTER_day93.md`): the ceiling test WITH `vp` is UNRUNNABLE on
+free data — Yahoo's ~41 sessions of 5-minute history cannot meet the corrected
+harness's 125-session floor at any feature count, and the bar was not lowered.
+The two-feature ceiling stands (day-43); the three-feature question is OPEN and
+the binding constraint is sub-hourly history depth (see `DATA_CEILING.md`).
+
+Day-94 (`PREREGISTER_day94.md`, shadow research, no adoption): `build_social.py`
+forward-collects StockTwits/Trends attention snapshots into `data/social/` —
+coverage gate after 20 sessions, no inference before 120. `validate_crossmarket.py`
+is the registered test of prior-session US proxy state (SPY/XLF/USO/USDCAD) beyond
+`[r0, gap]`, a DAILY-BAR PROXY that cannot certify the 09:46 contract.
+
 ## September 8 recovery
 
 Intraday and equity acquisition have independent process deadlines (22s/10s).
