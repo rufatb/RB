@@ -88,12 +88,27 @@ elif [ "$rc" -ne 0 ]; then
 fi
 
 # ── 3. THE REPORT ──────────────────────────────────────────────────────────
+# daily_job, NOT brief.py --publish. They are not interchangeable: brief
+# publishes the ledger rows but never writes the immutable Store entry, so
+# there is nothing for deliver_report to send and no durable publication to
+# reconcile a delivery against. `deploy/rb-report.service` used to call
+# daily_job DIRECTLY, which is why the record never reached the repository --
+# it published into the state dir, emailed, and never pulled, never checked
+# provenance and never pushed a single CSV. Two sessions went unrecorded that
+# way. One entrypoint now does all four.
+#
+# --send is deliberately NOT passed here. With it, daily_job prints only the
+# SMTP result, and the LATE / refusal greps below would have nothing to read.
+# Sending is step 3b, after those guards have had their say.
+: "${RB_STATE_DIR:=.rb-state}"
 log "running the report"
-out="$(TZ=America/Toronto python brief.py --publish 2>&1)"; rc=$?
+out="$(TZ=America/Toronto python daily_job.py \
+        --state-dir "$RB_STATE_DIR" \
+        --output-dir "$RB_STATE_DIR/latest" 2>&1)"; rc=$?
 printf '%s\n' "$out"
 
 if [ $rc -ne 0 ]; then
-    log "brief.py exited $rc"
+    log "daily_job.py exited $rc"
     exit 1
 fi
 
@@ -107,12 +122,38 @@ fi
 
 # MISSED THE WINDOW. A LATE run renders a full page and publishes NOTHING, so
 # without this it reads like an ordinary morning while the day goes unrecorded.
+late=0
 if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
+    late=1
     log "MISSED THE 09:46 PUBLICATION WINDOW — the page above is informational."
     log "  No board was recorded for today. Schedule the job EARLIER: the clock"
     log "  is checked after acquisition, so the fetch must finish before 09:47."
-    exit 5
 fi
+
+# ── 3b. SEND IT ────────────────────────────────────────────────────────────
+# A LATE run STILL gets emailed. Silence is the worse failure: it looks
+# identical to a job that never ran, and that ambiguity is what made a whole
+# session unexplainable. The subject line carries the state
+# (deliver_report.subject_state), so an informational or all-ABSTAIN morning
+# announces itself in the inbox list rather than in paragraph three.
+#
+# deliver_report claims the delivery in the Store before handing DATA to SMTP,
+# so a re-run returns ALREADY_ATTEMPTED instead of sending twice.
+session="$(TZ=America/Toronto date +%F)"
+if [ -n "${RB_SMTP_USER:-}" ] && [ -n "${RB_REPORT_TO:-}" ]; then
+    if send_out="$(TZ=America/Toronto python deliver_report.py \
+                     --state-dir "$RB_STATE_DIR" --session "$session" 2>&1)"; then
+        log "email: $send_out"
+    else
+        log "EMAIL FAILED — the board IS published and the record below still"
+        log "  travels; only delivery failed. Do not re-run the report."
+        printf '%s\n' "$send_out" | sed 's/^/    /'
+    fi
+else
+    log "no RB_SMTP_USER / RB_REPORT_TO — published without emailing"
+fi
+
+[ "$late" -eq 1 ] && exit 5
 
 # ── 4. PUSH THE RECORD ─────────────────────────────────────────────────────
 # Only the record. Never code — an unattended job must not publish edits

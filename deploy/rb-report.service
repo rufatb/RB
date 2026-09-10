@@ -1,7 +1,8 @@
 [Unit]
-Description=RB daily tactical report (one immutable publication)
+Description=RB daily report: pull, verify provenance, publish, email, push the record
 After=network-online.target
 Wants=network-online.target
+
 [Service]
 Type=oneshot
 User=rb-report
@@ -10,5 +11,21 @@ UMask=0077
 NoNewPrivileges=true
 WorkingDirectory=/opt/RB
 EnvironmentFile=/etc/rb-report.env
-ExecStart=/opt/RB/.venv/bin/python daily_job.py --state-dir /var/lib/rb-report --output-dir /var/lib/rb-report/latest --send
-TimeoutStartSec=65
+
+# morning.sh, NOT daily_job.py directly. The previous unit called daily_job
+# straight, which publishes into the state dir and emails -- and never pulls,
+# never checks provenance, and NEVER COMMITS OR PUSHES THE RECORD. That is why
+# ledger.csv, universe_prints.csv and data/advice.csv stopped at 2026-09-08
+# while emails kept arriving: the record existed only on this host.
+#
+# Exit codes are meaningful; see morning.sh. 3 = not a trading day,
+# 4 = integrity refusal, 5 = missed the window, 6 = published but main is
+# incomplete, 1 = broken.
+ExecStart=/opt/RB/morning.sh
+
+# Long enough to cover pull + provenance + acquisition + send + push, and
+# short enough that a hung run is killed rather than overlapping tomorrow.
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

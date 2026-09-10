@@ -1,10 +1,24 @@
 [Unit]
-Description=RB report at 09:46 America/New_York on weekdays
+Description=RB report, started early enough to FINISH inside the 09:46 minute
+
+# WHY 09:45:00 AND NOT 09:46:00. execution.clock_status marks a run LATE at
+# 09:47:00, and it checks AFTER acquisition, not at process start. Acquisition
+# has independent budgets of 22s (intraday) and 10s (equity), plus the git
+# pull and provenance check that now run first. A job starting at 09:46:00
+# therefore reaches the clock check somewhere after 09:46:30 on a good day and
+# past 09:47:00 on a slow feed -- publishing NOTHING while looking like an
+# ordinary morning. That is not hypothetical: this timer fired at 09:46:00 and
+# the record has no rows for 2026-09-09 or 2026-09-10.
+#
+# 60 seconds of head start costs nothing (the engine will not publish before
+# 09:46 either way -- daily_job raises on it) and buys the whole acquisition
+# budget inside the window.
 [Timer]
-OnCalendar=Mon..Fri *-*-* 09:46:00 America/New_York
+OnCalendar=Mon..Fri *-*-* 09:45:00 America/New_York
 AccuracySec=1s
 RandomizedDelaySec=0
 Persistent=false
 Unit=rb-report.service
+
 [Install]
 WantedBy=timers.target

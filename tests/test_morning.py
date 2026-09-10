@@ -47,7 +47,7 @@ def test_it_pulls_before_running():
     """House rule 6. A board published from a stale clone can duplicate or
     contradict rows another machine already wrote."""
     c = code()
-    assert c.index("git pull") < c.index("python brief.py")
+    assert c.index("git pull") < c.index("python daily_job.py")
 
 
 def test_a_failed_pull_aborts_rather_than_running_anyway():
@@ -62,7 +62,7 @@ def test_it_pushes_the_record_it_writes():
     record; a run that does not push leaves it on one machine, which is exactly
     what stranded 2026-09-08 on a single branch."""
     s = src()
-    assert s.index("python brief.py") < s.index("git push")
+    assert s.index("python daily_job.py") < s.index("git push")
     for f in ("ledger.csv", "universe_prints.csv", "data/advice.csv"):
         assert f in s, f"{f} is never staged — its rows would not travel"
 
@@ -149,12 +149,47 @@ def test_a_holiday_and_a_broken_check_are_distinguishable():
 
 # ── day-94: the publish contract changed under the wrapper ─────────────────
 
-def test_it_passes_publish_because_brief_alone_writes_nothing():
-    """REGRESSION. `brief.py` became a PREVIEW that persists nothing; a wrapper
-    omitting --publish runs cleanly every morning, exits 0, and records
-    NOTHING. Silent success is the worst available failure here."""
+def test_it_runs_daily_job_not_brief_because_brief_stores_nothing():
+    """REGRESSION, day-97. `brief.py --publish` writes the ledger rows but never
+    creates the immutable Store entry, so there is nothing for deliver_report to
+    send and no durable publication to reconcile a delivery against. The two are
+    not interchangeable."""
     c = code()
-    assert "brief.py --publish" in c, "the wrapper would only preview"
+    assert "daily_job.py" in c
+    assert "brief.py --publish" not in c, "brief publishes no Store entry"
+
+
+def test_send_is_not_passed_to_daily_job():
+    """With --send, daily_job prints only the SMTP result, and the LATE and
+    refusal greps below would have nothing to read. Sending is a separate step
+    AFTER those guards have had their say."""
+    c = code()
+    i = c.index("daily_job.py")
+    assert "--send" not in c[i:i + 300]
+
+
+def test_the_email_is_sent_after_the_integrity_guards_not_before():
+    c = code()
+    assert c.index("daily_job.py") < c.index("deliver_report.py")
+    assert c.index("REFUSING TO PUBLISH") < c.index("deliver_report.py")
+
+
+def test_a_late_run_still_gets_emailed():
+    """Silence is the worse failure: it is indistinguishable from a job that
+    never ran, and that ambiguity made a whole session unexplainable. The
+    subject line carries the state instead."""
+    c = code()
+    assert c.index("deliver_report.py") < c.index("exit 5")
+
+
+def test_a_failed_email_does_not_discard_the_record():
+    """Delivery failure is not publication failure. The board is published and
+    the CSVs must still travel."""
+    s = src()
+    i = s.index("EMAIL FAILED")
+    window = s[i:i + 400]
+    assert "board IS published" in window
+    assert "Do not re-run the report" in window
 
 
 def test_a_missed_publication_window_is_not_reported_as_success():
@@ -192,7 +227,7 @@ def test_provenance_is_checked_before_the_report_runs():
     another branch for five weeks while every morning ran without it."""
     c = code()          # commands, not the header prose — see code()
     assert "provenance.py" in c
-    assert c.index("provenance.py") < c.index("python brief.py")
+    assert c.index("provenance.py") < c.index("python daily_job.py")
 
 
 def test_unclean_provenance_warns_but_never_blocks_the_record():
@@ -203,7 +238,7 @@ def test_unclean_provenance_warns_but_never_blocks_the_record():
     assert "exit 6" in c
     i = c.index("PROVENANCE NOT CLEAN")
     assert "exit 1" not in c[i:i + 400], "an unclean audit must not abort the run"
-    assert c.index("PROVENANCE NOT CLEAN") < c.index("python brief.py")
+    assert c.index("PROVENANCE NOT CLEAN") < c.index("python daily_job.py")
 
 
 def test_an_integrity_refusal_outranks_an_unclean_audit():
