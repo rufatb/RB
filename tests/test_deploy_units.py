@@ -194,3 +194,71 @@ def test_the_cache_is_staged_before_the_unit_that_checks_it():
     assert at("rb-prepare.timer") < at("rb-biotech.timer")
     assert "After=" in directives("rb-biotech.service")
     assert "rb-prepare.service" in directives("rb-biotech.service")
+
+
+# ── day-97: the installer, because a hand-typed cp is how this broke ───────
+
+INSTALL = os.path.join(DEPLOY, "install.sh")
+
+
+def installer():
+    return open(INSTALL).read()
+
+
+def test_the_installer_is_executable_and_valid_shell():
+    import subprocess
+    assert os.access(INSTALL, os.X_OK)
+    assert subprocess.run(["bash", "-n", INSTALL]).returncode == 0
+
+
+def test_it_refuses_to_install_where_systemd_is_not_pid_1():
+    """A container with the systemd BINARY but a different PID 1 will accept
+    `cp` and `daemon-reload` and silently run nothing."""
+    s = installer()
+    assert "ps -p 1 -o comm=" in s
+    i = s.index("ps -p 1 -o comm=")
+    assert "exit 1" in s[i:i + 500]
+
+
+def test_it_verifies_the_LOADED_unit_not_the_repo_copy():
+    """THE CASE THAT MATTERS. The repo can be perfect while /etc/systemd
+    still holds the old unit that bypasses the wrapper. Verification must read
+    systemd, not the file it just copied."""
+    s = installer()
+    assert "systemctl cat rb-report.service" in s
+    assert "LOADED unit still bypasses the wrapper" in s
+
+
+def test_it_rejects_units_that_ignore_their_exit_status():
+    assert "ignores its exit status" in installer()
+
+
+def test_it_extracts_the_minute_not_the_timezone():
+    """`sed 's/.* //'` takes the LAST field of an OnCalendar line, which is
+    America/New_York — so every timer 'clashes' and the check is useless.
+    Found by running the installer, not by reading it."""
+    s = installer()
+    assert "[0-9]{2}:[0-9]{2}:[0-9]{2}" in s
+    assert "sed 's/.* //;s/:..$//'" not in s
+
+
+def test_check_mode_changes_nothing():
+    """--check must be safe to run on a live host at any hour."""
+    s = installer()
+    i = s.index('CHECK_ONLY" -eq 0')
+    for verb in ("install -m", "daemon-reload", "enable --now"):
+        assert s.index(verb) > i, f"{verb} runs outside the install guard"
+
+
+def test_it_requires_the_env_keys_the_run_actually_reads():
+    s = installer()
+    for key in ("RB_STATE_DIR", "RB_INTRADAY_CACHE_DIR",
+                "RB_SMTP_USER", "RB_REPORT_TO"):
+        assert key in s
+
+
+def test_the_installer_reads_no_credential_values():
+    """It checks that keys are PRESENT; it must never echo their values."""
+    s = installer()
+    assert 'grep -q "^${key}=" "$ENV_FILE"' in s
+    assert "PASSWORD" not in s
