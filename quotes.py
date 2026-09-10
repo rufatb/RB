@@ -275,9 +275,28 @@ class YahooMarketData:
         self.timeout = timeout
         self.cache = {}
 
-    def _get(self, url):
+    def _get(self, url, accept="application/json"):
+        """One transport. `accept` MUST match what the endpoint actually serves.
+
+        DAY-94, and it cost a full trading session. Every request sent
+        `Accept: application/json`, including the crumb fetch -- but
+        /v1/test/getcrumb returns a BARE TOKEN as text/plain, so Yahoo
+        correctly refuses it with 406 Not Acceptable. That is HTTP working as
+        specified, not an outage and not a block.
+
+        The cascade on 2026-09-09 read as three unrelated faults and was one:
+
+            fc.yahoo.com            404  (logged as expected, and harmless --
+                                          it still sets a usable cookie)
+            /v1/test/getcrumb       406  <- the real failure, this header
+            /v7/finance/quote       401  (no crumb, so unauthorised)
+
+        The reported symptom named the quote endpoint; the cause was two steps
+        earlier. Every leg ABSTAINed for want of a spread, the page still
+        rendered an order-shaped table, and the day was traded on it.
+        """
         request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
-                                                      "Accept": "application/json"})
+                                                      "Accept": accept})
         return self.op.open(request, timeout=self.timeout).read()
 
     def auth(self):
@@ -287,7 +306,9 @@ class YahooMarketData:
             self._get("https://fc.yahoo.com")
         except urllib.error.HTTPError as exc:
             log.warning("Yahoo cookie bootstrap HTTP %s; trying crumb endpoint", exc.code)
-        crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb").decode().strip()
+        # text/plain, NOT json — see _get. Asking for json here returns 406.
+        crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb",
+                          accept="*/*").decode().strip()
         if not crumb or "<" in crumb or len(crumb) > 256:
             raise ValueError("invalid Yahoo authentication response")
         self.crumb = crumb
