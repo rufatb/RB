@@ -17,7 +17,7 @@ import ssl
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
-from prepare_delivery import view
+from prepare_delivery import subject_state, view
 from report_store import Store
 
 
@@ -27,7 +27,7 @@ def message(report, sender, recipient):
             raise ValueError('invalid email address')
     msg=EmailMessage()
     msg['From']=sender;msg['To']=recipient
-    prefix='' if report['report_status']=='ON_TIME' else 'INFORMATIONAL — '
+    prefix=subject_state(report)
     msg['Subject']=f"RB Daily Report — {report['session']} — {prefix}Intraday + Biotech"
     msg['Message-ID']=f"<rb-daily-{report['session']}@rb-report.local>"
     msg['Date']=format_datetime(dt.datetime.fromisoformat(report['generated_at']))

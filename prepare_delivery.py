@@ -38,11 +38,45 @@ def view(report, now=None):
     return out
 
 
+def subject_state(report):
+    """The one thing the SUBJECT LINE must carry: is there anything to act on?
+
+    2026-09-09 cost real money because every leg had ABSTAINed on an
+    integrity check and the page still read like an order sheet. The body was
+    fixed that day (daily_render._leg_heading), but the body is not what a
+    phone shows at 09:46 — the subject is. An inbox line reading
+    "RB Daily Report — 2026-09-09 — Intraday + Biotech" is indistinguishable
+    from a tradeable morning, and that is the line the user actually saw.
+
+    Returns a prefix, most severe first. A missing/empty leg list is NOT
+    treated as "all clear": no legs means nothing was selected, which is also
+    not a tradeable board (rule 2 — absence of data is not absence of a
+    problem).
+    """
+    legs = ((report.get('intraday') or {}).get('legs')) or []
+    status = str(report.get('report_status') or '')
+    if 'DATA OUTAGE' in status:
+        return '⛔ DATA OUTAGE — DO NOT TRADE — '
+    if not legs:
+        return '⛔ NO LEGS SELECTED — nothing to act on — '
+    abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
+    if len(abstained) == len(legs):
+        return f'⛔ DO NOT TRADE — all {len(legs)} legs ABSTAINED — '
+    if abstained:
+        return f'⚠ {len(abstained)}/{len(legs)} legs ABSTAINED — '
+    if status != 'ON_TIME':
+        return 'INFORMATIONAL — '
+    return ''
+
+
 def artifacts(report, directory, now=None):
     out = view(report, now)
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    subject = f"RB Daily Report — {out['session']}"
+    # Same guard as the SMTP path (deliver_report imports this function), so
+    # the Gmail automation cannot ship a neutral-looking subject for a board
+    # nobody should act on.
+    subject = f"RB Daily Report — {out['session']} — {subject_state(out)}".rstrip(' —')
     if out['report_status'] != 'ON_TIME':
         subject += ' — ' + out['report_status']
     payload = dict(subject=subject, text=brief.render_text(out), html=brief.render_html(out),
