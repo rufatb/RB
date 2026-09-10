@@ -151,7 +151,7 @@ def text(d):
         recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
         for r in recorded:
             lines.append(f"| RECORDED — not a fresh entry | {r['ticker']} | {r['side']} | {r.get('p945','unknown')} | unverified | "
-                         f"{r.get('spread or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares |")
+                         f"{r.get('spread_bps') or 'unknown'} bps stored proxy | {r.get('shares') or 'unknown'} recorded shares |")
         if not recorded:
             unavailable=res.get('coverage_fail') or not res.get('n_names')
             lines.append('| '+('Scan not evaluated' if unavailable else 'No qualifying baseline legs')+

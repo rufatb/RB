@@ -132,7 +132,7 @@ fi
 
 # MISSED THE WINDOW. A LATE run renders a full page and publishes NOTHING, so
 # without this it reads like an ordinary morning while the day goes unrecorded.
-printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
+if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
     log "MISSED THE 09:46-09:50 PUBLICATION WINDOW — the page above is informational."
     log "  No board was recorded for today. Schedule the job EARLIER: the clock"
     log "  is checked after acquisition, so the fetch must finish before 09:50."
