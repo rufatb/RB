@@ -57,3 +57,20 @@ def test_panel_cannot_smuggle_missing_or_wrong_unit_returns(tmp_path, intraday):
                  f"A,2026-08-04,100,101,{intraday},1000\n")
     with pytest.raises(ValueError):
         P.load_wide(str(p))
+
+
+def test_zero_return_beats_losses_and_finite_placebo_never_reports_zero_p(monkeypatch):
+    import numpy as np
+    wide = {"intraday": np.zeros((2, 4)), "tickers": np.array(list("ABCD")),
+            "dates": np.array(["2026-08-04", "2026-08-05"]),
+            "close": np.ones((2, 4)), "volume": np.ones((2, 4)),
+            "dropped_incomplete": 0}
+    monkeypatch.setattr(P, "load_wide", lambda p: wide)
+    monkeypatch.setattr(P, "generate_signals", lambda w, m, t: [(m, t)])
+    def returns(signals, intra, permute=None):
+        net = 0.0 if signals == [("distance", 1.5)] and permute is None else -0.1
+        return [dict(t=0, i=0, j=1, gross=net + 0.1, net=net)]
+    monkeypatch.setattr(P, "attribute", returns)
+    result = V.run("synthetic", draws=4, verbose=False)
+    assert result["best_cell"] == "distance@1.5" and result["best"]["net"] == 0.0
+    assert result["placebo"]["p_value"] == pytest.approx(1 / 5)

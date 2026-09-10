@@ -87,7 +87,8 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
                   f"net={r['net']:+.4f}%  t={r['t'] or float('nan'):+.2f}",
                   flush=True)
 
-    best_key = max(real, key=lambda k: real[k]["net"] or -9e9)
+    best_key = max(real, key=lambda k: real[k]["net"]
+                   if real[k]["net"] is not None else -np.inf)
     best = real[best_key]
 
     # ── placebo-max over the SAME grid ─────────────────────────────────────
@@ -107,7 +108,8 @@ def run(panel: str, draws: int = PLACEBO_DRAWS, seed: int = P.SEED,
 
     pb = np.array(placebo_best, dtype=float)
     p95 = float(np.percentile(pb, 95))
-    p_value = float((pb >= (best["net"] or -9e9)).mean())
+    observed = best["net"] if best["net"] is not None else -np.inf
+    p_value = float((1 + (pb >= observed).sum()) / (len(pb) + 1))
 
     # ── the rest of the registered bars ────────────────────────────────────
     best_trades = P.attribute(signals[best_key], intra)

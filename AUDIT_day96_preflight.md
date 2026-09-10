@@ -101,3 +101,6 @@ The pairs loader also checks finite, positive price inputs and verifies the
 stored percent return against its own open/close prices. The US development
 and holdout CSVs were not present in this checkout, so this review cannot
 independently reproduce their reported effects or assert that they overlap.
+Future runs also retain a zero-return cell ahead of losing cells (zero is not
+missing) and use the finite-draw +1 correction for Monte Carlo p-values;
+zero exceedances in a finite placebo sample never means a probability of zero.
