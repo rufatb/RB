@@ -37,6 +37,7 @@ import statistics
 import sys
 import tempfile
 import time
+from zoneinfo import ZoneInfo
 
 import requests
 import yaml
@@ -338,8 +339,40 @@ def collect(cfg: dict, session=None, trends_session=None,
             "source": "stocktwits+google_trends(unofficial)",
             "registration": "PREREGISTER_day94.md",
             "names": names, "trends": trends,
+            **decision_usability(now),
             "coverage": {"total": len(universe), **counts,
                          "sessions_in_file": 1}}
+
+
+DECISION_ET = dt.time(9, 46)
+
+
+def decision_usability(collected_at: dt.datetime) -> dict:
+    """Was this snapshot knowable at the 09:46 decision, or is it look-ahead?
+
+    The registration collects at 09:20 ET -- PRE-OPEN, and therefore knowable
+    when the board is selected. That timing is not cosmetic. A snapshot taken
+    at 09:48 contains the market's REACTION to the open, so a feature built
+    from it would predict a 09:46 decision using information from after it.
+    That is the look-ahead this repo exists to exclude, and it would arrive
+    disguised as a scheduling convenience -- run the collector from the
+    morning wrapper, after the report, and every row is quietly poisoned.
+
+    So the snapshot carries the verdict rather than the reader inferring it
+    from a timestamp. `decision_usable` false does not make a snapshot
+    worthless; it makes it unusable AS A FEATURE for that session's board,
+    which is a different and narrower thing.
+    """
+    et = collected_at.astimezone(ZoneInfo("America/Toronto"))
+    usable = et.time() < DECISION_ET
+    return {"collected_at_et": et.isoformat(),
+            "decision_usable": usable,
+            "decision_note": (
+                "collected before the 09:46 ET decision — knowable at "
+                "selection time" if usable else
+                f"COLLECTED AT {et.strftime('%H:%M')} ET, AFTER the 09:46 "
+                "decision — contains the market's reaction to the open and "
+                "MUST NOT be used as a feature for this session's board")}
 
 
 def write_snapshot(snapshot: dict, outdir: str) -> str:

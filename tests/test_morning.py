@@ -78,7 +78,23 @@ def test_it_never_pushes_code_only_the_record():
         args = add.split(" -- ")[1]
         args = re.sub(r"\d?>[&]?\S+", "", args)      # drop shell redirects
         for f in args.split():
+            # The dated attention snapshot is a record too — forward
+            # collection has no history endpoint, so an unpushed snapshot is
+            # a permanently lost session. It is allowed BY EXACT PATH only;
+            # `git add -- data/social` would stage whatever else is in the
+            # directory, which is the failure this test exists to catch.
+            if f == '"$today_snap"':
+                continue
             assert f.endswith(".csv"), f"{f} is not a record file"
+
+    c_no_comments = "\n".join(l for l in c.splitlines()
+                              if not l.lstrip().startswith("#"))
+    if '"$today_snap"' in c_no_comments:
+        assert re.search(r'today_snap="data/social/\$\(.*\)\.json"',
+                         c_no_comments), \
+            "today_snap must be a dated data/social JSON path, nothing else"
+        assert "git add -- data/social " not in c_no_comments, \
+            "staging the directory would carry unread files with the record"
 
 
 def test_a_non_trading_day_exits_distinctly_and_is_not_an_error():
@@ -166,3 +182,51 @@ def test_the_clock_window_is_actually_one_minute_wide():
     import execution
     src_ = open(execution.__file__).read()
     assert "dt.time(9,46)" in src_ and "dt.time(9,47)" in src_
+
+
+# ── day-95: running everything that exists, and collecting what cannot wait ──
+
+def test_provenance_is_checked_before_the_report_runs():
+    """Pulling proves this clone matches origin/main. It says nothing about
+    whether main is the WHOLE of the work -- clock_vs_data sat finished on
+    another branch for five weeks while every morning ran without it."""
+    c = code()          # commands, not the header prose — see code()
+    assert "provenance.py" in c
+    assert c.index("provenance.py") < c.index("python brief.py")
+
+
+def test_unclean_provenance_warns_but_never_blocks_the_record():
+    """A day's record outweighs a tidy branch list. Refusing to publish over
+    an unmerged research branch would trade a real, unrecoverable loss for a
+    bookkeeping one."""
+    c = code()          # commands, not the header prose — see code()
+    assert "exit 6" in c
+    i = c.index("PROVENANCE NOT CLEAN")
+    assert "exit 1" not in c[i:i + 400], "an unclean audit must not abort the run"
+    assert c.index("PROVENANCE NOT CLEAN") < c.index("python brief.py")
+
+
+def test_an_integrity_refusal_outranks_an_unclean_audit():
+    """Exit 4 and 5 are decided before provenance colours the exit code, so a
+    guard refusal is never downgraded to 'published but untidy'."""
+    c = code()
+    assert c.index("exit 4") < c.index("exit 6")
+    assert c.index("exit 5") < c.index("exit 6")
+
+
+def test_a_missing_attention_snapshot_is_reported_not_passed_over():
+    """Forward collection has no history endpoint, so a missed morning is a
+    permanently missing session. Silence is the wrong response."""
+    s = src()
+    assert "NO ATTENTION SNAPSHOT" in s
+    assert "cannot be recovered" in s or "permanently" in s.lower()
+
+
+def test_the_collector_is_checked_here_but_never_RUN_here():
+    """Registered at 09:20 ET, pre-open. Running it from this wrapper would
+    put it at ~09:48 -- after the board is selected -- so its rows would carry
+    the market's reaction to the open. That look-ahead would arrive disguised
+    as a scheduling convenience."""
+    c = code()
+    assert "build_social.py" not in c, \
+        "morning.sh must not invoke the collector; 09:46 is after the decision"

@@ -8,6 +8,8 @@ import datetime as dt
 import json
 import os
 
+from zoneinfo import ZoneInfo
+
 import pytest
 import requests
 
@@ -260,3 +262,38 @@ def test_snapshots_written_before_the_fix_are_skipped_not_backfilled():
     n = gate["names"]["RY.TO"]
     assert n["pre_fix_sessions"] == 20 and n["ok_sessions"] == 0
     assert n["median_messages_per_day"] is None and n["usable"] is False
+
+
+# ── the snapshot must not become a look-ahead feature by scheduling accident ─
+
+def test_a_preopen_snapshot_is_knowable_at_the_decision():
+    et = dt.datetime(2026, 9, 10, 9, 20, tzinfo=ZoneInfo("America/Toronto"))
+    d = S.decision_usability(et)
+    assert d["decision_usable"] is True
+    assert "knowable at selection time" in d["decision_note"]
+
+
+def test_a_snapshot_taken_after_0946_is_marked_unusable_as_a_feature():
+    """The registration collects at 09:20 ET. Running the collector from the
+    morning wrapper instead would put it at ~09:48 -- AFTER the board is
+    selected -- so every row would carry the market's reaction to the open.
+    That look-ahead would arrive disguised as a scheduling convenience, so
+    the snapshot states the verdict rather than leaving it to be inferred."""
+    et = dt.datetime(2026, 9, 10, 9, 48, tzinfo=ZoneInfo("America/Toronto"))
+    d = S.decision_usability(et)
+    assert d["decision_usable"] is False
+    assert "MUST NOT be used as a feature" in d["decision_note"]
+    assert "09:48" in d["decision_note"]
+
+
+def test_the_boundary_minute_is_not_usable():
+    """09:46 itself is the decision minute, not before it."""
+    et = dt.datetime(2026, 9, 10, 9, 46, tzinfo=ZoneInfo("America/Toronto"))
+    assert S.decision_usability(et)["decision_usable"] is False
+
+
+def test_usability_is_judged_in_EASTERN_not_in_whatever_the_host_uses():
+    """A UTC host would read 13:20 ET as an afternoon collection and mark a
+    perfectly good pre-open snapshot unusable -- or worse, the reverse."""
+    utc = dt.datetime(2026, 9, 10, 13, 20, tzinfo=dt.timezone.utc)  # 09:20 ET
+    assert S.decision_usability(utc)["decision_usable"] is True
