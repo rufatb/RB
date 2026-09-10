@@ -182,6 +182,24 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
         except Exception as exc:
             clock['eligible'] = False
             error('calendar_final_check',exc)
+    # DAY-95b (C1): how late into the publication window this run is. Frozen
+    # into provenance so exact-window studies can filter late records.
+    try:
+        publication_delay = execution.publication_delay_sec(now)
+    except Exception as exc:
+        publication_delay = None
+        error('publication_delay',exc)
+    # DAY-95b (C3): record gaps anchored on TODAY, so interior gaps stay
+    # visible after later sessions publish (ledger.missing_sessions anchors on
+    # the last ledger date and stops seeing them). Zero-pick days write
+    # universe prints (C5), so they are reported apart from missed sessions.
+    try:
+        import dashboard
+        record_gaps = ledger.record_gaps(rows, now.date(), dashboard.is_trading_day,
+                                         prints=ledger.load_prints())
+    except Exception as exc:
+        record_gaps = None
+        error('record_gaps',exc)
     # Baseline ledger preserved separately; exact execution measurements live
     # in Store. A late report never creates a retrospectively chosen board.
     pub = {'picks':0,'pair':0,'already':False,'errors':[]}
@@ -215,16 +233,20 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     except (subprocess.SubprocessError, OSError) as exc:
         error('release_identity',exc)
         release = None
+    if publication_delay is not None:
+        pub['publication_delay_sec'] = publication_delay
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
                             'r945_sha256':hashlib.sha256((ROOT/'r945.py').read_bytes()).hexdigest(),
                             'ledger_snapshot_sha256':hashlib.sha256(encode(rows).encode()).hexdigest(),
                             'universe':cfg.get('scan',{}).get('universe',[]),
+                            'publication_delay_sec':publication_delay,
                             'biotech_source':'independent staged evidence feed'},
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'record':record,'publish':pub,
+                          'record_gaps':record_gaps,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
@@ -237,9 +259,42 @@ def _compute(cfg_path='config.yaml', shadow=True, no_net=False, *, now=None,
     report['readiness'] = assess(report)
     if not no_net and report['readiness']['gaps']:
         report['report_status'] += ' — PARTIAL DATA; consult section status'
-    if store and now.strftime('%H:%M') == '09:46':
+    # DAY-95b (C1/C2): the gate is the clock's publication window
+    # (09:46:00-09:49:59 ET), not one wall-clock minute. Publish-once is
+    # unchanged: Store keys by session and the first write wins, so a late
+    # rerun NEVER replaces a recorded board. And an eligible session that
+    # recorded NOTHING is deliberately NOT frozen -- freezing an informational
+    # report here is what masked the unrecorded 2026-09-09 board behind
+    # publish-once. The unfrozen report is returned so the caller can alarm.
+    if store and clock['eligible'] and not record_missed(report):
         return store.publish(report['session'],report)
     return json.loads(encode(report))
+
+
+def record_missed(report):
+    """True when an eligible publication window produced NO record (day-95b C2).
+
+    The run was on a trading day, the clock said the window applied, and yet
+    no board was recorded: no ledger rows from today, no picks, no universe
+    prints, and no earlier publication. Holidays/CLOSED/SHORT_SESSION/
+    PREPARING days are legitimately quiet (False). The caller's duty on True
+    is to ALARM -- a normal-looking email on an unrecorded eligible day is
+    upward selection bias in the track record (2026-09-09)."""
+    clock = report.get('clock') or {}
+    status = str(clock.get('status') or '')
+    if report.get('offline'):
+        return False
+    if status == 'CLOSED' or status.startswith(('SHORT_SESSION', 'CALENDAR', 'PREPARING')):
+        return False
+    if not clock.get('eligible'):
+        return False
+    intra = report.get('intraday') or {}
+    if intra.get('recorded_today'):
+        return False
+    pub = intra.get('publish') or {}
+    if pub.get('already') or pub.get('picks') or pub.get('prints'):
+        return False
+    return True
 
 
 
@@ -302,6 +357,16 @@ def main(argv=None):
         Path(args.output).write_text(value)
     else:
         print(value)
+    # DAY-95b (C2): an eligible session that recorded nothing must ALARM, not
+    # look like a normal morning. Exit 7 lets morning.sh map it loudly
+    # (exit 6 is main's provenance signal, 58da082; untouched).
+    if args.publish and record_missed(report):
+        print('RECORD NOT WRITTEN — the publication window was eligible but no '
+              'board was recorded (no ledger rows, no universe prints, no frozen '
+              'report). This day is currently a GAP in the track record. Do not '
+              're-run expecting a different board after the window: a late report '
+              'never creates a retrospectively chosen board.')
+        return 7
     return 0
 
 
