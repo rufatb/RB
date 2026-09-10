@@ -80,7 +80,10 @@ def test_catastrophic_assembly_failure_emits_one_frozen_outage(tmp_path,monkeypa
         if not kw.get('no_net'): raise ValueError('bad assembly')
         return copy.deepcopy(d)
     monkeypatch.setattr(daily_job.brief,'compute',compute)
-    report=daily_job.run(tmp_path/'state',tmp_path/'output')
+    # Clock INJECTED (day-94). Without this the job froze the report under the
+    # real date while this looked it up under NOW, so the test could only pass
+    # on 2026-09-08 and failed silently every day after.
+    report=daily_job.run(tmp_path/'state',tmp_path/'output',now=NOW)
     assert any(e['error']=='ValueError' for e in report['errors'])
     frozen=Store(tmp_path/'state').get(NOW.date().isoformat())
     assert frozen['report_status'].startswith('DATA OUTAGE')
@@ -118,3 +121,47 @@ def test_legacy_ledger_rendering_cannot_acquire_tide_data(monkeypatch):
     rows=[{'date':'2026-09-01','ticker':'AAA.TO','side':'LONG','role':'pair',
            'confidence':'dense','hit':'1','r1':'.2','weight':'.5','p945':'100'}]
     assert 'PAIR legs' in ledger.report(rows)
+
+
+def test_the_job_clock_is_injectable_so_this_suite_cannot_expire(tmp_path,
+                                                                 monkeypatch):
+    """A test that only passes on the day it was written guards nothing.
+
+    daily_job.run read the wall clock directly, so the outage test above froze
+    its report under the real date and looked it up under a fixed NOW. It
+    passed on 2026-09-08 and failed every day after, in a suite of 1100+ where
+    one red line is easy to inherit as background noise.
+    """
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+    import inspect
+    assert 'now' in inspect.signature(daily_job.run).parameters
+
+    d = brief.compute(now=NOW, services=services(), no_net=True)
+    monkeypatch.setattr(daily_job.brief, 'compute',
+                        lambda **kw: copy.deepcopy(d))
+    far = dt.datetime(2027, 3, 15, 9, 46, 20, tzinfo=ZoneInfo('America/New_York'))
+    d['session'] = far.date().isoformat()
+    d['generated_at'] = far.isoformat()
+    report = daily_job.run(tmp_path / 's', tmp_path / 'o', now=far)
+    assert Store(tmp_path / 's').get(far.date().isoformat()) is not None, \
+        "an injected clock did not govern the session key"
+
+
+def test_a_live_run_still_uses_the_wall_clock(tmp_path, monkeypatch):
+    """Production must be unchanged: now=None reads the real clock."""
+    import datetime as dt
+    from zoneinfo import ZoneInfo
+    d = brief.compute(now=NOW, services=services(), no_net=True)
+    # Stub the wall-clock provider, not a report with a conflicting old date.
+    # The test remains deterministic before the open and across midnight.
+    class WallClock(dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW.astimezone(tz) if tz else NOW.replace(tzinfo=None)
+    monkeypatch.setattr(daily_job.dt, 'datetime', WallClock)
+    monkeypatch.setattr(daily_job.brief, 'compute',
+                        lambda **kw: copy.deepcopy(d))
+    daily_job.run(tmp_path / 's', tmp_path / 'o')
+    today = NOW.date().isoformat()
+    assert Store(tmp_path / 's').get(today) is not None

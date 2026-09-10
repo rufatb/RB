@@ -22,7 +22,7 @@ counted and rejected. The snapshot distinguishes OK / UNMAPPED / ERROR so
 the coverage gate never has to guess.
 
 COVERAGE GATE (registered, runs via --coverage): after >= 20 collected
-sessions, per-name median messages/day over that name's OK sessions. Fewer
+sessions, per-name median observed messages/day over at least 20 OK sessions. Fewer
 than 8 of 21 names at median >= 1 message/day means the family is
 UNRUNNABLE for this universe — a finding, not an inconvenience.
 """
@@ -37,6 +37,7 @@ import statistics
 import sys
 import tempfile
 import time
+from zoneinfo import ZoneInfo
 
 import requests
 import yaml
@@ -92,7 +93,7 @@ def error_class(exc: BaseException) -> str:
     return type(exc).__name__.upper()
 
 
-def parse_stream(payload: dict, requested_symbol: str) -> dict:
+def parse_stream(payload: dict, requested_symbol: str, *, now=None) -> dict:
     """Counts from one StockTwits symbol-stream response. Pure given a payload.
 
     Asserts the response is for the requested symbol (rule 9). Sentiment tags
@@ -110,30 +111,52 @@ def parse_stream(payload: dict, requested_symbol: str) -> dict:
     if returned.upper() != requested_symbol.upper():
         raise StreamContractError(
             f"asked for {requested_symbol}, got stream for {returned!r}")
-    messages = payload.get("messages") or []
-    bullish = bearish = rejects = 0
+    now = now or dt.datetime.now(dt.timezone.utc)
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise StreamContractError('aware observation clock required')
+    start = now - dt.timedelta(hours=24)
+    messages = payload.get("messages")
+    if not isinstance(messages, list):
+        raise StreamContractError('messages must be a list')
+    bullish = bearish = rejects = old = future = duplicate = count = 0
+    seen = set()
     max_ts = None
     for m in messages:
         if not isinstance(m, dict):
             rejects += 1
             continue
-        basic = ((m.get("entities") or {}).get("sentiment") or {}).get("basic")
-        if basic == "Bullish":
-            bullish += 1
-        elif basic == "Bearish":
-            bearish += 1
         raw = m.get("created_at")
         try:
             ts = dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if ts.tzinfo is None or ts.utcoffset() is None or not isinstance(m.get('id'), int):
+                raise ValueError('aware timestamp and integer message id required')
         except (ValueError, TypeError):
             rejects += 1
             continue
+        if m['id'] in seen:
+            duplicate += 1
+            continue
+        seen.add(m['id'])
+        if ts > now:
+            future += 1
+            continue
+        if ts <= start:
+            old += 1
+            continue
+        count += 1
+        basic = ((m.get("entities") or {}).get("sentiment") or {}).get("basic")
+        bullish += basic == 'Bullish'
+        bearish += basic == 'Bearish'
         if max_ts is None or ts > max_ts:
             max_ts = ts
     return {"us": requested_symbol, "symbol_title": sym.get("title"),
-            "messages": len(messages), "bullish": bullish, "bearish": bearish,
+            "messages": count, "bullish": bullish, "bearish": bearish,
             "max_message_ts": max_ts.isoformat() if max_ts else None,
-            "rejected_messages": rejects}
+            "rejected_messages": rejects, 'older_messages':old,
+            'future_messages':future, 'duplicate_messages':duplicate,
+            'raw_messages':len(messages), 'window_start':start.isoformat(),
+            'window_end':now.isoformat(),
+            'count_basis':'unique observed messages in preceding 24h; capped stream, not total traffic'}
 
 
 def verify_mapping(tsx: str, symbol_title: str | None) -> bool:
@@ -228,7 +251,10 @@ def collect(cfg: dict, session=None, trends_session=None,
     delay = float(social.get("request_delay_sec", 0.5))
     tries = int(social.get("retries", 3))
     timeout = float(social.get("timeout_sec", 30.0))
+    injected_clock = now is not None
     now = now or dt.datetime.now(dt.timezone.utc)
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError('aware collection clock required')
     names, counts = {}, {"ok": 0, "unmapped": 0, "error": 0}
     universe = universe_from_config(cfg)
     for i, tsx in enumerate(universe):
@@ -247,7 +273,7 @@ def collect(cfg: dict, session=None, trends_session=None,
                 counts["error"] += 1
             else:
                 try:
-                    parsed = parse_stream(payload, us)
+                    parsed = parse_stream(payload, us, now=now)
                     entry.update(parsed)
                     if verify_mapping(tsx, parsed["symbol_title"]):
                         entry["status"] = "OK"
@@ -278,8 +304,10 @@ def collect(cfg: dict, session=None, trends_session=None,
         print(f"  Google Trends: {trends['status']} "
               f"({trends.get('failures') or trends.get('error')}) — "
               "recorded, continuing with StockTwits only", flush=True)
-    return {"date": now.date().isoformat(),
+    return {"schema_version":2, "date": now.astimezone(ZoneInfo('America/New_York')).date().isoformat(),
             "collected_at": now.isoformat(),
+            'completed_at':(now if injected_clock else dt.datetime.now(dt.timezone.utc)).isoformat(),
+            'trends_qualification':'Unverified search terms; not authenticated issuer sentiment.',
             "source": "stocktwits+google_trends(unofficial)",
             "registration": "PREREGISTER_day94.md",
             "names": names, "trends": trends,
@@ -288,14 +316,17 @@ def collect(cfg: dict, session=None, trends_session=None,
 
 
 def write_snapshot(snapshot: dict, outdir: str) -> str:
-    """Atomic dated write: temp file in the target directory, then replace."""
+    """Atomic first-write publication; a rerun cannot overwrite observations."""
+    session = dt.date.fromisoformat(snapshot['date']).isoformat()
     os.makedirs(outdir, exist_ok=True)
-    path = os.path.join(outdir, f"{snapshot['date']}.json")
+    path = os.path.join(outdir, f"{session}.json")
     fd, tmp = tempfile.mkstemp(dir=outdir, prefix=".social-", suffix=".tmp")
     try:
         with os.fdopen(fd, "w") as f:
             json.dump(snapshot, f, indent=2, sort_keys=True)
-        os.replace(tmp, path)
+        # link is atomic and fails if the dated observation already exists.
+        os.link(tmp, path)
+        os.unlink(tmp)
     except BaseException:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -320,9 +351,35 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
                   min_median: float = GATE_MIN_MEDIAN) -> dict:
     """The registered 20-session coverage gate. Failed fetches are EXCLUDED
     from a name's medians — never counted as zero attention (Forbidden list).
+    Day95 additionally requires 20 OK sessions per usable name and verifies
+    dated pre-open exchange sessions; duplicates/late files do not add evidence.
     """
+    import pandas_market_calendars as mcal
     per_name: dict = {}
+    qualified = []
+    rejected = []
+    seen = set()
     for snap in snapshots:
+        try:
+            date = dt.date.fromisoformat(snap['date'])
+            if date in seen:
+                raise ValueError('duplicate dated snapshot')
+            seen.add(date)
+            start = dt.datetime.fromisoformat(snap['collected_at'])
+            end = dt.datetime.fromisoformat(snap['completed_at'])
+            if any(t.tzinfo is None or t.utcoffset() is None for t in (start,end)):
+                raise ValueError('naive collection timestamp')
+            et = ZoneInfo('America/New_York')
+            start, end = start.astimezone(et), end.astimezone(et)
+            if (snap.get('schema_version') != 2 or start.date() != date or end.date() != date
+                    or end < start or end.time() >= dt.time(9,30)):
+                raise ValueError('not a certified pre-open observation')
+            if mcal.get_calendar('TSX').schedule(start_date=date,end_date=date).empty:
+                raise ValueError('not a TSX session')
+            qualified.append(snap)
+        except (KeyError, TypeError, ValueError) as exc:
+            rejected.append(dict(date=snap.get('date'), error=str(exc)))
+    for snap in qualified:
         for tsx, e in (snap.get("names") or {}).items():
             rec = per_name.setdefault(tsx, {"ok_sessions": 0, "counts": []})
             if e.get("status") == "OK" and e.get("messages") is not None:
@@ -334,9 +391,9 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
                if rec["counts"] else None)
         names[tsx] = {"ok_sessions": rec["ok_sessions"],
                       "median_messages_per_day": med,
-                      "usable": bool(med is not None and med >= min_median)}
+                      "usable": bool(rec['ok_sessions'] >= min_sessions and med is not None and med >= min_median)}
     usable = sum(1 for n in names.values() if n["usable"])
-    sessions = len(snapshots)
+    sessions = len(qualified)
     if sessions < min_sessions:
         gate = "COLLECTING"
         note = (f"{sessions}/{min_sessions} sessions collected — the gate is "
@@ -348,6 +405,7 @@ def coverage_gate(snapshots: list, min_sessions: int = GATE_SESSIONS,
                 f"messages/day over their OK sessions; registered bar is "
                 f">= {min_names} names")
     return {"sessions_collected": sessions, "min_sessions": min_sessions,
+            'rejected_snapshots':rejected,
             "names": names, "usable_names": usable, "min_names": min_names,
             "gate": gate, "note": note}
 

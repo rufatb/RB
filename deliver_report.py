@@ -17,6 +17,7 @@ import ssl
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
+from prepare_delivery import view
 from report_store import Store
 
 
@@ -42,8 +43,7 @@ def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None
     # Re-read the clock at the actual sending boundary. A report built on time
     # but queued for 20 minutes must not look executable in the inbox.
     now=now or dt.datetime.now(ZoneInfo('America/New_York'))
-    if now.date().isoformat()!=session or now.hour!=9 or not 40<=now.minute<=46:
-        report['report_status']='LATE — informational only, do not enter the morning board'
+    report = view(report, now)
     msg=message(report,sender,recipient)
     if store.delivery(session):
         return {'status':'ALREADY_ATTEMPTED','delivery':store.delivery(session)}

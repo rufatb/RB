@@ -158,3 +158,101 @@ def test_quote_reports_ok_and_its_own_reason():
     bad = Q.Quote("INO", Q.PARITY_BREAK, detail="gap 0.044")
     assert not bad.ok and bad.about_the_name
     assert "parity" in bad.why() and "0.044" in bad.why()
+
+
+# ── day-94: the Accept header that cost a trading session ──────────────────
+
+def test_the_crumb_request_does_not_ask_for_json():
+    """/v1/test/getcrumb returns a BARE TOKEN as text/plain, so
+    `Accept: application/json` is correctly refused with 406 Not Acceptable.
+    That single header took down the whole authenticated quote path on
+    2026-09-09: no crumb meant 401 on /v7/finance/quote, which meant no
+    spreads, which meant every leg ABSTAINed.
+    """
+    import inspect
+
+    import quotes
+    src = inspect.getsource(quotes.YahooMarketData.auth)
+    assert "getcrumb" in src
+    assert 'accept="*/*"' in src, "the crumb fetch still asks for json"
+
+
+def test_the_transport_lets_each_endpoint_state_what_it_serves():
+    import inspect
+
+    import quotes
+    sig = inspect.signature(quotes.YahooMarketData._get)
+    assert "accept" in sig.parameters
+    assert sig.parameters["accept"].default == "application/json", \
+        "json must stay the default; only the crumb is text/plain"
+
+
+def test_the_cascade_is_documented_where_the_header_is_set():
+    """The reported symptom named /v7/finance/quote and the cause was two
+    steps earlier. The next reader should not have to re-derive that."""
+    import quotes
+    doc = " ".join((quotes.YahooMarketData._get.__doc__ or "").split())
+    assert "406" in doc and "text/plain" in doc
+    assert "401" in doc and "fc.yahoo.com" in doc
+
+
+def _yahoo_shaped_opener(recorder):
+    """A stand-in for Yahoo that enforces the SAME content negotiation.
+
+    Refuses the crumb path with 406 unless the caller will accept text, and
+    404s the cookie bootstrap the way fc.yahoo.com actually does. If the header
+    regresses, auth() fails here for the real reason instead of passing on a
+    string match.
+    """
+    import io
+    import urllib.error
+
+    class Opener:
+        def open(self, request, timeout=None):
+            url = request.full_url
+            accept = request.get_header("Accept") or ""
+            recorder.append((url, accept))
+            if "fc.yahoo.com" in url:
+                raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+            if "getcrumb" in url:
+                if "application/json" == accept:
+                    raise urllib.error.HTTPError(
+                        url, 406, "Not Acceptable", {}, None)
+                return io.BytesIO(b"aB3xYz9\n")
+            raise AssertionError("unexpected url " + url)
+    return Opener()
+
+
+def test_auth_survives_a_server_that_enforces_content_negotiation():
+    import quotes
+    seen = []
+    client = quotes.YahooMarketData()
+    client.op = _yahoo_shaped_opener(seen)
+    client.auth()
+    assert client.crumb == "aB3xYz9"
+    crumb_accept = [a for u, a in seen if "getcrumb" in u]
+    assert crumb_accept and "application/json" != crumb_accept[0]
+
+
+def test_a_406_on_the_crumb_is_raised_not_swallowed():
+    """House rule 1. On 2026-09-09 the cascade WAS reported -- 404/406/401 all
+    reached the log -- which is why it was diagnosable a day later. A silent
+    crumb failure would have surfaced only as four ABSTAINs with no cause."""
+    import urllib.error
+
+    import quotes
+
+    class AlwaysRefuses:
+        def open(self, request, timeout=None):
+            raise urllib.error.HTTPError(
+                request.full_url, 406, "Not Acceptable", {}, None)
+
+    client = quotes.YahooMarketData()
+    client.op = AlwaysRefuses()
+    try:
+        client.auth()
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 406
+    else:
+        raise AssertionError("auth() hid a 406 and returned without a crumb")
+    assert client.crumb is None

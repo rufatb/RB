@@ -12,6 +12,13 @@ import pytest
 import requests
 
 import build_social as S
+NOW = dt.datetime.fromisoformat('2026-09-09T09:20:00-04:00')
+
+
+def sessions(n):
+    import pandas_market_calendars as mcal
+    return [str(d.date()) for d in mcal.get_calendar('TSX').schedule(
+        start_date='2026-08-01', end_date='2026-09-08').index[:n]]
 
 
 def stream(symbol="RY", title="Royal Bank of Canada", messages=None):
@@ -61,21 +68,21 @@ def cfg_two_names():
 
 
 def test_parse_stream_counts_sentiment_and_max_ts():
-    out = S.parse_stream(stream(), "RY")
+    out = S.parse_stream(stream(), "RY", now=NOW)
     assert out["messages"] == 4 and out["bullish"] == 1 and out["bearish"] == 1
     assert out["max_message_ts"] == "2026-09-08T20:15:00+00:00"
     assert out["rejected_messages"] == 0
     assert out["symbol_title"] == "Royal Bank of Canada"
 
 
-def test_parse_stream_rejects_bad_timestamps_but_keeps_the_message_count():
+def test_parse_stream_rejects_bad_timestamps_before_counting_sentiment():
     s = stream(messages=[{"id": 1, "created_at": "not-a-date",
                           "entities": {"sentiment": {"basic": "Bullish"}}},
                          {"id": 2, "created_at": "2026-09-08T10:00:00Z"}])
-    out = S.parse_stream(s, "RY")
-    assert out["messages"] == 2 and out["bullish"] == 1
+    out = S.parse_stream(s, "RY", now=NOW)
+    assert out["messages"] == 0 and out["bullish"] == 0
     assert out["rejected_messages"] == 1
-    assert out["max_message_ts"] == "2026-09-08T10:00:00+00:00"
+    assert out["max_message_ts"] is None and out['older_messages'] == 1
 
 
 def test_parse_stream_asserts_the_response_is_for_the_requested_symbol():
@@ -128,13 +135,15 @@ def test_snapshot_write_is_atomic_and_dated(tmp_path):
 
 def snapshot(date, counts):
     """counts: {tsx: message count}; every entry OK."""
-    return {"date": date, "names": {
+    return {"schema_version":2, "date": date,
+            'collected_at':date+'T09:20:00-04:00',
+            'completed_at':date+'T09:20:01-04:00', "names": {
         t: {"status": "OK", "messages": n} for t, n in counts.items()}}
 
 
 def test_coverage_gate_arithmetic_7_fails_8_passes():
     names21 = [f"N{i:02d}.TO" for i in range(21)]
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]  # 20 sessions
+    days = sessions(20)
     counts7 = {t: (3 if i < 7 else 0) for i, t in enumerate(names21)}
     counts8 = {t: (3 if i < 8 else 0) for i, t in enumerate(names21)}
     gate7 = S.coverage_gate([snapshot(d, counts7) for d in days])
@@ -145,12 +154,12 @@ def test_coverage_gate_arithmetic_7_fails_8_passes():
 
 
 def test_coverage_gate_excludes_failed_fetches_from_medians():
-    days = [f"2026-08-{d:02d}" for d in range(1, 21)]
+    days = sessions(20)
     snaps = []
     for d in days:
-        snaps.append({"date": d, "names": {
-            "RY.TO": {"status": "OK", "messages": 5},
-            "TD.TO": {"status": "ERROR", "messages": None}}})
+        snap = snapshot(d, {'RY.TO':5})
+        snap['names']['TD.TO'] = {'status':'ERROR','messages':None}
+        snaps.append(snap)
     gate = S.coverage_gate(snaps)
     assert gate["names"]["RY.TO"]["median_messages_per_day"] == 5.0
     assert gate["names"]["TD.TO"]["ok_sessions"] == 0
@@ -164,6 +173,6 @@ def test_empty_snapshot_dir_is_collecting_not_a_crash(tmp_path):
 
 
 def test_gate_not_decidable_before_20_sessions():
-    snaps = [snapshot(f"2026-08-{d:02d}", {"RY.TO": 9}) for d in range(1, 8)]
+    snaps = [snapshot(d, {"RY.TO": 9}) for d in sessions(7)]
     gate = S.coverage_gate(snaps)
     assert gate["sessions_collected"] == 7 and gate["gate"] == "COLLECTING"

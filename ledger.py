@@ -368,19 +368,14 @@ def accuracy(pair_rows: list, threshold: float = None) -> dict:
 
 
 def day_shape(hits: int, n: int, legs: int) -> dict:
-    """What a `legs`-leg day looks like at the record's own hit rate.
+    """Illustrative binomial benchmark assuming independent, identical legs.
 
-    WHY THIS IS ON THE PAGE. On 2026-09-09 the book took four legs, one hit,
-    and the day read as a malfunction. It was not: at 47.7%/leg, one-or-fewer
-    hits out of four happens 34.8% of the time -- about one session in three.
-    The portfolio manager had no way to know that in advance, so an ordinary
-    third-percentile-of-nothing day arrived as a shock.
-
-    This is NOT a forecast (rule 8). It is the arithmetic of the record applied
-    to today's leg count: if the rate is what it has been, this is the shape of
-    the distribution you are drawing from. It says nothing about which names.
+    Shared exposure violates independence. This is not an empirical bad-day
+    frequency. The daily report uses complete-session counts in risk_evidence.
     """
     import math
+    if n < 0 or not 0 <= hits <= n:
+        raise ValueError('invalid hit counts')
     if not n or legs < 1:
         return {}
     p = hits / n
@@ -399,13 +394,12 @@ def day_shape_line(hits: int, n: int, legs: int) -> list:
     d = day_shape(hits, n, legs)
     if not d or d["legs"] < 2:
         return []
-    return [f"At {d['legs']} legs and the record's {d['p']:.1%} per-leg rate "
-            f"({hits}/{n}), expect 1-or-fewer hits about "
-            f"{d['p_bad']:.0%} of sessions — roughly one in "
-            f"{d['one_in_bad']:.1f} — and zero hits one in "
-            f"{d['one_in_zero']:.0f}.",
-            "That is the shape of the draw, not a forecast: a day like that is "
-            "the engine working as measured, not breaking."]
+    frequency = f"one in {d['one_in_bad']:.1f}" if d['one_in_bad'] else 'zero in this model'
+    return [f"Illustrative independent-leg model: {d['legs']} legs at {d['p']:.1%} "
+            f"({hits}/{n}) gives 1-or-fewer hits {d['p_bad']:.1%}, {frequency}; "
+            f"zero hits {d['p_zero']:.1%}.",
+            'Assumes independent legs with a fixed common hit rate; shared exposure '
+            'violates that assumption. This is not a forecast or a measured bad-day frequency.']
 
 
 def accuracy_line(pair_rows: list) -> str:

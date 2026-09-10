@@ -1,0 +1,390 @@
+{
+  "block_sessions": 20,
+  "draws": 2000,
+  "fetch_failures": {
+    "CM.TO": [
+      {
+        "detail": "TIMEOUT after 1 tries: https://stooq.com/q/d/l/?s=cm.to&d1=20150101&d2=20260909&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=cm.to&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 1 tries: https://query1.finance.yahoo.com/v8/finance/chart/CM.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/CM.TO"
+      }
+    ],
+    "NTR.TO": [
+      {
+        "detail": "TIMEOUT after 1 tries: https://stooq.com/q/d/l/?s=ntr.to&d1=20150101&d2=20260909&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=ntr.to&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 1 tries: https://query1.finance.yahoo.com/v8/finance/chart/NTR.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/NTR.TO"
+      }
+    ],
+    "RY.TO": [
+      {
+        "detail": "ry.to: unexpected stooq schema ['<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex', 'nofollow\"></head><body><noscript>This site requires JavaScript to verify your ",
+        "error": "DECODE",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=ry.to&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 1 tries: https://query1.finance.yahoo.com/v8/finance/chart/RY.TO",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/RY.TO"
+      }
+    ],
+    "SPY": [
+      {
+        "detail": "spy.us: unexpected stooq schema ['<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex', 'nofollow\"></head><body><noscript>This site requires JavaScript to verify your",
+        "error": "DECODE",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=spy.us&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "SPY: 1 incomplete/nonfinite daily bars",
+        "error": "DECODE",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY"
+      }
+    ],
+    "USDCAD": [
+      {
+        "detail": "usdcad: unexpected stooq schema ['<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex', 'nofollow\"></head><body><noscript>This site requires JavaScript to verify your",
+        "error": "DECODE",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=usdcad&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "USDCAD=X: duplicate session bars",
+        "error": "DECODE",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/USDCAD=X"
+      }
+    ],
+    "USO": [
+      {
+        "detail": "uso.us: unexpected stooq schema ['<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex', 'nofollow\"></head><body><noscript>This site requires JavaScript to verify your",
+        "error": "DECODE",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=uso.us&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "USO: 1 incomplete/nonfinite daily bars",
+        "error": "DECODE",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/USO"
+      }
+    ],
+    "XLE": [
+      {
+        "detail": "TIMEOUT after 1 tries: https://stooq.com/q/d/l/?s=xle.us&d1=20150101&d2=20260909&i=d",
+        "error": "TIMEOUT",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=xle.us&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "TIMEOUT after 1 tries: https://query1.finance.yahoo.com/v8/finance/chart/XLE",
+        "error": "TIMEOUT",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/XLE"
+      }
+    ],
+    "XLF": [
+      {
+        "detail": "xlf.us: unexpected stooq schema ['<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex', 'nofollow\"></head><body><noscript>This site requires JavaScript to verify your",
+        "error": "DECODE",
+        "source": "stooq",
+        "url": "https://stooq.com/q/d/l/?s=xlf.us&d1=20150101&d2=20260909&i=d"
+      },
+      {
+        "detail": "XLF: 1 incomplete/nonfinite daily bars",
+        "error": "DECODE",
+        "source": "yahoo",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/XLF"
+      }
+    ]
+  },
+  "generated_at": "2026-09-10T01:07:44.269613+00:00",
+  "label": "DAILY-BAR PROXY; SHADOW RESEARCH; NO ADOPTION",
+  "mde80_points": null,
+  "mde_status": "Unavailable: no paired outcome panel",
+  "missing_series": [
+    "CM.TO",
+    "NTR.TO",
+    "RY.TO",
+    "SPY",
+    "USDCAD",
+    "USO",
+    "XLE",
+    "XLF"
+  ],
+  "probe": {
+    "note": "stooq TSX form unavailable here; yahoo fallback",
+    "symbol_form": "abx.to",
+    "verified": false
+  },
+  "provenance": {
+    "ABX.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "f623828fdbb33b3c68d230753ef27dbc61b32288c009db44e3d93be7bb27d136",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ABX.TO"
+    },
+    "AC.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "fe664cd45dc3e9862217de5c45d42f7cb8866aa80e47a34fd91401fa9d36e02c",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AC.TO"
+    },
+    "AEM.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "88185129bf2cd37e7f677a3d42b448468c341070f94fc04a34d4a4e2c794502c",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/AEM.TO"
+    },
+    "BCE.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "5606c7fd291c2fbccc4a117b3c1006d48c7bb43bf164b06184f3345a730e675a",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/BCE.TO"
+    },
+    "BMO.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "6afb9f11022fcda3fddf78fb96737efee211780d5c159e160b916ce00249fa67",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/BMO.TO"
+    },
+    "BNS.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "f8b37a41f3c99b08ed193ef142c8253edde9145001ecb28eaf20b4f4fc8f1d19",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/BNS.TO"
+    },
+    "CNQ.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "92e625da0c16ddc0e2be6b15d564e3f06f18f2c8ec5240500c6642d72b4ce424",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CNQ.TO"
+    },
+    "CNR.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "28bf966a45e3efe8af655df020d1f2f65781c68680a11a4d70bbcf6db22b90f6",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CNR.TO"
+    },
+    "CP.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "6b2324b59caac196f2d52466fb4eaa2fc372bfdfb828304ea84082d0ba4fc3df",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CP.TO"
+    },
+    "CVE.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "75c4e3d6a6c43f340cb60283976793b61195686521fb8e07e3b785faa700f4e3",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/CVE.TO"
+    },
+    "ENB.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "c39d7812aef403c3d3240ca750b77891b75df7fdc3e470a4f8db27a4d401c4c1",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/ENB.TO"
+    },
+    "MFC.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "f466708ad55d5f1f81b4ced03a628b4c9d051c61c067919423be99903f8aee7b",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/MFC.TO"
+    },
+    "SHOP.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2837,
+      "sha256": "fc49e6c8fe146a15675e5b2ebd180b6c8ff1aee80c92020ab32d628ea67c53bb",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SHOP.TO"
+    },
+    "SLF.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "d61cc3154afa40383e12aa4f65cfa2b75e051171975bc3649891387ebd8c5cb1",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SLF.TO"
+    },
+    "SU.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "931872e878576a1ce5ace2128bc415686aa7da421b83077f415b5e8f35152399",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/SU.TO"
+    },
+    "T.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "95f0a0754d3f1351b6936860947533d07dd124c6035a85f53d1f8b99297a6eb0",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/T.TO"
+    },
+    "TD.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "d07273ee9c32870ea821abce9e46fd02cc61febdd10273184a21dc6eef6f3bbf",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TD.TO"
+    },
+    "TRP.TO": {
+      "adjustment": "adjclose/close ratio (auto_adjust equivalent)",
+      "params": {
+        "events": "div,split",
+        "interval": "1d",
+        "period1": "1420070400",
+        "period2": "1788998400"
+      },
+      "rows": 2933,
+      "sha256": "bc8e2dea0cee30965dcd1d99d6d243d5274329cd26f940b3c9741e1977a13c36",
+      "source": "yahoo",
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TRP.TO"
+    }
+  },
+  "reason": "required series could not be fetched; fail closed (rule 2), nothing computed",
+  "registration": "PREREGISTER_day94.md",
+  "seed": 94,
+  "status": "BLOCKED",
+  "survivorship_disclosure": "Current configured TSX names: survivorship and universe-selection bias are not quantified or removed.",
+  "verdict": "BLOCKED",
+  "verdict_note": "data acquisition failed with the recorded error classes; no panel, no inference, no fabrication",
+  "window": {
+    "confirmation": [
+      "2026-01-01",
+      "2026-09-09"
+    ],
+    "development": [
+      "2015-01-01",
+      "2025-12-31"
+    ]
+  }
+}

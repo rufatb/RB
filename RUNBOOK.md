@@ -90,7 +90,8 @@ inserted into live marks, execution quotes or aggregate live book P&L.
 Before the open, restore persistent operational state and run:
 
 ```bash
-python sync_runtime.py --state-dir "$RB_STATE_DIR" --source-ref origin/claude/session-rw51c2
+python sync_runtime.py --state-dir "$RB_STATE_DIR"
+python sync_runtime.py --state-dir "$RB_STATE_DIR" --source-ref origin/main
 python bar_cache.py --directory "$RB_STATE_DIR/intraday_cache"
 python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
 ```
@@ -141,6 +142,26 @@ For a reviewable MIME file without sending:
 ```bash
 python deliver_report.py --session YYYY-MM-DD --state-dir /var/lib/rb-report --eml /tmp/rb-review.eml
 ```
+
+For the designated Gmail connector sender, after the delivery claim has been
+durably saved, re-render timing from the frozen publication immediately before
+transmission:
+
+```bash
+python prepare_delivery.py --state-dir "$RB_STATE_DIR" --session YYYY-MM-DD --output-dir "$RB_STATE_DIR/dispatch"
+```
+
+Use `gmail_payload.json`'s exact `subject`, `text`, and `html` in one multipart
+message. If the minute changes before calling Gmail, run this command again;
+it only annotates delivery time and renders, never reselects or overwrites the
+publication. It rejects delivery before 09:46. Do not claim a publication-time
+ON_TIME label establishes an on-time transmission. Dispatch is best effort.
+
+The September 9 jobs still pinned September 8 code even after main was fixed.
+After an authorized reviewed merge, update BOTH existing job pins to the same
+main SHA and their data-only source ref to origin/main. Do not create additional
+daily senders or copy private operational state into git. A failed state download
+is an operational blocker, never authorization to start with a blank database.
 
 Set sender/recipient environment variables even for MIME rendering. The
 ChatGPT Gmail task can send the same rendered artifacts using the Gmail plugin;
