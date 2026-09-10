@@ -1,0 +1,14 @@
+[Unit]
+Description=Stage the intraday history cache well before the open
+
+# 08:25, not 09:4x. bar_cache refuses to run at or after 09:30 (it stages the
+# PRIOR session's bars, so running it into the open would be meaningless), and
+# staging it early leaves the 09:46 acquisition budget for live quotes only.
+[Timer]
+OnCalendar=Mon..Fri *-*-* 08:25:00 America/New_York
+AccuracySec=30s
+Persistent=false
+Unit=rb-prepare.service
+
+[Install]
+WantedBy=timers.target

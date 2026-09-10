@@ -1,7 +1,11 @@
 [Unit]
 Description=RB event options refresh at 09:45 ET
 [Timer]
-OnCalendar=Mon..Fri *-*-* 09:45:00 America/New_York
+# 09:43, moved off 09:45 on day-97. The report timer now starts at 09:45 so
+# its acquisition FINISHES inside the 09:46 minute; two jobs hitting the same
+# rate-limited provider in the same second is how "Too Many Requests" happens,
+# and both would fail rather than one.
+OnCalendar=Mon..Fri *-*-* 09:43:00 America/New_York
 Persistent=false
 AccuracySec=1s
 [Install]

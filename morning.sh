@@ -87,6 +87,37 @@ elif [ "$rc" -ne 0 ]; then
     exit 1
 fi
 
+# ── 2b. IS THE PRE-OPEN HISTORY CACHE WARM? ────────────────────────────────
+# Checked, not built. bar_cache refuses to run at or after 09:30 and it is
+# right to: it stages the PRIOR session's bars.
+#
+# A cold cache does not fail loudly. It makes the 09:46 job fetch the whole
+# universe's 60-day history live inside a 22-second budget, against a provider
+# that rate-limits — and what reaches the inbox is "intraday: TimeoutExpired
+# after 22.0s" and "Freshly evaluated names: 0". That is a scheduling fault
+# wearing a data-outage costume, and it emptied the 2026-09-10 email.
+if [ -n "${RB_INTRADAY_CACHE_DIR:-}" ]; then
+    if python - "$RB_INTRADAY_CACHE_DIR" <<'PYEOF'
+import datetime as dt, json, pathlib, sys
+try:
+    m = json.loads((pathlib.Path(sys.argv[1]) / "manifest.json").read_text())
+except (OSError, ValueError):
+    sys.exit(1)
+sys.exit(0 if m.get("complete") and m.get("session") ==
+         dt.date.today().isoformat() else 1)
+PYEOF
+    then
+        log "intraday history cache: warm for today"
+    else
+        log "INTRADAY HISTORY CACHE IS COLD OR STALE — the 09:46 fetch will try"
+        log "  to stage the whole universe inside its 22s budget and will very"
+        log "  likely time out. Check rb-prepare.timer (08:25 ET). Continuing;"
+        log "  a degraded board is still worth recording."
+    fi
+else
+    log "RB_INTRADAY_CACHE_DIR unset — no pre-open cache configured"
+fi
+
 # ── 3. THE REPORT ──────────────────────────────────────────────────────────
 # daily_job, NOT brief.py --publish. They are not interchangeable: brief
 # publishes the ledger rows but never writes the immutable Store entry, so

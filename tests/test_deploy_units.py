@@ -91,3 +91,46 @@ def test_the_env_example_carries_no_real_secret():
     e = unit("rb-report.env.example")
     assert "replace-with" in e or "your-account@example.com" in e
     assert not re.search(r"[0-9a-f]{12,}\.[0-9]{6,}", e)
+
+
+# ── day-97: the 22-second timeout had a scheduling cause ───────────────────
+
+def test_a_unit_actually_stages_the_intraday_history_cache():
+    """THE CAUSE OF THE EMPTY 2026-09-10 EMAIL. bar_cache.py could always
+    stage the 60-day 5-minute history and preflight.py always CHECKED for it,
+    but no unit ever RAN it. So the 09:46 job fetched the whole universe live
+    inside a 22s budget and reported TimeoutExpired after exactly 22.0s, with
+    "Freshly evaluated names: 0" in the inbox. Staged pre-open it takes 5.8s."""
+    s = unit("rb-prepare.service")
+    assert "bar_cache.py" in s
+    assert "RB_INTRADAY_CACHE_DIR" in s
+
+
+def test_the_cache_is_staged_before_the_market_opens():
+    """bar_cache refuses to run at or after 09:30 -- it stages the PRIOR
+    session's bars -- so a timer at 09:4x would raise every single morning."""
+    m = re.search(r"OnCalendar=.*?(\d{2}):(\d{2}):(\d{2})", unit("rb-prepare.timer"))
+    start = dt.time(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    assert start < dt.time(9, 30), f"bar_cache refuses to run at {start}"
+
+
+def test_no_two_market_data_jobs_fire_in_the_same_minute():
+    """Two jobs hitting the same rate-limited provider at once is how
+    "YFRateLimitError: Too Many Requests" happens, and then BOTH fail rather
+    than one. rb-options sat on 09:45 when the report moved there."""
+    times = {}
+    for name in os.listdir(DEPLOY):
+        if not name.endswith(".timer"):
+            continue
+        m = re.search(r"^OnCalendar=.*?(\d{2}):(\d{2}):\d{2}", unit(name), re.M)
+        if m:
+            times.setdefault(f"{m.group(1)}:{m.group(2)}", []).append(name)
+    clashes = {k: v for k, v in times.items() if len(v) > 1}
+    assert not clashes, f"timers share a minute: {clashes}"
+
+
+def test_the_report_still_starts_after_the_cache_job():
+    def at(name):
+        m = re.search(r"OnCalendar=.*?(\d{2}):(\d{2}):(\d{2})", unit(name))
+        return dt.time(*(int(g) for g in m.groups()))
+    assert at("rb-prepare.timer") < at("rb-report.timer")

@@ -265,3 +265,28 @@ def test_the_collector_is_checked_here_but_never_RUN_here():
     c = code()
     assert "build_social.py" not in c, \
         "morning.sh must not invoke the collector; 09:46 is after the decision"
+
+
+def test_a_cold_intraday_cache_is_reported_before_the_report_runs():
+    """A cold cache does not fail loudly -- it surfaces as
+    "intraday: TimeoutExpired after 22.0s" and an email with no picks. That is
+    a scheduling fault wearing a data-outage costume."""
+    c = code()
+    assert "RB_INTRADAY_CACHE_DIR" in c
+    assert c.index("RB_INTRADAY_CACHE_DIR") < c.index("python daily_job.py")
+    assert "COLD OR STALE" in src()
+
+
+def test_a_cold_cache_warns_but_does_not_block_the_run():
+    """A degraded board is still worth recording; refusing would turn a
+    warning into the very missing day it is warning about."""
+    s = src()
+    i = s.index("COLD OR STALE")
+    assert "Continuing" in s[i:i + 400]
+    assert "exit" not in s[i:i + 300]
+
+
+def test_morning_checks_the_cache_but_never_builds_it():
+    """bar_cache stages the PRIOR session and refuses at/after 09:30; calling
+    it from the 09:45 wrapper would raise every morning."""
+    assert "bar_cache" not in code()

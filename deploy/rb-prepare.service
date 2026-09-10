@@ -1,0 +1,35 @@
+[Unit]
+Description=RB pre-open intraday history cache (the 22s timeout's actual cause)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+UMask=0077
+NoNewPrivileges=true
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+
+# WHY THIS UNIT EXISTS. bar_cache.py has always been able to stage the 60-day
+# 5-minute history, and preflight.py has always CHECKED for it -- but nothing
+# ever RAN it. So the 09:46 job had to fetch the whole universe's history live,
+# inside a 22-second acquisition budget, against a provider that rate-limits.
+# On 2026-09-10 that is exactly what happened:
+#
+#   intraday:      TimeoutExpired  - failed after 22.0s (the entire budget)
+#   equity_quotes: URLError        - failed after 8.0s
+#   biotech:       YFRateLimitError: Too Many Requests
+#
+# and the morning email went out with "Freshly evaluated names: 0". There were
+# no picks to print because nothing was ever fetched.
+#
+# Measured cost of doing it pre-open instead: 5.8 seconds, 21/21 names, no
+# errors. The work was never expensive; it was being done at the worst possible
+# moment.
+ExecStart=/opt/RB/.venv/bin/python bar_cache.py --directory ${RB_INTRADAY_CACHE_DIR}
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target
