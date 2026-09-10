@@ -306,9 +306,14 @@ def attribute(signals: list, intra: np.ndarray,
     co-movement and the z-score is still real, but each leg earns the intraday
     return of a DIFFERENT name from the same session. That preserves every
     name's own return distribution and the day's cross-section, and destroys
-    only the link between the pair selected and what it earned -- which is
-    exactly the advantage that comes from getting to pick a winner out of
-    166,753 candidates.
+    only the link between the pair selected and what it earned.
+
+    IT IS CONDITIONAL ON THE SELECTION, AND THE ORIGINAL DAY-96 WRITE-UP
+    OVERSTATED IT. This placebo was described as absorbing "the advantage that
+    comes from getting to pick a winner out of 166,753 candidates". It does
+    not. Selection runs on real close prices and is IDENTICAL in every draw --
+    only attribution is permuted -- so selection-stage luck is held fixed, not
+    sampled. `reselection_placebo` is the bar that answers that question.
 
     Cost is SUBTRACTED, not clipped. See the module docstring.
     """
@@ -442,3 +447,66 @@ def naive_public_recipe(wide: dict, top_k: int = TOP_K) -> dict:
     return {"n": len(arr), "mean": float(arr.mean()),      # (4) vs zero
             "hit_rate": float((arr > 0).mean()),
             "t_naive_iid": float(arr.mean() / (arr.std(ddof=1) / np.sqrt(len(arr))))}
+
+
+def shifted_panel(wide: dict, rng: np.random.Generator) -> dict:
+    """A null panel where NO pair is genuinely cointegrated.
+
+    THE PLACEBO THE DAY-96 AUDIT ASKED FOR, and it is a real correction rather
+    than a refinement. `attribute(permute=...)` and `attribute_shifted` both
+    hold the SELECTION FIXED and only change what the chosen pairs earn. They
+    are therefore CONDITIONAL on a selection made from real prices, and they
+    cannot absorb selection-stage luck -- which is precisely what the original
+    day-96 write-up claimed they absorbed. They do not.
+
+    Here every name's series is circularly shifted by its OWN independent
+    offset, so each name keeps its own serial structure (volatility clustering,
+    trend, autocorrelation) while cross-name alignment is destroyed. Genuine
+    co-movement cannot survive that. Formation, the DF statistic, the top-K
+    choice, the z-score and the trade are then re-run on the null panel from
+    scratch, so what comes back is the return to picking the best of N(N-1)/2
+    apparent pairs when none of them is real.
+
+    Independent circular shifts, not date shuffling: the audit is right that
+    shuffling individual dates manufactures an artificially independent sample
+    and destroys the serial structure the block bootstrap exists to respect.
+
+    CAVEAT, disclosed rather than hidden: a circular shift puts one wrap
+    discontinuity in each name's series. With a 252-session formation window
+    over ~2,500 sessions roughly a tenth of windows contain one, which adds
+    noise to the null. It does not induce co-movement between names, so it
+    cannot manufacture the effect being tested for.
+    """
+    T = wide["close"].shape[0]
+    N = wide["close"].shape[1]
+    offsets = rng.integers(1, T, size=N)
+    out = dict(wide)
+    for field in ("close", "open", "intraday", "volume"):
+        m = wide[field]
+        out[field] = np.stack([np.roll(m[:, k], int(offsets[k]))
+                               for k in range(N)], axis=1)
+    return out
+
+
+def reselection_placebo(wide: dict, methods, thresholds,
+                        draws: int, seed: int = SEED) -> dict:
+    """Best-cell distribution when selection itself is re-run on a null panel.
+
+    Returns the best-cell mean net return per draw. Compare the real best cell
+    against this, not against the conditional placebos.
+    """
+    rng = np.random.default_rng(seed)
+    best = []
+    for _ in range(draws):
+        null = shifted_panel(wide, rng)
+        cell_means = []
+        for m in methods:
+            for th in thresholds:
+                tr = attribute(generate_signals(null, m, th), null["intraday"])
+                cell_means.append(float(np.mean([x["net"] for x in tr]))
+                                  if tr else -np.inf)
+        best.append(max(cell_means))
+    arr = np.array(best, dtype=float)
+    return {"draws": draws, "best": arr,
+            "mean": float(arr.mean()), "p95": float(np.percentile(arr, 95)),
+            "max": float(arr.max())}

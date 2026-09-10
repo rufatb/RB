@@ -231,3 +231,70 @@ def test_registered_constants_have_not_drifted():
     assert P.BLOCKS == 4
     assert P.SIZE_RATIO_MAX == 2.0
     assert P.SPREAD_BPS == 5.0
+
+
+# ── day-96 audit: the registered placebos are CONDITIONAL ──────────────────
+
+def test_the_conditional_placebo_does_not_resample_selection():
+    """THE CORRECTION. The original write-up said this placebo absorbed the
+    advantage of picking the best of 166,753 candidates. It cannot: selection
+    runs on real close prices and is identical in every draw. Pinning that
+    here so the claim cannot quietly come back."""
+    w = synth()
+    sig_a = P.generate_signals(w, "cointegration", 2.0)
+    sig_b = P.generate_signals(w, "cointegration", 2.0)
+    assert sig_a == sig_b, "signals must be deterministic given the panel"
+    perm = np.roll(np.arange(len(w["tickers"])), 2)
+    a = P.attribute(sig_a, w["intraday"], permute=perm)
+    assert [(x["i"], x["j"]) for x in a] == [(x["i"], x["j"]) for x in sig_a], \
+        "the permuted draw traded a different pair set — it is not conditional"
+
+
+def test_the_reselection_placebo_destroys_real_comovement():
+    """Independent circular shifts per name: each keeps its own serial
+    structure, cross-name alignment does not survive. The planted cointegrated
+    pair must stop looking cointegrated."""
+    w = synth()
+    real = P.formation_scores(np.log(w["close"][:252]))
+    null = P.shifted_panel(w, np.random.default_rng(0))
+    got = P.formation_scores(np.log(null["close"][:252]))
+    assert real["df_t"][0, 1] < -3.0, "the planted pair should be stationary"
+    assert got["df_t"][0, 1] > real["df_t"][0, 1] + 1.0, \
+        "shifting failed to break the planted co-movement"
+
+
+def test_the_reselection_placebo_shifts_each_name_independently():
+    """A COMMON shift would preserve cross-name alignment and leave genuine
+    cointegration intact, which would make the null identical to the real
+    panel and the whole comparison vacuous."""
+    w = synth()
+    null = P.shifted_panel(w, np.random.default_rng(1))
+    lags = []
+    for k in range(w["close"].shape[1]):
+        col, ncol = w["close"][:, k], null["close"][:, k]
+        lags.append(int(np.argmin([np.abs(np.roll(col, s) - ncol).sum()
+                                   for s in range(w["close"].shape[0])])))
+    assert len(set(lags)) > 1, "every name got the same offset"
+
+
+def test_the_shift_keeps_each_name_its_own_returns():
+    """The null must be a re-timing, not a re-labelling: a name's multiset of
+    returns is unchanged, so only alignment is destroyed."""
+    w = synth()
+    null = P.shifted_panel(w, np.random.default_rng(2))
+    for k in range(w["intraday"].shape[1]):
+        assert np.allclose(np.sort(w["intraday"][:, k]),
+                           np.sort(null["intraday"][:, k]))
+
+
+def test_a_finite_draw_p_value_can_never_be_zero():
+    """500 draws cannot resolve p=0.000, which the day-96 write-up reported.
+    The (1+k)/(n+1) form has a floor of 1/(n+1)."""
+    import validate_pairs as V
+    src = inspect_source(V.run)
+    assert "(1 + (pb >= observed).sum()) / (len(pb) + 1)" in src
+
+
+def inspect_source(fn):
+    import inspect
+    return inspect.getsource(fn)

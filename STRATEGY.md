@@ -5007,9 +5007,27 @@ session.
 ### The US panel, and why its apparent edge is survivorship
 
 On 504 US names the best cell was *positive* (+0.0367%/trade) and beat both
-placebos at p = 0.000 — there is a real gross convergence effect, +0.1367%
+placebos at **p ≤ 0.002** — there is a gross convergence effect, +0.1367%
 against a timing-scrambled +0.026%. It is not adoptable, and the reason is not
 only the 10bp round trip that eats 73% of it:
+
+> **Two corrections to this section, day-96 audit (`AUDIT_day96_preflight.md`).**
+> Both were found by review of this study and both are upheld.
+>
+> 1. **"p = 0.000" was not a possible number.** With 500 Monte-Carlo draws and
+>    zero exceedances the floor is (1+0)/(500+1) = 0.002, and the code now uses
+>    that finite-draw form. Reporting 0.000 claimed more resolution than 500
+>    draws can carry.
+> 2. **The two placebos here are CONDITIONAL, and the original write-up
+>    overstated what they absorb.** Both hold the pair SELECTION fixed and vary
+>    only what the selected pairs earn, so neither can absorb selection-stage
+>    luck across the 166,753 candidates — which is exactly what this study
+>    claimed of them. That claim is withdrawn. `pairs.reselection_placebo`
+>    re-runs formation, the DF statistic, the top-K choice and the trade on a
+>    null panel built from independent circular shifts, and is the bar that
+>    actually answers the selection question. On the TSX-21 the rejection holds
+>    under it (real −0.1112% against a −0.0123% bar, p = 0.59), so the verdict
+>    below is unaffected there.
 
 | liquidity quartile | development (504) | holdout (913) |
 |---|---|---|
