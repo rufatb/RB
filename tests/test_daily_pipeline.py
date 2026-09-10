@@ -82,7 +82,13 @@ def test_offline_does_not_publish_or_fetch(tmp_path):
 
 def test_publish_once_restores_before_any_acquisition(tmp_path,monkeypatch):
     s=services();calls=[]
-    monkeypatch.setattr('r945.publish',lambda *a,**k: calls.append('publish') or {'errors':[]})
+    # DAY-95 (C2): the stub must report a REAL publication (picks/prints),
+    # because an eligible session that recorded nothing is now deliberately
+    # NOT frozen -- freezing it would mask an unrecorded day (the 2026-09-09
+    # defect this day-95 class fixes). The publish-once behaviour under test
+    # here is unchanged.
+    monkeypatch.setattr('r945.publish',lambda *a,**k: calls.append('publish') or
+                        {'errors':[],'picks':2,'prints':21,'already':False,'pair':2})
     first=brief.compute(now=NOW,publish=True,state_dir=tmp_path,services=s)
     assert calls==['publish']
     def fail():pytest.fail('published re-read acquired data')
@@ -105,9 +111,14 @@ def test_concurrent_publication_has_one_winner(tmp_path):
     assert all(x==out[0] for x in out)
 
 
+# DAY-95 (C1): the 09:47 row was `False` under the old 1-minute publication
+# gate. The window is now 09:46:00-09:49:59 (PREREGISTER_day95b.md), so 09:47
+# is eligible and explicitly marked late; 09:50 is LATE/informational again.
 @pytest.mark.parametrize('day,clock,eligible',[('2026-09-07','09:46',False),
     ('2026-09-08','09:40',False),('2026-09-08','09:46',True),
-    ('2026-09-08','09:47',False),('2026-12-24','09:46',False),
+    ('2026-09-08','09:47',True),('2026-09-08','09:49',True),
+    ('2026-09-08','09:50',False),
+    ('2026-12-24','09:46',False),
     ('2026-11-02','09:46',True)])
 def test_exchange_clock_dst_holidays_and_early_close(day,clock,eligible):
     now=dt.datetime.fromisoformat(day+'T'+clock).replace(tzinfo=ZoneInfo('America/New_York'))

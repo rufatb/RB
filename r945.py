@@ -107,6 +107,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import math
 from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
@@ -268,12 +269,35 @@ def coverage_ok(n_evaluated: int, universe: list, groups: dict,
     return True, f"{n_evaluated}/{n_uni} names ({frac:.0%})"
 
 
-def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
+def _finite_feature(value) -> bool:
+    """A usable feature is present AND finite (day-95: NaN/inf are not None)."""
+    if value is None:
+        return False
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def knn_probability(train: pd.DataFrame, today: dict, stats: dict | None = None) -> tuple:
     """Smoothed P(rest-of-day up) for today's features vs the pooled history.
     Returns (p, n_train). Same distance-weighted + Beta-smoothed machinery as
-    the analog engine; clamped to the hard band."""
+    the analog engine; clamped to the hard band.
+
+    DAY-95 (C4): non-finite values are rejected, not just None. A NaN feature
+    in `today` used to pass the `is None` check and poison every distance; a
+    NaN/inf TRAIN row likewise survived `dropna` (inf is not NaN). Such rows
+    are dropped and COUNTED in `stats['nonfinite_train_rows_dropped']` when a
+    stats dict is supplied — never silently (rule 1)."""
     tr = train.dropna(subset=FEATS + ["r1"])
-    if len(tr) < 200 or any(today.get(f) is None for f in FEATS):
+    finite = np.isfinite(tr[FEATS + ["r1"]].to_numpy(dtype=float)).all(axis=1)
+    dropped = int((~finite).sum())
+    if dropped:
+        tr = tr[finite]
+        if stats is not None:
+            stats["nonfinite_train_rows_dropped"] = (
+                stats.get("nonfinite_train_rows_dropped", 0) + dropped)
+    if len(tr) < 200 or any(not _finite_feature(today.get(f)) for f in FEATS):
         return None, len(tr), None
     mu, sd = tr[FEATS].mean(), tr[FEATS].std().replace(0, 1)
     Z = ((tr[FEATS] - mu) / sd).to_numpy()
@@ -286,6 +310,34 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     p = (g * K + 0.5 * M) / (K + M)
     nd = float(np.sqrt(d2[idx]).mean())   # neighbour distance: estimate density
     return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr), nd
+
+
+def density_cutoffs(train: pd.DataFrame, n_max: int = 120, seed: int = 7,
+                    stats: dict | None = None) -> tuple | None:
+    """(q33, q67) neighbour-distance cutoffs from the training frame itself.
+
+    BUG FIX (day-22): the sampled row is REMOVED from the training set before
+    measuring its neighbourhood, otherwise it matches itself at distance 0 and
+    biases both cutoffs low. DAY-95 (C4): the sample size is computed against
+    the DROPNA'D frame it is drawn from — the old inline code sized `n`
+    against the FULL frame and raised ValueError out of the 9:46 run whenever
+    NaN rows shrank the valid frame below `n`. Cannot change selection on
+    healthy data (the frames coincide when nothing is NaN); on degraded data
+    the caller fails closed with a named coverage reason.
+
+    Returns None when fewer than 2 complete rows exist (cutoffs not
+    estimable); (0.0, 9e9) when no neighbourhood could be scored, as before."""
+    valid = train.dropna(subset=FEATS + ["r1"])
+    if len(valid) < 2:
+        return None
+    sample = valid.sample(n=min(n_max, len(valid)), random_state=seed)
+    nds = []
+    for idx, row in sample.iterrows():
+        res = knn_probability(train.drop(index=idx), {f: row[f] for f in FEATS},
+                              stats=stats)
+        if res[0] is not None:
+            nds.append(res[2])
+    return (float(np.quantile(nds, 0.33)), float(np.quantile(nds, 0.67))) if nds else (0.0, 9e9)
 
 
 def allocate_book(picks: list, equity: float, max_book_pct: float,
@@ -791,23 +843,24 @@ def run(cfg, workers=8):
                       "long": (float(dn.quantile(0.5)), float(dn.quantile(0.25))),
                       "short": (float(up.quantile(0.5)), float(up.quantile(0.75)))}
 
-    # Density cutoffs from a sample of the training rows' own neighbourhoods.
-    # BUG FIX (day-22): the sampled row must be REMOVED from the training set
-    # before measuring its neighbourhood. Left in, it matches itself at
-    # distance 0 and drags the mean neighbour distance down — measured bias
-    # -2.4%, pushing both cutoffs ~2.3% low, so LIVE picks (which never match
-    # themselves) were tagged "sparse" more often than they had earned. Labels
-    # only — selection compares nd between live picks and is unaffected — but
-    # the dense tag is the pre-registered candidate for a future gate, so a
-    # biased label would corrupt the very evidence meant to decide it.
-    sample = train.dropna(subset=FEATS + ["r1"]).sample(
-        n=min(120, len(train)), random_state=7) if len(train) else train
-    nds = []
-    for idx, row in sample.iterrows():
-        res = knn_probability(train.drop(index=idx), {f: row[f] for f in FEATS})
-        if res[0] is not None:
-            nds.append(res[2])
-    cutoffs = (float(np.quantile(nds, 0.33)), float(np.quantile(nds, 0.67))) if nds else (0.0, 9e9)
+    # Density cutoffs from a sample of the training rows' own neighbourhoods
+    # (see density_cutoffs for the day-22 self-match and day-95 sampling
+    # fixes). Labels only — selection compares nd between live picks.
+    knn_stats: dict = {}
+    cutoffs = density_cutoffs(train, stats=knn_stats)
+    if cutoffs is None:
+        # DAY-95b (C4): fail closed with a NAMED reason instead of the old
+        # ValueError out of .sample() on a NaN-shrunk frame.
+        return {"now": now.isoformat(timespec="seconds"), "n_names": len(live),
+                "longs": [], "shorts": [], "excluded": [], "pair": None,
+                "min_p": min_p, "too_early": False,
+                "coverage_fail": (
+                    "DENSITY CALIBRATION UNAVAILABLE — fewer than 2 complete "
+                    "training rows after NaN filtering; the density cutoffs "
+                    "cannot be estimated, so no board is published. This is a "
+                    "data failure, not a judgement about the names."),
+                "source": src, "source_note": src_note,
+                "fetch_errors": fetch_errors}
 
     # Per-name trailing volatility of the entry->close move, from the training
     # window only (today is excluded upstream, so this cannot peek). Feeds the
@@ -822,7 +875,7 @@ def run(cfg, workers=8):
             r["excluded_reason"] = why_x
             extrapolated.append(r)
             continue
-        res = knn_probability(train, r)
+        res = knn_probability(train, r, stats=knn_stats)
         p, n = res[0], res[1]
         if p is None:
             continue
@@ -840,6 +893,19 @@ def run(cfg, workers=8):
     # exclusions — a silently dropped name is how a partial board hides.
     for r in extrapolated:
         excluded.append({"t": r["t"], "excluded_reason": r["excluded_reason"]})
+    # DAY-95b (H1, PREREGISTER_day95b.md): SHADOW A/B of the vp train/serve
+    # skew. Both normalizations are scored with the shipped machinery and the
+    # pick divergence is logged at publish time (data/shadow_vp.jsonl). This
+    # changes NO selection — `out` above is the only board — and a shadow
+    # failure is recorded, never raised into the run.
+    try:
+        import shadow_vp
+        shadow = shadow_vp.compare(
+            hist_rows, live, min_p=min_p, groups=cfg.get("peer_groups"),
+            selector=(cfg.get("pair") or {}).get("selector", "densest"),
+            legs_per_side=(cfg.get("pair") or {}).get("legs_per_side", 2))
+    except Exception as e:
+        shadow = {"status": "ERROR", "error": type(e).__name__}
     # Too-early detection: no live rows because today has <3 completed 5m bars.
     too_early = (len(out) == 0 and now.time() < dt.time(9, 46))
     # Day-25 coverage gate — fail closed rather than pick from a partial board.
@@ -849,6 +915,7 @@ def run(cfg, workers=8):
         return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
                 "longs": [], "shorts": [], "excluded": [], "pair": None,
                 "min_p": min_p, "too_early": False, "coverage_fail": cov_msg,
+                "shadow_vp": shadow,
                 "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
     pcfg = cfg.get("pair") or {}
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
@@ -873,6 +940,11 @@ def run(cfg, workers=8):
             # Anchor for the order window: the moment the 9:45 signal bar
             # became complete (open+16), NOT the moment the command was run.
             "ready_at_iso": ready.isoformat(timespec="seconds"),
+            # Day-95 (C4): non-finite training rows dropped by the k-NN,
+            # counted and surfaced rather than silently absorbed (rule 1).
+            "nonfinite_rows_dropped": knn_stats.get("nonfinite_train_rows_dropped", 0),
+            # Day-95 (H1): vp normalization shadow A/B — divergence log only.
+            "shadow_vp": shadow,
             "path_stats": path_stats}
 
 
@@ -1348,9 +1420,40 @@ def publish(res: dict, cfg: dict, assessed_costs=None) -> dict:
     out["pair"] = len(pair_picks)
 
     picks = res["longs"] + res["shorts"]
-    if not picks or res.get("too_early"):
+    if res.get("too_early"):
         return out
     date = res["now"][:10]
+
+    # DAY-95b (H1 shadow): log the vp train/serve A/B divergence once per
+    # session, beside the record but never part of it. SHADOW ONLY — no
+    # selection change, and a shadow failure can never affect the real run.
+    shadow = res.get("shadow_vp")
+    if isinstance(shadow, dict) and shadow.get("status") == "OK":
+        try:
+            import shadow_vp
+            out["shadow_vp_logged"] = shadow_vp.log(shadow, date)
+        except Exception as e:
+            out["errors"].append(
+                f"shadow vp log NOT saved ({type(e).__name__}: {e})"
+                " — the real record above is unaffected")
+
+    if not picks:
+        # DAY-95b (C5): a zero-pick day STILL writes its universe prints
+        # (day-29's design: every evaluated day leaves a trace), so
+        # "ran fine, nothing qualified" is distinguishable from "never
+        # published" — the distinction 2026-09-09 proved necessary. The
+        # ledger schema is unchanged: zero pick rows are written.
+        todays_prints = [r for r in ledger.load_prints() if r.get("date") == date]
+        if todays_prints:
+            out["already"] = True      # publish-once: prints already exist
+            return out
+        try:
+            out["prints"] = ledger.append_universe_prints(res.get("evaluated") or [],
+                                                          date)
+        except Exception as e:
+            out["errors"].append(f"universe prints NOT saved ({type(e).__name__}: {e})"
+                                 " — relative capture is lost for this session")
+        return out
     book_cap = (rcfg.get("account_equity", 0)
                 * rcfg.get("max_position_pct", 50) / 100.0)
     todays = [r for r in ledger.load() if r["date"] == date]

@@ -1,0 +1,17 @@
+{
+  "registration": "PREREGISTER_day95b.md",
+  "seed": 95,
+  "block_sessions": 20,
+  "draws": 2000,
+  "label": "HOURLY-PROXY SHADOW RESEARCH; NO ADOPTION",
+  "generated_at": "2026-09-10T02:00:39.663117+00:00",
+  "status": "BLOCKED",
+  "verdict": "BLOCKED",
+  "reason": "pool/index acquisition failed; fail closed (rule 2), nothing computed",
+  "errors": [
+    {
+      "error": "URLError",
+      "detail": "<urlopen error timed out>"
+    }
+  ]
+}

@@ -157,6 +157,8 @@ Not on the morning path. Candidates for consolidation, NOT deletion: several are
 | `validate_insider` | 262 | TEST A: does insider buying precede FDA outcomes? | — |
 | `validate_pair` | 204 | the day-9 experiment behind THE PAIR's selection rule. | `paired_time`, `validate_deep`, `validate_time_deep`, `validate_universe` |
 | `validate_priorcrl` | 152 | TEST B: is P(CRL) conditional on the sponsor's history? | — |
+| `shadow_vp` | 131 | day-95b H1 SHADOW: vp train/serve skew — logs pick divergence daily, never touches selection. | `r945` |
+| `validate_residual` | 430 | day-95b H2: tide-residualized [r0, gap] in the parity k-NN, hourly pool, seed 95. | — |
 | `validate_scaled` | 161 | the four-quarter test on the ONE candidate still standing. | — |
 | `validate_sixk` | 320 | does a company FILING something change the intraday leg? | — |
 | `validate_target` | 209 | train on CROSS-SECTIONAL rank instead of absolute direction? | — |

@@ -11,6 +11,40 @@ from quotes import number, stamp
 
 ET = ZoneInfo('America/New_York')
 
+# DAY-95b (C1, PREREGISTER_day95b.md): the publication gate was a single
+# wall-clock minute evaluated AFTER acquisition, so any run crossing 09:47:00
+# never published and publish-once then froze the miss (2026-09-09 was emailed,
+# went 1/4 and was never recorded). The window is now 09:46:00-09:49:59 ET.
+# The 09:46 ENTRY contract is unchanged; a record written after the first
+# minute is explicitly labelled late (publication_delay_sec in provenance).
+PUBLISH_WINDOW_MINUTES = 4
+
+
+def publication_delay_sec(now):
+    """Seconds after the 09:46:00 ET publication window opens.
+
+    Negative before the window. Recorded into the frozen report's provenance
+    so exact-window studies can filter late records. Pure + testable.
+
+    Duck-types datetimes instead of isinstance: the wall-clock tests stub
+    `datetime.datetime` itself (subclass), and an isinstance check against the
+    patched module would reject the plain datetimes its astimezone() returns.
+    Naive datetimes still fail closed."""
+    if hasattr(now, 'tzinfo') and hasattr(now, 'astimezone') and hasattr(now, 'replace'):
+        if now.tzinfo is None or now.utcoffset() is None:
+            raise ValueError('naive publication clock')
+        now = now.astimezone(ET)
+    else:
+        now = stamp(now).astimezone(ET)
+    opens = now.replace(hour=9, minute=46, second=0, microsecond=0)
+    return (now - opens).total_seconds()
+
+
+def in_publish_window(now):
+    """True inside 09:46:00-09:49:59 ET on the clock alone (calendar aside)."""
+    delay = publication_delay_sec(now)
+    return 0 <= delay < PUBLISH_WINDOW_MINUTES * 60
+
 
 def clock_status(now, calendar='TSX'):
     """Exchange calendar including holidays/early closes; fail closed if unknown."""
@@ -23,12 +57,17 @@ def clock_status(now, calendar='TSX'):
         return out
     close = schedule.iloc[0]['market_close'].to_pydatetime().astimezone(ET)
     out['close_at'] = close.isoformat()
+    delay = publication_delay_sec(now)
     if close.time() < dt.time(16):
         out['status'] = 'SHORT_SESSION — 15:59 contract unavailable'
     elif now.time() < dt.time(9,46):
         out['status'] = 'PREPARING — signal not final before 09:46'
-    elif now.time() >= dt.time(9,47):
+    elif delay >= PUBLISH_WINDOW_MINUTES * 60:
         out['status'] = 'LATE — informational only; entry window missed'
+    elif delay >= 60:
+        # Day-95: publishable, but the frozen record is labelled late.
+        out.update(status='LATE-WINDOW (09:47-09:50) — publishable, record marked late',
+                   eligible=True)
     else:
         out.update(status='09:46 publication window', eligible=True)
     return out

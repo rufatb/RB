@@ -18,16 +18,26 @@
 #   5  ran but MISSED THE PUBLICATION WINDOW — no board recorded
 #   6  PUBLISHED, but provenance was not clean — the record is safe and the
 #      run used code that is not the whole of main. Investigate same day.
+#   7  the publication window was ELIGIBLE but NOTHING was recorded — the
+#      day-95b unrecorded-day alarm; today's session is a track-record gap
+#      until a human resolves it. Never retro-enter the board.
 #   1  something actually failed
+#
+# brief.py --publish itself exits 7 when the publication window was ELIGIBLE
+# but nothing was recorded (day-95b: the unrecorded 2026-09-09 board is the
+# failure this exists to make loud). It is mapped to a loud block + exit 7
+# below, so cron can tell it from both a hard failure (1) and a provenance
+# warning (6).
+#
+# THE WINDOW IS FOUR MINUTES (day-95b): execution.clock_status keeps a run
+# publishable from 09:46:00 through 09:49:59 ET (LATE-WINDOW records are
+# marked late via publication_delay_sec) and marks it LATE at 09:50:00. The
+# clock is still checked AFTER acquisition, so schedule the job early enough
+# that fetching 21 names finishes inside the window.
 #
 # --publish IS REQUIRED. `brief.py` alone is a preview and writes nothing; a
 # wrapper that omitted the flag would run cleanly every morning, exit 0, and
 # record nothing at all. That is the silent failure this file exists to avoid.
-#
-# THE WINDOW IS 60 SECONDS: execution.clock_status marks a run LATE at 09:47:00
-# and the check happens AFTER acquisition, not at process start. So the job
-# must be scheduled early enough that fetching 21 names FINISHES inside the
-# 09:46 minute. Starting at 09:46:00 is already too late on a slow feed.
 #
 # Nothing here places, sizes or cancels an order. It runs a read-only report
 # and commits the record of what that report said.
@@ -92,6 +102,21 @@ log "running the report"
 out="$(TZ=America/Toronto python brief.py --publish 2>&1)"; rc=$?
 printf '%s\n' "$out"
 
+# DAY-95b: brief.py exits 7 when the window was ELIGIBLE but nothing was
+# recorded. This is the unrecorded-day alarm -- the worst quiet failure this
+# pipeline has had (2026-09-09: emailed, went 1/4, never recorded).
+if [ $rc -eq 7 ]; then
+    log "=============================================================="
+    log "RECORD NOT WRITTEN — the publication window was ELIGIBLE but"
+    log "no board was recorded today (no ledger rows, no universe"
+    log "prints, no frozen report). Today's session is a GAP in the"
+    log "track record until a HUMAN resolves it. Do NOT retro-enter a"
+    log "board later: publish-once means a late report never creates a"
+    log "retrospectively chosen board."
+    log "=============================================================="
+    exit 7
+fi
+
 if [ $rc -ne 0 ]; then
     log "brief.py exited $rc"
     exit 1
@@ -108,9 +133,9 @@ fi
 # MISSED THE WINDOW. A LATE run renders a full page and publishes NOTHING, so
 # without this it reads like an ordinary morning while the day goes unrecorded.
 if printf '%s' "$out" | grep -qiE "LATE — informational|entry window missed"; then
-    log "MISSED THE 09:46 PUBLICATION WINDOW — the page above is informational."
+    log "MISSED THE 09:46-09:50 PUBLICATION WINDOW — the page above is informational."
     log "  No board was recorded for today. Schedule the job EARLIER: the clock"
-    log "  is checked after acquisition, so the fetch must finish before 09:47."
+    log "  is checked after acquisition, so the fetch must finish before 09:50."
     exit 5
 fi
 
@@ -145,9 +170,23 @@ git add -- ledger.csv universe_prints.csv positions.csv data/advice.csv 2>/dev/n
 # avoid. The snapshot is a record: forward collection cannot re-derive it.
 git add -- "$today_snap" 2>/dev/null
 if git diff --cached --quiet; then
-    log "no new record rows (already published today) — nothing to push"
-    [ "$provenance_clean" -eq 1 ] || exit 6
-    exit 0
+    # DAY-95b: never claim "already published" unless a record for TODAY
+    # actually exists. On a coverage-fail day the old script fell through to
+    # here and logged exactly that -- a normal-looking line on a day with no
+    # board. Zero-pick days write universe prints, so their rows are found.
+    today="$(TZ=America/Toronto date +%F)"
+    if grep -q "^$today," ledger.csv 2>/dev/null || grep -q "^$today," universe_prints.csv 2>/dev/null; then
+        log "no new record rows (already published today) — nothing to push"
+        [ "$provenance_clean" -eq 1 ] || exit 6
+        exit 0
+    fi
+    log "=============================================================="
+    log "NO RECORD ROWS FOR $today — the run produced nothing to push"
+    log "and no board/prints for today exist in the record. This is an"
+    log "integrity refusal or an unrecorded session, NOT a quiet day."
+    log "See the report output above for the guard that fired."
+    log "=============================================================="
+    exit 4
 fi
 
 git commit -q -m "record: $(TZ=America/Toronto date +%F) board (automated 09:46 run)" || {

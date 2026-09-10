@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
+import execution
 from report_store import Store
 from build_biotech import write_atomic
 
@@ -54,13 +55,32 @@ def run(state_dir,output_dir,now=None,*,clock=None):
             report['report_status']='DATA OUTAGE — informational only'
             report['errors'].append({'layer':'daily_job','error':failure,
                                      'detail':'Local report assembly failed; recorded state retained, live scan unavailable.'})
-        # Also persist diagnostics/closed-session reports; zero picks is a result.
+        # A report whose session disagrees with the publication clock is an
+        # assembly error, not an alarm: refuse before anything else (fail
+        # closed), on every path including the NOT RECORDED one.
         if report['session'] != now.date().isoformat():
             raise ValueError('assembled report session does not match publication clock')
-        report=store.publish(now.date().isoformat(),report)
+        # DAY-95b (C2): an eligible trading day that recorded NOTHING must not
+        # be frozen as an informational report -- publish-once would then mask
+        # the miss forever (that is exactly how 2026-09-09 disappeared from
+        # the ledger after being emailed). Alarm instead; the email carries a
+        # 'NOT RECORDED — ' subject and the job exits 7. Holidays/CLOSED days
+        # stay quiet informational and are frozen as before.
+        if failure is None and brief.record_missed(report):
+            report={**report,'report_status':'NOT RECORDED — the publication '
+                    'window was eligible but no board was recorded; '
+                    +report['report_status']}
+        else:
+            # Also persist diagnostics/closed-session reports; zero picks is a result.
+            report=store.publish(now.date().isoformat(),report)
+    # Injected clock also governs the delivery-window check, so a test can
+    # pin the whole job rather than half of it. Day-95b: the delivery window is
+    # the publication window (09:46:00-09:49:59 ET), not a single minute.
     end=clock().astimezone(ZoneInfo('America/New_York'))
-    if end.strftime('%H:%M')!='09:46' or end.date().isoformat()!=report['session']:
-        report={**report,'report_status':'INFORMATIONAL — outside 09:46 delivery minute; '+report['report_status']}
+    if report['report_status'].startswith('NOT RECORDED'):
+        pass  # the alarm status must survive; never relabel it informational
+    elif not execution.in_publish_window(end) or end.date().isoformat()!=report['session']:
+        report={**report,'report_status':'INFORMATIONAL — outside the 09:46-09:50 delivery window; '+report['report_status']}
     directory=Path(output_dir);directory.mkdir(parents=True,exist_ok=True)
     write_atomic(directory/'report.json',report)
     (directory/'report.txt').write_text(brief.render_text(report))
@@ -74,14 +94,20 @@ def main(argv=None):
     p.add_argument('--output-dir',default='.rb-state/latest')
     p.add_argument('--send',action='store_true')
     a=p.parse_args(argv);report=run(a.state_dir,a.output_dir)
+    not_recorded=report['report_status'].startswith('NOT RECORDED')
     if a.send:
-        from deliver_report import send
+        from deliver_report import send, send_report
         sender=os.environ.get('RB_SMTP_USER');recipient=os.environ.get('RB_REPORT_TO')
         if not sender or not recipient:raise ValueError('email sender/recipient not configured')
-        print(send(Store(a.state_dir),report['session'],sender,recipient))
+        if not_recorded:
+            # Deliberately UNFROZEN (day-95b C2): no Store row exists to claim
+            # delivery against, and the alarm must still reach the inbox.
+            print(send_report(report,sender,recipient))
+        else:
+            print(send(Store(a.state_dir),report['session'],sender,recipient))
     else:
         print(brief.render_text(report))
-    return 0
+    return 7 if not_recorded else 0
 
 if __name__=='__main__':
     raise SystemExit(main())
