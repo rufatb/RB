@@ -35,3 +35,10 @@ This work adds no strategy, research adoption, new inferred holding or
 backdated morning signal. Latest main research rejections and operational
 updates are retained. The recorded ZYME close on September 10 is a ledger fact,
 not independent brokerage verification.
+
+Main advanced during review with a 09:45 standalone service start. Its new
+wrapper invoked daily_job immediately, which rejects any start before 09:46.
+The integration adds an explicit clock wait after runtime checks, uses the
+deployed virtual environment in the service PATH, and corrects comments about
+immutable publication. This standalone path remains distinct from the pinned
+Gmail task, which must not invoke morning.sh or its pull/push/SMTP path.
