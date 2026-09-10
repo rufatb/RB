@@ -119,6 +119,14 @@ def load(path: str = LEDGER) -> list:
         return list(csv.DictReader(f))
 
 
+def load_prints(path: str = PRINTS) -> list:
+    """The universe-print rows (every evaluated day's trace). [] when absent."""
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return list(csv.DictReader(f))
+
+
 def save(rows: list, path: str = LEDGER) -> None:
     # restval="" so rows written before a column existed survive untouched
     # rather than raising — the ledger is append-and-fill, never rewritten.
@@ -190,6 +198,48 @@ def missing_sessions(rows: list, today: dt.date, is_trading_day_fn,
             gaps.append(d.isoformat())
         d += dt.timedelta(days=1)
     return gaps
+
+
+def record_gaps(rows: list, today: dt.date, is_trading_day_fn,
+                prints: list | None = None, lookback: int = 45) -> dict:
+    """Sessions the RECORD has nothing for, anchored on TODAY (day-95, C3).
+
+    `missing_sessions` enumerates forward from the ledger's LAST entry, so once
+    a later session publishes, an interior gap (2026-09-09/09-10, the unrecorded
+    losing days) disappears from the warning exactly when the record starts
+    looking healthy again. This enumerates BACKWARD from today over a
+    `lookback`-day window (never before the record's first date), so interior
+    gaps stay visible.
+
+    Returns {"missing": [...], "zero_pick": [...]}:
+
+    - missing: trading days with neither ledger rows nor universe prints.
+      Either the run never happened or it happened and recorded nothing —
+      from the record's side the two are indistinguishable (day-42).
+    - zero_pick: trading days with universe prints but no ledger pick rows.
+      Since day-95 (C5) a zero-pick day still writes its prints, so these
+      are "ran fine, nothing qualified" — explicitly NOT missed publications.
+
+    Pure + testable (the calendar is injected)."""
+    dates = {r["date"] for r in rows if r.get("date")}
+    print_dates = {r["date"] for r in (prints or []) if r.get("date")}
+    if not dates and not print_dates:
+        return {"missing": [], "zero_pick": []}
+    if lookback < 1:
+        raise ValueError("lookback must be positive")
+    first = dt.date.fromisoformat(min(dates | print_dates))
+    start = max(today - dt.timedelta(days=lookback), first)
+    missing, zero_pick = [], []
+    d = start
+    while d < today:
+        if is_trading_day_fn(d):
+            iso = d.isoformat()
+            if iso not in dates and iso not in print_dates:
+                missing.append(iso)
+            elif iso not in dates:
+                zero_pick.append(iso)
+        d += dt.timedelta(days=1)
+    return {"missing": missing, "zero_pick": zero_pick}
 
 
 def gap_line(gaps: list) -> str:
