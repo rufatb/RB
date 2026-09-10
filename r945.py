@@ -270,15 +270,23 @@ def coverage_ok(n_evaluated: int, universe: list, groups: dict,
 
 def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     """Smoothed P(rest-of-day up) for today's features vs the pooled history.
-    Returns (p, n_train). Same distance-weighted + Beta-smoothed machinery as
+    Returns (p, n_train, neighbour_distance). Same distance-weighted + Beta-smoothed machinery as
     the analog engine; clamped to the hard band."""
     tr = train.dropna(subset=FEATS + ["r1"])
-    if len(tr) < 200 or any(today.get(f) is None for f in FEATS):
+    if not np.isfinite(tr[FEATS + ["r1"]].to_numpy(dtype=float)).all():
+        raise ValueError('nonfinite training features/labels; calibration unavailable')
+    try:
+        finite_today = all(today.get(f) is not None and np.isfinite(float(today[f])) for f in FEATS)
+    except (TypeError, ValueError, OverflowError):
+        finite_today = False
+    if len(tr) < 200 or not finite_today:
         return None, len(tr), None
     mu, sd = tr[FEATS].mean(), tr[FEATS].std().replace(0, 1)
     Z = ((tr[FEATS] - mu) / sd).to_numpy()
     z = ((pd.Series(today)[FEATS] - mu) / sd).to_numpy(dtype=float)
     d2 = ((Z - z) ** 2).sum(axis=1)
+    if not np.isfinite(d2).all():
+        raise ValueError('nonfinite normalized distances; calibration unavailable')
     idx = np.argsort(d2)[:K]
     w = 1 / (1 + np.sqrt(d2[idx]))
     y = (tr["r1"].to_numpy()[idx] > 0).astype(float)
@@ -286,6 +294,26 @@ def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
     p = (g * K + 0.5 * M) / (K + M)
     nd = float(np.sqrt(d2[idx]).mean())   # neighbour distance: estimate density
     return max(HARD_FLOOR, min(HARD_CAP, round(p, 3))), len(tr), nd
+
+
+def density_cutoffs(train: pd.DataFrame) -> tuple:
+    """Kimi day95b sampling correction, with explicit nonfinite rejection.
+
+    Sample size must use the same complete frame as sample(). Healthy-input
+    arithmetic and seed are unchanged. Do not silently count infinity as data.
+    """
+    valid = train.dropna(subset=FEATS + ['r1'])
+    if not np.isfinite(valid[FEATS + ['r1']].to_numpy(dtype=float)).all():
+        raise ValueError('nonfinite density calibration input')
+    if len(valid) < 2:
+        raise ValueError('density calibration needs at least two complete rows')
+    sample = valid.sample(n=min(120,len(valid)),random_state=7)
+    nds = []
+    for idx, row in sample.iterrows():
+        score = knn_probability(train.drop(index=idx),{f:row[f] for f in FEATS})
+        if score[0] is not None:
+            nds.append(score[2])
+    return (float(np.quantile(nds,.33)),float(np.quantile(nds,.67))) if nds else (0.0,9e9)
 
 
 def allocate_book(picks: list, equity: float, max_book_pct: float,
@@ -800,14 +828,7 @@ def run(cfg, workers=8):
     # only — selection compares nd between live picks and is unaffected — but
     # the dense tag is the pre-registered candidate for a future gate, so a
     # biased label would corrupt the very evidence meant to decide it.
-    sample = train.dropna(subset=FEATS + ["r1"]).sample(
-        n=min(120, len(train)), random_state=7) if len(train) else train
-    nds = []
-    for idx, row in sample.iterrows():
-        res = knn_probability(train.drop(index=idx), {f: row[f] for f in FEATS})
-        if res[0] is not None:
-            nds.append(res[2])
-    cutoffs = (float(np.quantile(nds, 0.33)), float(np.quantile(nds, 0.67))) if nds else (0.0, 9e9)
+    cutoffs = density_cutoffs(train)
 
     # Per-name trailing volatility of the entry->close move, from the training
     # window only (today is excluded upstream, so this cannot peek). Feeds the
@@ -825,6 +846,8 @@ def run(cfg, workers=8):
         res = knn_probability(train, r)
         p, n = res[0], res[1]
         if p is None:
+            r['excluded_reason'] = 'Unscorable — missing/nonfinite features or insufficient training'
+            extrapolated.append(r)
             continue
         v = vol_by_t.get(r["t"])
         r.update({"p_up": p, "n_train": n, "nd": res[2],

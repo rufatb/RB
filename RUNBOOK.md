@@ -178,6 +178,13 @@ live feed and measure end-to-end delivery latency before claiming the SLA.
 
 ## Execution-cost evidence and research
 
+Optional EODHD qualification is documented in `EODHD_DATA.md`. Run
+`prepare_eodhd.py` only before 09:30 with private credentials and restored state.
+Do not run it on the 09:46 critical path. `brief.compute` reads its staged
+diagnostics only. Day97 research is offline/shadow and never changes selection.
+Preserve private credentials, EODHD diagnostics and successful references in
+the operational archive; never copy them into GitHub or task prompt text.
+
 Manual collection accepts verified costs explicitly:
 
 ```bash
