@@ -1,0 +1,3027 @@
+Code,Name,Type,Currency,Isin
+0P0000704A,RBC North American Value Fund A,FUND,CAD,
+0P0000704C,Mackenzie Global Equity A,FUND,CAD,
+0P00007060,RBC Canadian Money Market Fund A,FUND,CAD,
+0P00007061,RBC Canadian Equity Fund A,FUND,CAD,
+0P00007065,RBC mondial d'Ã©nergie A,FUND,CAD,
+0P00007069,RBC Portefeuille de croissance sÃ©lect A,FUND,CAD,
+0P0000706A,RBC Select Balanced Portfolio A,FUND,CAD,
+0P0000706Z,FÉRIQUE Short Term Income,FUND,CAD,
+0P000070CY,CDSPI Canadian Equity (Trimark),FUND,CAD,
+0P000070DZ,CDSPI Common Stock (Fiera Capital),FUND,CAD,
+0P000070GY,Sun Life Aditya Birla Inde A,FUND,CAD,
+0P000070H9,CI Global Health Sciences Corp Class,FUND,CAD,
+0P000070HA,CI Global Alpha Innovators Corp Cl A,FUND,CAD,
+0P000070I2,CI Global Resource Class A,FUND,CAD,
+0P000070JI,Fidelity Technology Innovators Series A,FUND,CAD,
+0P000070KP,CDSPI petite cap Ãtats-Unis (Trimark),FUND,CAD,
+0P000070OO,FÉRIQUE Balanced Portfolio Ser A,FUND,CAD,
+0P000070OP,FÉRIQUE Canadian Equity,FUND,CAD,
+0P00007123,TD Investment Savings Acct Cl A-NlInstrument Symbol,FUND,CAD,
+0P0000712O,Scotia canadien équilibré,FUND,CAD,
+0P00007138,RBC sciences biologiques & technologie A,FUND,CAD,
+0P00007148,Mawer Canadian Money Market A,FUND,CAD,
+0P00007149,Mawer International Equity A,FUND,CAD,
+0P0000714B,Mawer New Canada A,FUND,CAD,
+0P0000714C,Mawer Tax Effective Balanced A,FUND,CAD,
+0P0000714D,Mawer Balanced Fund Class A,FUND,CAD,
+0P0000716B,Mawer US Equity A,FUND,CAD,
+0P00007173,Mawer Canadian Equity A,FUND,CAD,
+0P00007174,Mawer Canadian Bond A,FUND,CAD,
+0P000071B1,TD Indiciel obligs canadiennes - e,FUND,CAD,
+0P000071C3,Dynamique marchÃ© monÃ©taire,FUND,CAD,
+0P000071C8,Scotia dividendes canadiens,FUND,CAD,
+0P000071FT,Renaissance Ã©quilibrÃ© can,FUND,CAD,
+0P000071HC,FÉRIQUE World Dividend Equity,FUND,CAD,
+0P000071KM,NEI Clean Infrastructure A,FUND,CAD,
+0P000071LQ,TD Revenu mensuel - C,FUND,CAD,
+0P000071P8,RBC Select Choices Aggr Grwth Port A,FUND,CAD,
+0P000071QO,CI Money Market Class Series A,FUND,CAD,
+0P000071W8,TD U.S. Index Fund - e ,FUND,CAD,
+0P000071WT,TD European Index - e,FUND,CAD,
+0P000071WU,TD Dow Jones Industrial Average Index Fund - E Series,FUND,CAD,
+0P0000724E,CDSPI S&P 500 Index (BlackRock),FUND,CAD,
+0P0000727K,Capital Group Global Equity Canada F,FUND,CAD,
+0P000072CO,CI Corporate Bond Fund Series A,FUND,CAD,
+0P000072KJ,RBC Canadian Dividend Fund A,FUND,CAD,
+0P000072OJ,CDSPI Balanced Value (MFS),FUND,CAD,
+0P000072UA,Invesco Global Companies Series A,FUND,CAD,
+0P0000732C,Ninepoint Energy Fund Series A,FUND,CAD,
+0P0000733H,RBC Global Technology Fund A,FUND,CAD,
+0P0000738U,RBC Global Dividend Growth Fund A,FUND,CAD,
+0P000073DV,FÉRIQUE American Equity,FUND,CAD,
+0P000073MU,FÃRIQUE International Equity Fund,FUND,CAD,
+0P000074PD,Fidelity Far East Class Series B,FUND,CAD,
+0P000074QV,Fidelity Canadian Opportunities Sr B,FUND,CAD,
+0P00007524,CI Canadian Dividend Fund Series A,FUND,CAD,
+0P0000752C,CI Black Creek chefs file mondiaux A,FUND,CAD,
+0P000075A4,CDSPI Dividend (PH&N),FUND,CAD,
+0P000075B1,Resolute Performance Fund Series A,FUND,CAD,
+0P000075EQ,Fidelity US Focused Stock F,FUND,CAD,
+0P000075FB,Fidelity American High Yield Sr F,FUND,CAD,
+0P000075FV,Fidelity Canadian Growth Company Sr F,FUND,CAD,
+0P000075GQ,DFA Five-Year Global Fixed Income Cl F,FUND,CAD,
+0P000075KH,NEI Canadian Equity F,FUND,CAD,
+0P000075KO,Ninepoint Energy Series F,FUND,CAD,
+0P000075MK,Manulife Dividend Income Plus F,FUND,CAD,
+0P000075NL,Invesco Canadian F,FUND,CAD,
+0P000075NZ,Invesco Global Select Eq Cl F,FUND,CAD,
+0P000075PH,CI Select Global Equity F,FUND,CAD,
+0P000075Q1,CI Synergy American Class F,FUND,CAD,
+0P000075QB,CI Global Resource class F,FUND,CAD,
+0P000075R0,Dynamic Equity Income Fund Series F,FUND,CAD,
+0P000075R6,Dynamic Power American Growth Fund Series F,FUND,CAD,
+0P000075SE,Franklin ClearBridge Sst Intl Gr F,FUND,CAD,
+0P000075T2,Mackenzie Global Equity F,FUND,CAD,
+0P000075U8,Rbc North American Value Fund F,FUND,CAD,
+0P000075UM,RBC Global Technology Fund F,FUND,CAD,
+0P000075UP,RBC Life Science & Technology Fund F,FUND,CAD,
+0P000075UQ,RBC Canadian Money Market Fund F,FUND,CAD,
+0P000075VF,TD Global Capital Reinvestment - F,FUND,CAD,
+0P000075X3,Mackenzie US All Cap Growth Fund Series F,FUND,CAD,
+0P000075X9,RBC O'Shaughnessy Intl Equity Fund F,FUND,CAD,
+0P000075Y3,Fidelity Income Allocation Series F,FUND,CAD,
+0P0000760C,Renaissance Global Science & Tech Cl F,FUND,CAD,
+0P0000767H,Manulife Strategic Income Adv,FUND,CAD,
+0P0000768T,CI North Amer Sm/Mid Cap Eq Fd (Ser F U),FUND,CAD,
+0P00007692,Fidelity ClearPath 2035 Port Series F,FUND,CAD,
+0P00007694,Fidelity ClearPath 2045 Port Series F,FUND,CAD,
+0P000076N1,CI Money Market Class Series A,FUND,CAD,
+0P000077FS,RBC Canadian Equity Income A,FUND,CAD,
+0P000077P2,RBC U.S. Dividend Fund A,FUND,CAD,
+0P000077R7,CDSPI Global Growth (Capital),FUND,CAD,
+0P00008207,Mawer International Equity Series O,FUND,CAD,
+0P00008208,Mawer US Equity Series O,FUND,CAD,
+0P0000820A,Mawer New Canada Series O,FUND,CAD,
+0P0000820C,Mawer Tax Effective Balanced Series O,FUND,CAD,
+0P0000820E,Mawer Canadian Bond Series O,FUND,CAD,
+0P000083X4,RBC Select Aggressive Growth Port A,FUND,CAD,
+0P000083XF,CI Global Balanced Fund A,FUND,CAD,
+0P00008WVU,Fidelity Global Balanced Class Port Sr F,FUND,SGD,
+0P00008XK3,Manulife Fid Cdn Ast Allc GIF Sel Or 75,FUND,CAD,
+0P00008XL9,Fidelity Global Balanced Portfolio B,FUND,CAD,
+0P00008XLH,Fidelity Global Growth Portfolio Sr B,FUND,CAD,
+0P00008YEK,Manulife Simplicity Bal GIF Sel Orig 75,FUND,CAD,
+0P00009AJH,PH&N Dividend Income Fund F,FUND,CAD,
+0P00009AJI,PH&N High Yield Bond Fund F,FUND,CAD,
+0P00009DEX,Fidelity Global Dividend Series B,FUND,CAD,
+0P00009XRG,Mawer Global Small Cap A,FUND,CAD,
+0P00009XXZ,Dynamic Global Infrastructure S,FUND,CAD,
+0P0000ACFS,Tangerine Balanced Growth Portfolio,FUND,CAD,
+0P0000G368,Compass Maximum Growth Portfolio Sr O,FUND,CAD,
+0P0000I3XT,Fidelity AsiaStar Series F,FUND,CAD,
+0P0000IUYN,EdgePoint Canadian Portfolio Series A,FUND,CAD,
+0P0000IUYO,Edgepoint Global Portfolio Series I,FUND,CAD,
+0P0000IVLO,RBC Managed Payout Solution F,FUND,CAD,
+0P0000J2C7,Desjardins Sustainable Maximum Growth A,FUND,CAD,
+0P0000JO4E,Edgepoint Global Portfolio Series F,FUND,CAD,
+0P0000JO4N,Edgepoint Canadian Portfolio Series F,FUND,CAD,
+0P0000JO4O,Edgepoint Global Growth & Inc Port Sr F,FUND,CAD,
+0P0000JO4R,Edgepoint Cdn Growth & Income Port Sr F,FUND,CAD,
+0P0000JPVM,Ninepoint Gold Bullion Series F,FUND,CAD,
+0P0000JPZQ,Sun Life MFS Diversified Income Fund Series F,FUND,CAD,
+0P0000JU3R,CDSPI Income & Growth Corporate Cl (CI),FUND,CAD,
+0P0000JU3U,CDSPI Corporate Bond Corporate Cl (CI),FUND,CAD,
+0P0000KWKF,DFA Global Investment Grade Fxd Inc Cl F,FUND,CAD,
+0P0000M3Z6,FÉRIQUE Canadian Dividend Equity,FUND,CAD,
+0P0000MOTX,Manulife Global Equity Class Adv,FUND,CAD,
+0P0000MOTY,Manulife Global Equity Class F,FUND,CAD,
+0P0000N468,PH&N Canadian Equity Value A,FUND,CAD,
+0P0000N4UY,CI Canadian Dividend F,FUND,CAD,
+0P0000N4V3,CI Global Leaders Fund F,FUND,CAD,
+0P0000NA77,Global Iman Fund Series A,FUND,CAD,
+0P0000NFNA,Manulife Strategic Income F,FUND,CAD,
+0P0000OXA6,PH&N US Multi-Style All-Cap Equity Fd A,FUND,CAD,
+0P0000OXA8,"Phillips, Hager & North Us Multi-style All-cap Equity Fund F",FUND,CAD,
+0P0000PYZ0,CI Select Income Managed Corp Class F,FUND,CAD,
+0P0000Q354,RBC Monthly Income Bond Fund F,FUND,CAD,
+0P0000S9O5,PIMCO Monthly Income A,FUND,CAD,
+0P0000S9O6,PIMCO Monthly Income F,FUND,CAD,
+0P0000S9O7,PIMCO Monthly Income O,FUND,CAD,
+0P0000SC5H,CI Gold Corporate Class A,FUND,CAD,
+0P0000SCWD,Invesco Developing Markets Class Ser F,FUND,CAD,
+0P0000TG30,Mawer Global Small Cap Series O,FUND,CAD,
+0P0000TWQD,Invesco Diversified Yield Cl Ser A,FUND,CAD,
+0P0000U5JR,Manulife US All Cap Equity F,FUND,CAD,
+0P0000UGMA,Canoe Global Equity F,FUND,CAD,
+0P0000UOHZ,Fidelity Canadian Large Cap Cl F,FUND,CAD,
+0P0000VPWA,Dynamic Alternative Yield Serie,FUND,CAD,
+0P0000VUYE,Manulife Dividend Income Fund Series Adv,FUND,CAD,
+0P0000VUYF,Manulife Dividend Income F,FUND,CAD,
+0P0000WJLC,IG Putnam US Growth J NL,FUND,CAD,
+0P0000WJLP,IG Mackenzie European Mid-Cap Eq J NL,FUND,CAD,
+0P0000WJMR,IG Mackenzie Dividend J NL,FUND,CAD,
+0P0000WV0J,Manulife S2 Id Di G&I Pf 100,FUND,CAD,
+0P0000WV38,Manulife S2 Id Growth Pf 100,FUND,CAD,
+0P0000X0VU,CI Corporate Bond Cl F,FUND,CAD,
+0P0000XXNF,Lysander-Canso Corporate Value Bond A,FUND,CAD,
+0P0000XXNG,Lysander-Canso Corporate Value Bond F,FUND,CAD,
+0P0000YSHA,Desjardins Melodia Balanced Growth A,FUND,CAD,
+0P0000YW39,Russell Investments Global Infrastructure Pool Series F,FUND,CAD,
+0P0000YW3F,Russell Inv Real Assets Sr B,FUND,CAD,
+0P0000YW3H,Russell Inv Real Assets Sr F,FUND,CAD,
+0P0000ZBCX,RBC Emerging Markets Dividend A,FUND,CAD,
+0P0000ZCS9,IG Core Portfolio Balanced F,FUND,CAD,
+0P0000ZCTA,IG Core Portfolio Income F,FUND,CAD,
+0P0000ZCWK,IG Core Portfolio Income J NL,FUND,CAD,
+0P0000ZDI7,Mawer Global Balanced A,FUND,CAD,
+0P0000ZFE7,Mawer Global Balanced Series O,FUND,CAD,
+0P0000ZMM2,AGF U.S. Sector Class,FUND,CAD,
+0P0000ZXLT,Dynamic Premium Yield Fund F,FUND,CAD,
+0P00012DD2,RBC d'actions mondiales A,FUND,CAD,
+0P00012UCU,RBC Global Equity Focus Fund A,FUND,CAD,
+0P0001364C,Fidelity Tactical High Income Fund Series F,FUND,CAD,
+0P00013WZS,RBC U.S. Dividend Fund FT5,FUND,CAD,
+0P00015CCJ,TD Global Entertainment & Communications Fd D,FUND,CAD,
+0P00015CCM,TD North American Dividend - D,FUND,CAD,
+0P00016LIB,Manulife Fdmtl Inc GIF Sel Orig S75,FUND,CAD,
+0P00016N5D,TD Monthly Income - D,FUND,CAD,
+0P00016N6E,TD Dividend Growth - D,FUND,CAD,
+0P00016N6T,TD Science & Technology Fund - D Series,FUND,CAD,
+0P00016N6U,TD Health Sciences Fund - D Series,FUND,CAD,
+0P00017YCD,RBC U.S. Dividend Cur Neutral Fund T5,FUND,CAD,
+0P00017YCK,RBC Global Dividend Gr Curr Neutral A,FUND,CAD,
+0P00018DNG,PICTON Income Fund Class F,FUND,CAD,
+0P00018PVY,RBC European Mid-Cap Equity Fund A,FUND,CAD,
+0P00019UT2,Mawer Emerging Markets Equity A,FUND,CAD,
+0P00019WHF,Fidelity Insights Class F,FUND,CAD,
+0P0001AAKP,CI Signature Cat de soc tech mond E,FUND,CAD,
+0P0001AF4R,Canoe Defensive International Eq A,FUND,CAD,
+0P0001C8AD,Fidelity Global Innovators Cl B,FUND,CAD,
+0P0001C8AE,Fidelity Global Innovators Cl A,FUND,CAD,
+0P0001C8AO,Fidelity Global Innovators Cl F,FUND,CAD,
+0P0001ED7S,RBC QUBE U.S. Equity F,FUND,CAD,
+0P0001EDJY,TD Global Equity Focused F,FUND,CAD,
+0P0001EQZG,Dynamic Premium Yield PLUS Fund,FUND,CAD,
+0P0001FAU5,TD Comfort Aggressive Growth Portfolio D Series,FUND,CAD,
+0P0001FAU8,TD Comfort Balanced Portfolio D Series,FUND,CAD,
+0P0001FGJG,Mackenzie Grnchp Glbl Envr All Cap F,FUND,CAD,
+0P0001FKWD,CI Signature Cat de soc tech mond P,FUND,CAD,
+0P0001GZLR,Fidelity Canadian Growth Company Cl F5,FUND,CAD,
+0P0001H9RM,BMO Monthly Income I,FUND,CAD,
+0P0001HQM8,RBC Global All-Equity Portfolio A,FUND,CAD,
+0P0001I39P,AGF American Growth B,FUND,CAD,
+0P0001I39Q,AGF American Growth Fund Series FInstrument Symbol,FUND,CAD,
+0P0001I3F2,RP Alternative Global Bond F CAD,FUND,CAD,
+0P0001J62O,Dfa World Equity Portfolio Class F,FUND,CAD,
+0P0001K0DB,Mawer EAFE Large Cap A,FUND,CAD,
+0P0001K9TH,CIBC Money Market Cl F,FUND,CAD,
+0P0001KRRY,GQG Partners International Quality Eq F,FUND,CAD,
+0P0001KUBH,Tangerine Balanced ETF Portfolio,FUND,CAD,
+0P0001KUBJ,Tangerine Equity Growth ETF Portfolio,FUND,CAD,
+0P0001KYJE,Fidelity Long/Short Alternative F,FUND,CAD,
+0P0001LXLH,iProfile Active Allocation Pr Pl II I,FUND,CAD,
+0P0001LXLJ,iProfile Active Allocation Pr Pl III I,FUND,CAD,
+0P0001LXLL,iProfile Low Volatility Privat,FUND,CAD,
+0P0001LXLN,iProfile Alternatives Private,FUND,CAD,
+0P0001LXVE,iProfile ETF Private Pool I,FUND,CAD,
+0P0001LY0Y,iProfile Canadian Equity Private Pool I,FUND,CAD,
+0P0001LY12,iProfile Emerging Markets Private Pl I,FUND,CAD,
+0P0001LY14,iProfile Fixed Income Private Pool I,FUND,CAD,
+0P0001LY18,iProfile International Equity Pr Pl I,FUND,CAD,
+0P0001LY1C,iProfile U.S. Equity Private Pool I,FUND,CAD,
+0P0001N2YH,iProfile Global Equity F,FUND,CAD,
+0P0001N8MZ,Mackenzie Ivy European D,FUND,CAD,
+0P0001NMH1,Mawer U.S. Mid Cap Equity A,FUND,CAD,
+0P0001OCCH,RBC U.S. Equity Index ETF F,FUND,CAD,
+0P0001OCCL,RBC Global Equity Index ETF A,FUND,CAD,
+0P0001OF6V,NEI Clean Infrastructure A,FUND,CAD,
+0P0001OF6W,Nei Clean Infrastructure Fund F,FUND,CAD,
+0P0001OO5K,NBI Canadian Equity Index F,FUND,CAD,
+0P0001OO5L,NBI International Equity Index F,FUND,CAD,
+0P0001P069,PICTON Multi-Strategy Alpha Alt F,FUND,CAD,
+0P0001PZNT,PICTON Core Bond Fund Class F,FUND,CAD,
+0P0001QZ1I,IG Mackenzie Global Precious Metals F,FUND,CAD,
+0P0001SAAZ,Mawer Global Credit Opportunities A,FUND,CAD,
+AAB,Aberdeen International Inc.,Common Stock,CAD,CA0030691012
+AAPL,Apple CDR (CAD Hedged),Common Stock,CAD,CA03785Y1007
+AAPU,SavvyLong (2X) AAPL ETF,ETF,CAD,
+AAUC,Allied Gold Corporation,Common Stock,CAD,CA01921D2041
+AAV,Advantage Oil & Gas Ltd.,Common Stock,CAD,CA00791P1071
+ABBV,AbbVie CDR (CAD Hedged),Common Stock,CAD,
+ABHI,Ninepoint Barrick HighShares ETF,ETF,CAD,
+ABNB,Airbnb CDR (CAD Hedged),Common Stock,CAD,
+ABRA,AbraSilver Resource Corp.,Common Stock,CAD,CA00379L3048
+ABX,Barrick Gold Corp,Common Stock,CAD,CA06849F1080
+ABXU,SavvyLong (2X) Barrick ETF,ETF,CAD,
+ABXX,Abaxx Technologies Inc.,Common Stock,CAD,
+AC,Air Canada,Common Stock,CAD,CA0089118776
+ACAA,Arrow Long/Short Alternative Fund ETF,ETF,CAD,CA04276B1040
+ACB,Aurora Cannabis Inc,Common Stock,CAD,CA05156X8504
+ACD,Accord Financial Corp.,Common Stock,CAD,CA00435L1085
+ACO-X,ATCO Ltd,Common Stock,CAD,CA0467894006
+ACQ,Autocanada Inc,Common Stock,CAD,CA05277B2093
+ACT,Aduro Clean Technologies Inc.,Common Stock,CAD,
+ACX,ACT Energy Technologies Ltd.,Common Stock,CAD,CA14916J1021
+AD-UN,Alaris Equity Partners Income Trust,Common Stock,CAD,
+ADBE,Adobe CDR (CAD Hedged),Common Stock,CAD,
+ADCO,Adcore Inc,Common Stock,CAD,CA00654B1040
+ADEN,ADENTRA Inc.,Common Stock,CAD,
+ADIV,Arrow EC Equity Advantage Alternative Fund,FUND,CAD,
+ADN,Acadian Timber Corp,Common Stock,CAD,CA0042721005
+ADW-A,Andrew Peller Limited,Common Stock,CAD,
+ADW-B,Andrew Peller Limited,Common Stock,CAD,
+AEG,Aegis Brands Inc,Common Stock,CAD,CA00775H1055
+AEM,Agnico Eagle Mines Limited,Common Stock,CAD,CA0084741085
+AEM-CV,AGNICO EAGLE MINES LIMITED CVR,Common Stock,CAD,
+AEME,Harvest Agnico Eagle Enhanced High Income Shares ETF,ETF,CAD,
+AENP,AGF Enhanced U.S. Income Plus Fund,FUND,CAD,
+AFN,Ag Growth International Inc,Common Stock,CAD,CA0011811068
+AG,First Majestic Silver Corp,Common Stock,CAD,CA32076V1031
+AGCC,Global X Silver Covered Call ETF,ETF,CAD,
+AGF-B,AGF Management Limited,Common Stock,CAD,
+AGF9110,AGF Fixed Income Plus Fund Series F,FUND,CAD,
+AGG,Evolve Canadian Aggregate Bond Enhanced Yield Fund ETF,ETF,CAD,
+AGI,Alamos Gold Inc,Common Stock,CAD,CA0115321089
+AGMR,Silver Mountain Resources Inc.,Common Stock,CAD,
+AGSL,AGF Global Select Fund,ETF,CAD,
+AI,Atrium Mortgage Investment Corp,Common Stock,CAD,CA04964G1000
+AIAI,NetraMark Holdings Inc.,Common Stock,CAD,
+AIDX,HealWELL AI Inc.,Common Stock,CAD,CA42249X1006
+AIF,Altus Group Limited,Common Stock,CAD,CA02215R1073
+AIM,Aimia Inc,Common Stock,CAD,CA00900Q1037
+AIM-PA,Aimia Srs 1 Cum Rte Rst Prf,Preferred Stock,CAD,CA00900Q2027
+AIM-PC,Aimia Inc Pref C,Preferred Stock,CAD,CA00900Q4007
+AIQ,Global X Artificial Intelligence & Technology Index ETF,ETF,CAD,
+AKT,Akita Drilling Ltd.,Common Stock,CAD,
+ALA,AltaGas Ltd,Common Stock,CAD,CA0213611001
+ALA-PG,Altagas Ltd Pref G,Preferred Stock,CAD,CA0213618865
+ALC,Algoma Central Corporation,Common Stock,CAD,CA0156441077
+ALK,Alkane Resources Limited,Common Stock,CAD,
+ALPU,SavvyLong (2X) GOOGL ETF,ETF,CAD,
+ALS,Altius Minerals Corporation,Common Stock,CAD,CA0209361009
+ALYA,Alithya Group inc Class A,Common Stock,CAD,CA01643B1067
+ALZ,Allianz CDR (CAD Hedged),Common Stock,CAD,
+AMAP,Amapá Minerals Holdings Inc.,Common Stock,CAD,
+AMAT,Applied Materials CDR (CAD Hedged),Common Stock,CAD,
+AMAX,Hamilton Gold Producer YIELD MAXIMIZER ETF,ETF,CAD,CA4069181028
+AMC,Arizona Metals Corp.,Common Stock,CAD,
+AMD,Advanced Micro Devices CDR (CAD Hedged),Common Stock,CAD,
+AMDU,SavvyLong (2X) AMD ETF,ETF,CAD,
+AMDY,Harvest AMD Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+AMGN,Amgen CDR (CAD Hedged),Common Stock,CAD,
+AMGR,AGF American Growth Fund,ETF,CAD,
+AMHE,Harvest Amazon Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA41751W1041
+AMHE-U,Harvest Amazon Enhanced High Income Shares ETF,ETF,USD,
+AMZH,Harvest Amazon High Income Shares ETF - Class A Units,ETF,CAD,CA41752A1012
+AMZH-U,Harvest Amazon High Income Shares ETF,ETF,USD,
+AMZN,Amazon.com CDR (CAD Hedged),Common Stock,CAD,
+AMZU,SavvyLong (2X) AMZN ETF,ETF,CAD,
+ANET,Arista Networks CDR (CAD Hedged),Common Stock,CAD,
+ANRG,Anaergia Inc,Common Stock,CAD,CA03253E1079
+AOV,Amotiv Limited,Common Stock,CAD,CA4990531069
+AP-UN,Allied Properties Real Estate Investment Trust,Common Stock,CAD,CA0194561027
+APH,Amphenol Corporation CDR (CAD Hedged),Common Stock,CAD,
+APLE,Harvest Apple Enhanced High Income Shares ETF Class A Units,ETF,CAD,
+APLI,Appili Therapeutics Inc,Common Stock,CAD,CA03783R1073
+APM,Andean Precious Metals Corp.,Common Stock,CAD,
+APPS,AppLovin CDR (CAD Hedged),Common Stock,CAD,
+APR-UN,Automotive Properties Real Estate Investment Trust,Common Stock,CAD,CA05329M1041
+APTX,Apotex Health Corp,Common Stock,CAD,
+AQN,Algonquin Power & Utilities Corp,Common Stock,CAD,CA0158571053
+AQN-PA,Algonquin Power A Cum Rr Prf,Preferred Stock,CAD,CA0158573034
+AQN-PD,Algonquin Power & Utilities Corp,Preferred Stock,CAD,CA0158575013
+ARA,Aclara Resources Inc,Common Stock,CAD,
+ARB,Accelerate Arbitrage Fund,ETF,CAD,CA00437K1084
+ARE,Aecon Group Inc.,Common Stock,CAD,CA00762V1094
+ARG,Amerigo Resources Ltd.,Common Stock,CAD,CA03074G1090
+ARIS,Aris Mining Corporation,Common Stock,CAD,CA04040Y1097
+ARN,Asarian Energy Limited,Common Stock,CAD,
+ARTI,Evolve Artificial Intelligence Fund,ETF,CAD,
+ASHR,Mulvihill Split Capital Share ETF,ETF,CAD,
+ASM,Avino Silver & Gold Mines Ltd,Common Stock,CAD,CA0539061030
+ASML,ASML CDR (CAD Hedged),Common Stock,CAD,
+ASTL,Algoma Steel Group Inc,Common Stock,CAD,CA0156581070
+ATD,Alimentation Couchen Tard Inc A,Common Stock,CAD,CA01626P1484
+ATH,Athabasca Oil Corp,Common Stock,CAD,CA04682R1073
+ATRL,AtkinsRealis Group Inc,Common Stock,CAD,CA04764T1049
+ATS,ATS CORP,Common Stock,CAD,CA00217Y1043
+ATSX,Accelerate Canadian Long Short Equity Fund,ETF,CAD,CA00436P1080
+ATX,ATEX Resources Inc.,Common Stock,CAD,
+ATZ,Aritzia Inc,Common Stock,CAD,CA04045U1021
+AUGB-F,First Trust Cboe Vest U.S. Equity Buffer ETF - August,ETF,CAD,CA33732U1093
+AUMN,Golden Minerals Company,Common Stock,CAD,US3811191069
+AVCN,Avicanna Inc,Common Stock,CAD,CA05368K1003
+AVGO,Broadcom CDR (CAD Hedged),Common Stock,CAD,
+AVGY,Harvest Broadcom Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+AVL,Avalon Advanced Materials Ltd,Common Stock,CAD,CA05337L3048
+AVNT,Avant Brands Inc,Common Stock,CAD,CA05353D2023
+AW,A&W Food Services of Canada,Common Stock,CAD,CA0002251027
+AXP,American Express CDR (CAD Hedged),Common Stock,CAD,
+AYA,Aya Gold & Silver Inc,Common Stock,CAD,CA05466C1095
+AZO,AutoZone CDR (CAD Hedged),Common Stock,CAD,
+BAAA,Brompton Wellington Square AAA CLO ETF,ETF,CAD,
+BAM,Brookfield Asset Management Ltd,Common Stock,CAD,CA1130041058
+BAMI,Blue Ant Media Corporation,Common Stock,CAD,
+BANK,Evolve Canadian Banks and Lifecos Enhanced Yield Index Fund,ETF,CAD,CA30053T1093
+BASE,Evolve Global Materials & Mining Enhanced Yield Index ETF,ETF,CAD,CA30053C1068
+BASE-B,Evolve Global Materials & Mining Enhanced Yield Index ETF,ETF,CAD,CA30053C2058
+BB,BlackBerry Ltd,Common Stock,CAD,CA09228F1036
+BBBB,Brompton Wellington Square Investment Grade CLO ETF,ETF,CAD,
+BBD-A,Bombardier Inc,Common Stock,CAD,CA0977518798
+BBD-B,Bombardier Inc Series B,Common Stock,CAD,CA0977518616
+BBD-PB,Bombardier Inc Pref B,Preferred Stock,CAD,CA0977515075
+BBD-PC,Bombardier Inc Pref C,Preferred Stock,CAD,CA0977517055
+BBD-PD,Bombardier Inc Pref D,Preferred Stock,CAD,CA0977516065
+BBUC,Brookfield Business Corp,Common Stock,CAD,CA11259V1067
+BCE,BCE Inc,Common Stock,CAD,CA05534B7604
+BCE-PA,BCE Inc Pref AA,Preferred Stock,CAD,CA05534B7943
+BCE-PB,BCE Inc Pref AB,Preferred Stock,CAD,CA05534B6952
+BCE-PC,BCE Inc Pref AC,Preferred Stock,CAD,CA05534B7869
+BCE-PD,Bce Inc Pref D,Preferred Stock,CAD,CA05534B6879
+BCE-PE,Bce Inc Pref E,Preferred Stock,CAD,CA05534B7521
+BCE-PF,BCE Inc Pref AF,Preferred Stock,CAD,CA05534B7455
+BCE-PG,Bce Inc Pref G,Preferred Stock,CAD,CA05534B7372
+BCE-PH,Bce Inc Pref H,Preferred Stock,CAD,CA05534B7299
+BCE-PI,BCE Inc Pref AI,Preferred Stock,CAD,CA05534B7117
+BCE-PK,BCE Inc Pref AK,Preferred Stock,CAD,CA05534B6796
+BCE-PL,BCE Inc Pref AL,Preferred Stock,CAD,CA05534B6614
+BCE-PM,BCE Inc Pref M,Preferred Stock,CAD,CA05534B6465
+BCE-PQ,BCE Inc Pref Q,Preferred Stock,CAD,CA05534B5962
+BCE-PR,BCE Inc Pref R,Preferred Stock,CAD,CA05534B7034
+BCE-PS,Bce Inc Pref S,Preferred Stock,CAD,CA05534B8693
+BCE-PT,Bce Inc Pref T,Preferred Stock,CAD,CA05534B8107
+BCE-PY,BCE Inc Pref Y,Preferred Stock,CAD,CA05534B8511
+BCE-PZ,Bce Inc Pref Z,Preferred Stock,CAD,CA05534B8289
+BCEE,Harvest BCE Enhanced High Income Shares ETF,ETF,CAD,
+BCHI,Ninepoint BCE HighShares ETF,ETF,CAD,
+BCHT,Birchtech Corp.,Common Stock,CAD,US59833H2004
+BCT,Briacell Therapeutics Corp,Common Stock,CAD,CA10778Y3023
+BDGI,Badger Infrastructure Solutions Ltd,Common Stock,CAD,CA0565331026
+BDI,Black Diamond Group Limited,Common Stock,CAD,CA09202D2077
+BDIV,Brompton Global Dividend Growth ETF,ETF,CAD,CA11221W1095
+BDT,Bird Construction Inc.,Common Stock,CAD,CA09076P1045
+BEI-UN,Boardwalk Real Estate Investment Trust,Common Stock,CAD,CA0966311064
+BEK-B,Becker Milk Co Ltd Cl B Nv Spec (BEK-B.TO,Common Stock,CAD,
+BENZ,Mercedes-Benz CDR (CAD Hedged),Common Stock,CAD,
+BEP-PM,Brookfield Renewable Partners LP  Series 13 Pref Class A,Preferred Stock,CAD,BMG162584053
+BEP-PR,Brookfield Renewable Partners L.P.,Preferred Stock,CAD,
+BEP-UN,Brookfield Renewable Partners L.P,Common Stock,CAD,BMG162581083
+BEPC,Brookfield Renewable Corp,Common Stock,CAD,CA11284V1058
+BEPR,Brompton Flaherty & Crumrine Enhanced Investment Grade Preferred ETF,ETF,CAD,CA11223L1013
+BEPR-U,Brompton Flaherty & Crumrine Enhanced Investment Grade Preferred ETF,ETF,USD,
+BESG,Invesco ESG Canadian Core Plus Bond ETF,ETF,CAD,CA46137U1021
+BFIN,Brompton North American Financials Dividend ETF,ETF,CAD,CA11221X1078
+BFIN-U,Brompton North American Financials Dividend ETF,ETF,USD,
+BGAU,Blossom Gold Inc.,Common Stock,CAD,
+BGC,Bristol Gate Concentrated Canadian Equity ETF,ETF,CAD,CA11004B1085
+BGI-UN,Brookfield Global Infrastructure Securities Income Fund,Common Stock,CAD,
+BGIE,Brompton Global Infrastructure ETF,ETF,CAD,
+BGU,Bristol Gate Concentrated US Equity ETF,ETF,CAD,CA11004A1003
+BGU-U,Bristol Gate Concentrated US Equity ETF,ETF,USD,CA11004A2092
+BHC,Bausch Health Companies Inc,Common Stock,CAD,CA0717341071
+BIGY,Evolve US Equity UltraYield ETF,ETF,CAD,
+BILP-PA,Brookfield Infrastructure L.P.,Common Stock,CAD,
+BIP-PE,Brookfield Infrastructure Partners LP Pref A,Preferred Stock,CAD,BMG162522004
+BIP-PF,Brookfield Infrastructure Partners  Pref Class A,Preferred Stock,CAD,BMG162522269
+BIP-UN,Brookfield Infrastructure Partners L.P,Common Stock,CAD,BMG162521014
+BIP502,Brandes Global Opportunities Fund Series F,FUND,CAD,
+BIPC,Brookfield Infrastructure Corp,Common Stock,CAD,CA11275Q1072
+BIR,Birchcliff Energy Ltd.,Common Stock,CAD,CA0906971035
+BITC-U,Ninepoint Bitcoin ETF,ETF,USD,CA65445B1013
+BITI,BetaPro Inverse Bitcoin ETF CAD,ETF,CAD,CA0866241031
+BITI-U,BetaPro Inverse Bitcoin ETF,ETF,USD,CA0866241031
+BK,Canadian Banc Corp,Common Stock,CAD,CA13536V1076
+BK-PA,Canadian Banc Corp Pref A,Preferred Stock,CAD,CA13536V2066
+BKCC,Global X Equal Weight Canadian Bank Covered Call ETF,ETF,CAD,CA4404541068
+BKCL,Global X Enhanced Equal Weight Canadian Banks Covered Call ETF,ETF,CAD,CA44057N1096
+BKI,Black Iron Inc.,Common Stock,CAD,CA09214V1040
+BKNG,Booking CDR (CAD Hedged),Common Stock,CAD,
+BLCK,First Trust Indxx Innovative Transaction and Process ETF,ETF,CAD,CA33740T1021
+BLCO,Bausch + Lomb Corp,Common Stock,CAD,CA0717051076
+BLDP,Ballard Power Systems Inc,Common Stock,CAD,CA0585861085
+BLK,BlackRock CDR (CAD Hedged),Common Stock,CAD,
+BLKY,Harvest Block Enhanced High Income Shares ETF,ETF,CAD,
+BLOV,Brompton North American Low Volatility Dividend ETF,ETF,CAD,CA11222V1004
+BMAX,Brompton Enhanced Multi-Asset Income ETF,ETF,CAD,CA11221Y1051
+BMO,Bank of Montreal,Common Stock,CAD,CA0636711016
+BMO-PE,Bank of Montreal Pref Class B,Preferred Stock,CAD,CA06368B2075
+BMW,BMW CDR (CAD Hedged),Common Stock,CAD,
+BN,Brookfield Corporation,Common Stock,CAD,CA11271J1075
+BN-PB,Brookfield Asset Mgmt 2 Cl A Prf,Preferred Stock,CAD,CA1125852030
+BN-PC,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFA,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFB,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFC,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFD,PUTNAM SUSTAINABLE LEADERS ETF ,ETF,CAD,CA11271J7437
+BN-PFE,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFF,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFG,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFI,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFJ,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFK,Brookfield Corporation,Preferred Stock,CAD,
+BN-PFL,Brookfield Corporation,Preferred Stock,CAD,
+BN-PK,Brookfield Asset Management Inc Pref K,Preferred Stock,CAD,CA1125858722
+BN-PM,Brookfield Corporation,Preferred Stock,CAD,
+BN-PN,Brookfield Corporation,Preferred Stock,CAD,
+BN-PR,Brookfield Corporation,Preferred Stock,CAD,
+BN-PT,Brookfield Corporation,Preferred Stock,CAD,
+BN-PX,Brookfield Corporation,Preferred Stock,CAD,
+BN-PZ,Brookfield Corporation,Preferred Stock,CAD,
+BNC,Purpose Canadian Financial Income Fund Series ETF,ETF,CAD,CA74641F1062
+BND,Purpose Global Bond Fund Series ETF,ETF,CAD,CA74641B1058
+BNE,Bonterra Energy Corp,Common Stock,CAD,CA0985461049
+BNG,Bengal Energy Ltd,Common Stock,CAD,CA08184N1006
+BNK,Bankers Petroleum Ltd,Common Stock,CAD,
+BNK-PA,Big Banc Split Corp,Preferred Stock,CAD,CA0888932013
+BNKL,Global X Enhanced Equal Weight Banks Index ETF,ETF,CAD,CA44057L1031
+BNKR,Bunker Hill Mining Corp.,Common Stock,CAD,
+BNKU,MegaLong (3X) Canadian Banks Daily Leveraged Alternative ETF,ETF,CAD,
+BNS,Bank of Nova Scotia,Common Stock,CAD,CA0641491075
+BNT,Brookfield Wealth Solutions Ltd.,Common Stock,CAD,
+BOFA,Bank of America CDR (CAD Hedged),Common Stock,CAD,
+BOIL,Beyond Oil Ltd.,Common Stock,CAD,
+BOND,Evolve Enhanced Yield Bond Fund,ETF,CAD,CA30053G2062
+BOND-U,Evolve Enhanced Yield Bond Fund,ETF,USD,
+BOS,AirBoss of America Corp.,Common Stock,CAD,CA00927V2003
+BPF-UN,Boston Pizza Royalties Income Fund,Common Stock,CAD,
+BPO-PA,Brookfield Office Properties Inc Pref A,Preferred Stock,CAD,CA1129006831
+BPO-PE,Brookfield Office Properties Inc Pref E,Preferred Stock,CAD,CA1129006427
+BPO-PG,Brookfield Office Properties Inc,Preferred Stock,CAD,CA1129006260
+BPO-PI,Brookfield Office Properties Inc Pref Class AAA Series II,Preferred Stock,CAD,CA1129005924
+BPO-PN,Brookfield Offi Pro Cl Aaa N Prf,Preferred Stock,CAD,CA1129008324
+BPO-PP,Brookfield Offi Pro Cl Aaa P Prf,Preferred Stock,CAD,CA1129008167
+BPO-PR,Brookfield Office Cl Aaa R Prf,Preferred Stock,CAD,CA1129007821
+BPO-PT,Brookfield Off Prop T Cl Aaa Prf,Preferred Stock,CAD,CA1129007664
+BPO-PW,Brookfield Office Properties Inc Pref W,Preferred Stock,CAD,CA1129007334
+BPO-PX,Brookfield Office Properties Inc Pref X,Preferred Stock,CAD,CA1129007417
+BPO-PY,Brookfield Office Properties Inc Pref Y,Preferred Stock,CAD,CA1129007177
+BPRF,Brompton Flaherty & Crumrine Investment Grade Preferred ETF,ETF,CAD,CA11221N1096
+BPS-PA,Brookfield Property Split Corp Pref A,Preferred Stock,CAD,CA1128273085
+BPS-PB,Brookfield Property Split Corp Pref B,Preferred Stock,CAD,CA1128274075
+BPS-PC,Brookfield Property Split Corp Pref C,Preferred Stock,CAD,CA1128275064
+BPS-PU,Brookfield Property Split Corp Pref U,Preferred Stock,USD,CA1128272095
+BPYP-PA,Brookfield Property Preferred LP,Preferred Stock,CAD,
+BR,Big Rock Brewery Inc.,Common Stock,CAD,CA08947P1036
+BRAG,Bragg Gaming Group Inc,Common Stock,CAD,CA1048333068
+BRE,Bridgemarq Real Estate Services Inc,Common Stock,CAD,CA10808B1085
+BRF-PA,Brookfield Renewable Power Preferred Equity Inc Pref A,Preferred Stock,CAD,CA11283Q2062
+BRF-PB,Brookfield Renewable Power Preferred Equity Inc Pref B,Preferred Stock,CAD,CA11283Q3052
+BRF-PC,Brookfield Renewable Power Inc Preferred Series 3,Preferred Stock,CAD,CA11283Q4043
+BRF-PE,Brookfield Renewable Power Preferred Equity Inc Pref E,Preferred Stock,CAD,CA11283Q6022
+BRF-PF,Brookfield Renewable Power Preferred Equity Inc Pref F,Preferred Stock,CAD,CA11283Q7012
+BRK,Berkshire Hathaway CDR (CAD Hedged),Common Stock,CAD,
+BRY,Bri-Chem Corp.,Common Stock,CAD,CA10778T1057
+BSKT,Manulife Smart Core Bond ETF,ETF,CAD,
+BSX,Belo Sun Mining Corp.,Common Stock,CAD,CA0805581091
+BTB-UN,BTB Real Estate Investment Trust,Common Stock,CAD,CA11777P3007
+BTCC,Purpose Bitcoin ETF Currency Hedged Units,ETF,CAD,CA74642C1023
+BTCC-B,Purpose Bitcoin ETF,ETF,CAD,CA74642C2013
+BTCC-U,Purpose Bitcoin ETF,ETF,USD,CA74642C3003
+BTCO-B,Purpose Core Bitcoin ETF,ETF,CAD,
+BTCQ,3iQ Bitcoin ETF,ETF,CAD,CA88562D1069
+BTCX,CI Galaxy Bitcoin ETF,ETF,CAD,
+BTCX-B,CI Galaxy Bitcoin ETF,ETF,CAD,CA12563N2023
+BTCX-U,CI Galaxy Bitcoin ETF,ETF,USD,CA12563N1033
+BTCY,Purpose Bitcoin Yield ETF - ETF Units,ETF,CAD,CA74642T1057
+BTCY-B,Purpose Bitcoin Yield ETF,ETF,CAD,CA74642T2048
+BTCY-U,Purpose Bitcoin Yield ETF,ETF,USD,CA74642T3038
+BTE,Baytex Energy Corp,Common Stock,CAD,CA07317Q1054
+BTO,B2Gold Corp,Common Stock,CAD,CA11777Q2099
+BU,Burcon NutraScience Corporation,Common Stock,CAD,CA1208311029
+BX,Blackstone CDR (CAD Hedged),Common Stock,CAD,
+BXF,CI 1-5 Year Laddered Government Strip Bond Index ETF Common,ETF,CAD,CA12555C1077
+BYD,Boyd Group Services Inc.,Common Stock,CAD,CA1033101082
+BYL,Baylin Technologies Inc,Common Stock,CAD,CA0728191051
+CACB,CIBC Active Investment Grade Corporate Bond ETF,ETF,CAD,CA12545W1068
+CACE,Avantis CIBC Canadian Equity ETF,ETF,CAD,
+CADE,Avantis CIBC International Equity ETF,ETF,CAD,
+CADY,Cadillac Mines Corporation,Common Stock,CAD,
+CAE,CAE Inc.,Common Stock,CAD,CA1247651088
+CAEM,Avantis CIBC Emerging Markets Equity ETF,ETF,CAD,
+CAGE,Avantis CIBC All-Equity Asset Allocation ETF,ETF,CAD,
+CAGG,CI Canadian Aggregate Bond Index ETF,ETF,CAD,CA17167D1042
+CAGR,Avantis CIBC Growth Asset Allocation ETF,ETF,CAD,
+CAGS,CI Canadian Short-Term Aggregate Bond Index ETF,ETF,CAD,CA17166P1080
+CAGX,Avantis CIBC World Equity ETF,ETF,CAD,
+CAKE,Avantis CIBC Balanced Asset Allocation ETF,ETF,CAD,
+CALB,CIBC Canadian Government Long-Term Bond ETF,ETF,CAD,
+CALL,Evolve US Banks Enhanced Yield Fund Hedged Units,ETF,CAD,CA30051C1086
+CALL-B,Evolve US Banks Enhanced Yield Fund UnHedged Units,ETF,CAD,
+CALL-U,Evolve US Banks Enhanced Yield Fund,ETF,USD,CA30051C3066
+CALV,Avantis CIBC U.S. Large Cap Value ETF,ETF,CAD,
+CAMO,Evolve Global Defense & Aerospace Index ETF,ETF,CAD,
+CANL,Global X Enhanced S&P/TSX 60 Index ETF,ETF,CAD,CA44057M1014
+CANY,Evolve Canadian Equity UltraYield ETF,ETF,CAD,
+CAPG,Capital Group Global Equity Select ETF (Canada),ETF,CAD,CA14021V1076
+CAPI,Capital Group International Equity Select ETF (Canada),ETF,CAD,CA14021W1059
+CAPM,Capital Group Multi-Sector Income Select ETFTM (Canada),ETF,CAD,
+CAPN,Capital Group International Developed Equity Select ETF (Canada),ETF,CAD,
+CAPQ,Capital Group Global Developed Equity Select ETF (Canada),ETF,CAD,
+CAPU,Capital Group U.S. Equity Select ETF (Canada),ETF,CAD,
+CAPW,Capital Group World Bond Select ETF (Canada),ETF,CAD,CA14021X1033
+CAR-UN,Canadian Apartment Properties Real Estate Investment Trust,Common Stock,CAD,CA1349211054
+CARS,Evolve Automobile Innovation Index Fund - Hedged Units,ETF,CAD,CA30052J1021
+CAS,Cascades Inc.,Common Stock,CAD,CA1469001053
+CASH,GLOBAL X HIGH INTEREST SAVINGS ETF,ETF,CAD,CA4405671054
+CASV,Avantis CIBC Global Small Cap Value ETF,ETF,CAD,
+CATR,Caterpillar CDR (CAD Hedged),Common Stock,CAD,
+CAUS,Avantis CIBC U.S. All-Cap Equity ETF,ETF,CAD,
+CAUV,Avantis CIBC U.S. Small Cap Value ETF,ETF,CAD,
+CBAL,CI Balanced Asset Allocation ETF Common Units,ETF,CAD,CA12570E1043
+CBAP,CI Balanced+ Asset Allocation ETF Fund,ETF,CAD,
+CBCX,CI Galaxy Blockchain Index ETF CAD,ETF,CAD,CA12546E1051
+CBGR,CI Balanced Growth Asset Allocation ETF Common Units,ETF,CAD,CA12569Y1034
+CBH,iShares 1-10Yr Laddered Corporate Bond Common Class,ETF,CAD,CA46432J1093
+CBIL,Global X 0-3 Month T-Bill ETF,ETF,CAD,CA44057C1032
+CBIL-U,Global X 0-3 Month T-Bill ETF CAD,ETF,USD,
+CBIN,CI Balanced Income Asset Allocation ETF,ETF,CAD,
+CBL,Franklin Core ETF Portfolio Series ETF,ETF,CAD,
+CBLN,CIBC Balanced ETF Portfolio,ETF,CAD,
+CBND,Manulife Smart Corporate Bond ETF,ETF,CAD,CA56502X1024
+CBNK,Mulvihill Canadian Bank Enhanced Y ETF,ETF,CAD,CA62580L1013
+CBO,iShares 1-5 Year Laddered Corporate Bond Index ETF Common Class,ETF,CAD,CA46433Q1028
+CBUG,CI Digital Security Index ETF,ETF,CAD,CA12567L1031
+CCA,Cogeco Communications Inc,Common Stock,CAD,CA19239C1068
+CCAD,CIBC Premium Cash Management ETF,ETF,CAD,
+CCBD,CI U.S. Aggregate Bond Covered Call ETF,ETF,CAD,
+CCBI,CIBC Canadian Bond Index ETF,ETF,CAD,CA12550Q1019
+CCCB,CIBC Canadian Banks Covered Call ETF,ETF,CAD,
+CCCX,CI Galaxy Core Multi-Crypto ETF,ETF,CAD,CA1719313068
+CCCX-B,CI Galaxy Core Multi-Crypto ETF C$ Unhedged Series,ETF,CAD,CA1719312078
+CCDC,CIBC Canadian High Dividend Covered Call ETF,ETF,CAD,
+CCEI,CIBC Canadian Equity Index ETF,ETF,CAD,CA12565U1057
+CCGP,Counterpoint Global CIBC Global Permanence ETF,ETF,CAD,
+CCHI,Ninepoint Cameco HighShares ETF,ETF,CAD,
+CCIP,Counterpoint Global CIBC International Permanence ETF,ETF,CAD,
+CCL-A,CCL Industries Inc,Common Stock,CAD,
+CCL-B,CCL Industries Inc,Common Stock,CAD,CA1249003098
+CCM,Canagold Resources Ltd,Common Stock,CAD,CA1368421014
+CCNS,CIBC Conservative Fixed Income Pool ETF,ETF,CAD,CA12546Q1081
+CCNV,CI Conservative Asset Allocation ETF,ETF,CAD,
+CCO,Cameco Corp,Common Stock,CAD,CA13321L1085
+CCOE,Harvest Cameco Enhanced High Income Shares ETF,ETF,CAD,
+CCOM,CI Auspice Broad Commodity Fund - Hedged Common Units Acc,ETF,CAD,CA17160D1015
+CCON,CIBC Conservative ETF Portfolio,ETF,CAD,
+CCOU,SavvyLong (2X) Cameco ETF,ETF,CAD,
+CCRE,CIBC Core Fixed Income Pool ETF,ETF,CAD,CA12546V1076
+CCS-PC,Co Operaters Gen Insur C Cl E Prf,Preferred Stock,CAD,CA1899064077
+CCUL,Counterpoint Global CIBC U.S. Large Cap Growth ETF,ETF,CAD,
+CCUS,Counterpoint Global CIBC U.S. Small Cap Growth ETF,ETF,CAD,
+CDE,"Coeur Mining, Inc",Common Stock,CAD,
+CDEF,Manulife Smart Defensive Equity ETF,ETF,CAD,CA56503A1012
+CDIV,Manulife Smart Dividend ETF,ETF,CAD,CA56502U1084
+CDLB,CI DoubleLine Total Return Bond US$ Fund ETF C$ Hedged Series,ETF,CAD,CA12560C1005
+CDLB-B,CI DoubleLine Total Return Bond US$ Fund,ETF,CAD,CA12560C1187
+CDLB-U,CI DoubleLine Total Return Bond US$ Fund,ETF,USD,CA12560C1260
+CDR,Condor Energies Inc.,Common Stock,CAD,CA20676A1084
+CDZ,iShares S&P/TSX Canadian Dividend Aristocrats Index ETF Common Class,ETF,CAD,CA46433F1062
+CEF,Sprott Physical Gold and Silver Trust,Common Stock,CAD,CA85208R1010
+CEF-U,Sprott Physical Gold and Silver Trust,Common Stock,USD,
+CEGS,Constellation Energy CDR (CAD Hedged),Common Stock,CAD,
+CEMI,CIBC Emerging Markets Equity Index ETF,ETF,CAD,CA17165A2011
+CEMX,CEMATRIX Corporation,Common Stock,CAD,
+CEQP,CI Equity+ Asset Allocation ETF Fund,ETF,CAD,
+CEQT,CI Equity Asset Allocation ETF,ETF,CAD,
+CEQY,CIBC All-Equity ETF Portfolio,ETF,CAD,
+CEU,CES Energy Solutions Corp,Common Stock,CAD,CA15713J1049
+CEW,iShares Equal Weight Banc & Lifeco Common Class,ETF,CAD,CA46433J1084
+CF,Canaccord Genuity Group Inc,Common Stock,CAD,CA1348011091
+CF-PA,Canaccord Genuity Group Inc Pref A,Preferred Stock,CAD,CA1348013071
+CF-PC,Canaccord Genuity Group Inc Pref C,Preferred Stock,CAD,CA1348016041
+CFF,Conifex Timber Inc,Common Stock,CAD,CA2073241044
+CFIN,Evolve Canadian Financials Yield Fund,FUND,CAD,
+CFLX,CIBC Flexible Yield ETF (CAD-Hedged),ETF,CAD,CA12546R1064
+CFOD,BetaPro S&P/TSX Capped Financials -2x Daily Bear ETF,ETF,CAD,
+CFOU,BetaPro S&P/TSX Capped Financials 2x Daily Bull ETF,ETF,CAD,
+CFP,Canfor Corporation,Common Stock,CAD,CA1375761048
+CFRN,CIBC Active Investment Grade Floating Rate Bond ETF,ETF,CAD,CA12546T1021
+CFRT,CI Floating Rate Income Fund ETF CAD,ETF,CAD,CA17163R1073
+CFW,Calfrac Well Services Ltd.,Common Stock,CAD,CA1295844056
+CG,Centerra Gold Inc,Common Stock,CAD,CA1520061021
+CGAA,CI Global Asset Allocation Private Pool ETF,ETF,CAD,CA12558P1053
+CGBI,CIBC Global Bond ex-Canada Index ETF (CAD-Hedged),ETF,CAD,CA12548U1075
+CGDI,CI Global Dividend Private Pool,Common Stock,CAD,
+CGDV,CI Global Minimum Downside Volatility Index ETF (Hedged Common Units),ETF,CAD,CA12569N1078
+CGG,China Gold International Resources,Common Stock,CAD,CA16890P1036
+CGHY,CI Global High Yield Credit Private Pool,ETF,CAD,
+CGHY-U,CI Global High Yield Credit Private Pool,ETF,USD,
+CGI,Canadian General Investments Ltd,Common Stock,CAD,CA1358251074
+CGIN,CI Global Investment Grade ETF (ETF C$ Series),ETF,CAD,CA12568W1086
+CGL,iShares Gold Bullion ETF (CAD-Hedged),ETF,CAD,CA46432D2014
+CGL-C,iShares Gold Bullion ETF,ETF,CAD,CA46432D1024
+CGLO,CIBC Global Growth ETF,ETF,CAD,CA12547N1042
+CGMD,MegaShort (-3X) Canadian Gold Miners Daily Leveraged Alternative ETF,ETF,CAD,
+CGMU,MegaLong (3X) Canadian Gold Miners Daily Leveraged Alternative ETF,ETF,CAD,
+CGO,Cogeco Inc.,Common Stock,CAD,CA19238T1003
+CGQD-B,CI Global Quality Dividend Growth Index ETF,ETF,CAD,
+CGR,iShares Global Real Estate Common Class,ETF,CAD,CA46433A2065
+CGRA,CI Global Real Asset Private Pool - ETF C$ Series,ETF,CAD,CA12559R1001
+CGRB,CI Global Green Bond Fund,ETF,CAD,
+CGRE,CI Global REIT Private Pool - ETF C$ Series,ETF,CAD,CA17164X1033
+CGRN,CI Global Sustainable Infrastructure Fund C$ Series CAD Acc ETF,ETF,CAD,CA12568A1066
+CGRO,CI Growth Asset Allocation ETF Common Units,ETF,CAD,CA12569W1077
+CGRW,CIBC Balanced Growth ETF Portfolio,ETF,CAD,
+CGX,Cineplex Inc.,Common Stock,CAD,CA1724541000
+CGXF,CI Gold+ Giants Covered Call ETF Common,ETF,CAD,CA12558N1006
+CGY,Calian Technologies Ltd,Common Stock,CAD,CA12989J1084
+CHE-UN,Chemtrade Logistics Income Fund,Common Stock,CAD,CA16387P1036
+CHLT,Custom Health Holdings Inc.,Common Stock,CAD,
+CHNA-B,WisdomTree ICBCCS S&P China 500 Index ETF,ETF,CAD,CA17164T1021
+CHP-UN,Choice Properties Real Estate Investment Trust,Common Stock,CAD,CA17039A1066
+CHPS,Global X Artificial Intelligence Semiconductor Index ETF,ETF,CAD,CA4405571064
+CHPS-U,Global X Semiconductor Index ETF,ETF,USD,CA37963G1019
+CHQQ,Global X China Hang Seng TECH Index ETF,ETF,CAD,
+CHR,Chorus Aviation Inc,Common Stock,CAD,CA17040T3001
+CIA,Champion Iron Ltd,Common Stock,CAD,AU000000CIA2
+CIAI,CI Global Artificial Intelligence ETF,ETF,CAD,CA12571A1012
+CIBR,First Trust NASDAQ Cybersecurity ETF,ETF,CAD,CA33742B1094
+CIC,CI Canadian Banks Covered Call Income Class ETF,ETF,CAD,CA17163X4012
+CIEH,CIBC International Equity Index ETF (CAD-Hedged),ETF,CAD,
+CIEI,CIBC International Equity Index ETF,ETF,CAD,CA12564B1085
+CIEM,CI Emerging Markets Alpha ETF C$ Series,ETF,CAD,CA12547P1099
+CIF,iShares Global Infrastructure Common Class,ETF,CAD,CA46433R1001
+CIF823,Capital Group Global Equity Fund (Canada) Series F,FUND,CAD,
+CIG18006,CI Global Alpha Innovators Corporate Class A,FUND,CAD,
+CIGI,Colliers International Group Inc Bats,Common Stock,CAD,CA1946931070
+CINF,CI Global Infrastructure Private Pool - ETF C$ Series,ETF,CAD,CA12559B1058
+CINT,CIBC International Equity ETF,ETF,CAD,CA12547M1068
+CINV,CI Global Alpha Innovation ETF C$ Series,ETF,CAD,CA12567C1032
+CITI,Citigroup CDR (CAD Hedged),Common Stock,CAD,
+CIU-PA,CU Inc Pref A,Preferred Stock,CAD,CA22944C2058
+CIU-PC,CU Inc Pref C,Preferred Stock,CAD,CA22944C5028
+CJ,Cardinal Energy Ltd,Common Stock,CAD,CA14150G4007
+CJR-B,Corus Entertainment Inc,Common Stock,CAD,CA2208741017
+CJT,Cargojet Inc,Common Stock,CAD,CA14179V5036
+CKI,Clarke Inc.,Common Stock,CAD,CA1819013071
+CLCH,Clinch Resources Ltd.,Common Stock,CAD,
+CLDN,SavvyShort Geared Crude Oil ETF,ETF,CAD,
+CLF,iShares 1-5 Year Laddered Government Bond Index ETF Common Class,ETF,CAD,CA46432E1007
+CLG,iShares 1-10Yr Laddered Government Bond Common Class,ETF,CAD,CA46431U1057
+CLHI,Ninepoint Celestica HighShares ETF,ETF,CAD,
+CLML,CI Global Climate Leaders Fund (ETF C$ Series),ETF,CAD,CA17164Y1016
+CLS,Celestica Inc.,Common Stock,CAD,CA15101Q2071
+CLSA,Brompton Split Corp. Enhanced Equity Income ETF,ETF,CAD,
+CM,Canadian Imperial Bank Of Commerce,Common Stock,CAD,CA1360691010
+CM-PS,Canadian Imperial Bank of Commerce Pref Class A,Preferred Stock,CAD,CA1360708772
+CMAG,CI Munro Alternative Global Growth ETF Common Units,ETF,CAD,CA1255311039
+CMAG-U,CI Munro Alternative Global Growth ETF,ETF,USD,CA1255312029
+CMAR,CI Marret Alternative Absolute Return Bond ETF Common Units,ETF,CAD,CA12560B1022
+CMAR-U,CI Marret Alternative Absolute Return Bond ETF,ETF,USD,CA12560B2012
+CMAX,Hamilton Canadian Equity YIELD MAXIMIZER TM ETF,ETF,CAD,
+CMCC,Global X All-In-One Commodity Producers Equity Covered Call ETF,ETF,CAD,
+CMCL,Global X Enhanced All-in-one Commodity Producers Equity Covered Call ETF,ETF,CAD,
+CMCX,CI Galaxy Multi-Crypto Navigator ETF,ETF,CAD,
+CMCX-B,CI Galaxy Multi-Crypto ETF,ETF,CAD,CA17165B2093
+CMDO,CI Alternative Diversified Opportunities Fund ETF CAD series,ETF,CAD,CA12546P1009
+CMEY,CI Marret Alternative Enhanced Yield Fund - ETF C$ Series,ETF,CAD,CA12560F1036
+CMEY-U,CI Marret Alternative Enhanced Yield Fund - ETF US$ Hedged Series,ETF,USD,
+CMG,Computer Modelling Group Ltd.,Common Stock,CAD,CA2052491057
+CMGG,CI Munro Global Growth Equity Fund ETF,ETF,CAD,CA12561Q1081
+CMGS,Chipotle CDR (CAD Hedged),Common Stock,CAD,
+CMNY,CI Money Market ETF C$ Series,ETF,CAD,
+CMOM,CI U.S. Enhanced Momentum Index ETF (Hedged Common Units),ETF,CAD,CA12570V1067
+CMOM-B,CI U.S. Enhanced Momentum Index ETF (Unhedged Common Units),ETF,CAD,
+CMR,iShares Premium Money Market Common Class,ETF,CAD,CA46433M1014
+CMVP,HAMILTON CHAMPIONS Canadian Dividend Index ETF Class E Units,ETF,CAD,CA4069131031
+CNAO,CI Alternative North American Opportunities Fund (ETF C$ Series),ETF,CAD,CA12546N1050
+CNCC,Global X S&P/TSX 60 Covered Call ETF,ETF,CAD,CA44056X1087
+CNCL,Global X Enhanced S&P/TSX 60 Covered Call ETF,ETF,CAD,CA4409311038
+CNDD,BetaPro S&P/TSX 60 -2x Daily Bear ETF,ETF,CAD,
+CNDI,BetaPro S&P/TSX 60 Daily Inverse ETF,ETF,CAD,
+CNDU,BetaPro S&P/TSX 60 2x Daily Bull ETF,ETF,CAD,CA08662W2004
+CNDX,Global X S&P/TSX 60 Index ETF,ETF,CAD,CA37961W1086
+CNL,Collective Mining Ltd,Common Stock,CAD,CA19425C1005
+CNQ,Canadian Natural Resources Ltd,Common Stock,CAD,CA1363851017
+CNQE,Harvest CNQ Enhanced High Income Shares ETF,ETF,CAD,
+CNQU,SavvyLong (2X) Cdn Natural Resources ETF,ETF,CAD,
+CNR,Canadian National Railway Co,Common Stock,CAD,CA1363751027
+CNT,Century Global Commodities Corp,Common Stock,CAD,KYG2029R1065
+CNV,Franklin Conservative Income ETF Portfolio,ETF,CAD,
+CNYE,Harvest Coinbase Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+COID,SavvyShort (-2X) COIN ETF,ETF,CAD,
+COIL,All-Canadian Oil & Gas ETF,ETF,CAD,
+COIN,Coinbase CDR (CAD Hedged),ETF,CAD,
+COIU,LFG Daily (2X) COIN Long ETF,ETF,CAD,
+COLA,Coca-Cola CDR (CAD Hedged),Common Stock,CAD,CA19123A1093
+COMM,BMO Global Communications Index ETF,ETF,CAD,CA05585R1029
+COMU,SavvyLong 2X CIBC (CM) Equity-Linked ETF,ETF,CAD,
+COMX,Global X All-In-One Commodity Producers Equity ETF,ETF,CAD,
+CONY,Harvest Coinbase High Income Shares ETF - Class A Units,ETF,CAD,CA41756U1030
+COP-U,Sprott Physical Copper Trust,Common Stock,USD,
+COP-UN,Sprott Physical Copper Trust,Common Stock,CAD,
+COPP,Global X Copper Producers Index ETF,ETF,CAD,CA44057D1015
+COPR,Coppernico Metals Inc.,Common Stock,CAD,
+CORE,PIMCO Canadian Core Bond Fund,ETF,CAD,
+COST,Costco CDR (CAD Hedged),Common Stock,CAD,
+COSY,Harvest Costco Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+COW,iShares Global Agriculture Common Class,ETF,CAD,CA46433W1095
+CP,Canadian Pacific Railway Ltd,Common Stock,CAD,CA13646K1084
+CPCC,Global X Copper Producer Equity Covered Call ETF,ETF,CAD,
+CPD,iShares S&P/TSX Canadian Preferred Share Index ETF Common Class,ETF,CAD,CA46431G2053
+CPH,Cipher Pharmaceuticals Inc,Common Stock,CAD,CA17253X1050
+CPKR,Canada Packers Inc.,Common Stock,CAD,
+CPLS,CIBC Core Plus Fixed Income Pool ETF,ETF,CAD,CA12547X1024
+CPX,Capital Power Corporation,Common Stock,CAD,CA14042M1023
+CPX-PA,Capital Power Corporation Pref A,Preferred Stock,CAD,CA14042M3003
+CPX-PC,Capital Powr Cum Rat Rest 3 Pref,Preferred Stock,CAD,CA14042M5081
+CPX-PE,Capital Power Corporation Pref E,Preferred Stock,CAD,CA14042M7061
+CQHI,Ninepoint Canadian Natural Resources HighShares ETF,ETF,CAD,
+CRCY,Harvest Circle Enhanced High Income Shares ETF,ETF,CAD,
+CRDL,Cardiol Therapeutics Inc Class A,Common Stock,CAD,CA14161Y2006
+CRED,CI Lawrence Park Alternative Investment Grade Credit ETF C$ Series Units,ETF,CAD,CA17164R1064
+CRED-U,CI Alternative Investment Grade Credit Fund,ETF,USD,CA17164R2054
+CRHI,Ninepoint CNR HighShares ETF,ETF,CAD,
+CRM,Salesforce CDR (CAD Hedged),Common Stock,CAD,
+CROC,Purpose Credit Opportunities Class,Common Stock,CAD,
+CRON,Cronos Group Inc,Common Stock,CAD,CA22717L1013
+CROP,Purpose Credit Opportunities Fund ETF,ETF,CAD,CA74643L1013
+CRR-UN,Crombie Real Estate Investment Trust,Common Stock,CAD,CA2271071094
+CRRX,CareRx Corp,Common Stock,CAD,CA14173C1059
+CRT-UN,CT Real Estate Investment Trust,Common Stock,CAD,CA1264621006
+CRWD,CrowdStrike CDR (CAD Hedged),Common Stock,CAD,
+CRWN,Crown Capital Partners Inc,Common Stock,CAD,CA22821L1040
+CRWV,CoreWeave CDR (CAD Hedged),Common Stock,CAD,
+CRWY,Harvest CrowdStrike Enhanced High Income Shares ETF,ETF,CAD,
+CS,Capstone Mining Corp,Common Stock,CAD,CA14071L1085
+CSAV,CI High Interest Savings ETF,ETF,CAD,CA12558L1040
+CSBI,CIBC Canadian Short-Term Bond Index ETF,ETF,CAD,CA12569M1095
+CSCI,COSCIENS Biopharma Inc.,Common Stock,CAD,
+CSCO,Cisco CDR (CAD Hedged),Common Stock,CAD,CA17278B1040
+CSE-PA,Capstone Infrastructure Corp,Preferred Stock,CAD,CA14069Q5077
+CSH-UN,Chartwell Retirement Residences,Common Stock,CAD,CA16141A1030
+CSHI,Ninepoint Constellation Software HighShares ETF,ETF,CAD,
+CSMD,CI U.S. Small/Mid Cap Equity Private Pool,Common Stock,CAD,
+CSU,Constellation Software Inc.,Common Stock,CAD,CA21037X1006
+CSUC,Ninepoint Constellation Software CoreShares ETF,ETF,CAD,
+CSUU,SavvyLong (2X) Constellation Software ETF,ETF,CAD,
+CSW-A,Corby Spirit and Wine Limited,Common Stock,CAD,CA2183491083
+CSW-B,Corby Spirit and Wine Limited,Common Stock,CAD,
+CTC,Canadian Tire Corporation Limited,Common Stock,CAD,
+CTC-A,Canadian Tire Corporation Limited,Common Stock,CAD,CA1366812024
+CTF-UN,Citadel Income Fund,FUND,CAD,
+CTGO,Contango Silver & Gold Inc.,Common Stock,CAD,
+CTMA,CI Target 2028 Investment Grade Bond Fund,ETF,CAD,
+CTMB,CI Target 2029 Investment Grade Bond Fund,ETF,CAD,
+CTMC,CI Target 2030 Investment Grade Bond Fund,ETF,CAD,
+CU,Canadian Utilities Limited,Common Stock,CAD,CA1367178326
+CU-PC,Canadian Util Cum Red Sec Y Prf,Preferred Stock,CAD,CA1367176916
+CU-PD,Canadian Uti Aa Cum Red Sec Prf,Preferred Stock,CAD,CA1367176759
+CU-PE,Canadian Util Bb Cum Red Sec Prf,Preferred Stock,CAD,CA1367176676
+CU-PF,Canadian Utilities Ltd Pref F,Preferred Stock,CAD,CA1367176593
+CU-PG,Canadian Utilities Ltd Pref G,Preferred Stock,CAD,CA1367176429
+CU-PH,Canadian Utilities Ltd Pref H,Preferred Stock,CAD,CA1367176346
+CU-PJ,Canadian Utilities Limited,Common Stock,CAD,
+CUBD,CI Global Unconstrained Bond Fund,ETF,CAD,
+CUD,iShares US Dividend Growers Index ETF (CAD-Hedged) Common Class,ETF,CAD,CA46433G1046
+CUDC,CIBC U.S. High Dividend Covered Call ETF,ETF,CAD,
+CUDC-F,CIBC U.S. High Dividend Covered Call ETF (CAD-Hedged),ETF,CAD,
+CUDV,CI U.S. Minimum Downside Volatility Index ETF (Hedged Common Units),ETF,CAD,CA12569L1013
+CUEH,CIBC U.S. Equity Index ETF (CAD-Hedged),ETF,CAD,CA12569F1045
+CUEI,CIBC U.S. Equity Index ETF,ETF,CAD,CA12546X1033
+CUIG,CI U.S. Monthly Income Private Pool,Common Stock,CAD,
+CUP-U,Caribbean Utilities Company Ltd,Common Stock,USD,KYG1899E1465
+CURA,Curaleaf Holdings Inc.,Common Stock,CAD,CA23126M1023
+CUSD-U,CIBC USD Premium Cash Management ETF,ETF,USD,
+CUTE,Evolve Canadian Utilities Yield Fund,FUND,CAD,
+CUTL,CI Utilities Giants Covered Call ETF,ETF,CAD,
+CVD,iShares Convertible Bond Common Class,ETF,CAD,CA46432K2056
+CVE,Cenovus Energy Inc,Common Stock,CAD,CA15135U1093
+CVG,Clairvest Group Inc.,Common Stock,CAD,CA17965L1004
+CVLU,CI U.S. Enhanced Value Index ETF (Hedged Common Units),ETF,CAD,CA12570W1041
+CVO,Coveo Solutions Inc,Common Stock,CAD,CA22289D1078
+CVS,CVS Health CDR (CAD Hedged),Common Stock,CAD,
+CVVY,Cavvy Energy Ltd.,Common Stock,CAD,
+CVX,Chevron CDR (CAD Hedged),Common Stock,CAD,
+CWEB,Charlotte's Web Holdings Inc,Common Stock,CAD,CA16106R1091
+CWIN,HAMILTON CHAMPIONS Enhanced Canadian Dividend ETF Class E Units,ETF,CAD,CA4070501032
+CWL,Caldwell Partners International Inc,Common Stock,CAD,CA12913L2030
+CWW,iShares Global Water Index ETF Common Class,ETF,CAD,CA46430V1040
+CXF,CI Canadian Convertible Bond ETF Common,ETF,CAD,CA12554K1003
+CXI,Currency Exchange International Corp,Common Stock,CAD,US23131B3078
+CYB,Cymbria Corporation,Common Stock,CAD,CA23257X1096
+CYBR,Evolve Cyber Security Index Fund - Hedged Units,ETF,CAD,CA30051R1055
+CYBR-B,Evolve Cyber Security Index Fund - UnHedged Units,ETF,CAD,
+CYBR-U,Evolve Cyber Security Index Fund,ETF,USD,CA30051R3036
+CYH,iShares Global Monthly Dividend (CAD Hedged) Common Class,ETF,CAD,CA46433E1097
+D-UN,Dream Office Real Estate Investment Trust,Common Stock,CAD,CA26153P1045
+DACL,Desjardins Canadian Equity Leaders ETF,ETF,CAD,
+DACU,Desjardins Active Canadian Bond Universe ETF,ETF,CAD,
+DAGL,Desjardins Global Opportunities ETF,ETF,CAD,
+DAMG,Desjardins Alt Long/Short Global Equity Markets ETF - CA$ Hedged,ETF,CAD,CA25058T1049
+DANC,Desjardins Alt Long/Short Equity Market Neutral ETF,ETF,CAD,CA25058P1027
+DATA,Evolve Cloud Computing Index Fund ETF Hedged,ETF,CAD,CA3005321086
+DATA-B,Evolve Cloud Computing Index Fund,ETF,CAD,CA3005322076
+DBM,Doman Building Materials Group Ltd,Common Stock,CAD,CA25703L1004
+DBO,D-Box Technologies Inc.,Common Stock,CAD,CA23305P1080
+DC-A,Dundee Corporation,Common Stock,CAD,
+DCBC,Desjardins Canadian Corporate Bond Index ETF,ETF,CAD,
+DCBO,Docebo Inc,Common Stock,CAD,CA25609L1058
+DCC,Desjardins 1-5 Year Laddered Canadian Corporate Bond Index ETF,ETF,CAD,CA25058M1095
+DCG,Desjardins 1-5 Year Laddered Canadian Government Bond Index ETF,ETF,CAD,CA25058L1013
+DCM,Data Communications Management Ltd,Common Stock,CAD,CA23761M1023
+DCP,Desjardins Canadian Preferred Share Index ETF,ETF,CAD,CA25058Y1034
+DCS,Desjardins Canadian Short Term Bond Index ETF,ETF,CAD,CA25059L1004
+DCU,Desjardins Canadian Universe Bond Index ETF,ETF,CAD,CA25059M1086
+DEER,Deere CDR (CAD Hedged),Common Stock,CAD,
+DF,Dividend 15 Split Corp II,Common Stock,CAD,CA25537W1086
+DF-PA,Dividend 15 Split Corp II Pref A,Preferred Stock,CAD,CA25537W2076
+DFN,Dividend 15 Split Corp,Common Stock,CAD,CA25537R1091
+DFN-PA,Dividend 15 Split Corp Pref A,Preferred Stock,CAD,CA25537R2081
+DFY,Definity Financial Corp,Common Stock,CAD,CA24477T1003
+DGGB,Desjardins Global Government Bond Index ETF,ETF,CAD,
+DGLM,Desjardins Global Macro ETF,ETF,CAD,
+DGR-B,CI WisdomTree U.S. Quality Dividend Growth Index ETF,ETF,CAD,CA12559L1031
+DGRC,CI Canada Quality Dividend Growth Index ETF,ETF,CAD,CA17165G1090
+DGS,Dividend Growth Split Corp,Common Stock,CAD,CA25537Y1043
+DGS-PA,Dividend Growth Split Corp Pref A,Preferred Stock,CAD,CA25537Y2033
+DHI,D.R. Horton CDR (CAD Hedged),Common Stock,CAD,
+DHT-U,DRI Healthcare Trust,Common Stock,USD,CA23344H1091
+DHT-UN,DRI Healthcare Trust,Common Stock,CAD,
+DIAM,Star Diamond Corp,Common Stock,CAD,CA85511Y1088
+DII-A,Dorel Industries Inc Cl.A Mv (DII-A.TO,Common Stock,CAD,
+DII-B,Dorel Industries Inc,Common Stock,CAD,
+DIR-UN,Dream Industrial Real Estate Investment Trust,Common Stock,CAD,CA26153W1095
+DIS,Walt Disney CDR (CAD Hedged),Common Stock,CAD,
+DISC,BMO Global Consumer Discretionary Hedged to CAD Index ETF,ETF,CAD,CA05584F1099
+DIV,Diversified Royalty Corp,Common Stock,CAD,CA2553311002
+DIVS,Evolve Active Canadian Preferred Share Fund,ETF,CAD,CA30052A1012
+DLCG,Dominion Lending Centres Inc,Common Stock,CAD,CA2574141024
+DLR,Global X U.S. Dollar Currency ETF CAD,ETF,CAD,CA44049C4011
+DLR-U,Global X U.S. Dollar Currency ETF,ETF,USD,CA44049C4011
+DMEC,Desjardins Canadian Equity Index ETF,ETF,CAD,CA25058R1082
+DMEE,Desjardins Emerging Markets Equity Index ETF,ETF,CAD,CA25058E1079
+DMEI,Desjardins International Equity Index ETF,ETF,CAD,CA25060R1047
+DMEU,Desjardins American Equity Index ETF,ETF,CAD,CA25060D1050
+DMID,Desjardins American Mid Cap Equity Index ETF,ETF,CAD,
+DML,Denison Mines Corp,Common Stock,CAD,CA2483561072
+DMQC,Desjardins Quebec Equity ETF,ETF,CAD,
+DND,Dye & Durham Ltd,Common Stock,CAD,CA2674881040
+DNG,Dynacor Gold Mines Inc.,Common Stock,CAD,CA26779X1015
+DOL,Dollarama Inc,Common Stock,CAD,CA25675T1075
+DOO,BRP Inc,Common Stock,CAD,CA05577W2004
+DPM,Dundee Precious Metals Inc,Common Stock,CAD,CA26139R1091
+DR,Medical Facilities Corporation,Common Stock,CAD,CA58457V5036
+DRCU,Desjardins RI Active Canadian Bond - Low CO2 ETF,ETF,CAD,CA25059Q1090
+DRFC,Desjardins RI Canada Multifactor - Net-Zero Emissions Pathway ETF,ETF,CAD,CA25059K1021
+DRFD,Desjardins RI Developed ex-USA exCanada Multifactor - Net-Zero Emissions,ETF,CAD,CA25059J1057
+DRFE,Desjardins RI Emerging Markets Multifactor - Net-Zero Emissions Pathway ETF,ETF,CAD,CA25060F1009
+DRFG,Desjardins RI Global Multifactor Fossil Fuel Reserves Free ETF,ETF,CAD,CA25061T1093
+DRFU,Desjardins RI USA Multifactor - Low CO2 ETF,ETF,CAD,CA25061M1041
+DRM,Dream Unlimited Corp,Common Stock,CAD,CA26153M5072
+DRMC,Desjardins RI Canada - Net-Zero Emissions Pathway ETF,ETF,CAD,CA25060H1064
+DRMD,Desjardins RI Developed ex-USA ex-Canada - Net-Zero Emissions Pathway ETF,ETF,CAD,CA25060L1076
+DRME,Desjardins RI Emerging Markets-Net - Zero Emissions Pathway ETF,ETF,CAD,CA25060K1093
+DRMU,Desjardins RI USA - Low CO2 Index ETF,ETF,CAD,CA25060W1032
+DRT,DIRTT Environmental Solutions Ltd.,Common Stock,CAD,CA25490H1064
+DRX,ADF Group Inc.,Common Stock,CAD,CA00089N1033
+DS,Dividend Select 15 Corp,Common Stock,CAD,CA2553801077
+DSG,Descartes Systems Group Inc,Common Stock,CAD,CA2499061083
+DSV,Discovery Silver Corp.,Common Stock,CAD,
+DTOL,D2L Inc,Common Stock,CAD,CA23344V1085
+DUIG,Desjardins US Investment Grade Corporate Bond Index ETF,ETF,CAD,
+DXAU,Dynamic Active Global Gold ETF,ETF,CAD,CA26786N1042
+DXB,Dynamic Active Tactical Bond ETF,ETF,CAD,CA26801K1012
+DXBB,Dynamic Active Bond ETF,ETF,CAD,CA26784M1086
+DXBC,Dynamic Active Canadian Bond ETF,ETF,CAD,
+DXBG,Dynamic Global Fixed Income Fund,ETF,CAD,
+DXBU,Dynamic Active U.S. Investment Grade Corporate Bond ETF,ETF,CAD,
+DXC,Dynamic Active Canadian Dividend ETF,ETF,CAD,CA26788T1093
+DXCB,Dynamic Active Corporate Bond ETF,ETF,CAD,
+DXCO,Dynamic Credit Opportunities Fund,ETF,CAD,
+DXCP,Dynamic Short Term Credit PLUS Fund,ETF,CAD,
+DXDB,Dynamic Active Discount Bond ETF,ETF,CAD,CA26785J1049
+DXDU-U,Dynamic Active U.S. Discount Bond ETF,ETF,USD,
+DXEM,Dynamic Active Emerging Markets ETF,ETF,CAD,CA26785Q1081
+DXF,Dynamic Active Global Financial Services ETF,ETF,CAD,CA26800W1068
+DXG,Dynamic Active Global Dividend ETF,ETF,CAD,CA26800B1022
+DXGE,Dynamic Active Global Equity Income ETF,ETF,CAD,CA26786M1068
+DXID,Dynamic Active Innovation and Disruption ETF,ETF,CAD,CA26786C2076
+DXIF,Dynamic Active International ETF,ETF,CAD,CA26785N1050
+DXMO,Dynamic Active Mining Opportunities ETF,ETF,CAD,
+DXN,Dynamic Active Global Infrastructure ETF,ETF,CAD,CA26784H1091
+DXO,Dynamic Active Crossover Bond ETF,ETF,CAD,CA26789J1003
+DXP,Dynamic Active Preferred Shares ETF,ETF,CAD,CA26800U1003
+DXQ,Dynamic Active Enhanced Yield Covered Options ETF,ETF,CAD,CA26786L1085
+DXR,Dynamic Active Retirement Income ETF,ETF,CAD,CA26786G1090
+DXRE,Dynamic Active Real Estate ETF,ETF,CAD,
+DXT,Dexterra Group Inc,Common Stock,CAD,CA2523711091
+DXU,Dynamic Active U.S. Dividend ETF,ETF,CAD,CA26801J1049
+DXUS,Dynamic Active U.S. Equity ETF,ETF,CAD,CA26786K1003
+DXV,Dynamic Active Ultra Short Term Bond ETF,ETF,CAD,CA26801N1050
+DXW,Dynamic Active International Dividend ETF,ETF,CAD,CA26784G1019
+DXZ,Dynamic Active U.S. Mid-Cap ETF,ETF,CAD,CA26802A1021
+DYA,DynaCERT Inc.,Common Stock,CAD,CA26780A1084
+DYN004,Dynamic Power American Growth Fund Series A - FE,FUND,CAD,
+DYN014,Dynamic Power Global Growth Class Series A - FE,FUND,CAD,
+DYN3128,Dynamic Short Term Credit Plus Fund Series F,FUND,CAD,
+DYN3361,Dynamic Premium Yield Plus Fund Series F,FUND,CAD,
+E,Enterprise Group Inc,Common Stock,CAD,CA29373A3038
+EAGR,East Side Games Group Inc,Common Stock,CAD,CA2752551077
+EARN,Evolve Active Global Fixed Income Fund,ETF,CAD,CA30053B1085
+EASY,Evolve All-in-One UltraYield ETF,ETF,CAD,
+EBIT,Bitcoin ETF CAD,ETF,CAD,CA09175J1084
+EBIT-U,Bitcoin ETF,ETF,USD,CA09175J1167
+EBNK,Evolve European Banks Enhanced Yield ETF Hedged CAD,ETF,CAD,CA30053N3004
+EBNK-B,Evolve European Banks Enhanced Yield ETF Unhedged CAD,ETF,CAD,
+EBNK-U,Evolve European Banks Enhanced Yield ETF USD,ETF,USD,
+ECHI,Ninepoint Enhanced Canadian HighShares ETF,ETF,CAD,
+ECO,EcoSynthetix Inc,Common Stock,CAD,CA27923D1087
+ECOR,Ecora Resources plc,Common Stock,CAD,
+EDCU,Edge Copper Corporation,Common Stock,CAD,
+EDG5001,Edgepoint Global Portfolio Series F(N) Non Hst,FUND,CAD,
+EDG708,Edgepoint Canadian Portfolio Series I,FUND,CAD,
+EDGE,Evolve Innovation Index Fund ETF,ETF,CAD,CA30052W1032
+EDGE-U,Evolve Innovation Index Fund,ETF,USD,CA30052W1115
+EDGF,Brompton European Dividend Growth ETF,ETF,CAD,CA11222M1005
+EDR,Endeavour Silver Corp.,Common Stock,CAD,CA29258Y1034
+EDT,Spectral Med Inc,Common Stock,CAD,CA8475771033
+EDV,Endeavour Mining Corp,Common Stock,CAD,GB00BL6K5J42
+EFN,Element Fleet Management Corp,Common Stock,CAD,CA2861812014
+EFR,Energy Fuels Inc,Common Stock,CAD,CA2926717083
+EFX,Enerflex Ltd.,Common Stock,CAD,CA29269R1055
+EGIF,Exemplar Growth and Income Ser ETF,ETF,CAD,CA30170L1040
+EGLX,Enthusiast Gaming Holdings Inc,Common Stock,CAD,CA29385B1094
+EHE,CI Europe Hedged Equity Index ETF,ETF,CAD,CA97719D1096
+EIF,Exchange Income Corporation,Common Stock,CAD,CA3012831077
+EIT-PA,Canoe EIT Income Fund Pref,Preferred Stock,CAD,CA13780R2081
+EIT-PB,Canoe EIT Income Fund,ETF,CAD,CA13780R1331
+EIT-UN,Canoe EIT Income Fund,ETF,CAD,CA13780R1091
+ELD,Eldorado Gold Corp,Common Stock,CAD,CA2849025093
+ELE,Elemental Royalty Corporation,Common Stock,CAD,
+ELEF,Silver Elephant Mining Corp,Common Stock,CAD,CA82770L3074
+ELF,E-L Financial Corp Ltd,Common Stock,CAD,CA2685751075
+ELF-PF,E-L Financial Corp Ltd Pref F,Preferred Stock,CAD,CA26857Q3098
+ELF-PG,E-L Financial Corp Ltd Pref G,Preferred Stock,CAD,CA26857Q4088
+ELF-PH,E-L Financial 3 Non Cum Frst Prf,Preferred Stock,CAD,CA26857Q5077
+ELO,Eloro Resources Ltd.,Common Stock,CAD,
+ELR,Eastern Platinum Limited,Common Stock,CAD,CA2768555096
+ELVA,Electrovaya Inc.,Common Stock,CAD,CA28617B6061
+EMA,Emera Inc.,Common Stock,CAD,CA2908761018
+EMA-PA,Emera Inc Pref A,Preferred Stock,CAD,CA2908763097
+EMA-PC,Emera Srs C Cum Rr Prf,Preferred Stock,CAD,CA2908765076
+EMA-PE,Emera Inc Pref E,Preferred Stock,CAD,CA2908767056
+EMA-PF,Emera Inc Pref F,Preferred Stock,CAD,CA2908768047
+EMA-PH,Emera Inc,Preferred Stock,CAD,CA2908768617
+EMA-PL,Emera Inc,Preferred Stock,CAD,
+EMAX,Hamilton Energy YIELD MAXIMIZER ETF,ETF,CAD,CA4073611044
+EMP-A,Empire Company Limited,Common Stock,CAD,CA2918434077
+EMV-B,CI WisdomTree Emerging Markets Dividend Index ETF,ETF,CAD,CA17165Y1007
+ENB,Enbridge Inc,Common Stock,CAD,CA29250N1050
+ENB-PA,Enbridge Inc Pref A,Preferred Stock,CAD,CA29250N2041
+ENB-PB,Enbridge Cumulative Red B Prf,Preferred Stock,CAD,CA29250N7099
+ENB-PD,Enbridge D Cum Redeemable Prf,Preferred Stock,CAD,CA29250N8816
+ENB-PF,Enbridge F Cum Redeemable Prf,Preferred Stock,CAD,CA29250N8659
+ENB-PFA,Enbridge Inc Pref 9,Preferred Stock,CAD,CA29250N6265
+ENB-PFC,Enbridge Inc Pref 11,Preferred Stock,CAD,CA29250N5929
+ENB-PFE,Enbridge Inc Pref 13,Preferred Stock,CAD,CA29250N5762
+ENB-PFG,Enbridge Inc Pref 15,Preferred Stock,CAD,CA29250N5507
+ENB-PFK,Enbridge Inc Pref Series 19,Preferred Stock,CAD,CA29250N5192
+ENB-PFU,Enbridge Inc Pref L,Preferred Stock,USD,CA29250N7909
+ENB-PFV,Enbridge Inc Pref 5,Preferred Stock,USD,CA29250N6679
+ENB-PG,Enbridge Inc,Preferred Stock,CAD,
+ENB-PH,Enbridge H Cum Redeemable Prf,Preferred Stock,CAD,CA29250N8402
+ENB-PI,Enbridge Inc,Preferred Stock,CAD,
+ENB-PJ,Enbridge Inc Pref 7,Preferred Stock,CAD,CA29250N6422
+ENB-PN,Enbridge Srs N Cum Red Prf,Preferred Stock,CAD,CA29250N7743
+ENB-PP,Enbridge Srs P Cum Red Prf,Preferred Stock,CAD,CA29250N7586
+ENB-PT,Enbridge Srs R Cum Red Prf,Preferred Stock,CAD,CA29250N7339
+ENB-PV,Enbridge Inc Pref 1,Preferred Stock,USD,CA29250N7172
+ENB-PY,Enbridge Inc Pref 3,Preferred Stock,CAD,CA29250N6836
+ENBE,Harvest Enbridge Enhanced High Income Shares ETF,ETF,CAD,
+ENCC,Global X Canadian Oil and Gas Equity Covered Call ETF,ETF,CAD,CA44056V1022
+ENCL,Global X Enhanced Canadian Oil and Gas Equity Covered Call ETF CAD,ETF,CAD,CA37963B1022
+ENGH,Enghouse Systems Ltd,Common Stock,CAD,CA2929491041
+ENHI,Ninepoint Enbridge HighShares ETF,ETF,CAD,
+ENI-UN,Energy Income Fund,ETF,CAD,CA29270B2066
+ENS,E Split Corp Class A,Common Stock,CAD,CA26916F1045
+ENS-PA,E Split Corp,Preferred Stock,CAD,CA26916F2035
+EPRX,Eupraxia Pharmaceuticals Inc,Common Stock,CAD,CA29842P1053
+EQB,EQB Inc.,Common Stock,CAD,CA26886R1047
+EQCC,Global X All-Equity Asset Allocation Covered Call ETF,ETF,CAD,CA37962K1030
+EQCL,Global X Enhanced All-Equity Asset Allocation Covered Call ETF CAD,ETF,CAD,CA37963E1060
+EQL,CI Invesco S&P 500 Equal Weight Index ETF,ETF,CAD,CA46137P1036
+EQL-F,CI Invesco S&P 500 Equal Weight Index ETF,ETF,CAD,CA46137P2026
+EQL-U,CI Invesco S&P 500 Equal Weight Index ETF,ETF,USD,CA46137P3016
+EQLI,Invesco S&P 500 Equal Weight Income Advantage ETF,ETF,CAD,CA46149J1030
+EQLT,CI S&P/TSX 60 Equal Weight Index ETF,ETF,CAD,
+EQX,Equinox Gold Corp,Common Stock,CAD,CA29446Y5020
+EQY,Franklin All-Equity ETF,ETF,CAD,
+ERD,Erdene Resource Development Corp,Common Stock,CAD,CA29480N2068
+ERO,Ero Copper Corp,Common Stock,CAD,CA2960061091
+ESG,CI S&P 500 ESG Index ETF,ETF,CAD,CA46143V2012
+ESG-F,CI S&P 500 ESG Index ETF,ETF,CAD,CA05589Y1034
+ESGA,BMO MSCI Canada Selection Equity Index ETF,ETF,CAD,CA05587Y1051
+ESGB,BMO ESG Corporate Bond Index ETF,ETF,CAD,CA05600D1042
+ESGC,CI S&P/TSX Composite ESG Index ETF,ETF,CAD,CA46143X1087
+ESGE,BMO MSCI EAFE Selection Equity Index ETF,ETF,CAD,CA05600J1012
+ESGF,BMO ESG US Corporate Bond Hedged to CAD Index ETF,ETF,CAD,CA05589Y1034
+ESGG,BMO MSCI Global ESG Leaders Index ETF,ETF,CAD,CA09662J1084
+ESGY,BMO MSCI USA ESG Leaders Index ETF,ETF,CAD,CA05600C1068
+ESGY-F,BMO MSCI USA Selection Equity Index ETF (Hedged Units),ETF,CAD,CA05600C2058
+ESI,Ensign Energy Services Inc,Common Stock,CAD,CA2935701078
+ESM,Euro Sun Mining Inc,Common Stock,CAD,CA29872L2066
+ESP,Brompton Energy Split Corp,Common Stock,CAD,
+ESP-PA,Brompton Energy Split Corp.,Preferred Stock,CAD,
+ESPX,Evolve S&P 500® Enhanced Yield Fund CAD Hedged,ETF,CAD,CA30052U2065
+ESPX-B,Evolve S&P 500 Enhanced Yield Fund CAD Unhedged,ETF,CAD,
+ESPX-U,Evolve S&P 500 Enhanced Yield Fund USD Unhedged,ETF,USD,
+ET,Evertz Technologies Limited,Common Stock,CAD,CA30041N1078
+ETC,Evolve Cryptocurrencies ETF,ETF,CAD,CA3005342033
+ETC-U,Evolve Cryptocurrencies ETF,ETF,USD,CA3005341043
+ETG,Entree Resources Ltd,Common Stock,CAD,CA29384J1030
+ETHH,Purpose Ether ETF - Hedged,ETF,CAD,CA74642N1087
+ETHH-B,Purpose Ether ETF - CAD ETF Non-Currency Hedged,ETF,CAD,CA74642N2077
+ETHH-U,Purpose Ether ETF - USD ETF Non-Currency Hedged,ETF,USD,CA74642N3067
+ETHI,Global X Global Sustainability Leaders Index ETF,ETF,CAD,CA44054C1068
+ETHO-B,Purpose Core Ether ETF,ETF,CAD,
+ETHQ,3iQ Ether Staking ETF CAD,ETF,CAD,CA88428G1037
+ETHQ-U,3iQ Ether Staking ETF,ETF,USD,
+ETHR,Ether ETF CAD Unhedged Units,ETF,CAD,CA29764F2008
+ETHX,CI Galaxy Ethereum ETF,ETF,CAD,
+ETHX-B,CI Galaxy Ethereum ETF,ETF,CAD,CA12565N1015
+ETHX-U,CI Galaxy Ethereum ETF,ETF,USD,CA12565N2005
+ETHY,Purpose Ether Yield ETF - ETF Units,ETF,CAD,CA74642R1091
+ETHY-B,Purpose Ether Yield ETF,ETF,CAD,CA74642R2081
+ETHY-U,Purpose Ether Yield ETF,ETF,USD,CA74642R3071
+ETP,First Trust Global Risk Managed Income Index ETF Common,ETF,CAD,CA33739T1057
+ETSX,Evolve S&P/TSX 60 Enhanced Yield Fund CAD Unhedged,ETF,CAD,CA30052P1080
+EVO,Evovest Global Equity ETF,ETF,CAD,CA30053W1023
+EVT,Economic Investment Trust Ltd,Common Stock,CAD,CA2788931020
+EXE,Extendicare Inc,Common Stock,CAD,CA30224T8639
+F,Ford CDR (CAD Hedged),Common Stock,CAD,
+FAP,abrdn Asia Pacific Income Fund VCC,Common Stock,CAD,SGXZ44536704
+FAR,Foraco International SA,Common Stock,CAD,FR0010492199
+FAUS,Fidelity Advanced U.S. Equity Fund,ETF,CAD,
+FBGO,Franklin Brandywine Global Sustainable Income Optimiser Fund ETF,ETF,CAD,CA3524921028
+FBT,First Trust NYSE Arca Biotechnology ETF,ETF,CAD,CA33742D1050
+FBTC,Fidelity Advantage Bitcoin ETFTM,ETF,CAD,CA31580V1040
+FBTC-U,Fidelity Advantage Bitcoin ETF,ETF,USD,CA31580V1040
+FC,Firm Capital Mortgage Invest Corp,Common Stock,CAD,CA3183231024
+FCAB,Fidelity Absolute Income Fund,ETF,CAD,
+FCAE,Fidelity American Equity Fund,FUND,CAD,
+FCCD,Fidelity Canadian High Dividend ETF,ETF,CAD,CA31608M1023
+FCCQ,Fidelity Canadian High Quality ETF,ETF,CAD,CA31610C1005
+FCCV,Fidelity Canadian Value ETF,ETF,CAD,CA31609U1030
+FCD-UN,Firm Capital Property Trust,Common Stock,CAD,CA3183261054
+FCID,Fidelity International High Dividend ETF,ETF,CAD,CA31623D1033
+FCII,Franklin ClearBridge Sustainable Global Infrastructure Income Fund ETF,ETF,CAD,CA3525301097
+FCIQ,Fidelity International High Quality Index ETF,ETF,CAD,CA31623X1096
+FCIV,Fidelity International Value ETF,ETF,CAD,CA31622Y1088
+FCQH,Fidelity U.S. High Quality Currency Neutral ETF,ETF,CAD,CA31648J1012
+FCR-UN,First Capital Real Estate Investment Trust,Common Stock,CAD,CA31890B1031
+FCRC,Franklin Canadian Core Equity Fund,ETF,CAD,
+FCRI,Franklin International Core Equity Fund,ETF,CAD,
+FCRR,Fidelity U.S. Dividend for Rising Rates ETF,ETF,CAD,CA31644M1086
+FCRU,Franklin U.S. Core Equity Fund,ETF,CAD,
+FCUB,Fidelity Core U.S. Bond ETF,ETF,CAD,
+FCUD,Fidelity U.S. High Dividend ETF,ETF,CAD,CA31645M1077
+FCUH,Fidelity U.S. High Dividend Currency Neutral ETF,ETF,CAD,CA3157401009
+FCUQ,Fidelity U.S. High Quality Index ETF,ETF,CAD,CA31647C1077
+FCUV,Fidelity U.S. Value ETF,ETF,CAD,CA31647E1034
+FCVH,Fidelity U.S. Value Currency Neutral ETF,ETF,CAD,CA31646E1043
+FCXS,Freeport-McMoRan CDR (CAD Hedged),Common Stock,CAD,
+FDL,First Asset Canadian Dividend Low Volatility Index ETF,ETF,CAD,
+FDN,First Trust Dow Jones Internet ETF,ETF,CAD,CA33742F1009
+FDY,Faraday Copper Corp.,Common Stock,CAD,CA3073571034
+FEBB-F,First Trust Cboe Vest U.S. Equity Buffer ETF - February,ETF,CAD,CA33732W2040
+FEC,Frontera Energy Corp,Common Stock,CAD,CA35905B1076
+FEMO,Fidelity Emerging Markets Opportunities Fund,FUND,CAD,
+FETH,Fidelity Advantage Ether ETF - L,ETF,CAD,CA31580Y7028
+FF,First Mining Gold Corp,Common Stock,CAD,CA3208901064
+FFAB,Fidelity Alternative Bond Fund,FUND,CAD,
+FFH,Fairfax Financial Holdings Ltd,Common Stock,CAD,CA3039011026
+FFH-PK,Fairfax Financial Holdings Ltd Pref K,Preferred Stock,CAD,CA3039018211
+FFM,FireFly Metals Ltd.,Common Stock,CAD,
+FFN,North American Financial 15,Common Stock,CAD,CA65685J3010
+FFN-PA,North American Financial 15 Split Corp,Preferred Stock,CAD,CA65685J1030
+FGCV,Fidelity Global Concentrated Value Fund,FUND,CAD,
+FGEB,Fidelity Global Equity+ Balanced Fund ETF,ETF,CAD,CA3162201022
+FGEP,Fidelity Global Equity+ Fund,ETF,CAD,
+FGO,CI Enhanced Government Bond ETF,ETF,CAD,CA12558H1038
+FGO-U,CI Enhanced Government Bond ETF,ETF,USD,CA12558H2028
+FGOV,Franklin Canadian Government Bond Fund,ETF,CAD,
+FGRW,Forstrong Global Growth ETF,ETF,CAD,
+FGSM,Fidelity Global Small-Mid Cap Equity Fund,ETF,CAD,
+FHC-F,First Trust Dow Jones Internet ETF,ETF,CAD,
+FHG,FT AlphaDEX U.S. Industrials Sector Index ETF,ETF,CAD,CA33732Q1081
+FHH,First Trust AlphaDEX US Health Care,ETF,CAD,CA33718X1015
+FHH-F,First Trust AlphaDEX U.S. Health Care Sector Index ETF,ETF,CAD,CA33718X2005
+FHI,CI Health Care Giants Covered Call ETF Common Units,ETF,CAD,CA17162H1001
+FHI-B,CI Health Care Giants Covered Call ETF,ETF,CAD,CA17162H2090
+FHI-U,CI Health Care Giants Covered Call ETF Common Units (USD Hedged),ETF,USD,
+FHIS,Franklin Canadian Ultra Short Term Bond Fund ETF Series,ETF,CAD,CA35249A1049
+FHQ,First Trust AlphaDEX US Technology,ETF,CAD,CA33732K1012
+FHQ-F,First Trust AlphaDEX U.S. Technology Sector Index ETF,ETF,CAD,CA33732K2002
+FID265,Fidelity Canadian Growth Company Sr B,FUND,CAD,
+FID5494,Fidelity Insights Class Series F,FUND,CAD,
+FID5982,Fidelity Global Innovators Class Series Fio Series F(N) Non Hst,FUND,CAD,
+FID631,Fidelity Canadian Large Cap Fund Series F,FUND,CAD,
+FID661,Fidelity Small Cap America Sr F,FUND,CAD,
+FID7648,Fidelity Global Equity+ Fund Series F,FUND,CAD,
+FIE,iShares Canadian Financial Monthly Income Common Class,ETF,CAD,CA46433H1029
+FIG,CI Investment Grade Bond ETF,ETF,CAD,CA12556J1012
+FIH-U,Fairfax India Holdings Corporation,Common Stock,USD,
+FINC,Forstrong Global Income ETF,ETF,CAD,
+FINO,Franklin Innovation Fund ETF,ETF,CAD,CA35361K1049
+FINT,First Trust International Capital Strength ETF,ETF,CAD,CA33741A1021
+FISV,Fiserv CDR (CAD Hedged),Common Stock,CAD,
+FLCI,Franklin Bissett Corporate Bond Fund ETF,ETF,CAD,CA3537681049
+FLCP,Franklin Canadian Core Plus Bond Fund ETF,ETF,CAD,CA35377L1040
+FLGA,Franklin Global Core Bond Fund ETF Series,ETF,CAD,CA35377B1067
+FLI,CI U.S. & Canada Lifeco Covered Call ETF (Hedged Common Units),ETF,CAD,CA12555K1093
+FLNT,FLINT Corp.,Common Stock,CAD,
+FLSD,Franklin Canadian Short Term Bond Fund ETF,ETF,CAD,CA35377H1038
+FLSE,Fidelity Global Opportunities Long/Short Fund,FUND,CAD,
+FLT,Volatus Aerospace Inc.,Common Stock,CAD,
+FLUS,Franklin U.S. Large Cap Multifactor Index ETF,ETF,CAD,CA35376P1062
+FLX,Purpose Global Flexible Credit Fund - ETF,ETF,CAD,CA74643C1014
+FM,First Quantum Minerals Ltd,Common Stock,CAD,CA3359341052
+FMAB,Fidelity Multi-Alt Balanced Fund,FUND,CAD,
+FMAE,Fidelity Multi-Alt Equity Fund,ETF,CAD,
+FMAX,Hamilton U.S. Financials YIELD MAXIMIZER ETF,ETF,CAD,CA4078511041
+FMPB,Fidelity Global Balanced Portfolio,Common Stock,CAD,
+FMPG,Fidelity Global Growth Portfolio,Common Stock,CAD,
+FMPI,Fidelity Global Income Portfolio,Common Stock,CAD,
+FMR,Future Mineral Resources Inc.,Common Stock,CAD,
+FNV,Franco-Nevada Corporation,Common Stock,CAD,CA3518581051
+FOOD,Goodfood Market Corp,Common Stock,CAD,CA38217M1005
+FORA,VerticalScope Holdings Inc,Common Stock,CAD,CA92537Y1043
+FPR,CI Preferred Share ETF,ETF,CAD,CA17162D1096
+FRU,Freehold Royalties Ltd.,Common Stock,CAD,CA3565001086
+FRX,Fennec Pharmaceuticals Inc,Common Stock,CAD,CA31447P1009
+FSB,CI Enhanced Short Duration Bond Fund ETF Common Units,ETF,CAD,CA12559E1097
+FSB-U,CI Enhanced Short Duration Bond Fund,ETF,USD,CA12559E2087
+FSF,CI Global Financial Sector ETF,ETF,CAD,CA12556H1055
+FSL,First Trust Senior Loan ETF (CAD-Hedged) Common,ETF,CAD,CA33739J1075
+FST,First Trust Canadian Capital Strength ETF Common,ETF,CAD,CA3373311024
+FSV,FirstService Corp,Common Stock,CAD,CA33767E2024
+FSY,Forsys Metals Corp.,Common Stock,CAD,CA34660G1046
+FSZ,Fiera Capital Corporation,Common Stock,CAD,CA31660A1030
+FT,Fortune Minerals Limited,Common Stock,CAD,CA34967D1015
+FTG,Firan Technology Group Corporation,Common Stock,CAD,CA3180931014
+FTHI,Fidelity Tactical High Income Fund,ETF,CAD,
+FTLS,First Trust Long/Short Equity ETF,ETF,CAD,
+FTN,Financial 15 Split Corp,Common Stock,CAD,CA3175043064
+FTN-PA,Financial 15 Split Corp Pref A,Preferred Stock,CAD,CA3175041084
+FTS,Fortis Inc,Common Stock,CAD,CA3495531079
+FTS-PF,Fortis 1St Cum Red Srs F Prf,Preferred Stock,CAD,CA3495538678
+FTS-PG,Fortis Inc Pref G,Preferred Stock,CAD,CA3495538348
+FTS-PH,Fortis Inc Pref H,Preferred Stock,CAD,CA3495538264
+FTS-PI,Fortis Inc Pref I,Preferred Stock,CAD,CA3495538181
+FTS-PJ,Fortis Srs J Cum Red First Prf,Preferred Stock,CAD,CA3495537928
+FTS-PK,Fortis Inc Pref K,Preferred Stock,CAD,CA3495537845
+FTS-PM,Fortis Inc Pref M,Preferred Stock,CAD,CA3495537688
+FTT,Finning International Inc.,Common Stock,CAD,CA3180714048
+FTU,US Financial 15 Split Corp,Common Stock,CAD,CA90341H5078
+FTU-PB,US Financial 15 Split Corp Pref B,Preferred Stock,CAD,CA90341H3099
+FUD,First Trust Value Line® Dividend ETF Common,ETF,CAD,CA33740H1082
+FURY,Fury Gold Mines Ltd,Common Stock,CAD,CA36117T1003
+FVI,Fortuna Silver Mines Inc,Common Stock,CAD,CA3499421020
+FVL,Freegold Ventures Limited,Common Stock,CAD,CA3564552048
+FXM,First Asset Morningstar Canada Value Common Class,ETF,CAD,CA12554N1042
+GASD,SavvyShort Geared Natural Gas ETF,ETF,CAD,
+GASU,SavvyLong Geared Natural Gas ETF,ETF,CAD,
+GASX,NG Energy International Corp.,Common Stock,CAD,
+GAU,Galiano Gold Inc,Common Stock,CAD,CA36352H1001
+GBAL,iShares ESG Balanced ETF Portfolio,ETF,CAD,CA46436W1068
+GBSL,Ninepoint Global Select Fund,ETF,CAD,
+GBT,BMTC Group Inc,Common Stock,CAD,CA05561N2086
+GBUL,Ninepoint Gold Bullion Fund,ETF,CAD,
+GCBD,Guardian Canadian Bond Fund ETF Units,ETF,CAD,CA4013381088
+GCEI,Guardian Canadian Equity Income Fund,FUND,CAD,
+GCFE,Guardian Canadian Focused Equity ETF,ETF,CAD,CA40133A1030
+GCNS,iShares ESG Conservative Balanced ETF Portfolio,ETF,CAD,CA46437R1064
+GCSC,Guardian Canadian Sector Controlled Equity Fund,ETF,CAD,CA40133L1094
+GCTB,Guardian Ultra-Short Canadian T-Bill Fund,ETF,CAD,
+GCU,Gunnison Copper Corp,Common Stock,CAD,
+GDC,Genesis Land Development Corp.,Common Stock,CAD,CA37183V1022
+GDEP-B,Guardian Directed Equity Path ETF,ETF,CAD,CA40090B2012
+GDL,Goodfellow Inc.,Common Stock,CAD,CA38216R1001
+GDPY-B,Guardian Directed Premium Yield ETF,ETF,CAD,CA40138D2014
+GDV,Global Dividend Growth Split Corp Class A,Common Stock,CAD,CA3794441020
+GDV-PA,Global Dividend Growth Split Corp,Preferred Stock,CAD,CA3794442010
+GDXD,BetaPro Canadian Gold Miners -2x Daily Bear ETF,ETF,CAD,
+GDXU,BetaPro Canadian Gold Miners 2x Daily Bull ETF,ETF,CAD,
+GE,GE Aerospace CDR (CAD Hedged),Common Stock,CAD,CA36829X1006
+GEC,Global Real Estate & E-Commerce Dividend Fund,FUND,CAD,
+GEI,Gibson Energy Inc.,Common Stock,CAD,CA3748252069
+GENM,Generation Mining Ltd,Common Stock,CAD,CA37149B1094
+GEO,Geodrill Limited,Common Stock,CAD,IM00B3RLCZ58
+GEQT,iShares ESG Equity ETF Portfolio,ETF,CAD,CA46436Q1090
+GEV,GE Vernova CDR (CAD Hedged),Common Stock,CAD,
+GFGE,Guardian Fundamental Global Equity Fund,FUND,CAD,
+GFL,Gfl Environmental Holdings Inc,Common Stock,CAD,CA36168Q1046
+GFP,GreenFirst Forest Products Inc,Common Stock,CAD,CA39526A1003
+GFR,Greenfire Resources Ltd.,Common Stock,CAD,
+GGD,GoGold Resources Inc.,Common Stock,CAD,CA38045Y1025
+GGEP,Guardian Directed Equity Path Portfolio,Common Stock,CAD,
+GGPY,Guardian Directed Premium Yield Portfolio,Common Stock,CAD,
+GGRO,iShares ESG Growth ETF Portfolio,ETF,CAD,CA46438K1003
+GIAI,Guardian i3 AI Technology and Innovation Fund,FUND,CAD,
+GIB-A,CGI Inc,Common Stock,CAD,CA12532H1047
+GICD,Guardian i3 Canadian Dividend Growth Fund,FUND,CAD,
+GIDY,Guardian i3 Global Dividend Premium Yield Fund,ETF,CAD,
+GIES,Guardian International Equity Select ETF,ETF,CAD,CA40138E1007
+GIGC,Guardian Investment Grade Corporate Bond Fund,FUND,CAD,
+GIGD,Guardian i3 Global Dividend Growth Fund,FUND,CAD,
+GIGF,Guardian i3 Global Core Equity Fund,FUND,CAD,
+GIL,Gildan Activewear Inc.,Common Stock,CAD,CA3759161035
+GILD,Gilead Sciences CDR (CAD Hedged),Common Stock,CAD,
+GIQG,Guardian i3 Global Quality Growth ETF Hedged,ETF,CAD,CA40136W1023
+GIQG-B,Guardian i3 Global Quality Growth ETF,ETF,CAD,CA40136W2013
+GIUS,Guardian i3 U.S. Core Equity Fund,FUND,CAD,
+GLCC,Global X Gold Producer Equity Covered Call ETF,ETF,CAD,CA4405651098
+GLCL,Global X Enhanced Gold Producer Equity Covered Call ETF,ETF,CAD,
+GLDD,BetaPro Gold Bullion -2x Daily Bear ETF,ETF,CAD,
+GLDE,Ninepoint Gold and Precious Minerals Fund,ETF,CAD,
+GLDU,BetaPro Gold Bullion 2x Daily Bull ETF,ETF,CAD,CA08660T1003
+GLDX,Global X Gold Producers Index ETF,ETF,CAD,CA37965M1068
+GLO,Global Atomic Corp,Common Stock,CAD,CA37957M1068
+GLRA-PA,Global Real Assets Trust,Common Stock,CAD,
+GMIN,G Mining Ventures Corp.,Common Stock,CAD,CA36270K1021
+GMX,Globex Mining Enterprises Inc.,Common Stock,CAD,CA3799005093
+GO-U,GO Residential Real Estate Investment Trust,Common Stock,USD,
+GOGY,Harvest Alphabet Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+GOHI,Ninepoint Alphabet HighShares ETF,ETF,CAD,
+GOLD,GoldMining Inc,Common Stock,CAD,CA38149E1016
+GOOG,Alphabet CDR (CAD Hedged),Common Stock,CAD,
+GOOS,Canada Goose Holdings Inc,Common Stock,CAD,CA1350861060
+GRA,NanoXplore Inc,Common Stock,CAD,CA63010G1000
+GRC,Gold Springs Resource Corp,Common Stock,CAD,CA3807211006
+GRCC,Global X Growth Asset Allocation Covered Call ETF,ETF,CAD,CA3799421050
+GRGD,Groupe Dynamite Inc,Common Stock,CAD,CA39944C1005
+GRID,Tantalus Systems Holding Inc,Common Stock,CAD,CA87601F1062
+GRN,Greenlane Renewables Inc,Common Stock,CAD,CA3953321096
+GRO,Franklin Growth ETF Portfolio,ETF,CAD,
+GRT-UN,Granite Real Estate Investment Trust,Common Stock,CAD,CA3874372053
+GSDB,Guardian Short Duration Bond Fund,FUND,CAD,
+GSY,goeasy Ltd,Common Stock,CAD,CA3803551074
+GTE,Gran Tierra Energy Inc,Common Stock,CAD,US38500T1016
+GTRI,IA Clarington Agile Global Total Return Income Fund,ETF,CAD,
+GUD,Knight Therapeutics Inc.,Common Stock,CAD,
+GURU,Guru Organic Energy Corp,Common Stock,CAD,CA36260M1005
+GUTB-U,Guardian Ultra-Short U.S. T-Bill Fund,ETF,USD,
+GVC,Glacier Media Inc.,Common Stock,CAD,CA3763941026
+GWO,Great-West Lifeco Inc.,Common Stock,CAD,CA39138C1068
+GWO-PG,Great West Lifeco Inc Pref G,Preferred Stock,CAD,CA39138C8824
+GWO-PH,Great West Lifeco 1St 4.8 H Prf,Preferred Stock,CAD,CA39138C8741
+GWO-PI,Great West Lifeco 1St I Prf,Preferred Stock,CAD,CA39138C8667
+GWO-PL,Great Wst 5.65 Non Cum 1St L Prf,Preferred Stock,CAD,CA39138C8253
+GWO-PM,Great West Lifeco Inc Pref M,Preferred Stock,CAD,CA39138C8170
+GWO-PN,Great West 3.65% Non Cum N Prf,Preferred Stock,CAD,CA39138C7917
+GWO-PP,Great Lifec 5.40 % P Non Cum Prf,Preferred Stock,CAD,CA39138C7750
+GWO-PQ,Great Wes 5.15 Q Non Cum Fst Prf,Preferred Stock,CAD,CA39138C7677
+GWO-PR,Great 4.80% R Non Cum Frst Prf,Preferred Stock,CAD,CA39138C7594
+GWO-PS,Great West Lifeco Inc Pref S,Preferred Stock,CAD,CA39138C7347
+GWO-PT,Great-West Lifeco Inc,Preferred Stock,CAD,CA39138C7263
+GWO-PY,Great-West Lifeco Inc.,Preferred Stock,CAD,
+H,Hydro One Ltd,Common Stock,CAD,CA4488112083
+HAB,Global X Active Corporate Bond ETF Common,ETF,CAD,CA44051F1027
+HAC,Global X Seasonal Rotation ETF,ETF,CAD,CA44049U1049
+HAD,Global X Active Canadian Bond ETF Common,ETF,CAD,CA44051N1134
+HAF,Global X Active Global Fixed Income ETF,ETF,CAD,CA44052P1172
+HAI,Haivision Systems Inc,Common Stock,CAD,CA40531F1009
+HAL,Global X Active Canadian Dividend ETF Common,ETF,CAD,CA44050P1018
+HALO,Russell Investments Fallen Angels ETF,ETF,CAD,
+HAZ,Global X Active Global Dividend ETF,ETF,CAD,CA44051G1000
+HBA,Hamilton Australian Bank Equal-Weight Index ETF,ETF,CAD,CA40701D1096
+HBAL,Global X Balanced Asset Allocation ETF,ETF,CAD,CA44053R1047
+HBB,Global X Canadian Select Universe Bond Index Corporate Class ETF,ETF,CAD,CA44055A1093
+HBDV,Humilis North American Dividend Growth ETF,ETF,CAD,
+HBF,Harvest US Equity Leaders Income ETF,ETF,CAD,CA41753L1067
+HBF-B,Harvest US Equity Leaders Income ETF (Unhedged),ETF,CAD,CA41753L1224
+HBF-U,Harvest US Equity Leaders Income ETF (US),ETF,USD,CA41753L1141
+HBGD,Global X Big Data & Hardware Index ETF,ETF,CAD,CA44054U1066
+HBGD-U,Global X Big Data & Hardware Index ETF,ETF,USD,CA44054U1066
+HBIE,Harvest Balanced Income & Growth Enhanced ETF Class A,ETF,CAD,CA41752L1076
+HBIG,Harvest Balanced Income & Growth ETF Class A,ETF,CAD,CA41751V1067
+HBIL,Hamilton U.S. T-Bill YIELD MAXIMIZER ETF CAD Hedged Units,ETF,CAD,CA4078732076
+HBIL-U,Hamilton U.S. T-Bill YIELD MAXIMIZER ETF USD Unhedged Units,ETF,USD,
+HBLK,Blockchain Technologies ETF,ETF,CAD,CA09369T1021
+HBM,HudBay Minerals Inc,Common Stock,CAD,CA4436281022
+HBND,Hamilton U.S. Bond YIELD MAXIMIZER ETF,ETF,CAD,CA4079171035
+HBND-U,Hamilton U.S. Bond YIELD MAXIMIZER ETF USD Units,ETF,USD,
+HBNK,Global X Equal Weight Banks Index ETF,ETF,CAD,CA4404651024
+HBOP,Humilis Fundamental Opportunities ETF,ETF,CAD,
+HBP,Helix BioPharma Corp.,Common Stock,CAD,CA4229101098
+HBTA,Humilis North American Tactical Equity Fund,FUND,CAD,
+HCA,Hamilton Canadian Bank Mean Reversion Index ETF,ETF,CAD,CA40704K1003
+HCAL,Hamilton Enhanced Canadian Bank ETF,ETF,CAD,CA40704L1085
+HCLN,Harvest Clean Energy ETF Class A units,ETF,CAD,CA41754G1063
+HCON,Global X Conservative Asset Allocation ETF,ETF,CAD,CA44053V1058
+HCRE,Global X Equal Weight Canadian REITs Index Corporate Class ETF,ETF,CAD,CA44056F1071
+HD,Home Depot CDR (CAD Hedged),Common Stock,CAD,
+HDGE,Accelerate Absolute Return Hedge Fund,ETF,CAD,CA00435W1041
+HDIF,Harvest Diversified Monthly Income ETF - Class A Units,ETF,CAD,CA41753N1024
+HDIV,Hamilton Enhanced Multi-Sector Covered Call ETF,ETF,CAD,CA4073621027
+HEA-U,Global X Enhanced Income US Equity (USD) ETF,ETF,USD,
+HEB,Hamilton Canadian Bank Equal-Weight Index ETF,ETF,CAD,CA40704N1042
+HEQL,Global X Enhanced All-Equity Asset Allocation ETF CAD,ETF,CAD,CA37963C1005
+HEQT,Global X All-Equity Asset Allocation ETF,ETF,CAD,CA44055L1058
+HERO,Evolve E-Gaming Index ETF,ETF,CAD,CA30052Y1097
+HEWB,Global X Equal Weight Canadian Banks Index Corporate Class ETF,ETF,CAD,CA44055N1015
+HFG,Hamilton Global Financials ETF,ETF,CAD,CA40739A1012
+HFIN,Hamilton Enhanced Canadian Financials ETF,ETF,CAD,CA4073641082
+HFN,Hamilton Canadian Financials Index ETF,ETF,CAD,CA4069101091
+HFPC-U,Helios Fairfax Partners Corporation,Common Stock,USD,
+HFR,Global X Active Ultra-Short Term Investment Grade Bond ETF,ETF,CAD,CA44051H1082
+HGGG,Harvest Global Gold Giants Index ETF,ETF,CAD,CA41755C1041
+HGR,Harvest REIT Leaders Income ETF,ETF,CAD,CA41754X1096
+HGRW,Global X Growth Asset Allocation ETF CAD,ETF,CAD,CA3799201015
+HGY,Global X Gold Yield ETF,ETF,CAD,CA44050F1036
+HHIC,Harvest Canadian High Income Shares ETF,ETF,CAD,
+HHIH,Harvest High Income Equity Shares ETF,ETF,CAD,
+HHII,Harvest International High Income Shares ETF,ETF,CAD,
+HHIS,Harvest Diversified High Income Shares ETF - Class A Units,ETF,CAD,CA41756W1095
+HHIS-U,Harvest Diversified High Income Shares ETF,ETF,USD,
+HHL,Harvest Healthcare Leaders Income ETF,ETF,CAD,CA41755F1071
+HHL-B,Harvest Healthcare Leaders Income ETF,ETF,CAD,CA41755F3051
+HHL-U,Harvest Healthcare Leaders Income ETF,ETF,USD,CA41755F2061
+HHLE,Harvest Healthcare Leaders Enhanced Income ETF - Class A Units,ETF,CAD,CA41755U1049
+HIG,Brompton Global Healthcare Income & Growth ETF,ETF,CAD,CA11222T1057
+HIG-U,Brompton Global Healthcare Income & Growth ETF,ETF,USD,
+HIND,Harvest Industrial Leaders Income ETF Class A,ETF,CAD,CA4179251042
+HISU-U,US High Interest Savings Account ETF,ETF,USD,CA91737A1066
+HIVE,HIVE DIGITAL TECHNOLOGIES LTD,Common Stock,CAD,
+HLF,High Liner Foods Incorporated,Common Stock,CAD,CA4296951094
+HLIF,Harvest Canadian Dividend Leaders Income ETF,ETF,CAD,CA41756V1013
+HLIT,Global X Lithium Producers Index ETF,ETF,CAD,CA4404971059
+HLPR,Global X Laddered Canadian Preferred Share Index Corporate Class ETF,ETF,CAD,CA44055R1029
+HLS,HLS Therapeutics Inc,Common Stock,CAD,CA40390B1094
+HMAX,Hamilton Canadian Financials YIELD MAXIMIZER ETF,ETF,CAD,CA40704M1068
+HMM-A,Hammond Manufacturing Company Limited,Common Stock,CAD,CA40851T1021
+HMMC,Hemlo Mining Corp.,Common Stock,CAD,
+HMMJ,Global X Marijuana Life Sciences Index ETF,ETF,CAD,CA37991D1042
+HMMJ-U,Global X Marijuana Life Sciences Index ETF,ETF,USD,CA44054J1012
+HMP,Global X Active Canadian Municipal Bond ETF E,ETF,CAD,CA44052Y1007
+HND,BetaPro Natural Gas 2x Daily Bear,ETF,CAD,CA08662P1062
+HNU,BetaPro Natural Gas Leveraged Daily Bull ETF,ETF,CAD,CA08661K1084
+HOD,BetaPro Crude Oil Inverse Leveraged Daily Bear ETF,ETF,CAD,CA08662J1003
+HODY,Harvest Robinhood Enhanced High Income Shares ETF,ETF,CAD,
+HOM-U,BSR Real Estate Investment Trust,Common Stock,USD,
+HOM-UN,BSR Real Estate Investment Trust,Common Stock,CAD,CA05585D1033
+HONA,Honeywell Aerospace CDR (CAD Hedged),Common Stock,CAD,
+HOOD,Robinhood CDR (CAD Hedged),Common Stock,CAD,
+HOT-U,American Hotel Income Properties LP,Common Stock,USD,CA0266951064
+HOT-UN,American Hotel Income Properties REIT LP,Common Stock,CAD,
+HOU,BetaPro Crude Oil Daily Bull ETF,ETF,CAD,CA08663Q1037
+HPF,Harvest Energy Leaders Income ETF,ETF,CAD,CA41753Y1088
+HPF-U,Harvest Energy Leaders Income ETF (US),ETF,USD,CA41753Y1161
+HPR,Global X Active Preferred Share ETF,ETF,CAD,CA44051D1078
+HPS-A,Hammond Power Solutions Inc,Common Stock,CAD,CA4085491039
+HPYB,Harvest Premium Yield Canadian Bank ETF,ETF,CAD,
+HPYE,HARVEST PREMIUM YIELD ENHANCED ETF,ETF,CAD,
+HPYG,Harvest Premium Yield Gold ETF,ETF,CAD,
+HPYM,Harvest Premium Yield 7-10 Year Treasury ETF - Class A Units,ETF,CAD,CA41754J2092
+HPYM-U,Harvest Premium Yield 7-10 Year Treasury ETF - Class U Units,ETF,USD,CA41754J1003
+HPYT,Harvest Premium Yield Treasury ETF A,ETF,CAD,CA4179221011
+HPYT-B,Harvest Premium Yield Treasury ETF B Unhedged Units,ETF,CAD,CA4179223090
+HPYT-U,Harvest Premium Yield Treasury ETF,ETF,USD,
+HQD-U,BetaPro NASDAQ-100 -2x Daily Bear ETF,ETF,USD,CA08662N3094
+HR-UN,H&R Real Estate Investment Trust,Common Stock,CAD,CA4039254079
+HRIF,Harvest Diversified Equity Income ETF - Class A Units,ETF,CAD,CA41756E1097
+HRMS,Hermès CDR (CAD Hedged),Common Stock,CAD,
+HSAV,Global X Cash Maximizer Corporate Class ETF,ETF,CAD,CA43990D1033
+HSH,Global X S&P 500 CAD Hedged Index Corporate Class ETF,ETF,CAD,CA44055D1033
+HSLV,Highlander Silver Corp.,Common Stock,CAD,
+HSUV-U,Global X USD Cash Maximizer ETF,ETF,USD,CA43466T1030
+HTA,Harvest Tech Leaders Income ETF,ETF,CAD,CA41755D1024
+HTA-B,Harvest Tech Leaders Income ETF (Unhedged),ETF,CAD,CA41755D3004
+HTA-U,Harvest Tech Leaders Income ETF (US),ETF,USD,CA41755D2014
+HTAE,Harvest Tech Leaders Enhanced Income ETF,ETF,CAD,CA41754B1076
+HTB,Global X US 7-10 Year Treasury Bond Index Corporate Class ETF,ETF,CAD,CA44056K1066
+HTB-U,Global X US 7-10 Year Treasury Bond ETF,ETF,USD,CA44056K1066
+HUBL,Harvest US Bank Leaders Income ETF Class A,ETF,CAD,CA41755H1038
+HUBL-U,Harvest US Bank Leaders Income ETF,ETF,USD,CA41755H2028
+HUC,Global X Crude Oil ETF,ETF,CAD,CA44055Q1046
+HUG,Global X Gold ETF,ETF,CAD,CA44055T1084
+HULC,Global X US Large Cap Index Corporate Class ETF,ETF,CAD,CA44056L1040
+HULC-U,Global X US Large Cap Index ETF,ETF,USD,CA44056L1040
+HUM,Hamilton U.S. Mid-Cap Financials ETF,ETF,CAD,CA4078661028
+HUN,Global X Natural Gas ETF,ETF,CAD,CA44055X1096
+HURA,Global X Uranium Index ETF,ETF,CAD,CA44055K1075
+HUT,Hut 8 Mining Corp,Common Stock,CAD,US44812J1043
+HUTE,Harvest Utilities Leaders Enhanced Income ETF,ETF,CAD,CA41754D1033
+HUTL,Harvest Utilities Leaders Income ETF,ETF,CAD,CA41754C1059
+HUTS,Hamilton Enhanced Utilities ETF,ETF,CAD,CA40737J1049
+HUZ,Global X Silver ETF,ETF,CAD,CA44055W1014
+HVOI,Harvest Low Volatility Canadian Equity Income ETF - Class A Units,ETF,CAD,
+HVOL,Harvest Low Volatility Canadian Equity ETF - Class A Units,ETF,CAD,
+HWO,High Arctic Energy Services Inc.,Common Stock,CAD,CA4296442060
+HWX,Headwater Exploration Inc,Common Stock,CAD,CA4220961078
+HXCN,Global X S&P/TSX Capped Composite Index Corporate Class ETF,ETF,CAD,CA44057A1075
+HXDM,Global X Intl Developed Markets Equity Index Corporate Class ETF,ETF,CAD,CA44055M1032
+HXDM-U,Global X Intl Developed Markets Equity Index ETF,ETF,USD,CA44055M1032
+HXE,Global X S&P/TSX Capped Energy Index Corporate Class ETF,ETF,CAD,CA44055C1059
+HXEM,Global X Emerging Markets Equity Index Corporate Class ETF,ETF,CAD,CA44056J1093
+HXF,Global X S&P/TSX Capped Financials Index Corporate Class ETF,ETF,CAD,CA44054Y1088
+HXH,Global X Canadian High Dividend Index Corporate Class ETF,ETF,CAD,CA44054R1038
+HXQ,Global X NASDAQ-100 Index Corporate Class ETF CAD,ETF,CAD,CA44056R1010
+HXQ-U,Global X NASDAQ-100 Index ETF,ETF,USD,CA44056R1010
+HXS,Global X S&P 500 Corporate Class ETF,ETF,CAD,CA44056A1084
+HXS-U,Global X S&P 500 Index ETF,ETF,USD,
+HXT,Global X S&P/TSX 60™ Index Corporate Class ETF,ETF,CAD,CA44056G1054
+HXT-U,Global X S&P/TSX 60 Index ETF,ETF,USD,CA44056G1054
+HXX,Global X Europe 50 Index Corporate Class ETF,ETF,CAD,CA44055J1003
+HYBR,Global X Active Hybrid Bond and Preferred Share ETF,ETF,CAD,CA44052A2011
+HYLD,Hamilton Enhanced U.S. Covered Call ETF,ETF,CAD,CA40736Q1090
+HYLD-U,Hamilton Enhanced U.S. Covered Call ETF,ETF,USD,CA40736Q2080
+IAG,iA Financial Corporation Inc,Common Stock,CAD,CA45075E1043
+IAU,i-80 Gold Corp.,Common Stock,CAD,
+IBQT,iShares Equity + Bitcoin ETF Portfolio,ETF,CAD,
+ICAE,CI S&P/TSX Canadian Dividend Aristocrats ESG Index ETF,ETF,CAD,CA46147Y1025
+ICCB,Invesco Canadian Core Plus Bond ETF,ETF,CAD,
+ICE,Canlan Ice Sports Corp.,Common Stock,CAD,CA1376392090
+ICGB,Invesco Global Bond ETF,ETF,CAD,
+ICPB,IA Clarington Core Plus Bond Fund Series ETF,ETF,CAD,CA44931X1096
+IDEF-B,Manulife Smart International Defensive Equity ETF,ETF,CAD,CA56504H1055
+IDIV-B,Manulife Smart International Dividend ETF,ETF,CAD,CA56503T1003
+IE,Ivanhoe Energy Inc,Common Stock,CAD,
+IFA,iFabric Corp,Common Stock,CAD,CA45172X2032
+IFC,Intact Financial Corporation,Common Stock,CAD,CA45823T1066
+IFC-PA,Intact Financ 1 Cl A Non Cum Prf,Preferred Stock,CAD,CA45823T3047
+IFC-PC,Intact Non Cum Rt Res Cl A 3 Prf,Preferred Stock,CAD,CA45823T6016
+IFC-PE,Intact Financial Corp Pref Series 5,Preferred Stock,CAD,CA45823T8095
+IFC-PF,Intact Financial Corp Pref,Preferred Stock,CAD,CA45823T8822
+IFC-PG,Intact Financial Corp,Preferred Stock,CAD,CA45823T8749
+IFC-PI,Intact Financial Ser 9 Non cum Pref,Preferred Stock,CAD,CA45823T8582
+IFC-PK,Intact Financial Corporation,Preferred Stock,CAD,
+IFP,Interfor Corp,Common Stock,CAD,CA45868C1095
+IFRF,IA Clarington Floating Rate Income Fund ETF,ETF,CAD,CA44932R1010
+IGAF,IA Clarington Loomis Global Allocation Fund ETF,ETF,CAD,CA45075W1041
+IGB,Purpose Global Bond Class ETF,ETF,CAD,CA74641V1013
+IGBT-UN,2028 Investment Grade Bond Trust,Common Stock,CAD,
+IGCF,PIMCO Investment Grade Credit Fund (Canada) Series ETF,ETF,CAD,CA72203B1094
+IGEO,IA Clarington Loomis Global Equity Opportunities Fund ETF Series,ETF,CAD,CA44934G1037
+IGET,CI Morningstar Global Energy Transition Index ETF,ETF,CAD,
+IGM,IGM Financial Inc.,Common Stock,CAD,CA4495861060
+IIAE,CI S&P International Developed Dividend Aristocrats ESG Index ETF,ETF,CAD,CA46146T1049
+IIAE-F,CI S&P International Developed Dividend Aristocrats ESG Index ETF,ETF,CAD,
+IICE,CI S&P International Developed ESG Index ETF,ETF,CAD,CA46146U1012
+IICE-F,CI S&P International Developed ESG Index ETF,ETF,CAD,
+III,Imperial Metals Corporation,Common Stock,CAD,CA4528921022
+IIME,IA Clarington International Multifactor Equity Fund,FUND,CAD,
+IIMF,CI Invesco International Developed Multifactor Index ETF,ETF,CAD,
+IIMF-F,CI Invesco International Developed Multifactor Index ETF,ETF,CAD,
+ILGB,IA Clarington Loomis Global Multisector Bond Fund ETF,ETF,CAD,CA45076L1076
+ILLM,illumin Holdings Inc.,Common Stock,CAD,
+IMAX,Hamilton International Equity YIELD MAXIMIZER TM ETF,ETF,CAD,
+IMFE,IA Clarington Global Multifactor Equity Fund,FUND,CAD,
+IMG,IAMGold Corporation,Common Stock,CAD,CA4509131088
+IMO,Imperial Oil Ltd,Common Stock,CAD,CA4530384086
+IMP,Intermap Technologies Corp,Common Stock,CAD,CA4589774021
+INAI,CI Morningstar Global Next Gen AI Index ETF,ETF,CAD,CA4613041074
+INC-UN,Income Financial Trust,Common Stock,CAD,
+INCM,Accelerate Diversified Credit Income Fund,ETF,CAD,
+INCM-B,Accelerate Diversified Credit Income ETF CAD Hedged,ETF,CAD,
+INFR,Ninepoint Global Infrastructure Fund,ETF,CAD,
+INGS,ING CDR (CAD Hedged),Common Stock,CAD,
+INHI,Ninepoint Intel HighShares ETF,ETF,CAD,
+INO-UN,Inovalis Real Estate Investment Trust,Common Stock,CAD,CA45780E1007
+INOC,Global X Inovestor Canadian Equity Index ETF,ETF,CAD,CA44054E1025
+INTC,Intel CDR (CAD Hedged),Common Stock,CAD,
+INTU,Intuit CDR (CAD Hedged),Common Stock,CAD,
+INTY,Evolve International Equity UltraYield Hedged ETF Units Trust Units,ETF,CAD,
+IPCO,International Petroleum Corp,Common Stock,CAD,CA46016U1084
+IPO,InPlay Oil Corp,Common Stock,CAD,CA45780T2065
+IQD,CI International Quality Dividend Growth Index ETF,ETF,CAD,CA17165X1024
+IQD-B,CI WisdomTree International Quality Dividend Growth Index ETF,ETF,CAD,CA17165X2014
+IS,Infrastructure Dividend Split Corp.,Common Stock,CAD,
+ISCB,IA Clarington Strategic Corporate Bond Fund,ETF,CAD,
+ISIF,IA Clarington Strategic Income Fund ETF,ETF,CAD,CA44933N1096
+ISO,IsoEnergy Ltd.,Common Stock,CAD,
+ISRG,Intuitive Surgical CDR (CAD Hedged),Common Stock,CAD,
+ITH,International Tower Hill Mines Ltd,Common Stock,CAD,CA46050R1029
+ITIN,IA Clarington Thematic Innovation Class,Common Stock,CAD,
+IUAE,CI S&P US Dividend Aristocrats ESG Index ETF,ETF,CAD,CA46147H1091
+IUFR-U,CI US Treasury Floating Rate Note Index ETF (USD),ETF,USD,
+IUMF,CI Invesco Russell 1000 Multifactor Index ETF,ETF,CAD,
+IVN,Ivanhoe Mines Ltd.,Common Stock,CAD,CA46579R1047
+IVQ,Invesque Inc,Common Stock,CAD,CA46136U1030
+IVQ-U,Invesque Inc,Common Stock,USD,
+IWEB,IA Wealth Enhanced Bond Pool,Common Stock,CAD,
+JAG,Jaguar Mining Inc,Common Stock,CAD,CA47009M8896
+JAPN,CI WisdomTree Japan Equity Index ETF Hedged,ETF,CAD,CA12559J2074
+JAPN-B,CI WisdomTree Japan Equity Index ETF,ETF,CAD,CA12559J1084
+JAVA,JPMorgan US Value Active ETF,ETF,CAD,
+JBND,JPMorgan US Bond Active ETF,ETF,CAD,
+JCOR,JPMorgan US Core Active ETF,ETF,CAD,
+JEPH,JPMorgan US Equity Premium Income Active ETF - CAD Hedged,ETF,CAD,
+JEPI,JPMorgan US Equity Premium Income Active ETF,ETF,CAD,CA4809151075
+JEPQ,JPMorgan Nasdaq Equity Premium Income Active ETF,ETF,CAD,CA48129Q1072
+JFS-UN,JFT Strategies Fund,FUND,CAD,
+JGLO,JPMorgan Global Select Equity Active ETF,ETF,CAD,
+JGRO,JPMorgan US Growth Active ETF,ETF,CAD,
+JIDE,JPMorgan International Developed Equity Active ETF,ETF,CAD,
+JNJY,Harvest JnJ Enhanced High Income Shares ETF,ETF,CAD,
+JOY,Journey Energy Inc,Common Stock,CAD,CA48113W1023
+JPHE,Harvest JPHE Enhanced High Income Shares ETF,ETF,CAD,
+JPIE,JPMorgan Income Active ETF,ETF,CAD,
+JPM,JPMorgan CDR (CAD Hedged),Common Stock,CAD,
+JPQH,JPMorgan Nasdaq Equity Premium Income Active ETF - CAD Hedged,ETF,CAD,
+JPST,JPMorgan US Ultra-Short Income Active ETF,ETF,CAD,
+JWEL,Jamieson Wellness Inc,Common Stock,CAD,CA4707481046
+K,Kinross Gold Corp,Common Stock,CAD,CA4969024047
+KBL,K-Bro Linen Inc.,Common Stock,CAD,CA48243M1077
+KEEL,Keel Infrastructure Corp.,Common Stock,CAD,
+KEI,Kolibri Global Energy Inc,Common Stock,CAD,CA50043K4063
+KEL,Kelt Exploration Ltd.,Common Stock,CAD,CA4882951060
+KEY,Keyera Corp.,Common Stock,CAD,CA4932711001
+KGHI,Ninepoint Kinross Gold HighShares ETF,ETF,CAD,
+KILO,Purpose Gold Bullion Fund,ETF,CAD,CA74642E3068
+KILO-B,Purpose Gold Bullion Fund,ETF,CAD,CA74642E1088
+KILO-U,Purpose Gold Bullion Fund,ETF,USD,CA74642E2078
+KITS,Kits Eyecare Ltd,Common Stock,CAD,CA49804N1042
+KKR,KKR CDR (CAD Hedged),Common Stock,CAD,
+KLAC,KLA CDR (CAD Hedged),Common Stock,CAD,
+KLS,Kelso Technologies Inc,Common Stock,CAD,CA48826D2014
+KMP-UN,Killam Apartment Real Estate Investment Trust,Common Stock,CAD,CA49410M1023
+KNGC,Brompton Canadian Cash Flow Kings ETF,ETF,CAD,CA11221U1030
+KNGG,Brompton Global Cash Flow Kings ETF,ETF,CAD,
+KNGU,Brompton U.S. Cash Flow Kings ETF,ETF,CAD,CA11220T1075
+KNGX,Brompton International Cash Flow Kings ETF,ETF,CAD,
+KNT,K92 Mining Inc,Common Stock,CAD,CA4991131083
+KPT,KP Tissue Inc,Common Stock,CAD,CA48265Y1043
+KRN,Karnalyte Resources Inc.,Common Stock,CAD,CA4856722083
+KXS,Kinaxis Inc,Common Stock,CAD,CA49448Q1090
+L,Loblaw Companies Limited,Common Stock,CAD,CA5394811015
+LABS,Medipharm Labs Corp,Common Stock,CAD,CA58504D1006
+LAC,Lithium Americas Corp,Common Stock,CAD,CA53681J1030
+LAM,Laramide Resources Ltd.,Common Stock,CAD,CA51669T1012
+LAR,"Lithium Argentina AG",Common Stock,CAD,
+LAS-A,Lassonde Industries Inc,Common Stock,CAD,
+LB,Laurentian Bank Of Canada,Common Stock,CAD,CA51925D1069
+LB-PH,Laurentian Bank of Canada Pref H,Preferred Stock,CAD,CA51925D8254
+LBIT,Evolve Levered Bitcoin ETF,ETF,CAD,
+LBIT-U,Evolve Levered Bitcoin ETF USD,ETF,USD,
+LBS,Life & Banc Split Corp,Common Stock,CAD,CA53184C1005
+LBS-PA,Life & Banc Split Corp Pref A,Preferred Stock,CAD,CA53184C1187
+LCFS,Tidewater Renewables Ltd,Common Stock,CAD,
+LCS,Brompton Lifeco Split Corp,Common Stock,CAD,CA1122161062
+LCS-PA,Brompton Lifeco Split Corp Pref A,Preferred Stock,CAD,CA1122162052
+LEAD,Evolve Future Leadership Hedged,ETF,CAD,CA3005431059
+LEAD-B,Evolve Future Leadership Fund - Hedged ETF,ETF,CAD,CA3005432040
+LETH,Evolve Levered Ether ETF,ETF,CAD,
+LFE,Canadian Life Companies Split Corp,Common Stock,CAD,CA1362904007
+LFE-PB,Canadian Life Companies Split Corp Pref B,Preferred Stock,CAD,CA1362903017
+LGD,Liberty Gold Corp,Common Stock,CAD,CA53056H1047
+LGO,Largo Resources Ltd,Common Stock,CAD,CA5170971017
+LIF,Labrador Iron Ore Royalty Corp,Common Stock,CAD,CA5054401073
+LIFE,Evolve Global Healthcare Enhanced Yield Fund Hedged Units,ETF,CAD,CA30051T1012
+LIFE-B,Evolve Global Healthcare Enhanced Yield Fund UnHedged Units,ETF,CAD,
+LIFE-U,Evolve Global Healthcare Enhanced Yield Fund,ETF,USD,CA30051T3091
+LLHE,Harvest Eli Lilly Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA41753X1006
+LLHE-U,Harvest Eli Lilly Enhanced High Income Shares ETF,ETF,USD,
+LLY,Eli Lilly CDR (CAD Hedged),Common Stock,CAD,CA28655A1066
+LLYH,Harvest Eli Lilly High Income Shares ETF - Class A Units,ETF,CAD,CA41753W1023
+LLYH-U,Harvest Eli Lilly High Income Shares ETF,ETF,USD,
+LMAX,Hamilton Healthcare YIELD MAXIMIZER ETF,ETF,CAD,CA4069191001
+LMCU,Lumina Metals Corp.,Common Stock,CAD,
+LMT,Lockheed Martin CDR (CAD Hedged),ETF,CAD,
+LNF,Leon's Furniture Limited,Common Stock,CAD,CA5266821092
+LNR,Linamar Corporation,Common Stock,CAD,CA53278L1076
+LONG,CI Global Longevity Economy Fund Series ETF,ETF,CAD,CA12558X1087
+LORL,L'Oreal CDR (CAD Hedged),Common Stock,CAD,CA50214W1068
+LOVE,Cannara Biotech Inc.,Common Stock,CAD,
+LPAY,Global X Long-Term U.S. Treasury Premium Yield ETF USD CAD,ETF,CAD,CA37963H1091
+LPAY-U,Global X Long-Term U.S. Treasury Premium Yield ETF USD,ETF,USD,CA37963H1091
+LRCX,Lam Research CDR (CAD Hedged),Common Stock,CAD,
+LS,Middlefield Healthcare & Life Sciences ETF,ETF,CAD,CA5963361079
+LSPD,Lightspeed Commerce Inc,Common Stock,CAD,CA53229C1077
+LUC,Lucara Diamond Corp,Common Stock,CAD,CA54928Q1081
+LUG,Lundin Gold Inc,Common Stock,CAD,CA5503711080
+LULU,lululemon CDR (CAD Hedged),Common Stock,CAD,
+LUN,Lundin Mining Corporation,Common Stock,CAD,CA5503721063
+LUNR,LunR Royalties Corp.,Common Stock,CAD,CA5504281067
+LVMH,LVMH CDR (CAD Hedged),Common Stock,CAD,
+LYCT,Lysander-Canso Corporate Treasury ActivETF,ETF,CAD,
+LYFR,Lysander-Canso Floating Rate ActivETF,ETF,CAD,
+LYUV-U,Lysander-Canso U.S. Corporate Value Bond Fund,ETF,USD,
+LYZ801F,Lysander-Canso Corporate Value Bond Fund Series,FUND,CAD,
+LYZ932F,Lysander-Triasima Canadian Small Cap Equity Fund,FUND,CAD,
+MAAA,Mackenzie AAA CLO ETF,ETF,CAD,
+MAEC,Middlefield ActivEnergy Dividend Class,Common Stock,CAD,
+MAGV,Mackenzie Global Value ETF,ETF,CAD,
+MAI,Mining Americas Inc.,Common Stock,CAD,
+MAK-U,MAK Acquisition Corp.,Common Stock,USD,
+MAL,Magellan Aerospace Corporation,Common Stock,CAD,CA5589122004
+MALX,Mackenzie GQE US Alpha Extension ETF,ETF,CAD,
+MARI,Marimaca Copper Corp,Common Stock,CAD,CA56783M1068
+MART,Global X Equal Weight Canadian Groceries & Staples Index ETF,ETF,CAD,CA37965F1018
+MATR,Mattr Corp,Common Stock,CAD,CA57722Y1025
+MAU,Montage Gold Corp.,Common Stock,CAD,CA61178L1013
+MAUV,Mackenzie US Value ETF,ETF,CAD,
+MAW120,Mawer Global Equity A,FUND,CAD,
+MAYB-F,FT Cboe Vest US Equity Buffer ETF - May,ETF,CAD,CA3369401011
+MBAL,Mackenzie Balanced Allocation ETF,ETF,CAD,CA5545511019
+MBAP,Manulife Balanced ETF Portfolio,ETF,CAD,
+MBNK,Mulvihill Canadian Bank ETF,ETF,CAD,
+MBQG,Mackenzie GQE Global Balanced ETF,ETF,CAD,
+MBX,Microbix Biosystems Inc.,Common Stock,CAD,CA59501P1045
+MCAD,Premium Cash Management Fund,ETF,CAD,
+MCAN,Manulife Canadian Equity Class,Common Stock,CAD,
+MCAP,Manulife Conservative ETF Portfolio,ETF,CAD,
+MCB,Mccoy Global Inc,Common Stock,CAD,CA57980Q1063
+MCD,McDonald’s CDR (CAD Hedged),Common Stock,CAD,US5801351017
+MCLC,Manulife Multifactor Canadian Large Cap Index ETF,ETF,CAD,CA56502H1073
+MCLV,Mackenzie Canada Low Volatility ETF,ETF,CAD,
+MCON,Mackenzie Conservative Allocation ETF,ETF,CAD,CA5545671078
+MCSB,Mackenzie Canadian Short Term Fixed Income ETF,ETF,CAD,CA55452Q1090
+MCSM,Manulife Multifactor Canadian SMID Cap Index ETF,ETF,CAD,CA56502P2089
+MCYC,Mackenzie Cyclical Tilt ETF,ETF,CAD,
+MDA,MDA Ltd,Common Stock,CAD,CA55292X1087
+MDEF,Mackenzie Defensive Tilt ETF,ETF,CAD,
+MDI,Major Drilling Group International,Common Stock,CAD,CA5609091031
+MDIF,Manulife Dividend Income Fund,ETF,CAD,
+MDIV,Middlefield Global Dividend Growers ETF,ETF,CAD,CA59636Q1000
+MDNA,Medicenna Therapeutics Corp,Common Stock,CAD,CA58490H1073
+MDP,Medexus Pharmaceuticals Inc,Common Stock,CAD,CA58410Q2036
+MDS-UN,Healthcare Special Opportunities Fund,FUND,CAD,
+MEDX,Global X Equal Weight Global Healthcare Index ETF,ETF,CAD,
+MEME-B,Manulife Multifactor Emerging Markets Index ETF,ETF,CAD,CA56503M2040
+MEQ,Mainstreet Equity Corp.,Common Stock,CAD,CA5609151009
+MEQT,Mackenzie All-Equity Allocation ETF,ETF,CAD,CA55452A1049
+MER,Meren Energy Inc.,Common Stock,CAD,CA5889141019
+META,Meta CDR (CAD Hedged),Common Stock,CAD,
+METE,Harvest Meta Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA4175521067
+METU,SavvyLong (2X) META ETF,ETF,CAD,
+MFC,Manulife Financial Corp,Common Stock,CAD,CA56501R1064
+MFC-PB,Manulife Finl Srs 2 Prf,Preferred Stock,CAD,CA56501R4035
+MFC-PC,Manulife Finl Srs 3 Prf,Preferred Stock,CAD,CA56501R5024
+MFC-PF,Manulife Financial Corp Pref 3 Class 1,Preferred Stock,CAD,CA56501R8580
+MFC-PI,Manulife Financial Corp Pref 9 Class 1,Preferred Stock,CAD,CA56501R7830
+MFC-PJ,Manulife Fin Non Cum Cl 1 11 Prf,Preferred Stock,CAD,CA56501R7673
+MFC-PK,Manulife Financial Corp Pref K,Preferred Stock,CAD,CA56501R7426
+MFC-PL,Manulife Financial Corp Pref L,Preferred Stock,CAD,CA56501R7269
+MFC-PM,Manulife Financial Corp Pref M,Preferred Stock,CAD,CA56501R6923
+MFC-PN,Manulife Financial Corp Pref N,Preferred Stock,CAD,CA56501R6766
+MFC-PQ,Manulife Financial Corp Pref Class 1 Series 25,Preferred Stock,CAD,CA56501R6196
+MFC091,Mackenzie Bluewater Canadian Growth Fund - F,FUND,CAD,
+MFC5505,Mackenzie Gqe Emerging Markets Fund Series F,FUND,CAD,
+MFC650,Mackenzie Canadian Growth Fund - A,FUND,CAD,
+MFC7933,Mackenzie Gqe International Equity Fund F,FUND,CAD,
+MFI,Maple Leaf Foods Inc.,Common Stock,CAD,CA5649051078
+MFT,Mackenzie Floating Rate Income ETF,ETF,CAD,CA55453X1033
+MFUN,Manulife Fundamental Equity Fund,ETF,CAD,
+MG,Magna International Inc,Common Stock,CAD,CA5592224011
+MGA,Mega Uranium Ltd.,Common Stock,CAD,CA58516W1041
+MGAB,Mackenzie Global Fixed Income Allocation ETF,ETF,CAD,CA5545522081
+MGAP,Manulife Growth ETF Portfolio,ETF,CAD,
+MGB,Mackenzie Core Plus Global Fixed Income ETF,ETF,CAD,CA55452P1018
+MGDV,Mackenzie Global Dividend ETF,ETF,CAD,
+MGQE,Mackenzie Global Equity ETF,ETF,CAD,
+MGRW,Mackenzie Growth Allocation ETF,ETF,CAD,CA5545701016
+MHC-U,Flagship Communities Real Estate Investment Trust,Common Stock,USD,CA33843T1084
+MHCD,Middlefield Healthcare Dividend ETF,ETF,CAD,CA59633Q1037
+MHDC,Mackenzie Canadian High Dividend Yield ETF,ETF,CAD,
+MHDU,Mackenzie US High Dividend Yield ETF,ETF,CAD,
+MIC-PA,Sagen MI Canada Inc.,Preferred Stock,CAD,
+MID-UN,MINT Income Fund,Common Stock,CAD,
+MIDB,Evolve Enhanced Yield Mid Term Bond Fund,ETF,CAD,
+MIDB-U,Evolve Enhanced Yield Mid Terminal Bond Fund - Hedged Etf,ETF,USD,
+MINF,Middlefield Sustainable Infrastructure Dividend ETF,ETF,CAD,CA59637E1060
+MINT,Manulife Multifactor Developed International Index ETF,ETF,CAD,CA56502M1068
+MINT-B,Manulife Multifactor Developed International Index ETF,ETF,CAD,CA56502M2058
+MIPC,Middlefield Income Plus Class,Common Stock,CAD,
+MIQE,Mackenzie International Equity ETF,ETF,CAD,
+MIVG,Mackenzie Ivy Global Equity ETF,ETF,CAD,CA55454E1043
+MIX,Hamilton Enhanced Mixed Asset ETF,ETF,CAD,
+MKB,Mackenzie Core Plus Canadian Fixed Income ETF,ETF,CAD,CA55452R1073
+MKP,MCAN Mortgage Corporation,Common Stock,CAD,CA5791761086
+MKZ-UN,Mackenzie Mstr Un (MKZ-UN.TO,Common Stock,CAD,
+MLRG,Madison US Large Cap ETF,ETF,CAD,
+MMAC,Manulife CQS Multi Asset Credit Fund,FUND,CAD,
+MMF4606,Manulife Global Equity Class Series F,FUND,CAD,
+MMF8621,Manulife World Investment Class Series F,FUND,CAD,
+MMID,Madison US Mid Cap ETF,ETF,CAD,
+MMMM,3M CDR (CAD Hedged),Common Stock,CAD,
+MMP-UN,Precious Metals And Mining Trust,Common Stock,CAD,
+MNO,Meridian Mining UK Societas,Common Stock,CAD,NL0012084479
+MNS,Royal Canadian Mint - Canadian Silver Reserves,ETF,CAD,CA7799211130
+MNT,Royal Canadian Mint - Canadian Gold Reserves,ETF,CAD,CA7799211056
+MNT-U,ROYAL CANADIAN MINT CDN GLD RES,ETF,USD,
+MNU-U,Purpose USD Cash Management Fund,ETF,USD,
+MNXT,Mackenzie Bluewater Next Gen Growth ETF,ETF,CAD,
+MNY,Purpose Cash Management Fund ETF Units,ETF,CAD,
+MOAT,Moat Active Premium Yield ETF,ETF,CAD,
+MOLY,Greenland Resources Inc.,Common Stock,CAD,
+MORE,Mackenzie Core Resources ETF,ETF,CAD,
+MPAY,Global X Mid-Term U.S. Treasury Premium Yield ETF,ETF,CAD,CA37962Y1034
+MPAY-U,Global X Mid-Term U.S. Treasury Premium Yield ETF,ETF,USD,
+MPC,Madison Pacific Properties Inc.,Common Stock,CAD,CA5579031017
+MPC-C,Madison Pacific Properties Inc,Common Stock,CAD,
+MPCT-UN,Dream Impact Trust,Common Stock,CAD,
+MPY,Mulvihill Premium Yield Fund,ETF,CAD,
+MRC,Morguard Corporation,Common Stock,CAD,CA6175771014
+MRD,Melcor Developments Ltd.,Common Stock,CAD,CA5854671032
+MRE,Martinrea International Inc.,Common Stock,CAD,CA5734591046
+MREL,Middlefield Real Estate Dividend ETF,ETF,CAD,CA59635B1040
+MRG-UN,Morguard North American Residential Real Estate Investment Trust,Common Stock,CAD,CA61761E1007
+MRK,Merck CDR (CAD Hedged),Common Stock,CAD,
+MRT-UN,Morguard Real Estate Investment Trust,Common Stock,CAD,CA6179141065
+MRU,Metro Inc.,Common Stock,CAD,CA59162N1096
+MRV,"Marvell Technology, Inc. CDR (CAD Hedged)",Common Stock,CAD,
+MS,Morgan Stanley CDR (CAD Hedged),Common Stock,CAD,
+MSA,Mineros SA,Common Stock,CAD,COC07PA00027
+MSBP,Middlefield Short Duration Bond Plus ETF,ETF,CAD,
+MSCL,Satellos Bioscience Inc.,Common Stock,CAD,CA80401L3083
+MSFH,Harvest Microsoft High Income Shares ETF - Class A Units,ETF,CAD,CA4175531041
+MSFH-U,Harvest Microsoft Enhanced High Income Shares ETF,ETF,USD,
+MSFT,Microsoft CDR (CAD Hedged),Common Stock,CAD,
+MSFU,SavvyLong (2X) MSFT ETF,ETF,CAD,
+MSHE,Harvest Microsoft Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA41754L1058
+MSHE-U,Harvest Microsoft Enhanced High Income Shares ETF,ETF,USD,
+MSTE,Harvest MicroStrategy Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA4175561071
+MSTR,Strategy CDR (CAD Hedged),Common Stock,CAD,
+MSTU,LFG Daily (2X) MSTR Long ETF,ETF,CAD,
+MSTY,Harvest Strategy Inc. High Income Shares ETF,ETF,CAD,CA41757A1066
+MSTZ,SavvyShort (-2X) MSTR ETF,ETF,CAD,
+MSV,Minco Silver Corporation,Common Stock,CAD,CA60254C1005
+MTBA,Mackenzie Target 2027 North American IG Corporate Bond ETF,ETF,CAD,
+MTBB,Mackenzie Target 2029 North American IG Corporate Bond ETF,ETF,CAD,
+MTEK,Metatek-Group Ltd,Common Stock,CAD,
+MTL,Mullen Group Ltd.,Common Stock,CAD,CA6252841045
+MTRX,Global X Artificial Intelligence Infrastructure Index ETF,ETF,CAD,
+MTY,MTY Food Group Inc,Common Stock,CAD,CA55378N1078
+MU,Micron CDR (CAD Hedged),Common Stock,CAD,
+MUB,Mackenzie Unconstrained Bond ETF,ETF,CAD,CA55454N1042
+MULC,Manulife Multifactor U.S. Large Cap Index ETF (Hedged),ETF,CAD,CA56502J1113
+MULC-B,Manulife Multifactor U.S. Large Cap Index ETF,ETF,CAD,CA56502J1030
+MULV,Mackenzie US Low Volatility ETF,ETF,CAD,
+MUMC,Manulife Multifactor U.S. Mid Cap Index ETF (Hedged),ETF,CAD,CA56502K2092
+MUMC-B,Manulife Multifactor U.S. Mid Cap Index ETF,ETF,CAD,CA56502K1003
+MUSA,Middlefield U.S. Equity Dividend ETF,ETF,CAD,CA59636R1082
+MUSC,Manulife Multifactor U.S. Small Cap Index ETF (Hedged),ETF,CAD,CA56502T1012
+MUSD-U,US Premium Cash Management Fund,ETF,USD,
+MUU,SavvyLong (2X) Micron ETF,ETF,CAD,
+MUX,McEwen Mining Inc.,Common Stock,CAD,US58039P1075
+MWLV,Mackenzie World Low Volatility ETF,ETF,CAD,
+MX,Methanex Corporation,Common Stock,CAD,CA59151K1084
+MXG,Maxim Power Corp.,Common Stock,CAD,CA57773Y2096
+NA,National Bank of Canada,Common Stock,CAD,CA6330671034
+NA-PC,National Bank of Canada,Preferred Stock,CAD,CA6330672289
+NA-PE,National Bank of Canada Pref Series 40,Preferred Stock,CAD,CA6330671943
+NA-PG,National Bank of Canada Pref Series 42,Preferred Stock,CAD,CA63306A2056
+NA-PI,National Bank of Canada,Preferred Stock,CAD,
+NA-PS,National Bank of Canada Pref S,Preferred Stock,CAD,CA6330673196
+NACO,Ninepoint Alternative Credit Opportunities Fund,FUND,CAD,
+NALT,NBI Liquid Alternatives ETF,ETF,CAD,CA62877T1066
+NANO,Nano One Materials Corp,Common Stock,CAD,CA63010A1030
+NBAL,Ninepoint Balanced+ Fund,ETF,CAD,
+NBBX,NBI Canadian Bond Index Fund,ETF,CAD,
+NBCG,NBI Canadian Equity Growth Fund,FUND,CAD,
+NBCU,SavvyLong 2X NBC (NA) Equity-Linked ETF,ETF,CAD,
+NBCX,NBI Canadian Equity Index Fund,ETF,CAD,
+NBEM,NBI Diversified Emerging Markets Equity Fund,FUND,CAD,
+NBGE,NBI Global Equity Fund,ETF,CAD,
+NBIE,NBI International Equity Fund,ETF,CAD,
+NBIV,NBI International Value Fund,FUND,CAD,
+NBIX,NBI International Equity Index Fund,FUND,CAD,
+NBLD,NBI Balanced ETF Portfolio,ETF,CAD,
+NBND,Ninepoint Diversified Bond Fund,FUND,CAD,
+NBQC,NBI Quebec Growth Fund,ETF,CAD,
+NBSC,NBI Global Small Cap Fund,ETF,CAD,
+NBUE,NBI U.S. Equity Fund,ETF,CAD,
+NBUX,NBI U.S. Equity Index Fund,ETF,CAD,
+NCF,Northcliff Resources Ltd,Common Stock,CAD,CA66401Q1081
+NCNS,NBI Conservative ETF Portfolio,ETF,CAD,
+NCPB,NBI Canadian Core Plus Bond Fund,ETF,CAD,
+NDIV,NBI Canadian Dividend Income ETF,ETF,CAD,CA63946K1003
+NDM,Northern Dynasty Minerals Ltd,Common Stock,CAD,CA66510M2040
+NEO,Neo Performance Materials Inc,Common Stock,CAD,CA64046G1063
+NEQT,NBI Equity ETF Portfolio,ETF,CAD,
+NEXT,NextSource Materials Inc,Common Stock,CAD,CA65343M2094
+NFGC,New Found Gold Corp.,Common Stock,CAD,
+NFI,NFI Group Inc,Common Stock,CAD,CA62910L1022
+NFLX,Netflix CDR (CAD Hedged),Common Stock,CAD,
+NFLY,Harvest Netflix Enhanced High Income Shares ETF - Class A Units,ETF,CAD,
+NG,NovaGold Resources Inc,Common Stock,CAD,CA66987E2069
+NGEX,NGEx Minerals Ltd.,Common Stock,CAD,
+NGPE,NBI Global Private Equity ETF,ETF,CAD,CA63946J1030
+NGRW,NBI Growth ETF Portfolio,ETF,CAD,
+NHYB,NBI High Yield Bond ETF,ETF,CAD,CA62878A1066
+NICU,Magna Mining Inc.,Common Stock,CAD,
+NINT,NBI Active International Equity ETF,ETF,CAD,CA62879B1031
+NINV,NBI Innovators Fund,ETF,CAD,
+NKE,NIKE CDR (CAD Hedged),Common Stock,CAD,
+NMBL,Meritage Tactical ETF Balanced Portfolio,ETF,CAD,
+NMEQ,Meritage Tactical ETF Equity Portfolio,ETF,CAD,
+NMGR,Meritage Tactical ETF Growth Portfolio,ETF,CAD,
+NMMO,Meritage Tactical ETF Moderate Portfolio,ETF,CAD,
+NMNG,Ninepoint Mining Evolution Fund,ETF,CAD,
+NNRG,Ninepoint Energy Fund,FUND,CAD,
+NOA,North American Construction Group Ltd,Common Stock,CAD,CA6568111067
+NOC,Northrop Grumman CDR (CAD Hedged),Common Stock,CAD,
+NOU,Nouveau Monde Graphite Inc,Common Stock,CAD,
+NOVB-F,First Trust Cboe Vest U.S. Equity Buffer ETF - November,ETF,CAD,CA33740Q2071
+NOVO,Novo Nordisk CDR (CAD Hedged),Common Stock,CAD,
+NOVY,Harvest Novo Enhanced High Income Shares ETF Class A CAD,ETF,CAD,
+NOWS,ServiceNow CDR (CAD Hedged),Common Stock,CAD,
+NPI,Northland Power Inc.,Common Stock,CAD,CA6665111002
+NPI-PA,Northland Power Inc Pref A,Preferred Stock,CAD,CA6665113081
+NPI-PB,Northland Power Inc Pref B,Preferred Stock,CAD,CA6665115060
+NPK,Verde Agritech PLC,Common Stock,CAD,GB00B23TJD34
+NPRF,NBI Active Canadian Preferred Shares ETF,ETF,CAD,CA62877E1097
+NPS,Canadian Large Cap Leaders,Common Stock,CAD,
+NREA,NBI Global Real Assets Income ETF,ETF,CAD,CA62877G1046
+NRGD,BetaPro S&P/TSX Capped Energy -2x Daily Bear ETF,ETF,CAD,
+NRGI,Ninepoint Energy Income Fund,FUND,CAD,
+NRGU,BetaPro S&P/TSX Capped Energy 2x Daily Bull ETF,ETF,CAD,CA08660Y2087
+NRGY,Global X Equal Weight Canadian Oil & Gas Index ETF,ETF,CAD,CA37965H1073
+NRR-UN,Northview Residential REIT,Common Stock,CAD,
+NSAV,Ninepoint Cash Management Fund,FUND,CAD,
+NSCB,NBI Sustainable Canadian Bond ETF,ETF,CAD,CA62878C1023
+NSCC,NBI Sustainable Canadian Corporate Bond ETF,ETF,CAD,CA62879F1045
+NSCE,NBI Sustainable Canadian Equity ETF,ETF,CAD,CA62878E1088
+NSDC,NBI SmartData Canadian Equity Fund,FUND,CAD,
+NSDG,NBI SmartData Global Equity Fund,FUND,CAD,
+NSDI,NBI SmartData International Equity Fund,ETF,CAD,
+NSDU,NBI SmartData U.S. Equity Fund,ETF,CAD,
+NSGE,NBI Sustainable Global Equity ETF,ETF,CAD,CA62877W1095
+NSSB,NBI Sustainable Canadian Short Term Bond ETF,ETF,CAD,CA63947C1077
+NSTL,Nestle CDR (CAD Hedged),Common Stock,CAD,
+NTGA,NBI Target 2026 Investment Grade Bond Fund,ETF,CAD,
+NTGD,NBI Target 2029 Investment Grade Bond Fund,ETF,CAD,
+NTGE,NBI Target 2030 Investment Grade Bond Fund,ETF,CAD,
+NTGF,NBI Target 2031 Investment Grade Bond Fund,ETF,CAD,
+NTHM,NBI Thematic Rotation ETF,ETF,CAD,
+NTR,Nutrien Ltd,Common Stock,CAD,CA67077M1086
+NUAG,New Pacific Metals Corp,Common Stock,CAD,CA64782A1075
+NUBF,NBI Unconstrained Fixed Income ETF,ETF,CAD,CA62877X1078
+NUSA,NBI Active U.S. Equity ETF,ETF,CAD,CA62879G1028
+NVDA,Nvidia CDR (CAD Hedged),Common Stock,CAD,
+NVDD,SavvyShort (-2X) NVDA ETF,ETF,CAD,
+NVDH,Harvest NVIDIA High Income Shares ETF - Class A Units,ETF,CAD,CA41755Y1060
+NVDH-U,Harvest Nvidia High Income Shares ETF,ETF,USD,
+NVDU,SavvyLong (2X) NVDA ETF,ETF,CAD,
+NVHE,Harvest NVIDIA Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA41754U1057
+NVHE-U,Harvest Nvidia Enhanced High Income Shares ETF,ETF,USD,
+NVHI,Ninepoint NVIDIA HighShares ETF,ETF,CAD,
+NVO,Novo Resources Corp,Common Stock,CAD,CA67010B1022
+NVS,Novartis CDR (CAD Hedged),Common Stock,CAD,
+NWC,North West Company Inc,Common Stock,CAD,CA6632782083
+NWT595,Nei Global Total Return Bond Fund Series F,FUND,CAD,
+NXE,NexGen Energy Ltd.,Common Stock,CAD,CA65340P1062
+NXF,First Asset Energy Giants Covered Call (CAD Hedged) Common Class,ETF,CAD,CA12555B1094
+NXF-B,CI Energy Giants Covered Call ETF,ETF,CAD,CA12555B2084
+NXR-UN,Nexus Real Estate Investment Trust,Common Stock,CAD,CA65342N3159
+NXTG,First Trust Indxx NextG ETF,ETF,CAD,CA33743D1042
+NYSX,Global X NYSE 100 Index ETF,ETF,CAD,
+OBE,Obsidian Energy Ltd,Common Stock,CAD,CA6744822033
+OCG,Outcrop Silver & Gold Corporation,Common Stock,CAD,
+OGC,OceanaGold Corporation,Common Stock,CAD,CA6752224007
+OGD,Orbit Garant Drilling Inc.,Common Stock,CAD,CA68556N1042
+OGI,OrganiGram Holdings Inc,Common Stock,CAD,CA68617J1003
+OILD,SavvyShort Geared Crude Oil ETF,ETF,CAD,
+OILU,SavvyLong Geared Crude Oil ETF,ETF,CAD,
+OILY,Evolve Canadian Energy Enhanced Yield Index Fund,ETF,CAD,
+OLY,Olympia Financial Group Inc,Common Stock,CAD,CA6814721065
+OM,Osisko Metals Incorporated,Common Stock,CAD,
+ONEB,CI ONE North American Core Plus Bond ETF,ETF,CAD,CA12555Y1097
+ONEC,Accelerate OneChoice Alternative Multi-Asset Fund,ETF,CAD,CA00440A1057
+ONEQ,CI ONE Global Equity ETF,ETF,CAD,CA68236D1042
+ONEX,Onex Corp,Common Stock,CAD,CA68272K1030
+OR,OR Royalties Inc.,Common Stock,CAD,CA68390D1069
+ORAC,Oracle CDR (CAD Hedged),Common Stock,CAD,
+ORBU,SavvyLong (2X) SpaceX ETF,ETF,CAD,
+ORBX,Global X Space Tech Index ETF,ETF,CAD,
+ORCY,Harvest Oracle Enhanced High Income Shares ETF,ETF,CAD,
+ORE,Orezone Gold Corp,Common Stock,CAD,CA68616T1093
+ORIO,Orion Digital Corp.,Common Stock,CAD,CA68627G1046
+ORV,Orvana Minerals Corp.,Common Stock,CAD,CA68759M1014
+OTEX,Open Text Corp,Common Stock,CAD,CA6837151068
+OVV,Ovintiv Inc,Common Stock,CAD,US69047Q1022
+OXY,Occidental Petroleum CDR (CAD Hedged),Common Stock,CAD,
+PAAS,Pan American Silver Corp,Common Stock,CAD,CA6979001089
+PABF,Purpose Active Balanced Fund ETF,ETF,CAD,CA74639A1012
+PACF,Purpose Active Conservative Fund ETF,ETF,CAD,CA74639B1094
+PAGF,Purpose Active Growth Fund ETF,ETF,CAD,CA74639C1077
+PANW,Palo Alto Networks CDR (CAD Hedged),Common Stock,CAD,
+PAVE,Global X U.S. Infrastructure Development Index ETF,ETF,CAD,
+PAYF,Purpose Enhanced Premium Yield Fund,ETF,CAD,CA74642M1005
+PAYG,Brompton Global Equity HighPay ETF,ETF,CAD,CA11222L1022
+PAYI,Brompton Utilities & Infrastructure HighPay ETF,ETF,CAD,
+PAYL,Global X Long-Term Government Bond Premium Yield ETF,ETF,CAD,CA37965U1084
+PAYM,Global X Mid-Term Government Bond Premium Yield ETF,ETF,CAD,CA3799261084
+PAYS,Global X Short-Term Government Bond Premium Yield ETF,ETF,CAD,CA3799371057
+PAYU,Brompton U.S. Equity HighPay ETF,ETF,CAD,
+PBAL,PIMCO Managed Balanced Portfolio,Common Stock,CAD,
+PBD,Purpose Total Return Bond,ETF,CAD,CA74639Y5056
+PBH,Premium Brands Holdings Corporation,Common Stock,CAD,CA74061A1084
+PBI,Purpose Best Ideas,ETF,CAD,CA74640J1093
+PBI-B,Purpose Fund Corp. - Purpose Best Ideas Fund,ETF,CAD,CA74640J2083
+PBL,Pollard Banknote Limited,Common Stock,CAD,CA73150R1055
+PBY,Canso Credit Income Fund,ETF,CAD,CA1380801060
+PCA,Phoenix Metals Corp.,Common Stock,CAD,
+PCON,PIMCO Managed Conservative Bond Pool ETF,ETF,CAD,
+PCOR,PIMCO Managed Core Bond Pool ETF,ETF,CAD,CA72203V1058
+PD,Precision Drilling Corporation,Common Stock,CAD,CA74022D4075
+PDC,CI Canadian Dividend Index ETF,ETF,CAD,CA46141H1055
+PDF,Purpose Core Dividend Fund Series ETF,ETF,CAD,CA74639Y1097
+PDI,PDI Gold Limited,Common Stock,CAD,
+PDIV,Purpose Enhanced Dividend Fund ETF shares,ETF,CAD,CA74640V1022
+PDN,Paladin Energy Ltd.,Common Stock,CAD,
+PDV,Prime Dividend Corp,Common Stock,CAD,CA74161F3043
+PDV-PA,Prime Dividend Corp Pref A,Preferred Stock,CAD,CA74161F2052
+PEP,Pepsi CDR (CAD Hedged),Common Stock,CAD,
+PET,Pet Valu Holdings Ltd,Common Stock,CAD,CA71584R1055
+PEY,Peyto Exploration&Development Corp,Common Stock,CAD,CA7170461064
+PFAA,Picton Mahoney Fortified Alpha Alternative Fund ETF,ETF,CAD,CA72001R1082
+PFAE,Picton Mahoney Fortified Active Extension Alternative Fund ETF,ETF,CAD,CA72000M1005
+PFCB,Picton Mahoney Fortified Core Bond Fund,ETF,CAD,
+PFCO,PICTON Credit Opportunities Alternative Fund,ETF,CAD,
+PFE,Pfizer CDR (CAD Hedged),Common Stock,CAD,
+PFIA,Picton Mahoney Fortified Income Alternative Fund ETF,ETF,CAD,CA71989F1027
+PFIG,Picton Mahoney Fortified Investment Grade Alternative Fund,ETF,CAD,
+PFIN,PICTON Income Fund,ETF,CAD,
+PFL,CI Canadian Government Floating Rate Index ETF,ETF,CAD,CA46140U1075
+PFLS,Picton Mahoney Fortified Long Short Alternative Fund Class ETF,ETF,CAD,CA72001B1031
+PFMN,Picton Mahoney Fortified Market Neutral Alternative Fund ETF,ETF,CAD,CA71989M1077
+PFMS,Picton Mahoney Fortified Multi-Strategy Alternative Fund ETF,ETF,CAD,CA72000L1022
+PFRD,Mulvihill Split Preferred Share ETF,ETF,CAD,
+PGI,PIMCO Global Income Opportunities Fund,FUND,CAD,
+PGI-UN,PIMCO Global Incme Opportunities Fund,FUND,CAD,
+PGIC,Premium Global Income Split Corp.,Common Stock,CAD,
+PGIC-PA,Premium Global Income Split Corp,Preferred Stock,CAD,
+PGRX,Purpose Global Resource Fund,FUND,CAD,
+PHE,Purpose Tactical Hedged Equity,ETF,CAD,CA74639Y2087
+PHE-B,Purpose Fund Corp. - Purpose Tactical Hedged Equity Fund,ETF,CAD,CA74640M1023
+PHR,Purpose Real Estate Income Fund ETF Share,ETF,CAD,CA74640L1040
+PHW,Purpose International Tactical Hedged Equity,ETF,CAD,CA74640P1053
+PHX,PHX Energy Services Corporation,Common Stock,CAD,CA69338U1012
+PHYS,Sprott Physical Gold Trust,Common Stock,CAD,CA85207H1047
+PHYS-U,Sprott Physical Gold Trust,ETF,USD,
+PIC-A,Premium Income Corporation,Common Stock,CAD,CA7409103024
+PIC-PA,Premium Income Corp Pref A,Preferred Stock,CAD,CA7409102034
+PID,Purpose International Dividend Fund Series ETF,ETF,CAD,CA74640N1006
+PIF,Polaris Infrastructure Inc,Common Stock,CAD,CA73106R1001
+PIN,Purpose Monthly Income Fund Series ETF,ETF,CAD,CA74639Y3077
+PINC,Purpose Multi-Asset Income Fund ETF,ETF,CAD,CA74641M1014
+PINV,Purpose Global Innovators Fund ETF,ETF,CAD,CA74641A1075
+PLDI,PIMCO Low Duration Monthly Income Fund (Canada) ETF Series,ETF,CAD,CA72203C1077
+PLHI,Ninepoint Palantir HighShares ETF,ETF,CAD,
+PLTE,Harvest Palantir Enhanced High Income Shares ETF - Class A Units,ETF,CAD,CA41756T1066
+PLTR,Palantir CDR (CAD Hedged),Common Stock,CAD,
+PLTU,SavvyLong (2X) PLTR ETF,ETF,CAD,
+PLZ-UN,Plaza Retail REIT,Common Stock,CAD,CA72820F1036
+PME,Sentry Select Primary Metals Corp,Common Stock,CAD,CA81733D1050
+PMEI-UN,PIMCO Monthly Enhanced Income Fund,FUND,CAD,
+PMET,PMET Resources Inc.,Common Stock,CAD,CA70337R1073
+PMIF,PIMCO Monthly Income ETF,ETF,CAD,CA72203R1047
+PMIF-U,PIMCO Monthly Income Fund (Canada),ETF,USD,CA72203R2037
+PMM,Purpose Multi-Strategy Market Neutral Fund Series ETF,ETF,CAD,CA74640H1038
+PMNT,PIMCO Global Short Maturity Fund (Canada) ETF Series,ETF,CAD,CA72203K1093
+PMZ-UN,Primaris Retail R.E. Invest. Tr. Units,Common Stock,CAD,CA74167K1093
+PNC-A,Postmedia Network Canada Corp,Common Stock,CAD,
+PNC-B,Postmedia Network Canada Corp,Common Stock,CAD,CA73752W5028
+PNE,Pine Cliff Energy Ltd,Common Stock,CAD,CA7225241057
+PNP,Pinetree Capital Ltd,Common Stock,CAD,CA7233308583
+POU,Paramount Resources Ltd.,Common Stock,CAD,CA6993202069
+POW,Power Corporation Of Canada,Common Stock,CAD,CA7392391016
+POW-PA,Power Corporation of Canada Pref A,Preferred Stock,CAD,CA7392398870
+POW-PB,Power Corporation of Canada Pref B,Preferred Stock,CAD,CA7392398045
+POW-PC,Power Corporation of Canada Pref C,Preferred Stock,CAD,CA7392398797
+POW-PD,Power Corporation of Canada Pref D,Preferred Stock,CAD,CA7392398615
+POW-PG,Power Co 5.6 % G Non Cum Fir Prf,Preferred Stock,CAD,CA7392398532
+PPL,Pembina Pipeline Corp,Common Stock,CAD,CA7063271034
+PPL-PA,Pembina Pipeline Corp Pref A,Preferred Stock,CAD,CA7063272024
+PPL-PC,Pembina Pipeline Corp Pref C,Preferred Stock,CAD,CA7063274004
+PPL-PE,Pembina Pipeline Corp Pref E,Preferred Stock,CAD,CA7063271117
+PPL-PFA,Pembina Pipeline Corp Pref Series 21,Preferred Stock,CAD,CA7063277643
+PPL-PFE,Pembina Pipeline Corp Pref Series 25,Preferred Stock,CAD,CA7063277239
+PPL-PG,Pembina Pipeline Corp Pref G,Preferred Stock,CAD,CA7063276082
+PPL-PO,Pembina Pipeline Corp Pref Series 15 Class A,Preferred Stock,CAD,CA7063278302
+PPL-PQ,Pembina Pipeline Corp Pref Series 17 Class A,Preferred Stock,CAD,CA7063278146
+PPLN,Global X Pipelines & Energy Services Index ETF,ETF,CAD,
+PPR,Prairie Provident Resources Inc,Common Stock,CAD,CA73965Q1028
+PPTA,Perpetua Resources Corp,Common Stock,CAD,CA7142661031
+PR,Lysander-Slater Preferred Share ActivETF,ETF,CAD,CA5523741000
+PRA,Purpose Diversified Real Asset Fund Series ETF,ETF,CAD,CA74639Y4067
+PREF,Quadravest Preferred Split Share ETF CAN Unit Income,ETF,CAD,CA74739R1038
+PRL,Propel Holdings Inc,Common Stock,CAD,CA74349D1069
+PRM,Big Pharma Split Corp Class A,Common Stock,CAD,CA08934P1080
+PRM-PA,Big Pharma Split Corp,Preferred Stock,CAD,CA08934P2070
+PRN,Profound Medical Corp,Common Stock,CAD,CA74319B5027
+PRP,Purpose Conservative Income Fund Series ETF,ETF,CAD,CA74641W1095
+PRQ,Petrus Resources Ltd,Common Stock,CAD,CA71678F1080
+PRU,Perseus Mining Ltd,Common Stock,CAD,AU000000PRU3
+PRV-UN,Pro Real Estate Investment Trust,Common Stock,CAD,CA7426943006
+PSA,Purpose High Interest Savings Fund,ETF,CAD,CA74640A1084
+PSB,CI 1-5 Year Laddered Investment Grade Corporate Bond Index ETF,ETF,CAD,CA46138N1078
+PSD,Pulse Seismic Inc,Common Stock,CAD,CA74586Q1090
+PSI,Pason Systems Inc.,Common Stock,CAD,CA7029251088
+PSK,PrairieSky Royalty Ltd,Common Stock,CAD,CA7397211086
+PSLV,Sprott Physical Silver,Common Stock,CAD,CA85207K1075
+PSLV-U,Sprott Physical Silver Trust,Common Stock,USD,
+PSU-U,Purpose US Cash Fund,ETF,USD,CA74642V1004
+PTM,Platinum Group Metals Ltd,Common Stock,CAD,CA72765Q8829
+PVS-PH,Partners Value Split Corp Pref Class AA,Preferred Stock,CAD,CA70214J8712
+PVS-PJ,Partners Value Split Corp.,Preferred Stock,CAD,
+PVS-PK,Partners Value Split Corp.,Preferred Stock,CAD,
+PWF-PA,Power Financial Corp Pref A,Preferred Stock,CAD,CA73927C2094
+PWF-PE,Power Financial Corp Pref E,Preferred Stock,CAD,CA73927C8034
+PWF-PF,Power Financial 5.25 Sr E Prf,Preferred Stock,CAD,CA73927C8869
+PWF-PFA,Power Financial Corporation,Preferred Stock,CAD,
+PWF-PG,Power Financial Corp Pref G,Preferred Stock,CAD,CA73927C8786
+PWF-PH,Power Financial Corp Pref H,Preferred Stock,CAD,CA73927C8604
+PWF-PK,Power Finl 4.95 Sr K Prf,Preferred Stock,CAD,CA73927C8372
+PWF-PL,Power Financial 5.1 Sr L Prf,Preferred Stock,CAD,CA73927C8299
+PWF-PO,Power Financial Corp Pref O,Preferred Stock,CAD,CA73927C7879
+PWF-PP,Power Fi 4.40% Non Cum 5 Yr P Prf,Preferred Stock,CAD,CA73927C7796
+PWF-PR,Power Fin 5.50% R Non Cum Prf,Preferred Stock,CAD,CA73927C7531
+PWF-PS,Power Financial Corp Pref S,Preferred Stock,CAD,CA73927C7465
+PWF-PT,Power Financial Corp Pref T,Preferred Stock,CAD,CA73927C7382
+PWF-PZ,Power Financial Corp,Preferred Stock,CAD,CA73927C7127
+PWI,Sustainable Power & Infrastructure Split Corp,Common Stock,CAD,CA86934R1001
+PWI-PA,Sustainable Power & Infrastructure Split Corp.,Preferred Stock,CAD,
+PWRS,Quanta Services CDR (CAD Hedged),Common Stock,CAD,
+PXC,CI RAFI Canadian Index ETF,ETF,CAD,CA46140K1093
+PXS,CI Invesco RAFI U.S. Index ETF II,ETF,CAD,CA46141V1040
+PXT,Parex Resources Inc,Common Stock,CAD,CA69946Q1046
+PXU-F,CI Invesco RAFI U.S. Index ETF,ETF,CAD,CA46140T1003
+PYF,Purpose Premium Yield Fund Series ETF,ETF,CAD,CA74641L1031
+PYF-U,Purpose Fund Corp. - Purpose Premium Yield Fund,ETF,USD,CA74641L3011
+PYPL,PayPal CDR (CAD Hedged),Common Stock,CAD,
+PYR,PyroGenesis Canada Inc.,Common Stock,CAD,CA74734T1049
+PZA,Pizza Pizza Royalty Corp.,Common Stock,CAD,CA72585V1031
+PZW,CI Invesco RAFI Global Small-Mid ETF,ETF,CAD,CA46140D1050
+PZW-F,CI Invesco RAFI Global Small-Mid ETF,ETF,CAD,CA46140D3031
+QAH,Mackenzie US Large Cap Equity Index ETF (CAD-Hedged),ETF,CAD,CA55455M1059
+QASH,Mackenzie Canadian Ultra Short Bond Index ETF,ETF,CAD,
+QBB,Mackenzie Canadian Aggregate Bond Index ETF,ETF,CAD,CA55452S1056
+QBR-A,Quebecor Inc,Common Stock,CAD,CA7481931094
+QBR-B,Quebecor Inc,Common Stock,CAD,CA7481932084
+QBTC,Bitcoin Fund Unit,Common Stock,CAD,CA09175G1046
+QBTC-U,The Bitcoin Fund Class A,Common Stock,USD,
+QBTL,AGFiQ US Market Neutral Anti-Beta CAD-Hedged ETF,ETF,CAD,CA00111C1095
+QCE,Mackenzie Canadian Large Cap Equity Index ETF,ETF,CAD,CA55454W1041
+QCLN,First Trust Nasdaq Clean Edge Green Energy ETF,ETF,CAD,CA33741N1042
+QCN,Mackenzie Canadian Equity Index ETF,ETF,CAD,CA55453U1093
+QCOM,Qualcomm CDR (CAD Hedged),Common Stock,CAD,
+QDX,Mackenzie International Equity Index ETF,ETF,CAD,CA55455T1003
+QDXB,Mackenzie Developed ex-North America Aggregate Bond Index ETF (CAD-Hedged),ETF,CAD,CA55454P1099
+QDXH,Mackenzie International Equity Index ETF (CAD-Hedged),ETF,CAD,CA55455Y1097
+QEBH,Mackenzie Emerging Markets Bond Index ETF (CAD-Hedged),ETF,CAD,CA55454J1030
+QEBL,Mackenzie Emerging Markets Local Currency Bond Index ETF,ETF,CAD,CA55455J1021
+QEC,Questerre Energy Corporation,Common Stock,CAD,CA74836K1003
+QEE,Mackenzie Emerging Markets Equity Index ETF,ETF,CAD,CA55455L1076
+QETH-U,Ether Fund,ETF,USD,CA29764L1085
+QETH-UN,Ether Fund,ETF,CAD,CA29764L1085
+QHY,Mackenzie US High Yield Bond Index ETF (CAD-Hedged),ETF,CAD,CA55455K1093
+QINF,Mackenzie Global Infrastructure Index ETF,ETF,CAD,CA5545471099
+QLB,Mackenzie Canadian Government Long Bond Index ETF,ETF,CAD,
+QMAX,Hamilton Technology Yield Maximizer ETF,ETF,CAD,CA4079151078
+QMAX-U,Hamilton Technology YIELD MAXIMIZER ETF USD,ETF,USD,
+QMVP,HAMILTON CHAMPIONS TM U.S. Technology Index ETF,ETF,CAD,
+QQC,CI Invesco NASDAQ 100 Index ETF,ETF,CAD,CA46090T2092
+QQC-F,CI Invesco NASDAQ 100 Index ETF,ETF,CAD,CA46090T1003
+QQCC,Global X NASDAQ-100 Covered Call ETF,ETF,CAD,CA44057F1062
+QQCC-U,Global X NASDAQ-100 Covered Call ETF,ETF,USD,
+QQCE,CI ESG NASDAQ 100 Index ETF,ETF,CAD,CA46090M2040
+QQCE-F,CI ESG NASDAQ 100 Index ETF,ETF,CAD,CA46090M1059
+QQCI,Invesco NASDAQ 100 Income Advantage ETF,ETF,CAD,CA46149H1073
+QQCL,Global X Enhanced NASDAQ-100 Covered Call ETF,ETF,CAD,CA37962X1050
+QQD,BetaPro NASDAQ-100 -2x Daily Bear ETF,ETF,CAD,
+QQD-U,BetaPro NASDAQ-100 -2x Daily Bear ETF,ETF,USD,
+QQEQ,CI NASDAQ 100 Equal Weight Index ETF,ETF,CAD,CA4614781090
+QQI,BetaPro Nasdaq-100 Daily Inverse ETF,ETF,CAD,
+QQJR,CI Invesco NASDAQ Next Gen 100 Index ETF,ETF,CAD,CA46143Y2050
+QQQD,MegaShort (-3X) NASDAQ-100® Daily Leveraged Alternative ETF,ETF,CAD,
+QQQL,Global X Enhanced Nasdaq-100 Index ETF,ETF,CAD,
+QQQQ,Mackenzie NASDAQ 100 Index ETF,ETF,CAD,
+QQQT,Evolve NASDAQ Technology Index Fund,ETF,CAD,
+QQQT-B,Evolve NASDAQ Technology Index Fund CAD Unhedged,ETF,CAD,CA30054M3012
+QQQT-U,Evolve NASDAQ Technology Index Fund USD Unhedged,ETF,USD,CA30054M1032
+QQQU,MegaLong (3X) NASDAQ-100® Daily Leveraged Alternative ETF,ETF,CAD,
+QQQX,Global X Nasdaq-100 Index ETF CAD,ETF,CAD,CA37962C1014
+QQQX-U,Global X Nasdaq-100 Index ETF,ETF,USD,CA37962C1014
+QQQY,Evolve NASDAQ Technology Enhanced Yield Index Fund,ETF,CAD,CA30053Y3068
+QQQY-U,Evolve NASDAQ Technology Enhanced Yield Index Fund USD Unhedged,ETF,USD,
+QQU,BetaPro NASDAQ-100 2x Daily Bull ETF,ETF,CAD,CA08662F1080
+QRC,Queen's Road Capital Investment Ltd.,Common Stock,CAD,KYG7315B1032
+QRET,Mackenzie Developed Markets Real Estate Index ETF,ETF,CAD,CA55454K1003
+QSB,Mackenzie Canadian Short-Term Bond Index ETF,ETF,CAD,CA55453K1012
+QSP-UN,Restaurant Brands International Limited Partnership,Common Stock,CAD,CA76090H1038
+QSR,Restaurant Brands International Inc,Common Stock,CAD,CA76131D1033
+QTLT,Mackenzie US Government Long Bond Index ETF,ETF,CAD,
+QTRH,Quarterhill Inc,Common Stock,CAD,CA7477131055
+QUB,Mackenzie U.S. Aggregate Bond Index ETF (CAD-Hedged),ETF,CAD,CA5545571088
+QUIG,Mackenzie US Investment Grade Corporate Bond Index ETF (CAD-Hedged),ETF,CAD,CA55455H1064
+QUU,Mackenzie US Large Cap Equity Index ETF,ETF,CAD,CA55454T1012
+QXM,First Asset Morningstar National Bank Quebec Common Class,ETF,CAD,CA1255021042
+RAAA,Corton Enhanced Income Fund,ETF,CAD,
+RATE,Arrow EC Income Advantage Alternative Fund Series ETF,ETF,CAD,CA04273V1031
+RAY,Stingray Group Inc.,Common Stock,CAD,
+RBA,RB Global,Common Stock,CAD,CA7677441056
+RBCU,SavvyLong 2X RBC (RY) Equity-Linked ETF,ETF,CAD,
+RBF1684,RBC Core Bond Pool Series F,FUND,CAD,
+RBF619,RBC Life Science And Technology Fund Series F,FUND,CAD,
+RBF620,RBC Global Technology Fund Series F,FUND,CAD,
+RBF653,RBC Vision Global Equity Fund Series F,FUND,CAD,
+RBF686,RBC Emerging Markets Dividend Fund,FUND,CAD,
+RBN-UN,Blue Ribbon Income Fund,Common Stock,CAD,
+RBND,Russell Investments Core Plus Fixed Income ETF,ETF,CAD,
+RBNK,RBC Canadian Bank Yield Index ETF,ETF,CAD,CA75525D1096
+RBNU,SavvyLong (2X) HOOD ETF,ETF,CAD,
+RBO,RBC 1-5 Year Laddered Corporate Bond,ETF,CAD,CA74932K1030
+RBOT,Global X Robotics & AI Index ETF,ETF,CAD,CA44053Q1063
+RBOT-U,Global X Robotics & AI Index ETF,ETF,USD,CA37893B1076
+RBY,Rubellite Energy Inc,Common Stock,CAD,CA78111B2066
+RCAN,RBC Canadian Equity ETF,ETF,CAD,
+RCD,RBC Quant Canadian Dividend Leaders ETF,ETF,CAD,CA74930H1029
+RCDC,RBC Canadian Dividend Covered Call ETF,ETF,CAD,CA75526J1057
+RCH,Richelieu Hardware Ltd.,Common Stock,CAD,CA76329W1032
+RCI-A,Rogers Communications Inc,Common Stock,CAD,CA7751091017
+RCI-B,Rogers Communications Inc,Common Stock,CAD,CA7751092007
+RCTR,First Trust Bloomberg Nuclear Power ETF,ETF,CAD,
+RDBH,RBC U.S. Discount Bond CAD Hedged ETF,ETF,CAD,CA74938B1076
+RDDT,Reddit CDR (CAD Hedged),Common Stock,CAD,
+RDDY,Harvest Reddit Enhanced High Income Shares ETF,ETF,CAD,
+REAL,Real Matters Inc,Common Stock,CAD,CA75601Y1007
+REI-UN,RioCan Real Estate Investment Trust,Common Stock,CAD,CA7669101031
+REIT,Global X Equal Weight Canadian REITs Index ETF,ETF,CAD,
+RFA,RFA Financial Inc.,Common Stock,CAD,
+RFA-PI,RFA Financial Inc.,Common Stock,CAD,
+RGBM,Return Stacked® Global Balanced & Macro ETF,ETF,CAD,
+RGQO,RBC Target 2026 Government Bond ETF,ETF,CAD,CA7493771074
+RGQP,RBC Target 2027 Government Bond ETF,ETF,CAD,CA74936K1093
+RGQQ,RBC Target 2028 Government Bond ETF,ETF,CAD,CA74938H1047
+RGQR,RBC Target 2029 Government Bond ETF,ETF,CAD,CA74939C1041
+RGQS,RBC Target 2030 Canadian Government Bond ETF,ETF,CAD,
+RGQT,RBC Target 2031 Canadian Government Bond ETF,ETF,CAD,
+RGQU,RBC Target 2032 Canadian Government Bond ETF,ETF,CAD,
+RGSI,Rockpoint Gas Storage Inc,Common Stock,CAD,
+RIC,Richards Group Inc.,Common Stock,CAD,
+RID,RBC Quant EAFE Dividend Leaders ETF (CAD),ETF,CAD,CA74931R1091
+RID-U,RBC Quant EAFE Dividend Leaders ETF,ETF,USD,CA74931R2081
+RIDH,RBC Quant EAFE Dividend Leaders (CAD Hedged) ETF,ETF,CAD,CA74932R1082
+RIFI,Russell Investments Fixed Income ETF,ETF,CAD,CA78249T1030
+RIGE,Russell Investments Global Equity Pool,Common Stock,CAD,
+RIIN,Russell Investments Global Infrastructure ETF,ETF,CAD,CA78250R1038
+RING,Global X Equal Weight Canadian Telecommunications Index ETF,ETF,CAD,CA37965C1086
+RIO,Rio2 Ltd,Common Stock,CAD,CA7672171021
+RIRA,Russell Investments Real Assets ETF,ETF,CAD,CA78250P1071
+RIT,CI Canadian REIT ETF,ETF,CAD,CA12554R1055
+RKLC,Rocklinc Principled Equity ETF,ETF,CAD,
+RLB,RBC 1-5 Year Laddered Canadian Bond ETF,ETF,CAD,CA74933L1004
+RM,Roxmore Resources Inc.,Common Stock,CAD,
+RMAX,Hamilton REITs YIELD MAXIMIZER ETF,ETF,CAD,CA40785J1057
+RNCC,Global X Equal Weight Canadian Telecommunications Covered Call ETF,ETF,CAD,
+RNCL,Global X Enhanced Equal Weight Canadian Telecommunications Covered Call ETF,ETF,CAD,
+ROG,Roche Holding AG,Common Stock,CAD,
+ROOT,Roots Corp,Common Stock,CAD,CA7766521099
+ROSY,Corton Rosenberg Global Macro Fund,FUND,CAD,
+RPD,RBC Quant European Dividend Leaders ETF,ETF,CAD,CA74932V2084
+RPD-U,RBC Quant European Dividend Leaders ETF,ETF,USD,CA74932V1094
+RPD210,RP Alternative Global Bond Fund Class F,FUND,CAD,
+RPDH,RBC Quant European Dividend Leaders (CAD Hedged) ETF,ETF,CAD,CA74933B1022
+RPF,RBC Canadian Preferred Share ETF,ETF,CAD,CA74934A1030
+RQCA,Russell Investments Multi-Factor Canadian Equity Pool,Common Stock,CAD,
+RQIN,Russell Investments Multi-Factor International Equity Pool,Common Stock,CAD,
+RQO,RBC Target 2026 Corporate Bond Index ETF,ETF,CAD,CA7493851009
+RQP,RBC Target 2027 Canadian Corporate Bond Index ETF,ETF,CAD,CA7493341084
+RQQ,RBC Target 2028 Corporate Bond Index ETF,ETF,CAD,CA75528N1042
+RQR,RBC Target 2029 Canadian Corporate Bond ETF,ETF,CAD,CA75528M1068
+RQS,RBC Target 2030 Canadian Corporate Bond Index ETF,ETF,CAD,
+RQT,RBC Target 2031 Canadian Corporate Bond ETF,ETF,CAD,
+RQU,RBC Target 2032 Canadian Corporate Bond ETF,ETF,CAD,
+RQUS,Russell Investments Multi-Factor US Equity Pool,Common Stock,CAD,
+RS,Real Estate & E-Commerce Split Corp,Common Stock,CAD,CA75602C1077
+RS-PA,Real Estate & E-Commerce Split Corp,Preferred Stock,CAD,CA75602C2067
+RSI,Rogers Sugar Inc.,Common Stock,CAD,CA77519R1029
+RTG,RTG Mining Inc,Common Stock,CAD,VGG7707W1529
+RTX,RTX CDR (CAD Hedged),Common Stock,CAD,
+RUA,Rua Gold Inc.,Common Stock,CAD,
+RUD,RBC Quant US Dividend Leaders,ETF,CAD,CA74930L1031
+RUD-U,RBC Quant U.S. Dividend Leaders ETF,ETF,USD,CA74930L2021
+RUDB,RBC U.S. Discount Bond ETF,ETF,CAD,CA75528Q1072
+RUDC,RBC U.S. Dividend Covered Call ETF,ETF,CAD,CA74938C1059
+RUDH,RBC Quant U.S. Dividend Leaders (CAD Hedged) ETF,ETF,CAD,CA74933A1049
+RUQO,RBC Target 2026 U.S. Corporate Bond ETF,ETF,CAD,
+RUQP,RBC Target 2027 U.S. Corporate Bond ETF,ETF,CAD,
+RUQQ,RBC Target 2028 U.S. Corporate Bond ETF,ETF,CAD,
+RUQR,RBC Target 2029 U.S. Corporate Bond ETF,ETF,CAD,
+RUQS,RBC Target 2030 U.S. Corporate Bond ETF,ETF,CAD,
+RUQT,RBC Target 2031 U.S. Corporate Bond ETF,ETF,CAD,
+RUQU,RBC Target 2032 U.S. Corporate Bond ETF,ETF,CAD,
+RUS,Russel Metals Inc.,Common Stock,CAD,CA7819036046
+RUSA,RBC U.S. Large-Cap Equity ETF,ETF,CAD,
+RUSB,RBC Short Term U.S. Corporate Bond ETF,ETF,CAD,CA74934F1027
+RUST,RBC Canadian Ultra Short Term Bond ETF,ETF,CAD,
+RVX,Resverlogix Corp.,Common Stock,CAD,CA76128M1086
+RY,Royal Bank of Canada,Common Stock,CAD,CA7800871021
+RY-PS,Royal Bank of Canada Pref 1st,Preferred Stock,CAD,CA78013R3909
+RYHE,Harvest Enhanced High Income RY-Linked Shares ETF,ETF,CAD,
+RYHI,Ninepoint Royal Bank HighShares ETF,ETF,CAD,
+S,Sherritt International Corporation,Common Stock,CAD,CA8239011031
+SAFE,Global X Equal Weight Canadian Insurance Index ETF,ETF,CAD,CA37965G1090
+SAM,Starcore International Mines Ltd,Common Stock,CAD,CA85525T2020
+SAP,Saputo Inc,Common Stock,CAD,CA8029121057
+SAPS,SAP CDR (CAD Hedged),Common Stock,CAD,
+SAU,St Augustine Gold and Copper Ltd,Common Stock,CAD,VGG8448A1030
+SBC,Brompton Split Banc Corp,Common Stock,CAD,CA11221E1097
+SBC-PA,Brompton Split Banc Corp Pref A,Preferred Stock,CAD,CA11221E2087
+SBI,Serabi Gold PLC,Common Stock,CAD,GB00BG5NDX91
+SBLG,SLGI MFS Blended Research Low Vol Global Fund,FUND,CAD,
+SBLI,SLGI MFS Blended Research Low Vol International Fund,FUND,CAD,
+SBT,Silver Bullion Trust ETF Currency Hedged Units,ETF,CAD,CA74641C1032
+SBT-B,Purpose Silver Bullion Fund,ETF,CAD,
+SBT-U,Purpose Silver Bullion Fund,ETF,USD,CA74641C2022
+SBUX,Starbucks CDR (CAD Hedged),Common Stock,CAD,
+SCHN,Schneider Electric CDR (CAD Hedged),Common Stock,CAD,
+SCHW,Charles Schwab CDR (CAD Hedged),Common Stock,CAD,
+SCND,BetaPro -3x S&P/TSX 60 Daily Leveraged Bear Alternative ETF,ETF,CAD,
+SCR,Strathcona Resources Ltd.,Common Stock,CAD,CA8629521086
+SDE,Spartan Delta Corp,Common Stock,CAD,CA84678A1021
+SEA,Seabridge Gold Inc.,Common Stock,CAD,CA8119271028
+SEC,Senvest Capital Inc.,Common Stock,CAD,CA81731L1094
+SFC,Sagicor Financial Company,Common Stock,CAD,BM78669Q1007
+SFD,NXT Energy Solutions Inc,Common Stock,CAD,CA62948Q1072
+SFI,Solution Financial Inc,Common Stock,CAD,CA83439G2009
+SGD,Snowline Gold Corp.,Common Stock,CAD,
+SGR-U,Slate Grocery REIT,Common Stock,USD,
+SGR-UN,Slate Grocery REIT,Common Stock,CAD,CA8310622037
+SGRD,First Trust Nasdaq® Clean Edge® Smart Grid Infrastructure ETF,ETF,CAD,
+SGY,Surge Energy Inc.,Common Stock,CAD,CA86880Y8779
+SHHI,Ninepoint Shopify HighShares ETF,ETF,CAD,
+SHLD,Global X Defence Tech Index ETF,ETF,CAD,
+SHLE,Source Energy Services Ltd,Common Stock,CAD,CA83615X4075
+SHOP,Shopify Inc,Common Stock,CAD,CA82509L1076
+SHPD,SavvyShort (-2X) Shopify ETF,ETF,CAD,
+SHPE,Harvest Shopify Enhanced High Income Shares ETF,ETF,CAD,
+SHPU,SavvyLong (2X) Shopify ETF,ETF,CAD,
+SIA,Sienna Senior Living Inc,Common Stock,CAD,CA82621K1021
+SIH-UN,Sustainable Innovation & Health Dividend Fund,FUND,CAD,
+SII,Sprott Inc.,Common Stock,CAD,CA8520662088
+SIS,Savaria Corporation,Common Stock,CAD,CA8051121090
+SIXY,EVOLVE BIG SIX CANADIAN BANKS ULTRAYIELD INDEX ETF,ETF,CAD,
+SJ,Stella-Jones Inc.,Common Stock,CAD,CA85853F1053
+SKE,Skeena Resources Ltd,Common Stock,CAD,CA83056P7157
+SKYY,First Trust Cloud Computing ETF,ETF,CAD,CA33745D1024
+SLCA,Sun Life Core Advantage Credit Private Pool,Common Stock,CAD,
+SLF,Sun Life Financial Inc.,Common Stock,CAD,CA8667961053
+SLF-PC,Sun Life Financial Sr 3 Prf,Preferred Stock,CAD,CA8667964024
+SLF-PD,Sun Life Financial Sr 4 Prf,Preferred Stock,CAD,CA8667965013
+SLF-PE,Sun Life Financial Sr 5 Prf,Preferred Stock,CAD,CA8667966003
+SLF-PG,Sun Life Non Cum Rat 8R Cl A Prf,Preferred Stock,CAD,CA8667968819
+SLF-PH,Sun Lif Non Cum Rst Cl A 10R Prf,Preferred Stock,CAD,CA8667968652
+SLF-PJ,Sun Life Financial Inc,Preferred Stock,CAD,CA8667968736
+SLF-PK,Sun Life Financial Inc,Preferred Stock,CAD,CA8667968579
+SLGC,Sun Life MFS Global Core Plus Bond Fund,ETF,CAD,
+SLR,Solitario Exploration & Royalty Corp,Common Stock,CAD,US8342EP1070
+SLS,Solaris Resources Inc,Common Stock,CAD,CA83419D2014
+SLSC,Sun Life Crescent Specialty Credit Private Pool,Common Stock,CAD,
+SLT,Saltire Capital Ltd.,Common Stock,CAD,
+SLT-U,Saltire Capital Ltd.,Common Stock,USD,
+SLVD,BetaPro Silver -2x Daily Bear ETF,ETF,CAD,
+SLVR,Silver Tiger Metals Inc.,Common Stock,CAD,
+SLVU,BetaPro Silver 2x Daily Bull ETF,ETF,CAD,
+SLVX,Global X Silver Miners Index ETF,ETF,CAD,
+SMAX,Hamilton U.S. Equity YIELD MAXIMIZER ETF,ETF,CAD,CA4079161051
+SMAX-U,Hamilton US Equity YIELD MAXIMIZER ETF USD,ETF,USD,
+SMCI,Supermicro CDR (CAD Hedged),Common Stock,CAD,
+SMNS,Siemens CDR (CAD Hedged),Common Stock,CAD,
+SMVP,HAMILTON CHAMPIONS U.S. Dividend Index CDN$ Hedged Units,ETF,CAD,CA4070531070
+SMVP-U,HAMILTON CHAMPIONS U.S. Dividend Index ETF US$ unhedged units,ETF,USD,
+SNDK,Sandisk CDR (CAD Hedged),Common Stock,CAD,CA8000541083
+SNY,Sanofi CDR (CAD Hedged),Common Stock,CAD,
+SOBO,South Bow Corporation,Common Stock,CAD,CA83671M1059
+SOFY,Harvest SoFi Enhanced High Income Shares ETF,ETF,CAD,
+SOIL,Saturn Oil & Gas Inc.,Common Stock,CAD,
+SOLA,Evolve Solana ETF,ETF,CAD,
+SOLL,Purpose Solana ETF Currency Hedged Units,ETF,CAD,
+SOLL-B,Purpose Solana ETF Currency Non-Hedged Units,ETF,CAD,
+SOLL-U,Purpose Solana Etf,ETF,USD,
+SOLQ,3iQ Solana Staking ETF,ETF,CAD,
+SOLQ-U,3iQ Solana Staking ETF,ETF,USD,
+SOLX,CI Galaxy Solana ETF,ETF,CAD,
+SOLX-B,CI Galaxy Solana ETF,ETF,CAD,
+SOLX-U,CI Galaxy Solana ETF USD Series,ETF,USD,
+SOXD,MegaShort (-3X) US Semiconductors Daily Leveraged Alternative ETF,ETF,CAD,
+SOXU,MegaLong (3X) US Semiconductors Daily Leveraged Alternative ETF,ETF,CAD,
+SPAY,Global X Short-Term U.S. Treasury Premium Yield ETF USD CAD,ETF,CAD,CA3799431034
+SPAY-U,Global X Short-Term U.S. Treasury Premium Yield ETF,ETF,USD,
+SPB,Superior Plus Corp,Common Stock,CAD,CA86828P1036
+SPCX,SpaceX CDR (CAD Hedged),Common Stock,CAD,
+SPFD,Mulvihill Enhanced Split Preferred Share ETF,ETF,CAD,
+SPGI,S&P Global CDR (CAD Hedged),Common Stock,CAD,
+SPLT,Brompton Split Corp. PreferredShareETF,ETF,CAD,CA1119191064
+SPPP,Sprott Physical Platinum and Palladium Trust,Common Stock,CAD,
+SPPP-U,Sprott Physical Platinum & Palladium Tr,Common Stock,USD,
+SPXD,BetaPro S&P 500 -2x Daily Bear ETF,ETF,CAD,
+SPXE,Harvest SpaceX Enhanced High Income Shares ETF ,ETF,CAD,
+SPXI,BetaPro S&P 500 Daily Inverse ETF,ETF,CAD,
+SPXU,BetaPro S&P 500 2x Daily Bull ETF,ETF,CAD,CA08663L1040
+SPYD,MegaShort (-3X) S&P 500® Daily Leveraged Alternative ETF,ETF,CAD,
+SPYU,MegaLong (3X) S&P 500® Daily Leveraged Alternative ETF,ETF,CAD,
+SQQQ,BetaPro -3x Nasdaq-100 Daily Leveraged Bear Alternative ETF,ETF,CAD,
+SRSL,BetaPro -3x Russell 2000 Daily Leveraged Bear Alternative ETF,ETF,CAD,
+SRU-UN,SmartCentres Real Estate Investment Trust,Common Stock,CAD,CA83179X1087
+SRV-UN,SIR Royalty Income Fund,Common Stock,CAD,
+SSPX,BetaPro -3x S&P 500 Daily Leveraged Bear Alternative ETF,ETF,CAD,
+SSRM,SSR Mining Inc,Common Stock,CAD,CA7847301032
+STC,Sangoma Technologies Corp,Common Stock,CAD,CA80100R4089
+STCK,Stack Capital Group Inc,Common Stock,CAD,CA85236X1042
+STGO,Steppe Gold Ltd,Common Stock,CAD,CA85913R2063
+STLR,STLLR Gold Inc.,Common Stock,CAD,CA86101P1018
+STN,Stantec Inc,Common Stock,CAD,CA85472N1096
+STPL,BMO Global Consumer Staples Hedged,ETF,CAD,CA09659R1055
+STZ,Constellation Brands CDR (CAD Hedged),Common Stock,CAD,
+SU,Suncor Energy Inc,Common Stock,CAD,CA8672241079
+SUHE,Harvest Suncor Enhanced High Income Shares ETF,ETF,CAD,
+SUHI,Ninepoint Suncor HighShares ETF,ETF,CAD,
+SUN104,Sun Life Mfs International Value A,FUND,CAD,
+SVA,Sernova Corp,Common Stock,CAD,CA81732W1041
+SVB,Silver Bull Resources Inc,Common Stock,CAD,US8274582092
+SVCC,Global X Silver Miners Covered Call ETF,ETF,CAD,
+SVCL,Global X Enhanced Silver Miners Covered Call ETF,ETF,CAD,
+SVI,Storage Vault Canada Inc,Common Stock,CAD,CA86212H1055
+SVM,Silvercorp Metals Inc,Common Stock,CAD,CA82835P1036
+SVR,iShares Silver Bullion CAD Hedged,ETF,CAD,CA46434E1088
+SVR-C,iShares Silver Bullion ETF,ETF,CAD,CA46434E1161
+SWIN,HAMILTON CHAMPIONS Enhanced U.S. Dividend ETF CDN$ Hedged Units,ETF,CAD,CA4070521097
+SWP,Swiss Water Decaffeinated Coffee Inc,Common Stock,CAD,CA8710031094
+SXGC,Southern Cross Gold Consolidated Ltd.,Common Stock,CAD,
+SXHI,Ninepoint SpaceX HighShares ETF,ETF,CAD,
+SXP,Supremex Inc.,Common Stock,CAD,CA86863R1055
+SYK,Stryker CDR (CAD Hedged),Common Stock,CAD,
+SYLD,Purpose Strategic Yield Fund ETF,ETF,CAD,CA74641N1096
+SYZ,Sylogist Ltd.,Common Stock,CAD,CA87132P1027
+T,Telus Corp,Common Stock,CAD,CA87971M1032
+TA,TransAlta Corp,Common Stock,CAD,CA89346D1078
+TA-PD,Transalta A Cum Red Rat Rst Prf,Preferred Stock,CAD,CA89346D7687
+TA-PE,TransAlta Corp Pref E,Preferred Stock,CAD,CA89346D7505
+TA-PF,Transalta C Cum Redeem Rate Prf,Preferred Stock,CAD,CA89346D7356
+TA-PG,TransAlta Corp,Preferred Stock,CAD,
+TA-PH,Transalta E Cum Red Rate Rst Prf,Preferred Stock,CAD,CA89346D7273
+TA-PJ,TransAlta Corp Pref J,Preferred Stock,CAD,CA89346D6770
+TAL,PetroTal Corp.,Common Stock,CAD,
+TALA,Talamore Mining Corp.,Common Stock,CAD,
+TBAL,TD Balanced ETF Portfolio,ETF,CAD,
+TBCF,TD Target 2026 Investment Grade Bond ETF,ETF,CAD,
+TBCG,TD Target 2027 Investment Grade Bond ETF,ETF,CAD,
+TBCH,TD Target 2028 Investment Grade Bond ETF,ETF,CAD,
+TBCI,TD Target 2029 Investment Grade Bond ETF,ETF,CAD,
+TBCJ,TD Target 2030 Investment Grade Bond ETF,ETF,CAD,
+TBCK,TD Target 2031 Investment Grade Bond Fund,FUND,CAD,
+TBIL,Harvest Canadian T-Bill ETF,ETF,CAD,
+TBL,Taiga Building Products Ltd.,Common Stock,CAD,CA87402A1084
+TBNK,TD Canadian Bank Dividend Index ETF,ETF,CAD,CA87818R1091
+TBUF-U,TD Target 2026 U.S. Investment Grade Bond ETF,ETF,USD,
+TBUG-U,TD Target 2027 U.S. Investment Grade Bond ETF,ETF,USD,
+TC,Tucows Inc.,Common Stock,CAD,US8986972060
+TCCA,Trading Central Quant Canada 50 Equity Index ETF,ETF,CAD,
+TCCB,TD Canadian Corporate Bond Fund,FUND,CAD,
+TCL-A,Transcontinental Inc,Common Stock,CAD,CA8935781044
+TCL-B,Transcontinental Inc,Common Stock,CAD,CA8935782034
+TCLB,TD Canadian Long Term Federal Bond ETF,ETF,CAD,CA87242V1067
+TCLV,TD Q Canadian Low Volatility ETF,ETF,CAD,CA87249K1030
+TCND,BetaPro 3x S&P/TSX 60 Daily Leveraged Bull Alternative ETF,ETF,CAD,
+TCOM,TD Alternative Commodities Pool,Common Stock,CAD,
+TCON,TD Conservative ETF Portfolio,ETF,CAD,
+TCS,TECSYS Inc.,Common Stock,CAD,CA8789501043
+TCSB,TD Select Short Term Corporate Bond Ladder ETF,ETF,CAD,CA87241D1078
+TCSH,TD Cash Management ETF,ETF,CAD,CA87241R2054
+TCUS,Trading Central Quant U.S. 50 Equity Index ETF,ETF,CAD,
+TCW,Trican Well Service Ltd.,Common Stock,CAD,CA8959451037
+TCWW,Trading Central Quant Global 50 Equity Index ETF,ETF,CAD,
+TD,Toronto Dominion Bank,Common Stock,CAD,CA8911605092
+TD-PFA,Toronto Dominion Bank Pref A,Preferred Stock,CAD,CA8911456900
+TD-PFI,Toronto-Dominion Bank Pref Series 16,Preferred Stock,CAD,CA8911606405
+TD-PFJ,Toronto-Dominion Bank Pref Series 18,Preferred Stock,CAD,CA8911606249
+TDB,TD Canadian Aggregate Bond Index ETF,ETF,CAD,CA87818P1036
+TDB900,TD Canadian Index - E,FUND,CAD,
+TDB902,TD U.S. Index Fund-E Class,FUND,CAD,
+TDB908,TD Nasdaq Index Fund - E Series - NL,FUND,CAD,
+TDB909,TD Canadian Bond Index Fund - E-Series - NL,FUND,CAD,
+TDB911,TD International Index Fund - E-Series - NL,FUND,CAD,
+TDHE,Harvest Enhanced High Income TD-Linked Shares ETF,ETF,CAD,
+TDHI,Ninepoint TD HighShares ETF,ETF,CAD,
+TDNA,TD North American Dividend Fund,ETF,CAD,
+TDOC,TD Global Healthcare Leaders Index ETF,ETF,CAD,CA87809Y1051
+TDU,SavvyLong 2X TDB (TD) Equity-Linked ETF,ETF,CAD,
+TEC,TD Global Technology Leaders Index ETF,ETF,CAD,CA87241G1000
+TEC-U,TD Global Technology Leaders Index ETF USD,ETF,USD,
+TECH,Evolve FANGMA Index ETF Hedged CAD,ETF,CAD,CA3005353097
+TECH-B,Evolve FANGMA Index ETF Unhedged CAD,ETF,CAD,
+TECI,TD Global Technology Innovators Index ETF,ETF,CAD,CA87251B1085
+TECK-A,Teck Resources Limited,Common Stock,CAD,
+TECK-B,Teck Resources Limited,Common Stock,CAD,CA8787422044
+TECX,TD Global Technology Leaders CAD Hedged Index ETF,ETF,CAD,CA87809A1075
+TECY,Evolve NASDAQ Technology UltraYield ETF,ETF,CAD,
+TEHE,Harvest TELUS Enhanced High Income Shares ETF,ETF,CAD,
+TELY,TelyRx Holdings Inc.,Common Stock,CAD,
+TEQT,TD All-Equity ETF Portfolio,ETF,CAD,
+TERM,Manulife Smart Short-Term Bond ETF,ETF,CAD,CA56502Q1072
+TERP,TRU.X Exogenous Risk Pool,Common Stock,CAD,
+TF,Timbercreek Financial Corp,Common Stock,CAD,CA88709B1040
+TFII,TFI International Inc,Common Stock,CAD,CA87241L1094
+TFPM,Triple Flag Precious Metals Corp,Common Stock,CAD,CA89679M1041
+TGAF,Tralucent Global Alt(long/Short) Equity Fund E ETF,ETF,CAD,CA89300V1013
+TGED,TD Active Global Enhanced Dividend ETF,ETF,CAD,CA87241P1009
+TGFI,TD Active Global Income ETF,ETF,CAD,CA87241T1021
+TGGR,TD Active Global Equity Growth ETF,ETF,CAD,CA87242F1018
+TGO,TeraGo Inc.,Common Stock,CAD,CA88079F1071
+TGRE,TD Active Global Real Estate Equity ETF,ETF,CAD,CA87808T1075
+TGRO,TD Growth ETF Portfolio,ETF,CAD,
+THE,TD International Equity CAD Hedged Index ETF,ETF,CAD,CA87809T1066
+THNC,Thinkific Labs Inc,Common Stock,CAD,CA8841211045
+THU,TD U.S. Equity CAD Hedged Index ETF,ETF,CAD,CA87239W1095
+TI,Titan Mining Corp,Common Stock,CAD,CA88831L1031
+TIF,Ninepoint Target Income Fund,FUND,CAD,
+TIH,Toromont Industries Ltd.,Common Stock,CAD,CA8911021050
+TILV,TD Q International Low Volatility ETF,ETF,CAD,CA87241K1012
+TINF,TD Active Global Infrastructure Equity ETF,ETF,CAD,CA87242G1090
+TINY,Tiny Ltd.,Common Stock,CAD,
+TJX,TJX CDR (CAD Hedged),Common Stock,CAD,
+TKN,Ninepoint Crypto and AI Leaders ETF,ETF,CAD,
+TKN-U,Ninepoint Crypto and AI Leaders ETF,ETF,USD,
+TKO,Taseko Mines Ltd,Common Stock,CAD,CA8765111064
+TLF,Brompton Tech Leaders Income ETF,ETF,CAD,CA11222A1066
+TLF-U,Brompton Tech Leaders Income ETF (USD),ETF,USD,
+TLG,Troilus Gold Corp,Common Stock,CAD,CA8968871068
+TLO,Talon Metals Corp,Common Stock,CAD,VGG866591024
+TLRY,Tilray Inc,Common Stock,CAD,US88688T1007
+TLTX,Global X 20+ Year U.S. Treasury Bond Index ETF,ETF,CAD,
+TLTX-F,Global X 20+ Year U.S. Trs Bd Idx ETF H,ETF,CAD,
+TLTX-U,Global X 20+ Year U.S. Treasury Bond Index ETF,ETF,USD,
+TLV,CI S&P/TSX Composite Low Volatility Index ETF,ETF,CAD,CA46139Y1025
+TMO,Thermo Fisher CDR (CAD Hedged),Common Stock,CAD,
+TMQ,Trilogy Metals Inc,Common Stock,CAD,CA89621C1059
+TMUS,T-Mobile CDR (CAD Hedged),Common Stock,CAD,
+TNT-UN,True North Commercial Real Estate Investment Trust,Common Stock,CAD,CA89784Y2096
+TNZ,Tenaz Energy Corp.,Common Stock,CAD,CA88034V3048
+TOKN,Global X Tokenization Ecosystem Index ETF,ETF,CAD,
+TOT,Total Energy Services Inc.,Common Stock,CAD,CA89154B1022
+TOU,Tourmaline Oil Corp.,Common Stock,CAD,CA89156V1067
+TOY,Spin Master Corp,Common Stock,CAD,CA8485101031
+TPE,TD International Equity Index ETF,ETF,CAD,CA87809R1001
+TPRF,TD Active Preferred Share ETF,ETF,CAD,CA87808Q1037
+TPU,TD U.S. Equity Index ETF,ETF,CAD,CA87239X1078
+TPU-U,TD U.S. Equity Index ETF USD,ETF,USD,
+TPUT,Corton Theta TM Alpha Fund,FUND,CAD,
+TPX-A,Molson Coors Canada Inc,Common Stock,CAD,
+TPX-B,Molson Coors Canada Inc,Common Stock,CAD,CA6087112067
+TPZ,Topaz Energy Corp,Common Stock,CAD,CA89055A2039
+TQCD,TD Q Canadian Dividend ETF,ETF,CAD,CA87241H1082
+TQGD,TD Q Global Dividend ETF,ETF,CAD,CA87241X1033
+TQGM,TD Q Global Multifactor ETF,ETF,CAD,CA87241Q1081
+TQQQ,BetaPro 3x Nasdaq-100 Daily Leveraged Bull Alternative ETF,ETF,CAD,
+TQSM,TD Q U.S. Small-Mid-Cap Equity ETF,ETF,CAD,CA8723551021
+TRI,Thomson Reuters Corp,Common Stock,CAD,CA8849038812
+TRI-PB,Thomson Reuters Corp Sr B Prf,Preferred Stock,CAD,CA8849033037
+TRP,TC Energy Corp,Common Stock,CAD,CA87807B1076
+TRP-PA,TC Energy Corp Pref Series 1,Preferred Stock,CAD,CA87807B2066
+TRP-PB,TC Energy Corp Pref Series 3,Preferred Stock,CAD,CA87807B4047
+TRP-PC,TC Energy Corp Pref Series 5,Preferred Stock,CAD,CA87807B6026
+TRP-PD,TC Energy Corp Pref Series 7,Preferred Stock,CAD,CA87807B8006
+TRP-PE,TC Energy Corp Pref Series 9,Preferred Stock,CAD,CA87807B8758
+TRP-PF,TC Energy Corp Pref Series 2,Preferred Stock,CAD,CA87807B3056
+TRP-PH,TC Energy Corp Pref Series 4,Preferred Stock,CAD,CA87807B5036
+TRP-PL,TC Energy Corp Pref,Preferred Stock,CAD,
+TRSL,BetaPro 3x Russell 2000 Daily Leveraged Bull Alternative ETF,ETF,CAD,
+TRVI,Harvest Travel & Leisure Income ETF - Class A Units,ETF,CAD,CA4179071028
+TRVL,Harvest Travel & Leisure Index ETF Class A units,ETF,CAD,CA41756M1014
+TRVL-U,Harvest Travel & Leisure Index ETF,ETF,USD,CA41756M2004
+TRX,TRX Gold Corporation,Common Stock,CAD,CA87283P1099
+TRZ,Transat AT Inc,Common Stock,CAD,CA89351T4019
+TSAT,Telesat Corp,Common Stock,CAD,CA8795123097
+TSHI,Ninepoint Tesla HighShares ETF,ETF,CAD,
+TSK,Talisker Resources Ltd,Common Stock,CAD,CA87425A1012
+TSL,Tree Island Steel Ltd.,Common Stock,CAD,CA89467Q2009
+TSLA,Tesla CDR (CAD Hedged),Common Stock,CAD,
+TSLD,SavvyShort (-2X) TSLA ETF,ETF,CAD,
+TSLU,SavvyLong (2X) TSLA ETF,ETF,CAD,
+TSLY,HARVEST TESLA ENHANCED HIGH INCOME SHARES ETF,ETF,CAD,
+TSND,TerrAscend Corp.,Common Stock,CAD,
+TSPX,BetaPro 3x S&P 500 Daily Leveraged Bull Alternative ETF,ETF,CAD,
+TSTB,TD Short Term Bond Fund,FUND,CAD,
+TSTX,Global X 1-3 Year U.S. Treasury Bond Index ETF,ETF,CAD,
+TSTX-U,Global X 1-3 Year Us Treasury Bond Index ETF,ETF,USD,
+TSU,Trisura Group Ltd,Common Stock,CAD,CA89679A2092
+TTES,TotalEnergies CDR (CAD Hedged),Common Stock,CAD,
+TTP,TD Canadian Equity Index ETF,ETF,CAD,CA87240Y1025
+TTTX,Global X Innovative Bluechip Top 10 Index ETF,ETF,CAD,CA37964W1059
+TUED,TD Active U.S. Enhanced Dividend ETF,ETF,CAD,CA87250Q1063
+TUEX,TD Active U.S. Enhanced Dividend CAD Hedged ETF,ETF,CAD,CA87252B1076
+TUHY,TD Active U.S. High Yield Bond ETF,ETF,CAD,CA87241U1093
+TULB,TD U.S. Long Term Treasury Bond ETF,ETF,CAD,CA87242E2033
+TULV,TD Q U.S. Low Volatility ETF,ETF,CAD,CA87249E1079
+TUSB,TD Select U.S. Short Term Corporate Bond Ladder ETF,ETF,CAD,CA87241W1059
+TUSB-U,TD Select U.S. Short Term Corporate Bond Ladder ETF,ETF,USD,CA87241W2040
+TUSD-U,TD U.S. Cash Management ETF,ETF,USD,
+TUST,TD Ultra Short Term Bond Fund,FUND,CAD,
+TVA-B,TVA Group Inc,Common Stock,CAD,
+TVE,Tamarack Valley Energy Ltd,Common Stock,CAD,CA87505Y4094
+TVK,Terravest Capital Inc,Common Stock,CAD,CA88105G1037
+TWC,TWC Enterprises Ltd,Common Stock,CAD,CA87310A1093
+TWM,Tidewater Midstream and Infrastructure Ltd,Common Stock,CAD,CA8864531097
+TXF,First Asset Tech Giants Covered Call Common,ETF,CAD,CA12555E1034
+TXF-B,CI Tech Giants Covered Call ETF,ETF,CAD,CA12555E2024
+TXF-U,CI Tech Giants Covered Call ETF,ETF,USD,CA12555E3014
+TXG,Torex Gold Resources Inc,Common Stock,CAD,CA8910546032
+TXN,Texas Instruments CDR (CAD Hedged),Common Stock,CAD,
+TXP,Touchstone Exploration Inc,Common Stock,CAD,CA89156L1085
+U-U,Sprott Physical Uranium Trust,Common Stock,USD,CA85210A1049
+U-UN,Sprott Physical Uranium Trust Fund,ETF,CAD,CA85210A1049
+UBER,Uber CDR (CAD Hedged),Common Stock,CAD,
+UBIL-U,Global X 0-3 Month U.S. T-Bill ETF,ETF,USD,CA44057K1057
+UBNK,Global X Equal Weight U.S. Banks Index ETF,ETF,CAD,
+UBSS,UBS CDR (CAD Hedged),Common Stock,CAD,
+UCSH-U,Global X USD High Interest Savings ETF,ETF,USD,CA37964R1064
+UDEF,Manulife Smart U.S. Defensive Equity ETF Hedged,ETF,CAD,CA56503J1021
+UDIV,Manulife Smart U.S. Dividend ETF Hedged,ETF,CAD,CA56503P1163
+UDIV-B,Manulife Smart U.S. Dividend ETF,ETF,CAD,CA56503P1080
+ULV-C,CI Invesco S&P 500 Low Volatility Index ETF,ETF,CAD,CA46139X1042
+ULV-F,CI Invesco S&P 500 Low Volatility Index ETF,ETF,CAD,CA46139X1208
+ULV-U,CI Invesco S&P 500 Low Volatility Index ETF,ETF,USD,CA46139X1125
+UMAX,Hamilton Utilities YIELD MAXIMIZER ETF,ETF,CAD,CA4081251023
+UMI,CI U.S. MidCap Dividend Index ETF,ETF,CAD,CA12559H1029
+UMI-B,CI WisdomTree U.S. MidCap Dividend Index ETF,ETF,CAD,CA12559H2019
+UMNY-U,CI U.S. Money Market ETF,ETF,USD,
+UMRT,Global X Equal Weight U.S. Groceries & Staples Index ETF,ETF,CAD,
+UMVP,HAMILTON CHAMPIONS TM Utilities Index ETF,ETF,CAD,
+UNC,United Corporations Limited,Common Stock,CAD,CA9101442031
+UNH,UnitedHealth CDR (CAD Hedged),Common Stock,CAD,
+UNI,Unisync Corp,Common Stock,CAD,CA90922H2072
+UNP,Union Pacific CDR (CAD Hedged),Common Stock,CAD,
+UPS,UPS CDR (CAD Hedged),Common Stock,CAD,
+URB,Urbana Corporation,Common Stock,CAD,CA91707P1099
+URB-A,Urbana Corporation,Common Stock,CAD,CA91707P2089
+URCC,Global X Uranium Covered Call ETF,ETF,CAD,
+URE,Ur Energy Inc,Common Stock,CAD,CA91688R1082
+USA,Americas Silver Corp,Common Stock,CAD,CA03062D8035
+USCC,Global X S&P 500 Covered Call ETF,ETF,CAD,CA44056T1075
+USCC-U,Global X S&P 500 Covered Call ETF,ETF,USD,
+USCL,Global X Enhanced S&P 500 Covered Call ETF,ETF,CAD,CA4399181037
+USSL,Global X Enhanced S&P 500 Index ETF,ETF,CAD,
+USSX,Global X S&P 500 Index ETF CAD,ETF,CAD,CA37962A1057
+USSX-U,Global X S&P 500 Index ETF,ETF,USD,CA37962A1057
+UTES,Evolve Canadian Utilities Enhanced Yield Index Fund ETF,ETF,CAD,CA30054A1093
+UTIL,Global X Canadian Utility Services High Dividend Index ETF,ETF,CAD,CA44057B1058
+VA,Vanguard FTSE Developed Asia Pacific All Cap Index ETF,ETF,CAD,CA92206N1087
+VAB,Vanguard Canadian Aggregate Bond,ETF,CAD,CA92203E1016
+VALT,CI Gold Bullion Fund Hedged,ETF,CAD,CA12562B1004
+VALT-B,CI Gold Bullion Fund UnHedged,ETF,CAD,
+VALT-U,CI Gold Bullion Fund,ETF,USD,CA12562B2093
+VBAL,Vanguard Balanced Portfolio,ETF,CAD,CA92207E1079
+VBNK,VersaBank,Common Stock,CAD,CA92512J1066
+VCB,Vanguard Canadian Corporate Bond Index ETF,ETF,CAD,CA92210P1071
+VCE,Vanguard FTSE Canada,ETF,CAD,CA92203U1057
+VCIP,Vanguard Conservative Income ETF Portfolio,ETF,CAD,CA92208H1091
+VCM,Vecima Networks Inc.,Common Stock,CAD,CA92241Y1016
+VCN,Vanguard FTSE Canada All Cap,ETF,CAD,CA92205P1045
+VCNS,Vanguard Conservative ETF Portfolio,ETF,CAD,CA92207C1014
+VCOR,Vanguard Global Core-Plus Bond ETF,ETF,CAD,
+VDU,Vanguard FTSE Developed All Cap Ex US,ETF,CAD,CA92206W1086
+VDY,Vanguard FTSE Canadian High Dividend Yield,ETF,CAD,CA92203Q1046
+VE,Vanguard FTSE Developed Europe All Cap Index ETF,ETF,CAD,CA92206M1005
+VEE,Vanguard FTSE Emerging Markets All Cap Index ETF,ETF,CAD,CA92205X1078
+VEF,Vanguard FTSE Developed All Cap Ex US,ETF,CAD,CA92207G1028
+VEQT,Vanguard All-Equity ETF Portfolio,ETF,CAD,CA92201C1077
+VET,Vermilion Energy Inc.,Common Stock,CAD,CA9237251058
+VFV,Vanguard S&P 500 Index ETF,ETF,CAD,CA92205Y1051
+VGC,Valor Gold Corp.,Common Stock,CAD,CA9199211066
+VGG,Vanguard U.S. Dividend Appreciation Index ETF,ETF,CAD,CA92206F1053
+VGH,Vanguard US Dividend Appreciation CAD Hedged,ETF,CAD,CA92206E1088
+VGRO,Vanguard Growth Portfolio,ETF,CAD,CA92207X1050
+VGV,Vanguard Canadian Government Bond Index ETF,ETF,CAD,CA92210N1024
+VGZ,Vista Gold Corporation,Common Stock,CAD,CA9279263037
+VHI,Vitalhub Corp,Common Stock,CAD,CA92847V5018
+VI,Vanguard FTSE Developed All Cap ex Nrth Amer Idx ETF (CAD-Hdd),ETF,CAD,CA92206P1036
+VIDY,Vanguard FTSE Developed ex North America High Dividend Yield Index ETF,ETF,CAD,CA92202A1003
+VIGG,Vanguard Developed ex-North America Dividend Appreciation Index ETF,ETF,CAD,
+VISA,Visa CDR (CAD Hedged),Common Stock,CAD,
+VITL-DBH,Vital Infrastructure Property Trust,Common Stock,CAD,
+VITL-UN,NorthWest Healthcare Properties Real Estate Investment Trust,FUND,CAD,
+VIU,Vanguard FTSE Developed All Cap ex North Amer Idx ETF,ETF,CAD,CA92204G1054
+VLB,Vanguard Canadian Long-Term Bond Index ETF,ETF,CAD,CA92211H1047
+VLE,Valeura Energy Inc,Common Stock,CAD,CA9191444020
+VLN,Velan Inc.,Common Stock,CAD,CA9229321083
+VMET,Versamet Royalties Corporation,Common Stock,CAD,
+VMO,Vanguard Global Momentum Factor ETF CAD,ETF,CAD,CA92207T1049
+VNP,5N Plus Inc.,Common Stock,CAD,CA33833X1015
+VOLX,BetaPro S&P 500 VIX Short-Term Futures ETF,ETF,CAD,
+VOXR,Vox Royalty Corp.,Common Stock,CAD,CA92919F1036
+VRE,Vanguard FTSE Canadian Capped REIT Index ETF,ETF,CAD,CA92203B1076
+VRIF,Vanguard Retirement Income ETF Portfolio,ETF,CAD,CA92211X1096
+VRT,Vertiv CDR (CAD Hedged),Common Stock,CAD,
+VRTS,Vertiqal Studios,Common Stock,CAD,
+VSB,Vanguard Canadian Short Term Bond,ETF,CAD,CA92203G1063
+VSC,Vanguard Canadian Short-Term Corporate Bond,ETF,CAD,CA92203N1015
+VSP,Vanguard S&P 500 CAD hedged,ETF,CAD,CA92206A1066
+VUDH,Vanguard U.S. High Dividend Yield Index ETF (CAD-hedged),ETF,CAD,
+VUDV,Vanguard U.S. High Dividend Yield Index ETF,ETF,CAD,
+VUN,Vanguard US Total Market,ETF,CAD,CA92206D1006
+VUS,Vanguard US Total Market (CAD Hedged),ETF,CAD,CA92206B1040
+VVL,Vanguard Global Value Factor,ETF,CAD,CA92207U1012
+VVO,Vanguard Global Minimum Volatility ETF CAD,ETF,CAD,CA92207Q1000
+VVSG,Vanguard Canadian Ultra-Short Government Bond Index ETF,ETF,CAD,CA92213B1058
+VXC,Vanguard FTSE Global All Cap ex Canada Index ETF,ETF,CAD,CA92206Q1019
+VXM,First Asset Morningstar International Value CAD Hedged Common,ETF,CAD,CA12555N1033
+VXM-B,CI Morningstar International Value Index ETF,ETF,CAD,CA12555N2023
+VZ,Verizon CDR (CAD Hedged),Common Stock,CAD,
+VZLA,Vizsla Silver Corp.,Common Stock,CAD,CA92859G6085
+WAAV,Wavefront All-Weather Alternative Fund Series ETF,ETF,CAD,
+WAST,Waste Management CDR (CAD Hedged),Common Stock,CAD,
+WCM-A,Wilmington Capital Management Inc,Common Stock,CAD,
+WCN,Waste Connections Inc,Common Stock,CAD,CA94106B1013
+WCP,Whitecap Resources Inc.,Common Stock,CAD,CA96467A2002
+WDC,Western Digital CDR (CAD Hedged),Common Stock,CAD,
+WDO,Wesdome Gold Mines Ltd.,Common Stock,CAD,CA95083R1001
+WEED,Canopy Growth Corp,Common Stock,CAD,CA1380357048
+WEF,Western Forest Products Inc,Common Stock,CAD,CA9582112038
+WELL,WELL Health Technologies Corp,Common Stock,CAD,CA94947L1022
+WFC,Wall Financial Corporation,Common Stock,CAD,CA9319021007
+WFCS,Wells Fargo CDR (CAD Hedged),Common Stock,CAD,
+WFG,West Fraser Timber Co Ltd,Common Stock,CAD,CA9528451052
+WGX,Westgold Resources Limited,Common Stock,CAD,
+WILD,WildBrain Ltd,Common Stock,CAD,CA96810C1014
+WJX,Wajax Corporation,Common Stock,CAD,CA9307831052
+WM,Wallbridge Mining Company Limited,Common Stock,CAD,CA9323971023
+WMT,Walmart CDR (CAD Hedged),Common Stock,CAD,
+WN,George Weston Limited,Common Stock,CAD,CA9611485090
+WN-PA,George Weston Prf,Preferred Stock,CAD,CA9611488896
+WN-PC,George Weston Ser 3 Prf,Preferred Stock,CAD,CA9611488631
+WN-PD,George Weston 5.20 Ser Iv Prf,Preferred Stock,CAD,
+WN-PE,George Weston 4.75 Ser V Prf,Preferred Stock,CAD,CA9611488482
+WPK,Winpak Ltd.,Common Stock,CAD,CA97535P1045
+WPM,Wheaton Precious Metals Corp,Common Stock,CAD,CA9628791027
+WPRT,Westport Fuel Systems Inc,Common Stock,CAD,CA9609085076
+WRG,Western Energy Services Corp.,Common Stock,CAD,CA9581593030
+WRN,Western Copper and Gold Corp,Common Stock,CAD,CA95805V1085
+WRX,Western Resources Corp,Common Stock,CAD,CA95942C1041
+WSP,WSP Global Inc,Common Stock,CAD,CA92938W2022
+WSRD,Wealthsimple Developed Markets ex North America Socially Responsible Index ETF,ETF,CAD,CA94701J1030
+WSRI,Wealthsimple North America Socially Responsible Index ETF,ETF,CAD,CA94701L1085
+WTE,Westshore Terminals Investment Corp,Common Stock,CAD,CA96145A2002
+WXM,First Asset Morningstar Canada Momentum Common Class,ETF,CAD,CA12554M1068
+X,TMX Group Limited,Common Stock,CAD,CA87262K1057
+XAD,iShares U.S. Aerospace & Defense Index ETF,ETF,CAD,CA46390A1084
+XAGG,iShares U.S. Aggregate Bond Index ETF,ETF,CAD,CA46437M1077
+XAGH,iShares U.S. Aggregate Bond Index ETF (CAD-Hedged),ETF,CAD,CA46437J1049
+XAU,GoldMoney Inc,Common Stock,CAD,CA38149A1093
+XAW,iShares Core MSCI All Country World ex Canada Index ETF,ETF,CAD,CA46435D1096
+XAW-U,iShares Core MSCI All Country World ex Canada Index ETF,ETF,USD,CA46435D2086
+XBAL,iShares Core Balanced ETF Portfolio,ETF,CAD,CA46428Y1025
+XBB,iShares Canadian Universe Bond,ETF,CAD,CA46430T1093
+XBM,iShares S&P/TSX Global Base Metals,ETF,CAD,CA46431T1084
+XCB,iShares Core Canadian Corporate Bond Index ETF,ETF,CAD,CA46430K1084
+XCBG,iShares ESG Advanced Canadian Corporate Bond Index ETF,ETF,CAD,CA46436Y1025
+XCBU,iShares U.S. IG Corporate Bond Index ETF,ETF,CAD,CA46437A1030
+XCD,iShares S&P Global Consumer Discretionary CAD Hedged,ETF,CAD,CA46434P1036
+XCG,iShares Canadian Growth Index ETF,ETF,CAD,CA46430X1006
+XCH,iShares China,ETF,CAD,CA46429X1033
+XCHP,iShares Semiconductor Index ETF,ETF,CAD,CA46438Q1072
+XCLN,iShares Global Clean Energy Index ETF CAD,ETF,CAD,CA46437Y1016
+XCNS,iShares Core Conservative Balanced Portfolio,ETF,CAD,CA46436G1019
+XCS,iShares S&P/TSX Small Cap,ETF,CAD,CA46428G2009
+XCSR,iShares ESG Advanced MSCI Canada Index ETF,ETF,CAD,CA46436U1003
+XCV,iShares Canadian Value,ETF,CAD,CA46430U1066
+XDG,iShares Core MSCI Global Quality Dividend Index ETF,ETF,CAD,CA46436K1021
+XDG-U,iShares Core MSCI Global Quality Dividend Index ETF,ETF,USD,CA46436K1104
+XDGH,iShares Core MSCI Global Quality Dividend Index ETF (CAD-Hedged),ETF,CAD,CA46437B1013
+XDIV,iShares Core MSCI Canadian Quality Dividend Index ETF,ETF,CAD,CA46435V1094
+XDNA,iShares Genomics Immunology and Healthcare Index ETF CAD,ETF,CAD,CA46437W1059
+XDRV,iShares Global Electric and Autonomous Vehicles Index ETF,ETF,CAD,CA46437G1000
+XDSR,iShares ESG Advanced MSCI EAFE Index ETF,ETF,CAD,CA46438D1069
+XDU,iShares Core MSCI US Quality Dividend Index ETF,ETF,CAD,CA46435Q1000
+XDU-U,iShares Core MSCI US Quality Dividend Index ETF,ETF,USD,CA46435Q1182
+XDUH,iShares Core MSCI US Quality Dividend Index ETF (CAD-Hedged),ETF,CAD,CA46435T1049
+XDV,iShares Canadian Select Dividend Index ETF,ETF,CAD,CA46430W1023
+XEB,iShares JP Morgan USD Emerging Markets Bond (CAD Hedged),ETF,CAD,CA46432A1084
+XEC,iShares Core MSCI Emerging Markets IMI Index ETF,ETF,CAD,CA46434U1021
+XEC-U,iShares Core MSCI Emerging Markets IMI Index ETF,ETF,USD,CA46434U2011
+XEF,iShares Core MSCI EAFE IMI,ETF,CAD,CA46434T1057
+XEF-U,iShares Core MSCI EAFE IMI Index ETF,ETF,USD,CA46434T2048
+XEG,iShares S&P/TSX Capped Energy Index ETF,ETF,CAD,CA46428C1005
+XEH,iShares MSCI Europe IMI Index ETF (CAD-Hedged),ETF,CAD,CA46434X1069
+XEI,iShares S&P/TSX Composite High Dividend Index ETF,ETF,CAD,CA46431L1132
+XEM,iShares MSCI Emerging Markets Index ETF,ETF,CAD,CA46430E1025
+XEMC,iShares MSCI Emerging Markets ex China Index ETF,ETF,CAD,CA45033P1009
+XEN,iShares Jantzi Social Index ETF,ETF,CAD,CA46430F1099
+XEQT,iShares Core Equity Portfolio,ETF,CAD,CA46436D1087
+XESG,iShares ESG Aware MSCI Canada Index ETF,ETF,CAD,CA46437H1082
+XETM,iShares S&P/TSX Energy Transition Materials Index ETF,ETF,CAD,CA46438C1086
+XEU,iShares MSCI Europe IMI Index ETF,ETF,CAD,CA46434W1086
+XEXP,iShares Exponential Technologies Index ETF CAD,ETF,CAD,CA46438P1099
+XFH,iShares Core MSCI EAFE IMI Index ETF (CAD-Hedged),ETF,CAD,CA46435E1079
+XFLB,iShares Core Canadian 15+ Year Federal Bond Index ETF,ETF,CAD,CA46438A1021
+XFLI,iShares Flexible Monthly Income ETF,ETF,CAD,
+XFLX,iShares Flexible Monthly Income ETF (CAD-Hedged),ETF,CAD,CA46438Y1007
+XFN,iShares S&P/TSX Capped Financials Index ETF,ETF,CAD,CA46431B1076
+XFR,iShares Floating Rate,ETF,CAD,CA46432B1067
+XGB,iShares Canadian Government Bond,ETF,CAD,CA46430L1067
+XGD,iShares S&P/TSX Global Gold Index ETF,ETF,CAD,CA46428M1086
+XGI,iShares S&P Global Industrials Index ETF (CAD-Hedged),ETF,CAD,CA46434Q1019
+XGRO,iShares Core Growth ETF Portfolio,ETF,CAD,CA46429U1093
+XHAK,iShares Cybersecurity and Tech Index ETF USD,ETF,CAD,CA46437U1093
+XHB,iShares Canadian HYBrid Corporate Bond Index ETF,ETF,CAD,CA46431N1015
+XHC,iShares Global Healthcare (CAD Hedged),ETF,CAD,CA46431R1029
+XHD,iShares US High Dividend Equity (CAD Hedged),ETF,CAD,CA46434B1040
+XHU,iShares U.S. High Dividend Equity Index ETF,ETF,CAD,CA46434Y1043
+XHY,iShares U.S. High Yield Bond Index ETF (CAD-Hedged),ETF,CAD,CA46430D1042
+XIC,iShares Core S&P/TSX Capped Composite,ETF,CAD,CA46430J1012
+XID,iShares India Index ETF,ETF,CAD,CA46429R1064
+XIG,iShares U.S. IG Corporate Bond Index ETF (CAD-Hedged),ETF,CAD,CA46429Q1081
+XIGS,iShares 1-5 Year U.S. IG Corporate Bond Index ETF (CAD-Hedged),ETF,CAD,CA46437D1078
+XIN,iShares MSCI EAFE Index ETF (CAD-Hedged),ETF,CAD,CA46428L1004
+XINC,iShares Core Income Balanced ETF Portfolio,ETF,CAD,CA46435Y1034
+XINT,iShares Core MSCI All-International Equity Index ETF,ETF,CAD,
+XIT,iShares S&P/TSX Capped Information Technology Index ETF,ETF,CAD,CA46428N1069
+XIU,iShares S&P/TSX 60,ETF,CAD,CA46428D1087
+XLB,iShares Core Canadian Long Term Bond Index ETF,ETF,CAD,CA46430M1041
+XLY,Auxly Cannabis Group Inc,Common Stock,CAD,CA05335P1099
+XMA,iShares S&P/TSX Capped Materials Index ETF,ETF,CAD,CA46431E1016
+XMC,iShares S&P US Mid-Cap,ETF,CAD,CA46435J1066
+XMC-U,iShares S&P U.S. Mid-Cap Index ETF,ETF,USD,CA46435J1140
+XMD,iShares S&P/TSX Completion Index ETF,ETF,CAD,CA46430H1055
+XMF-A,M Split Corp,Common Stock,CAD,
+XMF-PB,M Split Corp Pref B,Preferred Stock,CAD,CA55376A5035
+XMF-PC,M Split Corp Pref C,Preferred Stock,CAD,CA55376A8005
+XMH,iShares S&P US Mid-Cap CAD Hedged,ETF,CAD,CA46435K1030
+XMI,iShares MSCI Min Vol EAFE Index ETF,ETF,CAD,CA46433U1030
+XML,iShares MSCI Min Vol EAFE Index ETF (CAD-Hedged),ETF,CAD,CA46436B1022
+XMM,iShares MSCI Min Vol Emerging Markets Index ETF,ETF,CAD,CA46433Y1051
+XMS,iShares Edge MSCI Min Vol USA CAD Hedged,ETF,CAD,CA46436R1073
+XMTM,iShares MSCI USA Momentum Factor Index ETF,ETF,CAD,CA46436L1004
+XMU,iShares MSCI Min Vol USA Index ETF,ETF,CAD,CA46433S1083
+XMU-U,iShares MSCI Min Vol USA Index ETF,ETF,USD,CA46433S2073
+XMV,iShares MSCI Canada Minimum Volatility,ETF,CAD,CA46433N1096
+XMW,iShares MSCI Min Vol Global Index ETF,ETF,CAD,CA46434A1066
+XMY,iShares MSCI Min Vol Global Index ETF (CAD-Hedged),ETF,CAD,CA46436T1030
+XNDU,Xanadu Quantum Technologies Limited,Common Stock,CAD,
+XPF,iShares S&P/TSX North American Preferred Stock (CAD Hedged),ETF,CAD,CA46431J1003
+XQB,iShares High Quality Canadian Bond Index ETF Common Class,ETF,CAD,CA46432H1038
+XQLT,iShares MSCI USA Quality Factor Index ETF,ETF,CAD,CA46436J1057
+XQQ,iShares NASDAQ 100 (CAD Hedged),ETF,CAD,CA46431V1031
+XQQU,iShares NASDAQ 100 Index ETF,ETF,CAD,CA46438E2033
+XRB,iShares Canadian Real Return Bond,ETF,CAD,CA46431C1059
+XRE,iShares S&P/TSX Capped REIT Index ETF,ETF,CAD,CA46431D1033
+XRP,Evolve XRP ETF,ETF,CAD,
+XRPP,Purpose XRP ETF,ETF,CAD,
+XRPP-B,Purpose Investments Inc - Purpose XRP ETF,ETF,CAD,
+XRPP-U,Purpose XRP ETF USD ETF Currency Non-Hedged Units,ETF,USD,
+XRPQ,3iQ XRP ETF,ETF,CAD,
+XSAB,iShares ESG Aware Canadian Aggregate Bond Index ETF,ETF,CAD,CA46436P1018
+XSB,iShares Canadian Short Term Bond,ETF,CAD,CA46431A1093
+XSC,iShares Conservative Short Term Strategic Fixed Income ETF,ETF,CAD,CA46435H1001
+XSE,iShares Conservative Strategic Fixed Income ETF,ETF,CAD,CA4642911032
+XSEA,iShares ESG Aware MSCI EAFE Index ETF,ETF,CAD,CA46436M1086
+XSEM,iShares ESG Aware MSCI Emerging Markets Index ETF,ETF,CAD,CA46437F1027
+XSH,iShares Core Canadian Short Term Corporate + Maple Bond,ETF,CAD,CA46431X1096
+XSHG,iShares ESG Advanced 1-5 Year Canadian Corporate Bond Index ETF,ETF,CAD,CA45033L1094
+XSHU,iShares 1-5 Year U.S. IG Corporate Bond Index ETF,ETF,CAD,CA45033M1077
+XSI,iShares Short Term Strategic Fixed Income ETF,ETF,CAD,CA46435B1031
+XSMB,iShares Core Canadian Short-Mid Term Universe Bond Index ETF,ETF,CAD,
+XSMC,iShares S&P U.S. Small-Cap Index ETF,ETF,CAD,CA46437K1012
+XSMH,iShares S&P U.S. Small-Cap Index ETF (CAD-Hedged),ETF,CAD,CA46436H1091
+XSP,iShares Core S&P 500 (CAD Hedged),ETF,CAD,CA46428J1057
+XSPC,iShares S&P 500 3% Capped Index ETF (CAD-Hedged),ETF,CAD,
+XST,iShares S&P/TSX Capped Consumer Staples Index ETF,ETF,CAD,CA46431P1062
+XSTB,iShares ESG Aware Canadian Short Term Bond Index ETF,ETF,CAD,CA46436N1069
+XSTH,iShares 0-5 Year TIPS Bond Index ETF (CAD-Hedged),ETF,CAD,CA46437N1050
+XSTP,iShares 0-5 Year TIPS Bond Index ETF,ETF,CAD,CA46438L1085
+XSU,iShares US Small Cap (CAD Hedged),ETF,CAD,CA46430R2028
+XSUS,iShares ESG MSCI USA Index,ETF,CAD,CA46437X1033
+XTC,Exco Technologies Limited,Common Stock,CAD,CA30150P1099
+XTD,TDb Split Corp,Common Stock,CAD,CA87234Y2096
+XTD-PA,TDb Split Corp Pref A,Preferred Stock,CAD,CA87234Y1007
+XTG,Xtra-Gold Resources Corp,Common Stock,CAD,VGG9829R1038
+XTLH,iShares 20+ Year U.S. Treasury Bond Index ETF (CAD-Hedged),ETF,CAD,CA45031C1014
+XTLT,iShares 20+ Year U.S. Treasury Bond Index ETF,ETF,CAD,CA45031A1057
+XTOT,iShares Core S&P Total U.S. Stock Market Index ETF,ETF,CAD,
+XTR,iShares Diversified Monthly Income ETF,ETF,CAD,CA46431F1080
+XTRA,Xtract One Technologies Inc.,Common Stock,CAD,CA98422Q1063
+XUH,iShares Core S&P U.S. Total Market Index ETF (CAD-Hedged),ETF,CAD,CA46435F1045
+XUS,iShares Core S&P 500 Index ETF,ETF,CAD,CA46434R1091
+XUS-U,iShares Core S&P 500 Index ETF,ETF,USD,CA46434R2081
+XUSC,iShares S&P 500 3% Capped Index ETF,ETF,CAD,
+XUSF,iShares S&P U.S. Financials Index ETF,ETF,CAD,CA46438B1004
+XUSR,iShares ESG Advanced MSCI USA Index ETF,ETF,CAD,CA46437Q1081
+XUT,iShares S&P/TSX Capped Utilities Index ETF,ETF,CAD,CA46431M1032
+XUU,iShares Core S&P US Total Market,ETF,CAD,CA46435C1014
+XUU-U,iShares Core S&P U.S. Total Market Index ETF,ETF,USD,CA46435C2004
+XVLU,iShares MSCI USA Value Factor Index ETF,ETF,CAD,CA46437L1094
+XWD,iShares MSCI World Index ETF,ETF,CAD,CA46430Y1088
+Y,Yellow Pages Limited,Common Stock,CAD,CA9855721069
+YCM,Commerce Split Corp,Common Stock,CAD,CA2007018039
+YCM-PA,Commerce Split Corp Pref A,Preferred Stock,CAD,CA2007015068
+YCM-PB,Commerce Split Corp Pref B,Preferred Stock,CAD,CA2007016058
+YGR,Yangarra Resources Ltd,Common Stock,CAD,CA98474P5013
+YRB,Yorbeau Resources Inc,Common Stock,CAD,CA9861913023
+ZABS,BMO Asset-Backed Securities ETF,ETF,CAD,
+ZACE,BMO U.S. All Cap Equity Fund ETF Series,ETF,CAD,CA09662N1096
+ZAG,BMO Aggregate Bond Index ETF,ETF,CAD,CA05590C1086
+ZBAL,BMO Balanced ETF,ETF,CAD,CA05591E1034
+ZBAL-T,BMO Balanced ETF (Target Cash Flow Units),ETF,CAD,CA05591E2024
+ZBI,BMO Canadian Bank Income Index ETF,ETF,CAD,CA0559821024
+ZBK,BMO Equal Weight US Banks Index ETF,ETF,CAD,CA05590V1067
+ZCB,BMO Corporate Bond Index ETF,ETF,CAD,CA05585M1032
+ZCDB,BMO Corporate Discount Bond ETF,ETF,CAD,CA05601Y1079
+ZCDX,BMO Credit Stress Opportunities ETF,ETF,CAD,
+ZCH,BMO MSCI China Selection Equity Index ETF,ETF,CAD,CA05575H1064
+ZCLN,BMO Clean Energy Index ETF,ETF,CAD,CA05600V1040
+ZCM,BMO Mid Corporate Bond Index ETF,ETF,CAD,CA05571K1030
+ZCN,BMO S&P/TSX Capped Composite,ETF,CAD,CA05574G1090
+ZCON,BMO Conservative ETF,ETF,CAD,CA05587M1014
+ZCS,BMO Short Corporate Bond Index ETF,ETF,CAD,CA0559761048
+ZCS-L,BMO Short Corporate Bond Index ETF,ETF,CAD,CA0559763028
+ZDB,BMO Discount Bond Index ETF,ETF,CAD,CA05590X1024
+ZDH,BMO International Dividend Hedged to CAD ETF,ETF,CAD,CA05581A1030
+ZDI,BMO International Dividend ETF,ETF,CAD,CA09658Q1081
+ZDIV,BMO MSCI Canada IMI High Dividend Yield Index ETF,ETF,CAD,
+ZDJ,BMO Dow Jones Industrial Average Hedged to CAD Index ETF,ETF,CAD,CA05560D1024
+ZDM,BMO MSCI EAFE Hedged to CAD Index ETF,ETF,CAD,CA05577N1015
+ZDV,BMO Canadian Dividend,ETF,CAD,CA05590R1055
+ZDY,BMO US Dividend ETF (CAD),ETF,CAD,CA05575X1197
+ZDY-U,BMO US Dividend ETF,ETF,USD,CA05575X1015
+ZEA,BMO MSCI EAFE Index ETF,ETF,CAD,CA05579E1097
+ZEB,BMO S&P/TSX Equal Weight Banks,ETF,CAD,CA0556851016
+ZEF,BMO Emerging Markets Bond (CAD Hedged),ETF,CAD,CA05560F1071
+ZEM,BMO MSCI Emerging Markets Index ETF,ETF,CAD,CA05576Y1088
+ZEO,BMO Equal Weight Oil & Gas Index ETF,ETF,CAD,CA05585A2083
+ZEQ,BMO MSCI Europe High Quality CAD Hedged,ETF,CAD,CA05579B1058
+ZEQL,BMO MSCI USA Equal Weight Index ETF,ETF,CAD,
+ZEQT,BMO All-Equity ETF,ETF,CAD,CA05592F1099
+ZEQT-T,BMO All-Equity ETF (Target Cash Flow Units),ETF,CAD,CA05592F2089
+ZESG,BMO Balanced ESG ETF,ETF,CAD,CA05601T1084
+ZESM,BMO MSCI EAFE Small-Mid Cap Index ETF,ETF,CAD,
+ZFC,BMO SIA Focused Canadian Equity Fund ETF Series,ETF,CAD,CA09661H1038
+ZFH,BMO Floating Rate High Yield,ETF,CAD,CA05579G1046
+ZFL,BMO Long Federal Bond Index ETF,ETF,CAD,CA05590K1003
+ZFM,BMO Mid Federal Bond,ETF,CAD,CA05590L1085
+ZFN,BMO SIA Focused North American Equity Fund ETF Series,ETF,CAD,CA09661G1054
+ZFS,BMO Short Federal Bond Index ETF,ETF,CAD,CA0969111024
+ZFS-L,BMO Short Federal Bond Index ETF (Accumulating Units),ETF,CAD,CA0969113004
+ZGB,BMO Government Bond Index ETF,ETF,CAD,CA09660R1029
+ZGD,BMO Equal Weight Global Gold Index ETF,ETF,CAD,CA0556952095
+ZGI,BMO Global Infrastructure Index ETF,ETF,CAD,CA05590G1090
+ZGLD,BMO Gold Bullion ETF (CAD Units),ETF,CAD,
+ZGLD-U,BMO Gold Bullion ETF (USD Units),ETF,USD,
+ZGLH,BMO Gold Bullion Hedged to CAD ETF,ETF,CAD,CA05611N1096
+ZGQ,BMO MSCI All Country World High Quality Index ETF,ETF,CAD,CA05580K1021
+ZGRO,BMO Growth ETF,ETF,CAD,CA05587J1084
+ZGRO-T,BMO Growth ETF,ETF,CAD,CA05587J2074
+ZHP,BMO US Preferred Share Hedged to CAD Index ETF,ETF,CAD,CA09661J1093
+ZHU,BMO Equal Weight US Health Care Index ETF,ETF,CAD,CA05586K1066
+ZHY,BMO High Yield US Corporate Bond Hedged to CAD Index ETF,ETF,CAD,CA05590B1004
+ZIC,BMO Mid-Term US IG Corporate Bond Index ETF (CAD),ETF,CAD,CA05577M1032
+ZIC-U,BMO Mid-Term US IG Corporate Bond Index ETF (USD Units),ETF,USD,CA05577M1115
+ZID,BMO MSCI India Selection Equity Index ETF,ETF,CAD,CA05575G1081
+ZIN,BMO Equal Weight Industrials Index ETF,ETF,CAD,CA05584D1042
+ZIQ,BMO MSCI EAFE High Quality Index ETF,ETF,CAD,CA05613P1027
+ZIU,BMO S&P/TSX 60 Index ETF,ETF,CAD,CA05593C1059
+ZJG,BMO Junior Gold Index ETF,ETF,CAD,CA05571L3092
+ZJK,BMO High Yield US Corporate Bond Index ETF,ETF,CAD,CA05584J1012
+ZJK-U,BMO High Yield US Corporate Bond Index ETF (USD Units) ,ETF,USD,CA05584J2002
+ZJPN,BMO Japan Index ETF,ETF,CAD,CA05592E1025
+ZJPN-F,BMO Japan Index ETF (Hedged Units),ETF,CAD,CA05592E2015
+ZLB,BMO Low Volatility Canadian Equity,ETF,CAD,CA05573T1021
+ZLC,BMO Long Corporate Bond Index ETF,ETF,CAD,CA05571J1066
+ZLD,BMO Low Volatility International Equity Hedged to CAD ETF,ETF,CAD,CA05582R1055
+ZLE,BMO Low Volatility Emerging Markets Equity ETF,ETF,CAD,CA05581X1033
+ZLH,BMO Low Volatility US Equity Hedged to CAD ETF,ETF,CAD,CA05581U1093
+ZLI,BMO Low Volatility International Equity ETF,ETF,CAD,CA05581C1095
+ZLSC,BMO Long Short Canadian Equity ETF,ETF,CAD,CA09662D1015
+ZLSU,BMO Long Short US Equity ETF,ETF,CAD,CA09663E1088
+ZLU,BMO Low Volatility US Equity ETF,ETF,CAD,CA05577D1033
+ZLU-U,BMO Low Volatility US Equity ETF (USD Units),ETF,USD,CA05577D2023
+ZMBS,BMO Canadian MBS Index ETF,ETF,CAD,CA05591H1064
+ZMI,BMO Monthly Income,ETF,CAD,CA05572P1018
+ZMI-U,BMO Monthly Income ETF (USD Units) ,ETF,USD,
+ZMID,BMO S&P US Mid Cap Index ETF,ETF,CAD,CA05589X1050
+ZMID-F,BMO S&P US Mid Cap Index ETF,ETF,CAD,CA05589X3031
+ZMID-U,BMO S&P US Mid Cap Index ETF (USD Units),ETF,USD,CA05589X2041
+ZMMK,BMO Money Market Fund ETF Series,ETF,CAD,CA05602J1093
+ZMP,BMO Mid Provincial Bond Index ETF,ETF,CAD,CA05576Q1054
+ZMT,BMO S&P/TSX Equal Weight Global Base Metals (CAD Hedged),ETF,CAD,CA05584E2015
+ZMU,BMO Mid-Term US IG Corporate Bond Hedged to CAD Index ETF,ETF,CAD,CA05575W1032
+ZNQ,BMO NASDAQ 100 Equity Index ETF,ETF,CAD,CA05586P1053
+ZNQ-U,BMO NASDAQ 100 Equity Index ETF (USD Units),ETF,USD,
+ZPAY,BMO Premium Yield ETF,ETF,CAD,CA05600A2092
+ZPAY-F,BMO Premium Yield ETF,ETF,CAD,CA05600A3082
+ZPAY-U,BMO Premium Yield ETF (USD Units),ETF,USD,CA05600A1003
+ZPH,BMO US Put Write Hedged ETF,ETF,CAD,CA05583V1058
+ZPL,BMO Long Provincial Bond,ETF,CAD,CA05577K1075
+ZPR,BMO Laddered Preferred Share Index ETF,ETF,CAD,CA05581T1021
+ZPR-U,BMO Laddered Preferred Share Index ETF (USD Units),ETF,USD,
+ZPS,BMO Short Provincial Bond,ETF,CAD,CA0559751064
+ZPS-L,BMO Short Provincial Bond Index ETF (Accumulating Units),ETF,CAD,CA0559753045
+ZPW,BMO US Put Write ETF,ETF,CAD,CA05581B1013
+ZPW-U,BMO US Put Write ETF (USD Units),ETF,USD,CA05581B2003
+ZQB,BMO High Quality Corporate Bond Index ETF,ETF,CAD,CA05589H1001
+ZQQ,BMO NASDAQ 100 Equity (CAD Hedged),ETF,CAD,CA05571N1078
+ZRE,BMO Equal Weight REITs Index ETF,ETF,CAD,CA05560G1054
+ZRR,BMO Real Return Bond Index ETF,ETF,CAD,CA05571V1094
+ZSB,BMO Short-Term Bond Index ETF,ETF,CAD,CA09660M1032
+ZSDB,BMO Short-Term Discount Bond ETF,ETF,CAD,CA05592G1072
+ZSML,BMO S&P US Small Cap Index ETF,ETF,CAD,CA05589W2067
+ZSML-F,BMO S&P US Small Cap Index ETF (Hedged Units),ETF,CAD,CA05589W3057
+ZSML-U,BMO S&P US Small Cap Index ETF (USD Units),ETF,USD,CA05589W1077
+ZSP,BMO S&P 500 Index ETF,ETF,CAD,CA05575T1003
+ZSP-U,BMO S&P 500 Index ETF (USD Units),ETF,USD,CA05575T1185
+ZST,BMO Ultra Short-Term Bond,ETF,CAD,CA05579A1075
+ZST-L,BMO Ultra Short-Term Bond ETF (Accumulating Units),ETF,CAD,CA05579A3055
+ZSU,BMO Short-Term US IG Corporate Bond Hedged to CAD Index ETF,ETF,CAD,CA05579D1015
+ZTIP,BMO Short-Term US TIPS Index ETF,ETF,CAD,CA05600Q1054
+ZTIP-F,BMO Short-Term US TIPS Index ETF (Hedged Units),ETF,CAD,CA05600Q3035
+ZTIP-U,BMO Short-Term US TIPS Index ETF (USD Units),ETF,USD,CA05600Q2045
+ZUAG,BMO US Aggregate Bond Index ETF,ETF,CAD,CA05592U1066
+ZUAG-F,BMO US Aggregate Bond Index ETF (Hedged Units),ETF,CAD,
+ZUAG-U,BMO US Aggregate Bond Index ETF (USD Units),ETF,USD,CA05592U1223
+ZUB,BMO Equal Weight US Banks Hedged to CAD Index ETF,ETF,CAD,CA05560J1093
+ZUCM,BMO USD Cash Management ETF,ETF,CAD,CA05609U2065
+ZUCM-U,BMO USD Cash Management ETF (USD Units),ETF,USD,
+ZUD,BMO US Dividend Hedged to CAD ETF,ETF,CAD,CA05576C1068
+ZUE,BMO S&P 500 (CAD Hedged),ETF,CAD,CA05574C1086
+ZUH,BMO Equal Weight US Health Care Hedged to CAD Index ETF,ETF,CAD,CA05560R1010
+ZUP,BMO US Preferred Share Index ETF,ETF,CAD,CA05591C1077
+ZUP-U,BMO US Preferred Share Index ETF (USD Units),ETF,USD,CA05591C1150
+ZUQ,BMO MSCI USA High Quality Index ETF,ETF,CAD,CA05580L1004
+ZUQ-F,BMO MSCI USA High Quality Index ETF (Hedged Units),ETF,CAD,CA05580L3083
+ZUQ-U,BMO MSCI USA High Quality Index ETF (USD Units),ETF,USD,CA05580L2093
+ZUS-U,BMO Ultra Short-Term US Bond ETF (USD Units),ETF,USD,CA05586U1049
+ZUS-V,BMO Ultra Short-Term US Bond ETF (US Dollar Accumulating Units),ETF,USD,CA05586U2039
+ZUT,BMO Equal Weight Utilities Index ETF,ETF,CAD,CA05590D1069
+ZVC,BMO MSCI Canada Value Index ETF,ETF,CAD,CA05584R1038
+ZVU,BMO MSCI USA Value ETF,ETF,CAD,CA05584G1072
+ZWA,BMO Covered Call Dow Jones Industrial Average Hedged to CAD ETF,ETF,CAD,CA05573X1033
+ZWB,BMO Covered Call Canadian Banks ETF,ETF,CAD,CA05560U1049
+ZWB-T,BMO Covered Call Canadian Banks ETF CAD,ETF,CAD,
+ZWB-U,BMO Covered Call Canadian Banks ETF (USD Units),ETF,USD,CA05560U3029
+ZWC,BMO Canadian High Dividend Covered Call,ETF,CAD,CA05591D1050
+ZWE,BMO Europe High Dividend Covered Call Hedged to CAD ETF,ETF,CAD,CA05580X1042
+ZWEN,BMO Covered Call Energy ETF,ETF,CAD,CA05592R1038
+ZWG,BMO Global High Dividend Covered Call ETF,ETF,CAD,CA05600B1085
+ZWGD,BMO Covered Call Spread Gold Bullion ETF,ETF,CAD,
+ZWH,BMO US High Dividend Covered Call ETF,ETF,CAD,CA05579F1062
+ZWH-U,BMO US High Dividend Covered Call ETF (USD Units),ETF,USD,CA05579F1146
+ZWHC,BMO Covered Call Health Care ETF,ETF,CAD,CA05592T1093
+ZWK,BMO Covered Call US Banks ETF,ETF,CAD,CA05586H1038
+ZWP,BMO Europe High Dividend Covered Call ETF,ETF,CAD,CA05585L1058
+ZWQT,BMO Global Enhanced Income Fund (ETF Series),ETF,CAD,
+ZWS,BMO US High Dividend Covered Call Hedged to CAD ETF,ETF,CAD,CA09661N1006
+ZWT,BMO Covered Call Technology ETF,ETF,CAD,CA05590J1030
+ZWU,BMO Covered Call Utilities ETF,ETF,CAD,CA05590N1042
+ZWU-T,BMO Covered Call Utilities ETF CAD,ETF,CAD,
+ZXCO,BMO Target 2027 Canadian Corporate Bond ETF,ETF,CAD,
+ZXCP,BMO Target 2028 Canadian Corporate Bond ETF,ETF,CAD,
+ZXCQ,BMO Target 2029 Canadian Corporate Bond ETF,ETF,CAD,
+ZXLB,BMO SPDR Materials Select Sector Index ETF,ETF,CAD,CA09663M1005
+ZXLB-F,BMO SPDR Materials Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLC,BMO SPDR Communication Services Select Sector Index ETF,ETF,CAD,CA09663F2044
+ZXLC-F,BMO SPDR Communication Services Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLE,BMO SPDR Energy Select Sector Index ETF,ETF,CAD,CA09661Y2050
+ZXLE-F,BMO SPDR Energy Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLF,BMO SPDR Financials Select Sector Index ETF,ETF,CAD,CA0969212004
+ZXLF-F,BMO SPDR Financials Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLI,BMO SPDR Industrials Select Sector Index ETF,ETF,CAD,CA09663B1040
+ZXLI-F,BMO SPDR Industrials Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLK,BMO SPDR Technology Select Sector Index ETF,ETF,CAD,CA09662X2068
+ZXLK-F,BMO SPDR Technology Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLP,BMO SPDR Consumer Staples Select Sector Index ETF,ETF,CAD,CA09662Y2042
+ZXLP-F,BMO SPDR Consumer Staples Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLR,BMO SPDR Real Estate Select Sector Index ETF,ETF,CAD,CA0969222086
+ZXLR-F,BMO SPDR Real Estate Select Sector Index ETFH,ETF,CAD,
+ZXLU,BMO SPDR Utilities Select Sector Index ETF,ETF,CAD,CA09661W2094
+ZXLU-F,BMO SPDR Utilities Select Sector Index ETFH,ETF,CAD,
+ZXLV,BMO SPDR Health Care Select Sector Index ETF,ETF,CAD,CA0969232069
+ZXLV-F,BMO SPDR Health Care Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXLY,BMO SPDR Consumer Discretionary Select Sector Index ETF,ETF,CAD,CA09663C2013
+ZXLY-F,BMO SPDR Consumer Discretionary Select Sector Index ETF (Hedged Units),ETF,CAD,
+ZXM,First Asset Morningstar International Momentum CAD Hedged Common,ETF,CAD,CA12555J2011
+ZXM-B,CI Morningstar International Momentum Index ETF,ETF,CAD,CA12555J1021
+ZYNS,Philip Morris CDR (CAD Hedged),Common Stock,CAD,
+ZZZD,BMO Tactical Dividend ETF Series ETF,ETF,CAD,CA05586E1007

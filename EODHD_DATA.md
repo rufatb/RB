@@ -77,3 +77,33 @@ net-return MDE. No study result changes production automatically.
 - https://eodhd.com/financial-apis/commercial-vs-personal-license-use
 
 These document API semantics, not a live entitlement test of this deployment.
+
+## Free-tier entitlement, measured 2026-09-10
+
+Probed with a live free key, 8 requests. `dailyRateLimit` is **20 requests/day**,
+which is itself a binding constraint on any research use.
+
+| capability | free tier | what it would have fixed |
+|---|---|---|
+| EOD daily OHLC + adjusted close | **YES** | redundancy against Yahoo — reliability, not accuracy |
+| Delisted symbol roster (896 TSX commons) | **YES** | names only; see below |
+| Delisted price history | **NO** — 0 rows | the actual survivorship fix |
+| 5-minute intraday | **NO** — HTTP 403 | day-93's `vp` blocker (needs ~145 sessions) |
+| Bid / ask (BBO) | **NO** — field absent | the four ABSTAINs on 2026-09-10 |
+
+**It does not improve the picks, and it was not wired into the daily path.**
+The two constraints that actually bind are sub-hourly history depth and a
+timestamped BBO, and the free tier addresses neither. `real-time/` returns
+OHLCV + `previousClose` with a *trade* timestamp and **no bid/ask at all** —
+the same shape as Yahoo, and the same reason `validate_equity` fails closed.
+
+What it did buy is one measurement: 50.6% of TSX common stocks in this
+provider's roster are already delisted. See `DATA_CEILING.md`.
+
+**Before paying, verify these two by trial, not by pricing page:**
+1. does the paid tier return **price history for delisted names** (not just the
+   roster — tested twice, 0 rows on free); and
+2. does it return a **bid/ask with its own quote timestamp**, not a last-trade
+   timestamp. The BBO gate needs the quote's time, not the print's.
+
+Neither is answerable from the free tier, and both are the whole reason to buy.

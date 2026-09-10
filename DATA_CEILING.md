@@ -41,6 +41,33 @@ The lesson generalises: with free data, **any cross-sectional strategy that
 buys losers is untestable here**. Not underpowered — untestable, because the
 bias points the same way as the hypothesis.
 
+> **MEASURED, day-97, and it is worse than the prose suggested.** An EODHD free
+> key now gives the delisted roster for the TSX. Same exchange, same provider,
+> same query shape, so both legs come from one population (rule 7):
+>
+> | TSX common stocks | count |
+> |---|---|
+> | currently listed | 874 |
+> | delisted | **896** |
+> | total ever seen | 1,770 |
+>
+> **50.6% of the TSX common stocks in this roster are already dead.** More than
+> half the population our universe is drawn from is invisible to any
+> Yahoo-based study here. This is an UNCONDITIONAL base rate over a
+> population, never a forecast for one name (rule 8), and the roster carries no
+> listing or delisting dates — so it is the provider's whole history, not a
+> rate per decade, and it cannot be attributed to our 10-year sample window.
+>
+> **The roster does NOT fix survivorship.** Names are not prices. EODHD's free
+> tier serves the delisted symbol LIST but returns **0 rows of price history**
+> for delisted names — tested on Allana Potash and again on Husky Energy, a
+> genuine large-cap that delisted into Cenovus in 2021. A list of the dead
+> without their returns is a roster, not a panel, and the whole point of the
+> acquisition is the delisting returns. What the roster buys is the ability to
+> MEASURE the exposure, which is the table above, and nothing more.
+>
+> Artifacts: `data/tsx_delisted.csv`, `data/tsx_live_symbols.csv`.
+
 **What fixes it:** a point-in-time universe including dead tickers, with
 delisting returns. CRSP is the reference product; commercial vendors resell
 equivalents. This is a paid dataset, and it is the single highest-value
