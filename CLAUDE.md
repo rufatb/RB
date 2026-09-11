@@ -1,5 +1,16 @@
 # Working notes for this repo
 
+## Day98 training integrity
+
+Read `AUDIT_day98_training_integrity.md` and
+`PREREGISTER_day98_training_integrity.md`. Production training and preflight
+now validate the actual exchange-session grid and immediate prior close through
+`intraday_history.py`. The legacy extractor remains for old-study reproduction.
+`audit_training_history.py` is standalone descriptive research, never a live
+selector. Preserve missing-data counts, immutable publications and prior work.
+These corrections do not establish an accuracy gain. Common exposure by side
+is computed once and printed beside the concise email's hypothetical legs.
+
 ## Day97 EODHD qualification
 
 Read `EODHD_DATA.md`, `AUDIT_day97.md` and `PREREGISTER_day97.md`. EODHD is

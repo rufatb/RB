@@ -47,6 +47,8 @@ def _concentration(intra):
     for group in groups:
         lines.append(f"- {', '.join(group['tickers'])}: {group['side']} {group['group']}; "
                      f"{fmt(group['gross_share'], '.1%')} of hypothetical gross allocation. "
+                     + (f"{fmt(group['side_share'], '.1%')} of the {group['side']} side. "
+                        if group.get('side_share') is not None else '') +
                      'Shared exposure; distinct names do not establish independent bets.')
     if groups:
         lines.append('A dollar-neutral book can retain sector and factor risk. The prior forced-diversification rejection remains in STRATEGY.md; no new sizing rule is adopted.')
@@ -214,6 +216,15 @@ def text(d):
                          f"exit {p['exit_px']:.2f} on {p['exit_date']}; gross P&L {p['pnl_usd']:+.2f} / {p['pnl_pct']:+.2f}% before costs.")
     if d.get('readiness',{}).get('gaps'):
         lines += ['', '## Readiness gaps']+d['readiness']['gaps']
+    history = res.get('training_history', [])
+    if history:
+        lines += ['', '### Training-label validation',
+                  'Only complete standard exchange sessions supply training outcomes; gaps need the immediately prior session close.']
+        for item in history:
+            lines.append(f"{item['ticker']}: {item['accepted_sessions']} complete sessions; "
+                         f"{item['rejected_sessions']} excluded; {item['missing_previous_closes']} unavailable prior closes; "
+                         f"{item['outside_session_bars']} outside-session bars ignored.")
+            lines.extend(f"  {e['session']}: {e['reason']}" for e in item['exclusions'])
     if d['errors']:
         lines += ['', '## Data and delivery diagnostics']
         lines += [f"{e['layer']}: {e['error']} — {e['detail']}" for e in d['errors']]
