@@ -457,8 +457,14 @@ def reference_close(row, ticker, now):
     except (ValueError,KeyError,TypeError,IndexError) as exc:
         return {**out,'reason':str(exc)}
 
-def validate_equity(row, ticker, now, *, currency=None, max_age=120):
-    """Validate last trade and BBO independently; a fresh trade is not a fresh BBO."""
+def validate_equity(row, ticker, now, *, currency=None, max_age=120,
+                    corroborate=None):
+    """Validate last trade and BBO independently; a fresh trade is not a fresh BBO.
+
+    `corroborate` is an optional callable(ticker) -> {'ts','low','high'} used
+    ONLY when the venue supplies no BBO timestamp. See corroborate_bbo. It can
+    never upgrade a quote to OK, only to CORROBORATED.
+    """
     out = {"ticker": ticker, "mark": None, "bid": None, "ask": None,
            "spread_bps": None, "quote_time": None, "status": "UNAVAILABLE",
            "reason": "missing quote", "currency": row.get("currency")}
@@ -477,12 +483,75 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120):
         return out
     ts = row.get("bidAskTimestamp", row.get("quoteTime"))
     if not fresh(ts, now, max_age):
+        corr = corroborate_bbo(bbo, corroborate, ticker, now, max_age)
+        if corr is not None:
+            out.update(corr)
+            return out
         out["reason"] = "BBO timestamp missing, stale or future; last trade is not quote time"
         return out
     out.update(status="OK", reason="validated BBO", bid=bbo[0], ask=bbo[1],
                mark=(bbo[0]+bbo[1])/2, quote_time=stamp(ts).isoformat(),
                spread_bps=(bbo[1]-bbo[0])/((bbo[0]+bbo[1])/2)*10000)
     return out
+
+
+# A quote whose recency is inferred from a TIMESTAMPED TRADE, not asserted by
+# the venue. Deliberately NOT "OK": nothing downstream may treat it as an
+# exchange-stamped BBO, and the distinct label is the whole point.
+CORROBORATED = "CORROBORATED"
+
+
+def corroborate_bbo(bbo, corroborate, ticker, now, max_age):
+    """Is this unstamped bid/ask consistent with a bar that IS stamped?
+
+    THE PROBLEM THIS ADDRESSES. Yahoo's /v7/finance/quote serves a usable
+    bid/ask and no quote timestamp at all — no `bidAskTimestamp`, no
+    `quoteTime`, and sizes of 0 or None. `fresh()` therefore fails on every
+    name, every session, and the engine abstains forever on this provider. On
+    2026-09-10 and 09-11 all four legs abstained for exactly this reason while
+    the quotes themselves were fine: books uncrossed, spreads 1.5-15bps.
+
+    Refusing an unstamped quote is RIGHT — it could be yesterday's. But
+    "unstamped" is not the same as "unverifiable". /v8/finance/chart serves
+    one-minute bars WITH timestamps, built from actual trades. If the quoted
+    mid sits inside the high/low of a bar stamped within `max_age`, then
+    trades were happening at that price in that minute, and a quote materially
+    stale would have to sit outside the range of prices actually printing.
+
+    WHAT THIS IS NOT. It does not prove the bid and ask were captured in that
+    minute; it bounds how wrong they can be. So it returns CORROBORATED, never
+    OK, and carries the corroborating bar's own timestamp so a reader can see
+    what the claim rests on. `spread_bps` is the quoted spread — that part was
+    never in doubt, only its recency.
+
+    Fails closed: no callable, no bar, a stale bar, or a mid outside the bar's
+    range all return None and the caller abstains as before.
+    """
+    if corroborate is None:
+        return None
+    try:
+        bar = corroborate(ticker)
+    except Exception:                        # noqa: BLE001 — a failed
+        return None                          # corroboration is just no proof
+    if not bar:
+        return None
+    low, high = number(bar.get("low"), positive=True), number(bar.get("high"), positive=True)
+    if low is None or high is None or low > high:
+        return None
+    if not fresh(bar.get("ts"), now, max_age):
+        return None
+    mid = (bbo[0] + bbo[1]) / 2
+    if not (low <= mid <= high):
+        return None
+    return {"status": CORROBORATED, "bid": bbo[0], "ask": bbo[1], "mark": mid,
+            "quote_time": None,
+            "corroborated_at": stamp(bar["ts"]).isoformat(),
+            "corroboration": (f"unstamped BBO; mid {mid:.4f} lies inside the "
+                              f"{low:.4f}-{high:.4f} range of a trade bar "
+                              f"stamped {stamp(bar['ts']).isoformat()}"),
+            "reason": "BBO has no venue timestamp; recency corroborated by a "
+                      "timestamped trade bar — NOT an exchange-stamped BBO",
+            "spread_bps": (bbo[1] - bbo[0]) / mid * 10000}
 
 
 def matched_pair(calls, puts, spot):
@@ -591,3 +660,43 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def minute_bar_corroborator(timeout: float = 10.0):
+    """A corroborate() callable backed by /v8/finance/chart 1-minute bars.
+
+    The chart endpoint needs no crumb — it is the one that kept serving through
+    the 2026-09-09 406 outage — and its bars carry real timestamps, which is
+    exactly what /v7/finance/quote does not give for bid/ask.
+
+    Takes the LAST bar that actually traded (volume > 0). A zero-volume minute
+    has no high/low worth comparing a quote against.
+    """
+    import json
+    import urllib.parse
+    import urllib.request
+
+    url = ("https://query2.finance.yahoo.com/v8/finance/chart/{t}"
+           "?interval=1m&range=1d")
+    headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+
+    def corroborate(ticker):
+        req = urllib.request.Request(
+            url.format(t=urllib.parse.quote(ticker, safe="")), headers=headers)
+        payload = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+        results = (payload.get("chart") or {}).get("result") or []
+        if not results:
+            return None
+        meta = results[0].get("meta") or {}
+        if meta.get("symbol") != ticker:          # rule 9: verify what you got
+            return None
+        stamps = results[0].get("timestamp") or []
+        q = ((results[0].get("indicators") or {}).get("quote") or [{}])[0]
+        for i in range(len(stamps) - 1, -1, -1):
+            low, high = (q.get("low") or [None])[i], (q.get("high") or [None])[i]
+            vol = (q.get("volume") or [None])[i]
+            if low and high and vol:
+                return {"ts": stamps[i], "low": float(low), "high": float(high)}
+        return None
+
+    return corroborate

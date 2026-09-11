@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime as dt
 import math
 from zoneinfo import ZoneInfo
-from quotes import number, stamp
+from quotes import CORROBORATED, number, stamp
 
 ET = ZoneInfo('America/New_York')
 
@@ -65,7 +65,20 @@ def evaluate_legs(res, cfg, quotes, clock, shadow):
             reasons.append(clock['status'])
         if q.get('status') == 'OK' and stamp(q['quote_time']).astimezone(ET).strftime('%H:%M') != '09:46':
             reasons.append('quote not from exact 09:46 entry minute')
-        if q.get('status') != 'OK':
+        # MEASURING A SPREAD AND ACTING ON IT ARE TWO DECISIONS, and they get
+        # two switches. `corroborate_bbo` (brief.py) makes an unstamped quote
+        # produce a CORROBORATED spread instead of "unknown" — that is pure
+        # visibility and changes no sizing. THIS flag decides whether such a
+        # quote may also clear the abstain and let the leg be sized.
+        #
+        # Both default OFF. A CORROBORATED quote is recency-BOUNDED by a
+        # timestamped trade bar, not recency-CERTIFIED by the venue, and the
+        # difference is exactly the sort of thing that should be an explicit
+        # choice rather than a quiet default.
+        accept_corr = bool(cfg.get('execution', {}).get('accept_corroborated_bbo'))
+        if q.get('status') == CORROBORATED and accept_corr:
+            pass                      # spread known, recency bounded, accepted
+        elif q.get('status') != 'OK':
             reasons.append(q.get('reason','validated BBO unavailable'))
         bound = r945.fill_bound(p['side_hint'],p['p945'],res.get('max_chase_pct',.04))
         fill = q.get('ask' if p['side_hint']=='LONG' else 'bid')

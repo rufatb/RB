@@ -23,6 +23,7 @@ import biotech
 import execution
 import ledger
 import positions
+import quotes as quotes_mod
 from quotes import market_client, validate_equity, stamp
 from report_store import Store, encode
 
@@ -129,8 +130,21 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             raw = raw_live if raw_live is not None else client.get(sorted(tickers))
             if live_clock:
                 now = dt.datetime.now(ZoneInfo('America/New_York'))
+            # OFF BY DEFAULT. Yahoo serves a usable bid/ask with no quote
+            # timestamp, so `fresh()` fails on every name and every leg
+            # abstains on this provider forever — 2026-09-10 and 09-11 both
+            # abstained with uncrossed books and 1.5-15bps spreads. The
+            # corroborator checks the quoted mid against a TIMESTAMPED
+            # one-minute trade bar and can only return CORROBORATED, never OK.
+            # Enabling it changes what the engine will SIZE, so it is a
+            # deliberate config decision and not a default. See
+            # quotes.corroborate_bbo.
+            corr = (quotes_mod.minute_bar_corroborator()
+                    if (cfg.get('execution') or {}).get('corroborate_bbo')
+                    else None)
             quotes = {t:validate_equity(raw.get(t,{}),t,now,
-                                        currency='CAD' if t.endswith('.TO') else 'USD') for t in tickers}
+                                        currency='CAD' if t.endswith('.TO') else 'USD',
+                                        corroborate=corr) for t in tickers}
         except Exception as exc:
             # Provider exception text can contain authentication URLs: record class only.
             error('equity_quotes',RuntimeError(type(exc).__name__))
