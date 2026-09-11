@@ -93,8 +93,12 @@ def assess(pair_rows, legs, recorded_today, cfg):
             if len(members) >= 2:
                 complete = all(n is not None for _, n in members) and all(n is not None for n in notionals)
                 share = sum(n for _, n in members) / gross if complete and gross else None
+                side_notional = sum(n for l, n in zip(selected, notionals)
+                                    if l['side'] == side and n is not None)
+                side_share = sum(n for _, n in members) / side_notional if complete and side_notional else None
                 concentration.append(dict(group=group, side=side,
-                    tickers=[l['ticker'] for l, _ in members], gross_share=share))
+                    tickers=[l['ticker'] for l, _ in members], gross_share=share,
+                    side_share=side_share))
     return dict(rate=rate, day_shape=shape, calibration=calibration,
                 concentration=concentration, gaps=gaps,
                 label='Prior published gross bar proxies; no exact-fill or net-profit inference.')

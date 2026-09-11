@@ -123,7 +123,10 @@ HARD_FLOOR, HARD_CAP = 0.35, 0.65
 
 def session_rows(bars: pd.DataFrame, ticker: str, drop_date: str | None = None,
                  min_bars: int = 10) -> list:
-    """Per-session feature/outcome rows from 5m bars. Pure given bars.
+    """Legacy research extractor, retained for reproducibility, not live training.
+
+    It does not certify the session grid or terminal close. Production uses
+    intraday_history.completed_history; old studies are not silently rewritten.
 
     `drop_date` (day-25, external audit): a session is only an OUTCOME once it
     has closed, but this function accepted any day with >= `min_bars` bars and
@@ -201,14 +204,11 @@ def validate_signal_bars(tb: pd.DataFrame, open_t: dt.time, tz: str,
     if now < bar3_end:
         return False, (f"the {idx[2]:%H:%M} bar closes at {bar3_end:%H:%M} and is still "
                        "IN PROGRESS — its close is the live price, not the 9:45 print")
-    head = tb.iloc[:3]
-    for col in ("Open", "High", "Low", "Close"):
-        if col in head and not np.isfinite(head[col].to_numpy(dtype=float)).all():
-            return False, f"non-finite {col} in the signal bars"
-    if "Volume" in head and (head["Volume"].fillna(0).to_numpy() < 0).any():
-        return False, "negative volume in the signal bars"
-    if {"High", "Low"} <= set(head.columns) and (head["High"] < head["Low"]).any():
-        return False, "High < Low in the signal bars (corrupt feed)"
+    from intraday_history import ohlcv_error
+    reason = ohlcv_error(tb.iloc[:3])
+    if reason:
+        return False, ('High < Low or open/close outside [Low, High]' if reason == 'INCONSISTENT_OHLC'
+                       else 'invalid signal OHLCV: '+reason)
     return True, "ok"
 
 
@@ -269,7 +269,7 @@ def coverage_ok(n_evaluated: int, universe: list, groups: dict,
 
 
 def knn_probability(train: pd.DataFrame, today: dict) -> tuple:
-    """Smoothed P(rest-of-day up) for today's features vs the pooled history.
+    """Smoothed directional analog score; not a calibrated win probability.
     Returns (p, n_train, neighbour_distance). Same distance-weighted + Beta-smoothed machinery as
     the analog engine; clamped to the hard band."""
     tr = train.dropna(subset=FEATS + ["r1"])
@@ -779,13 +779,20 @@ def run(cfg, workers=8, *, require_cache=False):
                 "min_p": min_p, "too_early": False, "clock_error": _why,
                 "latest_session": latest_session, "coverage_fail": _why,
                 "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
-    hist_rows, live = [], []
+    hist_rows, live, history_diagnostics = [], [], []
     progress('features_started')
+    from intraday_history import completed_history
     for t, bars in fetched.items():
         if bars.empty:
             continue
-        rows = session_rows(bars, t)
-        hist_rows += [r for r in rows if r["date"] != today_str]
+        try:
+            history = completed_history(bars, t, now, timezone=tz)
+        except (ValueError, TypeError) as exc:
+            fetch_errors[t] = 'historical input validation: '+str(exc)
+            continue
+        rows = history['rows']
+        history_diagnostics.append(history['diagnostics'])
+        hist_rows += rows
         tb = bars[[str(d) == today_str for d in bars.index.date]]
         ok, why = validate_signal_bars(tb, open_t, tz, now)
         if not ok:
@@ -793,15 +800,13 @@ def run(cfg, workers=8, *, require_cache=False):
         if ok:
             o = tb["Open"].iloc[0]; p945 = tb["Close"].iloc[2]
             v15 = float(tb["Volume"].iloc[:3].sum())
-            prior = [r for r in rows if r["date"] != today_str]
+            prior = rows
             med_v = np.median([r["v15"] for r in prior]) if prior else None
-            # Gap directly from the prior session's last close. (BUG FIX found
-            # live: the old path read today's gap from session_rows, which
-            # requires >=10 bars — impossible at 9:47, so every name silently
-            # dropped. Post-close smoke tests couldn't catch this.)
-            prev_bars = bars[[str(d) != today_str for d in bars.index.date]]
-            prior_close = float(prev_bars["Close"].iloc[-1]) if len(prev_bars) else None
-            gap = (o / prior_close - 1) * 100 if prior_close else None
+            prior_close = history['prior_close']
+            if prior_close is None:
+                fetch_errors[t] = 'immediately prior exchange-session close unavailable'
+                continue
+            gap = (o / prior_close - 1) * 100
             live.append({"t": t, "o": o, "p945": p945, "last": float(tb["Close"].iloc[-1]),
                          "r0": (p945 / o - 1) * 100, "gap": gap,
                          "vp": (v15 / med_v) if med_v else None})
@@ -825,7 +830,7 @@ def run(cfg, workers=8, *, require_cache=False):
                     f"board is published. This is a data outage, not a "
                     f"judgement about the names."),
                 "source": src, "source_note": src_note,
-                "fetch_errors": fetch_errors}
+                "fetch_errors": fetch_errors, "training_history": history_diagnostics}
     train["vp"] = train.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
 
     # Pooled path expectations: the normal worst swing AGAINST each side
@@ -894,7 +899,8 @@ def run(cfg, workers=8, *, require_cache=False):
         return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
                 "longs": [], "shorts": [], "excluded": [], "pair": None,
                 "min_p": min_p, "too_early": False, "coverage_fail": cov_msg,
-                "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
+                "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
+                "training_history": history_diagnostics}
     pcfg = cfg.get("pair") or {}
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
             "longs": longs, "shorts": shorts, "excluded": excluded,
@@ -907,7 +913,7 @@ def run(cfg, workers=8, *, require_cache=False):
             # reconstructed at scoring time (see ledger.append_universe_prints).
             "evaluated": [{"ticker": r["t"], "p945": r["p945"]} for r in out],
             "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
-            "coverage": cov_msg,
+            "coverage": cov_msg, "training_history": history_diagnostics,
             "late_min": round(late_minutes(now, open_t), 1),
             "stale_after_min": pcfg.get("stale_after_min", 20),
             "spent_drift_pct": pcfg.get("spent_drift_pct", 0.3),
@@ -915,8 +921,8 @@ def run(cfg, workers=8, *, require_cache=False):
             "disaster_stop_pct": pcfg.get("disaster_stop_pct", 2.5),
             "entry_window_min": pcfg.get("entry_window_min", 10),
             "legs_per_side": pcfg.get("legs_per_side", 2),
-            # Anchor for the order window: the moment the 9:45 signal bar
-            # became complete (open+16), NOT the moment the command was run.
+            # Anchor includes a one-minute visibility buffer after the first
+            # 15-minute window closes; it is not the signal bar's closing time.
             "ready_at_iso": ready.isoformat(timespec="seconds"),
             "path_stats": path_stats}
 

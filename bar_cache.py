@@ -21,7 +21,7 @@ def inspect_cache(cfg, directory, now=None):
     now=stamp(now).astimezone(ZoneInfo('America/New_York'))
     expected_tickers=cfg['scan']['universe']
     out={'status':'NOT READY','session':now.date().isoformat(),
-         'verified':0,'expected':len(expected_tickers),'errors':[]}
+         'verified':0,'expected':len(expected_tickers),'errors':[], 'training_history':[]}
     try:
         root=Path(directory)
         manifest=json.loads((root/'manifest.json').read_text())
@@ -47,6 +47,12 @@ def inspect_cache(cfg, directory, now=None):
             if (not np.isfinite(values[['Open','High','Low','Close','Volume']].to_numpy(dtype=float)).all()
                 or (values[['Open','High','Low','Close']]<=0).any().any() or (values['Volume']<0).any()):
                 raise ValueError('invalid cached OHLCV: '+ticker)
+            from intraday_history import completed_history
+            values.index = index
+            validated = completed_history(values, ticker, now, timezone=cfg['exchange_tz'])
+            out['training_history'].append(validated['diagnostics'])
+            if validated['prior_close'] is None or not validated['rows']:
+                raise ValueError('incomplete prior session or no valid training history: '+ticker)
             out['verified']+=1
         out['status']='READY'
     except (OSError,ValueError,KeyError,TypeError,IndexError) as exc:

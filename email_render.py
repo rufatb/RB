@@ -41,6 +41,16 @@ def text(d):
     else:
         lines.append(f"Evaluated {res['n_names']} names; no qualifying baseline selections.")
     lines.append(f"Coverage: {res.get('n_names',0)} evaluated; {len(intra.get('recorded_today',[]))} recorded qualifiers.")
+    groups = intra.get('risk_evidence', {}).get('concentration', [])
+    for g in groups:
+        lines.append(f"Common exposure: {', '.join(g['tickers'])} — {g['side']} {g['group']}; "
+                     f"{fmt(g['gross_share'], '.0%')} of gross allocation"+
+                     (f", {fmt(g['side_share'], '.0%')} of the {g['side']} side" if g.get('side_share') is not None else '')+
+                     '. These names can lose together.')
+    history = res.get('training_history', [])
+    if history:
+        lines.append(f"Training: {sum(h['accepted_sessions'] for h in history)} complete ticker-sessions; "
+                     f"{sum(h['rejected_sessions'] for h in history)} excluded; audit attached.")
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
     if not book['legs']:
@@ -77,12 +87,12 @@ def text(d):
     rec=intra['record']; risk=intra.get('risk_evidence',{}); rate=risk.get('rate',{}); exact=intra['exact_record']
     lines += ['', '## Evidence & gaps',
               f"Historical gross proxy: {rec['hits']}/{rec['n']} hits ({fmt(rec['rate'],'.1%')}); "
-              f"net proxy {fmt(rec.get('net_rate'),'.1%')} on {rec['net_n']} legs, {rec['net_unpriced']} unpriced. "
+              f"mean {fmt(rec.get('mean'),'+.3f')}% per leg. "
+              f"Net proxy {fmt(rec.get('net_rate'),'.1%')}, mean {fmt(rec.get('net_mean'),'+.3f')}% "
+              f"on {rec['net_n']} legs, {rec['net_unpriced']} unpriced. "
               f"MDE80 {fmt(rate.get('mde80_pp'))} percentage points; scores are not calibrated win probabilities.",
               f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
               f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%."]
-    groups=risk.get('concentration',[])
-    if groups:lines.append('Common exposure: '+'; '.join(f"{g['side']} {g['group']} {fmt(g['gross_share'],'.0%')}" for g in groups))
     errors=d.get('errors',[])
     if errors:
         from collections import Counter

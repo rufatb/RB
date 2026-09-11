@@ -24,14 +24,27 @@ def test_manifest_alone_does_not_certify_missing_cache_bytes(tmp_path):
 
 
 def test_cache_verifies_identity_and_rejects_after_open_preparation(tmp_path):
+    import pandas as pd
     cfg,m=cache(tmp_path)
     row=dict(ticker='A.TO',session=NOW.date().isoformat(),frame=json.dumps(dict(
-        columns=['Open','High','Low','Close','Volume'],index=['2026-09-04T15:55:00-04:00'],data=[[1,1,1,1,10]])))
+        columns=['Open','High','Low','Close','Volume'],
+        index=[t.isoformat() for t in pd.date_range('2026-09-04 09:30',periods=78,freq='5min',tz='America/New_York')],
+        data=[[1,1,1,1,10]]*78)))
     (tmp_path/bar_cache.key('A.TO')).write_text(json.dumps(row))
     assert bar_cache.inspect_cache(cfg,tmp_path,NOW)['status']=='READY'
     m['prepared_at']=NOW.replace(hour=9,minute=31).isoformat()
     (tmp_path/'manifest.json').write_text(json.dumps(m))
     assert bar_cache.inspect_cache(cfg,tmp_path,NOW)['status']=='NOT READY'
+
+
+def test_cache_with_only_a_closing_bar_is_not_ready(tmp_path):
+    cfg,_=cache(tmp_path)
+    row=dict(ticker='A.TO',session=NOW.date().isoformat(),frame=json.dumps(dict(
+        columns=['Open','High','Low','Close','Volume'],index=['2026-09-04T15:55:00-04:00'],data=[[1,1,1,1,10]])))
+    (tmp_path/bar_cache.key('A.TO')).write_text(json.dumps(row))
+    result = bar_cache.inspect_cache(cfg,tmp_path,NOW)
+    assert result['status']=='NOT READY'
+    assert result['training_history'][0]['rejected_sessions']==1
 
 
 def test_scheduled_scan_cannot_download_full_history_when_cache_is_unconfigured(monkeypatch):
