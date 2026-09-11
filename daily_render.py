@@ -120,9 +120,22 @@ def text(d):
            '| Status | Name | Baseline side | Signal reference | 09:46 quote | Spread | Hypothetical allocation |',
            '|---|---|---|---:|---:|---:|---:|']
     for l in intra['legs']:
+        # AN ABSTAINED LEG GETS NO SHARE COUNT AND NO DOLLAR FIGURE.
+        #
+        # 2026-09-09 and 2026-09-11 both printed ABSTAIN in the first column
+        # and "CAD 11,787 / 138 shares" in the last one. A banner saying DO NOT
+        # TRADE was added after the first of those and the table was still
+        # acted on, because a row carrying a share count IS an order ticket
+        # whatever the status column says. The words were never the problem.
+        #
+        # The size is not lost: it is the BASELINE's hypothetical figure and
+        # stays in the JSON for scoring. It is simply not rendered next to a
+        # pick the engine itself declined.
+        alloc = ('—' if l['status'] == 'ABSTAIN'
+                 else f"CAD {l['baseline_alloc']:,.0f} / {l['baseline_shares']} shares")
         lines.append(f"| {l['status']} | {l['ticker']} | {l['side']} | {l['signal_reference']:.2f} | "
                      f"{fmt(l['entry_reference'])} | {fmt(l['entry_spread_bps'])} bps | "
-                     f"CAD {l['baseline_alloc']:,.0f} / {l['baseline_shares']} shares |")
+                     f"{alloc} |")
     if not intra['legs']:
         recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
         for r in recorded:

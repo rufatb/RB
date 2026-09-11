@@ -28,7 +28,12 @@ def text(d):
         lines += ['', '| Status | Name / side | Shares | 09:45 bar | 09:46 quote | Spread |',
                   '|---|---|---:|---:|---:|---:|']
         for l in legs:
-            lines.append(f"| {l['status']} | {l['ticker']} {l['side']} | {l['baseline_shares']} | "
+            # No share count on an abstained leg. The email is what gets read
+            # at 09:46 on a phone, and a row with a share count is an order
+            # ticket no matter what the Status column says — twice now it was
+            # acted on. See daily_render for the full note.
+            shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
+            lines.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | "
                          f"{fmt(l.get('signal_reference'))} | {fmt(l.get('entry_reference'))} | {fmt(l.get('entry_spread_bps'))} bps |")
         if not legs:
             for r in recorded:

@@ -1,5 +1,26 @@
 # Working notes for this repo
 
+## Day98 side skill — registered, and NOT answerable until ~2027-04
+
+`PREREGISTER_day98_side_skill.md` and `AUDIT_day98_losing_days.md`. The long
+side shows 42.9% against a 53.0% base rate (−10.1pp, −1.42 SE) on 51 legs; the
+short side +6.4pp at +0.98 SE. **Neither is significant and rejection #16
+already refused this family**, having found the deep set and the true 5-minute
+set said OPPOSITE things about which side was broken.
+
+Resolving a 10pp side effect at |t|>=3 needs ~230 legs per side. At 1.27 long
+legs per session that is ~140 further sessions. **Do not re-open this after a
+losing day** — the bar and the date are registered precisely so it stops being
+re-litigated.
+
+What needs no test: the win/loss ratio is **0.92** against the **1.06** needed
+to break even at a 48.6% hit rate. That is arithmetic, and it is what loses
+money — not the hit rate, which is the ledger's headline metric.
+
+An ABSTAINED leg renders no share count and no dollar figure. A row carrying a
+size is an order ticket whatever the Status column says; the banner alone did
+not stop it being acted on twice.
+
 ## Day98 training integrity
 
 Read `AUDIT_day98_training_integrity.md` and
