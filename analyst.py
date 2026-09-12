@@ -1,5 +1,5 @@
 """
-analyst.py — optional Claude-powered analysis layer.
+analyst.py — optional narrative analysis and staged DeepSeek factors.
 
 WHAT IT IS: a second pair of eyes that reads the SAME computed, real metrics the
 deterministic engine produced and writes an honest narrative — pattern
@@ -19,7 +19,9 @@ WHAT IT IS NOT (hard guardrails, do not strip):
     * It degrades gracefully: no API key -> a clear "analyst disabled" stub, the
       rest of the brief is unaffected.
 
-Model: claude-opus-4-8 with adaptive thinking (see Anthropic docs / claude-api).
+The legacy narrative path requests claude-opus-4-8; model availability is a
+provider capability, not a guarantee. DeepSeek has its own strict JSON boundary
+and is invoked only by pre-open preparation, never by the daily renderer.
 """
 
 from __future__ import annotations
@@ -70,6 +72,15 @@ class AnalystResult:
     text: str
     model: Optional[str] = None
     error: Optional[str] = None
+
+
+def analyze_factors(candidates, macro, as_of, **kwargs):
+    """Assess public unstructured evidence; no indicators, selection or orders.
+
+    Preparation-only adapter seam. The report consumes the saved receipt.
+    """
+    from adapters.deepseek_adapter import evaluate_batch
+    return evaluate_batch(candidates, macro, as_of, **kwargs)
 
 
 def _compact_brief(brief: dict) -> dict:
@@ -141,7 +152,7 @@ def analyze(brief: dict, *, model: str = "claude-opus-4-8",
     try:
         import anthropic
     except Exception as e:
-        return AnalystResult(False, f"(Claude analyst unavailable: {e})")
+        return AnalystResult(False, f"(Claude analyst unavailable: {type(e).__name__})")
 
     payload = _compact_brief(brief)
     user_msg = (
@@ -167,4 +178,4 @@ def analyze(brief: dict, *, model: str = "claude-opus-4-8",
             return AnalystResult(False, "(Claude analyst returned no text.)", model=resp.model)
         return AnalystResult(True, text, model=resp.model)
     except Exception as e:  # network, auth, rate limit — never crash the brief
-        return AnalystResult(False, f"(Claude analyst error: {e})", error=str(e))
+        return AnalystResult(False, f"(Claude analyst error: {type(e).__name__})", error=type(e).__name__)

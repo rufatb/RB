@@ -7,6 +7,8 @@ scipy>=1.10            # pandas Spearman correlation in retained research harnes
 
 # Claude analysis layer (optional; activates when ANTHROPIC_API_KEY is set)
 anthropic>=0.40
+openai>=2.54,<3        # DeepSeek OpenAI-compatible client; preparation only
+httpx[socks]>=0.28,<1  # Honor SOCKS proxies on headless hosts
 
 # Config + terminal output
 pyyaml>=6.0

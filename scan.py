@@ -25,12 +25,24 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+from diagnostics import safe_detail, safe_error
+
+log = logging.getLogger(__name__)
+
+
+def _warn(layer, exc, diagnostics=None):
+    item = safe_error(layer, exc)
+    log.warning('%s unavailable: %s', item['layer'], item['error'])
+    if diagnostics is not None:
+        diagnostics.append(item)
+    return item
 
 import metrics
 import patterns
@@ -45,6 +57,14 @@ from dashboard import (build_levels, data_integrity_guard, decide, load_config,
 DEFAULT_CRUDE_BENEFICIARIES = {"CNQ.TO", "SU.TO", "CVE.TO", "ENB.TO", "TRP.TO",
                                "IMO.TO", "TOU.TO", "ARX.TO", "MEG.TO", "CPG.TO"}
 DEFAULT_CRUDE_VICTIMS = {"AC.TO"}
+
+
+def deepseek_shadow(candidates, staged, quotes, now, cfg, *, scan_available=True):
+    """Pure day99 shadow gate; never mutates or replaces baseline selections."""
+    from deepseek_factors import rank_shadow
+    return rank_shadow(candidates, staged, quotes, now,
+                       min_sided_p=cfg['report']['min_sided_p'],
+                       scan_available=scan_available)
 
 
 def macro_dir_for(ticker: str, crude_pct, sectors: Optional[dict] = None) -> Optional[int]:
@@ -88,20 +108,24 @@ def _confidence_score(c: dict) -> float:
 STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".scan_state.json")
 
 
-def load_state(path: str = STATE_PATH) -> dict:
+def load_state(path: str = STATE_PATH, *, diagnostics=None) -> dict:
     try:
         with open(path) as f:
-            return json.load(f)
-    except Exception:
+            state = json.load(f)
+        if not isinstance(state, dict):
+            raise ValueError('persistence state is not an object')
+        return state
+    except Exception as exc:
+        _warn('scan_state_load', exc, diagnostics)
         return {}
 
 
-def save_state(state: dict, path: str = STATE_PATH) -> None:
+def save_state(state: dict, path: str = STATE_PATH, *, diagnostics=None) -> None:
     try:
         with open(path, "w") as f:
             json.dump(state, f)
-    except Exception:
-        pass  # state is best-effort; never break a scan over it
+    except Exception as exc:
+        _warn('scan_state_save', exc, diagnostics)
 
 
 def apply_persistence(results: list, prev_state: dict, today: str) -> tuple:
@@ -124,9 +148,11 @@ def apply_persistence(results: list, prev_state: dict, today: str) -> tuple:
 # Per-candidate evaluation — the full engine, sharing macro context.
 # ─────────────────────────────────────────────────────────────────────────────
 def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
-    out = {"ticker": ticker, "passed": False, "verdict": "ERROR", "note": ""}
+    out = {"ticker": ticker, "passed": False, "verdict": "ERROR", "note": "",
+           "data_status": "UNAVAILABLE", "data_errors": []}
     try:
         quote = adapter.get_quote(ticker)
+        out['quote_notes'] = [safe_detail(note) for note in quote.notes[:8]]
         guard = data_integrity_guard(
             quote, now=now, exchange_tz=cfg["exchange_tz"],
             market_open=mkt_open, market_close=mkt_close,
@@ -137,16 +163,28 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
         out["guard_reasons"] = guard.reasons
         if not guard.passed:
             out["verdict"] = "DATA NOT VERIFIED"
+            out['data_status'] = 'UNVERIFIED'
             return out
 
         try:
             intraday = adapter.get_intraday_bars(ticker, "1m")
-        except Exception:
+        except Exception as exc:
+            _warn('intraday_history', exc, out['data_errors'])
             intraday = pd.DataFrame()
         try:
             daily = adapter.get_daily_bars(ticker, cfg["levels"]["daily_lookback_days"])
-        except Exception:
+        except Exception as exc:
+            _warn('daily_history', exc, out['data_errors'])
             daily = pd.DataFrame()
+
+        for label, frame in (('intraday_history',intraday), ('daily_history',daily)):
+            if frame is None or frame.empty:
+                if not any(item['layer'] == label for item in out['data_errors']):
+                    _warn(label, ValueError('history unavailable'), out['data_errors'])
+        out['data_status'] = 'PARTIAL' if out['data_errors'] else 'AVAILABLE'
+        if out['data_errors']:
+            out['note'] = 'PARTIAL DATA: ' + '; '.join(
+                f"{item['layer']} {item['error']}" for item in out['data_errors'])
 
         struct = metrics.structure(quote)
         orb = metrics.opening_range(intraday, quote.last, cfg["levels"]["orb_minutes"])
@@ -224,7 +262,9 @@ def evaluate(adapter, ticker, cfg, now, mkt_open, mkt_close, macro) -> dict:
             "history_days": (pat or {}).get("history_days", 0),
         })
     except Exception as e:
-        out["note"] = f"error: {e}"
+        _warn('candidate_evaluation', e, out['data_errors'])
+        out['data_status'] = 'UNAVAILABLE'
+        out["note"] = f"error: {type(e).__name__}"
     return out
 
 
@@ -243,9 +283,11 @@ def _evaluate_universe(config: dict, source: str, cross_check, max_workers: int 
     corr = config["correlated"]
     peers = [safe_pct_change(adapter, p, tz) for p in corr["airline_peers"]]
     peers_valid = [p for p in peers if p is not None]
+    macro_errors = []
     try:
         crude_daily = adapter.get_daily_bars(corr["crude"], config["levels"]["daily_lookback_days"])
-    except Exception:
+    except Exception as exc:
+        _warn('macro_crude_history', exc, macro_errors)
         crude_daily = pd.DataFrame()
     macro = {
         "crude_pct": safe_pct_change(adapter, corr["crude"], tz),
@@ -254,7 +296,12 @@ def _evaluate_universe(config: dict, source: str, cross_check, max_workers: int 
         "vix_pct": safe_pct_change(adapter, corr["vix"], tz),
         "peer_avg": sum(peers_valid) / len(peers_valid) if peers_valid else None,
         "crude_daily": crude_daily,
+        'data_errors': macro_errors,
     }
+    for field in ('crude_pct','tsx_pct','cad_pct','vix_pct','peer_avg'):
+        if macro[field] is None:
+            _warn('macro_'+field, ValueError('source unavailable'), macro_errors)
+    macro['data_status'] = 'PARTIAL' if macro_errors else 'AVAILABLE'
 
     universe = config.get("scan", {}).get("universe") or DEFAULT_UNIVERSE
     if config["ticker"] not in universe:
@@ -274,9 +321,10 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
 
     # Persistence: streak each candidate across consecutive scans, then persist.
     min_persist = config.get("scan", {}).get("min_persistence", 2)
-    state = load_state()
+    state_diagnostics = []
+    state = load_state(diagnostics=state_diagnostics)
     results, new_state = apply_persistence(results, state, now.date().isoformat())
-    save_state(new_state)
+    save_state(new_state,diagnostics=state_diagnostics)
 
     ranked = rank(results, config["ticker"])
     # Actionable = top leader that has PERSISTED and is not lens-conflicted. This
@@ -286,7 +334,8 @@ def scan_once(config: dict, source: str, cross_check, max_workers: int = 8) -> d
          if r.get("streak", 1) >= min_persist and r.get("alignment") != "conflicted"),
         None)
     ranked.update({"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
-                   "min_persistence": min_persist, "actionable": actionable})
+                   "min_persistence": min_persist, "actionable": actionable,
+                   'state_diagnostics': state_diagnostics})
     return ranked
 
 
@@ -382,7 +431,24 @@ def open_select(config: dict, source: str, cross_check, top_n: int = 3,
     return {"generated_at": now.isoformat(timespec="seconds"), "macro": macro,
             "longs": longs, "shorts": shorts, "n_universe": len(results),
             "n_verified": sum(1 for r in results if r.get("passed")),
-            "n_qualified": len(quals), "top_n": top_n}
+            "n_qualified": len(quals), "top_n": top_n,
+            'data_errors': [{**item, 'ticker':r['ticker']} for r in results
+                            for item in r.get('data_errors',[])]}
+
+
+def _render_data_errors(report):
+    items = list(report.get('state_diagnostics',[]))
+    items += list(report.get('macro',{}).get('data_errors',[]))
+    items += list(report.get('data_errors',[]))
+    for row in report.get('results',[]):
+        items += [{**item,'ticker':row['ticker']} for item in row.get('data_errors',[])]
+    if items:
+        print(f'  DATA GAPS: {len(items)} acquisition/state failure(s); available sections retained.')
+        for item in items[:12]:
+            print('    ' + safe_detail(' '.join(str(item.get(k,''))
+                  for k in ('ticker','layer','error')),160))
+        if len(items)>12:
+            print(f'    ... {len(items)-12} additional gap(s) retained in structured output.')
 
 
 def render_open(sel: dict):
@@ -393,6 +459,7 @@ def render_open(sel: dict):
     def f(x): return "n/a" if x is None else f"{x:+.2f}%"
     print(f"macro (context): crude {f(m['crude_pct'])}  TSX {f(m['tsx_pct'])}  "
           f"CAD {f(m['cad_pct'])}  VIX {f(m['vix_pct'])}")
+    _render_data_errors(sel)
     print(f"scanned {sel['n_universe']} names → {sel['n_qualified']} qualified.")
     print("Method: the day-long base rate (historical close>open odds for today's "
           "setup) sets\ndirection; opening structure, sector×crude macro, and "
@@ -461,6 +528,7 @@ def render(scan: dict):
     def f(x): return "n/a" if x is None else f"{x:+.2f}%"
     print(f"macro (context only): crude {f(m['crude_pct'])}  TSX {f(m['tsx_pct'])}  "
           f"CAD {f(m['cad_pct'])}  VIX {f(m['vix_pct'])}")
+    _render_data_errors(scan)
 
     minp = scan.get("min_persistence", 2)
     print(f"\nRanked candidates (probability CAPPED [0.35,0.65]; persist≥{minp} = actionable):")
@@ -477,6 +545,8 @@ def render(scan: dict):
             flags.append("⚑fade")
         if r.get("off_sample"):
             flags.append("⚠off-sample")
+        if r.get('data_status')=='PARTIAL':
+            flags.append('PARTIAL DATA')
         al = {"conflicted": "⛔conflict", "aligned-long": "✅long", "aligned-short": "✅short",
               "aligned-but-off-sample": "⚠off-sample", "neutral": ""}.get(r.get("alignment"), "")
         note = " ".join([al] + flags).strip()

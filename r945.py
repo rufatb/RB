@@ -912,6 +912,11 @@ def run(cfg, workers=8, *, require_cache=False):
             # Day-29: every evaluated name's 9:45 print, so the tide can be
             # reconstructed at scoring time (see ledger.append_universe_prints).
             "evaluated": [{"ticker": r["t"], "p945": r["p945"]} for r in out],
+            # Read-only inputs for the preregistered factor experiment. Never
+            # re-run fitting or substitute these shadow ranks for pair_of_day.
+            "factor_candidates": [{k: r.get(k) for k in
+                                   ("t", "p_up", "r0", "gap", "vp", "p945")}
+                                  for r in out],
             "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
             "coverage": cov_msg, "training_history": history_diagnostics,
             "late_min": round(late_minutes(now, open_t), 1),

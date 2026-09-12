@@ -16,6 +16,8 @@ import datetime as dt
 import json
 import hashlib
 import os
+import math
+from collections.abc import Mapping
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -26,8 +28,88 @@ import positions
 import quotes as quotes_mod
 from quotes import market_client, validate_equity, stamp
 from report_store import Store, encode
+from diagnostics import safe_detail, safe_error
 
 ROOT = Path(__file__).resolve().parent
+
+
+class Digest(dict):
+    """JSON-compatible unified computation; renderers consume it without acquisition."""
+
+
+def _ledger_rows(loader, now, errors):
+    """Validate read boundaries without modifying any source row or protected ledger."""
+    try:
+        original = loader()
+        if not isinstance(original, list):
+            raise ValueError('ledger is not a row list')
+    except Exception as exc:
+        errors.append(safe_error('ledger', exc, 'Ledger unavailable; fresh selection blocked to avoid replacing an unknown published board.'))
+        return [], [], {'status': 'UNAVAILABLE', 'invalid_rows': 0, 'selection_blocked': True}
+    valid, rejected = [], []
+    blocked = False
+    for index, row in enumerate(original):
+        try:
+            if not isinstance(row, Mapping):
+                raise ValueError('row is not an object')
+            day = dt.date.fromisoformat(row['date'])
+            if not isinstance(row['ticker'], str) or not row['ticker'].strip() or row['side'] not in ('LONG', 'SHORT'):
+                raise ValueError('invalid ticker or side')
+            if row.get('hit', '') not in ('', '0', '1', 0, 1):
+                raise ValueError('invalid recorded hit')
+            for key in ('p945', 'p_sided', 'shares', 'weight', 'spread_bps', 'r1'):
+                if row.get(key) not in (None, ''):
+                    value = float(row[key])
+                    if not math.isfinite(value) or (key in ('p945', 'shares') and value <= 0):
+                        raise ValueError('invalid recorded '+key)
+            valid.append(row)
+        except (ValueError, TypeError, KeyError) as exc:
+            # An invalid/missing session date may hide today's original board.
+            candidate_day = row.get('date') if isinstance(row, Mapping) else None
+            try:
+                candidate_day = dt.date.fromisoformat(candidate_day)
+            except (ValueError, TypeError):
+                candidate_day = None
+            blocked |= candidate_day is None or candidate_day == now.date()
+            rejected.append({'row_index': index, 'reason': safe_detail(exc)})
+    if rejected:
+        errors.append(safe_error('ledger', ValueError(), f'{len(rejected)} invalid ledger rows excluded from computed evidence; source records retained.'))
+    return valid, original, {'status': 'PARTIAL' if rejected else 'RECORDED',
+                             'invalid_rows': len(rejected), 'rejected': rejected,
+                             'selection_blocked': blocked}
+
+
+def _position_rows(loader, now, errors):
+    """Reject malformed position rows independently; never turn failure into flat holdings."""
+    try:
+        original = loader()
+        if not isinstance(original, list):
+            raise ValueError('position ledger is not a row list')
+    except Exception as exc:
+        errors.append(safe_error('positions', exc, 'Position ledger unavailable; holdings are unknown.'))
+        return [], {'status': 'UNAVAILABLE', 'invalid_rows': 0,
+                    'gaps': ['Position ledger unavailable; holdings are unknown.']}
+    valid, invalid = [], 0
+    for row in original:
+        try:
+            if not isinstance(row, Mapping) or row.get('status') not in (positions.OPEN, positions.CLOSED):
+                raise ValueError('invalid position status')
+            if not isinstance(row['ticker'], str) or not row['ticker'].strip() or row['side'] not in ('LONG', 'SHORT'):
+                raise ValueError('invalid position identity')
+            for field in ('shares', 'entry_px'):
+                value = float(row[field])
+                if not math.isfinite(value) or value <= 0:
+                    raise ValueError('invalid position '+field)
+            if row['status'] == positions.OPEN:
+                if not row.get('id') or dt.date.fromisoformat(row['entry_date']) > now.date():
+                    raise ValueError('invalid position entry identity/date')
+            valid.append(row)
+        except (ValueError, TypeError, KeyError):
+            invalid += 1
+    gaps = [f'{invalid} malformed position rows could not be marked; original records retained and holdings may be incomplete.'] if invalid else []
+    if invalid:
+        errors.append(safe_error('positions', ValueError(), gaps[0]))
+    return valid, {'status': 'PARTIAL' if invalid else 'RECORDED', 'invalid_rows': invalid, 'gaps': gaps}
 
 
 def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
@@ -42,7 +124,6 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     import r945
     injected = services is not None
     services = services or {}
-    cfg = load_config(str(cfg_path if cfg_path is not None else ROOT/'config.yaml'))
     live_clock = now is None
     now = now or dt.datetime.now(ZoneInfo('America/New_York'))
     now = stamp(now).astimezone(ZoneInfo('America/New_York'))
@@ -52,28 +133,27 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         prior = store.get(now.date().isoformat())
         if prior:
             return prior
+    cfg = load_config(str(cfg_path if cfg_path is not None else ROOT/'config.yaml'))
     errors = []
     def error(layer, exc):
-        errors.append({'layer': layer, 'error': type(exc).__name__, 'detail': str(exc)[:240]})
+        errors.append(safe_error(layer, exc, exc))
     try:
         clock = services.get('clock', execution.clock_status)(now)
     except Exception as exc:
         error('calendar',exc)
         clock = {'session':now.date().isoformat(),'status':'CALENDAR UNAVAILABLE',
                  'eligible':False,'entry_time':'09:46','exit_time':'15:59','close_at':None}
-    rows = services.get('ledger',ledger.load)()
+    rows, original_rows, ledger_status = _ledger_rows(services.get('ledger',ledger.load), now, errors)
     # Do not grade today's partial session or display future-dated rows.
     past_rows = [r for r in rows if r['date'] < now.date().isoformat()]
     pair_rows = [r for r in past_rows if r.get('role')=='pair']
     recorded_today = [r for r in rows if r['date']==now.date().isoformat()]
     record = ledger.accuracy(pair_rows)
+    record.update(status=ledger_status['status'], invalid_rows=ledger_status['invalid_rows'])
     record['label'] = 'Historical 09:45-bar to official-close PROXY; not exact 09:46–15:59 fills'
     record['benchmark_label'] = 'Historical universe median is not an index; exact index record starts with this version'
     record['future_rows_excluded'] = sum(r['date'] > now.date().isoformat() for r in rows)
-    try:
-        prows = services.get('positions',positions.load)()
-    except Exception as exc:
-        prows=[]; error('positions',exc)
+    prows, position_status = _position_rows(services.get('positions',positions.load), now, errors)
     # Fetch the configured universe once, concurrently with model acquisition.
     # Position marks and biotech evidence must survive an intraday timeout.
     section_status = {}
@@ -84,7 +164,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
         tasks = {'equity_quotes': (lambda: market_client().get(sorted(tickers)), 10)}
-        if not recorded_today and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
+        if not recorded_today and not ledger_status['selection_blocked'] and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
             tasks['intraday'] = (lambda: r945.run(cfg,require_cache=publish), 22)
         section_status = acquire(tasks)
         raw_live = section_status['equity_quotes']['value'] or {}
@@ -95,7 +175,10 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                                'detail': f"Independent section failed after {result['seconds']}s; last stage: {last_stage}; other sections retained."})
     res = {'now':now.isoformat(),'longs':[],'shorts':[], 'pair':{}, 'evaluated':[],
            'coverage_fail':None,'fetch_errors':{},'n_names':0}
-    if recorded_today:
+    if ledger_status['selection_blocked']:
+        res['coverage_fail']='LEDGER UNAVAILABLE / INVALID SESSION RECORD — original board cannot be safely replaced; fresh selection blocked'
+        res['source']='record integrity unavailable'
+    elif recorded_today:
         res['coverage_fail']='RECORDED BOARD — original selections retained; fresh selection intentionally not rerun'
         res['source']='published baseline ledger'
     elif no_net:
@@ -110,10 +193,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             else:
                 res = services.get('intraday',r945.run)(cfg)
             for ticker, why in res.get('fetch_errors',{}).items():
-                errors.append({'layer':'intraday','error':'DATA_UNAVAILABLE','detail':f'{ticker}: {why}'})
+                errors.append({'layer':'intraday','error':'DATA_UNAVAILABLE','detail':safe_detail(f'{ticker}: {why}')})
+            res['fetch_errors'] = {str(t):safe_detail(why) for t,why in res.get('fetch_errors',{}).items()}
         except Exception as exc:
             res['coverage_fail']='intraday computation unavailable'; error('intraday',exc)
-    res['live_record'] = ledger.live_summary(past_rows)
+    res['live_record'] = ledger.live_summary([{**r,'hit':r.get('hit','')} for r in past_rows])
     try:
         client = services.get('market') or market_client()
     except Exception as exc:
@@ -121,6 +205,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         error('market_client',exc)
     # One equity call for the full board, open positions and independent index.
     tickers = {r['t'] for r in res.get('longs',[])+res.get('shorts',[])}
+    tickers |= {r['t'] for r in res.get('factor_candidates',[])}
     tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
     tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
     tickers.add('XIU.TO')
@@ -142,9 +227,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             corr = (quotes_mod.minute_bar_corroborator()
                     if (cfg.get('execution') or {}).get('corroborate_bbo')
                     else None)
-            quotes = {t:validate_equity(raw.get(t,{}),t,now,
-                                        currency='CAD' if t.endswith('.TO') else 'USD',
-                                        corroborate=corr) for t in tickers}
+            quotes = quotes_mod.validate_equities(raw,tickers,now,corroborate=corr)
+            for ticker, quote in quotes.items():
+                if quote.get('error_class'):
+                    errors.append({'layer':'equity_quotes','error':safe_detail(quote['error_class'],60),
+                                   'detail':safe_detail(f"{ticker}: {quote.get('reason','quote unavailable')}")})
         except Exception as exc:
             # Provider exception text can contain authentication URLs: record class only.
             error('equity_quotes',RuntimeError(type(exc).__name__))
@@ -152,7 +239,10 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         quotes.setdefault(t, {'ticker':t,'status':'UNAVAILABLE','reason':'quote unavailable',
                               'mark':None,'spread_bps':None})
     book = positions.mark_book(prows, {t:q['mark'] for t,q in quotes.items() if q.get('mark') is not None},now.date())
+    book.update(position_status)
     book['verification'] = 'Recorded ledger only — holdings have not been reconciled with a brokerage account.'
+    if position_status['gaps']:
+        book['verification'] += ' ' + ' '.join(position_status['gaps'])
     book['recent_closed']=[]
     from quotes import number
     for row in prows:
@@ -197,7 +287,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         calendar = biotech.research_calendar(events,now)
     except Exception as exc:
         bio={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
-             'errors':[f'{type(exc).__name__}: {exc}'],'universe_n':0,'screened_events':0,'top_limit':2}
+             'errors':[safe_detail(f'{type(exc).__name__}: {exc}')],'universe_n':0,'screened_events':0,'top_limit':2}
         # A missing universe file does not invalidate independently reviewed dates.
         try:
             path = os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json')
@@ -247,11 +337,41 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         release = None
     import eodhd
     provider_evidence = eodhd.load_prepared(state_dir, now)
+    # Model assessment was staged before the open. This path is local and pure:
+    # neither a missing snapshot nor a renderer can call an LLM or repick a board.
+    import deepseek_factors
+    from scan import deepseek_shadow
+    try:
+        factor_evidence = deepseek_factors.load_prepared(state_dir, now)
+        factor_evidence['shadow'] = deepseek_shadow(
+            res.get('factor_candidates', []), factor_evidence, quotes, now, cfg,
+            scan_available=not bool(res.get('coverage_fail')) and not no_net)
+    except Exception as exc:
+        error('deepseek', RuntimeError(type(exc).__name__))
+        factor_evidence = deepseek_factors.unavailable('Optional factor assembly failed: '+type(exc).__name__)
+    try:
+        ledger_hash=hashlib.sha256(encode(original_rows).encode()).hexdigest()
+    except (TypeError,ValueError) as exc:
+        ledger_hash=None
+        errors.append(safe_error('ledger_provenance',exc,'Malformed source ledger cannot be encoded; original file is unchanged.'))
+    # Optional local factor validation can consume CPU after acquisition. Use
+    # the actual assembly clock, rather than retaining stale 09:46 eligibility.
+    if live_clock:
+        now = dt.datetime.now(ZoneInfo('America/New_York'))
+        try:
+            clock = execution.clock_status(now)
+        except Exception as exc:
+            clock['eligible'] = False
+            error('calendar_assembly_check', exc)
+        if not clock.get('eligible'):
+            legs = [{**leg, 'status':'ABSTAIN',
+                     'reasons':list(dict.fromkeys([*leg.get('reasons', []), clock['status']]))}
+                    for leg in legs]
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
                             'r945_sha256':hashlib.sha256((ROOT/'r945.py').read_bytes()).hexdigest(),
-                            'ledger_snapshot_sha256':hashlib.sha256(encode(rows).encode()).hexdigest(),
+                            'ledger_snapshot_sha256':ledger_hash,
                             'universe':cfg.get('scan',{}).get('universe',[]),
                             'biotech_source':'independent staged evidence feed'},
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
@@ -261,6 +381,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
                           'recorded_today':recorded_today, 'risk_evidence':risk,
+                          'ledger_status':ledger_status,
+                          'deepseek':factor_evidence,
                           'historical_provider':provider_evidence},
               'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
@@ -268,6 +390,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'report_status':'OFFLINE' if no_net else ('ON_TIME' if clock['eligible'] else 'INFORMATIONAL')}
     from readiness import assess
     report['readiness'] = assess(report)
+    boundary_gaps = position_status['gaps'] + ([f"Ledger {ledger_status['status']}: {ledger_status['invalid_rows']} invalid rows; historical evidence may be incomplete."]
+                                               if ledger_status['status'] != 'RECORDED' else [])
+    report['readiness']['gaps'].extend(boundary_gaps)
+    if boundary_gaps:
+        report['readiness']['status']='PARTIAL'
     if not no_net and report['readiness']['gaps']:
         report['report_status'] += ' — PARTIAL DATA; consult section status'
     if store and now.strftime('%H:%M') == '09:46':
@@ -309,12 +436,79 @@ def render_html(report):
     return daily_render.html(report)
 
 
-def build(cfg_path='config.yaml', shadow=True, no_net=False, days_back=4, digest=None):
-    """Compatibility facade. Preview only; use --publish for durable publication."""
-    report=compute(cfg_path,shadow,no_net)
+def outage_digest(now, exc):
+    """Factual local-record fallback; never invoke providers, a selector or an LLM.
+
+    This is used only when no immutable publication exists and assembly failed.
+    Missing sections are explicitly unavailable, not observed zero positions or
+    a fully evaluated zero-opportunity scan. Original CSV records stay untouched.
+    """
+    now=stamp(now).astimezone(ZoneInfo('America/New_York'))
+    errors=[safe_error('daily_job',exc,'Local report assembly failed; live scan unavailable. No second model or network pass was attempted.')]
+    rows,_,lstatus=_ledger_rows(ledger.load,now,errors)
+    recorded=[r for r in rows if r['date']==now.date().isoformat()]
+    historical=[r for r in rows if r['date']<now.date().isoformat() and r.get('role')=='pair']
+    try:
+        record=ledger.accuracy(historical)
+    except Exception as record_exc:
+        errors.append(safe_error('ledger_evidence',record_exc,'Historical evidence could not be computed; rates and returns are unknown.'))
+        lstatus['status']='UNAVAILABLE'
+        record={'n':0,'hits':0,'rate':None,'mean':None,'net_rate':None,'net_mean':None,
+                'net_n':0,'net_unpriced':0}
+    record.update(status=lstatus['status'],invalid_rows=lstatus['invalid_rows'],
+                  label='Historical 09:45-bar to official-close PROXY; no new outcome measured.',
+                  benchmark_label='Exact index evidence unavailable in assembly fallback.')
+    prows,pstatus=_position_rows(positions.load,now,errors)
+    try:
+        book=positions.mark_book(prows,{},now.date())
+    except Exception as position_exc:
+        errors.append(safe_error('positions',position_exc,'Recorded positions could not be assembled; holdings and marks are unknown.'))
+        pstatus={'status':'UNAVAILABLE','invalid_rows':len(prows),
+                 'gaps':['Recorded positions could not be assembled; holdings are unknown.']}
+        book={'legs':[],'stale':0,'net_usd':None,'gross':None,'net_pct':None,
+              'unassembled_records':prows}
+    book.update(pstatus)
+    book.update(recent_closed=[],verification='Recorded ledger only; live marks unavailable and holdings have not been independently reconciled.')
+    if pstatus['gaps']:
+        book['verification']+=' '+' '.join(pstatus['gaps'])
+    quote={'ticker':'XIU.TO','status':'UNAVAILABLE','reason':'assembly failed; quote not acquired',
+           'mark':None,'spread_bps':None}
+    report=Digest(schema_version=2,session=now.date().isoformat(),generated_at=now.isoformat(),
+        provenance={'code_commit':None,'biotech_source':'unavailable after assembly failure'},
+        clock={'session':now.date().isoformat(),'status':'ASSEMBLY UNAVAILABLE','eligible':False,
+               'entry_time':'09:46','exit_time':'15:59','close_at':None},
+        offline=True,shadow=True,errors=errors,sections={},
+        intraday={'res':{'longs':[],'shorts':[],'pair':{},'evaluated':[],'fetch_errors':{},'n_names':0,
+                         'coverage_fail':'SCAN UNAVAILABLE — report assembly failed; not a zero-opportunity result',
+                         'source':'local recorded facts only'},
+                  'legs':[],'record':record,'recorded_today':recorded,'ledger_status':lstatus,
+                  'publish':{'picks':0,'pair':0,'already':False,'errors':[]},
+                  'benchmark':quote,'benchmark_symbol':'XIU.TO',
+                  'exact_record':execution.observed_performance([],[]),'risk_evidence':{},
+                  'historical_provider':{'status':'NOT CONFIGURED'},
+                  'contract':'09:46 entry / 15:59 exit, same session',
+                  'model_claim':'SCAN UNAVAILABLE; no current prediction or execution claim.'},
+        biotech={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
+                 'errors':['Report assembly failed; staged biotech evidence was not evaluated.'],
+                 'universe_n':0,'screened_events':0,'top_limit':2},
+        positions=book,research_calendar={'events':[],'gaps':['Reviewed calendar not evaluated after assembly failure.']},
+        research={'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
+                  'mde':'Unavailable in assembly fallback; no improvement was measured.'},
+        readiness={'status':'PARTIAL','gaps':['Local report assembly failed; independent live sections unavailable.',*pstatus['gaps']]},
+        report_status='DATA OUTAGE — informational only')
+    return report
+
+
+def build(cfg_path=None, shadow=True, no_net=False, days_back=4, digest=None, **kwargs):
+    """Return one unified Digest. Preview by default; explicit publication is durable.
+
+    `compute` remains the compatible acquisition/publication implementation.
+    Legacy `digest=` callers receive the same schema; this function never renders.
+    """
+    report=Digest(compute(cfg_path,shadow,no_net,**kwargs))
     if digest is not None:
         digest.update(report)
-    return render_text(report)
+    return report
 
 
 def main(argv=None):
@@ -329,7 +523,7 @@ def main(argv=None):
     parser.add_argument('--output')
     parser.add_argument('--state-dir')
     args=parser.parse_args(argv)
-    report=compute(args.config,args.shadow,args.offline,publish=args.publish,state_dir=args.state_dir)
+    report=build(args.config,args.shadow,args.offline,publish=args.publish,state_dir=args.state_dir)
     value=encode(report) if args.format=='json' else render_html(report) if args.format=='html' else render_text(report)
     if args.output:
         Path(args.output).write_text(value)

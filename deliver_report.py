@@ -38,15 +38,18 @@ def message(report, sender, recipient):
     return msg
 
 
-def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None):
+def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None,clock=None):
     report=store.get(session)
     if not report:
         raise ValueError('no immutable report to send')
     # Re-read the clock at the actual sending boundary. A report built on time
     # but queued for 20 minutes must not look executable in the inbox.
-    now=now or dt.datetime.now(ZoneInfo('America/New_York'))
-    report = view(report, now)
-    msg=message(report,sender,recipient)
+    if now is not None and clock is not None:
+        raise ValueError('supply now or clock, not both')
+    fixed=now
+    clock=clock or ((lambda:fixed) if fixed is not None else
+                   (lambda:dt.datetime.now(ZoneInfo('America/New_York'))))
+    view(report, clock())  # refuse pre-entry transmission before authentication
     if store.delivery(session):
         return {'status':'ALREADY_ATTEMPTED','delivery':store.delivery(session)}
     host=os.environ.get('RB_SMTP_HOST','smtp.gmail.com')
@@ -56,9 +59,16 @@ def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None
     # Authenticate before claiming. Failures here cannot have sent DATA.
     with smtp_factory(host,465,context=ssl.create_default_context(),timeout=20) as smtp:
         smtp.login(user,password)
-        if not store.claim_delivery(session,msg['Message-ID']):
+        if not store.claim_delivery(session,f'<rb-daily-{session}@rb-report.local>'):
             return {'status':'ALREADY_ATTEMPTED'}
         try:
+            # Authentication/state claiming can cross the dispatch minute.
+            # Re-render only the delivery annotation, never the computation.
+            checked=clock()
+            msg=message(view(report,checked),sender,recipient)
+            final=clock()
+            if final.astimezone(ZoneInfo('America/New_York')).strftime('%Y-%m-%d %H:%M') != checked.astimezone(ZoneInfo('America/New_York')).strftime('%Y-%m-%d %H:%M'):
+                msg=message(view(report,final),sender,recipient)
             refused=smtp.send_message(msg)
             if refused:
                 raise RuntimeError('recipient refused')

@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parent
 def check():
     failures = []
     for module in ('pandas', 'numpy', 'yaml', 'requests', 'pandas_market_calendars',
-                   'scipy', 'yfinance', 'brief'):
+                   'scipy', 'yfinance', 'brief', 'openai', 'socksio',
+                   'adapters.deepseek_adapter', 'factor_inputs'):
         try:
             importlib.import_module(module)
         except Exception as exc:

@@ -19,4 +19,12 @@ def assess(report):
         gaps.append('Recorded holdings require brokerage/user reconciliation.')
     if report['positions']['stale']:
         gaps.append('One or more holdings have no live mark; dated references are not live P&L.')
+    if report['positions'].get('status') in ('UNAVAILABLE','PARTIAL'):
+        gaps.extend(report['positions'].get('gaps') or ['Position ledger unavailable or incomplete; holdings are unknown.'])
+    if report['intraday']['record'].get('status') in ('UNAVAILABLE','PARTIAL'):
+        gaps.append('Historical ledger evidence unavailable or incomplete; do not interpret displayed counts as full coverage.')
+    factor=report['intraday'].get('deepseek')
+    if factor is not None and factor.get('status')!='READY':
+        gaps.append('Optional DeepSeek factor coverage incomplete; baseline sections remain independent and factor research is unadopted.')
+    gaps=list(dict.fromkeys(gaps))
     return {'status':'PARTIAL' if gaps else 'READY', 'gaps':gaps}

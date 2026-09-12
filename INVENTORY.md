@@ -173,3 +173,19 @@ send-time annotation, no acquisition/state mutation/send.
 `STRATEGY_day95.md`: technical research addendum; session postmortems stay private.
 `data/day95_crossmarket_results.json`: corrected day94 attempt; BLOCKED by
 source/contract failures, not a null or an adopted improvement.
+
+### Day99 package and staged factor additions
+
+The day99 base contained 122 root Python modules; a conservative AST traversal
+from brief reached 40 including compatibility imports. Non-reachability from
+one entrypoint is not dead-code proof: operational CLIs, views and STUDY records
+remain. No rejected study or legacy compatibility renderer was deleted.
+
+LIVE: `brief.Digest/build`, diagnostics, adapters package (old exports retained),
+shared quotes and local deepseek_factors/scan shadow view.
+PREPARATION: factor_inputs, analyst.analyze_factors,
+adapters.deepseek_adapter, prepare_deepseek, import_deepseek_inputs.
+DESIGN/STUDY: deepseek_policy and PREREGISTER_day99_deepseek; no adopted alpha.
+TEST: new boundary, adapter, deterministic input, preparation, replay, renderer,
+quote and private-overlay tests. Package files join the import-safety inventory.
+See AUDIT_day99_deepseek.md for exact file edits and validation limits.

@@ -211,6 +211,8 @@ def summarise(quotes: list, feed_live: bool, feed_why: str) -> list:
 import math
 import json
 import logging
+import time
+from collections.abc import Mapping
 import http.cookiejar
 import urllib.error
 import urllib.parse
@@ -218,6 +220,66 @@ import urllib.request
 from zoneinfo import ZoneInfo
 
 log = logging.getLogger(__name__)
+
+
+class QuoteDataError(ValueError):
+    """A controlled validation error; messages must never contain provider data."""
+    reason_code = "INVALID_QUOTE"
+
+
+class InvalidQuoteError(QuoteDataError):
+    reason_code = "INVALID_PAYLOAD"
+
+
+class StaleQuoteError(QuoteDataError):
+    reason_code = "STALE_QUOTE"
+
+
+class MissingOptionChain(QuoteDataError):
+    reason_code = "MISSING_OPTION_CHAIN"
+
+
+def _exception_class(exc):
+    return ''.join(c for c in type(exc).__name__ if c.isalnum() or c == '_')[:64]
+
+
+def _failure_details(exc):
+    """Controlled failure categories; provider exception strings are private."""
+    if isinstance(exc, QuoteDataError):
+        return exc.reason_code, str(exc)[:200]
+    status = getattr(exc, 'code', None)
+    response = getattr(exc, 'response', None)
+    if status is None and response is not None:
+        status = getattr(response, 'status_code', None)
+    if status in (401, 403):
+        return 'AUTHENTICATION_ERROR', 'provider authentication or entitlement unavailable'
+    if status == 429:
+        return 'RATE_LIMITED', 'provider rate limit reached; no immediate retry'
+    if isinstance(exc, TimeoutError) or 'Timeout' in type(exc).__name__:
+        return 'TRANSPORT_TIMEOUT', 'provider acquisition exceeded its time budget'
+    if isinstance(exc, (ValueError, TypeError, KeyError, IndexError, AttributeError)):
+        return 'INVALID_PAYLOAD', 'provider returned malformed or incomplete data'
+    return 'TRANSPORT_ERROR', 'provider acquisition unavailable'
+
+
+def quote_failure(ticker, exc, *, currency=None):
+    """Complete equity placeholder, safe to persist and render headlessly."""
+    code, detail = _failure_details(exc)
+    return {'ticker': ticker, 'mark': None, 'bid': None, 'ask': None,
+            'spread_bps': None, 'quote_time': None, 'status': 'UNAVAILABLE',
+            'currency': currency, 'reason': detail, 'reason_code': code,
+            'error_class': _exception_class(exc)}
+
+
+def _transient(exc):
+    status = getattr(exc, 'code', None)
+    response = getattr(exc, 'response', None)
+    if status is None and response is not None:
+        status = getattr(response, 'status_code', None)
+    if status is not None:
+        return status in (500, 502, 503, 504)
+    return (isinstance(exc, (TimeoutError, ConnectionError, urllib.error.URLError))
+            or type(exc).__name__ in {'ConnectTimeout', 'ReadTimeout', 'ConnectionError'})
 
 
 def number(value, *, positive=False):
@@ -274,6 +336,7 @@ class YahooMarketData:
         self.crumb = None
         self.timeout = timeout
         self.cache = {}
+        self._quote_deadline = None
 
     def _get(self, url, accept="application/json"):
         """One transport. `accept` MUST match what the endpoint actually serves.
@@ -297,7 +360,13 @@ class YahooMarketData:
         """
         request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
                                                       "Accept": accept})
-        return self.op.open(request, timeout=self.timeout).read()
+        timeout = self.timeout
+        if self._quote_deadline is not None:
+            remaining = self._quote_deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('quote acquisition deadline exceeded')
+            timeout = min(timeout, remaining)
+        return self.op.open(request, timeout=timeout).read()
 
     def auth(self):
         if self.crumb:
@@ -329,14 +398,28 @@ class YahooMarketData:
         envelope = result.get("quoteResponse") or {}
         if envelope.get("error"):
             raise ValueError("Yahoo quote response reported an error")
-        return {r["symbol"]: r for r in envelope.get("result", [])}
+        rows = envelope.get("result", [])
+        if not isinstance(rows, list):
+            raise InvalidQuoteError('equity response is not a list')
+        out = {}
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get('symbol'), str):
+                log.warning('Equity response contains an unidentified malformed row')
+                continue
+            ticker = row['symbol']
+            if ticker in out:
+                # Duplicate identities are ambiguous; do not choose whichever wins.
+                out[ticker] = None
+            else:
+                out[ticker] = row
+        return out
 
     def chain(self, ticker, expiry=None):
         params = {} if expiry is None else {"date": int(expiry)}
         result = self._json("/v7/finance/options/" + urllib.parse.quote(ticker, safe=""), params)
         envelope = result.get("optionChain") or {}
         if envelope.get("error") or not envelope.get("result"):
-            raise ValueError("Yahoo returned no option chain")
+            raise MissingOptionChain("provider returned no option chain")
         return envelope["result"][0]
 
 
@@ -362,6 +445,80 @@ class SnapshotMarketData:
 def market_client():
     path=os.environ.get('RB_QUOTES_JSON')
     return SnapshotMarketData(path) if path else YahooMarketData()
+
+
+def validate_equities(raw, tickers, now, *, max_age=120, corroborate=None,
+                      currencies=None):
+    """Pure, isolated row validation; one malformed name cannot erase siblings.
+
+    Existing status/mark/BBO keys are unchanged. Additional reason_code and
+    error_class fields make unavailable rows useful in headless diagnostics.
+    """
+    out = {}
+    currencies = currencies or {}
+    for ticker in sorted(set(tickers)):
+        currency = currencies.get(ticker, 'CAD' if ticker.endswith('.TO') else 'USD')
+        try:
+            if not isinstance(raw, Mapping):
+                raise InvalidQuoteError('equity batch is not an object')
+            out[ticker] = validate_equity(raw.get(ticker, {}), ticker, now,
+                currency=currency, max_age=max_age, corroborate=corroborate)
+        except Exception as exc:
+            out[ticker] = quote_failure(ticker, exc, currency=currency)
+            log.warning('Equity validation %s unavailable: %s', ticker, _exception_class(exc))
+    return out
+
+
+def fetch_equities(client, tickers, now, *, max_age=120, max_attempts=2,
+                   budget_seconds=8, currencies=None):
+    """Acquire and validate once, with at most one transient-error retry.
+
+    The deadline covers the whole batch, including Yahoo authentication; no
+    existing client socket timeout is increased. Unknown injected clients must
+    implement their own timeout. This cooperative deadline is not a substitute
+    for brief's independent killable section budget and must not wrap it.
+    Invalid data, authentication failures and 429 responses are never retried.
+    """
+    tickers = sorted(set(tickers))
+    if not tickers:
+        return {}
+    budget = number(budget_seconds, positive=True)
+    if type(max_attempts) is not int or max_attempts not in (1, 2) or budget is None:
+        raise ValueError('quote acquisition requires one/two attempts and a positive budget')
+    deadline = time.monotonic() + budget
+    previous = getattr(client, '_quote_deadline', None)
+    if isinstance(client, YahooMarketData):
+        client._quote_deadline = min(previous, deadline) if previous is not None else deadline
+    failure = TimeoutError('quote acquisition deadline exceeded')
+    try:
+        for attempt in range(max_attempts):
+            if time.monotonic() >= deadline:
+                failure = TimeoutError('quote acquisition deadline exceeded')
+                break
+            try:
+                raw = client.get(tickers)
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('quote acquisition deadline exceeded')
+                rows = validate_equities(raw, tickers, now, max_age=max_age, currencies=currencies)
+                for row in rows.values():
+                    row['acquisition_attempts'] = attempt + 1
+                return rows
+            except Exception as exc:
+                failure = exc
+                log.warning('Equity acquisition attempt %s failed: %s', attempt + 1, _exception_class(exc))
+                if time.monotonic() >= deadline:
+                    failure = TimeoutError('quote acquisition deadline exceeded')
+                    break
+                if not _transient(exc):
+                    break
+    finally:
+        if isinstance(client, YahooMarketData):
+            client._quote_deadline = previous
+    currencies = currencies or {}
+    return {ticker: {**quote_failure(ticker, failure, currency=currencies.get(
+                ticker, 'CAD' if ticker.endswith('.TO') else 'USD')),
+                'acquisition_attempts': attempt + 1}
+            for ticker in tickers}
 
 
 # Which hosts may be cited as the SOURCE OF A PRICE, by declared provider.
@@ -465,14 +622,19 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120,
     ONLY when the venue supplies no BBO timestamp. See corroborate_bbo. It can
     never upgrade a quote to OK, only to CORROBORATED.
     """
+    if not isinstance(row, Mapping):
+        return quote_failure(ticker, InvalidQuoteError('equity row is not an object'), currency=currency)
     out = {"ticker": ticker, "mark": None, "bid": None, "ask": None,
            "spread_bps": None, "quote_time": None, "status": "UNAVAILABLE",
-           "reason": "missing quote", "currency": row.get("currency")}
+           "reason": "missing quote", "currency": row.get("currency"),
+           "reason_code": "MISSING_QUOTE", "error_class": None}
     if row.get("symbol") != ticker:
         out["reason"] = "symbol mismatch or missing"
+        out['reason_code'] = 'SYMBOL_MISMATCH'
         return out
     if currency and row.get("currency") != currency:
         out["reason"] = "currency mismatch or missing"
+        out['reason_code'] = 'CURRENCY_MISMATCH'
         return out
     px = number(row.get("regularMarketPrice"), positive=True)
     if px is not None and fresh(row.get("regularMarketTime"), now, max_age):
@@ -480,18 +642,24 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120,
     bbo = two_sided(row)
     if bbo is None:
         out["reason"] = "missing, nonfinite, nonpositive or crossed BBO"
+        out['reason_code'] = 'INVALID_BBO'
         return out
     ts = row.get("bidAskTimestamp", row.get("quoteTime"))
     if not fresh(ts, now, max_age):
-        corr = corroborate_bbo(bbo, corroborate, ticker, now, max_age)
+        diagnostics = {}
+        corr = (corroborate_bbo(bbo, corroborate, ticker, now, max_age,
+                               diagnostics=diagnostics) if ts is None else None)
+        out.update(diagnostics)
         if corr is not None:
             out.update(corr)
             return out
         out["reason"] = "BBO timestamp missing, stale or future; last trade is not quote time"
+        out['reason_code'] = 'MISSING_BBO_TIMESTAMP' if ts is None else 'STALE_QUOTE'
         return out
     out.update(status="OK", reason="validated BBO", bid=bbo[0], ask=bbo[1],
                mark=(bbo[0]+bbo[1])/2, quote_time=stamp(ts).isoformat(),
-               spread_bps=(bbo[1]-bbo[0])/((bbo[0]+bbo[1])/2)*10000)
+               spread_bps=(bbo[1]-bbo[0])/((bbo[0]+bbo[1])/2)*10000,
+               reason_code=OK)
     return out
 
 
@@ -501,7 +669,7 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120,
 CORROBORATED = "CORROBORATED"
 
 
-def corroborate_bbo(bbo, corroborate, ticker, now, max_age):
+def corroborate_bbo(bbo, corroborate, ticker, now, max_age, *, diagnostics=None):
     """Is this unstamped bid/ask consistent with a bar that IS stamped?
 
     THE PROBLEM THIS ADDRESSES. Yahoo's /v7/finance/quote serves a usable
@@ -531,9 +699,18 @@ def corroborate_bbo(bbo, corroborate, ticker, now, max_age):
         return None
     try:
         bar = corroborate(ticker)
-    except Exception:                        # noqa: BLE001 — a failed
-        return None                          # corroboration is just no proof
+    except Exception as exc:
+        error_class = _exception_class(exc)
+        log.warning('BBO corroboration %s unavailable: %s', ticker, error_class)
+        if diagnostics is not None:
+            diagnostics['corroboration_error_class'] = error_class
+        return None
     if not bar:
+        return None
+    if not isinstance(bar, Mapping):
+        log.warning('BBO corroboration %s unavailable: InvalidQuoteError', ticker)
+        if diagnostics is not None:
+            diagnostics['corroboration_error_class'] = 'InvalidQuoteError'
         return None
     low, high = number(bar.get("low"), positive=True), number(bar.get("high"), positive=True)
     if low is None or high is None or low > high:
@@ -543,7 +720,8 @@ def corroborate_bbo(bbo, corroborate, ticker, now, max_age):
     mid = (bbo[0] + bbo[1]) / 2
     if not (low <= mid <= high):
         return None
-    return {"status": CORROBORATED, "bid": bbo[0], "ask": bbo[1], "mark": mid,
+    return {"status": CORROBORATED, "reason_code": CORROBORATED,
+            "bid": bbo[0], "ask": bbo[1], "mark": mid,
             "quote_time": None,
             "corroborated_at": stamp(bar["ts"]).isoformat(),
             "corroboration": (f"unstamped BBO; mid {mid:.4f} lies inside the "
@@ -595,54 +773,56 @@ def event_quote(client, ticker, event_end, now, *, max_age=120):
     """One fail-closed event option snapshot. Missing fields never become prices."""
     out = {"ticker": ticker, "status": "UNAVAILABLE", "reason": None,
            "move": None, "iv": None, "put_pct": None, "call_pct": None,
-           "skew": None, "parity": None, "spot": None, "expiry": None}
+           "skew": None, "parity": None, "spot": None, "expiry": None,
+           "reason_code": "MISSING_OPTION_CHAIN", "error_class": None}
     try:
         initial = client.chain(ticker)
         q = initial.get("quote") or {}
         if q.get("symbol") != ticker or q.get("currency") != "USD":
-            raise ValueError("underlying symbol/currency mismatch or missing")
+            raise InvalidQuoteError("underlying symbol/currency mismatch or missing")
         if not fresh(q.get("regularMarketTime"), now, max_age):
-            raise ValueError("underlying timestamp missing, stale or future")
+            raise StaleQuoteError("underlying timestamp missing, stale or future")
         spot = number(q.get("regularMarketPrice"), positive=True)
         if spot is None:
-            raise ValueError("invalid underlying price")
+            raise InvalidQuoteError("invalid underlying price")
         expiries = [e for e in initial.get("expirationDates", [])
                     if stamp(e).date() > event_end]
         if not expiries:
-            raise ValueError("no expiry covers the entire event window")
+            raise MissingOptionChain("no expiry covers the entire event window")
         expiry = min(expiries)
         chain = client.chain(ticker, expiry)
         if chain.get('quote') and chain['quote'].get('symbol') != ticker:
-            raise ValueError('expiry chain underlying symbol mismatch')
+            raise InvalidQuoteError('expiry chain underlying symbol mismatch')
         options = chain.get("options") or []
         if len(options) != 1 or options[0].get("expirationDate") != expiry:
-            raise ValueError("expiry response mismatch")
+            raise InvalidQuoteError("expiry response mismatch")
         c, p = matched_pair(options[0].get("calls", []), options[0].get("puts", []), spot)
         if not c or not p:
-            raise ValueError("no matched call/put strike")
+            raise MissingOptionChain("no matched call/put strike")
         for leg in (c, p):
             if leg.get("expiration") != expiry or leg.get("currency") != "USD":
-                raise ValueError("contract expiry/currency mismatch")
+                raise InvalidQuoteError("contract expiry/currency mismatch")
             if not two_sided(leg):
-                raise ValueError("invalid contract BBO")
+                raise InvalidQuoteError("invalid contract BBO")
             if not fresh(leg.get("bidAskTimestamp", leg.get("quoteTime")), now, max_age):
-                raise ValueError("contract BBO timestamp missing, stale or future")
+                raise StaleQuoteError("contract BBO timestamp missing, stale or future")
             if number(leg.get("openInterest"), positive=True) is None:
-                raise ValueError("contract has no verified open interest")
+                raise InvalidQuoteError("contract has no verified open interest")
         metrics = option_metrics([c], [p], spot)
         # Consistency screen, not exact European parity for American contracts.
         if metrics["parity"] is None or metrics["parity"] > 0.03:
-            raise ValueError("call/put/underlying consistency gap exceeds 3%")
+            raise InvalidQuoteError("call/put/underlying consistency gap exceeds 3%")
         if metrics["iv"] is None:
-            raise ValueError("missing or nonfinite implied volatility")
-        out.update(metrics, status="OK", reason="validated matched contracts",
+            raise InvalidQuoteError("missing or nonfinite implied volatility")
+        out.update(metrics, status="OK", reason="validated matched contracts", reason_code=OK,
                    spot=spot, expiry=stamp(expiry).date().isoformat(),
                    put_oi=p['openInterest'], call_oi=c['openInterest'],
                    as_of=min(stamp(q['regularMarketTime']),
                              *(stamp(l.get('bidAskTimestamp',l.get('quoteTime'))) for l in (c,p))).isoformat())
     except Exception as exc:
         # Report the class and controlled validation text, never URLs with crumbs.
-        out["reason"] = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+        out["reason_code"], out["reason"] = _failure_details(exc)
+        out["error_class"] = _exception_class(exc)
         log.warning("Option snapshot %s unavailable: %s", ticker, out["reason"])
     return out
 

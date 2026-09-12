@@ -22,7 +22,7 @@ def test_legacy_cost_entrypoint_requires_bbo_timestamp(monkeypatch):
         def get(self,t):
             row=market_row('AAA.TO');del row['bidAskTimestamp']
             return {'AAA.TO':row}
-    monkeypatch.setattr(cost,'Quotes',Client)
+    monkeypatch.setattr(cost,'market_client',Client)
     out=cost.assess([{'ticker':'AAA.TO'}],now=NOW)
     assert out[0]['cost']['bps'] is None and 'timestamp' in out[0]['error']
 
