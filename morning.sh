@@ -110,7 +110,7 @@ PYEOF
     else
         log "INTRADAY HISTORY CACHE IS COLD OR STALE — the 09:46 fetch will try"
         log "  to stage the whole universe inside its 22s budget and will very"
-        log "  likely time out. Check rb-prepare.timer (08:25 ET). Continuing;"
+        log "  likely time out. Check rb-prepare.timer (08:05 ET). Continuing;"
         log "  a degraded board is still worth recording."
     fi
 else
@@ -132,11 +132,24 @@ fi
 : "${RB_STATE_DIR:=.rb-state}"
 # A 09:45 service start is preparation only. daily_job rejects publication
 # before 09:46; it does not wait for the timer automatically.
-python runtime_check.py
+# REQUIRED imports block. OPTIONAL ones (the day-99 DeepSeek factor layer) do
+# NOT — they are shadow, unadopted, read from a pre-staged snapshot, and
+# brief.compute already records their absence and degrades. Letting an
+# optional research module's missing SDK cost the whole day's record and email
+# would be the `ExecStart=-` mistake wearing a dependency-list costume. The
+# degradation is announced here; it is not swallowed.
+runtime_out="$(python runtime_check.py 2>&1)"
 runtime_rc=$?
+printf '%s\n' "$runtime_out"
 if [ "$runtime_rc" -ne 0 ]; then
     log "runtime imports failed before report acquisition"
     exit 1
+fi
+if printf '%s' "$runtime_out" | grep -q '"degraded": true'; then
+    log "RUNTIME DEGRADED — an OPTIONAL import failed; see optional_failures"
+    log "  above. The board and email still publish; the DeepSeek factor"
+    log "  section will read UNAVAILABLE. Fix with: .venv/bin/pip install -r"
+    log "  requirements.txt"
 fi
 python wait_for_publication.py
 wait_rc=$?

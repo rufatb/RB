@@ -1,5 +1,29 @@
 # Working notes for this repo
 
+## Day99 DeepSeek — staged, shadow, and it must never cost the morning
+
+A shadow layer with no adopted output may not block publication. The day-99
+merge put `openai`, `socksio`, `adapters.deepseek_adapter` and `factor_inputs`
+in `runtime_check.REQUIRED`; `morning.sh` exits 1 on any non-zero there, before
+acquisition. On a venv predating the merge that is **no board, no ledger row
+and no email at all** — `brief.compute` already degrades to UNAVAILABLE, and
+the import gate made that degradation unreachable. Those four are now OPTIONAL:
+counted, named, logged as DEGRADED, never blocking.
+
+`rb-deepseek.timer` (09:15 ET) stages the snapshot. Nothing ran
+`prepare_deepseek.py` before — `load_prepared` is a pure reader, so the section
+would have read "Assessment unavailable" every morning while looking installed.
+The window is bounded at both ends: after 08:05 staging, before the 09:30
+cut-off the reader enforces, and inside `MAX_SNAPSHOT_AGE_HOURS`.
+
+**The host needs `DEEPSEEK_MODEL=deepseek-flash` explicitly.** The code default
+`deepseek-chat` was absent from the 2026-09-12 account listing and there is no
+automatic fallback. The credential belongs in
+`${RB_STATE_DIR}/secrets/deepseek_api_key`, mode 0600, never in a unit file.
+
+A passing import check is not provider reachability, and no factor output is
+adopted, sized or ranked into the baseline board.
+
 ## Day98 side skill — registered, and NOT answerable until ~2027-04
 
 `PREREGISTER_day98_side_skill.md` and `AUDIT_day98_losing_days.md`. The long

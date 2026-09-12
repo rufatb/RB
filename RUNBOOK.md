@@ -59,6 +59,7 @@ must never invoke this exception automatically or reset an original claim.
 |---|---|---|
 | 08:05 | Prepare intraday history; validate all expected cache files and their pre-open session identity | Missing/invalid files remain NOT READY |
 | 08:10 | Stage complete biotech universe and review primary-source event evidence | Bounded workers checkpoint successes; rate limits stop further batches; independent calendar remains available |
+| 09:15 | `rb-deepseek.timer`: day-99 staged DeepSeek factor snapshot (`prepare_deepseek.py --refresh-public-inputs`). Shadow, unadopted, preparation only — the 09:46 path re-reads and re-validates the sealed file and never calls a model | `load_prepared` REJECTS a snapshot prepared at or after 09:30, older than six hours, or from another session. A missing or rejected snapshot reads UNAVAILABLE and costs the factor section only; the unit exits 2 on PARTIAL/UNAVAILABLE so a silent shadow section cannot look green |
 | 09:20 | `rb-social.timer`: day-94 shadow attention snapshot into `data/social/` (`build_social.py`; feeds nothing in the report). **PRE-OPEN BY DESIGN** — a snapshot after 09:46 holds the market's reaction to the open and is marked `decision_usable: false`; never move this into `morning.sh` | Failed fetches are recorded per name in the snapshot, never counted as zero attention. A missing snapshot is a permanently missing session — forward collection has no history endpoint, and `morning.sh` says so at 09:46 |
 | 09:39 | `provenance.py`: is main everything, and is this checkout main? | WARNS, never blocks — a day's record outweighs a tidy branch list. `morning.sh` exits 6: published, but not on the whole of main |
 | 09:40 | Prepare report environment and source review; inspect stored state and any delivery status | Signal is not final yet; never publish a hindsight-labelled 09:46 entry |
@@ -262,10 +263,15 @@ underpowered arms; no “improved accuracy” claim without prospective evidence
 ### Day99 staged DeepSeek factors
 
 Read `DEEPSEEK_DATA.md`, `AUDIT_day99_deepseek.md` and the day99 preregistration.
-Preparation may run `prepare_deepseek.py --state-dir "$RB_STATE_DIR"
---refresh-public-inputs` after history staging, before 09:30 ET. It records one
+Preparation runs `prepare_deepseek.py --state-dir "$RB_STATE_DIR"
+--refresh-public-inputs` from `rb-deepseek.timer` at 09:15 ET — after history
+staging, before the 09:30 cut-off `load_prepared` enforces. It records one
 bounded session attempt, including failure. The 09:46 path only reads staged
 inputs; do not put a model call or a news refresh on the report critical path.
+`runtime_check.py` treats `openai`, `socksio`, `adapters.deepseek_adapter` and
+`factor_inputs` as OPTIONAL: they are named and counted when missing and
+`morning.sh` logs the degradation, but they never block publication. A shadow
+layer with no adopted output must not be able to cost a day's record.
 Retain all new factor inputs/receipts/history and private host credentials in
 the existing operational archive with a version guard. A separate allowlisted
 private overlay is not a replacement report-state archive.

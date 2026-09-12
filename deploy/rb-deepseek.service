@@ -1,0 +1,42 @@
+[Unit]
+Description=RB day-99 staged DeepSeek factor snapshot (shadow research; preparation only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+UMask=0077
+NoNewPrivileges=true
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+
+# WHY THIS UNIT EXISTS. RUNBOOK's day-99 section says preparation "may run"
+# prepare_deepseek before 09:30 — and nothing did. `deepseek_factors.load_prepared`
+# is a pure reader: with no snapshot on disk it returns UNAVAILABLE, so the
+# factor section would have read "Assessment unavailable" every single morning
+# while looking installed. Same shape as the cache that was staged only by an
+# ignored ExecStartPre.
+#
+# NO CREDENTIAL LIVES HERE. prepare_deepseek reads DEEPSEEK_API_KEY from the
+# environment, or ${RB_STATE_DIR}/secrets/deepseek_api_key (mode 0600, outside
+# git). DEEPSEEK_MODEL may be set in /etc/rb-report.env or in
+# ${RB_STATE_DIR}/deepseek_model.txt; the default is deepseek-chat and an
+# account that does not carry it must name its model explicitly rather than
+# have one silently substituted.
+#
+# This unit calls a model. It does not select, size, rank into the baseline
+# board, or place an order. The 09:46 report only re-reads and re-validates
+# the sealed file this writes; a failure here costs the shadow section and
+# nothing else.
+#
+# A PARTIAL or UNAVAILABLE preparation exits 2 and this unit goes red on
+# purpose. A shadow section that quietly reports nothing is the failure mode
+# being fixed; do not add a `-` prefix to make the morning look tidy.
+ExecStart=/opt/RB/.venv/bin/python /opt/RB/prepare_deepseek.py \
+    --state-dir ${RB_STATE_DIR} --refresh-public-inputs
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,25 @@
+[Unit]
+Description=Stage the day-99 DeepSeek factor snapshot before the open
+
+# 09:15, and the window is bounded at BOTH ends.
+#
+#   * AFTER 08:05 (rb-prepare) so the technicals the prompt describes come
+#     from a staged cache rather than a live fetch.
+#   * BEFORE 09:30. deepseek_factors.load_prepared REJECTS any snapshot whose
+#     prepared_at is 09:30 or later, and also rejects one older than
+#     MAX_SNAPSHOT_AGE_HOURS (6h) or from another session. Staging at 09:15
+#     leaves 15 minutes of margin against the unit's own 300s budget.
+#   * Not 09:20 — rb-social holds that minute, and two jobs on one provider
+#     minute is the rate-limit clash install.sh refuses.
+#
+# Persistent=false: a missed morning must NOT fire at 11:00 and write a
+# snapshot the report would then reject anyway. A missing snapshot reads
+# UNAVAILABLE, which is the honest answer.
+[Timer]
+OnCalendar=Mon..Fri *-*-* 09:15:00 America/New_York
+AccuracySec=30s
+Persistent=false
+Unit=rb-deepseek.service
+
+[Install]
+WantedBy=timers.target

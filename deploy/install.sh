@@ -27,7 +27,7 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UNIT_DIR=/etc/systemd/system
 ENV_FILE=/etc/rb-report.env
-TIMERS=(rb-prepare rb-biotech rb-social rb-options rb-report)
+TIMERS=(rb-prepare rb-biotech rb-deepseek rb-social rb-options rb-report)
 CHECK_ONLY=0
 FAIL=0
 
@@ -64,7 +64,27 @@ ok "systemd is PID 1"
 ok "morning.sh present and executable"
 
 PY="$REPO/.venv/bin/python"
-if [ -x "$PY" ]; then ok "interpreter $PY"
+if [ -x "$PY" ]; then
+    ok "interpreter $PY"
+    # AN INTERPRETER THAT EXISTS IS NOT AN INTERPRETER THAT IMPORTS. The venv
+    # is created once and then outlives many merges of requirements.txt; the
+    # day-99 merge added openai/httpx[socks] and this check is the only thing
+    # between a stale venv and finding out at 09:46. Required failures stop the
+    # install; optional ones only cost the shadow factor section, so they warn.
+    rc_out="$("$PY" "$REPO/runtime_check.py" 2>&1)"; rc=$?
+    if [ "$rc" -ne 0 ]; then
+        bad "runtime_check FAILED on that interpreter — the 09:46 report cannot run:"
+        printf '%s\n' "$rc_out" | sed 's/^/      /'
+        say "  Fix: $REPO/.venv/bin/pip install -r $REPO/requirements.txt"
+    else
+        ok "runtime_check: required imports present"
+        if printf '%s' "$rc_out" | grep -q '"degraded": true'; then
+            warn "optional imports missing — the report publishes, the DeepSeek"
+            say "       factor section will read UNAVAILABLE. Fix with:"
+            say "       $REPO/.venv/bin/pip install -r $REPO/requirements.txt"
+            printf '%s\n' "$rc_out" | grep '"module"' | sed 's/^/       /'
+        fi
+    fi
 else bad "no interpreter at $PY — create the venv first"; fi
 
 if [ -f "$ENV_FILE" ]; then
