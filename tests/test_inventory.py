@@ -14,6 +14,7 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODS = sorted(f[:-3] for f in os.listdir(REPO)
               if f.endswith(".py") and not f.startswith("_"))
+MODS += ['adapters/__init__', 'adapters/deepseek_adapter']
 
 
 def _tree(m):

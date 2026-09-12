@@ -258,3 +258,21 @@ and complete costs are mandatory. The present TSX-only daily engine cannot
 satisfy the US gate by relabelling TSX observations. Results never automatically
 change production settings. MDE and controls are reported even for rejected or
 underpowered arms; no “improved accuracy” claim without prospective evidence.
+
+### Day99 staged DeepSeek factors
+
+Read `DEEPSEEK_DATA.md`, `AUDIT_day99_deepseek.md` and the day99 preregistration.
+Preparation may run `prepare_deepseek.py --state-dir "$RB_STATE_DIR"
+--refresh-public-inputs` after history staging, before 09:30 ET. It records one
+bounded session attempt, including failure. The 09:46 path only reads staged
+inputs; do not put a model call or a news refresh on the report critical path.
+Retain all new factor inputs/receipts/history and private host credentials in
+the existing operational archive with a version guard. A separate allowlisted
+private overlay is not a replacement report-state archive.
+
+The default model remains configurable; the actual account check on September
+12 required explicit `DEEPSEEK_MODEL=deepseek-flash`. Both legacy requested
+identifiers and new model identifiers must be verified, never silently changed.
+The active Gmail jobs remain the single sender. Updating these example units
+alone does not update a separately pinned Gmail task or install a service.
+A passing runtime import check is not provider reachability or improved alpha.

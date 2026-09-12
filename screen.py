@@ -591,7 +591,7 @@ def screen(cal: list, today: dt.date, horizon: int = 120,
         row.update({k: quote.get(k) for k in
                     ("spot", "move", "skew", "expiry", "call_pct", "put_pct", "parity", "put_oi", "call_oi")})
         row["px_source"] = "mid" if quote["status"] == "OK" else "none"
-        row["reason"] = _q.OK if quote["status"] == "OK" else _q.CHAIN_ERROR
+        row["reason"] = _q.OK if quote["status"] == "OK" else quote.get("reason_code", _q.CHAIN_ERROR)
         row["reason_detail"] = quote["reason"]
         if quote["status"] != "OK":
             row["error"] = quote["reason"]

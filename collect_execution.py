@@ -11,7 +11,8 @@ import datetime as dt
 import json
 import os
 from zoneinfo import ZoneInfo
-from quotes import market_client,YahooMarketData,validate_equity,stamp
+from quotes import (market_client, YahooMarketData, validate_equity, stamp,
+                    fetch_equities, quote_failure)
 from report_store import Store,encode
 from execution import score_leg
 
@@ -23,14 +24,27 @@ def collect(store, exit_time, now, client=None, fees_bps=None, slippage_bps=None
     report=store.get(now.date().isoformat())
     if not report:
         raise ValueError('no frozen morning publication')
-    client=client or market_client()
     intra=report['intraday']
-    tickers={l['ticker'] for l in intra['legs']}|{intra['benchmark_symbol']}
-    raw=client.get(sorted(tickers))
-    quotes={t:validate_equity(raw.get(t,{}),t,now,currency='CAD' if t.endswith('.TO') else 'USD') for t in tickers}
+    with store.connect() as db:
+        recorded = {t:json.loads(body) for t,body in db.execute(
+            'SELECT ticker,body FROM outcomes WHERE session=? AND exit_time=?',
+            (report['session'],exit_time))}
+    missing = [leg for leg in intra['legs'] if leg['ticker'] not in recorded]
+    if not missing:
+        return [recorded[leg['ticker']] for leg in intra['legs']]
+    tickers={l['ticker'] for l in missing}|{intra['benchmark_symbol']}
+    try:
+        # A failed first acquisition is an observation, not permission to retry
+        # later within the minute and silently select a more convenient print.
+        quotes=fetch_equities(client or market_client(),tickers,now,max_attempts=1)
+    except Exception as exc:
+        quotes={t:quote_failure(t,exc) for t in tickers}
     for q in quotes.values():
-        if q.get('status')=='OK' and stamp(q['quote_time']).astimezone(ZoneInfo('America/New_York')).strftime('%H:%M')!=exit_time:
-            q.update(status='UNAVAILABLE',reason='quote is outside the registered exit minute')
+        if q.get('status')=='OK':
+            quoted=stamp(q['quote_time']).astimezone(ZoneInfo('America/New_York'))
+            if quoted.date()!=now.date() or quoted.strftime('%H:%M')!=exit_time:
+                q.update(status='UNAVAILABLE',reason='quote is outside the registered exit minute',
+                         reason_code='WRONG_EXECUTION_WINDOW')
     b0=intra['benchmark'];b1=quotes[intra['benchmark_symbol']]
     index_return=None
     if b0.get('status')==b1.get('status')=='OK':
@@ -39,9 +53,14 @@ def collect(store, exit_time, now, client=None, fees_bps=None, slippage_bps=None
             index_return=(b1['mark']/b0['mark']-1)*100
     results=[]
     for l in intra['legs']:
+        if l['ticker'] in recorded:
+            results.append(recorded[l['ticker']])
+            continue
         row={'ticker':l['ticker'],'exit_time':exit_time,'exit_quote':quotes[l['ticker']],
              'index_return_pct':index_return,'status':'INCOMPLETE','error':None,'metrics':None}
         try:
+            if row['exit_quote']['status'] != 'OK':
+                raise ValueError(row['exit_quote']['reason'])
             entry=stamp(l['entry_time']).astimezone(ZoneInfo('America/New_York'))
             if entry.date()!=now.date() or entry.strftime('%H:%M')!='09:46':
                 raise ValueError('entry quote does not certify exact 09:46 execution')
@@ -50,12 +69,16 @@ def collect(store, exit_time, now, client=None, fees_bps=None, slippage_bps=None
             row['status']='SCORED_BBO_PROXY'
         except (ValueError,KeyError,TypeError) as exc:
             row['error']=str(exc)
-        results.append(row)
         with store.connect() as db:
             # First observation wins, including an outage. Replacing it would
             # select quotes after observing their quality or movement.
             db.execute('INSERT OR IGNORE INTO outcomes VALUES (?,?,?,?)',
                        (report['session'],l['ticker'],exit_time,encode(row)))
+            # Return the immutable winner too, including when another collector
+            # won the race between our initial read and INSERT OR IGNORE.
+            body=db.execute('SELECT body FROM outcomes WHERE session=? AND ticker=? AND exit_time=?',
+                (report['session'],l['ticker'],exit_time)).fetchone()[0]
+        results.append(json.loads(body))
     return results
 
 

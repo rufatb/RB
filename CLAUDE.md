@@ -220,3 +220,16 @@ its exact subject/text/html. Late dispatch labels the body as well as subject;
 the original publication stays immutable. The existing preparation and daily
 tasks must pin the same reviewed main commit; fetch moving main for CSV record
 imports only, never for executing unreviewed code during a scheduled run.
+
+### Day99 DeepSeek integration (unadopted)
+
+`brief.build()` returns the single Digest; renderers are pure views, never
+provider/model calls. `adapters` is now a package preserving existing exports.
+The bounded DeepSeek JSON client runs only in `prepare_deepseek.py` before the
+open; report computation reads the staged snapshot and computes preregistered
+shadow arms using the existing quantitative pool. Preserve baseline selections
+and allocation. NO EDGE - WAIT denotes a tested abstention; unavailable input
+is not proof of zero market opportunities. No accuracy gain is claimed.
+Read DEEPSEEK_DATA.md and PREREGISTER_day99_deepseek.md before editing this path.
+The six protected files, including constants.py, remain unchanged; DESIGN
+bounds live in deepseek_policy.py and do not mutate constants.REGISTRY.

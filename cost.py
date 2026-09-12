@@ -37,7 +37,8 @@ TYPICAL_MOVE_PCT = 0.69
 FALLBACK_HITS, FALLBACK_N = 34, 70
 
 
-from quotes import YahooMarketData as Quotes, two_sided, number, validate_equity
+from quotes import (YahooMarketData as Quotes, two_sided, number, validate_equity,
+                    market_client, fetch_equities, quote_failure)
 
 
 def spread_bps(row: dict) -> float | None:
@@ -125,27 +126,24 @@ def outside_trading_hours(now=None) -> bool:
     return not (9 * 60 + 30 <= m < 16 * 60)
 
 
-def assess(picks: list, now=None) -> list:
-    """picks: [{ticker, shares, price}] -> the same rows with cost attached."""
+def assess(picks: list, now=None, client=None) -> list:
+    """Attach shared validated costs; injected/prepared feeds use the same path."""
     if not picks:
         return []
     import datetime as dt
     from zoneinfo import ZoneInfo
-    q = Quotes()
+    now = now or dt.datetime.now(ZoneInfo('America/New_York'))
+    tickers = [p['ticker'] for p in picks]
     try:
-        quotes = q.get([p["ticker"] for p in picks])
-    except Exception as e:
-        return [{**p, "cost": {"bps": None, "usd": None,
-                               "share_of_move": None},
-                 "error": type(e).__name__} for p in picks]
+        rows = fetch_equities(client or market_client(), tickers, now)
+    except Exception as exc:
+        rows = {t:quote_failure(t, exc) for t in tickers}
     out = []
     for p in picks:
-        t = p['ticker']
-        r = validate_equity(quotes.get(t, {}), t,
-                            now or dt.datetime.now(ZoneInfo('America/New_York')),
-                            currency='CAD' if t.endswith('.TO') else 'USD')
+        r = rows[p['ticker']]
         out.append({**p, 'cost': drag(r['spread_bps'], p.get('shares'), p.get('price')),
                     'bid': r['bid'], 'ask': r['ask'], 'status': r['status'],
+                    'reason_code':r.get('reason_code'), 'error_class':r.get('error_class'),
                     'error': None if r['status']=='OK' else r['reason']})
     return out
 

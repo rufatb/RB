@@ -20,11 +20,22 @@ HONESTY CONSTRAINTS BAKED IN HERE (do not strip in future edits):
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
 import pandas as pd
+from diagnostics import safe_detail
+
+log = logging.getLogger(__name__)
+
+
+def _failure_note(stage, exc):
+    """Provider exception text may contain authenticated URLs; keep the class."""
+    note = safe_detail(f'{stage} unavailable: {type(exc).__name__}', 200)
+    log.warning('%s', note)
+    return note
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -122,7 +133,7 @@ class YahooAdapter(DataAdapter):
         try:
             fi = dict(t.fast_info)
         except Exception as e:  # pragma: no cover - network/library variance
-            notes.append(f"fast_info failed: {e}")
+            notes.append(_failure_note('Yahoo fast_info', e))
 
         last = fi.get("last_price")
         open_ = fi.get("open")
@@ -155,7 +166,7 @@ class YahooAdapter(DataAdapter):
                 if volume is None:
                     volume = float(bars["Volume"].sum())
         except Exception as e:  # pragma: no cover
-            notes.append(f"intraday history failed: {e}")
+            notes.append(_failure_note('Yahoo intraday history', e))
 
         return Quote(
             ticker=ticker,
@@ -237,9 +248,10 @@ class YahooDirectAdapter(DataAdapter):
                 j = r.json()
                 if j.get("chart", {}).get("result"):
                     return j["chart"]["result"][0]
+                raise ValueError('provider returned no chart data')
             except Exception as e:  # pragma: no cover - network variance
-                last_err = e
-        raise RuntimeError(f"yahoo_direct fetch failed for {ticker}: {last_err}")
+                last_err = _failure_note('Yahoo chart fetch', e)
+        raise RuntimeError(f"yahoo_direct fetch failed for {ticker}: {last_err}") from None
 
     def _bars_df(self, result: dict) -> pd.DataFrame:
         ts = result.get("timestamp") or []
@@ -348,7 +360,7 @@ class StooqAdapter(DataAdapter):
             return Quote(ticker=ticker, last=None, open=None, high=None, low=None,
                          prior_close=None, volume=None, source=self.name,
                          as_of=None, session_date=None,
-                         notes=[f"stooq unavailable: {e}"])
+                         notes=[_failure_note('Stooq quote', e)])
 
     def get_intraday_bars(self, ticker: str, interval: str = "1m") -> pd.DataFrame:
         return pd.DataFrame()  # stooq free tier has no reliable intraday — no fabrication
@@ -362,12 +374,14 @@ class StooqAdapter(DataAdapter):
             from io import StringIO
             df = pd.read_csv(StringIO(r.text))
             if "Date" not in df.columns:
-                return pd.DataFrame()
+                raise ValueError('daily response has no Date column')
             df["Date"] = pd.to_datetime(df["Date"])
             df = df.set_index("Date").tail(lookback_days)
             return df
-        except Exception:
-            return pd.DataFrame()
+        except Exception as exc:
+            result = pd.DataFrame()
+            result.attrs['acquisition_warnings'] = [_failure_note('Stooq daily history', exc)]
+            return result
 
     def get_quote_simple(self, ticker: str) -> Quote:
         return self.get_quote(ticker)
@@ -438,7 +452,7 @@ class TwelveDataAdapter(DataAdapter):
         r.raise_for_status()
         j = r.json()
         if j.get("status") == "error":
-            raise RuntimeError(f"twelvedata error: {j.get('message')}")
+            raise RuntimeError('TwelveData quote response reported an error')
         ts = j.get("timestamp")
         as_of = pd.Timestamp(int(ts), unit="s", tz="UTC").tz_convert(self.exchange_tz).to_pydatetime() if ts else None
         return Quote(
@@ -521,7 +535,7 @@ class MultiSourceAdapter(DataAdapter):
                 if cq.last is not None:
                     self.last_cross_quotes.append(cq)
             except Exception as e:  # record, do not fabricate
-                q.notes.append(f"cross-check {adp.name} failed: {e}")
+                q.notes.append(_failure_note(f'cross-check {adp.name}', e))
         return q
 
     def best_cross_quote(self) -> Optional[Quote]:
@@ -538,7 +552,8 @@ class MultiSourceAdapter(DataAdapter):
                 alt = adp.get_intraday_bars(ticker, interval)
                 if alt is not None and not alt.empty:
                     return alt
-            except Exception:
+            except Exception as exc:
+                _failure_note(f'cross-check {adp.name} intraday history', exc)
                 continue
         return df if df is not None else pd.DataFrame()
 
@@ -551,7 +566,8 @@ class MultiSourceAdapter(DataAdapter):
                 alt = adp.get_daily_bars(ticker, lookback_days)
                 if alt is not None and not alt.empty:
                     return alt
-            except Exception:
+            except Exception as exc:
+                _failure_note(f'cross-check {adp.name} daily history', exc)
                 continue
         return df if df is not None else pd.DataFrame()
 
@@ -743,8 +759,8 @@ def build_adapter(name: str, *, exchange_tz: str, manual_kwargs: Optional[dict] 
         if cc and cc.lower() != name.lower():
             try:
                 built.append(_build_single(cc, exchange_tz=exchange_tz))
-            except Exception:
-                pass  # missing key / unavailable source — skip, don't fabricate
+            except Exception as exc:
+                _failure_note(f'cross-check adapter {cc}', exc)
     if not built:
         return primary
     return MultiSourceAdapter(primary, built)

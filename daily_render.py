@@ -6,10 +6,104 @@ exactly five bullets. Both renderers consume the same immutable report model.
 from __future__ import annotations
 from html import escape
 import biotech
+from diagnostics import safe_detail
 
 
 def fmt(value, spec='.2f'):
     return 'unknown' if value is None else format(value,spec)
+
+
+def _factor_wait(snapshot):
+    """Describe the stored decision without computing another ranking."""
+    shadow=snapshot.get('shadow') or {}
+    rows=shadow.get('rows') or []
+    if not rows or snapshot.get('status')=='UNAVAILABLE' or any(r.get('status')=='UNAVAILABLE' for r in rows):
+        return 'UNEVALUATED / incomplete evidence; absence of candidates is not evidence of no market opportunities.'
+    if any((shadow.get('h1') or {}).values()):
+        return 'Factor-qualified research names lack exact entry-spread evidence.'
+    return 'Evaluated factors did not clear the registered threshold or alignment gate.'
+
+
+def deepseek_summary(intra):
+    """At most six concise lines over saved factors; older publications stay unchanged."""
+    if 'deepseek' not in intra:
+        return []
+    snap=intra['deepseek'] or {}
+    shadow=snap.get('shadow') or {}
+    lines=['### DeepSeek factor research — unadopted',
+           f"{safe_detail(snap.get('model') or 'Model unavailable',60)}: {snap.get('status','UNAVAILABLE')}; "
+           f"{snap.get('covered',0)}/{snap.get('requested',0)} assessed. Contextual leans, not forecasts."]
+    ranked=shadow.get('h2') or {}
+    if any(ranked.values()):
+        longs=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('longs',[])[:2]) or 'none'
+        shorts=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('shorts',[])[:2]) or 'none'
+        lines.append(f'H2 spread-ranked shadow: LONG {longs}; SHORT {shorts}. Research only; no executable recommendations.')
+    else:
+        reason=_factor_wait(snap)
+        unevaluated=(reason.startswith('UNEVALUATED') or
+                     str(shadow.get('decision','')).startswith('UNAVAILABLE'))
+        unpriced=any((shadow.get('h1') or {}).values())
+        prefix='UNAVAILABLE — ' if unevaluated else 'COST EVIDENCE UNAVAILABLE — ' if unpriced else 'NO EDGE - WAIT — '
+        lines.append(prefix+reason)
+    gaps=list(snap.get('gaps') or [])+list(shadow.get('gaps') or [])
+    if gaps:
+        lines.append('Factor gaps: '+safe_detail('; '.join(dict.fromkeys(gaps)),180)+' Full evidence attached.')
+    lines.append('DESIGN scores are not calibrated probabilities; MDE and accuracy gain remain unestablished.')
+    return lines
+
+
+def _deepseek_detail(intra):
+    if 'deepseek' not in intra:
+        return []
+    snap=intra['deepseek'] or {}
+    shadow=snap.get('shadow') or {}
+    lines=['',*deepseek_summary(intra),
+           'H1 tests factor abstention; H2 additionally ranks by observed entry spread. Neither changes baseline selections or allocation.',
+           'An entry spread is not a measured round-trip cost. Unpriced H1 rows are not executable observations.',
+           '', '| Name | Model contextual lean | Sentiment | Model rationale — not verified fact |',
+           '|---|---|---:|---|']
+    for row in snap.get('assessments') or []:
+        rationale=safe_detail(row.get('factor_rationale','Unavailable'),280).replace('|',' / ')
+        lines.append(f"| {row['ticker']} | {row['directional_lean']} | {fmt(row.get('sentiment_score'),'+.3f')} | {rationale} |")
+    if not snap.get('assessments'):
+        lines.append('| Assessment unavailable | — | unknown | No model result was inferred. |')
+    lines += ['', '| Name | Status | Research side | Quant score | Combined DESIGN score | Sided DESIGN score | Entry spread bps | Reason |',
+              '|---|---|---|---:|---:|---:|---:|---|']
+    for row in shadow.get('rows') or []:
+        reason=safe_detail(row.get('reason') or 'Registered shadow candidate; unadopted').replace('|',' / ')
+        lines.append(f"| {row['ticker']} | {row['status']} | {row.get('direction') or '—'} | "
+                     f"{fmt(row.get('quant_probability'),'.3f')} | {fmt(row.get('combined_probability'),'.3f')} | "
+                     f"{fmt(row.get('sided_score'),'.3f')} | {fmt(row.get('spread_bps'))} | {reason} |")
+    for ticker,gaps in (snap.get('candidate_gaps') or {}).items():
+        if gaps:
+            lines.append(f"{ticker} factor evidence gaps: "+safe_detail('; '.join(gaps)))
+    inputs=snap.get('inputs') or {}
+    for candidate in inputs.get('candidates') or []:
+        ticker=candidate['ticker']
+        if candidate.get('source_url'):
+            lines.append(f"{ticker} Python technical inputs as of {candidate.get('technicals_as_of','unknown')}: "
+                         f"{candidate.get('technicals_scope','scope unknown')}. [Data source]({candidate['source_url']})")
+        for key,label,text_key in [('headlines','Headline','title'),('catalyst_tags','Catalyst tag','tag')]:
+            for item in candidate.get(key) or []:
+                lines.append(f"{ticker} {label}, {item['published_at']}: {safe_detail(item[text_key],400)} "
+                             f"[Evidence source]({item['source_url']})")
+    for name,item in (inputs.get('macro') or {}).items():
+        lines.append(f"Macro {name}: {item['value']} as of {item['as_of']}. [Data source]({item['source_url']})")
+    mde=shadow.get('mde') or {}
+    lines += ['Factor registration: '+str(shadow.get('registration') or 'not recorded'),
+              'Factor MDE: '+str(mde.get('status') or 'UNAVAILABLE')+
+              f"; minimum forward sessions {mde.get('minimum_forward_sessions','unknown')}; net bps {fmt(mde.get('net_bps'))}."]
+    return lines
+
+
+def _historical_record(rec):
+    if rec.get('status')=='UNAVAILABLE':
+        return ['Historical record UNAVAILABLE; hit rates and returns are unknown.']
+    prefix=[f"Historical record PARTIAL: {rec.get('invalid_rows',0)} invalid source rows excluded; source records retained."] if rec.get('status')=='PARTIAL' else []
+    return prefix+[f"Historical baseline: {rec['hits']}/{rec['n']} gross hits ({fmt(rec['rate'],'.1%')}); "
+                   f"mean capture {fmt(rec['mean'],'+.3f')}%.",
+                   f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
+                   f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; unpriced {rec['net_unpriced']}."]
 
 
 def _day_shape(rec, intra):
@@ -110,11 +204,7 @@ def text(d):
            intra['model_claim'],
            f"Execution-verified research observations: {sum(l.get('status') in ('SHADOW','ELIGIBLE') and l.get('quote',{}).get('status')=='OK' for l in intra['legs'])}/{leg_count} selected or recorded legs at publication. "
            'This count verifies data, not predictive accuracy.', '',
-           f"Historical baseline: {rec['hits']}/{rec['n']} gross hits ({fmt(rec['rate'],'.1%')}); "
-           f"mean capture {fmt(rec['mean'],'+.3f')}%.",
-           f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
-           f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; "
-           f"unpriced {rec['net_unpriced']}.",rec['label'],rec['benchmark_label'],
+           *_historical_record(rec),rec['label'],rec['benchmark_label'],
            *_day_shape(rec, intra), *_concentration(intra),
            '', *_leg_heading(intra), '',
            '| Status | Name | Baseline side | Signal reference | 09:46 quote | Spread | Hypothetical allocation |',
@@ -182,6 +272,7 @@ def text(d):
                   f"Five-minute history: {provider['intraday_status']}.", provider['note']]
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
+    lines += _deepseek_detail(intra)
     exact=intra['exact_record']
     lines += ['', '### Execution evidence',
               f"Independent benchmark: {intra['benchmark_symbol']} — {intra['benchmark']['status']}. "
@@ -208,7 +299,9 @@ def text(d):
     lines += ['', ('## Original morning ledger snapshot — see replacement updates above'
                    if d.get('replacement') else '## Existing position marks'),
               book.get('verification','Recorded ledger; current holdings not independently verified.'),
-              f"{len(book['legs'])} recorded open positions; {book['stale']} unmarkable and excluded from live totals."]
+              ('Position ledger UNAVAILABLE; current holdings are unknown.' if book.get('status')=='UNAVAILABLE' else
+               f"{len(book['legs'])} readable recorded open positions; {book['stale']} unmarkable and excluded from live totals.")]
+    lines += ['Position evidence gap: '+safe_detail(gap) for gap in book.get('gaps',[])]
     for l in book['legs']:
         lines.append(f"{l['ticker']} {l['side']}: {l['shares']:g} recorded shares, entry {l['entry_px']:.2f} "
                      f"on {l.get('entry_date','unknown')}, {l['days']} days held in ledger; live mark {fmt(l.get('mark'))}; "

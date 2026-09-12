@@ -50,10 +50,7 @@ def run(state_dir,output_dir,now=None,*,clock=None):
             failure=type(exc).__name__
             # Catastrophic local model/schema failure only. Ordinary provider
             # timeouts are isolated in brief and never trigger this fallback.
-            report=brief.compute(no_net=True,now=now,state_dir=state_dir)
-            report['report_status']='DATA OUTAGE — informational only'
-            report['errors'].append({'layer':'daily_job','error':failure,
-                                     'detail':'Local report assembly failed; recorded state retained, live scan unavailable.'})
+            report=brief.outage_digest(now,exc)
         # Also persist diagnostics/closed-session reports; zero picks is a result.
         if report['session'] != now.date().isoformat():
             raise ValueError('assembled report session does not match publication clock')

@@ -29,8 +29,12 @@ def check(state,now=None):
     except (OSError,ValueError,KeyError,TypeError): checks['reviewed_calendar']='NOT READY — reviewed event feed missing'
     import eodhd
     provider = eodhd.load_prepared(state,now)
+    import deepseek_factors
+    factors = deepseek_factors.load_prepared(state, now)
     return {'checked_at':now.isoformat(),'checks':checks,'intraday_cache':history,
             'optional_historical_provider':provider,
+            'optional_deepseek':{k:factors.get(k) for k in
+                                ('status','model','requested','covered','prepared_at','gaps')},
             'status':'PARTIAL' if any(v.startswith('NOT READY') for v in checks.values()) else 'PREPARED',
             'note':'Preparation status only; live BBO and final signal are checked at publication.'}
 

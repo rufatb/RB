@@ -56,10 +56,18 @@ def text(d):
     if history:
         lines.append(f"Training: {sum(h['accepted_sessions'] for h in history)} complete ticker-sessions; "
                      f"{sum(h['rejected_sessions'] for h in history)} excluded; audit attached.")
+    if 'deepseek' in intra:
+        lines += ['',*full.deepseek_summary(intra)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
-    if not book['legs']:
+    if book.get('status')=='UNAVAILABLE':
+        lines.append('Position ledger UNAVAILABLE; current holdings are unknown.')
+    elif book.get('status')=='PARTIAL':
+        lines.append(f"Position ledger PARTIAL; {book.get('invalid_rows',0)} malformed rows excluded. Holdings may be incomplete.")
+    elif not book['legs']:
         lines.append('No open positions recorded; current holdings are not independently reconciled.')
+    if book.get('gaps'):
+        lines.append('Position gap: '+full.safe_detail(book['gaps'][0],180))
     for p in book['legs']:
         lines.append(f"{p['ticker']} {p['side']}: {p['shares']:g} shares @ {p['entry_px']:.2f}; "
                      f"{p['days']} days in ledger; live mark {fmt(p.get('mark'))}; P&L {fmt(p.get('pnl_pct'),'+.2f')}%.")
@@ -90,14 +98,19 @@ def text(d):
                          f"{e['asset']} / {e['stage']}, {e['kind']}. [Issuer/event source]({e['source_url']})")
         if len(calendar)>4:lines.append(f"{len(calendar)-4} further reviewed events in attachment.")
     rec=intra['record']; risk=intra.get('risk_evidence',{}); rate=risk.get('rate',{}); exact=intra['exact_record']
-    lines += ['', '## Evidence & gaps',
-              f"Historical gross proxy: {rec['hits']}/{rec['n']} hits ({fmt(rec['rate'],'.1%')}); "
+    lines += ['', '## Evidence & gaps']
+    if rec.get('status')=='UNAVAILABLE':
+        lines.append('Historical record UNAVAILABLE; hit rates and returns are unknown.')
+    else:
+        if rec.get('status')=='PARTIAL':
+            lines.append(f"Historical record PARTIAL: {rec.get('invalid_rows',0)} invalid rows excluded; source records retained.")
+        lines.append(f"Historical gross proxy: {rec['hits']}/{rec['n']} hits ({fmt(rec['rate'],'.1%')}); "
               f"mean {fmt(rec.get('mean'),'+.3f')}% per leg. "
               f"Net proxy {fmt(rec.get('net_rate'),'.1%')}, mean {fmt(rec.get('net_mean'),'+.3f')}% "
               f"on {rec['net_n']} legs, {rec['net_unpriced']} unpriced. "
-              f"MDE80 {fmt(rate.get('mde80_pp'))} percentage points; scores are not calibrated win probabilities.",
-              f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
-              f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%."]
+              f"MDE80 {fmt(rate.get('mde80_pp'))} percentage points; scores are not calibrated win probabilities.")
+    lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
+                 f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
     errors=d.get('errors',[])
     if errors:
         from collections import Counter
