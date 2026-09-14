@@ -6,6 +6,13 @@ addendum first. No command submits a brokerage order.
 
 ## Local verification
 
+For an explicitly requested DeepSeek integration diagnosis, run
+`diagnose_deepseek_pipeline.py --state-dir "$RB_STATE_DIR" --output-dir /new/separate/diagnostic`.
+Read `AUDIT_day100_deepseek_pipeline.md`. This current-time check exercises the
+shared preparation and saved-snapshot-to-email code, records partial coverage
+separately, and produces artifacts without sending or publishing. Never add it
+to the scheduled report path or import its diagnostic snapshot as pre-open data.
+
 ```bash
 python -m pip install -r requirements.txt
 python -m pytest -q

@@ -65,7 +65,7 @@ def check(state,now=None):
     return {'checked_at':now.isoformat(),'checks':checks,'intraday_cache':history,
             'optional_historical_provider':provider,
             'optional_deepseek':{k:factors.get(k) for k in
-                                ('status','model','requested','covered','prepared_at','gaps')},
+                                ('status','model','requested','eligible','submitted','covered','prepared_at','gaps')},
             'optional_factor_pool':pool, 'quote_authentication':auth,
             'status':'PARTIAL' if any(v.startswith('NOT READY') for v in checks.values()) else 'PREPARED',
             'note':'Preparation status only; live BBO and final signal are checked at publication.'}

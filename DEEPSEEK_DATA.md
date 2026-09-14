@@ -39,6 +39,12 @@ parser fix and exact limits; this is API evidence, not predictive validation.
 
 ## Preparation contract
 
+Production and diagnostic calls now use the same complete-input gate. A schema
+that permits explicit nulls is not sufficient evidence for submission. Counts
+distinguish source-requested, accepted, eligible, submitted, assessed and usable
+names. See `AUDIT_day100_deepseek_pipeline.md` for the confirmed mismatch and
+the preparation-through-email tests.
+
 After restoring the CURRENT operational archive and staging the unchanged
 baseline's history, run before 09:30 ET:
 
@@ -135,6 +141,24 @@ A strict BBO requirement is intentional: prior daily closes, un-timestamped
 BBO and CORROBORATED trade bars do not become executable 09:46 quotes.
 No prediction gain has been measured. The fixed forward study and untouched
 confirmation are required before considering any adoption.
+
+## Explicit current-time integration check
+
+```bash
+python diagnose_deepseek_pipeline.py --state-dir "$RB_STATE_DIR" --output-dir /new/separate/diagnostic
+```
+
+This uses the same bounded 60-name pool preparation, public refresh, model
+batches and snapshot validation as production, then builds one local-only
+Digest and the real email artifacts. Use a fresh directory outside canonical
+state. It neither sends email nor overwrites a morning attempt. It has no
+as-of option and never pretends current news was known at 09:46. Production
+rejects its marked diagnostic snapshots even before 09:30.
+
+An integration PASS requires unchanged, usable assessments in the loader,
+Digest and full email attachment. Actual source coverage and qualifying
+research names are separate counts. It is a current-host diagnostic, not a
+prediction backtest, morning-feed guarantee, or new scheduled job.
 
 ## Private overlay recovery
 

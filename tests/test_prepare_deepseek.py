@@ -52,13 +52,14 @@ def test_partial_candidate_contract_does_not_block_valid_independent_batch(tmp_p
     assert result['candidate_gaps']['X0']
 
 
-def test_missing_macro_is_explicit_null_for_provider_and_never_ready(tmp_path):
+def test_missing_macro_is_preserved_but_never_submitted_to_provider(tmp_path):
     p = pool(1); p['macro'].pop('vix')
     def evaluate(candidates, macro, as_of, **kwargs):
-        assert macro['vix'] is None
-        return success(candidates, macro, as_of, **kwargs)
+        pytest.fail('Incomplete inputs must not be sent to a model and discarded later')
     result = S.prepare(tmp_path, CFG, now=NOW, inputs=p, evaluator=evaluate)
-    assert result['status'] == 'PARTIAL'
+    assert result['status'] == 'UNAVAILABLE'
+    assert result['eligible'] == result['submitted'] == result['covered'] == 0
+    assert result['requested'] == 1 and 'vix' not in result['inputs']['macro']
     assert 'INCOMPLETE_MACRO' in result['candidate_gaps']['X0']
 
 
@@ -102,6 +103,23 @@ def test_corrupt_assessment_or_receipt_replay_never_retries_or_overwrites_histor
     assert result['status'] == 'UNAVAILABLE'
     assert 'integrity' in result['gaps'][0]
     assert prior.read_bytes() == corrupted
+
+
+@pytest.mark.parametrize('raw', ['[]', 'null'])
+def test_nonobject_saved_snapshot_fails_closed_without_retry_or_history_rewrite(tmp_path, raw):
+    history = tmp_path/'deepseek_history'/NOW.date().isoformat()
+    history.mkdir(parents=True)
+    prior = history/'snapshot.json'
+    prior.write_text(raw)
+    before = prior.read_bytes()
+    result = S.prepare(tmp_path, CFG, now=NOW,
+        evaluator=lambda *a, **k: pytest.fail('corrupt snapshot must not trigger a request'))
+    assert result['status'] == 'UNAVAILABLE'
+    assert 'Prior same-session DeepSeek snapshot failed integrity validation; no retry.' in result['gaps']
+    assert result['covered'] == 0 and result['assessments'] == []
+    assert prior.read_bytes() == before
+    assert json.loads((tmp_path/'deepseek_snapshot.json').read_text()) == result
+    assert not (history/'attempt.json').exists()
 
 
 def test_interrupted_attempt_blocks_retry_without_resetting_attempt(tmp_path):

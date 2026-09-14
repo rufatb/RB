@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from bar_cache import key
 from build_biotech import write_atomic
+from diagnostic_context import SNAPSHOT_KIND
 from factor_inputs import _from_cache, _previous_close
 import factor_pool_policy as P
 
@@ -40,11 +41,15 @@ def fetch_history(ticker, now):
             'retrieved_at': dt.datetime.now(ET).isoformat()}
 
 
-def _cached(ticker, directory, cfg, now):
+def _cached(ticker, directory, cfg, now, *, diagnostic=False):
     manifest = json.loads((directory/'manifest.json').read_text())
     prepared = dt.datetime.fromisoformat(manifest['prepared_at'])
+    is_diagnostic = manifest.get('kind') == SNAPSHOT_KIND
+    if is_diagnostic and (not diagnostic or manifest.get('morning_snapshot') is not False):
+        raise ValueError('RESEARCH_DIAGNOSTIC_CACHE_NOT_PREOPEN')
     if (prepared.tzinfo is None or prepared.astimezone(ET).date() != now.date()
-            or prepared.astimezone(ET).time() >= dt.time(9, 30) or prepared > now
+            or (prepared.astimezone(ET).time() >= dt.time(9, 30) and not is_diagnostic)
+            or prepared > now
             or manifest.get('session') != now.date().isoformat()
             or manifest.get('source') != 'yahoo_direct'
             or ticker not in manifest.get('tickers', [])):
@@ -58,14 +63,34 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
     Baseline cache is only read. Every requested name remains in the output,
     including failed names, so partial coverage cannot masquerade as a full pool.
     """
+    return _prepare(state_dir, cfg, now=now, fetcher=fetcher, acquire_fn=acquire_fn)
+
+
+def prepare_diagnostic(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
+    """Run the same pool preparation with real clocks in an isolated diagnostic.
+
+    Diagnostic history is previous-session context acquired now, never a cache
+    that was available before open. This entry point does not alter production's
+    deadline or permit replacing/retrying a scheduled preparation attempt.
+    """
+    from diagnostic_context import require_context
+    require_context(Path(state_dir))
+    return _prepare(state_dir, cfg, now=now, fetcher=fetcher,
+                    acquire_fn=acquire_fn, diagnostic=True)
+
+
+def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
+             diagnostic=False):
     from bounded import acquire
     live_clock = now is None
     now = now or dt.datetime.now(ET)
     if now.tzinfo is None:
         raise ValueError('AWARE_CLOCK_REQUIRED')
     now = now.astimezone(ET)
-    if now.time() >= dt.time(9, 30):
+    if not diagnostic and now.time() >= dt.time(9, 30):
         raise ValueError('RESEARCH_POOL_PREOPEN_ONLY')
+    context = ({'kind': SNAPSHOT_KIND, 'morning_snapshot': False}
+               if diagnostic else {})
     started_monotonic = time.monotonic()
     fetcher = fetcher or fetch_history
     acquire_fn = acquire_fn or acquire
@@ -77,13 +102,18 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             return {'status': 'UNAVAILABLE', 'session': now.date().isoformat(),
-                    'reason': 'PREPARATION_IN_PROGRESS_NO_RETRY', 'adopted': False}
+                    'reason': 'PREPARATION_IN_PROGRESS_NO_RETRY', 'adopted': False,
+                    **context}
         attempt = history/'attempt.json'
         if attempt.exists():
             # An interrupted attempt is not authorization to acquire again.
             prior = json.loads(attempt.read_text())
             saved = history/'candidates.json'
             current = root/'deepseek_candidates.json'
+            if ((prior.get('kind') == SNAPSHOT_KIND) != diagnostic
+                    or (diagnostic and prior.get('morning_snapshot') is not False)):
+                return {**prior, **context, 'status': 'UNAVAILABLE',
+                        'replay_gap': 'RESEARCH_POOL_CONTEXT_MISMATCH_NO_RETRY'}
             if prior.get('status') == 'PREPARING':
                 return {**prior, 'status': 'UNAVAILABLE', 'replay_gap': 'INTERRUPTED_PREPARATION_NO_RETRY'}
             if (not saved.exists() or not current.exists()
@@ -96,13 +126,13 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
                   'verified': 0, 'reused_baseline': 0, 'errors': {},
                   'complete_technicals': 0,
                   'identity_scope': 'New names: exact CAD/Toronto/equity provider metadata; baseline: existing validated cache identity.',
-                  'registration': P.REGISTRATION, 'adopted': False}
+                  'registration': P.REGISTRATION, 'adopted': False, **context}
         write_atomic(attempt, status)
         directory = root/'factor_pool_cache'
         directory.mkdir(parents=True, exist_ok=True)
         manifest = {'session': status['session'], 'source': 'yahoo_direct',
                     'tickers': list(P.TICKERS), 'complete': False,
-                    'prepared_at': now.isoformat()}
+                    'prepared_at': now.isoformat(), **context}
         write_atomic(directory/'manifest.json', manifest)
         rows, diagnostics, pending = {}, {}, []
         baseline = set(cfg['scan']['universe'])
@@ -116,8 +146,9 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
             except (OSError, ValueError, TypeError, KeyError, IndexError):
                 # Do not repeat the baseline provider's failed staging work.
                 status['errors'][ticker] = 'BASELINE_HISTORY_UNAVAILABLE'
-        deadline = started_monotonic + min(P.BUDGET_SECONDS,
+        budget = P.BUDGET_SECONDS if diagnostic else min(P.BUDGET_SECONDS,
             (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds())
+        deadline = started_monotonic + budget
 
         def checkpoint():
             status['verified'] = len(rows)
@@ -128,7 +159,7 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
             payload = {'as_of': assembled.isoformat(), 'candidates': [rows.get(t, {'ticker': t})
                         for t in P.TICKERS], 'macro': {},
                        'candidate_diagnostics': {t: notes for t, notes in diagnostics.items()
-                           if notes}, 'pool_registration': P.REGISTRATION}
+                           if notes}, 'pool_registration': P.REGISTRATION, **context}
             write_atomic(root/'deepseek_candidates.json', payload)
             write_atomic(history/'candidates.json', payload)
             status['candidates_sha256'] = hashlib.sha256((history/'candidates.json').read_bytes()).hexdigest()
@@ -144,7 +175,7 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
             batch = pending[offset:offset+P.WORKERS]
             results = acquire_fn({t: (lambda t=t: fetcher(t, now),
                                        min(P.REQUEST_SECONDS, remaining)) for t in batch})
-            if live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
+            if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
                 status['errors']['clock'] = 'PREOPEN_DEADLINE_REACHED_RESULTS_NOT_STAGED'
                 break
             outage = False
@@ -166,8 +197,13 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
                     write_atomic(directory/(key(ticker)+'.receipt'),
                                  {'retrieved_at': retrieved, 'response': receipt})
                     write_atomic(directory/key(ticker), item)
-                    rows[ticker], diagnostics[ticker] = _cached(ticker, directory, cfg,
-                        dt.datetime.now(ET) if live_clock else now)
+                    cache_clock = dt.datetime.now(ET) if live_clock else now
+                    if diagnostic:
+                        rows[ticker], diagnostics[ticker] = _cached(ticker, directory, cfg,
+                            cache_clock, diagnostic=True)
+                    else:
+                        rows[ticker], diagnostics[ticker] = _cached(ticker, directory, cfg,
+                            cache_clock)
                 except (OSError, ValueError, TypeError, KeyError, IndexError):
                     status['errors'][ticker] = 'RESEARCH_HISTORY_VALIDATION_FAILED'
             checkpoint()
@@ -179,7 +215,7 @@ def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
                 status['errors'].setdefault(ticker, 'NOT_ACQUIRED')
         status['status'] = ('READY' if status['complete_technicals'] == len(P.TICKERS)
                             else 'PARTIAL' if rows else 'UNAVAILABLE')
-        if live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
+        if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
             status['status'] = 'NOT READY'
             status['errors']['clock'] = 'PREOPEN_DEADLINE_REACHED'
         status['completed_at'] = dt.datetime.now(ET).isoformat()
