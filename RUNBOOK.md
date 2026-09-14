@@ -300,3 +300,38 @@ identifiers and new model identifiers must be verified, never silently changed.
 The active Gmail jobs remain the single sender. Updating these example units
 alone does not update a separately pinned Gmail task or install a service.
 A passing runtime import check is not provider reachability or improved alpha.
+
+### Day101 expanded research preparation
+
+Before09:30 ET, after canonical-state restoration and unchanged baseline
+history staging, run these commands with the same verified checkout/interpreter:
+
+```bash
+python prepare_tsx_universe.py --state-dir "$RB_STATE_DIR"
+python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
+python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
+python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
+```
+
+Each section records its own bounded attempt. A nonzero result is a visible
+section failure; continue independent sections rather than treating the whole
+run as ready or erasing prior successes. Do not chain these with `&&` in a
+supervisor that would prevent fallback preparation after a directory failure.
+Stage slower biotech evidence afterward. The daily report reads prepared local
+files only; no directory discovery, history expansion, news or LLM calls occur
+on its09:46 path. Both existing Gmail jobs must use the same reviewed revision.
+These commands do not install systemd units or start another sender.
+
+An optional `tsx_security_master.json` uses the reviewed schema validated by
+`tsx_universe.validate_master_row`; `--master` accepts an explicit equivalent
+path. Preserve source URLs, exact security identities, observation clocks and
+raw reference receipts. Missing industry/security classification is not fixed
+by setting `reviewed:true`. The official source's YTD turnover is only discovery
+priority; liquidity must use the immediate previous20 completed TSX sessions.
+
+Preserve `tsx_universe*`, `research_pool*`, shortlist receipts, DeepSeek inputs,
+optional opening snapshots and diagnostics with the canonical SQLite backup.
+Never overlay a current-time diagnostic onto a pre-open snapshot. Keep all
+same-session failed attempts and every publication/delivery/replacement claim.
+An unconfigured reference source may yield fewer than150 eligible names; the
+explicit60-name fallback remains separate from expanded readiness.

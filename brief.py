@@ -366,6 +366,42 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     except Exception as exc:
         error('deepseek', RuntimeError(type(exc).__name__))
         factor_evidence = deepseek_factors.unavailable('Optional factor assembly failed: '+type(exc).__name__)
+    # Expanded coverage is independent of model availability. Only prepared
+    # local receipt/cache checks run here; preflight performs full history
+    # validation before open. Older frozen reports need no new optional fields.
+    expanded_coverage = None
+    opening_context = None
+    state_path = Path(state_dir) if state_dir is not None else None
+    if state_path is not None:
+        expanded_present = (state_path/'tsx_universe.json').is_file() or bool(
+            factor_evidence.get('research_universe'))
+        if not expanded_present and (state_path/'deepseek_candidates.json').is_file():
+            try:
+                expanded_present = bool(json.loads((state_path/'deepseek_candidates.json').read_text()).get('research_universe'))
+            except (OSError, ValueError, TypeError, AttributeError):
+                # A malformed optional pool remains an explicit coverage gap.
+                expanded_present = True
+        if expanded_present:
+            try:
+                import research_coverage
+                expanded_coverage = research_coverage.load_prepared(
+                    state_path, cfg, now, factor_evidence,
+                    diagnostic=factor_diagnostic is not None)
+            except Exception as exc:
+                error('research_coverage', RuntimeError(type(exc).__name__))
+                expanded_coverage = {'status':'UNAVAILABLE', 'target':150,
+                    'gaps':['Local expanded research coverage failed: '+type(exc).__name__],
+                    'adopted':False}
+        if (state_path/'research_opening_snapshot.json').is_file():
+            try:
+                import research_opening
+                opening_context = research_opening.load_prepared(state_path, now,
+                    universe=(expanded_coverage or {}).get('master'))
+            except Exception as exc:
+                error('research_opening', RuntimeError(type(exc).__name__))
+                opening_context = {'status':'UNAVAILABLE', 'rows':[],
+                    'gaps':['Local opening context failed: '+type(exc).__name__],
+                    'shadow':True, 'adopted':False}
     try:
         ledger_hash=hashlib.sha256(encode(original_rows).encode()).hexdigest()
     except (TypeError,ValueError) as exc:
@@ -405,6 +441,10 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
                           'mde':'Historical 2-session proxy MDE80: 64.10 bps versus 5 bps target (UNDERPOWERED). Exact-arm MDE unavailable without matched BBO/cost/index observations.'},
               'report_status':'OFFLINE' if no_net else ('ON_TIME' if clock['eligible'] else 'INFORMATIONAL')}
+    if expanded_coverage is not None:
+        report['intraday']['research_coverage'] = expanded_coverage
+    if opening_context is not None:
+        report['intraday']['research_opening'] = opening_context
     from readiness import assess
     report['readiness'] = assess(report)
     boundary_gaps = position_status['gaps'] + ([f"Ledger {ledger_status['status']}: {ledger_status['invalid_rows']} invalid rows; historical evidence may be incomplete."]

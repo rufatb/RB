@@ -1,4 +1,4 @@
-"""Day100 research coverage target; never the production selection universe."""
+"""Registered research coverage limits; never the production selection universe."""
 
 # Explicit roster, not a claim of current TSX60 membership or ADV rank.
 # The historic expansion of production density selection remains rejected.
@@ -17,3 +17,6 @@ BUDGET_SECONDS = 120
 REQUEST_SECONDS = 18
 WORKERS = 8
 REGISTRATION = 'PREREGISTER_day100_deepseek_reliability.md'
+EXPANDED_TARGET = 150
+EXPANDED_BUDGET_SECONDS = 240
+EXPANSION_REGISTRATION = 'PREREGISTER_day101_tsx_expansion.md'

@@ -299,11 +299,22 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
         if hashlib.sha256(encode(inputs).encode()).hexdigest() != obj['input_sha256']:
             raise SnapshotValidationError('DeepSeek input hash mismatch')
         checked = validate_payload(inputs, now)
+        from research_shortlist import expanded
+        research = expanded(inputs)
+        research_shortlist = checked.get('research_shortlist') if research else None
+        if research and (not isinstance(research_shortlist, dict)
+                or obj.get('research_shortlist') != research_shortlist
+                or obj.get('research_universe') != checked.get('research_universe')
+                or obj.get('shortlist_count') != research_shortlist['selected_count']
+                or obj.get('source_accepted') != len(checked['candidates'])):
+            raise SnapshotValidationError('research shortlist metadata differs from saved inputs')
         by_t = {c['ticker']: c for c in checked['candidates']}
         saved = obj['assessments']
         if not isinstance(saved, list):
             raise SnapshotValidationError('invalid assessment list')
         tickers = [r['ticker'] for r in saved]
+        if research and not set(tickers) <= set(research_shortlist['tickers']):
+            raise SnapshotValidationError('model output outside the fixed pre-news shortlist')
         if not set(tickers) <= set(by_t):
             raise SnapshotValidationError('DeepSeek output outside validated candidate pool')
         assessments = parse_assessments(json.dumps({'assessments': saved}), tickers) if saved else []
@@ -323,6 +334,8 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
             if (len(submitted_names) != submitted or len(submitted_names) != len(set(submitted_names))
                     or not set(submitted_names) <= set(by_t) or not set(tickers) <= set(submitted_names)):
                 raise SnapshotValidationError('batch coverage does not match submitted candidates')
+            if research and not set(submitted_names) <= set(research_shortlist['tickers']):
+                raise SnapshotValidationError('submitted names outside the fixed pre-news shortlist')
         for assessment in assessments:
             assessment['factor_rationale'] = safe_detail(assessment['factor_rationale'], P.MAX_RATIONALE_CHARS)
         gaps = _notes(checked.get('gaps', [])) + _notes(obj.get('gaps', []))
@@ -365,6 +378,12 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
                 'requested': requested, 'covered': len(assessments), 'adopted': False,
                 'eligible': eligible, 'submitted': submitted,
                 'registration': P.DESIGN_PROVENANCE['registration']}
+        if research:
+            result.update(research_universe=checked['research_universe'],
+                research_shortlist=research_shortlist, shortlist_count=research_shortlist['selected_count'],
+                source_accepted=research_shortlist['source_accepted'])
+        if checked.get('news_status'):
+            result['news_status'] = checked['news_status']
         if diagnostic:
             result.update(kind='CURRENT_TIME_DIAGNOSTIC', morning_snapshot=False,
                           prediction_evidence=False)
