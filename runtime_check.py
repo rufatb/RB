@@ -15,7 +15,8 @@ def check():
                    'adapters.deepseek_adapter', 'factor_inputs', 'prepare_factor_pool',
                    'prepare_yahoo_auth', 'yahoo_auth_cache', 'tsx_universe',
                    'prepare_tsx_universe', 'research_shortlist', 'research_coverage',
-                   'research_opening', 'research_evaluation'):
+                   'research_opening', 'research_evaluation', 'factor_grounding',
+                   'grounded_records', 'factor_news', 'factor_macro'):
         try:
             importlib.import_module(module)
         except Exception as exc:

@@ -5160,3 +5160,22 @@ which is unsuggestive, and that is all that can be said.
 DAILY-BAR PROXY throughout: the label is same-day open→close, which contains
 09:30–09:46. Nothing here certifies the 09:46→15:59 contract, and nothing is
 adopted.
+
+### Day102: evidence-quality correction; no trading-rule adoption
+
+The September 14 after-close review found technical-sign contradictions in
+DeepSeek prose and commentary with a horizon poorly matched to intraday use.
+`PREREGISTER_day102_evidence_quality.md` was committed before the correction's
+implementation/evaluation. New requests cite supplied evidence IDs and the
+remaining-session horizon; displayed technical facts come from Python. Explicit
+protocol violations exclude only the affected assessment. News deduplication,
+conservative commentary labels and measured macro-reference changes improve
+input interpretation without declaring unknown materiality or novelty verified.
+
+The production TSX-21/K60/M20 selection, allocation, six protected modules and
+all earlier rejected research remain unchanged. Expanded-pool DeepSeek views,
+H1/H2 and the 0.50 sentiment threshold remain unadopted. Today's observed errors
+are development examples, not untouched confirmation. Accuracy/P&L improvement
+and numerical MDE remain UNAVAILABLE pending the registered matched forward
+sample, costs, uncertainty and confirmation. A synthetic API/schema success
+proves neither alpha nor future provider availability. See the day102 audit.

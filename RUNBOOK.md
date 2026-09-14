@@ -335,3 +335,21 @@ Never overlay a current-time diagnostic onto a pre-open snapshot. Keep all
 same-session failed attempts and every publication/delivery/replacement claim.
 An unconfigured reference source may yield fewer than150 eligible names; the
 explicit60-name fallback remains separate from expanded readiness.
+
+### Day102 grounded factor receipts
+
+Read `AUDIT_day102_evidence_quality.md` and
+`PREREGISTER_day102_evidence_quality.md`. Preparation uses the fixed
+`day102-grounded-v1` response contract with the existing explicit model setting.
+Keep private grounding receipts inside the sealed snapshot and operational
+archive. An excluded assessment is a completed model response that failed the
+contract; it is not an unqueried name or provider outage. Preserve the original
+requested, submitted, accepted and excluded counts and all per-symbol reasons.
+
+Do not delete same-session attempts to rerun a revised prompt after outcomes.
+Do not recompute an immutable report to apply a renderer change. The report job
+consumes prepared inputs; no news, model or research acquisition belongs in its
+renderers. Validated source links and Python facts may appear in the attachment;
+raw provider prose, credentials and private receipts must not. A synthetic
+contract probe is diagnostic only and must use the actual clock separately from
+morning prediction/publication state.

@@ -79,7 +79,7 @@ def test_real_probe_transport_error_is_explicit_without_secret_or_retries(tmp_pa
 def test_real_probe_missing_or_duplicate_assessment_stays_unavailable(tmp_path):
     def missing(*a,**k): return {'status':'READY','assessments':[]}
     result,_=P.probe_real(tmp_path,inputs(tmp_path),evaluator=missing,clock=lambda:NOW)
-    assert result['covered']==0 and result['api_receipt']['details']=='ResponseSchemaError'
+    assert result['covered']==0 and result['api_receipt']['details']=='GroundingValidationError'
 
 
 @pytest.mark.parametrize('field',['headline','scope','computation','url'])

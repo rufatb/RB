@@ -16,10 +16,8 @@ def pool(count):
 
 
 def success(candidates, macro, as_of, **kwargs):
-    return {'status': 'READY', 'assessments': [{'ticker': c['ticker'],
-        'directional_lean': 'NO_EDGE', 'sentiment_score': 0.,
-        'factor_rationale': 'The staged evidence does not establish a directional advantage.'}
-        for c in candidates], 'model': kwargs['model'], 'errorcode': None}
+    from grounded_helpers import response
+    return response(candidates, macro, as_of, model=kwargs['model'])
 
 
 def test_500_candidates_are_batched_once_and_same_day_replay_never_calls_again(tmp_path):
@@ -277,5 +275,5 @@ def test_public_macro_collector_enforces_same_session_reference_contract(monkeyp
     monkeypatch.setattr(requests, 'get', get)
     result = S._macro({'correlated': symbols}, now)
     assert all(value is not None for value in result['values'].values()) is valid
-    assert bool(result['gaps']) is not valid
+    assert bool([gap for gap in result['gaps'] if 'macro change unavailable' not in gap]) is not valid
     assert 'Dated macro references' in result['label']

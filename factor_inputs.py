@@ -106,6 +106,43 @@ def _blank(now, reason=None):
             'candidate_diagnostics': {}}
 
 
+def validated_macro_change(item, value, observed):
+    """Keep a measured change only with an explicit actual daily reference.
+
+    The reference timestamp is a provider daily-bar start, not an invented
+    close timestamp or certification of the immediately prior exchange session.
+    Invalid change metadata does not destroy an independently valid level.
+    """
+    missing = {'change_status': 'UNAVAILABLE', 'change_gap': 'DAILY_REFERENCE_UNAVAILABLE'}
+    if not isinstance(item, dict) or not isinstance(item.get('reference'), dict):
+        return missing
+    try:
+        ref = item['reference']
+        if (set(ref) != {'value', 'bar_timestamp', 'source_url', 'scope', 'interval'}
+                or not _number(ref['value']) or ref['value'] <= 0
+                or ref['scope'] != 'previous_observed_daily_bar_close'
+                or ref['interval'] != '1d'
+                or item.get('change_scope') != 'observed_level_vs_previous_daily_bar_close'):
+            raise ValueError('INVALID_DAILY_REFERENCE')
+        reference_at = _stamp(ref['bar_timestamp'])
+        if reference_at >= _stamp(observed):
+            raise ValueError('INVALID_DAILY_REFERENCE')
+        source = _url(ref['source_url'])
+        if source != _url(item['source_url']):
+            raise ValueError('REFERENCE_SOURCE_MISMATCH')
+        measured = (value / ref['value'] - 1.0) * 100.0
+        if (not _number(item.get('change_pct'))
+                or not math.isclose(item['change_pct'], measured, rel_tol=1e-9, abs_tol=1e-9)
+                or item.get('change_status', 'READY') != 'READY'):
+            raise ValueError('INVALID_MACRO_CHANGE')
+        return {'change_pct': measured, 'change_status': 'READY',
+                'change_scope': 'observed_level_vs_previous_daily_bar_close',
+                'reference': {'value': float(ref['value']), 'bar_timestamp': reference_at.isoformat(),
+                    'source_url': source, 'scope': ref['scope'], 'interval': '1d'}}
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return {'change_status': 'UNAVAILABLE', 'change_gap': 'INVALID_DAILY_CHANGE_REFERENCE'}
+
+
 def _evidence(items, field, now, gaps, cutoff):
     if not isinstance(items, list):
         gaps.append('INVALID_'+field.upper())
@@ -128,12 +165,22 @@ def _evidence(items, field, now, gaps, cutoff):
                 raise ValueError('FUTURE_EVIDENCE')
             if now-date > pd.Timedelta(hours=policy.MAX_NEWS_AGE_HOURS):
                 raise ValueError('STALE_EVIDENCE')
-            output.append({text_field: text.strip(), 'source_url': _url(item['source_url']),
-                           'published_at': date.isoformat()})
+            source = _url(item['source_url'])
+            evidence = {text_field: text.strip(), 'source_url': source,
+                        'published_at': date.isoformat()}
+            if field == 'headlines':
+                # Recompute limited title classifications; a staged claim of
+                # verified issuer relevance or novelty is not source evidence.
+                from factor_news import classify_headline
+                evidence['evidence_metadata'] = classify_headline(text.strip(), source)
+            output.append(evidence)
         except (KeyError, TypeError, ValueError) as exc:
             # Never echo rejected user/provider values (which may include secrets).
             reason = str(exc) if isinstance(exc, ValueError) else 'MISSING_EVIDENCE_FIELDS'
             gaps.append(field.upper()+':'+reason[:80])
+    if field == 'headlines':
+        from factor_news import prepare_headlines
+        output, _ = prepare_headlines(output, maximum)
     return output
 
 
@@ -190,16 +237,15 @@ def validate_payload(payload, now):
                 raise ValueError('STALE_MACRO')
             clean = {'value': float(item['value']), 'as_of': observed.isoformat(),
                      'source_url': _url(item['source_url'])}
-            if 'change_pct' in item:
-                if not _number(item['change_pct']):
-                    raise ValueError('INVALID_MACRO_CHANGE')
-                clean['change_pct'] = float(item['change_pct'])
+            clean.update(validated_macro_change(item, clean['value'], observed))
             output['macro'][name] = clean
         except (KeyError, TypeError, ValueError) as exc:
             reason = str(exc) if isinstance(exc, ValueError) else 'MISSING_MACRO'
             output['gaps'].append(name.upper()+':'+reason[:80])
     macro_complete = len(output['macro']) == len(policy.MACRO_KEYS)
     output['coverage']['macro_complete'] = macro_complete
+    output['coverage']['macro_change_complete'] = macro_complete and all(
+        item.get('change_status') == 'READY' for item in output['macro'].values())
     counts = {}
     for item in candidates:
         if isinstance(item, dict) and isinstance(item.get('ticker'), str):

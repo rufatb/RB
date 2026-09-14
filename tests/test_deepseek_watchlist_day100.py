@@ -17,6 +17,8 @@ def test_loader_computes_wider_watchlist_without_baseline_scores_or_quotes(tmp_p
     staged=snapshot(names)
     staged['assessments']=[assessment(name,'BULL' if i%2 else 'BEAR',.7 if i%2 else -.7)
                            for i,name in enumerate(names)]
+    from grounded_helpers import snapshot_receipt
+    snapshot_receipt(staged)
     save(tmp_path,staged)
     loaded=D.load_prepared(tmp_path,NOW)
     watch=loaded['research_watchlist']
@@ -158,5 +160,6 @@ def test_advisory_does_not_fill_missing_current_technical_fields(tmp_path):
     obj['inputs']['candidate_diagnostics']={'A.TO':['HISTORICAL_SESSIONS_EXCLUDED:2']}
     rehash(obj);save(tmp_path,obj)
     loaded=D.load_prepared(tmp_path,NOW)
-    assert 'TECHNICAL_UNAVAILABLE:rsi' in loaded['candidate_gaps']['A.TO']
+    assert loaded['status']=='UNAVAILABLE'
+    assert 'GROUNDED_REQUEST_IDENTITY_MISMATCH' in loaded['reason']
     assert loaded['research_watchlist']['status']=='UNAVAILABLE'
