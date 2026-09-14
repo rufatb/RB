@@ -300,6 +300,35 @@ def validate_payload(payload, now):
             output['coverage']['complete_tickers'].append(ticker)
     output['coverage']['accepted'] = len(output['candidates'])
     output['coverage']['complete'] = len(output['coverage']['complete_tickers'])
+    from research_shortlist import expanded, normalize_universe, select, validate_saved
+    if expanded(payload):
+        try:
+            session = now.date().isoformat()
+            # Fresh source rows define the denominator. Only an already saved
+            # shortlist receipt can preserve an earlier raw count after invalid
+            # rows were sanitized; a supplied target is not observed coverage.
+            source_requested = (payload.get('coverage', {}).get('requested', len(candidates))
+                if isinstance(payload.get('research_shortlist'), dict) else len(candidates))
+            if type(source_requested) is not int or not len(candidates) <= source_requested <= 150:
+                raise ValueError('INVALID_RESEARCH_SOURCE_COUNT')
+            output['coverage']['requested'] = source_requested
+            output['research_universe'] = normalize_universe(payload['research_universe'], session)
+            shortlist = (validate_saved(payload['research_shortlist'], output,
+                output['research_universe'], session) if 'research_shortlist' in payload else
+                select(output, output['research_universe'], session))
+            output['research_shortlist'] = shortlist
+            output['coverage']['shortlisted'] = shortlist['selected_count']
+            output['gaps'].extend(shortlist['gaps'])
+        except (ValueError, TypeError, KeyError):
+            # The explicit expanded mode cannot silently revert to all-pool calls.
+            output['research_universe'] = {'mode': 'EXPANDED_TSX_RESEARCH',
+                'session': now.date().isoformat(), 'target': 150, 'status': 'UNAVAILABLE', 'candidates': []}
+            output['research_shortlist'] = None
+            output['gaps'].append('RESEARCH_SHORTLIST_INVALID_OR_CHANGED')
+    news_status = payload.get('news_status', {})
+    if isinstance(news_status, dict):
+        output['news_status'] = {ticker: status for ticker, status in news_status.items()
+            if ticker in output['candidate_gaps'] and status in ('READY', 'NO_CURRENT_NEWS', 'UNAVAILABLE', 'NOT_QUERIED')}
     output['gaps'] = list(dict.fromkeys(output['gaps']))
     return output
 
@@ -335,11 +364,17 @@ def eligible_public_candidates(clean):
     required = ('vwap', 'rsi', 'macd', 'macd_signal', 'macd_hist',
                 'orb_high', 'orb_low', 'rvol')
     eligible, gaps = [], {}
+    from research_shortlist import expanded
+    research = expanded(clean)
+    shortlist = clean.get('research_shortlist')
+    shortlisted = set(shortlist.get('tickers', [])) if isinstance(shortlist, dict) else set()
     for candidate in clean['candidates']:
         ticker = candidate.get('ticker') if isinstance(candidate, dict) else None
         if not isinstance(ticker, str) or not TICKER.fullmatch(ticker):
             continue
         reasons = []
+        if research and ticker not in shortlisted:
+            reasons.append('OUTSIDE_FIXED_PRE_NEWS_SHORTLIST')
         if counts[ticker] != 1:
             reasons.append('DUPLICATE_CANDIDATE')
         existing = saved_gaps.get(ticker) if saved_gaps is not None else None
@@ -366,6 +401,9 @@ def eligible_public_candidates(clean):
                 eligible.append(public)
         if reasons:
             gaps[ticker] = sorted(set(reasons))
+    if research and isinstance(shortlist, dict):
+        by_ticker = {candidate['ticker']: candidate for candidate in eligible}
+        eligible = [by_ticker[ticker] for ticker in shortlist['tickers'] if ticker in by_ticker]
     return eligible, gaps
 
 
@@ -530,8 +568,21 @@ def build_from_state(state_dir, cfg, now, *, diagnostic=False):
                     for field in ('headlines', 'catalyst_tags'):
                         if field in evidence:
                             item[field] = evidence[field]
+                    if evidence.get('status') in ('READY', 'NO_CURRENT_NEWS', 'UNAVAILABLE', 'NOT_QUERIED'):
+                        payload.setdefault('news_status', {})[item['ticker']] = evidence['status']
         except (OSError, UnicodeError, KeyError, ValueError, TypeError):
             additional.append('STAGED_'+key.upper()+'_FILE_INVALID')
+    # Consume the same saved pre-news shortlist. A changed pool cannot be
+    # backfilled after news or model failures to manufacture fuller coverage.
+    shortlist_file = root/'deepseek_shortlist.json'
+    from research_shortlist import expanded
+    if expanded(payload) and shortlist_file.exists():
+        try:
+            previous = _read(shortlist_file)
+            if dt.date.fromisoformat(previous['session']) >= now.date():
+                payload['research_shortlist'] = previous
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError):
+            payload['research_shortlist'] = None
     output = validate_payload(payload, now)
     output['gaps'] = list(dict.fromkeys(output['gaps']+additional))
     for ticker, gaps in cache_gaps.items():

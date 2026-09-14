@@ -13,7 +13,9 @@ def check():
     for module in ('pandas', 'numpy', 'yaml', 'requests', 'pandas_market_calendars',
                    'scipy', 'yfinance', 'brief', 'openai', 'socksio',
                    'adapters.deepseek_adapter', 'factor_inputs', 'prepare_factor_pool',
-                   'prepare_yahoo_auth', 'yahoo_auth_cache'):
+                   'prepare_yahoo_auth', 'yahoo_auth_cache', 'tsx_universe',
+                   'prepare_tsx_universe', 'research_shortlist', 'research_coverage',
+                   'research_opening', 'research_evaluation'):
         try:
             importlib.import_module(module)
         except Exception as exc:

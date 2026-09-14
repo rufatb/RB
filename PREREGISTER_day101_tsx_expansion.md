@@ -71,6 +71,15 @@ outage may retain a clearly labelled existing60-name research fallback while
 the expanded universe remains UNAVAILABLE; it must preserve the baseline and
 independent sections. No new sender, orders or automatic replacement emails.
 
+September14 coverage-compatibility amendment, before any expanded model pass
+or outcome inspection: a partial directory must not shrink the existing60-name
+research roster into a small sector-specific subset. Activate expanded pool
+staging only when its validated directory contains more than the existing
+legacy roster (at least61 with today's60-name roster). Otherwise retain the
+explicit legacy fallback while preserving partial directory facts/exclusions.
+This boundary is derived from existing coverage, not fitted to returns; do not
+pad strict candidates with unverified names or describe fallback as expanded.
+
 ## Evaluation protocol
 
 The expanded arm is a new unadopted challenger alongside the unchanged baseline

@@ -27,7 +27,9 @@ def test_public_refresh_uses_expanded_staged_roster_and_keeps_partial_success(tm
     assert queried == ['X'+str(i) for i in range(17)]
     assert CFG['scan']['universe'] == ['ABC.TO']
     saved = json.loads((tmp_path/'deepseek_news.json').read_text())
-    assert len(saved) == 16 and 'X16' in saved and 'X0' not in saved
+    assert len(saved) == 17 and 'X16' in saved
+    assert saved['X0']['status'] == 'UNAVAILABLE' and saved['X0']['errorcode'] == 'TimeoutExpired'
+    assert not saved['X0'].get('headlines')
     status = json.loads((tmp_path/'deepseek_public_status.json').read_text())
     assert status['queried'] == status['requested'] == 17
     assert status['unqueried_tickers'] == []
@@ -47,7 +49,11 @@ def test_public_refusal_stops_new_batches_without_erasing_current_success(tmp_pa
     monkeypatch.setattr(S, 'acquire', acquire)
     S.refresh_public_inputs(tmp_path, CFG, NOW)
     assert len(queried) == S.P.PUBLIC_BATCH_SIZE
-    assert len(json.loads((tmp_path/'deepseek_news.json').read_text())) == S.P.PUBLIC_BATCH_SIZE-1
+    saved = json.loads((tmp_path/'deepseek_news.json').read_text())
+    assert len(saved) == S.P.PUBLIC_BATCH_SIZE
+    assert saved['X0']['status'] == 'UNAVAILABLE'
+    assert saved['X0']['errorcode'] == 'PROVIDER_RATE_LIMIT'
+    assert not saved['X0'].get('headlines')
     status = json.loads((tmp_path/'deepseek_public_status.json').read_text())
     assert status['stop_reason'] == 'provider refusal'
     assert len(status['unqueried_tickers']) == 17-S.P.PUBLIC_BATCH_SIZE

@@ -85,7 +85,7 @@ def test_bad_items_are_counted_without_erasing_healthy_items(monkeypatch):
 def test_empty_but_valid_ticker_feed_remains_no_evidence_not_fabricated_no_edge(monkeypatch):
     mock_rss(monkeypatch, feed([]))
     result = S._news('RY.TO', NOW)
-    assert result['status'] == 'READY' and result['headlines'] == []
+    assert result['status'] == 'NO_CURRENT_NEWS' and result['headlines'] == []
     assert 'directional_lean' not in result
 
 

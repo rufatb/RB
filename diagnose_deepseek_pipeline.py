@@ -26,7 +26,7 @@ def fingerprints(root):
             for path in sorted(Path(root).rglob('*')) if path.is_file() and not path.is_symlink()}
 
 
-def run(source_state, output_dir, config_path=None):
+def run(source_state, output_dir, config_path=None, *, expanded=False):
     from dashboard import load_config
     import prepare_factor_pool
     import prepare_deepseek
@@ -72,6 +72,23 @@ def run(source_state, output_dir, config_path=None):
         raise RuntimeError('FORBIDDEN_REPORT_SIDE_EFFECT')
     write_atomic(output/'pipeline_attempt.json', {**record,'status':'STARTED'})
     try:
+        if expanded:
+            import prepare_tsx_universe
+            then = time.monotonic()
+            # A reviewed source may be copied into the isolated diagnostic;
+            # canonical publications, attempts and credentials are not copied.
+            master = source/'tsx_security_master.json'
+            universe = prepare_tsx_universe.prepare(working, diagnostic=True,
+                master_path=master if master.is_file() else None)
+            record['stages']['universe'] = {key:universe.get(key) for key in
+                ('status','session','target','source_coverage','exclusions','reason')}
+            record['stages']['universe']['eligible'] = len(universe.get('candidates',[]))
+            record['stages']['universe']['elapsed_seconds'] = round(time.monotonic()-then,3)
+            if not universe.get('candidates'):
+                raise RuntimeError('EXPANDED_UNIVERSE_UNAVAILABLE_NO_MODEL_REQUEST')
+            import factor_pool_policy
+            if len(universe['candidates']) <= len(factor_pool_policy.TICKERS):
+                raise RuntimeError('EXPANDED_POOL_NOT_BROADER_THAN_LEGACY_NO_MODEL_REQUEST')
         if key_gap:
             raise ValueError('PRIVATE_PROVIDER_CONFIGURATION_UNAVAILABLE_NO_FALLBACK')
         then = time.monotonic()
@@ -159,7 +176,9 @@ def run(source_state, output_dir, config_path=None):
         record['note'] = ('Shared pipeline exercised at the actual current time; partial input coverage '
                           'is not full-pool readiness, a morning execution test or evidence of alpha.')
     except Exception as exc:
-        record['status'] = 'FAILED'
+        record['status'] = ('UNAVAILABLE' if str(exc) in {
+            'EXPANDED_UNIVERSE_UNAVAILABLE_NO_MODEL_REQUEST',
+            'EXPANDED_POOL_NOT_BROADER_THAN_LEGACY_NO_MODEL_REQUEST'} else 'FAILED')
         record['failure'] = type(exc).__name__
         # Our fixed upper-case reason codes are safe; external exception text
         # may contain credentials and is never recorded.
@@ -182,8 +201,10 @@ def main(argv=None):
     parser.add_argument('--state-dir',required=True)
     parser.add_argument('--output-dir',required=True)
     parser.add_argument('--config')
+    parser.add_argument('--expanded',action='store_true',
+        help='Stage the strict expanded directory first; no model call if it is unavailable.')
     args=parser.parse_args(argv)
-    result=run(args.state_dir,args.output_dir,args.config)
+    result=run(args.state_dir,args.output_dir,args.config,expanded=args.expanded)
     print(json.dumps(result,indent=2))
     return 0 if result['status']=='PASS' else 2
 

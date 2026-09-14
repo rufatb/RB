@@ -160,6 +160,44 @@ Digest and full email attachment. Actual source coverage and qualifying
 research names are separate counts. It is a current-host diagnostic, not a
 prediction backtest, morning-feed guarantee, or new scheduled job.
 
+## Day101 expanded TSX research coverage
+
+The unchanged TSX-21 remains the production baseline. The separate expanded
+research path targets up to150 validated common shares/REIT units, with exact
+issuer identity, TSX/CAD listing, security type, sector and industry. Its dated
+directory and actual previous20 completed-session liquidity receipts are stored
+in `tsx_universe.json` and `tsx_universe_history`. The CAD10m median daily
+close-times-volume screen is a liquidity proxy, not an expected-return estimate.
+TMX monthly year-to-date turnover only prioritizes source discovery; it cannot
+substitute for the20-session measurement or certify a full-market rank.
+
+Before news acquisition, `research_shortlist.py` selects at most50 securities
+with complete Python technicals by fixed sector rounds and liquidity order.
+Research coverage across industries is not a quota on long/short positions.
+The snapshot preserves the original pool, technical completeness, fixed
+shortlist, eligible inputs, submitted and assessed counts separately. No news
+backfill follows a failed shortlisted name. A successful empty feed is
+`NO_CURRENT_NEWS`; a failed feed is `UNAVAILABLE`. Neither manufactures a
+neutral assessment. Model settings and the0.50 watchlist threshold are unchanged.
+
+If strict directory evidence is unavailable or does not exceed the existing
+60-name roster, that roster still runs with `LEGACY_RESEARCH_FALLBACK` clearly recorded. It is not
+an expanded, certified150-name pool. Missing metadata, sessions, sources and
+shortlist exclusions remain visible in preflight and the full report. The
+concise email uses these same prepared counts without another model pass.
+
+`diagnose_deepseek_pipeline.py --expanded` exercises expanded preparation at
+the actual current clock in fresh isolated state. If no directory candidates
+validate, it retains the source diagnostic and sends no model request. It does
+not retry or overwrite a same-day morning attempt and never sends an email.
+Optional `research_opening_snapshot.json` is a separately sourced, local-only
+shadow view of completed opening bars and exact quote evidence; no collector
+or executable Canadian quote entitlement is implied by this schema.
+
+See `PREREGISTER_day101_tsx_expansion.md` for the forward matched-session study.
+Broader coverage, integration tests and successful API responses are not
+evidence of improved predictions or net returns.
+
 ## Private overlay recovery
 
 `import_deepseek_inputs.py --archive /path/RB-DeepSeek-private-inputs.zip

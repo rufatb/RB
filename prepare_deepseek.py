@@ -155,7 +155,7 @@ def _rss_news(ticker, now, *, clock=None):
                             'published_at': published.isoformat()})
             except (ValueError, TypeError, OverflowError, AttributeError):
                 reasons['INVALID_OR_OUT_OF_WINDOW_ITEM'] = reasons.get('INVALID_OR_OUT_OF_WINDOW_ITEM', 0)+1
-        return {'status': 'READY', 'headlines': out, 'catalyst_tags': [],
+        return {'status': 'READY' if out else 'NO_CURRENT_NEWS', 'headlines': out, 'catalyst_tags': [],
                 'retrieved_at': retrieved.isoformat(), 'source_url': source_url,
                 'source_identity': 'provider exact-ticker RSS channel',
                 'channel_title': title, 'response_sha256': digest,
@@ -199,7 +199,7 @@ def _search_news(ticker, now, *, clock=None):
             out.append({'title': title, 'source_url': link, 'published_at': observed.isoformat()})
         except (KeyError, TypeError, ValueError, OverflowError):
             continue  # Counted below as unusable source rows; no invented headline.
-    return {'status': 'READY', 'headlines': out, 'catalyst_tags': [], 'retrieved_at': retrieved.isoformat(),
+    return {'status': 'READY' if out else 'NO_CURRENT_NEWS', 'headlines': out, 'catalyst_tags': [], 'retrieved_at': retrieved.isoformat(),
             'source_url': url, 'unusable_rows': len(payload.get('news', []))-len(out),
             'tag_status': 'No structured SEC feed supplied; 8-K tags not inferred from headlines.'}
 
@@ -259,6 +259,15 @@ def candidate_roster(state_dir, cfg, now, *, diagnostic=False):
                 or observed.astimezone(ZoneInfo('America/New_York')).date() != now.date()):
             raise ValueError('STAGED_CANDIDATE_ROSTER_STALE_OR_FUTURE')
         tickers = [item['ticker'] for item in payload['candidates']]
+        from research_shortlist import expanded
+        if expanded(payload):
+            from factor_inputs import validate_payload
+            checked = validate_payload(payload, now)
+            receipt = checked.get('research_shortlist')
+            if not isinstance(receipt, dict):
+                raise ValueError('RESEARCH_SHORTLIST_INVALID_OR_CHANGED')
+            _persist_shortlist(state_dir, receipt)
+            tickers = receipt['tickers']
     else:
         tickers = cfg['scan']['universe']
     if (not isinstance(tickers, list) or len(tickers) > P.MAX_CANDIDATES
@@ -272,6 +281,22 @@ def _read_json(path):
     """One strict parser for staged evidence, CLI input and replay receipts."""
     from factor_inputs import _read
     return _read(Path(path))
+
+
+def _persist_shortlist(state_dir, receipt):
+    path = Path(state_dir)/'deepseek_shortlist.json'
+    if path.exists():
+        previous = _read_json(path)
+        if previous == receipt:
+            return
+        try:
+            prior_session = dt.date.fromisoformat(previous['session'])
+            session = dt.date.fromisoformat(receipt['session'])
+        except (ValueError, TypeError, KeyError):
+            raise ValueError('RESEARCH_SHORTLIST_ALREADY_FROZEN') from None
+        if prior_session >= session:
+            raise ValueError('RESEARCH_SHORTLIST_ALREADY_FROZEN')
+    write_atomic(path, receipt)
 
 
 def _failure_snapshot(now, reason, model=None):
@@ -402,6 +427,10 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
                 failed += 1
                 code = safe_detail(fresh.get('errorcode', 'UNKNOWN'))
                 gaps.append(ticker+': headline acquisition failed: '+code)
+                prior = news.get(ticker, {})
+                news[ticker] = {**(prior if isinstance(prior, dict) else {}),
+                    'status': 'UNAVAILABLE', 'errorcode': code,
+                    'last_attempt_at': (stamp(clock()) if clock is not None else now).isoformat()}
                 halt_provider |= code in ('PROVIDER_RATE_LIMIT', 'PROVIDER_AUTH')
             elif fresh is not None:
                 # Preserve independently reviewed tags and dated prior headlines
@@ -419,6 +448,10 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
             else:
                 failed += 1
                 gaps.append(ticker+': headline acquisition failed: '+safe_detail(item.get('error', 'UNKNOWN')))
+                prior = news.get(ticker, {})
+                news[ticker] = {**(prior if isinstance(prior, dict) else {}),
+                    'status': 'UNAVAILABLE', 'errorcode': safe_detail(item.get('error', 'UNKNOWN')),
+                    'last_attempt_at': (stamp(clock()) if clock is not None else now).isoformat()}
         write_atomic(existing, news)
         # A single failed ticker must not discard healthy independent names.
         # A rejected or wholly unavailable provider is not hammered repeatedly.
@@ -434,6 +467,8 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
         'requested': len(tickers), 'queried': len(queried), 'queried_tickers': queried,
         'unqueried_tickers': [t for t in tickers if t not in queried],
         'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps))),
+        'news_status': {ticker: news.get(ticker, {}).get('status', 'UNAVAILABLE')
+                        if ticker in queried else 'NOT_QUERIED' for ticker in tickers},
         **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})
     return gaps
 
@@ -515,6 +550,12 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
             from factor_inputs import _blank
             clean = _blank(now, 'Candidate preparation failed: '+type(exc).__name__)
         gaps.extend(clean.get('gaps', []))
+        if isinstance(clean.get('research_shortlist'), dict):
+            try:
+                _persist_shortlist(root, clean['research_shortlist'])
+            except (OSError, ValueError, TypeError, KeyError, UnicodeError):
+                clean['research_shortlist'] = None
+                gaps.append('RESEARCH_SHORTLIST_ALREADY_FROZEN')
         candidate_gaps = {t: list(gs) for t, gs in clean.get('candidate_gaps', {}).items()}
         macro = {key: clean.get('macro', {}).get(key) for key in P.MACRO_KEYS}
         try:
@@ -615,6 +656,11 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
                'source_requested': clean.get('coverage', {}).get('requested', len(clean['candidates'])),
                'coverage_version': 1,
                'eligible': len(eligible), 'submitted': len(submitted),
+               **({'source_accepted': len(clean['candidates']),
+                   'shortlist_count': (clean.get('research_shortlist') or {}).get('selected_count', 0),
+                   'research_shortlist': clean.get('research_shortlist'),
+                   'research_universe': clean.get('research_universe')}
+                  if 'research_universe' in clean else {}),
                'inputs': clean, 'input_sha256': hashlib.sha256(encode(clean).encode()).hexdigest(),
                'assessments': assessments, 'batches': batches,
                'candidate_gaps': {t: sorted(set(map(safe_detail, gs))) for t, gs in candidate_gaps.items()},

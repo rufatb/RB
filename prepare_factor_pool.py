@@ -41,8 +41,10 @@ def fetch_history(ticker, now):
             'retrieved_at': dt.datetime.now(ET).isoformat()}
 
 
-def _cached(ticker, directory, cfg, now, *, diagnostic=False):
+def _cache_manifest(ticker, directory, now, *, diagnostic=False):
     manifest = json.loads((directory/'manifest.json').read_text())
+    if not isinstance(manifest, dict):
+        raise ValueError('RESEARCH_CACHE_INVALID_MANIFEST')
     prepared = dt.datetime.fromisoformat(manifest['prepared_at'])
     is_diagnostic = manifest.get('kind') == SNAPSHOT_KIND
     if is_diagnostic and (not diagnostic or manifest.get('morning_snapshot') is not False):
@@ -54,7 +56,82 @@ def _cached(ticker, directory, cfg, now, *, diagnostic=False):
             or manifest.get('source') != 'yahoo_direct'
             or ticker not in manifest.get('tickers', [])):
         raise ValueError('RESEARCH_CACHE_IDENTITY_MISMATCH')
+    return manifest
+
+
+def _cached(ticker, directory, cfg, now, *, diagnostic=False):
+    manifest = _cache_manifest(ticker, directory, now, diagnostic=diagnostic)
     return _from_cache(ticker, directory, manifest, cfg, now)
+
+
+def _validate_research_receipt(ticker, directory, now, *, diagnostic=False):
+    """Validate actual saved bytes and receipt identity without rerunning metrics."""
+    path = directory/key(ticker)
+    raw = path.read_bytes()
+    receipt = json.loads((directory/(key(ticker)+'.receipt')).read_text())
+    if (not isinstance(receipt, dict) or not isinstance(receipt.get('response'), dict)
+            or not isinstance(receipt['response'].get('meta'), dict)):
+        raise ValueError('RESEARCH_CACHE_INVALID_RECEIPT')
+    retrieved = dt.datetime.fromisoformat(receipt['retrieved_at'])
+    meta = receipt['response']['meta']
+    if (retrieved.tzinfo is None or retrieved > now
+            or retrieved.astimezone(ET).date() != now.date()
+            or (not diagnostic and retrieved.astimezone(ET).time() >= dt.time(9, 30))
+            or receipt.get('input_sha256') != hashlib.sha256(raw).hexdigest()
+            or meta.get('symbol') != ticker or meta.get('currency') != 'CAD'
+            or meta.get('exchangeName') != 'TOR'
+            or meta.get('instrumentType') != 'EQUITY'):
+        raise ValueError('RESEARCH_CACHE_RECEIPT_MISMATCH')
+    return receipt
+
+
+def _research_cached(ticker, directory, cfg, now, *, diagnostic=False):
+    """Validate the saved file, source receipt and indicators before reusing bars.
+
+    A manifest alone does not establish coverage. Previous-session or diagnostic
+    caches cannot be relabelled as a current production preparation.
+    """
+    _validate_research_receipt(ticker, directory, now, diagnostic=diagnostic)
+    return _cached(ticker, directory, cfg, now, diagnostic=diagnostic)
+
+
+def _research_universe(root, now, *, diagnostic=False):
+    """Consume the prepared security master locally; never discover on this path."""
+    try:
+        from tsx_universe import load_prepared
+        master = load_prepared(root, now, diagnostic=diagnostic)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        master = {'status': 'UNAVAILABLE', 'session': now.date().isoformat(),
+                  'candidates': [], 'gaps': ['SECURITY_MASTER_LOAD_'+type(exc).__name__]}
+    except ModuleNotFoundError as exc:
+        if exc.name != 'tsx_universe':
+            raise
+        master = {'status': 'UNAVAILABLE', 'session': now.date().isoformat(),
+                  'candidates': [], 'gaps': ['SECURITY_MASTER_LOADER_UNAVAILABLE']}
+    if not isinstance(master, dict):
+        master = {'status': 'UNAVAILABLE', 'session': now.date().isoformat(),
+                  'candidates': [], 'gaps': ['SECURITY_MASTER_INVALID_RESULT']}
+    candidates = master.get('candidates')
+    eligible = (master.get('status') in ('READY', 'PARTIAL')
+                and master.get('session') == now.date().isoformat()
+                and isinstance(candidates, list) and 0 < len(candidates) <= P.EXPANDED_TARGET
+                and all(isinstance(row, dict) and isinstance(row.get('ticker'), str)
+                        and row['ticker'].endswith('.TO') for row in candidates))
+    if eligible and len({row['ticker'] for row in candidates}) != len(candidates):
+        eligible = False
+    broader = eligible and len(candidates) > len(P.TICKERS)
+    if broader:
+        tickers = tuple(row['ticker'] for row in candidates)
+        return tickers, {**master, 'target': P.EXPANDED_TARGET,
+            'mode': 'EXPANDED_TSX_RESEARCH', 'fallback_reason': None,
+            'source_requested': len(tickers), 'selected_count': len(tickers),
+            'expanded_status': master['status']}
+    return P.TICKERS, {**master, 'target': P.EXPANDED_TARGET,
+        'mode': 'LEGACY_RESEARCH_FALLBACK', 'expanded_status': 'UNAVAILABLE',
+        'fallback_reason': ('EXPANDED_POOL_NOT_BROADER_THAN_LEGACY' if eligible
+                            else 'NO_CURRENT_VALIDATED_EXPANDED_CANDIDATES'),
+        'source_requested': len(P.TICKERS), 'selected_count': len(P.TICKERS),
+        'fallback_registration': P.REGISTRATION}
 
 
 def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
@@ -95,6 +172,8 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
     fetcher = fetcher or fetch_history
     acquire_fn = acquire_fn or acquire
     root = Path(state_dir)
+    if not diagnostic and (root/'diagnostic_context.json').exists():
+        raise ValueError('RESEARCH_POOL_DIAGNOSTIC_CONTEXT_REQUIRES_EXPLICIT_RUN')
     history = root/'factor_pool_history'/now.date().isoformat()
     history.mkdir(parents=True, exist_ok=True)
     with (history/'lock').open('a') as lock:
@@ -121,23 +200,36 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
                     or current.read_bytes() != saved.read_bytes()):
                 return {**prior, 'status': 'UNAVAILABLE', 'replay_gap': 'PREPARED_POOL_MISSING_OR_CHANGED_NO_RETRY'}
             return prior
+        tickers, universe = _research_universe(root, now, diagnostic=diagnostic)
+        expanded = universe['mode'] == 'EXPANDED_TSX_RESEARCH'
+        registration = P.EXPANSION_REGISTRATION if expanded else P.REGISTRATION
+        budget_seconds = P.EXPANDED_BUDGET_SECONDS if expanded else P.BUDGET_SECONDS
         status = {'status': 'PREPARING', 'session': now.date().isoformat(),
-                  'started_at': now.isoformat(), 'requested': len(P.TICKERS),
-                  'verified': 0, 'reused_baseline': 0, 'errors': {},
+                  'started_at': now.isoformat(), 'requested': len(tickers),
+                  'verified': 0, 'reused_baseline': 0, 'reused_research': 0, 'errors': {},
+                  'cache_reuse_gaps': {}, 'research_universe': universe,
+                  'budget_seconds': budget_seconds,
                   'complete_technicals': 0,
                   'identity_scope': 'New names: exact CAD/Toronto/equity provider metadata; baseline: existing validated cache identity.',
-                  'registration': P.REGISTRATION, 'adopted': False, **context}
+                  'registration': registration, 'adopted': False, **context}
         write_atomic(attempt, status)
         directory = root/'factor_pool_cache'
         directory.mkdir(parents=True, exist_ok=True)
         manifest = {'session': status['session'], 'source': 'yahoo_direct',
-                    'tickers': list(P.TICKERS), 'complete': False,
+                    'tickers': list(tickers), 'complete': False,
                     'prepared_at': now.isoformat(), **context}
-        write_atomic(directory/'manifest.json', manifest)
         rows, diagnostics, pending = {}, {}, []
         baseline = set(cfg['scan']['universe'])
-        for ticker in P.TICKERS:
+        for ticker in tickers:
             if ticker not in baseline:
+                if (directory/'manifest.json').exists():
+                    try:
+                        rows[ticker], diagnostics[ticker] = _research_cached(
+                            ticker, directory, cfg, now, diagnostic=diagnostic)
+                        status['reused_research'] += 1
+                        continue
+                    except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+                        status['cache_reuse_gaps'][ticker] = 'RESEARCH_CACHE_REJECTED_'+type(exc).__name__
                 pending.append(ticker)
                 continue
             try:
@@ -146,7 +238,9 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             except (OSError, ValueError, TypeError, KeyError, IndexError):
                 # Do not repeat the baseline provider's failed staging work.
                 status['errors'][ticker] = 'BASELINE_HISTORY_UNAVAILABLE'
-        budget = P.BUDGET_SECONDS if diagnostic else min(P.BUDGET_SECONDS,
+        # Preserve the old manifest until all reuse checks have inspected it.
+        write_atomic(directory/'manifest.json', manifest)
+        budget = budget_seconds if diagnostic else min(budget_seconds,
             (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds())
         deadline = started_monotonic + budget
 
@@ -156,10 +250,15 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             status['complete_technicals'] = sum(all(item.get('technicals', {}).get(k) is not None
                     for k in required) for item in rows.values())
             assembled = dt.datetime.now(ET) if live_clock else now
+            all_diagnostics = {t: list(diagnostics.get(t, [])) for t in tickers}
+            for ticker in tickers:
+                if ticker in status['errors']:
+                    all_diagnostics[ticker].append(status['errors'][ticker])
             payload = {'as_of': assembled.isoformat(), 'candidates': [rows.get(t, {'ticker': t})
-                        for t in P.TICKERS], 'macro': {},
-                       'candidate_diagnostics': {t: notes for t, notes in diagnostics.items()
-                           if notes}, 'pool_registration': P.REGISTRATION, **context}
+                        for t in tickers], 'macro': {},
+                       'candidate_diagnostics': {t: notes for t, notes in all_diagnostics.items()
+                           if notes}, 'pool_registration': registration,
+                       'research_universe': universe, **context}
             write_atomic(root/'deepseek_candidates.json', payload)
             write_atomic(history/'candidates.json', payload)
             status['candidates_sha256'] = hashlib.sha256((history/'candidates.json').read_bytes()).hexdigest()
@@ -178,25 +277,27 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
                 status['errors']['clock'] = 'PREOPEN_DEADLINE_REACHED_RESULTS_NOT_STAGED'
                 break
-            outage = False
+            refusal = False
+            unavailable = 0
             for ticker in batch:
                 result = results[ticker]
                 if result['status'] != 'OK':
+                    unavailable += 1
                     reason = result.get('error', 'ACQUISITION_UNAVAILABLE')
                     # Exception classes only, never raw provider response text.
                     status['errors'][ticker] = reason if str(reason).isidentifier() else 'ACQUISITION_UNAVAILABLE'
-                    if reason in ('ChartRateLimitError', 'ChartAuthenticationError',
-                                  'ChartTimeoutError', 'TimeoutExpired', 'URLError',
-                                  'ConnectionError', 'Timeout', 'ChartAcquisitionError'):
-                        outage = True
+                    if reason in ('ChartRateLimitError', 'ChartAuthenticationError'):
+                        refusal = True
                     continue
                 item = result['value']
                 try:
                     receipt = item.pop('receipt')
                     retrieved = item.pop('retrieved_at')
-                    write_atomic(directory/(key(ticker)+'.receipt'),
-                                 {'retrieved_at': retrieved, 'response': receipt})
                     write_atomic(directory/key(ticker), item)
+                    write_atomic(directory/(key(ticker)+'.receipt'),
+                                 {'retrieved_at': retrieved, 'response': receipt,
+                                  'input_sha256': hashlib.sha256(
+                                      (directory/key(ticker)).read_bytes()).hexdigest()})
                     cache_clock = dt.datetime.now(ET) if live_clock else now
                     if diagnostic:
                         rows[ticker], diagnostics[ticker] = _cached(ticker, directory, cfg,
@@ -207,18 +308,18 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
                 except (OSError, ValueError, TypeError, KeyError, IndexError):
                     status['errors'][ticker] = 'RESEARCH_HISTORY_VALIDATION_FAILED'
             checkpoint()
-            if outage:
+            if refusal or unavailable == len(batch):
                 status['errors']['provider'] = 'PROVIDER_OUTAGE_FURTHER_REQUESTS_SKIPPED'
                 break
-        for ticker in P.TICKERS:
+        for ticker in tickers:
             if ticker not in rows:
                 status['errors'].setdefault(ticker, 'NOT_ACQUIRED')
-        status['status'] = ('READY' if status['complete_technicals'] == len(P.TICKERS)
+        status['status'] = ('READY' if status['complete_technicals'] == len(tickers)
                             else 'PARTIAL' if rows else 'UNAVAILABLE')
         if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
             status['status'] = 'NOT READY'
             status['errors']['clock'] = 'PREOPEN_DEADLINE_REACHED'
-        status['completed_at'] = dt.datetime.now(ET).isoformat()
+        status['completed_at'] = (dt.datetime.now(ET) if live_clock else now).isoformat()
         manifest['complete'] = status['status'] == 'READY'
         manifest['verified'] = list(rows)
         write_atomic(directory/'manifest.json', manifest)

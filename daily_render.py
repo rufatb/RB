@@ -24,10 +24,118 @@ def _factor_wait(snapshot):
     return 'Evaluated factors did not clear the registered threshold or alignment gate.'
 
 
+def _expanded_summary(intra):
+    coverage = intra.get('research_coverage')
+    if not coverage:
+        return ''
+    mode = coverage.get('mode', 'UNAVAILABLE')
+    line = (f"TSX research: target {fmt(coverage.get('target'),'d')}; "
+            f"eligible master {fmt(coverage.get('master_eligible'),'d')} "
+            f"({coverage.get('master_status','UNAVAILABLE')}); "
+            f"pool {fmt(coverage.get('pool_requested'),'d')} ({coverage.get('pool_status','UNAVAILABLE')}); "
+            f"prepared technicals {fmt(coverage.get('technical_complete'),'d')}; "
+            f"shortlisted {fmt(coverage.get('shortlisted'),'d')}; "
+            f"assessed {fmt(coverage.get('assessed'),'d')}.")
+    if mode == 'LEGACY_RESEARCH_FALLBACK':
+        line += ' Legacy research fallback; expanded directory unavailable.'
+    sectors = coverage.get('sectors') or []
+    if sectors:
+        line += ' Sector assessed/pool: '+', '.join(
+            f"{safe_detail(row['name'],60)} {row['assessed']}/{row['pool']}" for row in sectors)+'.'
+    return line
+
+
+def _expanded_detail(intra):
+    coverage = intra.get('research_coverage')
+    if not coverage:
+        return []
+    lines = ['', '### TSX industry research coverage — unadopted', _expanded_summary(intra),
+             'Coverage allocation broadens research attention; it does not set trade-sector quotas or alter baseline selection or weights.',
+             'Prepared technicals describe completed sessions. No live quote, alpha or execution approval follows from a coverage count.']
+    pool = coverage.get('pool') or {}
+    lines.append('Pool validation: '+safe_detail(pool.get('validation','unavailable'))+'.')
+    for label, key in [('Sector', 'sectors'), ('Industry', 'industries')]:
+        lines += ['', f'| {label} | Pool | Prepared technicals | Shortlisted | Assessed |',
+                  '|---|---:|---:|---:|---:|']
+        for row in coverage.get(key) or []:
+            name = safe_detail(row.get('name','Unverified classification'),100).replace('|',' / ')
+            lines.append(f"| {name} | {fmt(row.get('pool'),'d')} | {fmt(row.get('technical_complete'),'d')} | "
+                         f"{fmt(row.get('shortlisted'),'d')} | {fmt(row.get('assessed'),'d')} |")
+    master = coverage.get('master') or {}
+    if master.get('candidates'):
+        lines += ['', 'Dated directory observations — no complete-market liquidity-rank claim:',
+                  '| Name | Sector / industry | Median daily close × volume, CAD | Reference date | Sources |',
+                  '|---|---|---:|---|---|']
+        for row in master['candidates']:
+            sources = []
+            for field, label in [('source_url','Security reference'), ('liquidity_source_url','Daily-bar endpoint')]:
+                if row.get(field):
+                    sources.append(f"[{label}]({row[field]})")
+            for kind, url in (row.get('evidence') or {}).items():
+                sources.append(f"[{safe_detail(kind,40)} evidence]({url})")
+            classification = safe_detail(str(row.get('sector','Unverified'))+' / '+str(row.get('industry','Unverified')),160).replace('|',' / ')
+            lines.append(f"| {safe_detail(row.get('ticker','unknown'),24)} | {classification} | "
+                         f"{fmt(row.get('median_dollar_volume_20'),',.0f')} | {row.get('metadata_as_of','unknown')} | "+' · '.join(sources)+' |')
+    for gap in coverage.get('gaps') or []:
+        lines.append('Expanded research gap: '+safe_detail(gap,500))
+    for ticker, reason in (pool.get('errors') or {}).items():
+        lines.append(safe_detail(ticker,24)+' research history gap: '+safe_detail(reason,300))
+    for key, label in [('master_exclusions','Directory exclusion'),('shortlist_exclusions','Shortlist exclusion')]:
+        entries = coverage.get(key) or []
+        if isinstance(entries, dict):
+            entries = [{'ticker': key, 'reason': value} for key,value in entries.items()]
+        for row in entries:
+            if isinstance(row, dict):
+                lines.append(label+' '+safe_detail(row.get('ticker','unidentified'),24)+': '+
+                             safe_detail(row.get('reason') or row.get('reasons') or row.get('gaps') or row,400))
+            else:
+                lines.append(label+': '+safe_detail(row,400))
+    source = coverage.get('source_coverage') or {}
+    if source:
+        import json
+        lines.append('Directory source coverage: '+safe_detail(json.dumps(source,sort_keys=True),1600))
+    for ticker, status in (coverage.get('news_status') or {}).items():
+        if isinstance(status, dict):
+            status = status.get('status', 'UNAVAILABLE')
+        lines.append(safe_detail(ticker,24)+' news coverage: '+safe_detail(status,120)+'.')
+    lines.append('News NO_CURRENT_NEWS means a completed source response found no current linked article; UNAVAILABLE means the evidence request or validation failed. Neither creates a neutral model prediction.')
+    return lines
+
+
+def _opening_detail(intra):
+    context = intra.get('research_opening')
+    if not context:
+        return []
+    lines = ['', '### Expanded opening context — shadow descriptive inputs',
+             'Prepared opening context: '+safe_detail(context.get('status','UNAVAILABLE'))+'.',
+             'Five-minute VWAP is a bar-based proxy; sector-relative returns and relative volume are descriptive, not adopted entry gates.',
+             '| Name | Sector | Status | First 15m % | VWAP proxy | OR high | OR low | RVOL 15m | Sector-relative % | Quote status |',
+             '|---|---|---|---:|---:|---:|---:|---:|---:|---|']
+    for row in context.get('rows') or []:
+        quote = row.get('quote') or {}
+        lines.append(f"| {safe_detail(row.get('ticker','unknown'),24)} | {safe_detail(row.get('sector','unknown'),60)} | "
+                     f"{safe_detail(row.get('status','UNAVAILABLE'),40)} | {fmt(row.get('opening_return_pct'),'+.3f')} | "
+                     f"{fmt(row.get('vwap_5m_proxy'))} | {fmt(row.get('orb_high'))} | {fmt(row.get('orb_low'))} | "
+                     f"{fmt(row.get('rvol_15m'))} | {fmt(row.get('sector_relative_return_pct'),'+.3f')} | "
+                     f"{safe_detail(quote.get('status','UNAVAILABLE'),40)} |")
+        lines.append(safe_detail(row.get('ticker','unknown'),24)+f" opening bar reference: {row.get('bar_reference_time','unavailable')}; "
+                     f"RVOL completed-session count: {row.get('rvol_sessions','unknown')}; "
+                     f"sector peers: {row.get('sector_peer_count','unknown')}/{row.get('sector_peer_target_count','unknown')}.")
+        lines.append(f"09:45 bar reference {fmt(row.get('bar_reference_price'))}; "
+                     f"exact quote time {quote.get('quote_time') or 'unavailable'}; "
+                     f"bid {fmt(quote.get('bid'))} / ask {fmt(quote.get('ask'))}; "
+                     f"spread {fmt(quote.get('spread_bps'))} bps. Bar reference is not an executable quote.")
+        for gap in row.get('gaps') or []:
+            lines.append(safe_detail(row.get('ticker','unknown'),24)+' opening context gap: '+safe_detail(gap,300))
+    for gap in context.get('gaps') or []:
+        lines.append('Opening context gap: '+safe_detail(gap,400))
+    return lines
+
+
 def deepseek_summary(intra):
     """At most six concise lines over saved factors; older publications stay unchanged."""
     if 'deepseek' not in intra:
-        return []
+        return ['### TSX factor research — unadopted', _expanded_summary(intra)] if intra.get('research_coverage') else []
     snap=intra['deepseek'] or {}
     shadow=snap.get('shadow') or {}
     watch=snap.get('research_watchlist') or {}
@@ -37,6 +145,8 @@ def deepseek_summary(intra):
     if watch and 'input_complete' in watch:
         lines[-1] += (f" Complete inputs: {fmt(watch.get('input_complete'),'d')}; "
                       f"usable assessments: {watch.get('evaluated',0)}.")
+    if intra.get('research_coverage'):
+        lines[-1] += ' '+_expanded_summary(intra)
     if watch.get('bulls') or watch.get('bears'):
         bulls=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bulls',[])[:2]) or 'none'
         bears=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bears',[])[:2]) or 'none'
@@ -335,6 +445,8 @@ def text(d):
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     lines += _deepseek_detail(intra)
+    lines += _expanded_detail(intra)
+    lines += _opening_detail(intra)
     exact=intra['exact_record']
     lines += ['', '### Execution evidence',
               f"Independent benchmark: {intra['benchmark_symbol']} — {intra['benchmark']['status']}. "
