@@ -12,7 +12,8 @@ def check():
     failures = []
     for module in ('pandas', 'numpy', 'yaml', 'requests', 'pandas_market_calendars',
                    'scipy', 'yfinance', 'brief', 'openai', 'socksio',
-                   'adapters.deepseek_adapter', 'factor_inputs'):
+                   'adapters.deepseek_adapter', 'factor_inputs', 'prepare_factor_pool',
+                   'prepare_yahoo_auth', 'yahoo_auth_cache'):
         try:
             importlib.import_module(module)
         except Exception as exc:

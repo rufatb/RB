@@ -255,7 +255,9 @@ def _failure_details(exc):
         return 'AUTHENTICATION_ERROR', 'provider authentication or entitlement unavailable'
     if status == 429:
         return 'RATE_LIMITED', 'provider rate limit reached; no immediate retry'
-    if isinstance(exc, TimeoutError) or 'Timeout' in type(exc).__name__:
+    if (isinstance(exc, TimeoutError) or 'Timeout' in type(exc).__name__
+            or (isinstance(exc, urllib.error.URLError)
+                and isinstance(exc.reason, TimeoutError))):
         return 'TRANSPORT_TIMEOUT', 'provider acquisition exceeded its time budget'
     if isinstance(exc, (ValueError, TypeError, KeyError, IndexError, AttributeError)):
         return 'INVALID_PAYLOAD', 'provider returned malformed or incomplete data'
@@ -269,6 +271,26 @@ def quote_failure(ticker, exc, *, currency=None):
             'spread_bps': None, 'quote_time': None, 'status': 'UNAVAILABLE',
             'currency': currency, 'reason': detail, 'reason_code': code,
             'error_class': _exception_class(exc)}
+
+
+def section_quote_failure(ticker, result, *, currency=None):
+    """Restore controlled acquisition diagnostics after a worker has exited."""
+    error_class = ''.join(c for c in str(result.get('error', 'RuntimeError'))
+                          if c.isalnum() or c == '_')[:64]
+    failure = TimeoutError() if 'Timeout' in error_class else ConnectionError()
+    out = quote_failure(ticker, failure, currency=currency)
+    reasons = {
+        'AUTHENTICATION_ERROR': 'provider authentication or entitlement unavailable',
+        'RATE_LIMITED': 'provider rate limit reached; no immediate retry',
+        'INVALID_PAYLOAD': 'provider returned malformed or incomplete data',
+        'TRANSPORT_TIMEOUT': 'provider acquisition exceeded its time budget',
+        'TRANSPORT_ERROR': 'provider acquisition unavailable',
+    }
+    code = result.get('reason_code')
+    if code in reasons:
+        out.update(reason_code=code, reason=reasons[code])
+    out['error_class'] = error_class
+    return out
 
 
 def _transient(exc):
@@ -330,10 +352,18 @@ class YahooMarketData:
     HTTP failures are raised to the caller; the expected cookie-seeding HTTP
     status is logged. Credentials/cookies/crumbs never appear in log messages.
     """
-    def __init__(self, timeout=8):
-        self.op = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    def __init__(self, timeout=8, *, auth_state_dir=None, auth_now=None):
+        import yahoo_auth_cache
+        self.cookie_jar = http.cookiejar.CookieJar()
         self.crumb = None
+        state = os.environ.get('RB_STATE_DIR') if auth_state_dir is None else auth_state_dir
+        prepared, self.auth_cache_status = yahoo_auth_cache.load(state, auth_now)
+        if prepared is not None:
+            self.cookie_jar, self.crumb = prepared
+        self._auth_cached = prepared is not None
+        self._auth_now = auth_now
+        self.op = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.cookie_jar))
         self.timeout = timeout
         self.cache = {}
         self._quote_deadline = None
@@ -369,26 +399,50 @@ class YahooMarketData:
         return self.op.open(request, timeout=timeout).read()
 
     def auth(self):
+        from bounded import progress
+        if self._auth_cached:
+            import yahoo_auth_cache
+            now = yahoo_auth_cache._aware(self._auth_now or dt.datetime.now(yahoo_auth_cache.ET))
+            prepared = yahoo_auth_cache._aware(self.auth_cache_status['prepared_at'])
+            expiry = yahoo_auth_cache._aware(self.auth_cache_status['expires_at'])
+            if not prepared <= now < expiry or now.date() != prepared.date():
+                self.crumb = None
+                self.cookie_jar.clear()
+                self._auth_cached = False
+                self.auth_cache_status.update(status='STALE', reason_code='EXPIRED_AUTH_CACHE')
+                progress('yahoo_auth_cache_stale')
         if self.crumb:
+            progress('yahoo_auth_reused')
             return
+        if self.auth_cache_status['status'] == 'INVALID':
+            progress('yahoo_auth_cache_invalid')
+        progress('yahoo_cookie_started')
         try:
             self._get("https://fc.yahoo.com")
         except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                raise
             log.warning("Yahoo cookie bootstrap HTTP %s; trying crumb endpoint", exc.code)
+        progress('yahoo_cookie_completed')
         # text/plain, NOT json — see _get. Asking for json here returns 406.
+        progress('yahoo_crumb_started')
         crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb",
                           accept="*/*").decode().strip()
         if not crumb or "<" in crumb or len(crumb) > 256:
             raise ValueError("invalid Yahoo authentication response")
         self.crumb = crumb
+        progress('yahoo_crumb_completed')
 
     def _json(self, path, params):
         self.auth()
         key = (path, tuple(sorted(params.items())))
         if key not in self.cache:
+            from bounded import progress
             url = "https://query2.finance.yahoo.com" + path + "?" + urllib.parse.urlencode(
                 {**params, "crumb": self.crumb})
+            progress('yahoo_data_started')
             self.cache[key] = json.loads(self._get(url))
+            progress('yahoo_data_completed')
         return self.cache[key]
 
     def get(self, tickers):
@@ -442,9 +496,9 @@ class SnapshotMarketData:
         return entry['initial'] if expiry is None else entry['expiries'][str(expiry)]
 
 
-def market_client():
+def market_client(state_dir=None):
     path=os.environ.get('RB_QUOTES_JSON')
-    return SnapshotMarketData(path) if path else YahooMarketData()
+    return SnapshotMarketData(path) if path else YahooMarketData(auth_state_dir=state_dir)
 
 
 def validate_equities(raw, tickers, now, *, max_age=120, corroborate=None,
@@ -469,16 +523,18 @@ def validate_equities(raw, tickers, now, *, max_age=120, corroborate=None,
     return out
 
 
-def fetch_equities(client, tickers, now, *, max_age=120, max_attempts=2,
-                   budget_seconds=8, currencies=None):
-    """Acquire and validate once, with at most one transient-error retry.
+def acquire_equities_raw(client, tickers, *, max_attempts=2, budget_seconds=8,
+                         diagnostics=None):
+    """Acquire original provider rows under one cooperative batch deadline.
 
     The deadline covers the whole batch, including Yahoo authentication; no
     existing client socket timeout is increased. Unknown injected clients must
     implement their own timeout. This cooperative deadline is not a substitute
-    for brief's independent killable section budget and must not wrap it.
+    for brief's independent killable section budget.
     Invalid data, authentication failures and 429 responses are never retried.
+    ``diagnostics`` receives safe attempt counts without changing the raw schema.
     """
+    from bounded import progress
     tickers = sorted(set(tickers))
     if not tickers:
         return {}
@@ -495,16 +551,18 @@ def fetch_equities(client, tickers, now, *, max_age=120, max_attempts=2,
             if time.monotonic() >= deadline:
                 failure = TimeoutError('quote acquisition deadline exceeded')
                 break
+            if diagnostics is not None:
+                diagnostics['acquisition_attempts'] = attempt + 1
+            progress('equity_acquisition_started', count=len(tickers))
             try:
                 raw = client.get(tickers)
                 if time.monotonic() >= deadline:
                     raise TimeoutError('quote acquisition deadline exceeded')
-                rows = validate_equities(raw, tickers, now, max_age=max_age, currencies=currencies)
-                for row in rows.values():
-                    row['acquisition_attempts'] = attempt + 1
-                return rows
+                progress('equity_acquisition_completed', count=len(tickers))
+                return raw
             except Exception as exc:
                 failure = exc
+                progress('equity_acquisition_failed', error_class=_exception_class(exc))
                 log.warning('Equity acquisition attempt %s failed: %s', attempt + 1, _exception_class(exc))
                 if time.monotonic() >= deadline:
                     failure = TimeoutError('quote acquisition deadline exceeded')
@@ -514,10 +572,36 @@ def fetch_equities(client, tickers, now, *, max_age=120, max_attempts=2,
     finally:
         if isinstance(client, YahooMarketData):
             client._quote_deadline = previous
+    failure.acquisition_reason_code = _failure_details(failure)[0]
+    status = getattr(failure, 'code', None)
+    if type(status) is int and 100 <= status <= 599:
+        failure.acquisition_http_status = status
+    raise failure
+
+
+def fetch_equities(client, tickers, now, *, max_age=120, max_attempts=2,
+                   budget_seconds=8, currencies=None):
+    """Acquire and validate once, with at most one transient-error retry."""
+    tickers = sorted(set(tickers))
+    if not tickers:
+        return {}
+    budget = number(budget_seconds, positive=True)
+    if type(max_attempts) is not int or max_attempts not in (1, 2) or budget is None:
+        raise ValueError('quote acquisition requires one/two attempts and a positive budget')
+    diagnostics = {}
+    try:
+        raw = acquire_equities_raw(client, tickers, max_attempts=max_attempts,
+                                   budget_seconds=budget, diagnostics=diagnostics)
+        rows = validate_equities(raw, tickers, now, max_age=max_age, currencies=currencies)
+        for row in rows.values():
+            row.update(diagnostics)
+        return rows
+    except Exception as exc:
+        failure = exc
     currencies = currencies or {}
     return {ticker: {**quote_failure(ticker, failure, currency=currencies.get(
                 ticker, 'CAD' if ticker.endswith('.TO') else 'USD')),
-                'acquisition_attempts': attempt + 1}
+                'acquisition_attempts': diagnostics.get('acquisition_attempts', 1)}
             for ticker in tickers}
 
 

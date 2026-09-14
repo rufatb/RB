@@ -35,8 +35,16 @@ def _work(pipe, fn):
         pipe.send({'value': fn(), 'status': 'OK', 'error': None,
                    'seconds': round(time.monotonic()-started, 3)})
     except Exception as exc:
-        pipe.send({'value': None, 'status': 'UNAVAILABLE',
-                   'error': type(exc).__name__, 'seconds': round(time.monotonic()-started, 3)})
+        result = {'value': None, 'status': 'UNAVAILABLE',
+                  'error': type(exc).__name__, 'seconds': round(time.monotonic()-started, 3)}
+        reason = getattr(exc, 'acquisition_reason_code', None)
+        if isinstance(reason, str) and reason in {'AUTHENTICATION_ERROR', 'RATE_LIMITED', 'INVALID_PAYLOAD',
+                      'TRANSPORT_TIMEOUT', 'TRANSPORT_ERROR'}:
+            result['reason_code'] = reason
+        status = getattr(exc, 'acquisition_http_status', None)
+        if type(status) is int and 100 <= status <= 599:
+            result['http_status'] = status
+        pipe.send(result)
     finally:
         _progress_pipe = None
         pipe.close()

@@ -16,6 +16,11 @@ from quotes import stamp
 
 ET = ZoneInfo('America/New_York')
 TICKER = re.compile(r'[A-Z0-9][A-Z0-9.\-]{0,19}\Z')
+# Day100 DESIGN display policy, separately registered from the day99 H1/H2
+# quantitative study. These thresholds are not fitted success probabilities.
+RESEARCH_SENTIMENT_THRESHOLD = 0.5
+RESEARCH_MAX_PER_LEAN = 2
+RESEARCH_REGISTRATION = 'PREREGISTER_day100_deepseek_reliability.md'
 
 
 class SnapshotValidationError(ValueError):
@@ -77,6 +82,10 @@ def _batches(items, model):
                 raise SnapshotValidationError('batch model differs from snapshot')
         if item.get('response_model') is not None:
             clean['response_model'] = _model(item['response_model'])
+        if 'inference_mode' in item:
+            if item['inference_mode'] not in ('thinking_disabled', 'model_default'):
+                raise SnapshotValidationError('invalid batch inference mode')
+            clean['inference_mode'] = item['inference_mode']
         for key, pattern in (('request_id', r'[A-Za-z0-9_-]{1,120}'),
                              ('response_id', r'[A-Za-z0-9_-]{1,120}'),
                              ('input_sha256', r'[a-f0-9]{64}')):
@@ -112,10 +121,89 @@ def _safe_evidence(checked):
 
 
 def unavailable(reason, *, requested=0):
-    return {'status': 'UNAVAILABLE', 'reason': safe_detail(reason),
+    result = {'status': 'UNAVAILABLE', 'reason': safe_detail(reason),
             'requested': requested, 'covered': 0, 'assessments': [],
             'candidate_gaps': {}, 'gaps': [safe_detail(reason)],
             'adopted': False, 'model': None, 'input_sha256': None}
+    result['research_watchlist'] = research_watchlist(result)
+    return result
+
+
+def research_watchlist(snapshot):
+    """Pure contextual research selection, independent of scans and BBO.
+
+    Consume only assessments whose public inputs passed the saved validator.
+    No quantitative score, execution direction, allocation or win probability
+    is assigned to expanded names. No replacement of the baseline or H1/H2.
+    """
+    out = {'status': 'UNAVAILABLE', 'decision': 'UNAVAILABLE — factors not assessed',
+           'bulls': [], 'bears': [], 'assessed': 0, 'evaluated': 0, 'eligible': 0,
+           'excluded': [], 'threshold': RESEARCH_SENTIMENT_THRESHOLD,
+           'registration': RESEARCH_REGISTRATION, 'adopted': False,
+           'label': 'SHADOW sentiment watchlist; factor support, not probability or entry recommendation.'}
+    if not isinstance(snapshot, dict) or snapshot.get('status') not in ('READY', 'PARTIAL'):
+        return out
+    try:
+        from adapters.deepseek_adapter import parse_assessments
+        raw = snapshot.get('assessments')
+        if not isinstance(raw, list) or not raw:
+            return out
+        assessments = parse_assessments(json.dumps({'assessments': raw}), [r['ticker'] for r in raw])
+        inputs = snapshot.get('inputs') or {}
+        candidates = inputs.get('candidates')
+        if not isinstance(candidates, list):
+            raise SnapshotValidationError('validated public candidates unavailable')
+        counts = Counter(c['ticker'] for c in candidates)
+        gaps = snapshot.get('candidate_gaps') or {}
+        if not isinstance(gaps, dict):
+            raise SnapshotValidationError('invalid candidate diagnostics')
+        gaps = {ticker: _notes(notes) for ticker, notes in gaps.items()}
+    except (ValueError, TypeError, KeyError, AttributeError):
+        out['decision'] = 'UNAVAILABLE — factor watchlist input schema invalid'
+        return out
+    out['assessed'] = len(assessments)
+    by_lean = {'BULL': [], 'BEAR': []}
+    for assessment in assessments:
+        ticker = assessment['ticker']
+        reason = None
+        if counts[ticker] != 1:
+            reason = 'Validated public candidate missing or duplicated.'
+        elif gaps.get(ticker):
+            reason = '; '.join(gaps[ticker])
+        elif (inputs.get('coverage') or {}).get('macro_complete') is not True:
+            reason = 'INCOMPLETE_MACRO'
+        if reason:
+            out['excluded'].append({'ticker': ticker, 'reason': safe_detail(reason)})
+            continue
+        out['evaluated'] += 1
+        lean, score = assessment['directional_lean'], assessment['sentiment_score']
+        if lean == 'NO_EDGE':
+            reason = 'Model assessed NO_EDGE.'
+        elif (lean == 'BULL' and score <= 0) or (lean == 'BEAR' and score >= 0):
+            reason = 'Directional lean and sentiment sign disagree.'
+        elif abs(score) < RESEARCH_SENTIMENT_THRESHOLD:
+            reason = 'Sentiment support below the registered display threshold.'
+        if reason:
+            out['excluded'].append({'ticker': ticker, 'reason': reason})
+            continue
+        by_lean[lean].append({**assessment, 'factor_rationale': safe_detail(
+            assessment['factor_rationale'], P.MAX_RATIONALE_CHARS)})
+    out['eligible'] = sum(len(rows) for rows in by_lean.values())
+    for lean, key in [('BULL', 'bulls'), ('BEAR', 'bears')]:
+        out[key] = sorted(by_lean[lean], key=lambda r: (-abs(r['sentiment_score']), r['ticker']))[:RESEARCH_MAX_PER_LEAN]
+    if not out['evaluated']:
+        out['decision'] = 'UNAVAILABLE — assessed names lack complete validated evidence'
+        return out
+    partial = (snapshot.get('status') != 'READY' or out['evaluated'] != len(assessments)
+               or bool(snapshot.get('gaps')))
+    out['status'] = 'PARTIAL' if partial else 'READY'
+    if out['eligible']:
+        out['decision'] = 'SHADOW SENTIMENT WATCHLIST — unadopted; execution evidence separate'
+    elif partial:
+        out['decision'] = 'PARTIAL — evaluated names abstain; remaining names unavailable'
+    else:
+        out['decision'] = 'NO EDGE - WAIT'
+    return out
 
 
 def load_prepared(state_dir, now, path=None):
@@ -177,13 +265,18 @@ def load_prepared(state_dir, now, path=None):
             assessment['factor_rationale'] = safe_detail(assessment['factor_rationale'], P.MAX_RATIONALE_CHARS)
         gaps = _notes(checked.get('gaps', [])) + _notes(obj.get('gaps', []))
         candidate_gaps = {t: _notes(v) for t, v in checked.get('candidate_gaps', {}).items()}
+        candidate_diagnostics = {t: _notes(v) for t, v in checked.get('candidate_diagnostics', {}).items()}
         previous_gaps = obj.get('candidate_gaps', {})
         if not isinstance(previous_gaps, dict):
             raise SnapshotValidationError('invalid per-candidate diagnostics')
         for ticker, notes in previous_gaps.items():
             if not isinstance(ticker, str) or not TICKER.fullmatch(ticker):
                 raise SnapshotValidationError('invalid diagnostic ticker')
-            candidate_gaps.setdefault(ticker, []).extend(_notes(notes))
+            for note in _notes(notes):
+                if re.fullmatch(r'HISTORICAL_SESSIONS_EXCLUDED:[0-9]+', note):
+                    candidate_diagnostics.setdefault(ticker, []).append(note)
+                else:
+                    candidate_gaps.setdefault(ticker, []).append(note)
         for ticker in by_t:
             if ticker not in tickers:
                 candidate_gaps.setdefault(ticker, []).append('MODEL_ASSESSMENT_UNAVAILABLE')
@@ -196,16 +289,19 @@ def load_prepared(state_dir, now, path=None):
                     and len(assessments) == requested
                     and checked['coverage']['complete'] == requested)
         status = 'READY' if complete else 'PARTIAL' if assessments else 'UNAVAILABLE'
-        return {'schema_version': P.SCHEMA_VERSION, 'prompt_version': P.PROMPT_VERSION,
+        result = {'schema_version': P.SCHEMA_VERSION, 'prompt_version': P.PROMPT_VERSION,
                 'session': obj['session'], 'as_of': as_of.isoformat(),
                 'prepared_at': prepared.isoformat(), 'model': model,
                 'status': status, 'assessments': assessments, 'inputs': _safe_evidence(checked),
                 'batches': batches,
                 'candidate_gaps': candidate_gaps, 'gaps': sorted(set(gaps)),
+                'candidate_diagnostics': {t: sorted(set(notes)) for t, notes in candidate_diagnostics.items()},
                 'input_sha256': obj['input_sha256'],
                 'snapshot_sha256': seal,
                 'requested': requested, 'covered': len(assessments), 'adopted': False,
                 'registration': P.DESIGN_PROVENANCE['registration']}
+        result['research_watchlist'] = research_watchlist(result)
+        return result
     except Exception as exc:
         # Never echo library timestamp/JSON exceptions or raw stored text.
         detail = str(exc) if isinstance(exc, SnapshotValidationError) else type(exc).__name__

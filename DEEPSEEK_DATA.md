@@ -33,19 +33,36 @@ After restoring the CURRENT operational archive and staging the unchanged
 baseline's history, run before 09:30 ET:
 
 ```bash
+python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
 python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
 python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
 ```
 
-The optional public refresh uses one bounded 25-second pass for dated WTI,
+The optional public refresh uses one bounded 120-second pass for dated WTI,
 CAD/USD, TSX and VIX references and exact-ticker-linked headlines. It stops
-subsequent news batches after a provider failure. Missing structured SEC tags
+subsequent news batches after an authentication/rate-limit or complete-wave
+outage; independent successful names survive a sibling's failure. Missing structured SEC tags
 are explicit; headlines are not invented 8-K filings. Prior successful inputs
 are retained and revalidated, never relabelled fresh. Endpoint access is
 independent of DeepSeek access.
 
+TSX headlines come from Yahoo's exact-ticker RSS channel, whose title and
+channel ticker link must match the request. The generic search route returned
+unrelated global stories during the September 14 audit, even with an explicit
+news query ID. It is not a fallback for an unavailable TSX feed. RSS publication
+times, public HTTPS article links, bounded XML and response hashes are checked;
+old, future and malformed items remain excluded. The final repaired sample
+returned two linked RBC headlines and all four macro references. This is
+sample coverage, not a certification of all 60 research names.
+
 A supplied `deepseek_candidates.json` can contain up to 500 validated names.
-Without it, Python builds candidates from the actual configured TSX universe
+Day100 preparation targets 60 explicit TSX research names with its own cache
+and exact Canadian identity checks for newly fetched names. It reuses validated
+baseline files, without claiming new metadata verification of those reused files.
+The roster is neither an ADV ranking nor a production-universe change. Staged
+history and complete technical coverage are counted separately. The existing
+production expansion rejection remains in force. Without a staged pool, Python
+builds candidates from the actual configured TSX universe
 and file-validated history. No padding, inferred membership, or 500-name claim.
 `factor_inputs.validate_payload` defines the exact input contract. Candidates
 need timestamped Python technicals with computation/input-hash provenance,
@@ -60,8 +77,15 @@ cadusd, tsx and vix to dated values and source URLs. Missing fields stay missing
 The model sees only allowlisted public fields, never keys, private ledgers,
 account identities, holdings or order sizes. News text is untrusted data.
 
-Preparation is bounded to 120 seconds, batches of at most 25, 12 seconds per
-request, no SDK retries. This is a deadline, not a promise that 500 names fit.
+Preparation is bounded to 210 seconds and the actual 09:30 cutoff, batches of
+at most 25 with up to four batches concurrently, 30 seconds per model request,
+no SDK retries. Public requests use 16-second sockets, 12-name news waves and
+an 18-second macro worker. These limits reflect observed host latency; they
+are deadlines, not a promise that 500 names fit. Flash explicitly disables its
+default thinking mode for JSON classification and records the inference mode;
+explicit other models are not silently changed. A 25-row synthetic API check
+on September 14 succeeded in 15.608 seconds, exceeding the old 12-second limit.
+That check did not assess stocks or demonstrate an accuracy improvement.
 The session attempt is recorded before requests. Completed attempts, failures
 and interrupted/ambiguous attempts cannot silently be rerun the same day.
 Inputs, hashes, model metadata, diagnostics and original response assessments
@@ -75,6 +99,15 @@ historical rows or a retrospectively reconstructed sentiment backtest.
 `brief` reads only the local snapshot. It validates timestamps/session/input
 hash, candidate linkage and strict model fields. One unavailable optional
 section cannot erase successful baseline/holdings/calendar sections.
+
+The concise email separately displays up to two BULL/two BEAR sentiment
+watchlist names from the prepared research pool, using the fixed day100
+threshold and complete evidence. Those contextual assessments remain visible
+without BBO or a quantitative scan; they are not executable recommendations.
+H1 unpriced research candidates also remain visible. Only existing H2 costs
+and normal execution validators can support their respective cost checks.
+The attachment retains all factors, sources, exclusions, inference mode and
+receipt hashes. Missing data is UNAVAILABLE, never an invented NO_EDGE result.
 A saved old publication is returned before any data or model acquisition.
 
 The 09:46 quantitative pool comes from the one existing `r945.run` pass.

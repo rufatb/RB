@@ -14,6 +14,11 @@ import os
 import re
 from pathlib import Path
 import time
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import quote
+from urllib.parse import parse_qs
+from email.utils import parsedate_to_datetime
+import xml.etree.ElementTree as ET
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
@@ -62,59 +67,200 @@ def load_private_model(state_dir):
     return model
 
 
-def _news(ticker, now):
+def _public_failure(exc):
+    """Credential-free provider status; never persist an exception body/URL."""
+    response = getattr(exc, 'response', None)
+    status = getattr(response, 'status_code', None) or getattr(exc, 'code', None)
+    if status == 429:
+        code = 'PROVIDER_RATE_LIMIT'
+    elif status in (401, 403):
+        code = 'PROVIDER_AUTH'
+    elif status is not None:
+        code = 'PROVIDER_HTTP_ERROR'
+    elif isinstance(exc, (ValueError, KeyError, TypeError, IndexError)):
+        code = 'INVALID_PUBLIC_DATA'
+    elif 'timeout' in type(exc).__name__.lower():
+        code = 'TRANSPORT_TIMEOUT'
+    else:
+        code = 'TRANSPORT_ERROR'
+    return {'status': 'UNAVAILABLE', 'errorcode': code,
+            'details': type(exc).__name__[:80]}
+
+
+def _news(ticker, now, *, clock=None):
+    """Exact ticker RSS for TSX; search requires exact relatedTickers elsewhere."""
+    if ticker.endswith('.TO'):
+        return _rss_news(ticker, now, clock=clock)
+    return _search_news(ticker, now, clock=clock)
+
+
+def _rss_news(ticker, now, *, clock=None):
+    """Verify Yahoo's exact-symbol channel before accepting any article.
+
+    A ticker in our request is not evidence of response identity. The provider
+    must return the expected channel title AND a matching ticker channel link.
+    This is provider-assigned ticker linkage, not inferred issuer-name matching.
+    """
+    import requests
+    from factor_inputs import _url
+    url = 'https://feeds.finance.yahoo.com/rss/2.0/headline'
+    source_url = url+'?s='+quote(ticker, safe='')+'&region=CA&lang=en-CA'
+    digest = None
+    try:
+        response = requests.get(url, params={'s': ticker, 'region': 'CA', 'lang': 'en-CA'},
+            headers={'User-Agent': 'Mozilla/5.0'}, timeout=P.PUBLIC_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        raw = response.content
+        if not isinstance(raw, bytes) or len(raw) > P.MAX_PUBLIC_NEWS_BYTES:
+            raise ValueError('RSS_SIZE_LIMIT')
+        digest = hashlib.sha256(raw).hexdigest()
+        xml = raw.decode('utf-8-sig')
+        if re.search(r'<!\s*(?:DOCTYPE|ENTITY)\b', xml, re.I):
+            raise ValueError('RSS_ENTITY_DECLARATION_REJECTED')
+        try:
+            root = ET.fromstring(xml)
+        except ET.ParseError:
+            raise ValueError('INVALID_RSS_XML') from None
+        channels = root.findall('channel')
+        if root.tag != 'rss' or len(channels) != 1:
+            raise ValueError('RSS_CHANNEL_IDENTITY_MISMATCH')
+        channel = channels[0]
+        title = (channel.findtext('title') or '').strip()
+        link = urlsplit((channel.findtext('link') or '').strip())
+        symbols = parse_qs(link.query).get('s')
+        if (title != 'Yahoo! Finance: '+ticker+' News'
+                or link.scheme not in ('https', 'http') or link.hostname != 'finance.yahoo.com'
+                or link.username is not None or link.password is not None
+                or link.path not in ('/q/h', '/q/h/') or symbols != [ticker]):
+            raise ValueError('RSS_CHANNEL_IDENTITY_MISMATCH')
+        retrieved = stamp(clock()) if clock is not None else now
+        out, reasons = [], {}
+        items = channel.findall('item')
+        for item in items:
+            if len(out) >= P.MAX_NEWS_PER_CANDIDATE:
+                reasons['ITEM_LIMIT'] = reasons.get('ITEM_LIMIT', 0)+1
+                continue
+            try:
+                headline = (item.findtext('title') or '').strip()
+                if (not headline or len(headline) > P.MAX_TITLE_CHARS
+                        or any(ord(c) < 32 for c in headline)):
+                    raise ValueError('INVALID_RSS_TITLE')
+                article = _url((item.findtext('link') or '').strip())
+                published = parsedate_to_datetime(item.findtext('pubDate') or '')
+                if published.tzinfo is None or published.utcoffset() is None:
+                    raise ValueError('UNTIMED_RSS_ITEM')
+                if not 0 <= (retrieved-published).total_seconds() <= P.MAX_NEWS_AGE_HOURS*3600:
+                    raise ValueError('STALE_OR_FUTURE_RSS_ITEM')
+                out.append({'title': headline, 'source_url': article,
+                            'published_at': published.isoformat()})
+            except (ValueError, TypeError, OverflowError, AttributeError):
+                reasons['INVALID_OR_OUT_OF_WINDOW_ITEM'] = reasons.get('INVALID_OR_OUT_OF_WINDOW_ITEM', 0)+1
+        return {'status': 'READY', 'headlines': out, 'catalyst_tags': [],
+                'retrieved_at': retrieved.isoformat(), 'source_url': source_url,
+                'source_identity': 'provider exact-ticker RSS channel',
+                'channel_title': title, 'response_sha256': digest,
+                'unusable_rows': len(items)-len(out), 'rejected_rows': reasons,
+                'tag_status': 'No structured SEC feed supplied; 8-K tags not inferred from headlines.'}
+    except Exception as exc:
+        return {**_public_failure(exc), 'source_url': source_url, 'response_sha256': digest}
+
+
+def _search_news(ticker, now, *, clock=None):
     import requests
     url = 'https://query1.finance.yahoo.com/v1/finance/search'
-    response = requests.get(url, params={'q': ticker, 'newsCount': P.MAX_NEWS_PER_CANDIDATE,
-                                         'quotesCount': 1},
-                            headers={'User-Agent': 'Mozilla/5.0'}, timeout=P.PUBLIC_REQUEST_TIMEOUT)
-    response.raise_for_status()
-    payload = response.json()
+    try:
+        response = requests.get(url, params={'q': ticker, 'newsCount': P.MAX_NEWS_PER_CANDIDATE,
+                                             'quotesCount': 1,
+                                             'newsQueryId': 'news_cie_vespa',
+                                             'quotesQueryId': 'tss_match_phrase_query',
+                                             'enableFuzzyQuery': False},
+                                headers={'User-Agent': 'Mozilla/5.0'}, timeout=P.PUBLIC_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict) or not isinstance(payload.get('news', []), list):
+            raise ValueError('INVALID_NEWS_RESPONSE')
+    except Exception as exc:
+        return _public_failure(exc)
+    retrieved = stamp(clock()) if clock is not None else now
     out = []
     for item in payload.get('news', []):
         # Exact relatedTicker linkage, not a loose shared word such as energy.
-        if ticker not in item.get('relatedTickers', []):
+        if (not isinstance(item, dict) or not isinstance(item.get('relatedTickers'), list)
+                or any(not isinstance(symbol, str) for symbol in item['relatedTickers'])
+                or ticker not in item['relatedTickers']):
             continue
         try:
             observed = dt.datetime.fromtimestamp(item['providerPublishTime'], dt.timezone.utc)
             link, title = item['link'], item['title']
-            if (not 0 <= (now-observed).total_seconds() <= P.MAX_NEWS_AGE_HOURS*3600
+            if (not 0 <= (retrieved-observed).total_seconds() <= P.MAX_NEWS_AGE_HOURS*3600
                     or not isinstance(title, str) or len(title)>P.MAX_TITLE_CHARS
                     or urlsplit(link).scheme != 'https'):
                 continue
             out.append({'title': title, 'source_url': link, 'published_at': observed.isoformat()})
         except (KeyError, TypeError, ValueError, OverflowError):
             continue  # Counted below as unusable source rows; no invented headline.
-    return {'headlines': out, 'catalyst_tags': [], 'retrieved_at': now.isoformat(),
+    return {'status': 'READY', 'headlines': out, 'catalyst_tags': [], 'retrieved_at': retrieved.isoformat(),
             'source_url': url, 'unusable_rows': len(payload.get('news', []))-len(out),
             'tag_status': 'No structured SEC feed supplied; 8-K tags not inferred from headlines.'}
 
 
-def _macro(cfg, now):
-    from quotes import YahooMarketData, number
+def _macro(cfg, now, *, clock=None):
+    """Parallel chart metadata, not quote authentication or invented bar times."""
+    import requests
+    from quotes import number
     from factor_inputs import _previous_close
     prior_close = _previous_close(now)
     names = {'wti': cfg['correlated']['crude'], 'cadusd': cfg['correlated']['cadusd'],
              'tsx': cfg['correlated']['tsx'], 'vix': cfg['correlated']['vix']}
-    raw = YahooMarketData(timeout=P.PUBLIC_REQUEST_TIMEOUT).get(list(names.values()))
     values, gaps = {}, []
-    for name, ticker in names.items():
-        row = raw.get(ticker, {})
+
+    def fetch(pair):
+        name, ticker = pair
+        url = 'https://query1.finance.yahoo.com/v8/finance/chart/'+quote(ticker, safe='')
         try:
+            response = requests.get(url, params={'interval': '1d', 'range': '5d'},
+                headers={'User-Agent': 'Mozilla/5.0'}, timeout=P.PUBLIC_REQUEST_TIMEOUT)
+            response.raise_for_status()
+            row = response.json()['chart']['result'][0]['meta']
             if row.get('symbol') != ticker:
                 raise ValueError('macro symbol mismatch')
             value = number(row.get('regularMarketPrice'), positive=True)
             as_of = stamp(row['regularMarketTime'])
-            if value is None or not prior_close <= as_of <= now:
+            retrieved = stamp(clock()) if clock is not None else now
+            if value is None or not prior_close <= as_of <= retrieved:
                 raise ValueError('macro observation unavailable or stale')
-            values[name] = {'value': value, 'as_of': as_of.isoformat(),
-                            'source_url': 'https://query2.finance.yahoo.com/v7/finance/quote'}
-            change = number(row.get('regularMarketChangePercent'))
-            if change is not None:
-                values[name]['change_pct'] = change
-        except (KeyError, TypeError, ValueError):
-            values[name] = None; gaps.append(name+': timestamped macro reference unavailable')
+            return name, {'value': value, 'as_of': as_of.isoformat(),
+                          'source_url': url+'?interval=1d&range=5d'}, None
+        except Exception as exc:
+            fail = _public_failure(exc)
+            return name, None, name+': timestamped macro reference unavailable ('+fail['errorcode']+')'
+
+    with ThreadPoolExecutor(max_workers=len(names)) as pool:
+        for name, value, gap in pool.map(fetch, names.items()):
+            values[name] = value
+            if gap:
+                gaps.append(gap)
     return {'values': values, 'gaps': gaps, 'label': 'Dated macro references, not live executable BBO.'}
+
+
+def candidate_roster(state_dir, cfg, now):
+    """Use the actual staged pool, never silently fall back from a bad pool."""
+    from factor_inputs import TICKER
+    path = Path(state_dir)/'deepseek_candidates.json'
+    if path.exists():
+        payload = _read_json(path)
+        observed = stamp(payload['as_of'])
+        if (observed > now or (now-observed).total_seconds() > P.MAX_SNAPSHOT_AGE_HOURS*3600
+                or observed.astimezone(ZoneInfo('America/New_York')).date() != now.date()):
+            raise ValueError('STAGED_CANDIDATE_ROSTER_STALE_OR_FUTURE')
+        tickers = [item['ticker'] for item in payload['candidates']]
+    else:
+        tickers = cfg['scan']['universe']
+    if (not isinstance(tickers, list) or len(tickers) > P.MAX_CANDIDATES
+            or any(not isinstance(t, str) or not TICKER.fullmatch(t) for t in tickers)
+            or len(set(tickers)) != len(tickers)):
+        raise ValueError('INVALID_CANDIDATE_ROSTER')
+    return tickers
 
 
 def _read_json(path):
@@ -173,12 +319,18 @@ def _checked_replay(path, now):
     return obj
 
 
-def refresh_public_inputs(state_dir, cfg, now):
+def refresh_public_inputs(state_dir, cfg, now, *, clock=None):
     """One bounded pass; retain valid prior facts when a new field fails."""
     from factor_inputs import validate_payload
     root = Path(state_dir)
-    deadline = time.monotonic()+P.PUBLIC_INPUT_BUDGET_SECONDS
+    preopen_seconds = max(0., (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds())
+    deadline = time.monotonic()+min(P.PUBLIC_INPUT_BUDGET_SECONDS, preopen_seconds)
     gaps = []
+    try:
+        tickers = candidate_roster(root, cfg, now)
+    except (OSError, ValueError, KeyError, TypeError, UnicodeError):
+        tickers = []
+        gaps.append('Public evidence roster invalid; no ticker discovery or fallback was attempted.')
     macro_path = root/'deepseek_macro.json'
     previous_macro, can_write_macro = {}, True
     if macro_path.exists():
@@ -189,12 +341,15 @@ def refresh_public_inputs(state_dir, cfg, now):
         except (ValueError, OSError, TypeError, UnicodeError):
             can_write_macro = False
             gaps.append('Existing macro inputs unreadable; their file was preserved.')
-    result = acquire({'macro': (lambda: _macro(cfg, now), min(8, P.PUBLIC_INPUT_BUDGET_SECONDS))})['macro']
+    macro_budget = min(P.PUBLIC_REQUEST_TIMEOUT+2, max(0., deadline-time.monotonic()))
+    result = (acquire({'macro': (lambda: _macro(cfg, now, clock=clock), macro_budget)})['macro']
+              if macro_budget > 0 else {'value': None, 'error': 'PRE_OPEN_DEADLINE'})
     if result.get('value') is not None:
         try:
             fresh = result['value']
-            checked = validate_payload({'as_of': now.isoformat(), 'candidates': [],
-                                        'macro': fresh['values']}, now)
+            reviewed_at = stamp(clock()) if clock is not None else now
+            checked = validate_payload({'as_of': reviewed_at.isoformat(), 'candidates': [],
+                                        'macro': fresh['values']}, reviewed_at)
             if can_write_macro:
                 # A failed or null fresh item never wipes an earlier observation.
                 # Stale earlier facts remain dated; factor_inputs will exclude them.
@@ -216,22 +371,31 @@ def refresh_public_inputs(state_dir, cfg, now):
         except (ValueError, OSError, TypeError, UnicodeError):
             gaps.append('Existing news inputs unreadable; their file was preserved.')
             return gaps
-    tickers = cfg['scan']['universe']
+    queried = []
+    stopped = None
     for start in range(0, len(tickers), P.PUBLIC_BATCH_SIZE):
         remaining = deadline-time.monotonic()
         if remaining <= 0:
             gaps.append('Public evidence preparation deadline reached.'); break
         block = tickers[start:start+P.PUBLIC_BATCH_SIZE]
-        fetched = acquire({t: (lambda t=t: _news(t, now), min(P.PUBLIC_REQUEST_TIMEOUT+1, remaining)) for t in block})
-        failed = False
+        fetched = acquire({t: (lambda t=t: _news(t, now, clock=clock),
+                              min(P.PUBLIC_REQUEST_TIMEOUT+1, remaining)) for t in block})
+        failed = 0
+        halt_provider = False
+        queried.extend(block)
         for ticker, item in fetched.items():
-            if item.get('value') is not None:
+            fresh = item.get('value')
+            if isinstance(fresh, dict) and fresh.get('status') == 'UNAVAILABLE':
+                failed += 1
+                code = safe_detail(fresh.get('errorcode', 'UNKNOWN'))
+                gaps.append(ticker+': headline acquisition failed: '+code)
+                halt_provider |= code in ('PROVIDER_RATE_LIMIT', 'PROVIDER_AUTH')
+            elif fresh is not None:
                 # Preserve independently reviewed tags and dated prior headlines
                 # when the provider response contains no usable linked evidence.
-                fresh = item['value']
                 prior = news.get(ticker, {})
                 if not isinstance(fresh, dict):
-                    failed = True; gaps.append(ticker+': invalid headline result'); continue
+                    failed += 1; gaps.append(ticker+': invalid headline result'); continue
                 if isinstance(prior, dict):
                     if prior.get('catalyst_tags'):
                         fresh['catalyst_tags'] = prior['catalyst_tags']
@@ -240,11 +404,23 @@ def refresh_public_inputs(state_dir, cfg, now):
                         gaps.append(ticker+': no fresh linked headlines; dated prior evidence retained.')
                 news[ticker] = fresh
             else:
-                failed = True
+                failed += 1
                 gaps.append(ticker+': headline acquisition failed: '+safe_detail(item.get('error', 'UNKNOWN')))
         write_atomic(existing, news)
-        if failed:
+        # A single failed ticker must not discard healthy independent names.
+        # A rejected or wholly unavailable provider is not hammered repeatedly.
+        if halt_provider or failed == len(block):
+            stopped = 'provider refusal' if halt_provider else 'entire batch unavailable'
             gaps.append('Stopped headline acquisition after provider failure; remaining names not queried.'); break
+    if len(queried) < len(tickers):
+        gaps.append(f'Headline coverage: {len(queried)}/{len(tickers)} queried; remaining names unassessed.')
+    reviewed_at = stamp(clock()) if clock is not None else now
+    write_atomic(root/'deepseek_public_status.json', {
+        'session': now.date().isoformat(), 'as_of': now.isoformat(),
+        'finished_at': reviewed_at.isoformat(),
+        'requested': len(tickers), 'queried': len(queried), 'queried_tickers': queried,
+        'unqueried_tickers': [t for t in tickers if t not in queried],
+        'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps)))})
     return gaps
 
 
@@ -282,11 +458,18 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         # an unrecorded second request on the next same-day invocation.
         write_atomic(attempt, {'session': now.date().isoformat(), 'started_at': now.isoformat(),
                                'prompt_version': P.PROMPT_VERSION, 'status': 'STARTED'})
-        deadline = time.monotonic()+P.PREP_BUDGET_SECONDS
+        preopen_seconds = (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds()
+        deadline = time.monotonic()+min(P.PREP_BUDGET_SECONDS, preopen_seconds)
+        started_at = now
         gaps = []
         if refresh and inputs is None:
             try:
-                gaps.extend(refresh_public_inputs(root, cfg, now))
+                if injected_clock:
+                    gaps.extend(refresh_public_inputs(root, cfg, now))
+                else:
+                    gaps.extend(refresh_public_inputs(root, cfg, now,
+                        clock=lambda: dt.datetime.now(ZoneInfo('America/New_York'))))
+                    now = dt.datetime.now(ZoneInfo('America/New_York'))
             except Exception as exc:
                 gaps.append('Public input preparation failed: '+type(exc).__name__)
         try:
@@ -323,41 +506,67 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         if not key_ok:
             gaps.append('DEEPSEEK_API_KEY unavailable in environment/private host state.')
         elif model_ok:
-            for start in range(0, len(eligible), P.BATCH_SIZE):
+            pending = [eligible[start:start+P.BATCH_SIZE] for start in range(0, len(eligible), P.BATCH_SIZE)]
+            for start in range(0, len(pending), P.MODEL_BATCH_CONCURRENCY):
                 remaining = deadline-time.monotonic()
                 if remaining <= 0:
                     gaps.append('DeepSeek preparation deadline reached.'); break
-                batch = eligible[start:start+P.BATCH_SIZE]
+                wave = pending[start:start+P.MODEL_BATCH_CONCURRENCY]
                 timeout = min(P.REQUEST_TIMEOUT, remaining)
-                try:
-                    if evaluator is None:
-                        got = acquire({'deepseek': (lambda: analyze_factors(batch, macro, clean['as_of'],
-                                            model=model, timeout=timeout), timeout)})['deepseek']
-                        response = got.get('value') or {'status': 'UNAVAILABLE', 'assessments': [],
-                            'errorcode': 'BOUNDED_REQUEST_FAILURE', 'details': 'Bounded DeepSeek request failed.'}
-                    else:
-                        response = evaluator(batch, macro, clean['as_of'], model=model, timeout=timeout)
-                    if not isinstance(response, dict):
-                        raise ValueError('INVALID_BATCH_RESPONSE')
+                if evaluator is None:
+                    jobs = {('deepseek' if len(wave) == 1 else 'deepseek_'+str(i)):
+                            (lambda batch=batch: analyze_factors(batch, macro, clean['as_of'],
+                             model=model, timeout=timeout), timeout) for i, batch in enumerate(wave)}
+                    completed = acquire(jobs)
+                    received = [completed.get(name, {'value': None, 'error': 'MISSING_BATCH_RESULT'})
+                                for name in jobs]
+                else:
+                    # Offline evaluators have no network and intentionally run
+                    # in-process, while exercising the same response boundary.
+                    received = []
+                    for batch in wave:
+                        try:
+                            value = evaluator(batch, macro, clean['as_of'], model=model, timeout=timeout)
+                            received.append({'value': value})
+                        except Exception as exc:
+                            received.append({'value': None, 'error': type(exc).__name__})
+                failed, stop_provider = 0, False
+                for batch, got in zip(wave, received):
                     metadata = {}
-                    for key in ('status', 'errorcode', 'details', 'model', 'request_id',
-                                'response_id', 'response_model', 'prompt_version',
-                                'schema_version', 'input_sha256', 'close_warning'):
-                        if key in response:
-                            value = response[key]
-                            metadata[key] = safe_detail(value) if isinstance(value, str) else value if value is None or isinstance(value, (int, bool)) else 'INVALID_METADATA'
-                    batches.append(metadata)
-                    if response.get('status') == 'READY':
-                        rows = parse_assessments(encode({'assessments': response['assessments']}), [c['ticker'] for c in batch])
-                        assessments.extend(rows)
-                        continue
-                    reason = 'DeepSeek batch unavailable: '+safe_detail(response.get('errorcode', 'UNKNOWN'))
-                except Exception as exc:
-                    reason = 'DeepSeek batch failed validation or transport: '+type(exc).__name__
-                gaps.append(reason)
-                for c in batch:
-                    candidate_gaps.setdefault(c['ticker'], []).append(reason)
-                break  # No blind retry after timeout/auth/balance/rate-limit.
+                    try:
+                        response = got.get('value') or {'status': 'UNAVAILABLE', 'assessments': [],
+                            'errorcode': 'BOUNDED_REQUEST_FAILURE',
+                            'details': safe_detail(got.get('error', 'Bounded DeepSeek request failed.'))}
+                        if not isinstance(response, dict):
+                            raise ValueError('INVALID_BATCH_RESPONSE')
+                        for key in ('status', 'errorcode', 'details', 'model', 'request_id',
+                                    'response_id', 'response_model', 'prompt_version',
+                                    'schema_version', 'input_sha256', 'close_warning', 'inference_mode'):
+                            if key in response:
+                                value = response[key]
+                                metadata[key] = safe_detail(value) if isinstance(value, str) else value if value is None or isinstance(value, (int, bool)) else 'INVALID_METADATA'
+                        batches.append(metadata)
+                        if response.get('status') == 'READY':
+                            rows = parse_assessments(encode({'assessments': response['assessments']}), [c['ticker'] for c in batch])
+                            assessments.extend(rows)
+                            continue
+                        code = safe_detail(response.get('errorcode', 'UNKNOWN'))
+                        stop_provider |= code in ('PROVIDER_AUTH', 'PROVIDER_PAYMENT_REQUIRED', 'PROVIDER_RATE_LIMIT')
+                        reason = 'DeepSeek batch unavailable: '+code+' ('+safe_detail(response.get('details') or 'no response details')+')'
+                    except Exception as exc:
+                        metadata.update(status='UNAVAILABLE', errorcode='INVALID_BATCH_RESULT',
+                                        details=type(exc).__name__)
+                        if not any(item is metadata for item in batches):
+                            batches.append(metadata)
+                        reason = 'DeepSeek batch failed validation or transport: '+type(exc).__name__
+                    failed += 1
+                    gaps.append(reason)
+                    for c in batch:
+                        candidate_gaps.setdefault(c['ticker'], []).append(reason)
+                # Concurrent successes survive a neighbour's failure. No failed
+                # batch is retried, and refusal/full-wave outage stops new work.
+                if stop_provider or failed == len(wave):
+                    break
         covered = {a['ticker'] for a in assessments}
         for candidate in clean['candidates']:
             if candidate['ticker'] not in covered:
@@ -377,7 +586,7 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         obj = _seal(obj)
         write_atomic(prior, obj)
         write_atomic(root/'deepseek_snapshot.json', obj)
-        write_atomic(attempt, {'session': now.date().isoformat(), 'started_at': now.isoformat(),
+        write_atomic(attempt, {'session': now.date().isoformat(), 'started_at': started_at.isoformat(),
                                'finished_at': prepared.isoformat(), 'status': 'COMPLETED',
                                'snapshot_sha256': obj['snapshot_sha256']})
         return obj

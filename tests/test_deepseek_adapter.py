@@ -84,6 +84,18 @@ def test_payload_is_public_deterministic_and_indicators_are_unchanged():
     assert result['input_sha256'] == run()['input_sha256']
 
 
+def test_flash_explicitly_disables_default_thinking_without_model_fallback():
+    client = FakeClient()
+    result = run(client, model='deepseek-flash')
+    assert client.calls[0]['model'] == 'deepseek-flash'
+    assert client.calls[0]['extra_body'] == {'thinking': {'type': 'disabled'}}
+    assert result['inference_mode'] == 'thinking_disabled'
+    client = FakeClient()
+    result = run(client, model='deepseek-reasoner')
+    assert 'extra_body' not in client.calls[0]
+    assert result['inference_mode'] == 'model_default'
+
+
 def test_client_uses_env_key_fixed_endpoint_no_retries_and_closes(monkeypatch):
     recorded = {}
     client = FakeClient()
