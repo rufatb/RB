@@ -102,7 +102,8 @@ def _blank(now, reason=None):
                          'complete_tickers': [], 'macro_complete': False,
                          'macro_scope': 'Dated references since the previous TSX session close; not live executable quotes.',
                          'target_capacity': policy.MAX_CANDIDATES},
-            'gaps': [reason] if reason else [], 'candidate_gaps': {}}
+            'gaps': [reason] if reason else [], 'candidate_gaps': {},
+            'candidate_diagnostics': {}}
 
 
 def _evidence(items, field, now, gaps, cutoff):
@@ -288,6 +289,13 @@ def validate_payload(payload, now):
             gaps.append('INCOMPLETE_MACRO')
         output['candidates'].append(clean)
         output['candidate_gaps'][ticker] = sorted(set(gaps))
+        # Historical exclusions are audit context once the current inputs have
+        # independently passed validation. They never fill missing indicators.
+        diagnostics = payload.get('candidate_diagnostics', {}).get(ticker, []) if isinstance(
+            payload.get('candidate_diagnostics', {}), dict) else []
+        if isinstance(diagnostics, list):
+            output['candidate_diagnostics'][ticker] = sorted(set(note for note in diagnostics
+                if isinstance(note, str) and re.fullmatch(r'HISTORICAL_SESSIONS_EXCLUDED:[0-9]+', note)))
         if not gaps:
             output['coverage']['complete_tickers'].append(ticker)
     output['coverage']['accepted'] = len(output['candidates'])
@@ -382,7 +390,15 @@ def build_from_state(state_dir, cfg, now):
     if candidate_file.exists():
         try:
             payload = _read(candidate_file)
-        except (OSError, UnicodeError, ValueError, TypeError):
+            pool_clock = _stamp(payload['as_of'])
+            if (pool_clock > now or pool_clock.date() != now.date()
+                    or now-pool_clock > pd.Timedelta(hours=policy.MAX_SNAPSHOT_AGE_HOURS)):
+                raise ValueError('STAGED_CANDIDATE_FILE_STALE_OR_FUTURE')
+            # The candidate preparation and later public evidence have separate
+            # real clocks. The combined snapshot is assembled now, preserving
+            # each fact's own observed/computed clock and original pool clock.
+            payload['as_of'] = now.isoformat()
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError):
             return _blank(now, 'STAGED_CANDIDATE_FILE_INVALID')
     else:
         payload = {'as_of': now.isoformat(), 'candidates': [], 'macro': {}}
@@ -447,10 +463,16 @@ def build_from_state(state_dir, cfg, now):
     output = validate_payload(payload, now)
     output['gaps'] = list(dict.fromkeys(output['gaps']+additional))
     for ticker, gaps in cache_gaps.items():
-        output['candidate_gaps'][ticker] = sorted(set(output['candidate_gaps'].get(ticker, [])+gaps))
+        advisory = [gap for gap in gaps if re.fullmatch(r'HISTORICAL_SESSIONS_EXCLUDED:[0-9]+', gap)]
+        hard = [gap for gap in gaps if gap not in advisory]
+        output['candidate_diagnostics'][ticker] = sorted(set(
+            output['candidate_diagnostics'].get(ticker, [])+advisory))
+        output['candidate_gaps'][ticker] = sorted(set(output['candidate_gaps'].get(ticker, [])+hard))
     output['coverage']['complete_tickers'] = [item['ticker'] for item in output['candidates']
         if not output['candidate_gaps'].get(item['ticker'])]
     output['coverage']['complete'] = len(output['coverage']['complete_tickers'])
     output['coverage']['pool_source'] = 'staged_public_candidates' if candidate_file.exists() else 'configured_cached_universe'
     output['coverage']['upstream_python_declaration'] = bool(candidate_file.exists())
+    if candidate_file.exists():
+        output['coverage']['pool_prepared_at'] = pool_clock.isoformat()
     return output

@@ -33,11 +33,23 @@ def deepseek_summary(intra):
     lines=['### DeepSeek factor research — unadopted',
            f"{safe_detail(snap.get('model') or 'Model unavailable',60)}: {snap.get('status','UNAVAILABLE')}; "
            f"{snap.get('covered',0)}/{snap.get('requested',0)} assessed. Contextual leans, not forecasts."]
+    watch=snap.get('research_watchlist') or {}
+    if watch.get('bulls') or watch.get('bears'):
+        bulls=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bulls',[])[:2]) or 'none'
+        bears=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bears',[])[:2]) or 'none'
+        lines.append(f'SHADOW sentiment watchlist: BULL {bulls}; BEAR {bears}. Factor support only; entries unverified.')
+    elif watch:
+        lines.append('Sentiment watchlist: '+safe_detail(watch.get('decision','UNAVAILABLE — not evaluated'),180)+'.')
     ranked=shadow.get('h2') or {}
-    if any(ranked.values()):
+    if any(ranked.values()) and snap.get('status') in ('READY','PARTIAL'):
         longs=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('longs',[])[:2]) or 'none'
         shorts=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('shorts',[])[:2]) or 'none'
         lines.append(f'H2 spread-ranked shadow: LONG {longs}; SHORT {shorts}. Research only; no executable recommendations.')
+    elif any((shadow.get('h1') or {}).values()) and snap.get('status') in ('READY','PARTIAL'):
+        ranked=shadow['h1']
+        longs=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('longs',[])[:2]) or 'none'
+        shorts=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('shorts',[])[:2]) or 'none'
+        lines.append(f'H1 SHADOW factor candidates: LONG {longs}; SHORT {shorts}. COST EVIDENCE UNAVAILABLE — lack exact entry-spread evidence; research only.')
     else:
         reason=_factor_wait(snap)
         unevaluated=(reason.startswith('UNEVALUATED') or
@@ -48,7 +60,11 @@ def deepseek_summary(intra):
     gaps=list(snap.get('gaps') or [])+list(shadow.get('gaps') or [])
     if gaps:
         lines.append('Factor gaps: '+safe_detail('; '.join(dict.fromkeys(gaps)),180)+' Full evidence attached.')
-    lines.append('DESIGN scores are not calibrated probabilities; MDE and accuracy gain remain unestablished.')
+    disclaimer='DESIGN scores are not calibrated probabilities; MDE and accuracy gain remain unestablished.'
+    if len(lines)>=6:
+        lines[-1]+=' '+disclaimer
+    else:
+        lines.append(disclaimer)
     return lines
 
 
@@ -67,6 +83,15 @@ def _deepseek_detail(intra):
         lines.append(f"| {row['ticker']} | {row['directional_lean']} | {fmt(row.get('sentiment_score'),'+.3f')} | {rationale} |")
     if not snap.get('assessments'):
         lines.append('| Assessment unavailable | — | unknown | No model result was inferred. |')
+    watch=snap.get('research_watchlist') or {}
+    if watch:
+        lines += ['', 'Expanded sentiment watchlist: '+str(watch.get('decision','UNAVAILABLE'))+'.',
+                  'This separate research view does not require a successful baseline scan or BBO; it assigns no quantitative probability, trade allocation or entry approval.',
+                  f"Watchlist coverage: {watch.get('evaluated',0)}/{watch.get('assessed',0)} assessed names have complete evidence; "
+                  f"{watch.get('eligible',0)} clear absolute sentiment support {fmt(watch.get('threshold'),'.2f')}. At most two BULL and two BEAR names; no forced quota.",
+                  'Watchlist registration: '+str(watch.get('registration','not recorded'))+'. No demonstrated accuracy gain; independent forward evidence and uncertainty/MDE remain required.']
+        for item in watch.get('excluded') or []:
+            lines.append(f"{item['ticker']} watchlist exclusion: "+safe_detail(item.get('reason','Unavailable')))
     lines += ['', '| Name | Status | Research side | Quant score | Combined DESIGN score | Sided DESIGN score | Entry spread bps | Reason |',
               '|---|---|---|---:|---:|---:|---:|---|']
     for row in shadow.get('rows') or []:
@@ -78,6 +103,10 @@ def _deepseek_detail(intra):
         if gaps:
             lines.append(f"{ticker} factor evidence gaps: "+safe_detail('; '.join(gaps)))
     inputs=snap.get('inputs') or {}
+    diagnostics=snap.get('candidate_diagnostics') or inputs.get('candidate_diagnostics') or {}
+    for ticker,notes in diagnostics.items():
+        if notes:
+            lines.append(f"{ticker} factor input audit notes (advisory; current evidence validated separately): "+safe_detail('; '.join(notes)))
     for candidate in inputs.get('candidates') or []:
         ticker=candidate['ticker']
         if candidate.get('source_url'):
@@ -93,6 +122,14 @@ def _deepseek_detail(intra):
     lines += ['Factor registration: '+str(shadow.get('registration') or 'not recorded'),
               'Factor MDE: '+str(mde.get('status') or 'UNAVAILABLE')+
               f"; minimum forward sessions {mde.get('minimum_forward_sessions','unknown')}; net bps {fmt(mde.get('net_bps'))}."]
+    lines += [f"Prepared model: {safe_detail(snap.get('model') or 'unavailable',100)}; input receipt SHA-256: {safe_detail(snap.get('input_sha256') or 'unavailable',64)}; "
+              f"snapshot receipt SHA-256: {safe_detail(snap.get('snapshot_sha256') or 'unavailable',64)}."]
+    for batch in snap.get('batches') or []:
+        lines.append(f"Model batch: {safe_detail(batch.get('status') or 'UNAVAILABLE',40)}; "
+                     f"requested {safe_detail(batch.get('model') or 'unavailable',100)}; "
+                     f"response {safe_detail(batch.get('response_model') or 'unavailable',100)}; "
+                     f"inference mode {safe_detail(batch.get('inference_mode') or 'not recorded',40)}; "
+                     f"input SHA-256 {safe_detail(batch.get('input_sha256') or 'unavailable',64)}.")
     return lines
 
 

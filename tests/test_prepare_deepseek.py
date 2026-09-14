@@ -76,9 +76,9 @@ def test_failure_stops_remaining_batches_and_saves_same_day_failure(tmp_path):
         calls.append(1)
         return {'status': 'UNAVAILABLE', 'assessments': [], 'errorcode': 'TIMEOUT'}
     first = S.prepare(tmp_path, CFG, now=NOW, inputs=pool(50), evaluator=fail)
-    assert calls == [1] and first['covered'] == 0
+    assert calls == [1, 1] and first['covered'] == 0
     again = S.prepare(tmp_path, CFG, now=NOW, inputs=pool(50), evaluator=fail)
-    assert again == first and calls == [1]
+    assert again == first and calls == [1, 1]
     assert len(first['candidate_gaps']) == 50
 
 
@@ -197,7 +197,7 @@ def test_news_failure_stops_subsequent_batches_and_retains_reviewed_tags(tmp_pat
     S.refresh_public_inputs(tmp_path, cfg, NOW)
     saved = json.loads((tmp_path/'deepseek_news.json').read_text())
     assert saved['X0']['catalyst_tags'] == prior['X0']['catalyst_tags']
-    assert len(calls) == 2 and calls[-1] == ['X0', 'X1', 'X2', 'X3']
+    assert len(calls) == 2 and calls[-1] == ['X'+str(i) for i in range(8)]
 
 
 @pytest.mark.parametrize('raw', ['{"candidates":[],"candidates":[]}', '{"value":NaN}'])
@@ -243,13 +243,20 @@ def test_private_model_with_credential_or_invalid_bytes_never_echoes_or_calls_mo
     ('2026-09-11T08:11:00-04:00', False),
 ])
 def test_public_macro_collector_enforces_same_session_reference_contract(monkeypatch, observed, valid):
-    import quotes
+    import requests
+    from types import SimpleNamespace
+    from urllib.parse import unquote
     now = NOW.replace(hour=8, minute=10)
     symbols = {'crude': 'CL=F', 'cadusd': 'CADUSD=X', 'tsx': '^GSPTSE', 'vix': '^VIX'}
     raw = {symbol: {'symbol': symbol, 'regularMarketPrice': 10.,
                     'regularMarketTime': dt.datetime.fromisoformat(observed).timestamp()}
            for symbol in symbols.values()}
-    monkeypatch.setattr(quotes.YahooMarketData, 'get', lambda self, tickers: raw)
+    def get(url, **kwargs):
+        ticker = unquote(url.rsplit('/', 1)[-1])
+        assert kwargs['params'] == {'interval': '1d', 'range': '5d'}
+        return SimpleNamespace(raise_for_status=lambda: None,
+            json=lambda: {'chart': {'result': [{'meta': raw[ticker]}]}})
+    monkeypatch.setattr(requests, 'get', get)
     result = S._macro({'correlated': symbols}, now)
     assert all(value is not None for value in result['values'].values()) is valid
     assert bool(result['gaps']) is not valid

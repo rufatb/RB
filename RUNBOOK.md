@@ -41,12 +41,29 @@ the checkout as working directory throughout; a venv copied from another
 temporary directory can contain broken symlinks. `brief.compute()` resolves
 its default configuration relative to its own source file.
 
-With a prepared intraday cache, each Yahoo host attempt has a two-second
-socket timeout instead of twenty seconds. The independent 22-second process
+With a prepared intraday cache, Yahoo chart requests run in one concurrent wave
+with a 14-second socket limit, shared 16-second per-name and 18-second chart
+deadlines. The independent 22-second process
 deadline still bounds fetch, feature construction and calibration together;
 socket timeouts do not establish a delivery SLA. Fixed stage/ticker/count
 diagnostics survive termination without exposing provider URLs or credentials.
 If current bars cannot be acquired, cached history is not today's signal.
+
+Day100: the separate research pool stages with `prepare_factor_pool.py` after
+baseline history and before `prepare_deepseek.py --refresh-public-inputs`.
+It targets 60 configured TSX names without changing the rejected/unchanged
+production density universe. It runs only before 09:30, once per session,
+preserves actual coverage/checkpoints, and never supplies a live entry quote.
+See `PREREGISTER_day100_deepseek_reliability.md` and `DEEPSEEK_DATA.md`.
+
+Near 09:40, use `prepare_yahoo_auth.py --state-dir "$RB_STATE_DIR"` once,
+before options and report acquisition. It stages cookie/crumb authentication
+only in private state (same session, maximum 15 minutes). No prices are cached
+or relabelled live. This removes a measured cookie bootstrap delay from the
+eight-second quote section when preparation succeeds; it does not certify
+BBO timestamps or provider entitlement. Keep credential-free preparation and
+stage diagnostics even on failure. Do not add a second sender or enable the
+standalone SMTP example alongside the existing Gmail jobs.
 
 An explicit recipient request can authorize a separate informational
 replacement through `replacement_report.Replacements`. It preserves the

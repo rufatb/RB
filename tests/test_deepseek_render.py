@@ -53,14 +53,14 @@ def test_saved_factors_render_in_both_views_without_compute_or_provider(tmp_path
     assert len(daily_render.deepseek_summary(d['intraday']))<=6
 
 
-def test_no_factor_order_ticket_or_h1_unpriced_name_in_concise_summary():
+def test_unpriced_h1_names_stay_visible_as_research_without_order_ticket():
     d=report(); snap=d['intraday']['deepseek']
     snap['shadow']['h2']={'longs':[],'shorts':[]}
     for row in snap['shadow']['rows']:row['spread_bps']=None
     section='\n'.join(daily_render.deepseek_summary(d['intraday']))
     assert 'COST EVIDENCE UNAVAILABLE' in section and 'lack exact entry-spread evidence' in section
     assert 'NO EDGE - WAIT' not in section
-    assert 'FACTORLONG' not in section and 'FACTORSHORT' not in section
+    assert 'FACTORLONG' in section and 'FACTORSHORT' in section and 'H1 SHADOW' in section
     assert 'shares' not in section and '$' not in section and 'BUY' not in section
     full=brief.render_text(d)
     assert 'Unpriced H1 rows are not executable' in full
@@ -69,6 +69,7 @@ def test_no_factor_order_ticket_or_h1_unpriced_name_in_concise_summary():
 @pytest.mark.parametrize('kind',['unavailable','empty','incomplete'])
 def test_unevaluated_factor_scan_is_not_no_market_opportunities(kind):
     d=report();snap=d['intraday']['deepseek'];snap['shadow']['h2']={'longs':[],'shorts':[]}
+    snap['shadow']['h1']={'longs':[],'shorts':[]}
     if kind=='unavailable':snap['status']='UNAVAILABLE'
     elif kind=='empty':snap['shadow']['rows']=[]
     else:snap['shadow']['rows'][0]['status']='UNAVAILABLE'
