@@ -243,12 +243,17 @@ def _macro(cfg, now, *, clock=None):
     return {'values': values, 'gaps': gaps, 'label': 'Dated macro references, not live executable BBO.'}
 
 
-def candidate_roster(state_dir, cfg, now):
+def candidate_roster(state_dir, cfg, now, *, diagnostic=False):
     """Use the actual staged pool, never silently fall back from a bad pool."""
     from factor_inputs import TICKER
     path = Path(state_dir)/'deepseek_candidates.json'
     if path.exists():
         payload = _read_json(path)
+        if payload.get('kind') == 'CURRENT_TIME_DIAGNOSTIC' or payload.get('morning_snapshot') is False:
+            if not diagnostic:
+                raise ValueError('DIAGNOSTIC_CANDIDATES_ARE_NOT_MORNING_INPUTS')
+            from diagnostic_context import require_context
+            require_context(state_dir)
         observed = stamp(payload['as_of'])
         if (observed > now or (now-observed).total_seconds() > P.MAX_SNAPSHOT_AGE_HOURS*3600
                 or observed.astimezone(ZoneInfo('America/New_York')).date() != now.date()):
@@ -288,11 +293,16 @@ def _seal(obj):
     return obj
 
 
-def _checked_replay(path, now):
+def _checked_replay(path, now, *, diagnostic=False):
     from adapters.deepseek_adapter import parse_assessments
     from factor_inputs import validate_payload
     obj = _read_json(path)
-    if not isinstance(obj, dict) or obj.get('snapshot_sha256') != _seal(obj)['snapshot_sha256']:
+    if not isinstance(obj, dict):
+        raise ValueError('INVALID_SNAPSHOT_OBJECT')
+    diagnostic_snapshot = obj.get('kind') == 'CURRENT_TIME_DIAGNOSTIC' and obj.get('morning_snapshot') is False
+    if diagnostic != diagnostic_snapshot:
+        raise ValueError('SNAPSHOT_EXECUTION_CONTEXT_MISMATCH')
+    if obj.get('snapshot_sha256') != _seal(obj)['snapshot_sha256']:
         raise ValueError('SNAPSHOT_INTEGRITY_MISMATCH')
     observed, prepared = stamp(obj['as_of']), stamp(obj['prepared_at'])
     if (obj.get('schema_version') != P.SCHEMA_VERSION or obj.get('prompt_version') != P.PROMPT_VERSION
@@ -319,15 +329,18 @@ def _checked_replay(path, now):
     return obj
 
 
-def refresh_public_inputs(state_dir, cfg, now, *, clock=None):
+def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
     """One bounded pass; retain valid prior facts when a new field fails."""
     from factor_inputs import validate_payload
     root = Path(state_dir)
+    if diagnostic:
+        from diagnostic_context import require_context
+        require_context(root)
     preopen_seconds = max(0., (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds())
-    deadline = time.monotonic()+min(P.PUBLIC_INPUT_BUDGET_SECONDS, preopen_seconds)
+    deadline = time.monotonic()+(P.PUBLIC_INPUT_BUDGET_SECONDS if diagnostic else min(P.PUBLIC_INPUT_BUDGET_SECONDS, preopen_seconds))
     gaps = []
     try:
-        tickers = candidate_roster(root, cfg, now)
+        tickers = candidate_roster(root, cfg, now, diagnostic=diagnostic)
     except (OSError, ValueError, KeyError, TypeError, UnicodeError):
         tickers = []
         gaps.append('Public evidence roster invalid; no ticker discovery or fallback was attempted.')
@@ -420,17 +433,33 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None):
         'finished_at': reviewed_at.isoformat(),
         'requested': len(tickers), 'queried': len(queried), 'queried_tickers': queried,
         'unqueried_tickers': [t for t in tickers if t not in queried],
-        'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps)))})
+        'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps))),
+        **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})
     return gaps
 
 
 def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=None):
+    """Production-only pre-open preparation through the shared pipeline."""
+    if (Path(state_dir)/'diagnostic_context.json').exists():
+        raise ValueError('Diagnostic state cannot become a production preparation.')
+    return _prepare(state_dir, cfg, now=now, inputs=inputs, refresh=refresh, evaluator=evaluator)
+
+
+def prepare_diagnostic(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=None):
+    """Same pipeline at the actual current time, in explicit isolated state only."""
+    from diagnostic_context import require_context
+    require_context(state_dir)
+    return _prepare(state_dir, cfg, now=now, inputs=inputs, refresh=refresh,
+                    evaluator=evaluator, diagnostic=True)
+
+
+def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=None, diagnostic=False):
     from adapters.deepseek_adapter import CANDIDATE_KEYS, parse_assessments, public_payload
     from analyst import analyze_factors
-    from factor_inputs import build_from_state, validate_payload
+    from factor_inputs import build_from_state, validate_payload, eligible_public_candidates
     injected_clock = now is not None
     now = stamp(now or dt.datetime.now(ZoneInfo('America/New_York'))).astimezone(ZoneInfo('America/New_York'))
-    if now.time() >= dt.time(9, 30):
+    if not diagnostic and now.time() >= dt.time(9, 30):
         raise ValueError('DeepSeek preparation is pre-open only; report critical path must remain local.')
     root = Path(state_dir); root.mkdir(parents=True, exist_ok=True)
     history = root/'deepseek_history'/now.date().isoformat()
@@ -444,7 +473,7 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         prior = history/'snapshot.json'
         if prior.exists():
             try:
-                obj = _checked_replay(prior, now)
+                obj = _checked_replay(prior, now, diagnostic=diagnostic)
             except (ValueError, TypeError, KeyError, OSError, UnicodeError):
                 obj = _seal(_failure_snapshot(now, 'Prior same-session DeepSeek snapshot failed integrity validation; no retry.'))
             write_atomic(root/'deepseek_snapshot.json', obj)
@@ -457,14 +486,20 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         # Persist before any provider access. A terminated worker/run cannot cause
         # an unrecorded second request on the next same-day invocation.
         write_atomic(attempt, {'session': now.date().isoformat(), 'started_at': now.isoformat(),
-                               'prompt_version': P.PROMPT_VERSION, 'status': 'STARTED'})
+                               'prompt_version': P.PROMPT_VERSION, 'status': 'STARTED',
+                               **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})
         preopen_seconds = (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds()
-        deadline = time.monotonic()+min(P.PREP_BUDGET_SECONDS, preopen_seconds)
+        deadline = time.monotonic()+(P.PREP_BUDGET_SECONDS if diagnostic else min(P.PREP_BUDGET_SECONDS, preopen_seconds))
         started_at = now
         gaps = []
         if refresh and inputs is None:
             try:
-                if injected_clock:
+                if diagnostic:
+                    gaps.extend(refresh_public_inputs(root, cfg, now, diagnostic=True,
+                        clock=None if injected_clock else lambda: dt.datetime.now(ZoneInfo('America/New_York'))))
+                    if not injected_clock:
+                        now = dt.datetime.now(ZoneInfo('America/New_York'))
+                elif injected_clock:
                     gaps.extend(refresh_public_inputs(root, cfg, now))
                 else:
                     gaps.extend(refresh_public_inputs(root, cfg, now,
@@ -473,7 +508,9 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
             except Exception as exc:
                 gaps.append('Public input preparation failed: '+type(exc).__name__)
         try:
-            clean = validate_payload(inputs, now) if inputs is not None else build_from_state(root, cfg, now)
+            clean = (validate_payload(inputs, now) if inputs is not None else
+                     build_from_state(root, cfg, now, diagnostic=True) if diagnostic else
+                     build_from_state(root, cfg, now))
         except Exception as exc:
             from factor_inputs import _blank
             clean = _blank(now, 'Candidate preparation failed: '+type(exc).__name__)
@@ -486,17 +523,10 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
         except (OSError, ValueError, UnicodeError):
             model = None; model_ok = False
             gaps.append('INVALID_MODEL: no DeepSeek request attempted.')
-        eligible = []
-        for candidate in clean['candidates']:
-            ticker = candidate['ticker']
-            if not candidate.get('headlines') and not candidate.get('catalyst_tags'):
-                candidate_gaps.setdefault(ticker, []).append('No current unstructured evidence to assess.'); continue
-            public = {k: candidate[k] for k in CANDIDATE_KEYS if k in candidate}
-            try:
-                public_payload([public], macro, clean['as_of'])
-            except ValueError:
-                candidate_gaps.setdefault(ticker, []).append('Candidate failed DeepSeek public payload validation.'); continue
-            eligible.append(public)
+        eligible, eligibility_gaps = eligible_public_candidates(clean)
+        for ticker, reasons in eligibility_gaps.items():
+            candidate_gaps.setdefault(ticker, []).extend(reasons)
+        submitted = []
         assessments, batches = [], []
         try:
             key_ok = evaluator is not None or load_private_key(root)
@@ -512,6 +542,7 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
                 if remaining <= 0:
                     gaps.append('DeepSeek preparation deadline reached.'); break
                 wave = pending[start:start+P.MODEL_BATCH_CONCURRENCY]
+                submitted.extend(c['ticker'] for batch in wave for c in batch)
                 timeout = min(P.REQUEST_TIMEOUT, remaining)
                 if evaluator is None:
                     jobs = {('deepseek' if len(wave) == 1 else 'deepseek_'+str(i)):
@@ -532,7 +563,7 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
                             received.append({'value': None, 'error': type(exc).__name__})
                 failed, stop_provider = 0, False
                 for batch, got in zip(wave, received):
-                    metadata = {}
+                    metadata = {'tickers': [c['ticker'] for c in batch]}
                     try:
                         response = got.get('value') or {'status': 'UNAVAILABLE', 'assessments': [],
                             'errorcode': 'BOUNDED_REQUEST_FAILURE',
@@ -572,23 +603,32 @@ def prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=N
             if candidate['ticker'] not in covered:
                 candidate_gaps.setdefault(candidate['ticker'], []).append('No successful model assessment for this candidate.')
         prepared = now if injected_clock or evaluator is not None else dt.datetime.now(ZoneInfo('America/New_York'))
+        missed_cutoff = not diagnostic and prepared.time() >= dt.time(9, 30)
+        if missed_cutoff:
+            gaps.append('PREOPEN_DEADLINE_REACHED: returned assessments are audit-only, not morning-usable.')
         obj = {'schema_version': P.SCHEMA_VERSION, 'session': now.date().isoformat(),
                'as_of': clean['as_of'], 'prepared_at': prepared.isoformat(),
                'prompt_version': P.PROMPT_VERSION, 'model': model, 'adopted': False,
-               'status': 'READY' if assessments and not gaps and not any(candidate_gaps.values()) else
+               'status': 'UNAVAILABLE' if missed_cutoff else 'READY' if assessments and not gaps and not any(candidate_gaps.values()) else
                          'PARTIAL' if assessments else 'UNAVAILABLE',
                'requested': len(clean['candidates']), 'covered': len(assessments),
+               'source_requested': clean.get('coverage', {}).get('requested', len(clean['candidates'])),
+               'coverage_version': 1,
+               'eligible': len(eligible), 'submitted': len(submitted),
                'inputs': clean, 'input_sha256': hashlib.sha256(encode(clean).encode()).hexdigest(),
                'assessments': assessments, 'batches': batches,
                'candidate_gaps': {t: sorted(set(map(safe_detail, gs))) for t, gs in candidate_gaps.items()},
                'gaps': sorted(set(map(safe_detail, gaps))),
-               'registration': P.DESIGN_PROVENANCE['registration']}
+               'registration': P.DESIGN_PROVENANCE['registration'],
+               **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False,
+                   'prediction_evidence': False} if diagnostic else {})}
         obj = _seal(obj)
         write_atomic(prior, obj)
         write_atomic(root/'deepseek_snapshot.json', obj)
         write_atomic(attempt, {'session': now.date().isoformat(), 'started_at': started_at.isoformat(),
                                'finished_at': prepared.isoformat(), 'status': 'COMPLETED',
-                               'snapshot_sha256': obj['snapshot_sha256']})
+                               'snapshot_sha256': obj['snapshot_sha256'],
+                               **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})
         return obj
 
 
@@ -605,7 +645,8 @@ def main(argv=None):
         path = Path(args.input)
         inputs = _read_json(path)
     result = prepare(args.state_dir, load_config(args.config), inputs=inputs, refresh=args.refresh_public_inputs)
-    print(encode({k: result[k] for k in ('status', 'requested', 'covered', 'model', 'gaps')}))
+    print(encode({k: result.get(k) for k in
+                  ('status', 'source_requested', 'requested', 'eligible', 'submitted', 'covered', 'model', 'gaps')}))
     return 0 if result['status']=='READY' else 2
 
 

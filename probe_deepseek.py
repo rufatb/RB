@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from adapters.deepseek_adapter import evaluate_batch, MACRO_KEYS, CANDIDATE_KEYS, parse_assessments
+from adapters.deepseek_adapter import evaluate_batch, MACRO_KEYS, parse_assessments
 from build_biotech import write_atomic
 from prepare_deepseek import load_private_key, load_private_model
 from diagnostics import safe_detail
@@ -29,7 +29,7 @@ def probe_real(state_dir, input_path, *, evaluator=evaluate_batch, clock=None):
     """
     import hashlib
     from bounded import acquire
-    from factor_inputs import _read, validate_payload
+    from factor_inputs import _read, validate_payload, eligible_public_candidates
     from report_store import encode
     from deepseek_factors import research_watchlist
     clock = clock or (lambda: dt.datetime.now(ZoneInfo('America/New_York')))
@@ -57,9 +57,10 @@ def probe_real(state_dir, input_path, *, evaluator=evaluate_batch, clock=None):
             or re.search(r'(?i)\bbearer\s+[A-Za-z0-9._~+/-]{12,}', encoded_raw)):
         raise ValueError('PRIVATE_DIAGNOSTIC_INPUT_REJECTED')
     clean = validate_payload(raw, now)
-    complete = set(clean['coverage']['complete_tickers'])
-    candidates = [{key: candidate[key] for key in CANDIDATE_KEYS}
-                  for candidate in clean['candidates'] if candidate['ticker'] in complete]
+    candidates, eligibility_gaps = eligible_public_candidates(clean)
+    for ticker, reasons in eligibility_gaps.items():
+        if not clean['candidate_gaps'].get(ticker):
+            clean['candidate_gaps'][ticker] = reasons
     directory = Path(state_dir)/'diagnostics'/('deepseek-real-'+now.strftime('%Y%m%dT%H%M%S%f'))
     directory.mkdir(parents=True, exist_ok=False)
     input_hash = hashlib.sha256(encode(clean).encode()).hexdigest()

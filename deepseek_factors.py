@@ -70,6 +70,13 @@ def _batches(items, model):
         if not isinstance(item, dict):
             raise SnapshotValidationError('invalid batch provenance')
         clean = {}
+        if 'tickers' in item:
+            names = item['tickers']
+            if (not isinstance(names, list) or not 1 <= len(names) <= P.BATCH_SIZE
+                    or any(not isinstance(t, str) or not TICKER.fullmatch(t) for t in names)
+                    or len(names) != len(set(names))):
+                raise SnapshotValidationError('invalid batch ticker provenance')
+            clean['tickers'] = list(names)
         for key in ('status', 'errorcode', 'details', 'close_warning'):
             value = item.get(key)
             if value is not None:
@@ -138,10 +145,25 @@ def research_watchlist(snapshot):
     """
     out = {'status': 'UNAVAILABLE', 'decision': 'UNAVAILABLE — factors not assessed',
            'bulls': [], 'bears': [], 'assessed': 0, 'evaluated': 0, 'eligible': 0,
+           'requested': None, 'input_complete': None, 'threshold_evaluated': False,
            'excluded': [], 'threshold': RESEARCH_SENTIMENT_THRESHOLD,
            'registration': RESEARCH_REGISTRATION, 'adopted': False,
            'label': 'SHADOW sentiment watchlist; factor support, not probability or entry recommendation.'}
-    if not isinstance(snapshot, dict) or snapshot.get('status') not in ('READY', 'PARTIAL'):
+    if not isinstance(snapshot, dict):
+        return out
+    # Preserve the original pool denominator even when no model request ran.
+    # Complete public inputs, actual assessments, usable assessments and
+    # threshold passes are different populations, not interchangeable counts.
+    requested = snapshot.get('requested')
+    if type(requested) is int and 0 <= requested <= P.MAX_CANDIDATES:
+        out['requested'] = requested
+    inputs = snapshot.get('inputs')
+    coverage = inputs.get('coverage') if isinstance(inputs, dict) else None
+    complete = coverage.get('complete') if isinstance(coverage, dict) else None
+    if (type(complete) is int and 0 <= complete <= P.MAX_CANDIDATES
+            and (out['requested'] is None or complete <= out['requested'])):
+        out['input_complete'] = complete
+    if snapshot.get('status') not in ('READY', 'PARTIAL'):
         return out
     try:
         from adapters.deepseek_adapter import parse_assessments
@@ -194,6 +216,7 @@ def research_watchlist(snapshot):
     if not out['evaluated']:
         out['decision'] = 'UNAVAILABLE — assessed names lack complete validated evidence'
         return out
+    out['threshold_evaluated'] = True
     partial = (snapshot.get('status') != 'READY' or out['evaluated'] != len(assessments)
                or bool(snapshot.get('gaps')))
     out['status'] = 'PARTIAL' if partial else 'READY'
@@ -208,6 +231,17 @@ def research_watchlist(snapshot):
 
 def load_prepared(state_dir, now, path=None):
     """Revalidate the snapshot; no SDK call, provider request or state mutation."""
+    return _load_snapshot(state_dir, now, path=path)
+
+
+def load_diagnostic(state_dir, now, path):
+    """Explicit diagnostic view only; production never accepts these snapshots."""
+    from diagnostic_context import require_context
+    require_context(state_dir)
+    return _load_snapshot(state_dir, now, path=path, diagnostic=True)
+
+
+def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
     try:
         now = stamp(now).astimezone(ET)
         path = Path(path or os.getenv('RB_DEEPSEEK_SNAPSHOT_JSON') or
@@ -229,6 +263,13 @@ def load_prepared(state_dir, now, path=None):
         unsigned = {key: value for key, value in obj.items() if key != 'snapshot_sha256'}
         if hashlib.sha256(encode(unsigned).encode()).hexdigest() != seal:
             raise SnapshotValidationError('snapshot integrity mismatch')
+        diagnostic_snapshot = (obj.get('kind') == 'CURRENT_TIME_DIAGNOSTIC'
+                               and obj.get('morning_snapshot') is False
+                               and obj.get('prediction_evidence') is False)
+        if diagnostic and not diagnostic_snapshot:
+            raise SnapshotValidationError('explicit current-time diagnostic snapshot required')
+        if not diagnostic and (obj.get('morning_snapshot') is False or obj.get('kind') is not None):
+            raise SnapshotValidationError('diagnostic evidence is not a morning snapshot')
         # Preparation can fail before an account model is selected. Such a
         # sealed failure must retain its actual cause, without inventing a
         # model or granting an exception to any provider assessment/receipt.
@@ -244,7 +285,7 @@ def load_prepared(state_dir, now, path=None):
                 or obj['session'] != now.date().isoformat()
                 or prepared.astimezone(ET).date() != now.date()
                 or as_of.astimezone(ET).date() != now.date()
-                or prepared.astimezone(ET).time() >= dt.time(9, 30)
+                or (not diagnostic and prepared.astimezone(ET).time() >= dt.time(9, 30))
                 or not as_of <= prepared <= now
                 or (now-prepared).total_seconds() > P.MAX_SNAPSHOT_AGE_HOURS*3600):
             raise SnapshotValidationError('stale, future or mismatched DeepSeek snapshot')
@@ -266,6 +307,22 @@ def load_prepared(state_dir, now, path=None):
         if not set(tickers) <= set(by_t):
             raise SnapshotValidationError('DeepSeek output outside validated candidate pool')
         assessments = parse_assessments(json.dumps({'assessments': saved}), tickers) if saved else []
+        input_count = len(inputs.get('candidates', []))
+        source_requested = obj.get('source_requested', input_count)
+        if type(source_requested) is not int or not input_count <= source_requested <= P.MAX_CANDIDATES:
+            raise SnapshotValidationError('snapshot coverage differs from saved records')
+        if obj.get('coverage_version') == 1 and (obj.get('requested') != input_count
+                or obj.get('covered') != len(assessments)):
+            raise SnapshotValidationError('snapshot coverage differs from saved records')
+        eligible, submitted = obj.get('eligible'), obj.get('submitted')
+        if eligible is not None or submitted is not None:
+            if (type(eligible) is not int or type(submitted) is not int
+                    or not len(assessments) <= submitted <= eligible <= input_count):
+                raise SnapshotValidationError('invalid preparation coverage counts')
+            submitted_names = [ticker for batch in batches for ticker in batch.get('tickers', [])]
+            if (len(submitted_names) != submitted or len(submitted_names) != len(set(submitted_names))
+                    or not set(submitted_names) <= set(by_t) or not set(tickers) <= set(submitted_names)):
+                raise SnapshotValidationError('batch coverage does not match submitted candidates')
         for assessment in assessments:
             assessment['factor_rationale'] = safe_detail(assessment['factor_rationale'], P.MAX_RATIONALE_CHARS)
         gaps = _notes(checked.get('gaps', [])) + _notes(obj.get('gaps', []))
@@ -289,7 +346,7 @@ def load_prepared(state_dir, now, path=None):
                           for ticker, notes in candidate_gaps.items()}
         # A partial successful batch is useful evidence, but it never fills an
         # uncovered ticker with an invented NO_EDGE assessment.
-        requested = checked['coverage']['requested']
+        requested = source_requested
         complete = (assessments and not gaps and not any(candidate_gaps.values())
                     and len(assessments) == requested
                     and checked['coverage']['complete'] == requested)
@@ -306,7 +363,11 @@ def load_prepared(state_dir, now, path=None):
                 'input_sha256': obj['input_sha256'],
                 'snapshot_sha256': seal,
                 'requested': requested, 'covered': len(assessments), 'adopted': False,
+                'eligible': eligible, 'submitted': submitted,
                 'registration': P.DESIGN_PROVENANCE['registration']}
+        if diagnostic:
+            result.update(kind='CURRENT_TIME_DIAGNOSTIC', morning_snapshot=False,
+                          prediction_evidence=False)
         if model_absent_failure:
             reasons = _notes(obj.get('gaps', []))
             result['reason'] = (reasons[0] if reasons else

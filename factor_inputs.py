@@ -304,6 +304,71 @@ def validate_payload(payload, now):
     return output
 
 
+def eligible_public_candidates(clean):
+    """Select complete public inputs identically for preparation and diagnostics.
+
+    ``validate_payload`` (or ``build_from_state``) must run first with the actual
+    evidence clock. The SDK's payload validator deliberately permits unknown
+    values represented by null; transport eligibility therefore cannot
+    stand in for this stricter research-input completeness gate. Excluded names
+    remain in the caller's requested pool and retain their existing diagnostics.
+    This helper neither fetches evidence nor changes the supplied object.
+    """
+    from collections import Counter
+    from adapters.deepseek_adapter import CANDIDATE_KEYS, public_payload
+
+    if not isinstance(clean, dict) or not isinstance(clean.get('candidates'), list):
+        return [], {}
+    coverage = clean.get('coverage')
+    coverage = coverage if isinstance(coverage, dict) else {}
+    complete = coverage.get('complete_tickers')
+    complete = set(complete) if (isinstance(complete, list)
+        and all(isinstance(ticker, str) for ticker in complete)) else set()
+    macro = clean.get('macro')
+    macro = macro if isinstance(macro, dict) else {}
+    macro_complete = (coverage.get('macro_complete') is True
+        and all(isinstance(macro.get(name), dict) for name in policy.MACRO_KEYS))
+    saved_gaps = clean.get('candidate_gaps')
+    saved_gaps = saved_gaps if isinstance(saved_gaps, dict) else None
+    counts = Counter(candidate.get('ticker') for candidate in clean['candidates']
+                     if isinstance(candidate, dict) and isinstance(candidate.get('ticker'), str))
+    required = ('vwap', 'rsi', 'macd', 'macd_signal', 'macd_hist',
+                'orb_high', 'orb_low', 'rvol')
+    eligible, gaps = [], {}
+    for candidate in clean['candidates']:
+        ticker = candidate.get('ticker') if isinstance(candidate, dict) else None
+        if not isinstance(ticker, str) or not TICKER.fullmatch(ticker):
+            continue
+        reasons = []
+        if counts[ticker] != 1:
+            reasons.append('DUPLICATE_CANDIDATE')
+        existing = saved_gaps.get(ticker) if saved_gaps is not None else None
+        if not isinstance(existing, list) or any(not isinstance(note, str) for note in existing):
+            reasons.append('INVALID_CANDIDATE_DIAGNOSTICS')
+        elif existing:
+            reasons.append('Candidate has unresolved public evidence gaps.')
+        if ticker not in complete:
+            reasons.append('Candidate lacks complete validated public evidence.')
+        if not macro_complete:
+            reasons.append('INCOMPLETE_MACRO')
+        technicals = candidate.get('technicals')
+        if not isinstance(technicals, dict) or any(not _number(technicals.get(key)) for key in required):
+            reasons.append('INCOMPLETE_TECHNICALS')
+        if not candidate.get('headlines') and not candidate.get('catalyst_tags'):
+            reasons.append('No current unstructured evidence to assess.')
+        if not reasons:
+            public = {key: candidate[key] for key in CANDIDATE_KEYS if key in candidate}
+            try:
+                public_payload([public], macro, clean.get('as_of'))
+            except ValueError:
+                reasons.append('Candidate failed DeepSeek public payload validation.')
+            else:
+                eligible.append(public)
+        if reasons:
+            gaps[ticker] = sorted(set(reasons))
+    return eligible, gaps
+
+
 def _from_cache(ticker, directory, manifest, cfg, now):
     from bar_cache import key
     path = directory/key(ticker)
@@ -376,7 +441,7 @@ def _from_cache(ticker, directory, manifest, cfg, now):
                 'computed_at': now.isoformat(), 'source_url': source}}, diagnostics
 
 
-def build_from_state(state_dir, cfg, now):
+def build_from_state(state_dir, cfg, now, *, diagnostic=False):
     """Load a staged <=500 pool or compute the actual configured cached pool.
 
     Neither staged evidence nor prior-session bars are executable morning quotes.
@@ -384,12 +449,19 @@ def build_from_state(state_dir, cfg, now):
     """
     now = _stamp(now)
     root = Path(state_dir)
+    if diagnostic:
+        from diagnostic_context import require_context
+        require_context(root)
     candidate_file = root/'deepseek_candidates.json'
     additional = []
     cache_gaps = {}
     if candidate_file.exists():
         try:
             payload = _read(candidate_file)
+            if (not diagnostic and isinstance(payload, dict)
+                    and (payload.get('kind') == 'CURRENT_TIME_DIAGNOSTIC'
+                         or payload.get('morning_snapshot') is False)):
+                return _blank(now, 'DIAGNOSTIC_CANDIDATES_NOT_A_MORNING_POOL')
             pool_clock = _stamp(payload['as_of'])
             if (pool_clock > now or pool_clock.date() != now.date()
                     or now-pool_clock > pd.Timedelta(hours=policy.MAX_SNAPSHOT_AGE_HOURS)):
@@ -475,4 +547,7 @@ def build_from_state(state_dir, cfg, now):
     output['coverage']['upstream_python_declaration'] = bool(candidate_file.exists())
     if candidate_file.exists():
         output['coverage']['pool_prepared_at'] = pool_clock.isoformat()
+    if diagnostic:
+        output['kind'] = 'CURRENT_TIME_DIAGNOSTIC'
+        output['morning_snapshot'] = False
     return output

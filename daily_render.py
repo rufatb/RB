@@ -30,16 +30,22 @@ def deepseek_summary(intra):
         return []
     snap=intra['deepseek'] or {}
     shadow=snap.get('shadow') or {}
+    watch=snap.get('research_watchlist') or {}
     lines=['### DeepSeek factor research — unadopted',
            f"{safe_detail(snap.get('model') or 'Model unavailable',60)}: {snap.get('status','UNAVAILABLE')}; "
            f"{snap.get('covered',0)}/{snap.get('requested',0)} assessed. Contextual leans, not forecasts."]
-    watch=snap.get('research_watchlist') or {}
+    if watch and 'input_complete' in watch:
+        lines[-1] += (f" Complete inputs: {fmt(watch.get('input_complete'),'d')}; "
+                      f"usable assessments: {watch.get('evaluated',0)}.")
     if watch.get('bulls') or watch.get('bears'):
         bulls=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bulls',[])[:2]) or 'none'
         bears=', '.join(safe_detail(r['ticker'],24) for r in watch.get('bears',[])[:2]) or 'none'
         lines.append(f'SHADOW sentiment watchlist: BULL {bulls}; BEAR {bears}. Factor support only; entries unverified.')
     elif watch:
-        lines.append('Sentiment watchlist: '+safe_detail(watch.get('decision','UNAVAILABLE — not evaluated'),180)+'.')
+        line='Sentiment watchlist: '+safe_detail(watch.get('decision','UNAVAILABLE — not evaluated'),180)+'.'
+        if watch.get('threshold_evaluated') is False:
+            line += ' Threshold NOT EVALUATED.'
+        lines.append(line)
     ranked=shadow.get('h2') or {}
     if any(ranked.values()) and snap.get('status') in ('READY','PARTIAL'):
         longs=', '.join(safe_detail(r['ticker'],24) for r in ranked.get('longs',[])[:2]) or 'none'
@@ -56,10 +62,21 @@ def deepseek_summary(intra):
                      str(shadow.get('decision','')).startswith('UNAVAILABLE'))
         unpriced=any((shadow.get('h1') or {}).values())
         prefix='UNAVAILABLE — ' if unevaluated else 'COST EVIDENCE UNAVAILABLE — ' if unpriced else 'NO EDGE - WAIT — '
-        lines.append(prefix+reason)
+        lines.append('Quantitative H1/H2: '+prefix+reason)
     gaps=list(snap.get('gaps') or [])+list(shadow.get('gaps') or [])
+    if not gaps:
+        # A per-name input failure can leave the top-level gap list empty.
+        # Keep its actual cause visible instead of showing only UNAVAILABLE.
+        for notes in (snap.get('candidate_gaps') or {}).values():
+            gaps.extend(notes or [])
     if gaps:
-        lines.append('Factor gaps: '+safe_detail('; '.join(dict.fromkeys(gaps)),180)+' Full evidence attached.')
+        unique=list(dict.fromkeys(gaps))
+        shown=[]
+        for gap in unique[:2]:
+            clean=safe_detail(gap,1000)
+            shown.append(clean if len(clean)<=140 else clean[:137].rsplit(' ',1)[0]+'…')
+        remainder=f' (+{len(unique)-len(shown)} other causes)' if len(unique)>len(shown) else ''
+        lines.append('Factor gaps: '+'; '.join(shown)+remainder+'. Full evidence attached.')
     disclaimer='DESIGN scores are not calibrated probabilities; MDE and accuracy gain remain unestablished.'
     if len(lines)>=6:
         lines[-1]+=' '+disclaimer
@@ -85,10 +102,18 @@ def _deepseek_detail(intra):
         lines.append('| Assessment unavailable | — | unknown | No model result was inferred. |')
     watch=snap.get('research_watchlist') or {}
     if watch:
+        requested=watch.get('requested',snap.get('requested'))
+        coverage=(f"Watchlist coverage: {fmt(requested,'d')} requested; "
+                  f"{fmt(watch.get('input_complete'),'d')} complete inputs; "
+                  f"{watch.get('assessed',0)} model-assessed; "
+                  f"{watch.get('evaluated',0)} usable assessments.")
+        threshold=(f"{watch.get('eligible',0)} of {watch.get('evaluated',0)} usable assessments clear "
+                   f"absolute sentiment support {fmt(watch.get('threshold'),'.2f')}."
+                   if watch.get('threshold_evaluated',bool(watch.get('evaluated')))
+                   else 'Sentiment threshold NOT EVALUATED; no qualifying-count or opportunity conclusion.')
         lines += ['', 'Expanded sentiment watchlist: '+str(watch.get('decision','UNAVAILABLE'))+'.',
                   'This separate research view does not require a successful baseline scan or BBO; it assigns no quantitative probability, trade allocation or entry approval.',
-                  f"Watchlist coverage: {watch.get('evaluated',0)}/{watch.get('assessed',0)} assessed names have complete evidence; "
-                  f"{watch.get('eligible',0)} clear absolute sentiment support {fmt(watch.get('threshold'),'.2f')}. At most two BULL and two BEAR names; no forced quota.",
+                  coverage, threshold+' At most two BULL and two BEAR names; no forced quota.',
                   'Watchlist registration: '+str(watch.get('registration','not recorded'))+'. No demonstrated accuracy gain; independent forward evidence and uncertainty/MDE remain required.']
         for item in watch.get('excluded') or []:
             lines.append(f"{item['ticker']} watchlist exclusion: "+safe_detail(item.get('reason','Unavailable')))

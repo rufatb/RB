@@ -113,7 +113,7 @@ def _position_rows(loader, now, errors):
 
 
 def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
-            publish=False, state_dir=None, services=None):
+            publish=False, state_dir=None, services=None, factor_diagnostic=None):
     """Acquire and compute once. Inject providers/clock for deterministic tests.
 
     Published re-reads return the frozen report before any provider is called.
@@ -357,7 +357,9 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     import deepseek_factors
     from scan import deepseek_shadow
     try:
-        factor_evidence = deepseek_factors.load_prepared(state_dir, now)
+        factor_evidence = (deepseek_factors.load_diagnostic(state_dir, now, factor_diagnostic)
+                           if factor_diagnostic is not None else
+                           deepseek_factors.load_prepared(state_dir, now))
         factor_evidence['shadow'] = deepseek_shadow(
             res.get('factor_candidates', []), factor_evidence, quotes, now, cfg,
             scan_available=not bool(res.get('coverage_fail')) and not no_net)
@@ -412,6 +414,12 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         report['readiness']['status']='PARTIAL'
     if not no_net and report['readiness']['gaps']:
         report['report_status'] += ' — PARTIAL DATA; consult section status'
+    if factor_diagnostic is not None:
+        report['report_status'] = 'CURRENT-TIME DEEPSEEK DIAGNOSTIC / INFORMATIONAL — NOT A MORNING SIGNAL'
+        report['provenance']['factor_diagnostic'] = {
+            'kind': 'CURRENT_TIME_DIAGNOSTIC', 'actual_assembly_at': now.isoformat(),
+            'morning_snapshot': False, 'prediction_evidence': False}
+        report['clock']['eligible'] = False
     if store and now.strftime('%H:%M') == '09:46':
         return store.publish(report['session'],report)
     return json.loads(encode(report))
@@ -419,15 +427,17 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
 
 
 def compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
-            publish=False, state_dir=None, services=None):
+            publish=False, state_dir=None, services=None, factor_diagnostic=None):
     """Serialize the entire publication, including the legacy CSV side effects.
 
     POSIX file locking is appropriate for the supplied Linux/systemd host.
     Previews and offline calls do not create state or acquire write locks.
     """
+    if factor_diagnostic is not None and (publish or not no_net):
+        raise ValueError('Factor diagnostics require an offline unpublished preview.')
     if not publish or no_net:
         return _compute(cfg_path,shadow,no_net,now=now,publish=False,
-                        state_dir=state_dir,services=services)
+                        state_dir=state_dir,services=services,factor_diagnostic=factor_diagnostic)
     import fcntl
     directory=Path(state_dir or os.environ.get('RB_STATE_DIR',str(ROOT/'.rb-state')))
     directory.mkdir(parents=True,exist_ok=True)
