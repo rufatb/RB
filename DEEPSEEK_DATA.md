@@ -27,6 +27,16 @@ Provider model changes require a documented setting change and new receipt.
 Official references: [JSON mode](https://api-docs.deepseek.com/guides/json_mode/),
 [model list](https://api-docs.deepseek.com/api/list-models/).
 
+For a current-time check using a supplied real public input batch (at most 25
+names), run `python probe_deepseek.py --state-dir "$RB_STATE_DIR" --input PUBLIC_INPUT_JSON`.
+This diagnostic uses the actual clock, submits only complete inputs and saves
+separate requested/eligible/assessed counts. It cannot become a morning snapshot
+or overwrite a failed attempt. No news/price fetch is performed by the probe.
+The September 14 real-input check returned 14/14 valid assessments in 20.748s;
+seven of the 21 source names remained incomplete. None cleared the existing
+research-watchlist threshold. See `AUDIT_day100_deepseek_live_check.md` for the
+parser fix and exact limits; this is API evidence, not predictive validation.
+
 ## Preparation contract
 
 After restoring the CURRENT operational archive and staging the unchanged
