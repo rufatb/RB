@@ -103,6 +103,7 @@ def _rss_news(ticker, now, *, clock=None):
     """
     import requests
     from factor_inputs import _url
+    from factor_news import prepare_headlines
     url = 'https://feeds.finance.yahoo.com/rss/2.0/headline'
     source_url = url+'?s='+quote(ticker, safe='')+'&region=CA&lang=en-CA'
     digest = None
@@ -137,9 +138,6 @@ def _rss_news(ticker, now, *, clock=None):
         out, reasons = [], {}
         items = channel.findall('item')
         for item in items:
-            if len(out) >= P.MAX_NEWS_PER_CANDIDATE:
-                reasons['ITEM_LIMIT'] = reasons.get('ITEM_LIMIT', 0)+1
-                continue
             try:
                 headline = (item.findtext('title') or '').strip()
                 if (not headline or len(headline) > P.MAX_TITLE_CHARS
@@ -155,6 +153,8 @@ def _rss_news(ticker, now, *, clock=None):
                             'published_at': published.isoformat()})
             except (ValueError, TypeError, OverflowError, AttributeError):
                 reasons['INVALID_OR_OUT_OF_WINDOW_ITEM'] = reasons.get('INVALID_OR_OUT_OF_WINDOW_ITEM', 0)+1
+        out, quality_reasons = prepare_headlines(out, P.MAX_NEWS_PER_CANDIDATE)
+        reasons.update(quality_reasons)
         return {'status': 'READY' if out else 'NO_CURRENT_NEWS', 'headlines': out, 'catalyst_tags': [],
                 'retrieved_at': retrieved.isoformat(), 'source_url': source_url,
                 'source_identity': 'provider exact-ticker RSS channel',
@@ -167,6 +167,8 @@ def _rss_news(ticker, now, *, clock=None):
 
 def _search_news(ticker, now, *, clock=None):
     import requests
+    from factor_inputs import _url
+    from factor_news import prepare_headlines
     url = 'https://query1.finance.yahoo.com/v1/finance/search'
     try:
         response = requests.get(url, params={'q': ticker, 'newsCount': P.MAX_NEWS_PER_CANDIDATE,
@@ -193,22 +195,28 @@ def _search_news(ticker, now, *, clock=None):
             observed = dt.datetime.fromtimestamp(item['providerPublishTime'], dt.timezone.utc)
             link, title = item['link'], item['title']
             if (not 0 <= (retrieved-observed).total_seconds() <= P.MAX_NEWS_AGE_HOURS*3600
-                    or not isinstance(title, str) or len(title)>P.MAX_TITLE_CHARS
-                    or urlsplit(link).scheme != 'https'):
+                    or not isinstance(title, str) or not title.strip()
+                    or len(title)>P.MAX_TITLE_CHARS or any(ord(c) < 32 for c in title)):
                 continue
-            out.append({'title': title, 'source_url': link, 'published_at': observed.isoformat()})
+            out.append({'title': title.strip(), 'source_url': _url(link), 'published_at': observed.isoformat()})
         except (KeyError, TypeError, ValueError, OverflowError):
             continue  # Counted below as unusable source rows; no invented headline.
+    invalid_count = len(payload.get('news', []))-len(out)
+    out, reasons = prepare_headlines(out, P.MAX_NEWS_PER_CANDIDATE)
+    if invalid_count:
+        reasons['INVALID_OR_UNLINKED_ITEM'] = invalid_count
     return {'status': 'READY' if out else 'NO_CURRENT_NEWS', 'headlines': out, 'catalyst_tags': [], 'retrieved_at': retrieved.isoformat(),
             'source_url': url, 'unusable_rows': len(payload.get('news', []))-len(out),
+            'rejected_rows': reasons,
             'tag_status': 'No structured SEC feed supplied; 8-K tags not inferred from headlines.'}
 
 
 def _macro(cfg, now, *, clock=None):
-    """Parallel chart metadata, not quote authentication or invented bar times."""
+    """Parallel dated levels and validated bar-change context; no extra requests."""
     import requests
     from quotes import number
     from factor_inputs import _previous_close
+    from factor_macro import daily_change_context
     prior_close = _previous_close(now)
     names = {'wti': cfg['correlated']['crude'], 'cadusd': cfg['correlated']['cadusd'],
              'tsx': cfg['correlated']['tsx'], 'vix': cfg['correlated']['vix']}
@@ -221,7 +229,8 @@ def _macro(cfg, now, *, clock=None):
             response = requests.get(url, params={'interval': '1d', 'range': '5d'},
                 headers={'User-Agent': 'Mozilla/5.0'}, timeout=P.PUBLIC_REQUEST_TIMEOUT)
             response.raise_for_status()
-            row = response.json()['chart']['result'][0]['meta']
+            chart = response.json()['chart']['result'][0]
+            row = chart['meta']
             if row.get('symbol') != ticker:
                 raise ValueError('macro symbol mismatch')
             value = number(row.get('regularMarketPrice'), positive=True)
@@ -229,8 +238,12 @@ def _macro(cfg, now, *, clock=None):
             retrieved = stamp(clock()) if clock is not None else now
             if value is None or not prior_close <= as_of <= retrieved:
                 raise ValueError('macro observation unavailable or stale')
+            source = url+'?interval=1d&range=5d'
+            context = daily_change_context(chart, value, as_of, source)
+            gap = (name+': macro change unavailable ('+context['change_gap']+')'
+                   if context['change_status'] == 'UNAVAILABLE' else None)
             return name, {'value': value, 'as_of': as_of.isoformat(),
-                          'source_url': url+'?interval=1d&range=5d'}, None
+                          'source_url': source, **context}, gap
         except Exception as exc:
             fail = _public_failure(exc)
             return name, None, name+': timestamped macro reference unavailable ('+fail['errorcode']+')'
@@ -347,6 +360,8 @@ def _checked_replay(path, now, *, diagnostic=False):
         raise ValueError('SNAPSHOT_ASSESSMENT_IDENTITY_MISMATCH')
     if rows:
         parse_assessments(encode({'assessments': rows}), names)
+    from grounded_records import validate_snapshot
+    validate_snapshot(obj)
     if obj.get('covered') != len(rows) or obj.get('requested') != len(obj['inputs']['candidates']):
         raise ValueError('SNAPSHOT_COVERAGE_MISMATCH')
     # Replay never calls a model. The decision-time loader separately rechecks
@@ -568,7 +583,7 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
         for ticker, reasons in eligibility_gaps.items():
             candidate_gaps.setdefault(ticker, []).extend(reasons)
         submitted = []
-        assessments, batches = [], []
+        assessments, batches, grounded_receipts, grounding_notes = [], [], [], []
         try:
             key_ok = evaluator is not None or load_private_key(root)
         except Exception as exc:
@@ -618,19 +633,36 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
                                 value = response[key]
                                 metadata[key] = safe_detail(value) if isinstance(value, str) else value if value is None or isinstance(value, (int, bool)) else 'INVALID_METADATA'
                         batches.append(metadata)
-                        if response.get('status') == 'READY':
-                            rows = parse_assessments(encode({'assessments': response['assessments']}), [c['ticker'] for c in batch])
+                        if response.get('status') in ('READY', 'PARTIAL') or response.get('grounding'):
+                            from grounded_records import validate_result
+                            rows, grounding, private = validate_result(response, batch, macro, clean['as_of'])
+                            # Even an all-excluded response is completed model
+                            # work with an indispensable receipt, not a generic
+                            # transport failure whose evidence may be omitted.
+                            metadata['grounded_contract'] = grounding['version']
+                            grounded_receipts.append({'batch_index': len(batches)-1,
+                                'status': response['status'], 'input_sha256': response['input_sha256'],
+                                'assessments': rows, 'grounding': grounding,
+                                'private_grounding_receipt': private})
+                            grounding_notes.append(grounding)
                             assessments.extend(rows)
+                            for ticker, issues in grounding['excluded'].items():
+                                candidate_gaps.setdefault(ticker, []).extend('GROUNDING:'+code for code in issues)
+                            # A completed but inadmissible opinion is not a
+                            # provider outage; later independent batches remain
+                            # eligible within the unchanged outer deadline.
                             continue
                         code = safe_detail(response.get('errorcode', 'UNKNOWN'))
                         stop_provider |= code in ('PROVIDER_AUTH', 'PROVIDER_PAYMENT_REQUIRED', 'PROVIDER_RATE_LIMIT')
                         reason = 'DeepSeek batch unavailable: '+code+' ('+safe_detail(response.get('details') or 'no response details')+')'
                     except Exception as exc:
+                        from grounded_records import GroundingValidationError
+                        detail = str(exc) if isinstance(exc, GroundingValidationError) else type(exc).__name__
                         metadata.update(status='UNAVAILABLE', errorcode='INVALID_BATCH_RESULT',
-                                        details=type(exc).__name__)
+                                        details=detail)
                         if not any(item is metadata for item in batches):
                             batches.append(metadata)
-                        reason = 'DeepSeek batch failed validation or transport: '+type(exc).__name__
+                        reason = 'DeepSeek batch failed validation or transport: '+detail
                     failed += 1
                     gaps.append(reason)
                     for c in batch:
@@ -647,6 +679,7 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
         missed_cutoff = not diagnostic and prepared.time() >= dt.time(9, 30)
         if missed_cutoff:
             gaps.append('PREOPEN_DEADLINE_REACHED: returned assessments are audit-only, not morning-usable.')
+        from grounded_records import merge_grounding
         obj = {'schema_version': P.SCHEMA_VERSION, 'session': now.date().isoformat(),
                'as_of': clean['as_of'], 'prepared_at': prepared.isoformat(),
                'prompt_version': P.PROMPT_VERSION, 'model': model, 'adopted': False,
@@ -663,6 +696,9 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
                   if 'research_universe' in clean else {}),
                'inputs': clean, 'input_sha256': hashlib.sha256(encode(clean).encode()).hexdigest(),
                'assessments': assessments, 'batches': batches,
+               'grounding': merge_grounding(grounding_notes),
+               'grounding_registration': P.EVIDENCE_REGISTRATION,
+               'private_grounding_receipts': grounded_receipts,
                'candidate_gaps': {t: sorted(set(map(safe_detail, gs))) for t, gs in candidate_gaps.items()},
                'gaps': sorted(set(map(safe_detail, gaps))),
                'registration': P.DESIGN_PROVENANCE['registration'],

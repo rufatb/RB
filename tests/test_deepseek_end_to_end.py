@@ -28,11 +28,15 @@ def sdk_evaluator(calls, mode='success'):
         calls.append(tickers)
         if mode == 'timeout':
             raise TimeoutError('synthetic provider timeout')
-        rows = [{'ticker': ticker, 'directional_lean': 'BULL', 'sentiment_score': .7,
-                 'factor_rationale': 'The supplied fixture update supports an unadopted contextual lean.'}
-                for ticker in tickers]
+        rows = [{'ticker': item['ticker'], 'directional_lean': 'BULL', 'sentiment_score': .7,
+                 'factor_rationale': 'The supplied fixture update supports an unadopted contextual lean.',
+                 'evidence_ids': [item['headlines'][0]['evidence_id']],
+                 'forecast_horizon': payload['forecast']['horizon']}
+                for item in payload['candidates']]
         if mode == 'invalid':
             rows[0]['sentiment_score'] = 10
+        if mode == 'technical_prose':
+            rows[0]['factor_rationale'] = 'The negative MACD histogram supports this opinion.'
         return SimpleNamespace(id='fixture-response', model=kwargs['model'],
             choices=[SimpleNamespace(finish_reason='stop', message=SimpleNamespace(
                 content=json.dumps({'assessments': rows}), refusal=None))])
@@ -153,3 +157,49 @@ def test_raw_requested_count_survives_rejected_source_row(tmp_path):
     loaded = factors.load_prepared(tmp_path, NOW.replace(hour=9, minute=46))
     assert loaded['requested'] == 3 and loaded['covered'] == 2
     assert loaded['status'] == 'PARTIAL'
+
+
+def test_grounding_exclusion_survives_sealed_load_and_email_without_raw_prose(tmp_path, monkeypatch):
+    monkeypatch.delenv('RB_DEEPSEEK_SNAPSHOT_JSON', raising=False)
+    calls = []
+    prepared = preparation.prepare(tmp_path, CFG, now=NOW, inputs=pool(2),
+        evaluator=sdk_evaluator(calls, 'technical_prose'))
+    assert prepared['covered'] == 1 and prepared['status'] == 'PARTIAL'
+    assert prepared['grounding']['excluded']['X0'] == ['TECHNICAL_PROSE_PROHIBITED']
+    private = json.dumps(prepared['private_grounding_receipts'])
+    assert 'negative MACD histogram' in private
+    monkeypatch.setattr('adapters.deepseek_adapter.evaluate_batch', no_more_model)
+    at_report = NOW.replace(hour=9, minute=46)
+    loaded = factors.load_prepared(tmp_path, at_report)
+    assert loaded['covered'] == 1 and loaded['grounding']['excluded']['X0']
+    assert 'private_grounding' not in json.dumps(loaded)
+    assert 'negative MACD histogram' not in json.dumps(loaded)
+    source = pool(2)['candidates'][1]['headlines'][0]['source_url']
+    catalog = loaded['grounding']['per_ticker']['X1']['evidence_catalog']
+    assert next(iter(catalog.values()))['source_url'] == source
+    d = brief.build(now=at_report, state_dir=tmp_path, services=services())
+    mail = prepare_delivery.artifacts(d, tmp_path/'dispatch', at_report)
+    assert 'X1' in mail['text']
+    assert '2/2 assessed' in mail['text']
+    assert '1 accepted after grounding' in mail['text']
+    assert '2 model-assessed; 1 accepted after grounding; 1 usable assessments' in mail['attachments'][0]['content']
+    assert loaded['research_watchlist']['assessed'] == loaded['research_watchlist']['evaluated'] == 1
+    assert 'negative MACD histogram' not in json.dumps(d)+json.dumps(mail)
+    assert 'href="'+source+'"' in mail['attachments'][0]['content']
+    assert calls == [['X0', 'X1']]
+
+
+def test_public_grounding_preserves_validated_links_but_scrubs_unsafe_urls_and_prose(monkeypatch):
+    monkeypatch.setenv('SOURCE_TEST_SECRET', 'different-format-private-value')
+    value = {'source_url': 'https://issuer.example/news/update',
+             'evidence_metadata': {'canonical_url': 'https://issuer.example/news/update'},
+             'scope': 'different-format-private-value https://arbitrary.example/',
+             'unsafe': {'source_url': 'https://issuer.example/?api_key=bad'},
+             'private': {'canonical_url': 'https://issuer.example/different-format-private-value'}}
+    clean = factors._safe_grounding(value)
+    assert clean['source_url'] == value['source_url']
+    assert clean['evidence_metadata']['canonical_url'] == value['source_url']
+    assert clean['unsafe']['source_url'] == '[INVALID PUBLIC SOURCE]'
+    assert clean['private']['canonical_url'] == '[INVALID PUBLIC SOURCE]'
+    assert 'different-format-private-value' not in json.dumps(clean)
+    assert 'arbitrary.example' not in json.dumps(clean)

@@ -127,6 +127,27 @@ def _safe_evidence(checked):
     return checked
 
 
+def _safe_grounding(value, *, field=None):
+    """Public projection only, after deterministic private-receipt validation."""
+    if isinstance(value, str):
+        if field in ('source_url', 'canonical_url'):
+            # A provenance link is not arbitrary prose. Validate it separately
+            # so the generic diagnostic URL scrubber cannot destroy every
+            # evidence citation in the attachment.
+            from adapters.deepseek_adapter import _source
+            from factor_inputs import _url
+            try:
+                return _url(_source(value))
+            except ValueError:
+                return '[INVALID PUBLIC SOURCE]'
+        return safe_detail(value, 2000)
+    if isinstance(value, list):
+        return [_safe_grounding(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _safe_grounding(item, field=key) for key, item in value.items()}
+    return value
+
+
 def unavailable(reason, *, requested=0):
     result = {'status': 'UNAVAILABLE', 'reason': safe_detail(reason),
             'requested': requested, 'covered': 0, 'assessments': [],
@@ -318,11 +339,13 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
         if not set(tickers) <= set(by_t):
             raise SnapshotValidationError('DeepSeek output outside validated candidate pool')
         assessments = parse_assessments(json.dumps({'assessments': saved}), tickers) if saved else []
+        from grounded_records import validate_snapshot
+        grounding = validate_snapshot(obj)
         input_count = len(inputs.get('candidates', []))
         source_requested = obj.get('source_requested', input_count)
         if type(source_requested) is not int or not input_count <= source_requested <= P.MAX_CANDIDATES:
             raise SnapshotValidationError('snapshot coverage differs from saved records')
-        if obj.get('coverage_version') == 1 and (obj.get('requested') != input_count
+        if (obj.get('requested') != input_count
                 or obj.get('covered') != len(assessments)):
             raise SnapshotValidationError('snapshot coverage differs from saved records')
         eligible, submitted = obj.get('eligible'), obj.get('submitted')
@@ -371,6 +394,8 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
                 'prepared_at': prepared.isoformat(), 'model': model,
                 'status': status, 'assessments': assessments, 'inputs': _safe_evidence(checked),
                 'batches': batches,
+                'grounding': _safe_grounding(grounding),
+                'grounding_registration': P.EVIDENCE_REGISTRATION,
                 'candidate_gaps': candidate_gaps, 'gaps': reported_gaps,
                 'candidate_diagnostics': {t: sorted(set(notes)) for t, notes in candidate_diagnostics.items()},
                 'input_sha256': obj['input_sha256'],
@@ -395,7 +420,8 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
         return result
     except Exception as exc:
         # Never echo library timestamp/JSON exceptions or raw stored text.
-        detail = str(exc) if isinstance(exc, SnapshotValidationError) else type(exc).__name__
+        from grounded_records import GroundingValidationError
+        detail = str(exc) if isinstance(exc, (SnapshotValidationError, GroundingValidationError)) else type(exc).__name__
         return unavailable('DeepSeek snapshot rejected: '+safe_detail(detail))
 
 

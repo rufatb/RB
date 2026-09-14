@@ -170,7 +170,7 @@ def test_macro_keeps_actual_provider_timestamp_and_never_authenticates(monkeypat
     monkeypatch.setattr(requests, 'get', get)
     result = S._macro({'correlated': {'crude': 'CL=F', 'cadusd': 'CADUSD=X',
                                     'tsx': '^GSPTSE', 'vix': '^VIX'}}, NOW)
-    assert not result['gaps']
+    assert all('macro change unavailable' in gap for gap in result['gaps'])
     for value in result['values'].values():
         assert S.stamp(value['as_of']) == S.stamp('2026-09-10T16:00:01-04:00')
         assert '/v8/finance/chart/' in value['source_url']
@@ -202,7 +202,7 @@ def test_macro_observation_after_request_start_uses_actual_retrieval_clock(monke
     monkeypatch.setattr(requests, 'get', get)
     cfg = {'correlated': {'crude': 'CL=F', 'cadusd': 'CADUSD=X', 'tsx': '^GSPTSE', 'vix': '^VIX'}}
     result = S._macro(cfg, NOW, clock=lambda: later)
-    assert not result['gaps']
+    assert all('macro change unavailable' in gap for gap in result['gaps'])
     assert all(S.stamp(v['as_of']) == later for v in result['values'].values())
     rejected = S._macro(cfg, NOW, clock=lambda: NOW)
     assert all(v is None for v in rejected['values'].values())

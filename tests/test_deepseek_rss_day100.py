@@ -90,7 +90,8 @@ def test_empty_but_valid_ticker_feed_remains_no_evidence_not_fabricated_no_edge(
 
 
 def test_item_cap_and_body_size_are_bounded(monkeypatch):
-    mock_rss(monkeypatch, feed([item(title='Issuer update '+str(i)) for i in range(10)]))
+    mock_rss(monkeypatch, feed([item(title='Issuer update '+str(i),
+                                    link='https://issuer.example/news/'+str(i)) for i in range(10)]))
     result = S._news('RY.TO', NOW)
     assert len(result['headlines']) == S.P.MAX_NEWS_PER_CANDIDATE
     assert result['unusable_rows'] == 2

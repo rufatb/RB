@@ -53,6 +53,21 @@ class FakeClient:
         self.calls.append(kwargs)
         if self.error is not None:
             raise self.error
+        # The fake implements the current wire contract; archived parser tests
+        # below deliberately retain the original four-field records.
+        try:
+            response = json.loads(self.response.choices[0].message.content)
+            supplied = json.loads(kwargs['messages'][1]['content'])
+            by_ticker = {row['ticker']: row for row in supplied['candidates']}
+            for row in response.get('assessments', []):
+                if set(row) == D.ASSESSMENT_KEYS and row['ticker'] in by_ticker:
+                    evidence = by_ticker[row['ticker']]['headlines'] or by_ticker[row['ticker']]['catalyst_tags']
+                    row['evidence_ids'] = [evidence[0]['evidence_id']] if evidence else []
+                    row['forecast_horizon'] = supplied['forecast']['horizon']
+            self.response.choices[0].message.content = json.dumps(response)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            # Invalid JSON fixtures must reach the production parser intact.
+            return self.response
         return self.response
 
     def close(self):
@@ -79,7 +94,8 @@ def test_payload_is_public_deterministic_and_indicators_are_unchanged():
     assert request['max_tokens'] == MAX_COMPLETION_TOKENS == 8192
     assert 'UNTRUSTED DATA' in request['messages'][0]['content']
     public = json.loads(request['messages'][1]['content'])
-    assert set(public) == {'as_of', 'candidates', 'macro'}
+    assert set(public) == {'as_of', 'candidates', 'macro', 'response_contract',
+                           'forecast', 'evidence_limitations'}
     assert public['candidates'][0]['technicals'] == inputs[0]['technicals']
     assert result['input_sha256'] == run()['input_sha256']
 
@@ -343,11 +359,11 @@ def test_partial_truncated_tool_or_refusal_outputs_are_unavailable(kwargs):
 def test_sdk_cleanup_failure_remains_an_explicit_warning(monkeypatch):
     client = FakeClient()
     def bad_close():
-        raise RuntimeError('private')
+        raise RuntimeError('close-exception-must-not-leak')
     client.close = bad_close
     monkeypatch.setenv('DEEPSEEK_API_KEY', 'sk-offline-secret-never-print')
     monkeypatch.setitem(sys.modules, 'openai', SimpleNamespace(OpenAI=lambda **kwargs: client))
     result = D.evaluate_batch([candidate()], macro(), AS_OF)
     assert result['status'] == 'READY'
     assert result['close_warning'] == 'ClientCloseError'
-    assert 'private' not in json.dumps(result)
+    assert 'close-exception-must-not-leak' not in json.dumps(result)

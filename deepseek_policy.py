@@ -6,7 +6,8 @@ at import. Trading thresholds reuse report.min_sided_p and dashboard's clamp.
 
 BASE_URL = 'https://api.deepseek.com'
 DEFAULT_MODEL = 'deepseek-chat'
-PROMPT_VERSION = 'day99-v1'
+PROMPT_VERSION = 'day102-grounded-v1'
+EVIDENCE_REGISTRATION = 'PREREGISTER_day102_evidence_quality.md'
 SCHEMA_VERSION = 1
 MAX_CANDIDATES = 500
 BATCH_SIZE = 25

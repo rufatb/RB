@@ -10,6 +10,8 @@ import email_render
 from report_store import encode
 from test_deepseek_factors import NOW, assessment, save, snapshot
 from test_deepseek_render import report
+from grounded_helpers import snapshot_receipt
+from grounded_records import merge_grounding
 
 
 def render_factor(snapshot, monkeypatch):
@@ -33,6 +35,7 @@ def test_zero_assessments_keeps_requested_pool_and_does_not_score_threshold(tmp_
     obj = snapshot(tuple(f'NAME{i:02}.TO' for i in range(21)))
     obj.update(status='UNAVAILABLE', assessments=[], batches=[], covered=0,
                gaps=['Public input acquisition timed out; no model request was made.'])
+    obj.update(private_grounding_receipts=[], grounding=merge_grounding([]))
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
     watch = loaded['research_watchlist']
@@ -49,6 +52,7 @@ def test_failed_public_evidence_count_differs_from_no_model_response(tmp_path, m
     obj.update(status='PARTIAL', covered=2,
                assessments=[assessment('A.TO','BULL',.7),assessment('B.TO','BEAR',-.4)])
     obj['candidate_gaps']['C.TO'] = ['MODEL_ASSESSMENT_UNAVAILABLE']
+    snapshot_receipt(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
     watch = loaded['research_watchlist']
@@ -67,6 +71,7 @@ def test_candidate_only_failure_reaches_concise_view_without_fake_no_edge(tmp_pa
     obj['inputs']['candidates'][0]['technicals']['rsi'] = None
     from test_deepseek_factors import rehash
     rehash(obj)
+    snapshot_receipt(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
     assert loaded['gaps'] == []
@@ -90,6 +95,7 @@ def test_unknown_input_coverage_is_not_relabelled_zero_or_complete():
 def test_evaluated_no_edge_has_scored_denominator_not_unavailable(tmp_path):
     obj = snapshot(('A.TO', 'B.TO'))
     obj['assessments'] = [assessment('A.TO','NO_EDGE',0.),assessment('B.TO','BULL',.4)]
+    snapshot_receipt(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
     before = copy.deepcopy(loaded)

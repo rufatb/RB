@@ -64,6 +64,7 @@ def probe_real(state_dir, input_path, *, evaluator=evaluate_batch, clock=None):
     directory = Path(state_dir)/'diagnostics'/('deepseek-real-'+now.strftime('%Y%m%dT%H%M%S%f'))
     directory.mkdir(parents=True, exist_ok=False)
     input_hash = hashlib.sha256(encode(clean).encode()).hexdigest()
+    outcome_gaps = {ticker: list(notes) for ticker, notes in clean['candidate_gaps'].items()}
     write_atomic(directory/'inputs.json', clean)
     write_atomic(directory/'attempt.json', {'kind': 'REAL_INPUT_API_DIAGNOSTIC',
         'started_at': now.isoformat(), 'status': 'STARTED', 'input_sha256': input_hash,
@@ -87,9 +88,13 @@ def probe_real(state_dir, input_path, *, evaluator=evaluate_batch, clock=None):
                         'errorcode': 'BOUNDED_REQUEST_FAILURE', 'details': got.get('error'), 'model': model}
                 else:
                     result = request()
-                if result.get('status') == 'READY':
-                    result['assessments'] = parse_assessments(
-                        encode({'assessments': result['assessments']}), [row['ticker'] for row in candidates])
+                if result.get('status') in ('READY', 'PARTIAL') or result.get('grounding'):
+                    from grounded_records import validate_result
+                    rows, grounding, private = validate_result(result, candidates, clean['macro'], clean['as_of'])
+                    result['assessments'] = rows
+                    for ticker, issues in grounding['excluded'].items():
+                        outcome_gaps.setdefault(ticker, []).extend('GROUNDING:'+code for code in issues)
+                    write_atomic(directory/'private-grounding-receipt.json', private)
                 else:
                     result['assessments'] = []
         except Exception as exc:
@@ -104,7 +109,8 @@ def probe_real(state_dir, input_path, *, evaluator=evaluate_batch, clock=None):
         'status': status, 'api_status': result.get('status'),
         'requested': len(raw['candidates']), 'eligible': len(candidates), 'covered': len(rows),
         'inputs': clean, 'input_sha256': input_hash,
-        'assessments': rows, 'candidate_gaps': clean['candidate_gaps'], 'gaps': clean['gaps'],
+        'assessments': rows, 'candidate_gaps': outcome_gaps, 'gaps': clean['gaps'],
+        'grounding': result.get('grounding'),
         'adopted': False, 'morning_snapshot': False, 'prediction_evidence': False,
         'api_receipt': {k: safe_detail(result[k]) if isinstance(result.get(k),str) else
             None if result.get(k) is None else 'INVALID_METADATA' for k in ('status', 'model', 'response_model', 'inference_mode',
@@ -134,14 +140,20 @@ def probe(state_dir, *, evaluator=evaluate_batch):
     model = load_private_model(state_dir)
     started = time.monotonic()
     result = evaluator(rows, macro, now.isoformat(), model=model)
+    if result.get('status') in ('READY', 'PARTIAL') or result.get('grounding'):
+        from grounded_records import validate_result
+        validate_result(result, rows, macro, now.isoformat())
     receipt = {'kind': 'SYNTHETIC_API_SCHEMA_PROBE_NOT_MARKET_DATA',
                'checked_at': now.isoformat(), 'elapsed_seconds': round(time.monotonic()-started, 3),
                'requested': 25, 'covered': len(result.get('assessments', [])),
                **{k: result.get(k) for k in ('status', 'model', 'response_model', 'inference_mode',
                     'request_id', 'response_id', 'input_sha256', 'errorcode', 'details')},
-               'prediction_evidence': False}
+               'prediction_evidence': False, 'prompt_version': P.PROMPT_VERSION,
+               'grounding_excluded': len((result.get('grounding') or {}).get('excluded', {}))}
     path = Path(state_dir)/'diagnostics'/('deepseek-contract-'+now.strftime('%Y%m%dT%H%M%S%f')+'.json')
     write_atomic(path, receipt)
+    if result.get('private_grounding_receipt'):
+        write_atomic(path.with_suffix('.private.json'), result)
     return receipt
 
 

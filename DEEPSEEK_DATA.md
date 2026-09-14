@@ -207,3 +207,42 @@ has been restored. It requires existing valid reports.sqlite3 and never
 initializes a replacement database. Different credentials/settings or receipt
 conflicts remain visible; newer receipts are retained. Do not print secrets or
 put them in GitHub, email, task prompts or authenticated URLs.
+
+## Day102 evidence grounding
+
+New requests use `day102-grounded-v1` and the explicitly configured model.
+The response adds `evidence_ids` and
+`forecast_horizon: remaining_session_to_1559_ET` to the original four fields.
+Python supplies dated technical values, units and signs; the model may evaluate
+unstructured context but may not write technical assertions. Display rationales
+are a deterministic projection of accepted evidence references and Python facts.
+The original four-field parser remains available for archived records.
+
+`factor_grounding.py` assigns per-ticker evidence IDs and applies finite protocol
+checks. Technical prose, wrong horizons and unsupported references exclude the
+affected assessment. A directional opinion supported only by explicit investment
+commentary or a multi-year headline is excluded. Other valid names in the batch
+survive, and semantic exclusions do not become a provider outage. Syntax or
+identity failures still invalidate the envelope. This is not general semantic
+truth verification: unknown issuer role, novelty and materiality remain unknown.
+
+`factor_news.py` deduplicates URLs/titles before the existing eight-headline cap.
+`factor_macro.py` adds a measured change only with an actual dated daily-bar
+reference and explicit comparison scope. A missing reference leaves the level
+available but the change unavailable; a range-start `chartPreviousClose` is never
+substituted. Previous observed daily bars are not certified immediately preceding
+exchange-session closes or executable quotes.
+
+The sealed snapshot retains `private_grounding_receipts`, including bounded raw
+provider rows. `grounded_records.py` reconstructs each request and projection
+before preparation or loading accepts it. Request hashes, evidence references,
+Python facts and exclusion codes reach the full attachment; original model prose
+stays in private state. Preserve these receipts when backing up the canonical
+archive. Never copy private receipts or credentials into GitHub or email.
+
+The concise view and attachment remain pure views of one Digest. No news, model
+or price acquisition was added to rendering or the report critical path. New
+preparation uses this contract; immutable older publications are not re-rendered
+or replaced automatically. See `AUDIT_day102_evidence_quality.md` and
+`PREREGISTER_day102_evidence_quality.md`. Baseline selection and the 0.50 research
+threshold are unchanged; grounding is not evidence of profitable predictions.
