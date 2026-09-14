@@ -158,16 +158,20 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     # Position marks and biotech evidence must survive an intraday timeout.
     section_status = {}
     raw_live = None
+    quote_acquisition_failure = None
     if not no_net and not injected and clock['status'] != 'CLOSED':
         from bounded import acquire
         tickers = set(cfg.get('scan',{}).get('universe',[])) | {'XIU.TO'}
         tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
-        tasks = {'equity_quotes': (lambda: market_client().get(sorted(tickers)), 10)}
+        tasks = {'equity_quotes': (lambda: quotes_mod.acquire_equities_raw(
+            market_client(), sorted(tickers), budget_seconds=8), 10)}
         if not recorded_today and not ledger_status['selection_blocked'] and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
             tasks['intraday'] = (lambda: r945.run(cfg,require_cache=publish), 22)
         section_status = acquire(tasks)
         raw_live = section_status['equity_quotes']['value'] or {}
+        if section_status['equity_quotes']['error']:
+            quote_acquisition_failure = section_status['equity_quotes']
         for name, result in section_status.items():
             if result['error']:
                 last_stage = (result.get('progress') or [{}])[-1].get('stage', 'not recorded')
@@ -228,8 +232,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                     if (cfg.get('execution') or {}).get('corroborate_bbo')
                     else None)
             quotes = quotes_mod.validate_equities(raw,tickers,now,corroborate=corr)
+            if quote_acquisition_failure:
+                for ticker in tickers:
+                    if not isinstance(raw, Mapping) or ticker not in raw:
+                        quotes[ticker] = quotes_mod.section_quote_failure(
+                            ticker, quote_acquisition_failure,
+                            currency='CAD' if ticker.endswith('.TO') else 'USD')
             for ticker, quote in quotes.items():
                 if quote.get('error_class'):
+                    # One batch outage already has a section error. Keep its
+                    # cause on every quote, without repeating the same block
+                    # once per symbol in the digest's diagnostic summary.
+                    if quote_acquisition_failure and (not isinstance(raw, Mapping) or ticker not in raw):
+                        continue
                     errors.append({'layer':'equity_quotes','error':safe_detail(quote['error_class'],60),
                                    'detail':safe_detail(f"{ticker}: {quote.get('reason','quote unavailable')}")})
         except Exception as exc:

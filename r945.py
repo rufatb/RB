@@ -700,8 +700,9 @@ def pair_of_day(longs: list, shorts: list, groups: dict = None,
     return {"long": leg(longs, "LONG", shorts), "short": leg(shorts, "SHORT", longs)}
 
 
-def run(cfg, workers=8, *, require_cache=False):
+def run(cfg, workers=None, *, require_cache=False):
     import os
+    import time
     from bounded import progress
     progress('intraday_started')
     if require_cache and not os.getenv('RB_INTRADAY_CACHE_DIR'):
@@ -737,12 +738,19 @@ def run(cfg, workers=8, *, require_cache=False):
         src_note = f"configured source '{src}' unusable ({e}); fell back to yahoo_direct"
         src = "yahoo_direct"
     uni = cfg.get("scan", {}).get("universe") or []
-    # Three waves of eight names must fit inside the enclosing 22s worker.
-    # Cached history leaves only small same-day responses on the network path.
-    # Two hosts at 2s each leave room for parsing and unchanged calibration.
-    # This is a socket timeout, not an SLA; the outer process remains killable.
-    if os.getenv('RB_INTRADAY_CACHE_DIR') and isinstance(a, YahooDirectAdapter):
-        a.timeout = min(a.timeout, 2)
+    cached_yahoo = bool(os.getenv('RB_INTRADAY_CACHE_DIR')) and isinstance(a, YahooDirectAdapter)
+    # Measured host responses exceed the former 2s cutoff even when healthy.
+    # A bounded single wave avoids making half the universe wait for earlier
+    # sockets to time out. Each symbol gets 16s INCLUDING failover, all chart
+    # work shares 18s, and the
+    # enclosing process still enforces 22s including unchanged calibration.
+    # These are acquisition limits, not model parameters or a delivery SLA.
+    if cached_yahoo:
+        a.timeout = min(a.timeout, 14)
+        a.chart_budget_seconds = 16
+        a.chart_deadline = time.monotonic() + 18
+    if workers is None:
+        workers = max(1, min(24, len(uni))) if cached_yahoo else 8
     progress('fetch_started', count=len(uni))
     min_p = (cfg.get("report") or {}).get("min_sided_p", 0.55)
     fetch_errors: dict = {}
@@ -897,7 +905,7 @@ def run(cfg, workers=8, *, require_cache=False):
                                   (cfg.get("scan") or {}).get("min_coverage_frac", 0.8))
     if not cov_ok and not too_early:
         return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
-                "longs": [], "shorts": [], "excluded": [], "pair": None,
+                "longs": [], "shorts": [], "excluded": excluded, "pair": None,
                 "min_p": min_p, "too_early": False, "coverage_fail": cov_msg,
                 "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
                 "training_history": history_diagnostics}
@@ -1196,7 +1204,8 @@ def main(argv=None):
     _make_output_safe()
     p = argparse.ArgumentParser(description="9:45-to-close prediction engine")
     p.add_argument("--config", default="config.yaml")
-    p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--workers", type=int, default=None,
+                   help="fetch workers (default: up to 24 with prepared Yahoo cache, otherwise 8)")
     p.add_argument("--book", action="store_true",
                    help="once-daily workflow: exact share counts, enter at market now, flat by 3:59")
     p.add_argument("--html", metavar="PATH",
