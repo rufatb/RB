@@ -229,7 +229,12 @@ def load_prepared(state_dir, now, path=None):
         unsigned = {key: value for key, value in obj.items() if key != 'snapshot_sha256'}
         if hashlib.sha256(encode(unsigned).encode()).hexdigest() != seal:
             raise SnapshotValidationError('snapshot integrity mismatch')
-        model = _model(obj['model'])
+        # Preparation can fail before an account model is selected. Such a
+        # sealed failure must retain its actual cause, without inventing a
+        # model or granting an exception to any provider assessment/receipt.
+        model_absent_failure = (obj['model'] is None and obj.get('status') == 'UNAVAILABLE'
+                                and obj.get('assessments') == [] and obj.get('batches') == [])
+        model = None if model_absent_failure else _model(obj['model'])
         batches = _batches(obj.get('batches', []), model)
         prepared, as_of = stamp(obj['prepared_at']), stamp(obj['as_of'])
         if (type(obj.get('schema_version')) is not int
@@ -289,17 +294,23 @@ def load_prepared(state_dir, now, path=None):
                     and len(assessments) == requested
                     and checked['coverage']['complete'] == requested)
         status = 'READY' if complete else 'PARTIAL' if assessments else 'UNAVAILABLE'
+        reported_gaps = (list(dict.fromkeys(_notes(obj.get('gaps', []))+gaps))
+                         if model_absent_failure else sorted(set(gaps)))
         result = {'schema_version': P.SCHEMA_VERSION, 'prompt_version': P.PROMPT_VERSION,
                 'session': obj['session'], 'as_of': as_of.isoformat(),
                 'prepared_at': prepared.isoformat(), 'model': model,
                 'status': status, 'assessments': assessments, 'inputs': _safe_evidence(checked),
                 'batches': batches,
-                'candidate_gaps': candidate_gaps, 'gaps': sorted(set(gaps)),
+                'candidate_gaps': candidate_gaps, 'gaps': reported_gaps,
                 'candidate_diagnostics': {t: sorted(set(notes)) for t, notes in candidate_diagnostics.items()},
                 'input_sha256': obj['input_sha256'],
                 'snapshot_sha256': seal,
                 'requested': requested, 'covered': len(assessments), 'adopted': False,
                 'registration': P.DESIGN_PROVENANCE['registration']}
+        if model_absent_failure:
+            reasons = _notes(obj.get('gaps', []))
+            result['reason'] = (reasons[0] if reasons else
+                                'No model was selected and no assessment was produced.')
         result['research_watchlist'] = research_watchlist(result)
         return result
     except Exception as exc:

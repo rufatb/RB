@@ -211,6 +211,40 @@ def _nonstandard_number(value):
     raise ResponseSchemaError()
 
 
+def _multiple_sentences(text):
+    """Bounded style check that does not mistake common abbreviations for stops.
+
+    This is deliberately a small punctuation heuristic, not a semantic grammar
+    or a reason to rewrite provider output. Terminal abbreviations followed by
+    a capitalized sentence opener still fail. Ambiguous proper-name prose may
+    require the provider to use a clearer one-sentence formulation.
+    """
+    abbreviations = {'u.s.', 'u.k.', 'inc.', 'ltd.', 'corp.', 'e.g.', 'i.e.', 'vs.'}
+    connectors = {'e.g.', 'i.e.', 'vs.'}
+    for boundary in re.finditer(r'[.!?]\s+\S', text):
+        if text[boundary.start()] != '.':
+            return True
+        before = text[:boundary.start()+1]
+        token = re.search(r'(?<![A-Za-z.])([A-Za-z][A-Za-z.]*)\.$', before)
+        if token is None:
+            return True
+        abbreviation = token.group(0).lower()
+        if abbreviation not in abbreviations:
+            return True
+        after = text[boundary.end()-1:].lstrip('"\'“‘([')
+        following = re.match(r'[A-Za-z0-9]+', after)
+        word = following.group(0) if following else ''
+        # A lowercase continuation, number or acronym is not a fresh sentence
+        # opener. Explicit connectors also remain within their sentence.
+        starts_sentence = (not word or not (word[0].islower() or word[0].isdigit()
+                                            or word.isupper()))
+        starts_with_initialism = (abbreviation in ('u.s.', 'u.k.')
+                                  and not before[:token.start()].strip())
+        if starts_sentence and abbreviation not in connectors and not starts_with_initialism:
+            return True
+    return False
+
+
 def parse_assessments(content, tickers):
     """Strict JSON parsing: missing, duplicate, invented or partial rows fail."""
     if (not isinstance(tickers, list) or not 1 <= len(tickers) <= MAX_CANDIDATES
@@ -245,7 +279,7 @@ def parse_assessments(content, tickers):
             rationale = _text(row['factor_rationale'], MAX_RATIONALE_CHARS)
         except InputValidationError:
             raise ResponseSchemaError() from None
-        if not -1 <= score <= 1 or re.search(r'[.!?]\s+\S', rationale):
+        if not -1 <= score <= 1 or _multiple_sentences(rationale):
             raise ResponseSchemaError()
         by_ticker[ticker] = {**row, 'sentiment_score': score, 'factor_rationale': rationale}
     if set(by_ticker) != set(tickers):
