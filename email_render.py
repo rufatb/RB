@@ -109,6 +109,9 @@ def text(d):
               f"Net proxy {fmt(rec.get('net_rate'),'.1%')}, mean {fmt(rec.get('net_mean'),'+.3f')}% "
               f"on {rec['net_n']} legs, {rec['net_unpriced']} unpriced. "
               f"MDE80 {fmt(rate.get('mde80_pp'))} percentage points; scores are not calibrated win probabilities.")
+    gap = full.record_gap_line(rec)
+    if gap:
+        lines.append(gap)
     lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
                  f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
     errors=d.get('errors',[])

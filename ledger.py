@@ -119,6 +119,17 @@ def load(path: str = LEDGER) -> list:
         return list(csv.DictReader(f))
 
 
+def load_prints(path: str = PRINTS) -> list:
+    """Universe-print rows — the trace of every day that was EVALUATED.
+
+    Separate from the ledger on purpose: a day can run correctly and pick
+    nothing. Prints say the run happened; ledger rows say it chose."""
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return list(csv.DictReader(f))
+
+
 def save(rows: list, path: str = LEDGER) -> None:
     # restval="" so rows written before a column existed survive untouched
     # rather than raising — the ledger is append-and-fill, never rewritten.
@@ -190,6 +201,77 @@ def missing_sessions(rows: list, today: dt.date, is_trading_day_fn,
             gaps.append(d.isoformat())
         d += dt.timedelta(days=1)
     return gaps
+
+
+def record_gaps(rows: list, today: dt.date, is_trading_day_fn,
+                prints: list | None = None, lookback: int = 45) -> dict:
+    """Sessions the RECORD has nothing for, anchored on TODAY.
+
+    Ported from day-95b (`kimi/day95-record-integrity`, C3). The defect it
+    fixes is real and reproducible on this very ledger:
+
+        >>> missing_sessions(rows, date(2026,9,14), is_trading_day)
+        ['2026-09-09', '2026-09-10', '2026-09-11']
+        >>> missing_sessions(rows + [{'date': '2026-09-11'}], ...)
+        []
+
+    `missing_sessions` walks FORWARD from `max(dates)` — the ledger's last
+    entry — so the moment any later session publishes, the anchor jumps past
+    the hole and an interior gap disappears **exactly when the record starts
+    looking healthy again**. Four sessions went missing here before anything
+    said so, and this is why nothing would have said so afterwards either.
+
+    This walks BACKWARD from today across `lookback` days (never before the
+    record's own first date), so interior gaps stay visible until they are
+    explained. Returns two classes, because they are not the same event:
+
+    - missing:   trading days with neither ledger rows NOR universe prints.
+                 Either the run never happened, or it happened and recorded
+                 nothing. From the record's side those are indistinguishable
+                 (day-42) — say so rather than guessing which.
+    - zero_pick: trading days WITH prints but no pick rows. The run happened
+                 and nothing qualified. That is a result, not a gap.
+
+    Pure: the calendar is injected, nothing is read from disk, nothing is
+    written. `missing_sessions` is retained — it answers the different
+    question of what has gone unrecorded since the record's own end."""
+    dates = {r["date"] for r in rows if r.get("date")}
+    print_dates = {r["date"] for r in (prints or []) if r.get("date")}
+    if not dates and not print_dates:
+        return {"missing": [], "zero_pick": []}
+    if lookback < 1:
+        raise ValueError("lookback must be positive")
+    first = dt.date.fromisoformat(min(dates | print_dates))
+    day = max(today - dt.timedelta(days=lookback), first)
+    missing, zero_pick = [], []
+    while day < today:
+        if is_trading_day_fn(day):
+            iso = day.isoformat()
+            if iso not in dates and iso not in print_dates:
+                missing.append(iso)
+            elif iso not in dates:
+                zero_pick.append(iso)
+        day += dt.timedelta(days=1)
+    return {"missing": missing, "zero_pick": zero_pick}
+
+
+def record_gap_line(gaps: dict) -> str:
+    """One line for the email. Empty when the record has no hole in it.
+
+    A zero-pick day is reported separately and WITHOUT alarm: it is a run that
+    happened and declined, which is the system working."""
+    if not gaps or not gaps.get("missing"):
+        if gaps and gaps.get("zero_pick"):
+            days = gaps["zero_pick"]
+            return (f"Record complete; {len(days)} evaluated session(s) picked nothing "
+                    f"({', '.join(days[:3])}{'…' if len(days) > 3 else ''}) — a result, not a gap.")
+        return ""
+    days = gaps["missing"]
+    return ("⚠ RECORD HAS A HOLE: no ledger rows and no universe prints for "
+            f"{len(days)} trading day(s) — {', '.join(days[:5])}"
+            f"{'…' if len(days) > 5 else ''}. Either those runs never happened or "
+            "they recorded nothing; from the record's side those are the same. "
+            "The hit rates above are computed on what IS recorded.")
 
 
 def gap_line(gaps: list) -> str:

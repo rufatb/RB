@@ -96,14 +96,27 @@ def _deepseek_detail(intra):
     return lines
 
 
+def record_gap_line(rec):
+    """The record's own holes, rendered from the frozen computation.
+
+    Printed BESIDE the hit rate, not in a diagnostics appendix: a rate computed
+    over a record with four missing sessions is a rate over what survived, and
+    the reader cannot discount it without being told."""
+    import ledger
+    gaps = (rec or {}).get('record_gaps')
+    return ledger.record_gap_line(gaps) if gaps else ''
+
+
 def _historical_record(rec):
     if rec.get('status')=='UNAVAILABLE':
         return ['Historical record UNAVAILABLE; hit rates and returns are unknown.']
     prefix=[f"Historical record PARTIAL: {rec.get('invalid_rows',0)} invalid source rows excluded; source records retained."] if rec.get('status')=='PARTIAL' else []
+    gap=record_gap_line(rec)
     return prefix+[f"Historical baseline: {rec['hits']}/{rec['n']} gross hits ({fmt(rec['rate'],'.1%')}); "
                    f"mean capture {fmt(rec['mean'],'+.3f')}%.",
                    f"Net of stored spread: {fmt(rec.get('net_rate'),'.1%')} hits; "
-                   f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; unpriced {rec['net_unpriced']}."]
+                   f"mean {fmt(rec['net_mean'],'+.3f')}% on {rec['net_n']} legs; unpriced {rec['net_unpriced']}."]+(
+                   [gap] if gap else [])
 
 
 def _day_shape(rec, intra):

@@ -153,6 +153,18 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     record['label'] = 'Historical 09:45-bar to official-close PROXY; not exact 09:46–15:59 fills'
     record['benchmark_label'] = 'Historical universe median is not an index; exact index record starts with this version'
     record['future_rows_excluded'] = sum(r['date'] > now.date().isoformat() for r in rows)
+    # Day-95b (ported): a hole in the record must be visible IN THE EMAIL, beside
+    # the hit rate it silently distorts. Anchored on today and print-aware, so an
+    # interior gap cannot vanish the moment a later session publishes. Never
+    # blocks — this protects the record, not the bet (ledger.missing_sessions).
+    try:
+        from dashboard import is_trading_day
+        record['record_gaps'] = ledger.record_gaps(
+            past_rows, now.date(), is_trading_day,
+            services.get('prints', ledger.load_prints)())
+    except Exception as exc:
+        error('record_gaps', exc)
+        record['record_gaps'] = None
     prows, position_status = _position_rows(services.get('positions',positions.load), now, errors)
     # Fetch the configured universe once, concurrently with model acquisition.
     # Position marks and biotech evidence must survive an intraday timeout.

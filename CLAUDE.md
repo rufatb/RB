@@ -1,5 +1,30 @@
 # Working notes for this repo
 
+## Day100 — a hole in the record must stay visible
+
+Read `AUDIT_day100_day95b_review.md`. `ledger.missing_sessions` anchors on the
+ledger's LAST date and walks forward, so an interior gap disappears the moment
+a later session publishes — verified on our own ledger: three missing days
+become `[]` when one row for 09-11 is added. `ledger.record_gaps` anchors on
+TODAY, walks backward, and is print-aware, so it separates *the run never
+happened* from *the run happened and picked nothing*. Only the first is a gap.
+It prints **beside the hit rate in the email**, because a rate over a holed
+record is a rate over what survived. It never blocks: this protects the RECORD,
+not the bet.
+
+`kimi/day95-record-integrity` is NOT mergeable — its base predates PRs #5–#12,
+so it would resurrect `adapters.py` and delete thirteen CLAUDE.md sections. Its
+diagnosis was right and is ported. Its four-minute publication window is
+**refused**: it sets `eligible=True` for 09:47–09:50, which licenses a fresh
+entry claim at prices the board does not show and contradicts day-99's
+`exact_spread`. Do not loosen an execution contract to make a missed run look
+on time.
+
+DeepSeek credentials are live and verified: the account carries `deepseek-flash`
+and `deepseek-v4-pro` and **not** `deepseek-chat`, so the explicit model setting
+is required. A probe verified credentials, model access and JSON handling only —
+not coverage, not accuracy.
+
 ## Day99 DeepSeek — staged, shadow, and it must never cost the morning
 
 A shadow layer with no adopted output may not block publication. The day-99
