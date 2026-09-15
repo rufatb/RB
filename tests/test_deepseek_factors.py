@@ -43,8 +43,9 @@ def public_inputs(tickers=('TRP.TO', 'ENB.TO')):
 
 
 def snapshot(tickers=('TRP.TO', 'ENB.TO')):
+    from grounded_helpers import snapshot_receipt
     inputs = validate_payload(public_inputs(tickers), PREP)
-    return {'schema_version': P.SCHEMA_VERSION, 'prompt_version': P.PROMPT_VERSION,
+    return snapshot_receipt({'schema_version': P.SCHEMA_VERSION, 'prompt_version': P.PROMPT_VERSION,
             'session': PREP.date().isoformat(), 'as_of': PREP.isoformat(),
             'prepared_at': PREP.isoformat(), 'model': P.DEFAULT_MODEL,
             'status': 'READY', 'adopted': False, 'inputs': inputs,
@@ -55,7 +56,7 @@ def snapshot(tickers=('TRP.TO', 'ENB.TO')):
             'batches': [{'status': 'READY', 'model': P.DEFAULT_MODEL, 'request_id': 'req_123',
                          'prompt_version': P.PROMPT_VERSION, 'schema_version': P.SCHEMA_VERSION,
                          'input_sha256': 'b'*64}],
-            'registration': 'PREREGISTER_day99_deepseek.md'}
+            'registration': 'PREREGISTER_day99_deepseek.md'})
 
 
 def save(root, obj):
@@ -104,7 +105,9 @@ def test_partial_success_preserves_assessment_and_missing_candidate_gap(tmp_path
     obj['assessments'] = obj['assessments'][:1]
     obj['gaps'] = ['Second batch timed out.']
     obj['candidate_gaps']['ENB.TO'] = ['TIMEOUT']
-    obj['covered'] = 999
+    obj['covered'] = 1
+    from grounded_helpers import snapshot_receipt
+    snapshot_receipt(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
     assert loaded['status'] == 'PARTIAL'
@@ -125,11 +128,13 @@ def test_candidate_data_gap_cannot_be_cleared_by_forged_ready_label(tmp_path):
     rehash(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)
-    assert loaded['status'] == 'PARTIAL'
-    assert 'NO_CURRENT_CATALYST_EVIDENCE' in loaded['candidate_gaps']['ENB.TO']
+    # Changing saved model inputs cannot retain the old request/projection
+    # receipt merely by recomputing the outer JSON seal.
+    assert loaded['status'] == 'UNAVAILABLE'
+    assert 'GROUNDED_REQUEST_IDENTITY_MISMATCH' in loaded['reason']
     result = rank([{'t': 'ENB.TO', 'p_up': .65}], loaded, {'ENB.TO': quote('ENB.TO')})
     assert not result['h1']['longs']
-    assert result['rows'][0]['status'] == 'UNAVAILABLE'
+    assert result['evaluation_status'] == 'UNAVAILABLE' and result['rows'] == []
 
 
 @pytest.mark.parametrize('mutation', [
@@ -230,7 +235,6 @@ def test_snapshot_diagnostics_and_extras_are_sanitized(tmp_path, monkeypatch):
     obj['password'] = 'private-never-reveal-value'
     obj['batches'][0]['raw_provider_response'] = 'private-never-reveal-value'
     obj['batches'][0]['details'] = 'private-never-reveal-value'
-    obj['inputs']['candidates'][0]['headlines'][0]['title'] = 'Update private-never-reveal-value'
     rehash(obj)
     save(tmp_path, obj)
     loaded = D.load_prepared(tmp_path, NOW)

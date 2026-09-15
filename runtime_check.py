@@ -33,11 +33,31 @@ REQUIRED = ('pandas', 'numpy', 'yaml', 'requests', 'pandas_market_calendars',
 
 # Reason each optional module is optional, printed beside the failure so the
 # cron mail says what is lost rather than only what is missing.
+# Day-101/102 added sixteen more names to the blocking list. Every one of them
+# is reached through a try/except in `brief._compute` that records the failure
+# and degrades — `research_coverage` and `research_opening` included (see
+# brief.py, the `expanded_present` and `research_opening_snapshot` blocks).
+# Hard-requiring twenty-four imports in front of the report means any one of
+# sixteen degradable research modules can cost the day's board, its ledger row
+# and its email. They are checked and named here; they do not block.
 OPTIONAL = {
     'openai': 'DeepSeek preparation client (prepare_deepseek only; never the 09:46 path)',
     'socksio': 'SOCKS proxy support for that client on headless hosts',
     'adapters.deepseek_adapter': 'staged DeepSeek snapshot parsing; report degrades to UNAVAILABLE',
     'factor_inputs': 'staged DeepSeek input validation; report degrades to UNAVAILABLE',
+    'prepare_factor_pool': 'pre-open factor pool staging; coverage degrades to UNAVAILABLE',
+    'prepare_yahoo_auth': 'pre-open Yahoo auth staging; live acquisition re-authenticates',
+    'yahoo_auth_cache': 'cached Yahoo crumb; acquisition falls back to bootstrap',
+    'tsx_universe': 'expanded TSX directory; research coverage degrades',
+    'prepare_tsx_universe': 'pre-open directory staging; research coverage degrades',
+    'research_shortlist': 'expanded research shortlist; unadopted research only',
+    'research_coverage': 'expanded coverage section; brief records the failure and degrades',
+    'research_opening': 'shadow opening context; brief records the failure and degrades',
+    'research_evaluation': 'unadopted research evaluation',
+    'factor_grounding': 'DeepSeek evidence grounding; assessment degrades',
+    'grounded_records': 'grounded evidence records; assessment degrades',
+    'factor_news': 'pre-open headline evidence; preparation-only',
+    'factor_macro': 'pre-open macro references; preparation-only',
 }
 
 

@@ -6,6 +6,13 @@ addendum first. No command submits a brokerage order.
 
 ## Local verification
 
+For an explicitly requested DeepSeek integration diagnosis, run
+`diagnose_deepseek_pipeline.py --state-dir "$RB_STATE_DIR" --output-dir /new/separate/diagnostic`.
+Read `AUDIT_day100_deepseek_pipeline.md`. This current-time check exercises the
+shared preparation and saved-snapshot-to-email code, records partial coverage
+separately, and produces artifacts without sending or publishing. Never add it
+to the scheduled report path or import its diagnostic snapshot as pre-open data.
+
 ```bash
 python -m pip install -r requirements.txt
 python -m pytest -q
@@ -41,12 +48,29 @@ the checkout as working directory throughout; a venv copied from another
 temporary directory can contain broken symlinks. `brief.compute()` resolves
 its default configuration relative to its own source file.
 
-With a prepared intraday cache, each Yahoo host attempt has a two-second
-socket timeout instead of twenty seconds. The independent 22-second process
+With a prepared intraday cache, Yahoo chart requests run in one concurrent wave
+with a 14-second socket limit, shared 16-second per-name and 18-second chart
+deadlines. The independent 22-second process
 deadline still bounds fetch, feature construction and calibration together;
 socket timeouts do not establish a delivery SLA. Fixed stage/ticker/count
 diagnostics survive termination without exposing provider URLs or credentials.
 If current bars cannot be acquired, cached history is not today's signal.
+
+Day100: the separate research pool stages with `prepare_factor_pool.py` after
+baseline history and before `prepare_deepseek.py --refresh-public-inputs`.
+It targets 60 configured TSX names without changing the rejected/unchanged
+production density universe. It runs only before 09:30, once per session,
+preserves actual coverage/checkpoints, and never supplies a live entry quote.
+See `PREREGISTER_day100_deepseek_reliability.md` and `DEEPSEEK_DATA.md`.
+
+Near 09:40, use `prepare_yahoo_auth.py --state-dir "$RB_STATE_DIR"` once,
+before options and report acquisition. It stages cookie/crumb authentication
+only in private state (same session, maximum 15 minutes). No prices are cached
+or relabelled live. This removes a measured cookie bootstrap delay from the
+eight-second quote section when preparation succeeds; it does not certify
+BBO timestamps or provider entitlement. Keep credential-free preparation and
+stage diagnostics even on failure. Do not add a second sender or enable the
+standalone SMTP example alongside the existing Gmail jobs.
 
 An explicit recipient request can authorize a separate informational
 replacement through `replacement_report.Replacements`. It preserves the
@@ -282,3 +306,56 @@ identifiers and new model identifiers must be verified, never silently changed.
 The active Gmail jobs remain the single sender. Updating these example units
 alone does not update a separately pinned Gmail task or install a service.
 A passing runtime import check is not provider reachability or improved alpha.
+
+### Day101 expanded research preparation
+
+Before09:30 ET, after canonical-state restoration and unchanged baseline
+history staging, run these commands with the same verified checkout/interpreter:
+
+```bash
+python prepare_tsx_universe.py --state-dir "$RB_STATE_DIR"
+python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
+python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
+python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
+```
+
+Each section records its own bounded attempt. A nonzero result is a visible
+section failure; continue independent sections rather than treating the whole
+run as ready or erasing prior successes. Do not chain these with `&&` in a
+supervisor that would prevent fallback preparation after a directory failure.
+Stage slower biotech evidence afterward. The daily report reads prepared local
+files only; no directory discovery, history expansion, news or LLM calls occur
+on its09:46 path. Both existing Gmail jobs must use the same reviewed revision.
+These commands do not install systemd units or start another sender.
+
+An optional `tsx_security_master.json` uses the reviewed schema validated by
+`tsx_universe.validate_master_row`; `--master` accepts an explicit equivalent
+path. Preserve source URLs, exact security identities, observation clocks and
+raw reference receipts. Missing industry/security classification is not fixed
+by setting `reviewed:true`. The official source's YTD turnover is only discovery
+priority; liquidity must use the immediate previous20 completed TSX sessions.
+
+Preserve `tsx_universe*`, `research_pool*`, shortlist receipts, DeepSeek inputs,
+optional opening snapshots and diagnostics with the canonical SQLite backup.
+Never overlay a current-time diagnostic onto a pre-open snapshot. Keep all
+same-session failed attempts and every publication/delivery/replacement claim.
+An unconfigured reference source may yield fewer than150 eligible names; the
+explicit60-name fallback remains separate from expanded readiness.
+
+### Day102 grounded factor receipts
+
+Read `AUDIT_day102_evidence_quality.md` and
+`PREREGISTER_day102_evidence_quality.md`. Preparation uses the fixed
+`day102-grounded-v1` response contract with the existing explicit model setting.
+Keep private grounding receipts inside the sealed snapshot and operational
+archive. An excluded assessment is a completed model response that failed the
+contract; it is not an unqueried name or provider outage. Preserve the original
+requested, submitted, accepted and excluded counts and all per-symbol reasons.
+
+Do not delete same-session attempts to rerun a revised prompt after outcomes.
+Do not recompute an immutable report to apply a renderer change. The report job
+consumes prepared inputs; no news, model or research acquisition belongs in its
+renderers. Validated source links and Python facts may appear in the attachment;
+raw provider prose, credentials and private receipts must not. A synthetic
+contract probe is diagnostic only and must use the actual clock separately from
+morning prediction/publication state.

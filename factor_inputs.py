@@ -102,7 +102,45 @@ def _blank(now, reason=None):
                          'complete_tickers': [], 'macro_complete': False,
                          'macro_scope': 'Dated references since the previous TSX session close; not live executable quotes.',
                          'target_capacity': policy.MAX_CANDIDATES},
-            'gaps': [reason] if reason else [], 'candidate_gaps': {}}
+            'gaps': [reason] if reason else [], 'candidate_gaps': {},
+            'candidate_diagnostics': {}}
+
+
+def validated_macro_change(item, value, observed):
+    """Keep a measured change only with an explicit actual daily reference.
+
+    The reference timestamp is a provider daily-bar start, not an invented
+    close timestamp or certification of the immediately prior exchange session.
+    Invalid change metadata does not destroy an independently valid level.
+    """
+    missing = {'change_status': 'UNAVAILABLE', 'change_gap': 'DAILY_REFERENCE_UNAVAILABLE'}
+    if not isinstance(item, dict) or not isinstance(item.get('reference'), dict):
+        return missing
+    try:
+        ref = item['reference']
+        if (set(ref) != {'value', 'bar_timestamp', 'source_url', 'scope', 'interval'}
+                or not _number(ref['value']) or ref['value'] <= 0
+                or ref['scope'] != 'previous_observed_daily_bar_close'
+                or ref['interval'] != '1d'
+                or item.get('change_scope') != 'observed_level_vs_previous_daily_bar_close'):
+            raise ValueError('INVALID_DAILY_REFERENCE')
+        reference_at = _stamp(ref['bar_timestamp'])
+        if reference_at >= _stamp(observed):
+            raise ValueError('INVALID_DAILY_REFERENCE')
+        source = _url(ref['source_url'])
+        if source != _url(item['source_url']):
+            raise ValueError('REFERENCE_SOURCE_MISMATCH')
+        measured = (value / ref['value'] - 1.0) * 100.0
+        if (not _number(item.get('change_pct'))
+                or not math.isclose(item['change_pct'], measured, rel_tol=1e-9, abs_tol=1e-9)
+                or item.get('change_status', 'READY') != 'READY'):
+            raise ValueError('INVALID_MACRO_CHANGE')
+        return {'change_pct': measured, 'change_status': 'READY',
+                'change_scope': 'observed_level_vs_previous_daily_bar_close',
+                'reference': {'value': float(ref['value']), 'bar_timestamp': reference_at.isoformat(),
+                    'source_url': source, 'scope': ref['scope'], 'interval': '1d'}}
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return {'change_status': 'UNAVAILABLE', 'change_gap': 'INVALID_DAILY_CHANGE_REFERENCE'}
 
 
 def _evidence(items, field, now, gaps, cutoff):
@@ -127,12 +165,22 @@ def _evidence(items, field, now, gaps, cutoff):
                 raise ValueError('FUTURE_EVIDENCE')
             if now-date > pd.Timedelta(hours=policy.MAX_NEWS_AGE_HOURS):
                 raise ValueError('STALE_EVIDENCE')
-            output.append({text_field: text.strip(), 'source_url': _url(item['source_url']),
-                           'published_at': date.isoformat()})
+            source = _url(item['source_url'])
+            evidence = {text_field: text.strip(), 'source_url': source,
+                        'published_at': date.isoformat()}
+            if field == 'headlines':
+                # Recompute limited title classifications; a staged claim of
+                # verified issuer relevance or novelty is not source evidence.
+                from factor_news import classify_headline
+                evidence['evidence_metadata'] = classify_headline(text.strip(), source)
+            output.append(evidence)
         except (KeyError, TypeError, ValueError) as exc:
             # Never echo rejected user/provider values (which may include secrets).
             reason = str(exc) if isinstance(exc, ValueError) else 'MISSING_EVIDENCE_FIELDS'
             gaps.append(field.upper()+':'+reason[:80])
+    if field == 'headlines':
+        from factor_news import prepare_headlines
+        output, _ = prepare_headlines(output, maximum)
     return output
 
 
@@ -189,16 +237,15 @@ def validate_payload(payload, now):
                 raise ValueError('STALE_MACRO')
             clean = {'value': float(item['value']), 'as_of': observed.isoformat(),
                      'source_url': _url(item['source_url'])}
-            if 'change_pct' in item:
-                if not _number(item['change_pct']):
-                    raise ValueError('INVALID_MACRO_CHANGE')
-                clean['change_pct'] = float(item['change_pct'])
+            clean.update(validated_macro_change(item, clean['value'], observed))
             output['macro'][name] = clean
         except (KeyError, TypeError, ValueError) as exc:
             reason = str(exc) if isinstance(exc, ValueError) else 'MISSING_MACRO'
             output['gaps'].append(name.upper()+':'+reason[:80])
     macro_complete = len(output['macro']) == len(policy.MACRO_KEYS)
     output['coverage']['macro_complete'] = macro_complete
+    output['coverage']['macro_change_complete'] = macro_complete and all(
+        item.get('change_status') == 'READY' for item in output['macro'].values())
     counts = {}
     for item in candidates:
         if isinstance(item, dict) and isinstance(item.get('ticker'), str):
@@ -288,12 +335,122 @@ def validate_payload(payload, now):
             gaps.append('INCOMPLETE_MACRO')
         output['candidates'].append(clean)
         output['candidate_gaps'][ticker] = sorted(set(gaps))
+        # Historical exclusions are audit context once the current inputs have
+        # independently passed validation. They never fill missing indicators.
+        diagnostics = payload.get('candidate_diagnostics', {}).get(ticker, []) if isinstance(
+            payload.get('candidate_diagnostics', {}), dict) else []
+        if isinstance(diagnostics, list):
+            output['candidate_diagnostics'][ticker] = sorted(set(note for note in diagnostics
+                if isinstance(note, str) and re.fullmatch(r'HISTORICAL_SESSIONS_EXCLUDED:[0-9]+', note)))
         if not gaps:
             output['coverage']['complete_tickers'].append(ticker)
     output['coverage']['accepted'] = len(output['candidates'])
     output['coverage']['complete'] = len(output['coverage']['complete_tickers'])
+    from research_shortlist import expanded, normalize_universe, select, validate_saved
+    if expanded(payload):
+        try:
+            session = now.date().isoformat()
+            # Fresh source rows define the denominator. Only an already saved
+            # shortlist receipt can preserve an earlier raw count after invalid
+            # rows were sanitized; a supplied target is not observed coverage.
+            source_requested = (payload.get('coverage', {}).get('requested', len(candidates))
+                if isinstance(payload.get('research_shortlist'), dict) else len(candidates))
+            if type(source_requested) is not int or not len(candidates) <= source_requested <= 150:
+                raise ValueError('INVALID_RESEARCH_SOURCE_COUNT')
+            output['coverage']['requested'] = source_requested
+            output['research_universe'] = normalize_universe(payload['research_universe'], session)
+            shortlist = (validate_saved(payload['research_shortlist'], output,
+                output['research_universe'], session) if 'research_shortlist' in payload else
+                select(output, output['research_universe'], session))
+            output['research_shortlist'] = shortlist
+            output['coverage']['shortlisted'] = shortlist['selected_count']
+            output['gaps'].extend(shortlist['gaps'])
+        except (ValueError, TypeError, KeyError):
+            # The explicit expanded mode cannot silently revert to all-pool calls.
+            output['research_universe'] = {'mode': 'EXPANDED_TSX_RESEARCH',
+                'session': now.date().isoformat(), 'target': 150, 'status': 'UNAVAILABLE', 'candidates': []}
+            output['research_shortlist'] = None
+            output['gaps'].append('RESEARCH_SHORTLIST_INVALID_OR_CHANGED')
+    news_status = payload.get('news_status', {})
+    if isinstance(news_status, dict):
+        output['news_status'] = {ticker: status for ticker, status in news_status.items()
+            if ticker in output['candidate_gaps'] and status in ('READY', 'NO_CURRENT_NEWS', 'UNAVAILABLE', 'NOT_QUERIED')}
     output['gaps'] = list(dict.fromkeys(output['gaps']))
     return output
+
+
+def eligible_public_candidates(clean):
+    """Select complete public inputs identically for preparation and diagnostics.
+
+    ``validate_payload`` (or ``build_from_state``) must run first with the actual
+    evidence clock. The SDK's payload validator deliberately permits unknown
+    values represented by null; transport eligibility therefore cannot
+    stand in for this stricter research-input completeness gate. Excluded names
+    remain in the caller's requested pool and retain their existing diagnostics.
+    This helper neither fetches evidence nor changes the supplied object.
+    """
+    from collections import Counter
+    from adapters.deepseek_adapter import CANDIDATE_KEYS, public_payload
+
+    if not isinstance(clean, dict) or not isinstance(clean.get('candidates'), list):
+        return [], {}
+    coverage = clean.get('coverage')
+    coverage = coverage if isinstance(coverage, dict) else {}
+    complete = coverage.get('complete_tickers')
+    complete = set(complete) if (isinstance(complete, list)
+        and all(isinstance(ticker, str) for ticker in complete)) else set()
+    macro = clean.get('macro')
+    macro = macro if isinstance(macro, dict) else {}
+    macro_complete = (coverage.get('macro_complete') is True
+        and all(isinstance(macro.get(name), dict) for name in policy.MACRO_KEYS))
+    saved_gaps = clean.get('candidate_gaps')
+    saved_gaps = saved_gaps if isinstance(saved_gaps, dict) else None
+    counts = Counter(candidate.get('ticker') for candidate in clean['candidates']
+                     if isinstance(candidate, dict) and isinstance(candidate.get('ticker'), str))
+    required = ('vwap', 'rsi', 'macd', 'macd_signal', 'macd_hist',
+                'orb_high', 'orb_low', 'rvol')
+    eligible, gaps = [], {}
+    from research_shortlist import expanded
+    research = expanded(clean)
+    shortlist = clean.get('research_shortlist')
+    shortlisted = set(shortlist.get('tickers', [])) if isinstance(shortlist, dict) else set()
+    for candidate in clean['candidates']:
+        ticker = candidate.get('ticker') if isinstance(candidate, dict) else None
+        if not isinstance(ticker, str) or not TICKER.fullmatch(ticker):
+            continue
+        reasons = []
+        if research and ticker not in shortlisted:
+            reasons.append('OUTSIDE_FIXED_PRE_NEWS_SHORTLIST')
+        if counts[ticker] != 1:
+            reasons.append('DUPLICATE_CANDIDATE')
+        existing = saved_gaps.get(ticker) if saved_gaps is not None else None
+        if not isinstance(existing, list) or any(not isinstance(note, str) for note in existing):
+            reasons.append('INVALID_CANDIDATE_DIAGNOSTICS')
+        elif existing:
+            reasons.append('Candidate has unresolved public evidence gaps.')
+        if ticker not in complete:
+            reasons.append('Candidate lacks complete validated public evidence.')
+        if not macro_complete:
+            reasons.append('INCOMPLETE_MACRO')
+        technicals = candidate.get('technicals')
+        if not isinstance(technicals, dict) or any(not _number(technicals.get(key)) for key in required):
+            reasons.append('INCOMPLETE_TECHNICALS')
+        if not candidate.get('headlines') and not candidate.get('catalyst_tags'):
+            reasons.append('No current unstructured evidence to assess.')
+        if not reasons:
+            public = {key: candidate[key] for key in CANDIDATE_KEYS if key in candidate}
+            try:
+                public_payload([public], macro, clean.get('as_of'))
+            except ValueError:
+                reasons.append('Candidate failed DeepSeek public payload validation.')
+            else:
+                eligible.append(public)
+        if reasons:
+            gaps[ticker] = sorted(set(reasons))
+    if research and isinstance(shortlist, dict):
+        by_ticker = {candidate['ticker']: candidate for candidate in eligible}
+        eligible = [by_ticker[ticker] for ticker in shortlist['tickers'] if ticker in by_ticker]
+    return eligible, gaps
 
 
 def _from_cache(ticker, directory, manifest, cfg, now):
@@ -368,7 +525,7 @@ def _from_cache(ticker, directory, manifest, cfg, now):
                 'computed_at': now.isoformat(), 'source_url': source}}, diagnostics
 
 
-def build_from_state(state_dir, cfg, now):
+def build_from_state(state_dir, cfg, now, *, diagnostic=False):
     """Load a staged <=500 pool or compute the actual configured cached pool.
 
     Neither staged evidence nor prior-session bars are executable morning quotes.
@@ -376,13 +533,28 @@ def build_from_state(state_dir, cfg, now):
     """
     now = _stamp(now)
     root = Path(state_dir)
+    if diagnostic:
+        from diagnostic_context import require_context
+        require_context(root)
     candidate_file = root/'deepseek_candidates.json'
     additional = []
     cache_gaps = {}
     if candidate_file.exists():
         try:
             payload = _read(candidate_file)
-        except (OSError, UnicodeError, ValueError, TypeError):
+            if (not diagnostic and isinstance(payload, dict)
+                    and (payload.get('kind') == 'CURRENT_TIME_DIAGNOSTIC'
+                         or payload.get('morning_snapshot') is False)):
+                return _blank(now, 'DIAGNOSTIC_CANDIDATES_NOT_A_MORNING_POOL')
+            pool_clock = _stamp(payload['as_of'])
+            if (pool_clock > now or pool_clock.date() != now.date()
+                    or now-pool_clock > pd.Timedelta(hours=policy.MAX_SNAPSHOT_AGE_HOURS)):
+                raise ValueError('STAGED_CANDIDATE_FILE_STALE_OR_FUTURE')
+            # The candidate preparation and later public evidence have separate
+            # real clocks. The combined snapshot is assembled now, preserving
+            # each fact's own observed/computed clock and original pool clock.
+            payload['as_of'] = now.isoformat()
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError):
             return _blank(now, 'STAGED_CANDIDATE_FILE_INVALID')
     else:
         payload = {'as_of': now.isoformat(), 'candidates': [], 'macro': {}}
@@ -442,15 +614,37 @@ def build_from_state(state_dir, cfg, now):
                     for field in ('headlines', 'catalyst_tags'):
                         if field in evidence:
                             item[field] = evidence[field]
+                    if evidence.get('status') in ('READY', 'NO_CURRENT_NEWS', 'UNAVAILABLE', 'NOT_QUERIED'):
+                        payload.setdefault('news_status', {})[item['ticker']] = evidence['status']
         except (OSError, UnicodeError, KeyError, ValueError, TypeError):
             additional.append('STAGED_'+key.upper()+'_FILE_INVALID')
+    # Consume the same saved pre-news shortlist. A changed pool cannot be
+    # backfilled after news or model failures to manufacture fuller coverage.
+    shortlist_file = root/'deepseek_shortlist.json'
+    from research_shortlist import expanded
+    if expanded(payload) and shortlist_file.exists():
+        try:
+            previous = _read(shortlist_file)
+            if dt.date.fromisoformat(previous['session']) >= now.date():
+                payload['research_shortlist'] = previous
+        except (OSError, UnicodeError, ValueError, TypeError, KeyError):
+            payload['research_shortlist'] = None
     output = validate_payload(payload, now)
     output['gaps'] = list(dict.fromkeys(output['gaps']+additional))
     for ticker, gaps in cache_gaps.items():
-        output['candidate_gaps'][ticker] = sorted(set(output['candidate_gaps'].get(ticker, [])+gaps))
+        advisory = [gap for gap in gaps if re.fullmatch(r'HISTORICAL_SESSIONS_EXCLUDED:[0-9]+', gap)]
+        hard = [gap for gap in gaps if gap not in advisory]
+        output['candidate_diagnostics'][ticker] = sorted(set(
+            output['candidate_diagnostics'].get(ticker, [])+advisory))
+        output['candidate_gaps'][ticker] = sorted(set(output['candidate_gaps'].get(ticker, [])+hard))
     output['coverage']['complete_tickers'] = [item['ticker'] for item in output['candidates']
         if not output['candidate_gaps'].get(item['ticker'])]
     output['coverage']['complete'] = len(output['coverage']['complete_tickers'])
     output['coverage']['pool_source'] = 'staged_public_candidates' if candidate_file.exists() else 'configured_cached_universe'
     output['coverage']['upstream_python_declaration'] = bool(candidate_file.exists())
+    if candidate_file.exists():
+        output['coverage']['pool_prepared_at'] = pool_clock.isoformat()
+    if diagnostic:
+        output['kind'] = 'CURRENT_TIME_DIAGNOSTIC'
+        output['morning_snapshot'] = False
     return output

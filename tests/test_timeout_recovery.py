@@ -57,7 +57,7 @@ def test_daily_default_config_is_independent_of_working_directory(tmp_path, monk
     assert 'Part 1' in brief.render_text(result)
 
 
-def test_cached_intraday_has_small_socket_budget_without_changing_plain_adapter(tmp_path, monkeypatch):
+def test_cached_intraday_shares_budget_without_changing_plain_adapter(tmp_path, monkeypatch):
     import r945
     import bar_cache
     import pandas as pd
@@ -68,7 +68,7 @@ def test_cached_intraday_has_small_socket_budget_without_changing_plain_adapter(
     monkeypatch.setattr(r945, 'build_adapter', lambda *a, **kw: adapter)
     observed = []
     def bars(a, ticker, now):
-        observed.append(a.timeout)
+        observed.append((a.timeout, a.chart_budget_seconds, a.chart_deadline-time.monotonic()))
         return pd.DataFrame()
     monkeypatch.setattr(bar_cache, 'get_bars', bars)
     class Clock(dt.datetime):
@@ -78,6 +78,7 @@ def test_cached_intraday_has_small_socket_budget_without_changing_plain_adapter(
     monkeypatch.setattr(r945.dt, 'datetime', Clock)
     cfg = load_config(str(__import__('brief').ROOT/'config.yaml'))
     result = r945.run(cfg)
-    assert observed and max(observed) == 2
+    assert observed and all(timeout == 14 and budget == 16 and 0 < remaining <= 18
+                            for timeout, budget, remaining in observed)
     assert result['n_names'] == 0
     assert YahooDirectAdapter().timeout == 20

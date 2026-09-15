@@ -113,7 +113,7 @@ def _position_rows(loader, now, errors):
 
 
 def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
-            publish=False, state_dir=None, services=None):
+            publish=False, state_dir=None, services=None, factor_diagnostic=None):
     """Acquire and compute once. Inject providers/clock for deterministic tests.
 
     Published re-reads return the frozen report before any provider is called.
@@ -170,16 +170,20 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     # Position marks and biotech evidence must survive an intraday timeout.
     section_status = {}
     raw_live = None
+    quote_acquisition_failure = None
     if not no_net and not injected and clock['status'] != 'CLOSED':
         from bounded import acquire
         tickers = set(cfg.get('scan',{}).get('universe',[])) | {'XIU.TO'}
         tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
-        tasks = {'equity_quotes': (lambda: market_client().get(sorted(tickers)), 10)}
+        tasks = {'equity_quotes': (lambda: quotes_mod.acquire_equities_raw(
+            market_client(state_dir=state_dir), sorted(tickers), budget_seconds=8), 10)}
         if not recorded_today and not ledger_status['selection_blocked'] and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
             tasks['intraday'] = (lambda: r945.run(cfg,require_cache=publish), 22)
         section_status = acquire(tasks)
         raw_live = section_status['equity_quotes']['value'] or {}
+        if section_status['equity_quotes']['error']:
+            quote_acquisition_failure = section_status['equity_quotes']
         for name, result in section_status.items():
             if result['error']:
                 last_stage = (result.get('progress') or [{}])[-1].get('stage', 'not recorded')
@@ -211,7 +215,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             res['coverage_fail']='intraday computation unavailable'; error('intraday',exc)
     res['live_record'] = ledger.live_summary([{**r,'hit':r.get('hit','')} for r in past_rows])
     try:
-        client = services.get('market') or market_client()
+        client = services.get('market') or market_client(state_dir=state_dir)
     except Exception as exc:
         client = None
         error('market_client',exc)
@@ -240,8 +244,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                     if (cfg.get('execution') or {}).get('corroborate_bbo')
                     else None)
             quotes = quotes_mod.validate_equities(raw,tickers,now,corroborate=corr)
+            if quote_acquisition_failure:
+                for ticker in tickers:
+                    if not isinstance(raw, Mapping) or ticker not in raw:
+                        quotes[ticker] = quotes_mod.section_quote_failure(
+                            ticker, quote_acquisition_failure,
+                            currency='CAD' if ticker.endswith('.TO') else 'USD')
             for ticker, quote in quotes.items():
                 if quote.get('error_class'):
+                    # One batch outage already has a section error. Keep its
+                    # cause on every quote, without repeating the same block
+                    # once per symbol in the digest's diagnostic summary.
+                    if quote_acquisition_failure and (not isinstance(raw, Mapping) or ticker not in raw):
+                        continue
                     errors.append({'layer':'equity_quotes','error':safe_detail(quote['error_class'],60),
                                    'detail':safe_detail(f"{ticker}: {quote.get('reason','quote unavailable')}")})
         except Exception as exc:
@@ -354,13 +369,51 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     import deepseek_factors
     from scan import deepseek_shadow
     try:
-        factor_evidence = deepseek_factors.load_prepared(state_dir, now)
+        factor_evidence = (deepseek_factors.load_diagnostic(state_dir, now, factor_diagnostic)
+                           if factor_diagnostic is not None else
+                           deepseek_factors.load_prepared(state_dir, now))
         factor_evidence['shadow'] = deepseek_shadow(
             res.get('factor_candidates', []), factor_evidence, quotes, now, cfg,
             scan_available=not bool(res.get('coverage_fail')) and not no_net)
     except Exception as exc:
         error('deepseek', RuntimeError(type(exc).__name__))
         factor_evidence = deepseek_factors.unavailable('Optional factor assembly failed: '+type(exc).__name__)
+    # Expanded coverage is independent of model availability. Only prepared
+    # local receipt/cache checks run here; preflight performs full history
+    # validation before open. Older frozen reports need no new optional fields.
+    expanded_coverage = None
+    opening_context = None
+    state_path = Path(state_dir) if state_dir is not None else None
+    if state_path is not None:
+        expanded_present = (state_path/'tsx_universe.json').is_file() or bool(
+            factor_evidence.get('research_universe'))
+        if not expanded_present and (state_path/'deepseek_candidates.json').is_file():
+            try:
+                expanded_present = bool(json.loads((state_path/'deepseek_candidates.json').read_text()).get('research_universe'))
+            except (OSError, ValueError, TypeError, AttributeError):
+                # A malformed optional pool remains an explicit coverage gap.
+                expanded_present = True
+        if expanded_present:
+            try:
+                import research_coverage
+                expanded_coverage = research_coverage.load_prepared(
+                    state_path, cfg, now, factor_evidence,
+                    diagnostic=factor_diagnostic is not None)
+            except Exception as exc:
+                error('research_coverage', RuntimeError(type(exc).__name__))
+                expanded_coverage = {'status':'UNAVAILABLE', 'target':150,
+                    'gaps':['Local expanded research coverage failed: '+type(exc).__name__],
+                    'adopted':False}
+        if (state_path/'research_opening_snapshot.json').is_file():
+            try:
+                import research_opening
+                opening_context = research_opening.load_prepared(state_path, now,
+                    universe=(expanded_coverage or {}).get('master'))
+            except Exception as exc:
+                error('research_opening', RuntimeError(type(exc).__name__))
+                opening_context = {'status':'UNAVAILABLE', 'rows':[],
+                    'gaps':['Local opening context failed: '+type(exc).__name__],
+                    'shadow':True, 'adopted':False}
     try:
         ledger_hash=hashlib.sha256(encode(original_rows).encode()).hexdigest()
     except (TypeError,ValueError) as exc:
@@ -400,6 +453,10 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',
                           'mde':'Historical 2-session proxy MDE80: 64.10 bps versus 5 bps target (UNDERPOWERED). Exact-arm MDE unavailable without matched BBO/cost/index observations.'},
               'report_status':'OFFLINE' if no_net else ('ON_TIME' if clock['eligible'] else 'INFORMATIONAL')}
+    if expanded_coverage is not None:
+        report['intraday']['research_coverage'] = expanded_coverage
+    if opening_context is not None:
+        report['intraday']['research_opening'] = opening_context
     from readiness import assess
     report['readiness'] = assess(report)
     boundary_gaps = position_status['gaps'] + ([f"Ledger {ledger_status['status']}: {ledger_status['invalid_rows']} invalid rows; historical evidence may be incomplete."]
@@ -409,6 +466,12 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         report['readiness']['status']='PARTIAL'
     if not no_net and report['readiness']['gaps']:
         report['report_status'] += ' — PARTIAL DATA; consult section status'
+    if factor_diagnostic is not None:
+        report['report_status'] = 'CURRENT-TIME DEEPSEEK DIAGNOSTIC / INFORMATIONAL — NOT A MORNING SIGNAL'
+        report['provenance']['factor_diagnostic'] = {
+            'kind': 'CURRENT_TIME_DIAGNOSTIC', 'actual_assembly_at': now.isoformat(),
+            'morning_snapshot': False, 'prediction_evidence': False}
+        report['clock']['eligible'] = False
     if store and now.strftime('%H:%M') == '09:46':
         return store.publish(report['session'],report)
     return json.loads(encode(report))
@@ -416,15 +479,17 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
 
 
 def compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
-            publish=False, state_dir=None, services=None):
+            publish=False, state_dir=None, services=None, factor_diagnostic=None):
     """Serialize the entire publication, including the legacy CSV side effects.
 
     POSIX file locking is appropriate for the supplied Linux/systemd host.
     Previews and offline calls do not create state or acquire write locks.
     """
+    if factor_diagnostic is not None and (publish or not no_net):
+        raise ValueError('Factor diagnostics require an offline unpublished preview.')
     if not publish or no_net:
         return _compute(cfg_path,shadow,no_net,now=now,publish=False,
-                        state_dir=state_dir,services=services)
+                        state_dir=state_dir,services=services,factor_diagnostic=factor_diagnostic)
     import fcntl
     directory=Path(state_dir or os.environ.get('RB_STATE_DIR',str(ROOT/'.rb-state')))
     directory.mkdir(parents=True,exist_ok=True)

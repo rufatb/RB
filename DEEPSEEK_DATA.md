@@ -27,25 +27,58 @@ Provider model changes require a documented setting change and new receipt.
 Official references: [JSON mode](https://api-docs.deepseek.com/guides/json_mode/),
 [model list](https://api-docs.deepseek.com/api/list-models/).
 
+For a current-time check using a supplied real public input batch (at most 25
+names), run `python probe_deepseek.py --state-dir "$RB_STATE_DIR" --input PUBLIC_INPUT_JSON`.
+This diagnostic uses the actual clock, submits only complete inputs and saves
+separate requested/eligible/assessed counts. It cannot become a morning snapshot
+or overwrite a failed attempt. No news/price fetch is performed by the probe.
+The September 14 real-input check returned 14/14 valid assessments in 20.748s;
+seven of the 21 source names remained incomplete. None cleared the existing
+research-watchlist threshold. See `AUDIT_day100_deepseek_live_check.md` for the
+parser fix and exact limits; this is API evidence, not predictive validation.
+
 ## Preparation contract
+
+Production and diagnostic calls now use the same complete-input gate. A schema
+that permits explicit nulls is not sufficient evidence for submission. Counts
+distinguish source-requested, accepted, eligible, submitted, assessed and usable
+names. See `AUDIT_day100_deepseek_pipeline.md` for the confirmed mismatch and
+the preparation-through-email tests.
 
 After restoring the CURRENT operational archive and staging the unchanged
 baseline's history, run before 09:30 ET:
 
 ```bash
+python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
 python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
 python preflight.py --state-dir "$RB_STATE_DIR" --output "$RB_STATE_DIR/preflight.json"
 ```
 
-The optional public refresh uses one bounded 25-second pass for dated WTI,
+The optional public refresh uses one bounded 120-second pass for dated WTI,
 CAD/USD, TSX and VIX references and exact-ticker-linked headlines. It stops
-subsequent news batches after a provider failure. Missing structured SEC tags
+subsequent news batches after an authentication/rate-limit or complete-wave
+outage; independent successful names survive a sibling's failure. Missing structured SEC tags
 are explicit; headlines are not invented 8-K filings. Prior successful inputs
 are retained and revalidated, never relabelled fresh. Endpoint access is
 independent of DeepSeek access.
 
+TSX headlines come from Yahoo's exact-ticker RSS channel, whose title and
+channel ticker link must match the request. The generic search route returned
+unrelated global stories during the September 14 audit, even with an explicit
+news query ID. It is not a fallback for an unavailable TSX feed. RSS publication
+times, public HTTPS article links, bounded XML and response hashes are checked;
+old, future and malformed items remain excluded. The final repaired sample
+returned two linked RBC headlines and all four macro references. This is
+sample coverage, not a certification of all 60 research names.
+
 A supplied `deepseek_candidates.json` can contain up to 500 validated names.
-Without it, Python builds candidates from the actual configured TSX universe
+Day100 preparation targets 60 explicit TSX research names with its own cache
+and exact Canadian identity checks for newly fetched names. It reuses validated
+baseline files, without claiming new metadata verification of those reused files.
+The roster is neither an ADV ranking nor a production-universe change. Staged
+history and complete technical coverage are counted separately. The existing
+production expansion rejection remains in force. Without a staged pool, Python
+builds candidates from the actual configured TSX universe
 and file-validated history. No padding, inferred membership, or 500-name claim.
 `factor_inputs.validate_payload` defines the exact input contract. Candidates
 need timestamped Python technicals with computation/input-hash provenance,
@@ -60,8 +93,15 @@ cadusd, tsx and vix to dated values and source URLs. Missing fields stay missing
 The model sees only allowlisted public fields, never keys, private ledgers,
 account identities, holdings or order sizes. News text is untrusted data.
 
-Preparation is bounded to 120 seconds, batches of at most 25, 12 seconds per
-request, no SDK retries. This is a deadline, not a promise that 500 names fit.
+Preparation is bounded to 210 seconds and the actual 09:30 cutoff, batches of
+at most 25 with up to four batches concurrently, 30 seconds per model request,
+no SDK retries. Public requests use 16-second sockets, 12-name news waves and
+an 18-second macro worker. These limits reflect observed host latency; they
+are deadlines, not a promise that 500 names fit. Flash explicitly disables its
+default thinking mode for JSON classification and records the inference mode;
+explicit other models are not silently changed. A 25-row synthetic API check
+on September 14 succeeded in 15.608 seconds, exceeding the old 12-second limit.
+That check did not assess stocks or demonstrate an accuracy improvement.
 The session attempt is recorded before requests. Completed attempts, failures
 and interrupted/ambiguous attempts cannot silently be rerun the same day.
 Inputs, hashes, model metadata, diagnostics and original response assessments
@@ -75,6 +115,15 @@ historical rows or a retrospectively reconstructed sentiment backtest.
 `brief` reads only the local snapshot. It validates timestamps/session/input
 hash, candidate linkage and strict model fields. One unavailable optional
 section cannot erase successful baseline/holdings/calendar sections.
+
+The concise email separately displays up to two BULL/two BEAR sentiment
+watchlist names from the prepared research pool, using the fixed day100
+threshold and complete evidence. Those contextual assessments remain visible
+without BBO or a quantitative scan; they are not executable recommendations.
+H1 unpriced research candidates also remain visible. Only existing H2 costs
+and normal execution validators can support their respective cost checks.
+The attachment retains all factors, sources, exclusions, inference mode and
+receipt hashes. Missing data is UNAVAILABLE, never an invented NO_EDGE result.
 A saved old publication is returned before any data or model acquisition.
 
 The 09:46 quantitative pool comes from the one existing `r945.run` pass.
@@ -93,6 +142,62 @@ BBO and CORROBORATED trade bars do not become executable 09:46 quotes.
 No prediction gain has been measured. The fixed forward study and untouched
 confirmation are required before considering any adoption.
 
+## Explicit current-time integration check
+
+```bash
+python diagnose_deepseek_pipeline.py --state-dir "$RB_STATE_DIR" --output-dir /new/separate/diagnostic
+```
+
+This uses the same bounded 60-name pool preparation, public refresh, model
+batches and snapshot validation as production, then builds one local-only
+Digest and the real email artifacts. Use a fresh directory outside canonical
+state. It neither sends email nor overwrites a morning attempt. It has no
+as-of option and never pretends current news was known at 09:46. Production
+rejects its marked diagnostic snapshots even before 09:30.
+
+An integration PASS requires unchanged, usable assessments in the loader,
+Digest and full email attachment. Actual source coverage and qualifying
+research names are separate counts. It is a current-host diagnostic, not a
+prediction backtest, morning-feed guarantee, or new scheduled job.
+
+## Day101 expanded TSX research coverage
+
+The unchanged TSX-21 remains the production baseline. The separate expanded
+research path targets up to150 validated common shares/REIT units, with exact
+issuer identity, TSX/CAD listing, security type, sector and industry. Its dated
+directory and actual previous20 completed-session liquidity receipts are stored
+in `tsx_universe.json` and `tsx_universe_history`. The CAD10m median daily
+close-times-volume screen is a liquidity proxy, not an expected-return estimate.
+TMX monthly year-to-date turnover only prioritizes source discovery; it cannot
+substitute for the20-session measurement or certify a full-market rank.
+
+Before news acquisition, `research_shortlist.py` selects at most50 securities
+with complete Python technicals by fixed sector rounds and liquidity order.
+Research coverage across industries is not a quota on long/short positions.
+The snapshot preserves the original pool, technical completeness, fixed
+shortlist, eligible inputs, submitted and assessed counts separately. No news
+backfill follows a failed shortlisted name. A successful empty feed is
+`NO_CURRENT_NEWS`; a failed feed is `UNAVAILABLE`. Neither manufactures a
+neutral assessment. Model settings and the0.50 watchlist threshold are unchanged.
+
+If strict directory evidence is unavailable or does not exceed the existing
+60-name roster, that roster still runs with `LEGACY_RESEARCH_FALLBACK` clearly recorded. It is not
+an expanded, certified150-name pool. Missing metadata, sessions, sources and
+shortlist exclusions remain visible in preflight and the full report. The
+concise email uses these same prepared counts without another model pass.
+
+`diagnose_deepseek_pipeline.py --expanded` exercises expanded preparation at
+the actual current clock in fresh isolated state. If no directory candidates
+validate, it retains the source diagnostic and sends no model request. It does
+not retry or overwrite a same-day morning attempt and never sends an email.
+Optional `research_opening_snapshot.json` is a separately sourced, local-only
+shadow view of completed opening bars and exact quote evidence; no collector
+or executable Canadian quote entitlement is implied by this schema.
+
+See `PREREGISTER_day101_tsx_expansion.md` for the forward matched-session study.
+Broader coverage, integration tests and successful API responses are not
+evidence of improved predictions or net returns.
+
 ## Private overlay recovery
 
 `import_deepseek_inputs.py --archive /path/RB-DeepSeek-private-inputs.zip
@@ -102,3 +207,42 @@ has been restored. It requires existing valid reports.sqlite3 and never
 initializes a replacement database. Different credentials/settings or receipt
 conflicts remain visible; newer receipts are retained. Do not print secrets or
 put them in GitHub, email, task prompts or authenticated URLs.
+
+## Day102 evidence grounding
+
+New requests use `day102-grounded-v1` and the explicitly configured model.
+The response adds `evidence_ids` and
+`forecast_horizon: remaining_session_to_1559_ET` to the original four fields.
+Python supplies dated technical values, units and signs; the model may evaluate
+unstructured context but may not write technical assertions. Display rationales
+are a deterministic projection of accepted evidence references and Python facts.
+The original four-field parser remains available for archived records.
+
+`factor_grounding.py` assigns per-ticker evidence IDs and applies finite protocol
+checks. Technical prose, wrong horizons and unsupported references exclude the
+affected assessment. A directional opinion supported only by explicit investment
+commentary or a multi-year headline is excluded. Other valid names in the batch
+survive, and semantic exclusions do not become a provider outage. Syntax or
+identity failures still invalidate the envelope. This is not general semantic
+truth verification: unknown issuer role, novelty and materiality remain unknown.
+
+`factor_news.py` deduplicates URLs/titles before the existing eight-headline cap.
+`factor_macro.py` adds a measured change only with an actual dated daily-bar
+reference and explicit comparison scope. A missing reference leaves the level
+available but the change unavailable; a range-start `chartPreviousClose` is never
+substituted. Previous observed daily bars are not certified immediately preceding
+exchange-session closes or executable quotes.
+
+The sealed snapshot retains `private_grounding_receipts`, including bounded raw
+provider rows. `grounded_records.py` reconstructs each request and projection
+before preparation or loading accepts it. Request hashes, evidence references,
+Python facts and exclusion codes reach the full attachment; original model prose
+stays in private state. Preserve these receipts when backing up the canonical
+archive. Never copy private receipts or credentials into GitHub or email.
+
+The concise view and attachment remain pure views of one Digest. No news, model
+or price acquisition was added to rendering or the report critical path. New
+preparation uses this contract; immutable older publications are not re-rendered
+or replaced automatically. See `AUDIT_day102_evidence_quality.md` and
+`PREREGISTER_day102_evidence_quality.md`. Baseline selection and the 0.50 research
+threshold are unchanged; grounding is not evidence of profitable predictions.

@@ -16,10 +16,8 @@ def pool(count):
 
 
 def success(candidates, macro, as_of, **kwargs):
-    return {'status': 'READY', 'assessments': [{'ticker': c['ticker'],
-        'directional_lean': 'NO_EDGE', 'sentiment_score': 0.,
-        'factor_rationale': 'The staged evidence does not establish a directional advantage.'}
-        for c in candidates], 'model': kwargs['model'], 'errorcode': None}
+    from grounded_helpers import response
+    return response(candidates, macro, as_of, model=kwargs['model'])
 
 
 def test_500_candidates_are_batched_once_and_same_day_replay_never_calls_again(tmp_path):
@@ -52,13 +50,14 @@ def test_partial_candidate_contract_does_not_block_valid_independent_batch(tmp_p
     assert result['candidate_gaps']['X0']
 
 
-def test_missing_macro_is_explicit_null_for_provider_and_never_ready(tmp_path):
+def test_missing_macro_is_preserved_but_never_submitted_to_provider(tmp_path):
     p = pool(1); p['macro'].pop('vix')
     def evaluate(candidates, macro, as_of, **kwargs):
-        assert macro['vix'] is None
-        return success(candidates, macro, as_of, **kwargs)
+        pytest.fail('Incomplete inputs must not be sent to a model and discarded later')
     result = S.prepare(tmp_path, CFG, now=NOW, inputs=p, evaluator=evaluate)
-    assert result['status'] == 'PARTIAL'
+    assert result['status'] == 'UNAVAILABLE'
+    assert result['eligible'] == result['submitted'] == result['covered'] == 0
+    assert result['requested'] == 1 and 'vix' not in result['inputs']['macro']
     assert 'INCOMPLETE_MACRO' in result['candidate_gaps']['X0']
 
 
@@ -76,9 +75,9 @@ def test_failure_stops_remaining_batches_and_saves_same_day_failure(tmp_path):
         calls.append(1)
         return {'status': 'UNAVAILABLE', 'assessments': [], 'errorcode': 'TIMEOUT'}
     first = S.prepare(tmp_path, CFG, now=NOW, inputs=pool(50), evaluator=fail)
-    assert calls == [1] and first['covered'] == 0
+    assert calls == [1, 1] and first['covered'] == 0
     again = S.prepare(tmp_path, CFG, now=NOW, inputs=pool(50), evaluator=fail)
-    assert again == first and calls == [1]
+    assert again == first and calls == [1, 1]
     assert len(first['candidate_gaps']) == 50
 
 
@@ -102,6 +101,23 @@ def test_corrupt_assessment_or_receipt_replay_never_retries_or_overwrites_histor
     assert result['status'] == 'UNAVAILABLE'
     assert 'integrity' in result['gaps'][0]
     assert prior.read_bytes() == corrupted
+
+
+@pytest.mark.parametrize('raw', ['[]', 'null'])
+def test_nonobject_saved_snapshot_fails_closed_without_retry_or_history_rewrite(tmp_path, raw):
+    history = tmp_path/'deepseek_history'/NOW.date().isoformat()
+    history.mkdir(parents=True)
+    prior = history/'snapshot.json'
+    prior.write_text(raw)
+    before = prior.read_bytes()
+    result = S.prepare(tmp_path, CFG, now=NOW,
+        evaluator=lambda *a, **k: pytest.fail('corrupt snapshot must not trigger a request'))
+    assert result['status'] == 'UNAVAILABLE'
+    assert 'Prior same-session DeepSeek snapshot failed integrity validation; no retry.' in result['gaps']
+    assert result['covered'] == 0 and result['assessments'] == []
+    assert prior.read_bytes() == before
+    assert json.loads((tmp_path/'deepseek_snapshot.json').read_text()) == result
+    assert not (history/'attempt.json').exists()
 
 
 def test_interrupted_attempt_blocks_retry_without_resetting_attempt(tmp_path):
@@ -197,7 +213,7 @@ def test_news_failure_stops_subsequent_batches_and_retains_reviewed_tags(tmp_pat
     S.refresh_public_inputs(tmp_path, cfg, NOW)
     saved = json.loads((tmp_path/'deepseek_news.json').read_text())
     assert saved['X0']['catalyst_tags'] == prior['X0']['catalyst_tags']
-    assert len(calls) == 2 and calls[-1] == ['X0', 'X1', 'X2', 'X3']
+    assert len(calls) == 2 and calls[-1] == ['X'+str(i) for i in range(8)]
 
 
 @pytest.mark.parametrize('raw', ['{"candidates":[],"candidates":[]}', '{"value":NaN}'])
@@ -243,14 +259,21 @@ def test_private_model_with_credential_or_invalid_bytes_never_echoes_or_calls_mo
     ('2026-09-11T08:11:00-04:00', False),
 ])
 def test_public_macro_collector_enforces_same_session_reference_contract(monkeypatch, observed, valid):
-    import quotes
+    import requests
+    from types import SimpleNamespace
+    from urllib.parse import unquote
     now = NOW.replace(hour=8, minute=10)
     symbols = {'crude': 'CL=F', 'cadusd': 'CADUSD=X', 'tsx': '^GSPTSE', 'vix': '^VIX'}
     raw = {symbol: {'symbol': symbol, 'regularMarketPrice': 10.,
                     'regularMarketTime': dt.datetime.fromisoformat(observed).timestamp()}
            for symbol in symbols.values()}
-    monkeypatch.setattr(quotes.YahooMarketData, 'get', lambda self, tickers: raw)
+    def get(url, **kwargs):
+        ticker = unquote(url.rsplit('/', 1)[-1])
+        assert kwargs['params'] == {'interval': '1d', 'range': '5d'}
+        return SimpleNamespace(raise_for_status=lambda: None,
+            json=lambda: {'chart': {'result': [{'meta': raw[ticker]}]}})
+    monkeypatch.setattr(requests, 'get', get)
     result = S._macro({'correlated': symbols}, now)
     assert all(value is not None for value in result['values'].values()) is valid
-    assert bool(result['gaps']) is not valid
+    assert bool([gap for gap in result['gaps'] if 'macro change unavailable' not in gap]) is not valid
     assert 'Dated macro references' in result['label']

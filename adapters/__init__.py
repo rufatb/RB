@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
@@ -225,6 +226,22 @@ _YH_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; PreOpenBrief/1.0)"}
 _YH_HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"]
 
 
+class ChartAcquisitionError(RuntimeError):
+    """Credential-free chart failure; never retain a provider response/URL."""
+
+
+class ChartTimeoutError(ChartAcquisitionError):
+    """The chart request or its shared acquisition budget expired."""
+
+
+class ChartRateLimitError(ChartAcquisitionError):
+    """The provider requested that acquisition stop (HTTP 429)."""
+
+
+class ChartAuthenticationError(ChartAcquisitionError):
+    """The chart endpoint denied authentication or entitlement."""
+
+
 class YahooDirectAdapter(DataAdapter):
     name = "yahoo_direct"
 
@@ -233,25 +250,52 @@ class YahooDirectAdapter(DataAdapter):
         self._requests = requests
         self.exchange_tz = exchange_tz
         self.timeout = timeout
+        # Optional report-path budgets. Ordinary adapter callers retain their
+        # existing timeout; cached acquisition sets these once before threads.
+        self.chart_budget_seconds = None
+        self.chart_deadline = None
 
     def _chart(self, ticker: str, interval: str, rng: str) -> dict:
-        """Fetch a chart payload, failing over query1 -> query2. Hard timeout."""
+        """Fetch a chart; failover shares optional per-symbol/global budgets.
+
+        Socket timeouts are not wall-clock guarantees. The report's enclosing
+        process supplies the unchanged killable deadline.
+        """
         last_err = None
+        failure_type = ChartAcquisitionError
+        deadline = self.chart_deadline
+        if self.chart_budget_seconds is not None:
+            per_symbol = time.monotonic() + self.chart_budget_seconds
+            deadline = per_symbol if deadline is None else min(deadline, per_symbol)
         for host in _YH_HOSTS:
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if remaining is not None and remaining <= 0:
+                raise ChartTimeoutError('Yahoo chart acquisition budget exhausted') from None
             url = f"{host}/v8/finance/chart/{ticker}"
             try:
                 r = self._requests.get(
                     url, params={"interval": interval, "range": rng},
-                    headers=_YH_HEADERS, timeout=self.timeout,
+                    headers=_YH_HEADERS, timeout=self.timeout if remaining is None
+                    else min(self.timeout, remaining),
                 )
                 r.raise_for_status()
                 j = r.json()
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise ChartTimeoutError('Yahoo chart acquisition budget exhausted')
                 if j.get("chart", {}).get("result"):
                     return j["chart"]["result"][0]
                 raise ValueError('provider returned no chart data')
             except Exception as e:  # pragma: no cover - network variance
                 last_err = _failure_note('Yahoo chart fetch', e)
-        raise RuntimeError(f"yahoo_direct fetch failed for {ticker}: {last_err}") from None
+                status = getattr(getattr(e, 'response', None), 'status_code', None)
+                if status == 429:
+                    raise ChartRateLimitError('Yahoo chart rate limited; no host retry') from None
+                failure_type = (ChartTimeoutError if isinstance(e, TimeoutError)
+                                or 'Timeout' in type(e).__name__ else ChartAcquisitionError)
+                # Authentication/entitlement errors are not another-host retries.
+                if status in (401, 403):
+                    raise ChartAuthenticationError('Yahoo chart authentication or entitlement unavailable') from None
+        raise failure_type(f"yahoo_direct fetch failed: {last_err}") from None
 
     def _bars_df(self, result: dict) -> pd.DataFrame:
         ts = result.get("timestamp") or []

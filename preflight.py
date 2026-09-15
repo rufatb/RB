@@ -13,7 +13,8 @@ def check(state,now=None):
     checks={}
     from bar_cache import inspect_cache
     from dashboard import load_config
-    history=inspect_cache(load_config(str(Path(__file__).resolve().parent/'config.yaml')),state/'intraday_cache',now)
+    cfg=load_config(str(Path(__file__).resolve().parent/'config.yaml'))
+    history=inspect_cache(cfg,state/'intraday_cache',now)
     checks['intraday_history']=history['status']+' — '+f"{history['verified']}/{history['expected']} history files verified"
     try:
         snap=json.loads((state/'biotech_snapshot.json').read_text())
@@ -31,10 +32,26 @@ def check(state,now=None):
     provider = eodhd.load_prepared(state,now)
     import deepseek_factors
     factors = deepseek_factors.load_prepared(state, now)
+    from yahoo_auth_cache import inspect as inspect_auth
+    auth = inspect_auth(state, now)
+    # Read the actual prepared candidates and cached histories. A staged
+    # success count or manifest by itself is not evidence of usable inputs.
+    import research_coverage
+    pool = research_coverage.inspect_pool(state, cfg, now, verify_history=True)
+    expanded = None
+    if (state/'tsx_universe.json').is_file() or pool.get('research_universe'):
+        try:
+            expanded = research_coverage.load_prepared(state, cfg, now, factors,
+                                                       verify_history=True, pool=pool)
+        except Exception as exc:
+            expanded = {'status':'UNAVAILABLE', 'gaps':['Expanded coverage validation failed: '+type(exc).__name__],
+                        'adopted':False}
     return {'checked_at':now.isoformat(),'checks':checks,'intraday_cache':history,
             'optional_historical_provider':provider,
             'optional_deepseek':{k:factors.get(k) for k in
-                                ('status','model','requested','covered','prepared_at','gaps')},
+                                ('status','model','requested','eligible','submitted','covered','prepared_at','gaps')},
+            'optional_factor_pool':pool, 'optional_expanded_research':expanded,
+            'quote_authentication':auth,
             'status':'PARTIAL' if any(v.startswith('NOT READY') for v in checks.values()) else 'PREPARED',
             'note':'Preparation status only; live BBO and final signal are checked at publication.'}
 

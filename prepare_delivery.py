@@ -22,7 +22,9 @@ def view(report, now=None):
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError('aware dispatch clock required')
     now = now.astimezone(ET)
-    if now.date().isoformat() == report['session'] and now.time() < dt.time(9, 46):
+    diagnostic = ((report.get('provenance', {}).get('factor_diagnostic') or {}).get('kind')
+                  == 'CURRENT_TIME_DIAGNOSTIC' and report.get('offline') is True)
+    if not diagnostic and now.date().isoformat() == report['session'] and now.time() < dt.time(9, 46):
         raise ValueError('do not deliver before 09:46 ET')
     out = copy.deepcopy(report)
     on_time = now.date().isoformat() == report['session'] and now.strftime('%H:%M') == '09:46'
@@ -35,6 +37,10 @@ def view(report, now=None):
         note += ' Partial or unavailable data; retain the section-specific gaps.'
     out['publication_status'] = report.get('publication_status', report['report_status'])
     out['report_status'] = status + (' / PARTIAL DATA' if partial else '')
+    if diagnostic:
+        out['report_status'] = 'CURRENT-TIME DEEPSEEK DIAGNOSTIC / INFORMATIONAL — NOT A MORNING SIGNAL'
+        note = 'Explicit current-time diagnostic; no morning publication, entry or predictive-accuracy claim.'
+        status = 'INFORMATIONAL'
     out['delivery'] = dict(checked_at=now.isoformat(), status=status, note=note)
     return out
 
@@ -68,6 +74,8 @@ def subject_state(report):
 
 
 def subject(report):
+    if (report.get('provenance', {}).get('factor_diagnostic') or {}).get('kind') == 'CURRENT_TIME_DIAGNOSTIC':
+        return f"RB Daily Report — {report['session']} — CURRENT-TIME DEEPSEEK DIAGNOSTIC / INFORMATIONAL"
     prefix=subject_state(report).strip(' —')
     pieces=[f"RB Daily Report — {report['session']}"]
     if report['report_status']!='ON_TIME':pieces.append('INFORMATIONAL')
