@@ -113,7 +113,7 @@ def test_complete_inputs_same_board_for_serial_and_default_cached_workers(monkey
         def now(cls, tz=None): return NOW.astimezone(tz)
     monkeypatch.setattr(r945.dt, 'datetime', Clock)
     monkeypatch.setenv('RB_INTRADAY_CACHE_DIR', str(tmp_path))
-    monkeypatch.setattr(bar_cache, 'get_bars', lambda adapter, ticker, now: frames[ticker].copy())
+    monkeypatch.setattr(bar_cache, 'get_bars', lambda adapter, ticker, now, **kw: frames[ticker].copy())
     serial = r945.run(cfg, workers=1)
     concurrent = r945.run(cfg)
     assert serial['n_names'] >= 17 and serial.get('pair')

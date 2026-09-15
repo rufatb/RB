@@ -64,10 +64,20 @@ def test_cached_intraday_shares_budget_without_changing_plain_adapter(tmp_path, 
     from adapters import YahooDirectAdapter
     from dashboard import load_config
     adapter = YahooDirectAdapter()
+    # The tightened budget now follows a cache that can actually SERVE this
+    # session and source, not the mere presence of the variable: a 14s socket
+    # and an 18s shared deadline are sized for small same-day responses, and a
+    # stale manifest means every name falls back to a 60-day fetch instead.
+    # So stage a manifest the run will accept.
+    import json as _json
+    (tmp_path/'manifest.json').write_text(_json.dumps(
+        {'complete': True, 'session': NOW.date().isoformat(),
+         'prepared_at': NOW.replace(hour=8, minute=5).isoformat(),
+         'source': 'yahoo_direct', 'tickers': []}))
     monkeypatch.setenv('RB_INTRADAY_CACHE_DIR', str(tmp_path))
     monkeypatch.setattr(r945, 'build_adapter', lambda *a, **kw: adapter)
     observed = []
-    def bars(a, ticker, now):
+    def bars(a, ticker, now, **kw):
         observed.append((a.timeout, a.chart_budget_seconds, a.chart_deadline-time.monotonic()))
         return pd.DataFrame()
     monkeypatch.setattr(bar_cache, 'get_bars', bars)

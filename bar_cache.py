@@ -60,28 +60,90 @@ def inspect_cache(cfg, directory, now=None):
     return out
 
 
-def get_bars(adapter, ticker, now):
+class CacheMiss(Exception):
+    """The cache cannot serve this ticker. NOT a data outage — see get_bars."""
+
+
+def cache_ready(adapter, now, directory=None):
+    """Can the cache serve THIS session from THIS source? Cheap, manifest-only.
+
+    Lets the caller decide before fetching whether it is on the fast cached
+    path (small same-day responses, a 2s socket timeout is generous) or the
+    live path (60 days per name, which needs the full timeout)."""
+    directory=directory or os.getenv('RB_INTRADAY_CACHE_DIR')
+    if not directory:
+        return False, 'no cache directory configured'
+    try:
+        manifest=json.loads((Path(directory)/'manifest.json').read_text())
+    except (OSError, ValueError) as exc:
+        return False, 'cache manifest unreadable: '+type(exc).__name__
+    if not manifest.get('complete'):
+        return False, 'cache marked incomplete'
+    if manifest.get('session')!=now.date().isoformat():
+        return False, f"cache staged for session {manifest.get('session')}, not {now.date().isoformat()}"
+    if manifest.get('source')!=adapter.name:
+        return False, f"cache staged from {manifest.get('source')}, not {adapter.name}"
+    return True, None
+
+
+def get_bars(adapter, ticker, now, *, on_fallback=None):
+    """Cached history when it is usable for this session; live history when not.
+
+    A CACHE MISS IS NOT A DATA OUTAGE. This used to raise, and because the
+    09:46 path passes `require_cache`, an unstaged cache produced a board with
+    zero names evaluated and an email reading "SCAN UNAVAILABLE" — on 2026-09-14
+    and again on 2026-09-15, with a healthy feed both mornings. The cache
+    "changes acquisition only, not baseline features or rules" (CLAUDE.md,
+    September 8 recovery), so the live path yields the SAME board; it just
+    spends more of the 22s budget. Measured on the live TSX-21: 4.1-4.9s for
+    the whole universe against that budget, 0 fetch errors.
+
+    The fallback is never silent. Every fallback is reported through
+    `on_fallback(ticker, reason)`, counted by the caller, and printed in the
+    report — a stale or corrupt cache is a real operational fault even though
+    it must not cost the day's board (house rule 1)."""
+    def live(reason):
+        if on_fallback is not None:
+            on_fallback(ticker, reason)
+        return adapter._bars_df(adapter._chart(ticker,'5m','60d'))
     directory=os.getenv('RB_INTRADAY_CACHE_DIR')
     if not directory:
-        return adapter._bars_df(adapter._chart(ticker,'5m','60d'))
-    directory=Path(directory)
-    manifest=json.loads((directory/'manifest.json').read_text())
-    if (not manifest.get('complete') or manifest.get('session')!=now.date().isoformat()
-        or manifest.get('source')!=adapter.name or ticker not in manifest.get('tickers',[])):
-        raise ValueError('intraday history cache not prepared for this session/source/universe')
-    row=json.loads((directory/key(ticker)).read_text())
+        return live('no cache directory configured')
+    ready, why = cache_ready(adapter, now, directory)
+    if not ready:
+        return live(why)
+    try:
+        return _cached_bars(adapter, ticker, now, Path(directory))
+    except CacheMiss as exc:
+        return live(str(exc))
+
+
+def _cached_bars(adapter, ticker, now, directory):
+    """Prior session from disk + today from the feed. Raises CacheMiss only."""
+    try:
+        manifest=json.loads((directory/'manifest.json').read_text())
+        if ticker not in manifest.get('tickers',[]):
+            raise CacheMiss('ticker not in the staged universe')
+        row=json.loads((directory/key(ticker)).read_text())
+    except (OSError, ValueError) as exc:
+        raise CacheMiss('cached row unreadable: '+type(exc).__name__) from exc
     if row['ticker']!=ticker or row['session']!=now.date().isoformat():
-        raise ValueError('history cache identity mismatch')
+        raise CacheMiss('history cache identity mismatch')
     encoded=json.loads(row['frame'])
     prior=pd.DataFrame(encoded['data'],columns=encoded['columns'],
                        index=pd.to_datetime(encoded['index'],utc=True).tz_convert(adapter.exchange_tz))
     if any(i.date()>=now.date() for i in prior.index):
-        raise ValueError('pre-open history contains today/future bars')
+        # LEAKAGE. A pre-open cache holding today's bars would put the future
+        # into the training window. Discarding it for a live fetch is the safe
+        # answer, not a lenient one: completed_history excludes today on the
+        # live path. It is reported as a fallback, which is how it gets seen.
+        raise CacheMiss('pre-open history contains today/future bars')
     current=adapter._bars_df(adapter._chart(ticker,'5m','1d'))
     current.index=pd.to_datetime(current.index,utc=True).tz_convert(adapter.exchange_tz)
     current=current[[i.date()==now.date() for i in current.index]]
     combined=pd.concat([prior,current]).sort_index()
-    if combined.index.has_duplicates: raise ValueError('duplicate cached/current bars')
+    if combined.index.has_duplicates:
+        raise CacheMiss('duplicate cached/current bars')
     return combined
 
 

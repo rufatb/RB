@@ -182,5 +182,18 @@ def test_history_cache_combination_matches_cold_bars(tmp_path,monkeypatch):
     monkeypatch.setenv('RB_INTRADAY_CACHE_DIR',str(tmp_path))
     cached=bar_cache.get_bars(adapter,'A',NOW)
     pd.testing.assert_frame_equal(cached,cold,check_dtype=False)
-    with pytest.raises(ValueError,match='not prepared'):
-        bar_cache.get_bars(adapter,'A',NOW+dt.timedelta(days=1))
+    # A cache staged for ANOTHER session used to raise, and because the 09:46
+    # path passes require_cache that produced a board with zero names and an
+    # email reading SCAN UNAVAILABLE -- twice, on a healthy feed. It now falls
+    # back to live acquisition and SAYS SO. The assertion that matters is that
+    # the fallback is equivalent: the cache is an acquisition optimisation, so
+    # the frame it yields must match the cold one exactly.
+    told=[]
+    stale=bar_cache.get_bars(adapter,'A',NOW+dt.timedelta(days=1),
+                             on_fallback=lambda ticker,why:told.append((ticker,why)))
+    pd.testing.assert_frame_equal(stale,cold,check_dtype=False)
+    assert told and told[0][0]=='A'
+    assert 'session' in told[0][1], told
+    # ...and silence is not an option: a fallback with no reporting hook still
+    # happens, but the caller must be able to see it.
+    assert bar_cache.cache_ready(adapter,NOW+dt.timedelta(days=1),str(tmp_path))[0] is False

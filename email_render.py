@@ -112,6 +112,7 @@ def text(d):
     gap = full.record_gap_line(rec)
     if gap:
         lines.append(gap)
+    lines += full.cache_lines(res)
     lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
                  f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
     errors=d.get('errors',[])

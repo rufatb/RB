@@ -1,5 +1,31 @@
 # Working notes for this repo
 
+## Day103 — a missing cache costs latency, never the board
+
+`require_cache` used to RAISE when no cache directory was staged, to protect
+the 22s budget after the day-97 timeout. The budget is real; refusing to run
+was not the way to protect it. **2026-09-14 and 2026-09-15 both published a
+board with ZERO names evaluated and emailed "SCAN UNAVAILABLE" on a healthy
+feed** — the whole TSX-21 fetches live in 4.1–5.1s against that 22s budget
+with no errors.
+
+`bar_cache.cache_ready(adapter, now)` answers whether the cache can serve THIS
+session from THIS source — the 09-15 board was empty *with* the variable
+exported, because the manifest was staged for 09-11. `get_bars` falls back to
+live acquisition on any miss and reports it through `on_fallback`; `r945.run`
+counts them into `cache_degraded` / `cache_fallbacks`, and both renderers print
+the degradation. The board is unaffected — caching "changes acquisition only,
+not baseline features or rules" — but a fallback means a pre-open job did not
+run, and it is never silent (house rule 1).
+
+The tightened socket budget now follows `cache_ready`, not the env var: 14s/16s
+is sized for small same-day responses, not a 60-day fetch. A cache holding
+today's bars is LEAKAGE and is discarded for a live fetch, reported, not trusted.
+
+**The host has never been installed and cannot be installed from a Claude Code
+container** — PID 1 is not systemd, and `install.sh` refuses by design. The
+board no longer depends on that install; delivery still does.
+
 ## Day100 — a hole in the record must stay visible
 
 Read `AUDIT_day100_day95b_review.md`. `ledger.missing_sessions` anchors on the

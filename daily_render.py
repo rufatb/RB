@@ -314,6 +314,24 @@ def _deepseek_detail(intra):
     return lines
 
 
+def cache_lines(res):
+    """Say out loud when the board was built on live acquisition.
+
+    The pre-open cache is an acquisition optimisation — it does not enter
+    features or rules — so a fallback yields the same board. It is still an
+    operational fault worth naming: it means a pre-open job did not run."""
+    degraded = (res or {}).get('cache_degraded')
+    fallbacks = (res or {}).get('cache_fallbacks') or {}
+    if not degraded and not fallbacks:
+        return []
+    reasons = sorted({safe_detail(why, 120) for why in fallbacks.values()}) or (
+        [safe_detail(degraded, 120)] if degraded else [])
+    return [f"Pre-open history cache DEGRADED: {len(fallbacks)} name(s) acquired live "
+            f"instead of from cache ({'; '.join(reasons)}). The cache changes acquisition "
+            "only, not features or selection rules, so the board is unaffected — but a "
+            "pre-open staging job did not run and should be investigated."]
+
+
 def record_gap_line(rec):
     """The record's own holes, rendered from the frozen computation.
 
@@ -496,6 +514,7 @@ def text(d):
     if res.get('coverage_fail'):
         lines += ['', 'Coverage: '+res['coverage_fail']]
     lines += ['', f"Freshly evaluated names: {res.get('n_names',0)}. Recorded qualifiers: {len(intra.get('recorded_today',[]))}. Source: {res.get('source','unavailable')}."]
+    lines += cache_lines(res)
     provider = intra.get('historical_provider',{})
     if provider and provider.get('status') != 'NOT CONFIGURED':
         lines += ['', '### Additional historical data — not a live signal',

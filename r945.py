@@ -705,9 +705,17 @@ def run(cfg, workers=None, *, require_cache=False):
     import time
     from bounded import progress
     progress('intraday_started')
+    # A missing cache DEGRADES acquisition; it does not cancel the morning.
+    # This used to raise, and since daily_job passes require_cache=True, two
+    # consecutive sessions (2026-09-14, 09-15) published a board with zero
+    # names evaluated and emailed "SCAN UNAVAILABLE" while the feed was
+    # healthy and the live path took 4.9s of a 22s budget. The cache is an
+    # acquisition optimisation, not an input to features or rules, so the
+    # live path produces the same board. Counted and reported, never silent.
+    cache_degraded = None
     if require_cache and not os.getenv('RB_INTRADAY_CACHE_DIR'):
+        cache_degraded = 'no prepared cache directory configured'
         progress('cache_unavailable')
-        raise ValueError('scheduled intraday path requires a prepared cache directory')
     tz = cfg["exchange_tz"]
     now = dt.datetime.now(ZoneInfo(tz))
     # HARD too-early guard (bug found live at 9:38): between open+10 and
@@ -738,7 +746,18 @@ def run(cfg, workers=None, *, require_cache=False):
         src_note = f"configured source '{src}' unusable ({e}); fell back to yahoo_direct"
         src = "yahoo_direct"
     uni = cfg.get("scan", {}).get("universe") or []
-    cached_yahoo = bool(os.getenv('RB_INTRADAY_CACHE_DIR')) and isinstance(a, YahooDirectAdapter)
+    # Ask whether the cache can actually SERVE this session and source, not
+    # merely whether the env var is set. A stale manifest means every name
+    # falls back to a 60-day live fetch, and the tightened budget below would
+    # then be sized for responses that are not the ones being requested.
+    # Reach these through the module, never `from bar_cache import get_bars`:
+    # a local binding is captured at call time and silently defeats every test
+    # that patches `bar_cache.get_bars`.
+    import bar_cache
+    cache_usable, cache_why = bar_cache.cache_ready(a, now)
+    if cache_degraded is None and cache_why:
+        cache_degraded = cache_why
+    cached_yahoo = cache_usable and isinstance(a, YahooDirectAdapter)
     # Measured host responses exceed the former 2s cutoff even when healthy.
     # A bounded single wave avoids making half the universe wait for earlier
     # sockets to time out. Each symbol gets 16s INCLUDING failover, all chart
@@ -754,11 +773,11 @@ def run(cfg, workers=None, *, require_cache=False):
     progress('fetch_started', count=len(uni))
     min_p = (cfg.get("report") or {}).get("min_sided_p", 0.55)
     fetch_errors: dict = {}
+    cache_fallbacks: dict = {}
 
     def fetch(t):
         try:
-            from bar_cache import get_bars
-            bars = get_bars(a, t, now)
+            bars = bar_cache.get_bars(a, t, now, on_fallback=cache_fallbacks.__setitem__)
             progress('symbol_received', ticker=t, count=len(bars))
             return t, bars
         except Exception as e:
@@ -786,7 +805,8 @@ def run(cfg, workers=None, *, require_cache=False):
                 "longs": [], "shorts": [], "excluded": [], "pair": None,
                 "min_p": min_p, "too_early": False, "clock_error": _why,
                 "latest_session": latest_session, "coverage_fail": _why,
-                "source": src, "source_note": src_note, "fetch_errors": fetch_errors}
+                "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
+                "cache_degraded": cache_degraded, "cache_fallbacks": cache_fallbacks}
     hist_rows, live, history_diagnostics = [], [], []
     progress('features_started')
     from intraday_history import completed_history
@@ -838,7 +858,8 @@ def run(cfg, workers=None, *, require_cache=False):
                     f"board is published. This is a data outage, not a "
                     f"judgement about the names."),
                 "source": src, "source_note": src_note,
-                "fetch_errors": fetch_errors, "training_history": history_diagnostics}
+                "fetch_errors": fetch_errors, "training_history": history_diagnostics,
+                 "cache_degraded": cache_degraded, "cache_fallbacks": cache_fallbacks}
     train["vp"] = train.groupby("t")["v15"].transform(lambda s: s / (s.median() or 1))
 
     # Pooled path expectations: the normal worst swing AGAINST each side
@@ -908,6 +929,7 @@ def run(cfg, workers=None, *, require_cache=False):
                 "longs": [], "shorts": [], "excluded": excluded, "pair": None,
                 "min_p": min_p, "too_early": False, "coverage_fail": cov_msg,
                 "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
+                 "cache_degraded": cache_degraded, "cache_fallbacks": cache_fallbacks,
                 "training_history": history_diagnostics}
     pcfg = cfg.get("pair") or {}
     return {"now": now.isoformat(timespec="seconds"), "n_names": len(out),
@@ -926,6 +948,7 @@ def run(cfg, workers=None, *, require_cache=False):
                                    ("t", "p_up", "r0", "gap", "vp", "p945")}
                                   for r in out],
             "source": src, "source_note": src_note, "fetch_errors": fetch_errors,
+                 "cache_degraded": cache_degraded, "cache_fallbacks": cache_fallbacks,
             "coverage": cov_msg, "training_history": history_diagnostics,
             "late_min": round(late_minutes(now, open_t), 1),
             "stale_after_min": pcfg.get("stale_after_min", 20),

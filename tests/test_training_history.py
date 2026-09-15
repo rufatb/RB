@@ -101,7 +101,7 @@ def test_live_run_uses_validated_history_and_preserves_exclusion_diagnostics(mon
     historical=pd.concat([day('2026-09-08'), day('2026-09-09',periods=10), day('2026-09-10')])
     frame=pd.concat([historical, day('2026-09-11',periods=4)])
     monkeypatch.setattr(r945,'build_adapter',lambda *a,**kw:YahooDirectAdapter())
-    monkeypatch.setattr(bar_cache,'get_bars',lambda *a:frame)
+    monkeypatch.setattr(bar_cache,'get_bars',lambda *a,**kw:frame)
     class Clock(dt.datetime):
         @classmethod
         def now(cls,tz=None): return NOW.astimezone(tz)

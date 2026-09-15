@@ -47,12 +47,38 @@ def test_cache_with_only_a_closing_bar_is_not_ready(tmp_path):
     assert result['training_history'][0]['rejected_sessions']==1
 
 
-def test_scheduled_scan_cannot_download_full_history_when_cache_is_unconfigured(monkeypatch):
+def test_scheduled_scan_degrades_to_live_history_instead_of_losing_the_board(monkeypatch):
+    """REPLACES a rule that cost two consecutive sessions.
+
+    The scheduled path used to RAISE when no cache directory was configured,
+    to protect the 22-second acquisition budget after the 2026-09-10 timeout.
+    The protection was worth having; refusing to run was not the way to get
+    it. On 2026-09-14 and 2026-09-15 the feed was healthy, the whole TSX-21
+    took 4.1-5.1s live, and both mornings published a board with ZERO names
+    evaluated and emailed "SCAN UNAVAILABLE".
+
+    The cache "changes acquisition only, not baseline features or rules"
+    (CLAUDE.md), so the live path yields the same board. What the scheduled
+    path must now do is degrade, and say so — never silently (house rule 1)."""
     import r945
     monkeypatch.delenv('RB_INTRADAY_CACHE_DIR',raising=False)
-    monkeypatch.setattr(r945,'build_adapter',lambda **kw:pytest.fail('network adapter created'))
-    with pytest.raises(ValueError,match='prepared cache'):
-        r945.run({},require_cache=True)
+    built=[]
+    monkeypatch.setattr(r945,'build_adapter',lambda **kw:built.append(kw) or (_ for _ in ()).throw(TypeError('no 5m')))
+    out=r945.run({'exchange_tz':'America/New_York','scan':{'universe':[]}},require_cache=True)
+    assert out['cache_degraded'], 'a degraded acquisition path must be recorded'
+    assert 'cache' in out['cache_degraded']
+    assert 'cache_fallbacks' in out, 'per-name fallbacks must be countable'
+
+
+def test_an_unconfigured_cache_is_not_reported_as_ready(monkeypatch):
+    """cache_ready must answer for THIS session and source, not merely whether
+    the environment variable is set — the stale-manifest case is what made the
+    2026-09-15 board empty even with the variable exported."""
+    import bar_cache
+    class Adapter: name='yahoo_direct'
+    monkeypatch.delenv('RB_INTRADAY_CACHE_DIR',raising=False)
+    ok,why=bar_cache.cache_ready(Adapter(),NOW)
+    assert ok is False and 'no cache directory' in why
 
 
 def test_biotech_timeout_is_bounded_and_checkpointed(monkeypatch):
