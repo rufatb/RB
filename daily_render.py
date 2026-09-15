@@ -38,6 +38,14 @@ def _expanded_summary(intra):
             f"assessed {fmt(coverage.get('assessed'),'d')}.")
     if mode == 'LEGACY_RESEARCH_FALLBACK':
         line += ' Legacy research fallback; expanded directory unavailable.'
+    # Baseline names used to be DROPPED on a stale pre-open cache — the only
+    # group with no live fallback, and the only group the report trades. They
+    # are acquired live now; the reader is told, because a reuse gap means a
+    # pre-open staging job did not run.
+    reuse = (coverage.get('pool') or {}).get('cache_reuse_gaps') or {}
+    if reuse:
+        line += (f" Pre-open pool cache DEGRADED for {len(reuse)} name(s); "
+                 "acquired live within the same budget, technicals unchanged.")
     sectors = coverage.get('sectors') or []
     if sectors:
         line += ' Sector assessed/pool: '+', '.join(

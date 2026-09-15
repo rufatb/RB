@@ -235,9 +235,19 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             try:
                 rows[ticker], diagnostics[ticker] = _cached(ticker, root/'intraday_cache', cfg, now)
                 status['reused_baseline'] += 1
-            except (OSError, ValueError, TypeError, KeyError, IndexError):
-                # Do not repeat the baseline provider's failed staging work.
-                status['errors'][ticker] = 'BASELINE_HISTORY_UNAVAILABLE'
+            except (OSError, ValueError, TypeError, KeyError, IndexError) as exc:
+                # A stale baseline cache used to EXCLUDE the ticker outright,
+                # and baseline names were the only ones with no live fallback —
+                # research names already fall through to `pending`. The effect
+                # was that the twenty-one names the report actually trades were
+                # the twenty-one guaranteed to be dropped whenever the pre-open
+                # staging job had not run, which is exactly what produced
+                # "0/60 assessed" with "prepared technicals 21" in the
+                # 2026-09-15 email. Caching changes acquisition only, not
+                # features or rules, so acquire them live inside the same
+                # budget instead — and say that it happened.
+                status['cache_reuse_gaps'][ticker] = 'BASELINE_CACHE_REJECTED_'+type(exc).__name__
+                pending.append(ticker)
         # Preserve the old manifest until all reuse checks have inspected it.
         write_atomic(directory/'manifest.json', manifest)
         budget = budget_seconds if diagnostic else min(budget_seconds,
