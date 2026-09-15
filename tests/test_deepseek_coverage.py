@@ -42,11 +42,20 @@ def test_zero_assessments_keeps_requested_pool_and_does_not_score_threshold(tmp_
     assert watch['requested'] == watch['input_complete'] == 21
     assert watch['assessed'] == watch['evaluated'] == 0
     assert watch['threshold_evaluated'] is False
-    for body in render_factor(loaded, monkeypatch):
+    concise, full, html = render_factor(loaded, monkeypatch)
+    # The FULL report keeps every count verbatim: 21 requested, 0 assessed, no
+    # threshold scored. Nothing is lost.
+    for body in (full, html):
         assert '0/21 assessed' in body
         assert 'Threshold NOT EVALUATED' in body
         assert '0/0 assessed names' not in body
         assert '0 clear absolute sentiment support' not in body
+    # The CONCISE email omits the section when the layer produced nothing and
+    # states the absence in one line instead of several UNAVAILABLE lines about
+    # an experiment that changes no selection. The absence must still be there.
+    assert 'not evaluated' in concise
+    assert 'No selection, size or threshold depends on it' in concise
+    assert 'Threshold NOT EVALUATED' not in concise
 def test_failed_public_evidence_count_differs_from_no_model_response(tmp_path, monkeypatch):
     obj = snapshot(('A.TO', 'B.TO', 'C.TO'))
     obj.update(status='PARTIAL', covered=2,

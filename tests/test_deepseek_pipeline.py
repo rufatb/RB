@@ -83,8 +83,14 @@ def test_unavailable_optional_model_preserves_baseline_and_visible_gap(tmp_path,
     assert {l['ticker'] for l in d['intraday']['legs']}=={'AAA.TO','BBB.TO'}
     assert d['intraday']['deepseek']['status']=='UNAVAILABLE'
     body=email_render.text(d)
+    # The FAULT must reach the concise email — a reader has to be able to tell
+    # a tested abstention from a broken run. The word UNAVAILABLE no longer
+    # needs to: the concise view drops a section with nothing in it and states
+    # the absence, with its reason, in one line. The full report keeps the
+    # section verbatim.
     assert 'preparation timed out' in body and 'AAA.TO LONG' in body
-    assert 'UNAVAILABLE' in body and 'NO EDGE - WAIT' not in body
+    assert 'not evaluated' in body and 'NO EDGE - WAIT' not in body
+    assert 'UNAVAILABLE' in brief.render_text(d)
     assert counts['quant']==1 and counts['quotes']==1
 
 

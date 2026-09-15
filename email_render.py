@@ -56,7 +56,14 @@ def text(d):
     if history:
         lines.append(f"Training: {sum(h['accepted_sessions'] for h in history)} complete ticker-sessions; "
                      f"{sum(h['rejected_sessions'] for h in history)} excluded; audit attached.")
-    if 'deepseek' in intra:
+    # The concise email carries the FACTOR SECTION only when the factor layer
+    # has something to say. It is shadow, unadopted, and changes no selection,
+    # so with no staged snapshot it produced five consecutive UNAVAILABLE lines
+    # describing an experiment that did not run — noise that crowded out the
+    # board on a phone at 09:46. Nothing is swallowed: the attached full report
+    # keeps every diagnostic verbatim, and `factor_note` states the absence in
+    # one line among the gaps (house rule 1).
+    if 'deepseek' in intra and full.factor_reported(intra):
         lines += ['',*full.deepseek_summary(intra)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
@@ -113,14 +120,27 @@ def text(d):
     if gap:
         lines.append(gap)
     lines += full.cache_lines(res)
-    lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
-                 f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
+    # Exact-window evidence begins at zero and stays there until collect_execution
+    # has captured matched entry and exit BBOs. Saying "0 scored legs, net
+    # unknown%, selection unknown%" every morning reads as a fault; it is a
+    # study that has not started. Say that once, plainly.
+    if exact['scored_legs']:
+        lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
+                     f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
+    else:
+        lines.append('Exact net/index evidence: not yet accumulating — matched 09:46/15:59 '
+                     'execution quotes are required and none are recorded. The proxy record above is what exists.')
+    note = full.factor_note(intra)
+    if note:
+        lines.append(note)
     errors=d.get('errors',[])
     if errors:
         from collections import Counter
-        counts=Counter((e['layer'],e['error']) for e in errors)
-        lines.append('Acquisition: '+'; '.join(f"{layer}: {error}"+(f" ({n})" if n>1 else '') for (layer,error),n in counts.items()))
-    if bio.get('errors'):lines.append('Biotech coverage: '+bio['errors'][0][:180]+('… Details attached.' if len(bio['errors'][0])>180 or len(bio['errors'])>1 else ''))
+        counts=Counter((e['layer'],full.plain_fault(e)) for e in errors)
+        lines.append('Acquisition faults: '+'; '.join(f"{layer} — {fault}"+(f" (×{n})" if n>1 else '') for (layer,fault),n in counts.items())+'.')
+    if bio.get('errors'):
+        lines.append('Biotech coverage: '+full.plain_fault({'error':bio['errors'][0],'layer':'biotech'})+
+                     ('' if len(bio['errors'])==1 else f" (+{len(bio['errors'])-1} more, attached)")+'.')
     provider=intra.get('historical_provider',{})
     if provider and provider.get('status')!='NOT CONFIGURED':
         lines.append(f"EODHD history: {provider['status']}; 5-minute history {provider['intraday_status']}. No live selection change.")

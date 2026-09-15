@@ -78,7 +78,17 @@ def test_preparation_to_real_loader_to_digest_to_email(tmp_path, monkeypatch, mo
         assert 'X2' in mail['attachments'][0]['content']
     else:
         assert loaded['covered'] == 0 and loaded['status'] == 'UNAVAILABLE'
-        assert all('UNAVAILABLE' in body and 'NOT EVALUATED' in body for body in bodies)
+        # FULL views keep the section and its labels verbatim; the attachment
+        # is the record. bodies[0]/[1] are the full text/HTML, bodies[4] the
+        # attached full report.
+        for body in (bodies[0], bodies[1], bodies[4]):
+            assert 'UNAVAILABLE' in body and 'NOT EVALUATED' in body
+        # CONCISE views drop a section that produced nothing, but a failed
+        # preparation must still be visible in one line — otherwise the reader
+        # cannot tell "the experiment abstained" from "the experiment broke".
+        for body in (bodies[2], bodies[3]):
+            assert 'not evaluated' in body
+            assert 'No selection, size or threshold depends on it' in body
         assert not loaded['research_watchlist']['threshold_evaluated']
     assert calls == [['X0', 'X1']] and snapshot.read_bytes() == before and encode(d) == frozen
     assert not (tmp_path/'reports.sqlite3').exists()

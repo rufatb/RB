@@ -147,6 +147,59 @@ def _model_assessed_count(snapshot):
     return len(records) if isinstance(records, dict) else snapshot.get('covered', 0)
 
 
+FAULTS = (
+    ('FileNotFoundError', 'a staged input file was missing'),
+    ('TimeoutExpired', 'the provider did not answer inside its budget'),
+    ('RateLimit', 'the provider rate-limited us; remaining names were not requested'),
+    ('ConnectionError', 'the provider connection failed'),
+    ('HTTPError', 'the provider returned an error status'),
+    ('ValueError', 'an input failed validation and was excluded'),
+    ('KeyError', 'a provider response was missing an expected field'),
+)
+
+
+def plain_fault(err):
+    """Name the fault in words, keeping the exception class for the record.
+
+    An email that says "intraday: ValueError" tells the reader something broke
+    and nothing about what it costs them. The exception class is kept — it is
+    what makes two mornings comparable — but it is no longer the whole message."""
+    raw = str((err or {}).get('error') or 'unknown')
+    detail = str((err or {}).get('detail') or '')
+    for needle, english in FAULTS:
+        if needle in raw or needle in detail:
+            return f"{english} ({needle})"
+    return safe_detail(raw, 80)
+
+
+def factor_reported(intra):
+    """Does the unadopted factor layer have anything to SAY this morning?
+
+    True when some assessment or coverage figure exists. False when the layer
+    simply did not run — no staged snapshot and no coverage — in which case the
+    concise email omits the section rather than printing several UNAVAILABLE
+    lines about an experiment that produced nothing and changes no selection.
+    The full report and `factor_note` still record the absence."""
+    snap = intra.get('deepseek') or {}
+    if snap.get('assessments') or (snap.get('covered') or 0):
+        return True
+    if snap.get('status') in ('READY', 'PARTIAL'):
+        return True
+    coverage = intra.get('research_coverage') or {}
+    return bool(coverage.get('assessed') or coverage.get('technical_complete'))
+
+
+def factor_note(intra):
+    """One line for the gaps list when the section itself is omitted."""
+    if 'deepseek' not in intra or factor_reported(intra):
+        return ''
+    snap = intra.get('deepseek') or {}
+    reason = safe_detail((snap.get('gaps') or [snap.get('reason') or
+                          'inputs were not prepared for this session'])[0], 160)
+    return ('Factor research (shadow, unadopted): not evaluated — '+reason+
+            ' No selection, size or threshold depends on it.')
+
+
 def deepseek_summary(intra):
     """At most six concise lines over saved factors; older publications stay unchanged."""
     if 'deepseek' not in intra:
