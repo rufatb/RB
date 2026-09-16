@@ -1,0 +1,241 @@
+"""The daily HTML page, and the one rule it must enforce by construction.
+
+The page was being rewritten by hand every morning. The standing instruction
+for that rewrite had to shout "render NO share count on an ABSTAIN leg" in
+capitals, because nothing enforced it — and a leg rendered with a size has
+twice been acted on as an order. A renderer cannot be reminded; it can only be
+built so the number has no path to the page.
+
+`report_page.render` is pure: frozen digest in, string out. No clock, no
+network, no writes.
+"""
+import json
+
+import pytest
+
+import report_page
+
+
+def leg(ticker, status='ABSTAIN', **over):
+    row = {'ticker': ticker, 'side': 'LONG', 'status': status,
+           'signal_reference': 12.34, 'entry_reference': None, 'entry_spread_bps': None,
+           'baseline_shares': 4242, 'baseline_alloc': 987654.0, 'reasons': [], 'quote': {}}
+    row.update(over)
+    return row
+
+
+def digest(legs=(), status='ON_TIME', **over):
+    out = {
+        'session': '2026-09-16', 'generated_at': '2026-09-16T09:46:12-04:00',
+        'report_status': status, 'schema_version': 2,
+        'provenance': {'code_commit': 'abcdef1234567890'},
+        'errors': [], 'biotech': {'errors': []},
+        'intraday': {
+            'contract': '09:46 entry / 15:59 exit, same session',
+            'model_claim': 'No demonstrated predictive edge.',
+            'legs': list(legs), 'recorded_today': [],
+            'res': {'n_names': 21, 'source': 'yahoo_direct'},
+            'record': {'hits': 52, 'n': 107, 'rate': .486, 'mean': -.058,
+                       'net_rate': .5, 'net_mean': .247, 'net_n': 6, 'net_unpriced': 101},
+            'risk_evidence': {'rate': {'rate': .486, 'ci95': [.375, .597],
+                                       'mde80_pp': 23.8, 'n': 107, 'sessions': 39},
+                              'calibration': []},
+            'exact_record': {'scored_legs': 0},
+        }}
+    out['intraday'].update(over.pop('intraday', {}))
+    out.update(over)
+    return out
+
+
+def body(html):
+    """Just the legs table, so a match cannot come from CSS or a footnote."""
+    return html.split('<tbody>')[1].split('</tbody>')[0]
+
+
+# ── the rule ──────────────────────────────────────────────────────────────
+
+def test_an_abstained_leg_renders_no_share_count():
+    html = report_page.render(digest([leg('AC.TO')]))
+    assert '4242' not in body(html), 'a size reached an abstained row'
+    assert report_page.ABSTAIN_CELL in body(html)
+
+
+def test_an_abstained_leg_renders_no_dollar_allocation():
+    html = report_page.render(digest([leg('AC.TO')]))
+    assert '987,654' not in html and '987654' not in html
+
+
+@pytest.mark.parametrize('status', ['ABSTAIN'])
+def test_the_helper_itself_cannot_emit_a_size(status):
+    """Enforced at the one place a number becomes text, so a future table
+    column cannot reintroduce it by accident."""
+    assert report_page._alloc_cell(leg('X', status), 'baseline_shares') == report_page.ABSTAIN_CELL
+    assert report_page._alloc_cell(leg('X', status), 'baseline_alloc') == report_page.ABSTAIN_CELL
+
+
+def test_an_eligible_leg_does_render_its_size():
+    """The rule is about abstention, not about hiding everything — an eligible
+    leg on an on-time board is the one case a size is meaningful."""
+    assert report_page._alloc_cell(leg('X', 'ELIGIBLE'), 'baseline_shares') == '4242'
+
+
+def test_a_missing_size_never_renders_as_none():
+    assert report_page._alloc_cell(leg('X', 'ELIGIBLE', baseline_shares=None),
+                                   'baseline_shares') == report_page.ABSTAIN_CELL
+
+
+# ── entry versus informational ────────────────────────────────────────────
+
+def test_an_all_abstain_board_is_not_an_entry_even_when_on_time():
+    html = report_page.render(digest([leg('AC.TO')], status='ON_TIME'))
+    assert 'Not an executable entry' in html
+
+
+def test_a_late_run_is_not_an_entry():
+    html = report_page.render(digest([leg('AC.TO', 'ELIGIBLE')],
+                                     status='INFORMATIONAL — outside 09:46 delivery minute'))
+    assert 'Not an executable entry' in html
+
+
+def test_an_on_time_eligible_board_is_an_entry():
+    html = report_page.render(digest([leg('AC.TO', 'ELIGIBLE')], status='ON_TIME'))
+    assert 'Not an executable entry' not in html
+    assert 'Morning entry board' in html
+
+
+# ── an empty board is not a zero-opportunity claim ────────────────────────
+
+def test_an_empty_board_says_why_it_is_empty():
+    html = report_page.render(digest([]))
+    assert 'not a statement that no opportunity existed' in html
+
+
+# ── the interval figure ───────────────────────────────────────────────────
+
+def test_the_interval_marks_stay_inside_the_drawing():
+    """One scale places band, point and coin line; a rate outside 30-70% is
+    clamped so no mark escapes its container."""
+    d = digest([leg('A')])
+    d['intraday']['risk_evidence']['rate'] = {'rate': .95, 'ci95': [.90, .99],
+                                              'mde80_pp': 5, 'n': 500, 'sessions': 100}
+    html = report_page.render(d)
+    import re
+    for value in re.findall(r'(?:left|width):([\d.]+)%', html):
+        assert 0 <= float(value) <= 100, value
+
+
+def test_an_interval_containing_a_coin_flip_says_so():
+    html = report_page.render(digest([leg('A')]))
+    assert 'not distinguishable from a coin flip' in html
+
+
+def test_an_interval_excluding_a_coin_flip_does_not_say_so():
+    d = digest([leg('A')])
+    d['intraday']['risk_evidence']['rate'] = {'rate': .62, 'ci95': [.55, .69],
+                                              'mde80_pp': 8, 'n': 400, 'sessions': 90}
+    html = report_page.render(d)
+    assert 'not distinguishable from a coin flip' not in html
+    assert 'excludes 50%' in html
+
+
+def test_a_record_with_no_interval_does_not_invent_one():
+    d = digest([leg('A')])
+    d['intraday']['risk_evidence']['rate'] = {}
+    html = report_page.render(d)
+    assert 'interval unavailable' in html
+
+
+# ── faults reach the reader in words ──────────────────────────────────────
+
+def test_an_acquisition_fault_is_named_in_english():
+    d = digest([leg('A')], errors=[{'layer': 'intraday', 'error': 'TimeoutExpired'}])
+    html = report_page.render(d)
+    assert 'did not answer inside its budget' in html and 'TimeoutExpired' in html
+
+
+def test_a_record_hole_is_carried_onto_the_page():
+    d = digest([leg('A')])
+    d['intraday']['record']['record_gaps'] = {'missing': ['2026-09-09'], 'zero_pick': []}
+    assert 'RECORD HAS A HOLE' in report_page.render(d)
+
+
+# ── purity and safety ─────────────────────────────────────────────────────
+
+def test_rendering_does_not_mutate_the_frozen_digest():
+    d = digest([leg('A')])
+    before = json.dumps(d, sort_keys=True, default=str)
+    report_page.render(d)
+    assert json.dumps(d, sort_keys=True, default=str) == before
+
+
+def test_a_hostile_ticker_cannot_inject_markup():
+    html = report_page.render(digest([leg('<script>alert(1)</script>')]))
+    assert '<script>alert(1)</script>' not in html
+    assert '&lt;script&gt;' in html
+
+
+def test_the_page_names_itself_by_session():
+    assert '<title>RB Report 2026-09-16</title>' in report_page.render(digest([]))
+
+
+def test_both_themes_define_every_colour_token():
+    """A token defined only inside a media block renders one theme's text on
+    the other theme's ground."""
+    html = report_page.render(digest([]))
+    base = html.split(':root {')[1].split('}')[0]
+    dark = html.split(':root[data-theme="dark"] {')[1].split('}')[0]
+    names = lambda block: {line.split(':')[0].strip()
+                           for line in block.split(';') if line.strip().startswith('--')}
+    assert names(dark) <= names(base), names(dark) - names(base)
+    assert '--ground' in names(base) and '--ink' in names(base)
+
+
+# ── the factor section (added after it was found missing entirely) ─────────
+
+def factor_digest(**snap):
+    body = {'status': 'UNAVAILABLE', 'assessments': [], 'covered': 0, 'requested': 0,
+            'gaps': ['DeepSeek inputs have not been prepared for this session.'],
+            'shadow': {'rows': []}, 'model': None}
+    body.update(snap)
+    return digest([leg('AC.TO')], intraday={'deepseek': body})
+
+
+def test_a_factor_layer_that_did_not_run_says_so_rather_than_vanishing():
+    """A MISSING section reads as 'no signal'. That is a different claim from
+    'not evaluated', and the first one is not true."""
+    html = report_page.render(factor_digest())
+    assert 'Factor research' in html
+    assert 'not evaluated' in html
+
+
+def test_assessments_are_rendered_with_their_leans():
+    html = report_page.render(factor_digest(
+        status='PARTIAL', covered=2, requested=60,
+        assessments=[{'ticker': 'CNQ.TO', 'directional_lean': 'BULL', 'sentiment_score': .30,
+                      'factor_rationale': 'Python gap +2.21% positive'},
+                     {'ticker': 'TD.TO', 'directional_lean': 'NO_EDGE', 'sentiment_score': .10,
+                      'factor_rationale': 'Python gap -0.49% negative'}]))
+    assert 'CNQ.TO' in html and 'BULL' in html and '+0.30' in html
+    assert 'NO_EDGE' in html
+    assert '2 / 60' in html
+
+
+def test_a_lean_is_never_presented_as_a_recommendation():
+    html = report_page.render(factor_digest(
+        status='PARTIAL', covered=1, requested=60,
+        assessments=[{'ticker': 'CNQ.TO', 'directional_lean': 'BULL', 'sentiment_score': .30,
+                      'factor_rationale': 'x'}]))
+    assert 'not a recommendation' in html
+    assert 'Nothing in this section is adopted' in html
+    assert '0 name(s) cleared the registered threshold' in html
+
+
+def test_threshold_passes_are_counted_from_the_shadow_rows():
+    html = report_page.render(factor_digest(
+        status='PARTIAL', covered=1, requested=60,
+        assessments=[{'ticker': 'A.TO', 'directional_lean': 'BULL', 'sentiment_score': .6,
+                      'factor_rationale': 'x'}],
+        shadow={'rows': [{'ticker': 'A.TO', 'status': 'CANDIDATE'},
+                         {'ticker': 'B.TO', 'status': 'ABSTAIN'}]}))
+    assert '1 name(s) cleared the registered threshold' in html
+    assert 'do not enter the baseline board' in html
