@@ -138,6 +138,59 @@ LEAN_NOTE = ('A lean is a reading of public evidence, not a recommendation. The 
              'and quoted back to it. Nothing in this section is adopted.')
 
 
+def _factor_top2(shadow):
+    """The factor layer's own top two per side — H1, as registered.
+
+    This is NOT a new ranking invented for the page. `rank_shadow` already
+    computes it at MAX_PER_SIDE = 2 from names that cleared BOTH the combined
+    score threshold and the lean/sign agreement gate. Rendering it here only
+    surfaces a decision the frozen computation already made.
+
+    On a day when nothing clears, this renders the fact that nothing cleared.
+    It must never fall back to "the two highest anyway": a top two taken from
+    an all-NO_EDGE set is a pick manufactured out of ties, and the engine's
+    whole design is that abstention is an answer."""
+    h1 = (shadow or {}).get('h1') or {}
+    out = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for rank, row in enumerate((h1.get(key) or [])[:2], start=1):
+            out.append({'side': side, 'rank': rank, 'ticker': row.get('ticker'),
+                        'sided': row.get('sided_score'),
+                        'combined': row.get('combined_probability'),
+                        'quant': row.get('quant_probability'),
+                        'spread': row.get('spread_bps'),
+                        'reason': row.get('reason')})
+    return out
+
+
+def _factor_top2_block(top, passes):
+    if not top:
+        return ('<p class="note"><strong>Top two: none.</strong> No name cleared both the '
+                'combined-score threshold and the lean-agreement gate, so the factor layer '
+                'selected nothing on either side. A top two taken from names that did not '
+                'clear would be a pick manufactured out of ties — abstention is the answer '
+                'here, not a missing one.</p>')
+    rows = ''.join(
+        '<tr>'
+        f'<td>{escape(r["side"])} #{r["rank"]}</td>'
+        f'<td class="tick">{escape(str(r["ticker"]))}</td>'
+        f'<td class="num">{fmt(r["sided"], ".3f")}</td>'
+        f'<td class="num">{fmt(r["combined"], ".3f")}</td>'
+        f'<td class="num">{fmt(r["quant"], ".3f")}</td>'
+        f'<td class="num">{fmt(r["spread"])}</td>'
+        '</tr>' for r in top)
+    return ('<h2 class="head" style="font-size:1.2rem;margin-top:2rem">Factor top two per side</h2>'
+            '<div class="scroll"><table><caption>H1, as registered: at most two per side, '
+            'ranked by sided score, from names that cleared the threshold AND agreed in sign '
+            'with their lean. These are shadow research candidates recorded for a forward '
+            'study — they do not enter the baseline board, carry no size, and are not '
+            'calibrated win probabilities.</caption>'
+            '<thead><tr><th>Slot</th><th>Name</th><th class="num">Sided</th>'
+            '<th class="num">Combined</th><th class="num">Quant</th>'
+            '<th class="num">Spread bps</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>')
+
+
 def _factor_section(intra):
     """The day-99 factor layer. Shadow, unadopted, and never a pick list.
 
@@ -170,6 +223,7 @@ def _factor_section(intra):
              '<th class="num">Sentiment</th><th>Rationale — not verified fact</th></tr></thead>'
              f'<tbody>{"".join(rows)}</tbody></table></div>') if rows else ''
 
+    top = _factor_top2(shadow)
     verdict = (f'<p><strong>{passes} name(s) cleared the registered threshold.</strong> '
                + ('Nothing in this section became a candidate, so the shadow arms produce no '
                   'board.' if not passes else
@@ -181,7 +235,7 @@ def _factor_section(intra):
             f'<small>{escape(str(snap.get("status","?")))}</small></dd></div>'
             f'<div><dt>Assessed</dt><dd>{covered} / {requested}<small>of the staged pool</small></dd></div>'
             f'<div><dt>Threshold passes</dt><dd>{passes}<small>entering nothing</small></dd></div></div>'
-            + verdict + table
+            + verdict + _factor_top2_block(top, passes) + table
             + f'<p class="note">{LEAN_NOTE}</p>'
             + (f'<ul class="gaps">{gaps}</ul>' if gaps else '')
             + '</section>')

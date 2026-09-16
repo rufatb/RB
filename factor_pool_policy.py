@@ -12,8 +12,31 @@ TICKERS = (
     'QSR.TO', 'SAP.TO', 'MG.TO', 'WCN.TO', 'TFII.TO', 'WSP.TO', 'STN.TO',
     'EMA.TO', 'FTS.TO', 'H.TO', 'CU.TO', 'CSU.TO', 'GIB-A.TO', 'OTEX.TO',
     'RCI-B.TO', 'TRI.TO', 'QBR-B.TO', 'CTC-A.TO',
+    # Day-107 widening, on request. Liquid TSX names outside the first roster;
+    # still a fixed explicit list, still NOT a claim of index membership or ADV
+    # rank, and still never the production selection universe. Coverage is
+    # gated by prepared technicals, not by the length of this tuple: a name
+    # that cannot produce 35 contiguous complete sessions is excluded whether
+    # or not it is listed here.
+    'BIP-UN.TO', 'BEP-UN.TO', 'PBA.TO', 'KEY.TO', 'ALA.TO', 'GEI.TO',
+    'CPX.TO', 'NPI.TO', 'BLX.TO', 'ACO-X.TO', 'AQN.TO',
+    'WN.TO', 'EMP-A.TO', 'ATZ.TO', 'GIL.TO', 'BYD.TO',
+    'CIGI.TO', 'FSV.TO', 'TIH.TO', 'FTT.TO', 'RBA.TO',
+    'LNR.TO', 'MRE.TO', 'CAE.TO', 'BBD-B.TO', 'ONEX.TO', 'X.TO',
+    'IGM.TO', 'CIX.TO', 'ELF.TO', 'DFY.TO', 'TSU.TO',
+    'CCA.TO', 'BCI.TO', 'TC.TO', 'DIR-UN.TO', 'GRT-UN.TO',
+    'REI-UN.TO', 'CAR-UN.TO', 'SRU-UN.TO', 'FCR-UN.TO', 'IIP-UN.TO',
+    'MEG.TO', 'BTE.TO', 'CR.TO', 'VRN.TO', 'WCP.TO', 'BIR.TO',
+    'ERF.TO', 'NVA.TO', 'PEY.TO', 'TVE.TO',
+    'LUN.TO', 'HBM.TO', 'CS.TO', 'ERO.TO', 'IVN.TO', 'NGD.TO',
+    'ELD.TO', 'IMG.TO', 'BTO.TO', 'OGC.TO', 'EQX.TO', 'SSRM.TO',
+    'PAAS.TO', 'MAG.TO', 'SIL.TO', 'CG.TO', 'AGI.TO', 'LUG.TO',
 )
-BUDGET_SECONDS = 120
+# Day-107: the roster more than doubled and staging moved to 09:05, so the
+# pre-open window is ~25 minutes rather than minutes. 60 names took ~26s; this
+# leaves room for 131 without the budget becoming the thing that caps coverage.
+# It is still a bound, not an SLA, and it never runs into the 09:30 cut-off.
+BUDGET_SECONDS = 420
 REQUEST_SECONDS = 18
 WORKERS = 8
 REGISTRATION = 'PREREGISTER_day100_deepseek_reliability.md'

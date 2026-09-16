@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import pytest
 
+import factor_pool_policy as P
 import prepare_factor_pool as F
 from bar_cache import key
 from intraday_history import session_schedule
@@ -100,7 +101,10 @@ def test_verified_expansion_keeps_metadata_actual_counts_and_baseline(tmp_path, 
         return acquire(tasks)
     result = F.prepare(tmp_path, CFG, now=NOW, fetcher=fetch(history), acquire_fn=captured)
     assert result['requested'] == result['complete_technicals'] == result['verified'] == 3
-    assert result['status'] == 'READY' and result['budget_seconds'] == 240
+    # The EXPANDED path must take the expanded budget. Assert the constant, not
+    # a literal: the point is which budget is chosen, and a literal turns any
+    # legitimate retune into a false failure.
+    assert result['status'] == 'READY' and result['budget_seconds'] == P.EXPANDED_BUDGET_SECONDS
     assert result['started_at'] == result['completed_at'] == NOW.isoformat()
     assert result['reused_baseline'] == 1 and tasks_seen == ['NA.TO', 'GWO.TO']
     assert result['research_universe']['expanded_status'] == 'PARTIAL'
@@ -123,7 +127,9 @@ def test_failed_master_keeps_explicit_legacy_fallback(tmp_path, monkeypatch, his
     source(monkeypatch, [metadata('NA.TO')], **changes)
     monkeypatch.setattr(F.P, 'TICKERS', ('NA.TO', 'GWO.TO'))
     result = F.prepare(tmp_path, CFG, now=NOW, fetcher=fetch(history), acquire_fn=acquire)
-    assert result['requested'] == 2 and result['budget_seconds'] == 120
+    assert result['requested'] == 2 and result['budget_seconds'] == P.BUDGET_SECONDS
+    assert P.BUDGET_SECONDS != P.EXPANDED_BUDGET_SECONDS, \
+        'the fallback must be distinguishable from the expanded path'
     assert result['status'] == 'READY'  # Complete legacy inputs, never 150 certified names.
     assert result['research_universe']['mode'] == 'LEGACY_RESEARCH_FALLBACK'
     assert result['research_universe']['expanded_status'] == 'UNAVAILABLE'

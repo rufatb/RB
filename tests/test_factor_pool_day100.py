@@ -10,12 +10,22 @@ NOW = dt.datetime(2026, 9, 15, 8, 15, tzinfo=ZoneInfo('America/New_York'))
 CFG = {'scan': {'universe': ['AC.TO']}, 'exchange_tz': 'America/Toronto'}
 
 
-def test_roster_is_separate_and_exactly_sixty():
+def test_the_research_roster_is_separate_from_the_traded_universe():
+    """The size of the roster is a tuning choice; its SEPARATION is not.
+
+    This asserted `len(TICKERS) == 60`, which pinned a number rather than the
+    invariant and failed the moment the roster was widened on request. What
+    must hold is that research coverage is strictly broader than the universe
+    the engine actually trades, that the traded names are all covered, and that
+    widening research can never widen trading."""
     from dashboard import load_config
     cfg = load_config('config.yaml')
-    assert len(TICKERS) == len(set(TICKERS)) == 60
-    assert len(cfg['scan']['universe']) == 21
-    assert set(cfg['scan']['universe']) <= set(TICKERS)
+    traded = cfg['scan']['universe']
+    assert len(TICKERS) == len(set(TICKERS)), 'duplicate names inflate the coverage count'
+    assert all(t.endswith('.TO') for t in TICKERS), 'the roster is TSX-only'
+    assert set(traded) <= set(TICKERS), 'every traded name must be researched'
+    assert len(TICKERS) > len(traded), 'research must be broader than what is traded'
+    assert len(traded) == 21, 'the traded universe is unchanged by any roster widening'
 
 
 @pytest.mark.parametrize('clock', [NOW.replace(hour=9, minute=30), NOW.replace(tzinfo=None)])

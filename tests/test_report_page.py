@@ -239,3 +239,63 @@ def test_threshold_passes_are_counted_from_the_shadow_rows():
                          {'ticker': 'B.TO', 'status': 'ABSTAIN'}]}))
     assert '1 name(s) cleared the registered threshold' in html
     assert 'do not enter the baseline board' in html
+
+
+# ── the factor layer's own top two per side ───────────────────────────────
+
+def shadow_digest(h1):
+    return factor_digest(status='PARTIAL', covered=2, requested=130,
+                         assessments=[{'ticker': 'A.TO', 'directional_lean': 'BULL',
+                                       'sentiment_score': .4, 'factor_rationale': 'x'}],
+                         shadow={'rows': [{'ticker': 'A.TO', 'status': 'CANDIDATE'}], 'h1': h1})
+
+
+def test_the_top_two_comes_from_the_registered_arm_not_a_new_ranking():
+    top = report_page._factor_top2({'h1': {
+        'longs': [{'ticker': 'CNQ.TO', 'sided_score': .61, 'combined_probability': .61,
+                   'quant_probability': .60, 'spread_bps': 7.2},
+                  {'ticker': 'SU.TO', 'sided_score': .58, 'combined_probability': .58,
+                   'quant_probability': .57, 'spread_bps': None}],
+        'shorts': [{'ticker': 'TD.TO', 'sided_score': .59, 'combined_probability': .41,
+                    'quant_probability': .42, 'spread_bps': 4.0}]}})
+    assert [(r['side'], r['rank'], r['ticker']) for r in top] == [
+        ('LONG', 1, 'CNQ.TO'), ('LONG', 2, 'SU.TO'), ('SHORT', 1, 'TD.TO')]
+
+
+def test_never_more_than_two_per_side_reach_the_page():
+    """MAX_PER_SIDE is 2 and the page must not widen it."""
+    many = [{'ticker': f'T{i}.TO', 'sided_score': .6, 'combined_probability': .6,
+             'quant_probability': .6, 'spread_bps': 1.0} for i in range(5)]
+    top = report_page._factor_top2({'h1': {'longs': many, 'shorts': many}})
+    assert len([r for r in top if r['side'] == 'LONG']) == 2
+    assert len([r for r in top if r['side'] == 'SHORT']) == 2
+
+
+def test_nothing_clearing_renders_nothing_rather_than_the_two_highest():
+    """THE RULE. A top two taken from names that did not clear is a pick
+    manufactured out of ties. Abstention is the answer, not a missing one."""
+    block = report_page._factor_top2_block([], 0)
+    assert 'Top two: none' in block
+    assert 'manufactured out of ties' in block
+    assert '<table' not in block
+
+
+def test_an_all_no_edge_day_produces_no_top_two():
+    """End to end: 23 NO_EDGE assessments, empty h1 — the real 2026-09-16 shape."""
+    html = report_page.render(factor_digest(
+        status='PARTIAL', covered=23, requested=130,
+        assessments=[{'ticker': f'N{i}.TO', 'directional_lean': 'NO_EDGE',
+                      'sentiment_score': 0.0, 'factor_rationale': 'x'} for i in range(23)],
+        shadow={'rows': [], 'h1': {'longs': [], 'shorts': []}}))
+    assert 'Top two: none' in html
+    assert '0 name(s) cleared the registered threshold' in html
+
+
+def test_a_selected_top_two_is_labelled_as_unadopted_research():
+    html = report_page.render(shadow_digest(
+        {'longs': [{'ticker': 'CNQ.TO', 'sided_score': .61, 'combined_probability': .61,
+                    'quant_probability': .60, 'spread_bps': 7.2}], 'shorts': []}))
+    assert 'CNQ.TO' in html and 'LONG #1' in html
+    assert 'do not enter the baseline board' in html
+    assert 'carry no size' in html
+    assert 'not' in html and 'calibrated win probabilities' in html
