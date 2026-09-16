@@ -163,13 +163,47 @@ def _factor_top2(shadow):
     return out
 
 
-def _factor_top2_block(top, passes):
+def _nearest_misses(shadow, limit=3):
+    """The names that came closest, and which gate stopped each one.
+
+    "Top two: none" is true but tells the reader nothing about whether the day
+    was quiet or the gate is unreachable. These rows are NOT picks and are
+    ranked by a score that did not qualify — they exist so a reader can see
+    where the veto happened. Naming the binding gate matters: on 2026-09-16
+    TRP.TO reached sided 0.592 against a 0.55 threshold and was still rejected,
+    because the model returned NO_EDGE and the lean gate, not the score, is
+    what stopped it."""
+    rows = [r for r in (shadow or {}).get('rows') or []
+            if r.get('sided_score') is not None and r.get('status') != 'CANDIDATE']
+    rows.sort(key=lambda r: -r['sided_score'])
+    return rows[:limit]
+
+
+def _factor_top2_block(top, passes, shadow=None):
     if not top:
+        near = _nearest_misses(shadow)
+        table = ''
+        if near:
+            body = ''.join(
+                '<tr>'
+                f'<td class="tick">{escape(str(r.get("ticker","?")))}</td>'
+                f'<td class="num">{fmt(r.get("sided_score"), ".3f")}</td>'
+                f'<td class="num">{fmt(r.get("quant_probability"), ".3f")}</td>'
+                f'<td class="reasontext">{escape(str(r.get("reason") or ""))}</td>'
+                '</tr>' for r in near)
+            table = ('<div class="scroll"><table><caption>Not picks. These did not qualify; '
+                     'they are shown so the binding gate is visible. A score above the '
+                     'threshold can still be rejected — the factor layer requires a '
+                     'directional lean that agrees in sign, and an assessment of NO_EDGE '
+                     'vetoes the name however high its quantitative score.</caption>'
+                     '<thead><tr><th>Name</th><th class="num">Sided</th>'
+                     '<th class="num">Quant</th><th>Why it did not qualify</th></tr></thead>'
+                     f'<tbody>{body}</tbody></table></div>')
         return ('<p class="note"><strong>Top two: none.</strong> No name cleared both the '
                 'combined-score threshold and the lean-agreement gate, so the factor layer '
                 'selected nothing on either side. A top two taken from names that did not '
                 'clear would be a pick manufactured out of ties — abstention is the answer '
-                'here, not a missing one.</p>')
+                'here, not a missing one.</p>' + table)
     rows = ''.join(
         '<tr>'
         f'<td>{escape(r["side"])} #{r["rank"]}</td>'
@@ -235,7 +269,7 @@ def _factor_section(intra):
             f'<small>{escape(str(snap.get("status","?")))}</small></dd></div>'
             f'<div><dt>Assessed</dt><dd>{covered} / {requested}<small>of the staged pool</small></dd></div>'
             f'<div><dt>Threshold passes</dt><dd>{passes}<small>entering nothing</small></dd></div></div>'
-            + verdict + _factor_top2_block(top, passes) + table
+            + verdict + _factor_top2_block(top, passes, shadow) + table
             + f'<p class="note">{LEAN_NOTE}</p>'
             + (f'<ul class="gaps">{gaps}</ul>' if gaps else '')
             + '</section>')

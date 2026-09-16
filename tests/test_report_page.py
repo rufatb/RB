@@ -299,3 +299,48 @@ def test_a_selected_top_two_is_labelled_as_unadopted_research():
     assert 'do not enter the baseline board' in html
     assert 'carry no size' in html
     assert 'not' in html and 'calibrated win probabilities' in html
+
+
+# ── nearest misses: show the gate, never a substitute pick ────────────────
+
+NEAR = {'rows': [
+    {'ticker': 'TRP.TO', 'sided_score': .592, 'quant_probability': .60, 'status': 'ABSTAIN',
+     'reason': 'Combined score below threshold or factor disagreement.'},
+    {'ticker': 'CM.TO', 'sided_score': .563, 'quant_probability': .579, 'status': 'ABSTAIN',
+     'reason': 'Combined score below threshold or factor disagreement.'},
+    {'ticker': 'WIN.TO', 'sided_score': .61, 'quant_probability': .62, 'status': 'CANDIDATE',
+     'reason': None}]}
+
+
+def test_a_qualifying_name_is_never_listed_as_a_near_miss():
+    near = report_page._nearest_misses(NEAR)
+    assert 'WIN.TO' not in [r['ticker'] for r in near]
+    assert [r['ticker'] for r in near] == ['TRP.TO', 'CM.TO']
+
+
+def test_near_misses_are_labelled_as_not_picks():
+    block = report_page._factor_top2_block([], 0, NEAR)
+    assert 'Not picks' in block
+    assert 'did not qualify' in block
+
+
+def test_the_block_explains_that_a_lean_can_veto_a_high_score():
+    """THE THING THE READER NEEDS. On 2026-09-16 TRP.TO scored 0.592 against a
+    0.55 threshold and was still rejected — by the lean, not the number. A page
+    that only says 'none' hides which gate bound."""
+    block = report_page._factor_top2_block([], 0, NEAR)
+    assert 'TRP.TO' in block and '0.592' in block
+    assert 'vetoes the name however high' in block
+
+
+def test_near_misses_are_not_shown_when_something_did_qualify():
+    top = [{'side': 'LONG', 'rank': 1, 'ticker': 'WIN.TO', 'sided': .61,
+            'combined': .61, 'quant': .62, 'spread': 3.0}]
+    block = report_page._factor_top2_block(top, 1, NEAR)
+    assert 'WIN.TO' in block
+    assert 'Not picks' not in block and 'TRP.TO' not in block
+
+
+def test_no_evaluated_rows_means_no_near_miss_table():
+    assert '<table' not in report_page._factor_top2_block([], 0, {'rows': []})
+    assert '<table' not in report_page._factor_top2_block([], 0, None)
