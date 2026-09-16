@@ -1,5 +1,31 @@
 # Working notes for this repo
 
+## Day105 — the morning run is a Routine, and the email is its summary
+
+`trig_01YZ2smjbMZXJvWKBxU4JfWj` — "RB Daily Report — weekday 09:46 ET", cron
+`40 13 * * 1-5` (UTC; 09:40 ET), fresh session per fire, notifications push +
+email. It runs `morning.sh`, which waits for the publication minute, publishes,
+pushes the record CSVs, then rewrites the owner's page at
+`https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9` and finishes with a short
+summary. **That summary is the email.** It is not `deliver_report.py`: no SMTP
+credential and no Gmail connector exists, so the inbox is reached through the
+Routine's own notification channel.
+
+**Cron is UTC and does not know about DST.** `trig_01AG5fGuTJtdADMJyse1Sizj`
+fires once on 2026-11-01 to shift the cron to `40 14 * * 1-5` when EDT ends,
+and is instructed to register the reverse for 2026-03-14. Do not "tidy up"
+either Routine without replacing that mechanism.
+
+**09:46 is the earliest honest publication and cannot be moved.** The third
+five-minute bar closes at 09:45, `r945.run` refuses before open+16 minutes, and
+`exact_spread` requires 09:46 at both the quote and the clock. Firing at 09:40
+buys acquisition slack, not an earlier report; the gain over recent mornings is
+that it is on time at all rather than at 09:59 or 11:22.
+
+The concise email omits a section that produced nothing rather than printing
+UNAVAILABLE lines about it — see day-105 in the render notes below. The full
+attached report is unchanged and remains the record.
+
 ## Day103 — a missing cache costs latency, never the board
 
 `require_cache` used to RAISE when no cache directory was staged, to protect
