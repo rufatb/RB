@@ -79,6 +79,17 @@ else
         *) log "  DeepSeek factors: FAILED — the factor section will read UNAVAILABLE"
            stage_faults+=("DeepSeek snapshot not staged") ;;
     esac
+
+    # The model's OWN top-2 per side. A separate question from the factor
+    # layer's "is there sentiment here", and a separate section. It is a
+    # reasoning model: measured at ~54s over 39 names, which is why it is
+    # staged here and can never sit inside the 09:46 publication window.
+    timeout 300 python deepseek_opportunities.py --state-dir "$RB_STATE_DIR"
+    case $? in
+        0) log "  DeepSeek opportunities: staged" ;;
+        *) log "  DeepSeek opportunities: FAILED — that section will read UNAVAILABLE"
+           stage_faults+=("DeepSeek opportunity ranking not staged") ;;
+    esac
 fi
 
 # ── 2. HOLD until the publication window opens ─────────────────────────────

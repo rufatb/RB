@@ -1,5 +1,43 @@
 # Working notes for this repo
 
+## Day110 — the model was never asked the question the owner was asking
+
+`deepseek_factors` answers "is there directional sentiment in these headlines".
+On a commentary feed that is `NO_EDGE` almost every day, and day-109 proved the
+abstention is real. But nobody had ever asked DeepSeek **which names it would be
+long and short, and how sure it is**. That is an opinion, not a sentiment
+reading, so it is a separate module (`deepseek_opportunities.py`), a separate
+staged snapshot, and its own report section beside the board. Read
+`PREREGISTER_day110_deepseek_opportunities.md`.
+
+**`deepseek-flash` is a REASONING model.** Measured on 46 names it spent
+**15,939 tokens thinking** and 349 emitting JSON. `max_tokens=4096` truncated
+every reply and the section read UNAVAILABLE against a healthy provider;
+`MAX_COMPLETION_TOKENS` is 32,768 and a truncated reply is never parsed. One
+request takes ~54s over 39 names — by itself disqualifying for the 09:46 window,
+which is why it is staged pre-open by `morning_full.sh` and read by a pure
+reader.
+
+The positive control passes **numbers only** (house rule 4, and day-109's
+lesson): planted long `CTLUP.TO` returned at 0.74, planted short `CTLDN.TO` at
+0.63, none of the ten noise names picked. Re-run with
+`python deepseek_opportunities.py --control` before reporting any null.
+
+**A confidence here is the model's own number.** Not calibrated, no track
+record, never scored against an outcome, and **never blended** with the engine's
+sided probability — averaging a measured quantity with an unmeasured self-report
+launders the second into the first.
+
+**`compare()` needs the engine universe or it lies.** The engine scores 21
+names; the pool is 130. On 2026-09-17 all four picks (EMA.TO, CAE.TO long;
+AGI.TO, CG.TO short) were `UNSEEN` — outside the engine's universe — so the
+0-of-4 agreement is a fact about COVERAGE, not disagreement. Without the
+universe argument every such row would have read "the engine rejected this",
+which is a claim about the engine from evidence containing none.
+
+A ranking asked after 09:30 is a different instrument from one asked before it,
+and both renderers label the diagnostic case rather than printing "pre-open".
+
 ## Day109 — the factor layer's NO_EDGE is a tested abstention
 
 Read `AUDIT_day109_factor_positive_control.md`. A planted-edge control through

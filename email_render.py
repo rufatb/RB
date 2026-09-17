@@ -65,6 +65,11 @@ def text(d):
     # one line among the gaps (house rule 1).
     if 'deepseek' in intra and full.factor_reported(intra):
         lines += ['',*full.deepseek_summary(intra)]
+    # Same rule for the model's own picks: carried when it answered, silent in
+    # the concise email when it did not, and never reduced to an UNAVAILABLE
+    # line. The absence still appears once in the attached full report.
+    if full.opportunities_reported(intra):
+        lines += ['',*full.opportunities_summary(intra)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
     if book.get('status')=='UNAVAILABLE':

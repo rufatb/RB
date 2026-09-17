@@ -378,6 +378,18 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     except Exception as exc:
         error('deepseek', RuntimeError(type(exc).__name__))
         factor_evidence = deepseek_factors.unavailable('Optional factor assembly failed: '+type(exc).__name__)
+    # The model's OWN top-2 per side, staged pre-open by a separate job. Read
+    # only — same contract as the factor snapshot, and for the same reason: a
+    # renderer that could reach a provider could change a frozen report.
+    import deepseek_opportunities
+    try:
+        opportunity_evidence = (deepseek_opportunities.load_diagnostic(state_dir, now)
+                                if factor_diagnostic is not None else
+                                deepseek_opportunities.load_prepared(state_dir, now))
+    except Exception as exc:
+        error('deepseek_opportunities', RuntimeError(type(exc).__name__))
+        opportunity_evidence = deepseek_opportunities.unavailable(
+            'Optional opportunity ranking failed: '+type(exc).__name__)
     # Expanded coverage is independent of model availability. Only prepared
     # local receipt/cache checks run here; preflight performs full history
     # validation before open. Older frozen reports need no new optional fields.
@@ -432,6 +444,13 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             legs = [{**leg, 'status':'ABSTAIN',
                      'reasons':list(dict.fromkeys([*leg.get('reasons', []), clock['status']]))}
                     for leg in legs]
+    # Freeze the agreement between the two instruments here, where both are
+    # final, so no renderer has to recompute it and they cannot disagree.
+    try:
+        opportunity_evidence['comparison'] = deepseek_opportunities.compare(
+            opportunity_evidence, legs, cfg.get('scan', {}).get('universe', []))
+    except Exception as exc:
+        error('deepseek_opportunities_comparison', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -448,6 +467,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                           'recorded_today':recorded_today, 'risk_evidence':risk,
                           'ledger_status':ledger_status,
                           'deepseek':factor_evidence,
+                          'opportunities':opportunity_evidence,
                           'historical_provider':provider_evidence},
               'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',

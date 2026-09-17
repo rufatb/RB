@@ -344,3 +344,129 @@ def test_near_misses_are_not_shown_when_something_did_qualify():
 def test_no_evaluated_rows_means_no_near_miss_table():
     assert '<table' not in report_page._factor_top2_block([], 0, {'rows': []})
     assert '<table' not in report_page._factor_top2_block([], 0, None)
+
+
+# ── DeepSeek opportunities: the model's own picks, beside the board ──────────
+# This is an OPINION printed next to a measured record. The risks are that a
+# self-reported confidence reads as a probability, that a pick reads as an
+# order, and that a name the engine never scored reads as one the engine
+# rejected. Each of those has a test.
+
+def opportunities(status='READY', rows=(), **over):
+    out = {'status': status, 'model': 'deepseek-flash', 'considered': 39,
+           'adopted': False, 'longs': [], 'shorts': [], 'gaps': [],
+           'confidence_label': 'not a calibrated win probability',
+           'comparison': {'rows': list(rows), 'agree': 0, 'oppose': 0,
+                          'passed_over': 0, 'unseen': len(rows),
+                          'comparable': 0, 'engine_only': []}}
+    out.update(over)
+    return out
+
+
+def orow(ticker, side='LONG', confidence=0.65, verdict=report_page.O.UNSEEN, engine=None):
+    return {'side': side, 'ticker': ticker, 'confidence': confidence,
+            'reason': 'gap and rvol', 'engine_side': None,
+            'engine_p_sided': engine, 'engine_status': None, 'verdict': verdict}
+
+
+def test_the_model_picks_are_rendered_with_their_confidence():
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO', confidence=0.6)])})
+    assert 'EMA.TO' in html and '0.60' in html
+
+
+def test_the_confidence_is_never_presented_as_a_win_probability():
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO')])})
+    assert 'NOT a calibrated win probability' in html
+    assert 'never been scored against an outcome' in html
+
+
+def test_the_two_numbers_are_never_blended_on_the_page():
+    """Averaging a measured probability with an unmeasured self-report launders
+    the second into the first."""
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('AC.TO', engine=0.6)])})
+    assert 'never combined' in html and 'never blended' in html
+
+
+def test_a_pick_carries_no_share_count_and_no_dollar_figure():
+    """A row carrying a size is an order ticket whatever the label says."""
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO')])})
+    assert '$' not in html and 'shares' not in html.lower()
+    assert 'no size' in html
+
+
+def test_a_name_the_engine_never_scored_says_so_rather_than_showing_a_number():
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO')])})
+    assert 'outside the engine universe' in html
+    assert report_page.ABSTAIN_CELL in html
+
+
+def test_no_opportunity_renders_the_abstention_and_its_control():
+    """An empty section reads as 'no signal'; this must read as 'it answered
+    no, and the harness can detect a planted edge'."""
+    html = report_page._opportunities_section({'opportunities': opportunities('NO_OPPORTUNITY')})
+    assert 'no opportunity on either side' in html
+    assert 'planted long and a planted short' in html
+    assert 'manufactured out of ties' in html
+
+
+def test_an_unstaged_ranking_states_its_reason_in_one_line():
+    html = report_page._opportunities_section(
+        {'opportunities': {'status': 'UNAVAILABLE',
+                           'reason': 'The opportunity ranking was not staged for this session.'}})
+    assert 'not staged for this session' in html
+    assert '<table' not in html
+
+
+def test_a_missing_opportunities_key_still_renders_a_stated_absence():
+    html = report_page._opportunities_section({})
+    assert 'Not staged this session.' in html and '<table' not in html
+
+
+def test_the_section_appears_in_the_page_beside_the_board():
+    d = digest([leg('AC.TO')])
+    d['intraday']['opportunities'] = opportunities(rows=[orow('EMA.TO')])
+    html = report_page.render(d)
+    assert html.index('DeepSeek opportunities') > html.index('Part 1 &middot; Intraday'.replace('&middot;', '·'))
+    assert html.index('DeepSeek opportunities') < html.index('How reliable is this record?')
+
+
+def test_agreement_and_opposition_are_visually_distinguished():
+    agree = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('AC.TO', verdict=report_page.O.AGREE, engine=0.6)])})
+    oppose = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('AC.TO', side='SHORT',
+                                                   verdict=report_page.O.OPPOSE, engine=0.6)])})
+    assert 'g-accent' in agree and 'g-alarm' not in agree
+    assert 'g-alarm' in oppose
+
+
+def test_a_reason_from_the_model_is_escaped_and_labelled_unverified():
+    row = orow('EMA.TO')
+    row['reason'] = '<script>alert(1)</script> rvol 3.1'
+    html = report_page._opportunities_section({'opportunities': opportunities(rows=[row])})
+    assert '<script>' not in html and '&lt;script&gt;' in html
+    assert 'not verified fact' in html
+
+
+def test_a_ranking_asked_after_the_open_is_labelled_as_a_diagnostic():
+    """Same prior-session inputs, different instrument: the request was not
+    blind to the day. The page must say so rather than let it read as a
+    pre-open opinion."""
+    snap = opportunities(rows=[orow('EMA.TO')])
+    snap['diagnostic'] = True
+    html = report_page._opportunities_section({'opportunities': snap})
+    assert 'Current-time diagnostic' in html
+    assert 'not a pre-open opinion' in html
+    assert 'asked once, pre-open' not in html
+
+
+def test_a_pre_open_ranking_carries_no_diagnostic_banner():
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO')])})
+    assert 'Current-time diagnostic' not in html
+    assert 'asked once, pre-open' in html

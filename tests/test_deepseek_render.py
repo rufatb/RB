@@ -87,12 +87,32 @@ def test_evaluated_abstention_names_threshold_failure():
 
 
 def test_old_publication_without_factor_key_acquires_no_new_section():
+    """A frozen publication is immutable. Adding a renderer must never make an
+    older report grow a section it did not have when it was published — each
+    model section is keyed on its own evidence, and absence of the key means
+    absence of the section, not a default one."""
     d=brief.build(now=NOW,services=services())
     d['intraday'].pop('deepseek',None)
+    d['intraday'].pop('opportunities',None)
     d['readiness']=readiness.assess(d)
     assert 'DeepSeek' not in brief.render_text(d)
     assert 'DeepSeek' not in email_render.text(d)
     assert daily_render.deepseek_summary(d['intraday'])==[]
+    assert daily_render._opportunities_detail(d['intraday'])==[]
+
+
+def test_each_model_section_is_keyed_on_its_own_evidence():
+    """The factor layer and the opportunity ranking are separate instruments
+    staged by separate jobs. One being absent must not silence or summon the
+    other."""
+    d=brief.build(now=NOW,services=services())
+    d['readiness']=readiness.assess(d)
+    without_factors=copy.deepcopy(d);without_factors['intraday'].pop('deepseek',None)
+    without_picks=copy.deepcopy(d);without_picks['intraday'].pop('opportunities',None)
+    assert 'DeepSeek factor research' not in brief.render_text(without_factors)
+    assert 'DeepSeek opportunities' not in brief.render_text(without_picks)
+    assert daily_render._opportunities_detail(without_factors['intraday'])!=[]
+    assert daily_render.deepseek_summary(without_picks['intraday'])!=[]
 
 
 def test_unavailable_records_never_look_like_confirmed_empty_holdings():

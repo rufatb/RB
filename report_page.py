@@ -19,6 +19,7 @@ import json
 from html import escape
 
 import daily_render as R
+import deepseek_opportunities as O
 
 fmt = R.fmt
 
@@ -275,6 +276,98 @@ def _factor_section(intra):
             + '</section>')
 
 
+OPPORTUNITY_NOTE = (
+    'These are the model\'s own picks, not the engine\'s. The engine scores 21 names with a '
+    'recorded hit rate behind its number; this asks a 130-name pool a direct question and '
+    'prints whatever comes back. The two are shown side by side so they can be compared '
+    'GOING FORWARD — there is no forward evidence yet, nothing here is adopted, nothing here '
+    'carries a size, and the two numbers are never blended, because averaging a measured '
+    'probability with an unmeasured self-report launders the second into the first.')
+
+
+def _opportunity_rows(comparison):
+    verdict_class = {O.AGREE: 'g-accent', O.OPPOSE: 'g-alarm'}
+    rows = ''
+    for r in (comparison or {}).get('rows') or []:
+        cls = verdict_class.get(r['verdict'], 'g-quiet')
+        rows += ('<tr>'
+                 f'<td>{escape(r["side"])}</td>'
+                 f'<td class="tick">{escape(str(r["ticker"]))}</td>'
+                 f'<td class="num">{fmt(r["confidence"], ".2f")}</td>'
+                 f'<td class="num">{fmt(r["engine_p_sided"], ".3f") if r.get("engine_p_sided") is not None else ABSTAIN_CELL}</td>'
+                 f'<td class="{cls}">{escape(r["verdict"])}</td>'
+                 f'<td class="reasontext">{escape(str(r.get("reason") or ""))[:200]}</td>'
+                 '</tr>')
+    return rows
+
+
+def _opportunities_section(intra):
+    """DeepSeek's own top two per side, beside the engine's board.
+
+    Unlike `_factor_section` this is an OPINION, asked for directly. It exists
+    because the factor layer answers a narrower question — "is there sentiment
+    in these headlines" — and on a commentary feed it abstains almost every day,
+    which for six sessions read to the owner as a broken integration rather than
+    as the tested abstention it is.
+
+    When the model returns nothing, that is stated as an abstention with its
+    control recorded, never as an empty section. A missing section reads as
+    "no signal", which is a different claim from "not evaluated"."""
+    snap = intra.get('opportunities') or {}
+    comparison = snap.get('comparison') or {}
+    head = ('<section><h2 class="head">DeepSeek opportunities</h2>'
+            '<p class="sub">The model\'s own top 2 per side · shadow · unadopted · no size</p>')
+    status = snap.get('status')
+    if status not in ('READY', 'NO_OPPORTUNITY'):
+        reason = escape(str(snap.get('reason') or 'Not staged this session.'))
+        return head + f'<ul class="gaps"><li class="g-quiet">{reason}</li></ul></section>'
+
+    # A ranking asked after the bell is a different instrument from one asked
+    # before it: the prior-session indicators are the same, but the answer was
+    # formed with the morning already visible to the person who ran it. That
+    # distinction belongs on the page, not in the operator's head.
+    when = ('asked AFTER the open — diagnostic' if snap.get('diagnostic')
+            else 'asked once, pre-open')
+    diagnostic_banner = ('<p class="note"><strong>Current-time diagnostic.</strong> This '
+                         'ranking was requested after 09:30 ET, so it is not a pre-open '
+                         'opinion and is not evidence about the morning. The inputs are still '
+                         'previous-session indicators, but the request itself was not blind '
+                         'to the day.</p>') if snap.get('diagnostic') else ''
+    kv = (diagnostic_banner + f'<div class="kv">'
+          f'<div><dt>Model</dt><dd>{escape(str(snap.get("model") or "unavailable"))}'
+          f'<small>{escape(when)}</small></dd></div>'
+          f'<div><dt>Names offered</dt><dd>{snap.get("considered", 0)}'
+          f'<small>carrying complete technicals</small></dd></div>'
+          f'<div><dt>Agreement</dt><dd>{comparison.get("agree", 0)} of '
+          f'{len(comparison.get("rows") or [])}<small>{comparison.get("oppose", 0)} opposed · '
+          f'{comparison.get("unseen", 0)} outside the engine universe</small></dd></div></div>')
+
+    if status == 'NO_OPPORTUNITY':
+        return (head + kv + '<p><strong>The model returned no opportunity on either side.</strong> '
+                'That is an answer, not a failure: the same request detects a planted long and a '
+                'planted short through this exact path, so an empty result is a reading of the '
+                'evidence. Nothing is shown here rather than the two least-bad names, because a '
+                'top two taken from names the model declined is a pick manufactured out of ties.</p>'
+                f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
+
+    engine_only = comparison.get('engine_only') or []
+    tail = ''
+    if engine_only:
+        tail = ('<p class="sub" style="border:none;padding:0">The engine\'s own board today: '
+                + escape(', '.join(engine_only)) + ' — none of which the model picked.</p>')
+    return (head + kv
+            + '<div class="scroll"><table><caption>Confidence is the model\'s own stated number. '
+              'It is NOT a calibrated win probability, has no track record, and has never been '
+              'scored against an outcome. The engine column is its sided probability, a different '
+              'quantity on a different scale; they are printed together for comparison and are '
+              'never combined.</caption>'
+              '<thead><tr><th>Side</th><th>Name</th><th class="num">Model confidence</th>'
+              '<th class="num">Engine sided</th><th>Do they agree?</th>'
+              '<th>Why — the model\'s words, not verified fact</th></tr></thead>'
+            + f'<tbody>{_opportunity_rows(comparison)}</tbody></table></div>'
+            + tail + f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
+
+
 def _gap_items(digest):
     """Every gap the frozen computation recorded, in the reader's language."""
     intra = digest['intraday']
@@ -449,6 +542,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
       {len(intra.get('recorded_today') or [])} recorded qualifiers ·
       source {escape(str(res.get('source') or 'unavailable'))}</p>
   </section>
+
+  {_opportunities_section(intra)}
 
   <section>
     <h2 class="head">How reliable is this record?</h2>

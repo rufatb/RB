@@ -267,6 +267,66 @@ def deepseek_summary(intra):
     return lines
 
 
+def opportunities_reported(intra):
+    """True when the model was actually asked and answered.
+
+    An UNAVAILABLE ranking says nothing the gap list does not already say, and
+    five consecutive UNAVAILABLE lines in a phone-sized email crowd out the
+    board — the same mistake day-105 fixed for the factor section."""
+    return (intra.get('opportunities') or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
+
+
+def opportunities_summary(intra):
+    """The model's own top two per side, and whether the engine agreed.
+
+    Confidence is restated as self-reported every time it is printed. A number
+    between 0 and 1 beside a ticker reads as a probability unless it is told not
+    to, and this one has never been scored against an outcome."""
+    snap = intra.get('opportunities') or {}
+    comparison = snap.get('comparison') or {}
+    # Pre-open and after-the-bell are different instruments on the same inputs:
+    # the second was formed with the morning already visible. Never print the
+    # pre-open claim over a diagnostic run.
+    when = ('asked AFTER the open — CURRENT-TIME DIAGNOSTIC, not evidence about the morning'
+            if snap.get('diagnostic') else 'asked once pre-open')
+    lines = ['### DeepSeek opportunities — the model’s own picks, unadopted',
+             f"{safe_detail(snap.get('model') or 'Model unavailable', 60)}: {snap.get('status')}; "
+             f"{when} over {snap.get('considered', 0)} names carrying complete technicals."]
+    if snap.get('status') == 'NO_OPPORTUNITY':
+        lines.append('The model returned NO OPPORTUNITY on both sides. A planted long and a '
+                     'planted short are detected through this same path, so this is a reading '
+                     'of the evidence, not a broken request.')
+    for row in comparison.get('rows') or []:
+        lines.append(f"{row['side']} {safe_detail(row['ticker'], 24)}: self-reported confidence "
+                     f"{fmt(row['confidence'], '.2f')} — {safe_detail(row['verdict'], 60)}. "
+                     f"{safe_detail(row.get('reason') or '', 160)}")
+    if comparison.get('rows'):
+        lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
+                     f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "
+                     f"{comparison.get('unseen', 0)} outside the engine universe.")
+    lines.append('Self-reported confidence is NOT a calibrated win probability: no track record, '
+                 'never scored against an outcome, never blended with the engine’s number. '
+                 'Nothing here is adopted, sized or recorded as a position.')
+    return lines
+
+
+def _opportunities_detail(intra):
+    if 'opportunities' not in intra:
+        return []
+    snap = intra['opportunities'] or {}
+    if not opportunities_reported(intra):
+        return ['', '### DeepSeek opportunities — the model’s own picks, unadopted',
+                safe_detail(snap.get('reason') or 'Not staged this session.', 240)]
+    lines = ['', *opportunities_summary(intra)]
+    engine_only = (snap.get('comparison') or {}).get('engine_only') or []
+    if engine_only:
+        lines.append('Engine board today: '+', '.join(safe_detail(t, 24) for t in engine_only)
+                     + ' — none picked by the model.')
+    for gap in list(dict.fromkeys(snap.get('gaps') or []))[:3]:
+        lines.append('Opportunity gap: '+safe_detail(gap, 180))
+    return lines
+
+
 def _deepseek_detail(intra):
     if 'deepseek' not in intra:
         return []
@@ -584,6 +644,7 @@ def text(d):
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     lines += _deepseek_detail(intra)
+    lines += _opportunities_detail(intra)
     lines += _expanded_detail(intra)
     lines += _opening_detail(intra)
     exact=intra['exact_record']

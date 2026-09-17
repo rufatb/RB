@@ -39,7 +39,8 @@ def test_it_is_executable_and_valid_shell():
 
 def test_it_stages_before_it_publishes():
     body = code()
-    for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_deepseek.py'):
+    for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_deepseek.py',
+                 'deepseek_opportunities.py'):
         assert body.index(tool) < body.index('./morning.sh'), \
             f'{tool} must run before the publication hand-off'
 
@@ -65,8 +66,9 @@ def test_staging_after_the_cutoff_is_skipped_not_forced():
     body = code()
     guard = body[body.index('if [ "$(minutes_now)" -ge "$STAGE_DEADLINE" ]'):body.index('while')]
     taken, skipped = guard.split('else', 1)
-    assert 'prepare_deepseek' not in taken, 'the post-cutoff branch must not stage'
-    assert 'prepare_deepseek' in skipped, 'the pre-cutoff branch must stage'
+    for tool in ('prepare_deepseek', 'deepseek_opportunities'):
+        assert tool not in taken, f'the post-cutoff branch must not stage {tool}'
+        assert tool in skipped, f'the pre-cutoff branch must stage {tool}'
     assert 'exit' not in taken.split('\n')[0]
 
 
@@ -82,7 +84,7 @@ def test_a_staging_failure_never_stops_the_publication():
     bare = re.sub(r'"[^"]*"', '""', stage)
     offenders = [l.strip() for l in bare.splitlines() if re.search(r'\bexit\b', l)]
     assert not offenders, f'a staging failure exits the script: {offenders}'
-    assert body.count('stage_faults+=') >= 4, 'faults must be counted per step'
+    assert body.count('stage_faults+=') >= 5, 'faults must be counted per step'
     assert 'stage_faults[*]' in body, 'counted faults must also be reported'
 
 
