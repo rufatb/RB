@@ -1,5 +1,32 @@
 # Working notes for this repo
 
+## Day109 — the factor layer's NO_EDGE is a tested abstention
+
+Read `AUDIT_day109_factor_positive_control.md`. A planted-edge control through
+the real `evaluate_batch` path returns **BULL +0.30** and **BEAR −0.60** on
+unambiguous catalysts, and **raw equals final** on both — so `factor_grounding`
+is NOT flattening leans, and the harness detects a planted edge in both
+directions. House rule 4 is satisfied: the NO_EDGE sessions are informative
+nulls, not a broken harness.
+
+The first control was CONFOUNDED by its own design — it wrote "SYNTHETIC
+CONTROL" into the headline text and the model correctly refused to lean on
+evidence labelled fake. Do not repeat that: plant realistic wording.
+
+The binding constraint is EVIDENCE QUALITY. `factor_news.classify_headline`
+labels every Yahoo RSS item COMMENTARY or UNCLASSIFIED with
+`first_disclosed_at: None` and `primary_source_verified: False`, because the
+feed carries no disclosure metadata; catalyst tags were zero across all 130
+names. Widening the roster 60 → 130 moved assessed 23 → 29 and produced no
+extra lean. More names carrying commentary are still commentary.
+
+A lean does not imply a board: `BULL +0.30` on a name whose quant score is
+0.504 gives combined 0.512, under the 0.55 threshold. The lean gate and the
+score gate are independent and both must pass.
+
+`public_payload` rejects a staged candidate until it is stripped to
+`CANDIDATE_KEYS` — the staged rows carry an extra `technical_provenance` key.
+
 ## Day105 — the morning run is a Routine, and the email is its summary
 
 `trig_01YZ2smjbMZXJvWKBxU4JfWj` — "RB Daily Report — weekday 09:46 ET", cron
