@@ -144,3 +144,35 @@ def test_smtp_authentication_minute_crossing_updates_both_views(tmp_path,monkeyp
     assert '09:47' in sent[0].get_body(('plain',)).get_content()
     assert 'no fresh morning entry claim' in sent[0].get_body(('plain',)).get_content()
     assert store.get(original['session'])==original
+
+
+def test_the_styled_page_is_written_by_the_job_not_by_hand(tmp_path,monkeypatch):
+    """day-110. `report_page` was written to stop the daily HTML being rebuilt
+    by hand, and then nothing invoked it — so it went on being rebuilt by hand,
+    which is exactly the drift its own docstring warns about. The job owns the
+    artifact now, and the DeepSeek section travels with it."""
+    monkeypatch.setattr(brief,'compute',lambda **kw:brief._compute(now=NOW,services=services()))
+    monkeypatch.setattr(brief.ledger,'load',lambda:[])
+    monkeypatch.setattr(brief.positions,'load',lambda:[])
+    daily_job.run(tmp_path/'state',tmp_path/'out',now=NOW)
+    page=(tmp_path/'out'/'report_page.html')
+    assert page.exists()
+    body=page.read_text()
+    assert 'DeepSeek opportunities' in body
+    assert 'Part 1' in body and 'no order was placed' in body
+
+
+def test_a_page_render_fault_never_costs_the_three_published_artifacts(tmp_path,monkeypatch):
+    """The page is a fourth view of an already-frozen report. It may fail; it
+    may not take the record with it."""
+    import report_page
+    monkeypatch.setattr(brief,'compute',lambda **kw:brief._compute(now=NOW,services=services()))
+    monkeypatch.setattr(brief.ledger,'load',lambda:[])
+    monkeypatch.setattr(brief.positions,'load',lambda:[])
+    monkeypatch.setattr(report_page,'render',
+                        lambda d:(_ for _ in ()).throw(RuntimeError('render defect')))
+    d=daily_job.run(tmp_path/'state',tmp_path/'out',now=NOW)
+    for name in ('report.json','report.txt','report.html'):
+        assert (tmp_path/'out'/name).exists()
+    assert not (tmp_path/'out'/'report_page.html').exists()
+    assert any(e.get('layer')=='report_page' for e in d['errors'])

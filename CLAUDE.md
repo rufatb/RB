@@ -38,6 +38,32 @@ which is a claim about the engine from evidence containing none.
 A ranking asked after 09:30 is a different instrument from one asked before it,
 and both renderers label the diagnostic case rather than printing "pre-open".
 
+### The three wiring defects found when asked "will this actually run tomorrow"
+
+1. **`report_page.py` was invoked by NOTHING.** It was written to stop the daily
+   HTML being rebuilt by hand, then went on being rebuilt by hand — the exact
+   drift its own docstring warns about. `daily_job.run` now writes
+   `report_page.html` beside the three artifacts, inside a try so a page fault
+   cannot cost the record.
+2. **The credential never reached the ranker.** `rank()` reads `os.environ`,
+   right for a pure function and wrong for a job: run from `morning_full.sh` in
+   a fresh process nothing had exported the key. `stage()` now calls
+   `prepare_deepseek.load_private_key/load_private_model` — one implementation
+   of the contract, not a second copy that drifts.
+3. **The page had no DOCTYPE and no charset.** Harmless while it was pasted
+   somewhere; a mojibake and quirks-mode risk now the job writes a file opened
+   from disk.
+
+**`.rb-state/` is gitignored, so a fresh container has NO credential.** Every
+session must supply `DEEPSEEK_API_KEY` (env, or
+`$RB_STATE_DIR/secrets/deepseek_api_key` mode 0600) before 09:30 or both model
+sections read UNAVAILABLE against a healthy account. `morning_full.sh` checks
+this FIRST and names the remedy while there is still time to act.
+
+`tests/test_morning_full.code()` used to keep TRAILING comments, so an ordering
+assertion matched prose forty lines above the command it described. It now cuts
+at an unquoted `#`.
+
 ## Day109 — the factor layer's NO_EDGE is a tested abstention
 
 Read `AUDIT_day109_factor_positive_control.md`. A planted-edge control through

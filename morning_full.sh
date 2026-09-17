@@ -45,6 +45,18 @@ PUBLISH_AT=0944       # morning.sh's own guard allows a wait from here
 # morning). Each is bounded so a hung provider cannot eat the window.
 stage_faults=()
 
+# THE CREDENTIAL DOES NOT SURVIVE A CONTAINER. `.rb-state/` is gitignored
+# (.gitignore:32), so a fresh clone has no key and no model file, and both
+# DeepSeek sections would read UNAVAILABLE against a healthy account. Say so
+# HERE, at the top of the log, rather than fifteen minutes later inside a
+# provider error — the remedy takes ten seconds and only before the open.
+if [ -z "${DEEPSEEK_API_KEY:-}" ] && [ ! -f "$RB_STATE_DIR/secrets/deepseek_api_key" ]; then
+    log "NO DEEPSEEK CREDENTIAL — both model sections will read UNAVAILABLE."
+    log "  Remedy: export DEEPSEEK_API_KEY, or write it to"
+    log "  \$RB_STATE_DIR/secrets/deepseek_api_key (mode 0600), before staging."
+    stage_faults+=("no DeepSeek credential staged")
+fi
+
 if [ "$(minutes_now)" -ge "$STAGE_DEADLINE" ]; then
     log "PAST ${STAGE_DEADLINE} ET — staging skipped; the factor and cache sections"
     log "  will read UNAVAILABLE. This is the guard working, not a fault: staged"

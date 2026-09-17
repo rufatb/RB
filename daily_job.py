@@ -62,6 +62,18 @@ def run(state_dir,output_dir,now=None,*,clock=None):
     write_atomic(directory/'report.json',report)
     (directory/'report.txt').write_text(brief.render_text(report))
     (directory/'report.html').write_text(brief.render_html(report))
+    # The standalone page was written to stop the daily HTML being rebuilt by
+    # hand -- and then nothing invoked it, so it went on being rebuilt by hand
+    # anyway, which is the drift its own docstring warns about. It is a fourth
+    # pure view of the same frozen report: it cannot fetch, select or persist,
+    # so it cannot change what was published, and a failure here must not cost
+    # the three artifacts already written.
+    try:
+        import report_page
+        (directory/'report_page.html').write_text(report_page.render(report))
+    except Exception as exc:
+        report.setdefault('errors',[]).append(
+            {'layer':'report_page','error':type(exc).__name__})
     return report
 
 

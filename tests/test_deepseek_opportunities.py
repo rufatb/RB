@@ -9,6 +9,7 @@ Every test here is about that boundary.
 import datetime as dt
 import hashlib
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
@@ -374,3 +375,44 @@ def test_the_text_summary_restates_the_confidence_caveat_every_time():
     body = '\n'.join(daily_render.opportunities_summary({'opportunities': snap}))
     assert 'NOT a calibrated win probability' in body
     assert 'never blended' in body and 'not adopted, sized' in body.replace('Nothing here is ', 'not ')
+
+
+# ── the credential reaches the job, not just the environment ────────────────
+
+def test_the_staged_credential_is_loaded_from_state_not_only_the_environment(tmp_path, monkeypatch):
+    """rank() reading os.environ is right for a pure function and wrong for a
+    job: run from morning_full.sh in a fresh process nothing has exported the
+    key, and the section reads 'not set' against a healthy account."""
+    monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
+    monkeypatch.delenv('DEEPSEEK_MODEL', raising=False)
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    (root/'secrets').mkdir()
+    (root/'secrets'/'deepseek_api_key').write_text('sk-staged-key-value\n')
+    (root/'deepseek_model.txt').write_text('deepseek-flash\n')
+    seen = {}
+
+    def spy(candidates, **kwargs):
+        seen['key'] = os.environ.get('DEEPSEEK_API_KEY')
+        seen['model'] = kwargs.get('model')
+        return O.unavailable('stopped here')
+
+    monkeypatch.setattr(O, 'rank', spy)
+    O.stage(root, now=PREOPEN)
+    assert seen['key'] == 'sk-staged-key-value'
+    assert seen['model'] == 'deepseek-flash'
+
+
+def test_a_missing_credential_is_named_in_the_snapshot_gaps(tmp_path, monkeypatch):
+    monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    snap = O.stage(root, now=PREOPEN, client=Client({'longs': [], 'shorts': []}))
+    assert any('credential' in g for g in snap['gaps'])
+
+
+def test_a_staged_credential_never_reaches_the_snapshot_on_disk(tmp_path, monkeypatch):
+    monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    (root/'secrets').mkdir()
+    (root/'secrets'/'deepseek_api_key').write_text('sk-staged-key-value\n')
+    O.stage(root, now=PREOPEN, client=Client({'longs': [pick('AC.TO')], 'shorts': []}))
+    assert 'sk-staged-key-value' not in (root/O.SNAPSHOT_NAME).read_text()

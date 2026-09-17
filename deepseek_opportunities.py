@@ -248,6 +248,22 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
     elif now.time() >= PREOPEN_CUTOFF:
         raise ValueError('OPPORTUNITIES_PREOPEN_ONLY')
 
+    # THE CREDENTIAL LIVES IN STATE, NOT IN THE ENVIRONMENT. `rank()` reads
+    # os.environ, which is correct for a pure function but wrong for a job: run
+    # from morning_full.sh in a fresh process nothing has exported the key, and
+    # the section would have read "DEEPSEEK_API_KEY is not set" every morning
+    # against a healthy account. Reuse prepare_deepseek's loaders rather than
+    # copying the contract — one implementation, one place to fix.
+    from prepare_deepseek import load_private_key, load_private_model
+    credential_gaps = []
+    try:
+        if not load_private_key(root):
+            credential_gaps.append('No DeepSeek credential is staged for this session.')
+        model = model or load_private_model(root)
+    except (OSError, UnicodeError, ValueError) as exc:
+        credential_gaps.append('The staged DeepSeek credential was rejected (%s).'
+                               % type(exc).__name__)
+
     pool_path = root/'deepseek_candidates.json'
     try:
         pool = json.loads(pool_path.read_text())
@@ -261,6 +277,9 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
 
     context = ({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False,
                 'prediction_evidence': False} if diagnostic else {})
+    # A missing credential must be named, not left to surface as a generic
+    # request failure two layers down (house rule 1).
+    result = {**result, 'gaps': list(result.get('gaps') or []) + credential_gaps}
     snapshot = _seal({**result, 'schema_version': SCHEMA_VERSION,
                       'prompt_version': PROMPT_VERSION,
                       'session': now.date().isoformat(), 'prepared_at': now.isoformat(),

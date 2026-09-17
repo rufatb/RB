@@ -470,3 +470,22 @@ def test_a_pre_open_ranking_carries_no_diagnostic_banner():
         {'opportunities': opportunities(rows=[orow('EMA.TO')])})
     assert 'Current-time diagnostic' not in html
     assert 'asked once, pre-open' in html
+
+
+def test_the_page_declares_a_doctype_and_utf8_before_any_content():
+    """daily_job writes this to disk and the owner opens it from the
+    filesystem. Without an explicit charset the browser guesses, and the page
+    is full of em-dashes, middots and the abstention glyph; without a DOCTYPE
+    it renders in quirks mode."""
+    html = report_page.render(digest([leg('AC.TO')]))
+    head = html[:400]
+    assert head.lstrip().lower().startswith('<!doctype html>')
+    assert 'charset="utf-8"' in head
+    assert head.index('charset') < html.index('<style')
+    assert 'viewport' in head
+
+
+def test_the_page_round_trips_its_own_glyphs_through_utf8():
+    html = report_page.render(digest([leg('AC.TO')]))
+    assert html.encode('utf-8').decode('utf-8') == html
+    assert '&mdash;' in html or '—' in html

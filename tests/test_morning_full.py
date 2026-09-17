@@ -27,9 +27,27 @@ def src():
 
 def code():
     """Commands only — assertions about behaviour must not read the prose that
-    explains it. Same trap as test_morning.code() and test_deploy_units."""
-    return '\n'.join(l for l in src().splitlines()
-                     if l.strip() and not l.strip().startswith('#'))
+    explains it. Same trap as test_morning.code() and test_deploy_units.
+
+    TRAILING comments count as prose too, and this helper used to keep them:
+    `STAGE_DEADLINE=0930   # prepare_deepseek / bar_cache refuse...` made an
+    ordering assertion about `prepare_deepseek` match a COMMENT forty lines
+    above the command it describes. A hash inside a quoted string is not a
+    comment, so only cut at one with balanced quotes before it."""
+    out = []
+    for line in src().splitlines():
+        for i, ch in enumerate(line):
+            if ch == '#' and line[:i].count("'") % 2 == 0 and line[:i].count('"') % 2 == 0:
+                line = line[:i]
+                break
+        if line.strip():
+            out.append(line.rstrip())
+    return '\n'.join(out)
+
+
+def test_the_helper_reads_commands_not_the_prose_about_them():
+    assert '# ' not in code() and 'WHY THIS EXISTS' not in code()
+    assert 'STAGE_DEADLINE=0930' in code(), 'the command itself must survive'
 
 
 def test_it_is_executable_and_valid_shell():
@@ -99,3 +117,22 @@ def test_it_does_not_bypass_the_publication_guard():
     assert 'wait_for_publication' not in body, \
         'the wait belongs to morning.sh; this script must not reimplement it'
     assert '--send' not in body
+
+
+def test_a_missing_credential_is_reported_before_staging_not_inside_it():
+    """`.rb-state/` is gitignored, so a fresh container has no key and both
+    DeepSeek sections read UNAVAILABLE against a healthy account. The remedy
+    only works before 09:30, so the warning has to come first."""
+    body = code()
+    check = body.index('DEEPSEEK_API_KEY')
+    assert check < body.index('prepare_deepseek'), \
+        'the credential check must precede staging, while there is still time to act'
+    assert check < body.index('STAGE_DEADLINE" ]'), \
+        'it must not sit inside the post-cutoff branch'
+    assert 'secrets/deepseek_api_key' in body, 'the warning must name the remedy'
+
+
+def test_the_credential_warning_never_prints_the_credential():
+    body = src()
+    warn = body[body.index('NO DEEPSEEK CREDENTIAL'):body.index('STAGE_DEADLINE" ]')]
+    assert '$DEEPSEEK_API_KEY' not in warn and '${DEEPSEEK_API_KEY}' not in warn

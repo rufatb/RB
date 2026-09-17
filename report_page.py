@@ -416,7 +416,15 @@ def render(digest):
     gaps = '\n'.join(
         f'<li class="g-{kind}">{escape(str(text))}</li>' for kind, text in _gap_items(digest))
 
-    return f'''<title>RB Report {escape(str(digest.get("session", "")))}</title>
+    # A DOCTYPE and an explicit charset, because this is now written to disk by
+    # daily_job and opened directly from the filesystem. Without the charset a
+    # browser guesses, and this page is full of em-dashes, middots and the
+    # abstention glyph; without the DOCTYPE it renders in quirks mode.
+    return f'''<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RB Report {escape(str(digest.get("session", "")))}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
