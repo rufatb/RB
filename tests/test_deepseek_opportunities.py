@@ -547,3 +547,46 @@ def test_staging_reads_the_validated_payload_so_news_reaches_the_model(tmp_path,
     O.stage(root, now=PREOPEN, client=client)
     sent = json.loads(client.seen[0]['messages'][1]['content'])['candidates'][0]
     assert sent['headlines'], 'staged news must reach the model'
+
+
+def test_the_reader_carries_the_evidence_counts_through(tmp_path, monkeypatch):
+    """stage() sealed these and load_prepared DROPPED them, so the page could
+    not say what the model had been shown — the same computed-then-discarded
+    fault as r945's too-early branch. The renderer test passed anyway because
+    it fed the dict directly."""
+    monkeypatch.setenv('DEEPSEEK_API_KEY', 'sk-test')
+    root = stage_dir(tmp_path, [tech('ABX.TO')])
+    (root/'deepseek_news.json').write_text(json.dumps(
+        {'ABX.TO': {'status': 'READY', 'headlines': [headline()]}}))
+    O.stage(root, now=PREOPEN, client=Client({'longs': [pick('ABX.TO')], 'shorts': []}))
+    out = O.load_prepared(root, PREOPEN)
+    assert out['evidence']['names_with_headlines'] == 1
+
+
+@pytest.mark.parametrize('bad', [{'names_with_headlines': 99, 'names_with_catalyst_tags': 0,
+                                  'macro_fields': []},
+                                 {'names_with_headlines': -1, 'names_with_catalyst_tags': 0,
+                                  'macro_fields': []},
+                                 {'names_with_headlines': 'many', 'names_with_catalyst_tags': 0,
+                                  'macro_fields': []},
+                                 'not a dict'])
+def test_a_resealed_snapshot_cannot_overstate_what_the_model_saw(tmp_path, bad):
+    """A count is a claim about the evidence. It may not exceed the universe."""
+    root = stage_dir(tmp_path, [tech('ABX.TO')])
+    O.stage(root, now=PREOPEN, client=Client({'longs': [pick('ABX.TO')], 'shorts': []}))
+    path = root/O.SNAPSHOT_NAME
+    obj = json.loads(path.read_text())
+    obj['evidence'] = bad
+    path.write_text(json.dumps(O._seal(obj)))
+    assert O.load_prepared(root, PREOPEN)['evidence'] is None
+
+
+def test_an_invented_macro_field_is_dropped_by_the_reader(tmp_path):
+    root = stage_dir(tmp_path, [tech('ABX.TO')])
+    O.stage(root, now=PREOPEN, client=Client({'longs': [pick('ABX.TO')], 'shorts': []}))
+    path = root/O.SNAPSHOT_NAME
+    obj = json.loads(path.read_text())
+    obj['evidence'] = {'names_with_headlines': 0, 'names_with_catalyst_tags': 0,
+                       'macro_fields': ['wti', 'GOLD_PRICE_TARGET']}
+    path.write_text(json.dumps(O._seal(obj)))
+    assert O.load_prepared(root, PREOPEN)['evidence']['macro_fields'] == ['wti']

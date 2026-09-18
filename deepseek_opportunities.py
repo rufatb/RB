@@ -324,6 +324,26 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
 
 # ── staging ───────────────────────────────────────────────────────────────────
 
+def _evidence_counts(raw, considered):
+    """Re-validate the sealed evidence counts against the universe read back.
+
+    A count is a claim about what the model saw. An edited or resealed file
+    must not be able to assert more names with news than there were names."""
+    if not isinstance(raw, dict):
+        return None
+    out = {}
+    for key in ('names_with_headlines', 'names_with_catalyst_tags'):
+        value = raw.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= considered:
+            return None
+        out[key] = value
+    fields = raw.get('macro_fields')
+    if not isinstance(fields, list) or not all(isinstance(f, str) for f in fields):
+        return None
+    out['macro_fields'] = sorted(f for f in fields if f in ('wti', 'cadusd', 'tsx', 'vix'))
+    return out
+
+
 def _seal(obj):
     from report_store import encode
     obj = {k: v for k, v in obj.items() if k != 'snapshot_sha256'}
@@ -463,6 +483,12 @@ def load_prepared(state_dir, now, *, diagnostic=False):
                 'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
                 'model': safe_detail(str(obj.get('model') or 'unavailable'), 60),
                 'considered': len(allowed), 'universe': sorted(allowed),
+                # `stage()` seals this and the reader used to DROP it, so the
+                # page could not say what the model had been shown — the same
+                # computed-then-discarded fault as r945's too-early branch.
+                # Re-validated here: a snapshot cannot assert more news than
+                # there were names.
+                'evidence': _evidence_counts(obj.get('evidence'), len(allowed)),
                 'longs': longs, 'shorts': shorts,
                 'gaps': [safe_detail(str(g)) for g in (obj.get('gaps') or [])]
                         + long_gaps + short_gaps,
