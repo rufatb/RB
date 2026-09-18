@@ -176,6 +176,15 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
     context = ({'kind': SNAPSHOT_KIND, 'morning_snapshot': False}
                if diagnostic else {})
     started_monotonic = time.monotonic()
+    # Capture whether the CALLER injected, before defaulting destroys the
+    # evidence. The daily and biotech passes below key off this: gating them
+    # on `fetcher is None` after this line made both dead code, and the run
+    # reported daily_filled 0 / biotech_added 0 while looking healthy.
+    # ANY injection means the caller is running deterministically. Keying only
+    # on `fetcher` was not enough: several tests inject `acquire_fn` alone, and
+    # the daily pass then opened real sockets behind their mock and filled the
+    # very names they assert were NOT acquired.
+    injected = fetcher is not None or acquire_fn is not None
     fetcher = fetcher or fetch_history
     acquire_fn = acquire_fn or acquire
     root = Path(state_dir)
@@ -348,7 +357,7 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
         # suite non-hermetic and its results nondeterministic. When a caller
         # injects a fetcher it is running deterministically, so the daily pass
         # runs only with its own injected counterpart.
-        if daily_fetcher is None and fetcher is None:
+        if daily_fetcher is None and not injected:
             try:
                 import daily_technicals
                 from adapters import YahooDirectAdapter
@@ -394,7 +403,7 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
         # neither scores nor prices them — every row is tagged so a biotech
         # name can never be read as a TSX board leg.
         status['biotech_added'] = 0
-        if biotech_snapshot is None and fetcher is None:
+        if biotech_snapshot is None and not injected:
             try:
                 biotech_snapshot = json.loads((ROOT/'data'/'biotech_snapshot.json').read_text())
             except (OSError, UnicodeError, ValueError):
