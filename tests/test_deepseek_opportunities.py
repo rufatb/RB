@@ -590,3 +590,38 @@ def test_an_invented_macro_field_is_dropped_by_the_reader(tmp_path):
                        'macro_fields': ['wti', 'GOLD_PRICE_TARGET']}
     path.write_text(json.dumps(O._seal(obj)))
     assert O.load_prepared(root, PREOPEN)['evidence']['macro_fields'] == ['wti']
+
+
+# ── the request cap ─────────────────────────────────────────────────────────
+
+def test_the_cap_carries_the_whole_prepared_population():
+    """At 60 the cap began to bind the moment the daily-bar pass lifted
+    coverage 38 -> 116, and the cut is by ROSTER ORDER — so AGI, IVN, LUN and
+    PAAS were complete, present, and dropped for being alphabetically late."""
+    assert O.MAX_NAMES >= 240, 'must carry ~130 TSX plus ~110 biotech'
+
+
+def test_a_binding_cap_is_disclosed_rather_than_silent():
+    """A name absent from the model's options is indistinguishable on the page
+    from a name the model declined."""
+    many = [tech('N%03d.TO' % i) for i in range(O.MAX_NAMES + 5)]
+    client = Client({'longs': [], 'shorts': []})
+    out = O.rank(many, client=client, now=PREOPEN)
+    assert any('exceeded the' in g and 'not a ranking' in g for g in out['gaps'])
+
+
+def test_no_truncation_gap_when_the_cap_does_not_bind():
+    out = O.rank([tech('AC.TO')], client=Client({'longs': [], 'shorts': []}), now=PREOPEN)
+    assert not any('exceeded the' in g for g in out['gaps'])
+
+
+def test_the_cut_never_silently_drops_a_name_the_model_then_picks():
+    """Whatever survives the cap is what the model may choose from, and the
+    validator still refuses anything outside it."""
+    many = [tech('N%03d.TO' % i) for i in range(O.MAX_NAMES + 5)]
+    offered = {c['ticker'] for c in O.usable_candidates(many)}
+    dropped = sorted({c['ticker'] for c in many} - offered)
+    assert dropped, 'this test needs the cap to bind'
+    out = O.rank(many, client=Client({'longs': [pick(dropped[0])], 'shorts': []}),
+                 now=PREOPEN)
+    assert out['longs'] == []

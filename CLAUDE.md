@@ -1,5 +1,58 @@
 # Working notes for this repo
 
+## Day111b — the population was never roster-bound; it was warm-up bound
+
+**MEASURED: the eligible set was IDENTICAL day to day.** 09-17 and 09-18 both
+produced 38 usable names and overlapped 38 of 38. Both model sections were
+choosing from a set that never moved, which is exactly what the owner reported.
+
+The roster was not the cause — 130 names were already requested. RSI/MACD/RVOL
+were derived from a FIVE-MINUTE panel (each session's 15:55 bar as its close);
+MACD needs 35 CONTIGUOUS sessions and Yahoo serves ~41 of 5-minute history, so
+any excluded session truncates the tail. Day-109 saw the same shape from the
+other end (60 → 130 moved assessed 23 → 29) and read it as a roster result.
+
+`daily_technicals.py` computes the daily indicators from TRUE DAILY BARS (~250
+sessions), and `prepare_factor_pool` runs it as a second pass that fills only
+what the warm-up could not produce — `r0`, `vwap` and the opening range are
+intraday and stay with the 5m panel, and five-minute values WIN on merge.
+
+    acquired 77/130 → 117/130 · complete technicals 38 → 77 · usable 38 → 116
+
+**Biotech comes from bars already on disk.** `build_biotech.py` stages US
+securities with `daily_bars` attached — 109 of 111 compute at zero acquisition
+cost. They are US/USD; the baseline engine neither scores nor prices them, so
+every row carries `market` and `currency` and the prompt says not to compare
+levels across markets. **`validate_payload` STRIPPED that tag** (unknown fields
+never pass through) — now passed from a CLOSED set, bogus values rejected.
+
+**`MAX_NAMES` was 60 and cut in ROSTER ORDER**, so AGI, IVN, LUN and PAAS —
+names both models had been picking — were complete, present and silently
+dropped for being alphabetically late. An alphabetical slice is an unregistered
+selection rule. Raised to 250; measured at 116 names the DeepSeek payload is
+~5.9k tokens / 27.5s (no worse than at 38) and Jev ~9.2k / 1.0s, so the budget
+was never the constraint. If it ever binds again it is DISCLOSED in the gaps.
+
+**Jev abstains more as the population grows.** At 38 names it shorted SHOP.TO;
+at 116 it declined both sides, because probability mass spreads across options
+and nothing beats its own `NONE`. That is the registered gate working, not a
+fault, and the gate has no dial to turn.
+
+### Three self-inflicted defects worth remembering
+
+1. **Both new passes were DEAD CODE when first shipped.** They were gated on
+   `fetcher is None`, but `_prepare` does `fetcher = fetcher or fetch_history`
+   near the top. The live run returned `daily_filled: 0, biotech_added: 0` and
+   the same 38 names while reporting `PARTIAL` and looking healthy. Every test
+   passed because none asserted the passes did WORK.
+2. **The gate was then wrong a second way.** Several tests inject `acquire_fn`
+   and NOT `fetcher`; the daily pass opened real sockets behind their mocks and
+   filled the very names they assert were not acquired. Gate on ANY injection.
+3. **Two mutants survived the first pass.** A mostly-daily series riddled with
+   holes keeps a 1.0-day median, and the 5m/daily merge was never exercised
+   because the daily-filled name had failed 5m acquisition entirely and so had
+   nothing to overwrite — that needs a PARTIAL fixture.
+
 ## Day111 — Jev, a second opinion from a DECISIONS model
 
 Read `PREREGISTER_day111_jev_opportunities.md`. `jev_opportunities.py` asks a

@@ -53,7 +53,15 @@ SCHEMA_VERSION = 'day110-opportunities-v1'
 PROMPT_VERSION = 'day110-v1'
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
-MAX_NAMES = 60          # keep one request well inside the response-token budget
+# Sized to carry the WHOLE prepared population rather than slice it. At 60 this
+# began to bind the moment day-111's daily-bar pass lifted coverage 38 -> 116,
+# and `usable_candidates` truncates in ROSTER ORDER — so AGI, IVN, LUN and PAAS,
+# names both models had been picking, were complete, present, and silently cut
+# for being alphabetically late. An arbitrary alphabetical slice is a selection
+# rule nobody registered. Measured at 116 names: the DeepSeek payload is ~5.9k
+# tokens and took 27.5s (no worse than at 38), Jev ~9.2k tokens and 1.0s. The
+# constraint was never the budget.
+MAX_NAMES = 250
 MAX_SNAPSHOT_AGE_HOURS = 6
 MAX_SNAPSHOT_BYTES = 1_000_000
 REQUEST_TIMEOUT = 150.0
@@ -268,6 +276,24 @@ def usable_candidates(candidates):
     return out[:MAX_NAMES]
 
 
+def truncation_gap(candidates):
+    """Say so when the cap cuts names, instead of cutting them quietly.
+
+    The cut is by ROSTER ORDER, which is close to alphabetical and is not a
+    ranking. If it ever binds again the reader must be told, because a name
+    absent from the model's options is indistinguishable on the page from a
+    name the model declined."""
+    eligible = sum(1 for c in candidates or []
+                   if isinstance(c, dict) and isinstance(c.get('ticker'), str)
+                   and all(isinstance((c.get('technicals') or {}).get(k), (int, float))
+                           and not isinstance((c.get('technicals') or {}).get(k), bool)
+                           for k in ('rsi', 'macd_hist', 'rvol', 'last')))
+    if eligible <= MAX_NAMES:
+        return None
+    return ('%d eligible names exceeded the %d-name request cap; the surplus was cut '
+            'in roster order, which is not a ranking.' % (eligible, MAX_NAMES))
+
+
 def rank(candidates, *, macro=None, model=None, client=None, now=None,
          timeout=REQUEST_TIMEOUT):
     """Ask once, validate hard, return at most two per side. Pure of state.
@@ -304,6 +330,9 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     # numbers and nothing else" produce different answers and must not be
     # reported as the same reading (house rule 1).
     evidence_gaps = []
+    cut = truncation_gap(candidates)
+    if cut:
+        evidence_gaps.append(cut)
     with_news = sum(1 for r in rows if r.get('headlines'))
     with_tags = sum(1 for r in rows if r.get('catalyst_tags'))
     if not with_news:
