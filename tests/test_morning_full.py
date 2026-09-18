@@ -136,3 +136,26 @@ def test_the_credential_warning_never_prints_the_credential():
     body = src()
     warn = body[body.index('NO DEEPSEEK CREDENTIAL'):body.index('STAGE_DEADLINE" ]')]
     assert '$DEEPSEEK_API_KEY' not in warn and '${DEEPSEEK_API_KEY}' not in warn
+
+
+def test_the_research_pool_is_staged_and_before_the_news_refresh():
+    """`prepare_factor_pool` writes `deepseek_candidates.json` and NOTHING ELSE
+    DOES. It was absent from this script, so no scheduled run ever staged the
+    130-name pool: on 2026-09-18 the opportunities section read "the candidate
+    pool has not been staged" on a healthy account. It must also precede the
+    news refresh, so headlines are fetched for the pool's names rather than
+    only the baseline twenty-one."""
+    body = code()
+    assert 'prepare_factor_pool.py' in body, 'nothing else writes the candidate pool'
+    assert body.index('prepare_factor_pool.py') < body.index('prepare_deepseek.py'), \
+        'the pool must exist before headlines are fetched for it'
+    assert body.index('prepare_factor_pool.py') < body.index('deepseek_opportunities.py')
+
+
+def test_the_staged_cache_is_actually_pointed_at():
+    """bar_cache writes into $RB_STATE_DIR/intraday_cache; morning.sh reads
+    RB_INTRADAY_CACHE_DIR. Nothing set it, so every morning staged a cache and
+    then acquired all 21 names live beside it."""
+    body = code()
+    assert 'export RB_INTRADAY_CACHE_DIR' in body
+    assert body.index('RB_INTRADAY_CACHE_DIR') < body.index('bar_cache.py')

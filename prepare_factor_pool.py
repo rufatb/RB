@@ -6,6 +6,7 @@ import datetime as dt
 import fcntl
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -343,6 +344,18 @@ if __name__ == '__main__':
     parser.add_argument('--state-dir', required=True)
     parser.add_argument('--config', default=str(Path(__file__).with_name('config.yaml')))
     args = parser.parse_args()
-    result = prepare(args.state_dir, load_config(args.config))
+    # A GUARD REFUSING IS NOT A CRASH. Run after 09:30 this raised
+    # RESEARCH_POOL_PREOPEN_ONLY as a bare traceback, which in a morning log is
+    # indistinguishable from the job breaking — and the distinction is the
+    # whole diagnosis: one means "too late, correctly declined", the other
+    # means "fix me". Name the reason and exit 3 for a refusal.
+    try:
+        result = prepare(args.state_dir, load_config(args.config))
+    except ValueError as exc:
+        reason = str(exc)
+        if not re.fullmatch(r'[A-Z0-9_]{1,80}', reason):
+            raise
+        print(json.dumps({'status': 'REFUSED', 'reason': reason, 'adopted': False}, indent=2))
+        raise SystemExit(3) from None
     print(json.dumps(result, indent=2))
     raise SystemExit(0 if result['status'] == 'READY' else 2)

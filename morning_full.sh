@@ -32,6 +32,15 @@ cd "$(dirname "$0")" || exit 1
 : "${RB_STATE_DIR:=.rb-state}"
 export RB_STATE_DIR
 
+# STAGE THE CACHE AND THEN POINT AT IT. `bar_cache.py` writes into
+# $RB_STATE_DIR/intraday_cache below, but `morning.sh` looks for the directory
+# in RB_INTRADAY_CACHE_DIR and nothing ever set it — so every morning staged a
+# cache and then ignored it, and the board reported "cache DEGRADED: 21 names
+# acquired live (no cache directory configured)" while the cache sat beside it.
+# That cost latency, never the board (day-103), but it was a silent no-op.
+: "${RB_INTRADAY_CACHE_DIR:=$RB_STATE_DIR/intraday_cache}"
+export RB_INTRADAY_CACHE_DIR
+
 log() { printf '[%s] %s\n' "$(TZ=America/New_York date '+%F %H:%M:%S ET')" "$*"; }
 minutes_now() { TZ=America/New_York date '+%H%M'; }
 
@@ -80,6 +89,23 @@ else
            stage_faults+=("biotech universe partial") ;;
         *) log "  biotech universe: FAILED — Part 2 will be unavailable"
            stage_faults+=("biotech universe failed") ;;
+    esac
+
+    # THE RESEARCH POOL. This writes `deepseek_candidates.json`, the 130-name
+    # pool with prepared technicals, and NOTHING ELSE WRITES IT. It was never
+    # in this script, so no scheduled run has ever staged it: on 2026-09-18 the
+    # opportunities section read "The candidate pool has not been staged
+    # (FileNotFoundError)" on a healthy account, and the factor layer has been
+    # quietly working off the 21-name CONFIGURED universe rather than the pool
+    # it is documented to use. It must precede the news refresh, so headlines
+    # are fetched for the pool's names and not just the baseline twenty-one.
+    # Its own budget is already clamped to the time remaining before 09:30.
+    timeout 900 python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
+    case $? in
+        0) log "  factor pool: staged" ;;
+        *) log "  factor pool: FAILED or PARTIAL — the opportunity ranking falls back"
+           log "    to the configured universe, or reads UNAVAILABLE"
+           stage_faults+=("factor research pool not staged") ;;
     esac
 
     # Exits 2 when some names lack complete inputs. That is the ordinary

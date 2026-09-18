@@ -38,6 +38,33 @@ which is a claim about the engine from evidence containing none.
 A ranking asked after 09:30 is a different instrument from one asked before it,
 and both renderers label the diagnostic case rather than printing "pre-open".
 
+### Day110d — the 130-name pool has NEVER been staged by a scheduled run
+
+2026-09-18 published ON TIME at 09:46:09 and the opportunities section read
+**"The candidate pool has not been staged (FileNotFoundError)"** on a healthy
+account. `prepare_factor_pool.py` writes `deepseek_candidates.json` and
+**nothing else does** — and it was never in `morning_full.sh`. So the factor
+layer has been quietly working off the 21-name CONFIGURED universe (that is the
+"Assessed 17 / 21" on the page) rather than the 130-name pool it is documented
+to use, and `deepseek_opportunities` had no pool at all. It now runs BEFORE the
+news refresh, so headlines are fetched for the pool's names, not just the
+baseline twenty-one.
+
+`bar_cache.py` stages into `$RB_STATE_DIR/intraday_cache`; `morning.sh` reads
+**`RB_INTRADAY_CACHE_DIR`**, which nothing ever set. Every morning staged a
+cache and then acquired all 21 names live beside it — the "cache DEGRADED"
+line on the page was telling the truth about a silent no-op. Exported now.
+
+`prepare_factor_pool.py` run after 09:30 raised a bare traceback, so a CORRECT
+refusal was indistinguishable from a crash in the morning log. It exits **3**
+with `{"status":"REFUSED","reason":"RESEARCH_POOL_PREOPEN_ONLY"}`.
+
+**A Routine's `last_run.finished_at` is the DELIVERY record, not the session.**
+09-18 showed fired 13:06:24 / finished 13:09:13 and looked like a 3-minute
+death; the session actually ran to 13:50 and published at 09:46. Check
+`get_session` `updated_at` and the artifact's `updated_at` before concluding a
+run died.
+
 ### Day110c — the ranker was reading charts with the news on the same disk
 
 `stage()` read `deepseek_candidates.json`, which carries **technicals only**.
