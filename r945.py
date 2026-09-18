@@ -726,8 +726,16 @@ def run(cfg, workers=None, *, require_cache=False):
     ready = now.replace(hour=open_t.hour, minute=open_t.minute, second=0,
                         microsecond=0) + dt.timedelta(minutes=16)
     if now < ready and now.date() == ready.date():
+        # Carry the degradation out of this branch too. Every other exit
+        # reports it; this one computed `cache_degraded` above and then threw
+        # it away, so a pre-open caller was told nothing about a missing cache
+        # — silent degradation, which is exactly what house rule 1 forbids and
+        # what day-103 was written to stop. The test that was meant to guard
+        # this read the wall clock, so it only ever ran the post-09:46 path and
+        # passed every afternoon while this branch went unchecked.
         return {"now": now.isoformat(timespec="seconds"), "n_names": 0,
                 "longs": [], "shorts": [], "min_p": 0.55, "too_early": True,
+                "cache_degraded": cache_degraded, "cache_fallbacks": {},
                 "ready_at": ready.strftime("%H:%M")}
     # DAY-25 (external audit): the 9:46 path hard-coded YahooDirectAdapter and
     # ignored `data_sources.primary` entirely, so the configured source — and

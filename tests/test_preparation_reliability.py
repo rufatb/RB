@@ -3,10 +3,13 @@ import datetime as dt
 import json
 import time
 from pathlib import Path
+from zoneinfo import ZoneInfo
 import pytest
 import bar_cache
 import build_biotech as build
 from test_daily_pipeline import NOW
+
+ET = ZoneInfo('America/New_York')
 
 
 def cache(tmp_path):
@@ -47,6 +50,21 @@ def test_cache_with_only_a_closing_bar_is_not_ready(tmp_path):
     assert result['training_history'][0]['rejected_sessions']==1
 
 
+
+class _FixedDatetime(dt.datetime):
+    """Pin `dt.datetime.now` inside r945 without touching anything else."""
+
+    _fixed = None
+
+    def __new__(cls, fixed):
+        obj = super().__new__(cls, 2000, 1, 1)
+        obj._fixed = fixed
+        return obj
+
+    def now(self, tz=None):
+        return self._fixed.astimezone(tz) if tz else self._fixed
+
+
 def test_scheduled_scan_degrades_to_live_history_instead_of_losing_the_board(monkeypatch):
     """REPLACES a rule that cost two consecutive sessions.
 
@@ -59,15 +77,26 @@ def test_scheduled_scan_degrades_to_live_history_instead_of_losing_the_board(mon
 
     The cache "changes acquisition only, not baseline features or rules"
     (CLAUDE.md), so the live path yields the same board. What the scheduled
-    path must now do is degrade, and say so — never silently (house rule 1)."""
+    path must now do is degrade, and say so — never silently (house rule 1).
+
+    THIS TEST USED TO READ THE WALL CLOCK. `r945.run` calls
+    `dt.datetime.now(...)` itself, so before 09:46 ET it returns on the
+    too-early branch, and that branch dropped `cache_degraded` entirely. The
+    assertion therefore only ever exercised the afternoon path: it passed every
+    time the suite was run after the open and raised KeyError at 09:05, which
+    is precisely the hour it exists to protect. Both clocks are pinned now."""
     import r945
     monkeypatch.delenv('RB_INTRADAY_CACHE_DIR',raising=False)
     built=[]
     monkeypatch.setattr(r945,'build_adapter',lambda **kw:built.append(kw) or (_ for _ in ()).throw(TypeError('no 5m')))
-    out=r945.run({'exchange_tz':'America/New_York','scan':{'universe':[]}},require_cache=True)
-    assert out['cache_degraded'], 'a degraded acquisition path must be recorded'
-    assert 'cache' in out['cache_degraded']
-    assert 'cache_fallbacks' in out, 'per-name fallbacks must be countable'
+    cfg={'exchange_tz':'America/New_York','scan':{'universe':[]}}
+    for label,clock in (('pre-open',dt.datetime(2026,9,18,9,5,tzinfo=ET)),
+                        ('publication',dt.datetime(2026,9,18,9,46,tzinfo=ET))):
+        monkeypatch.setattr(r945.dt,'datetime',_FixedDatetime(clock))
+        out=r945.run(cfg,require_cache=True)
+        assert out['cache_degraded'], f'{label}: a degraded acquisition path must be recorded'
+        assert 'cache' in out['cache_degraded']
+        assert 'cache_fallbacks' in out, f'{label}: per-name fallbacks must be countable'
 
 
 def test_an_unconfigured_cache_is_not_reported_as_ready(monkeypatch):

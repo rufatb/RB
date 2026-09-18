@@ -292,6 +292,13 @@ def opportunities_summary(intra):
     lines = ['### DeepSeek opportunities — the model’s own picks, unadopted',
              f"{safe_detail(snap.get('model') or 'Model unavailable', 60)}: {snap.get('status')}; "
              f"{when} over {snap.get('considered', 0)} names carrying complete technicals."]
+    # What it was SHOWN, beside what it said. A ranking made on prices alone
+    # and one made with the morning's headlines are different readings.
+    ev = snap.get('evidence') or {}
+    if ev.get('names_with_headlines') is not None:
+        macro = ', '.join(ev.get('macro_fields') or []) or 'none staged'
+        lines[-1] += (f" Evidence shown: {ev['names_with_headlines']} of "
+                      f"{snap.get('considered', 0)} names with news; macro {macro}.")
     if snap.get('status') == 'NO_OPPORTUNITY':
         lines.append('The model returned NO OPPORTUNITY on both sides. A planted long and a '
                      'planted short are detected through this same path, so this is a reading '

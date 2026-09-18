@@ -489,3 +489,31 @@ def test_the_page_round_trips_its_own_glyphs_through_utf8():
     html = report_page.render(digest([leg('AC.TO')]))
     assert html.encode('utf-8').decode('utf-8') == html
     assert '&mdash;' in html or '—' in html
+
+
+def test_the_page_shows_what_the_model_was_actually_given():
+    """A ranking made on prices alone and one made with the morning's headlines
+    are different readings. Printing picks without the evidence count invites
+    the first to be read as the second."""
+    snap = opportunities(rows=[orow('EMA.TO')])
+    snap['evidence'] = {'names_with_headlines': 32, 'names_with_catalyst_tags': 0,
+                        'macro_fields': ['cadusd', 'tsx', 'vix', 'wti']}
+    html = report_page._opportunities_section({'opportunities': snap})
+    assert '32 / 39 with news' in html
+    assert 'wti' in html and 'vix' in html
+
+
+def test_a_technicals_only_ranking_says_no_macro_was_staged():
+    snap = opportunities(rows=[orow('EMA.TO')])
+    snap['evidence'] = {'names_with_headlines': 0, 'names_with_catalyst_tags': 0,
+                        'macro_fields': []}
+    html = report_page._opportunities_section({'opportunities': snap})
+    assert '0 / 39 with news' in html and 'no macro staged' in html
+
+
+def test_an_older_snapshot_without_evidence_counts_renders_no_evidence_cell():
+    """Frozen reports published before this field existed must not grow a
+    fabricated zero."""
+    html = report_page._opportunities_section(
+        {'opportunities': opportunities(rows=[orow('EMA.TO')])})
+    assert 'Evidence shown' not in html

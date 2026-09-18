@@ -301,6 +301,23 @@ def _opportunity_rows(comparison):
     return rows
 
 
+def _evidence_cell(snap):
+    """What the model was actually shown, beside what it said.
+
+    A ranking made on prices alone and one made with the morning's headlines
+    and the macro tape are different readings. Printing the picks without the
+    evidence count invites the first to be read as the second."""
+    ev = snap.get('evidence') or {}
+    news = ev.get('names_with_headlines')
+    macro = ev.get('macro_fields') or []
+    if news is None:
+        return ''
+    considered = snap.get('considered') or 0
+    detail = (', '.join(macro) if macro else 'no macro staged')
+    return (f'<div><dt>Evidence shown</dt><dd>{news} / {considered} with news'
+            f'<small>macro: {escape(detail)}</small></dd></div>')
+
+
 def _opportunities_section(intra):
     """DeepSeek's own top two per side, beside the engine's board.
 
@@ -338,7 +355,8 @@ def _opportunities_section(intra):
           f'<small>{escape(when)}</small></dd></div>'
           f'<div><dt>Names offered</dt><dd>{snap.get("considered", 0)}'
           f'<small>carrying complete technicals</small></dd></div>'
-          f'<div><dt>Agreement</dt><dd>{comparison.get("agree", 0)} of '
+          + _evidence_cell(snap)
+          + f'<div><dt>Agreement</dt><dd>{comparison.get("agree", 0)} of '
           f'{len(comparison.get("rows") or [])}<small>{comparison.get("oppose", 0)} opposed · '
           f'{comparison.get("unseen", 0)} outside the engine universe</small></dd></div></div>')
 

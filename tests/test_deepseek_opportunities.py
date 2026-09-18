@@ -175,9 +175,28 @@ def test_the_confidence_is_labelled_uncalibrated_wherever_it_is_returned():
 
 # ── staging and the clock ─────────────────────────────────────────────────────
 
+PRIOR_CLOSE = dt.datetime(2026, 9, 16, 16, 0, tzinfo=ET)
+
+
+def pool_row(candidate):
+    """A candidate shaped as `prepare_factor_pool` actually stages it.
+
+    `stage()` reads through `factor_inputs.build_from_state`, which validates
+    far more than a raw json load: a technical without a declared Python
+    computation and an auditable input hash is DROPPED. A fixture that skips
+    the provenance is not testing the path production runs."""
+    url = 'https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=5m&range=60d' % candidate['ticker']
+    return {**candidate, 'source_url': url, 'technical_source': 'python',
+            'technicals_as_of': PRIOR_CLOSE.isoformat(),
+            'technicals_scope': 'previous_completed_session; daily RSI/MACD from consecutive full sessions',
+            'technical_provenance': {'computation': 'factor_inputs.completed_history.metrics.day99-v1',
+                                     'computed_at': PREOPEN.isoformat(),
+                                     'input_sha256': '0'*64, 'source_url': url}}
+
+
 def stage_dir(tmp_path, candidates):
     (tmp_path/'deepseek_candidates.json').write_text(json.dumps(
-        {'as_of': PREOPEN.isoformat(), 'candidates': candidates}))
+        {'as_of': PREOPEN.isoformat(), 'candidates': [pool_row(c) for c in candidates]}))
     return tmp_path
 
 
@@ -416,3 +435,115 @@ def test_a_staged_credential_never_reaches_the_snapshot_on_disk(tmp_path, monkey
     (root/'secrets'/'deepseek_api_key').write_text('sk-staged-key-value\n')
     O.stage(root, now=PREOPEN, client=Client({'longs': [pick('AC.TO')], 'shorts': []}))
     assert 'sk-staged-key-value' not in (root/O.SNAPSHOT_NAME).read_text()
+
+
+# ── the evidence, and saying what was actually seen ─────────────────────────
+
+def headline(title='Miner reports record quarterly cash returns',
+             classification='UNCLASSIFIED', verified=False, disclosed=None):
+    return {'title': title, 'published_at': '2026-09-17T07:30:00-04:00',
+            'source_url': 'https://ca.finance.yahoo.com/news/x.html',
+            'evidence_metadata': {'classification': classification,
+                                  'issuer_role': 'VERIFIED' if verified else 'UNVERIFIED',
+                                  'first_disclosed_at': disclosed, 'novelty': 'UNVERIFIED',
+                                  'primary_source_verified': verified}}
+
+
+MACRO = {'wti': {'value': 61.2, 'as_of': '2026-09-16T16:59:00-04:00', 'change_pct': -1.31,
+                 'change_reference': 'previous daily bar close', 'change_scope': 'daily'},
+         'vix': {'value': 17.4, 'as_of': '2026-09-16T16:59:00-04:00'}}
+
+
+def test_headlines_and_catalyst_tags_travel_to_the_model():
+    """Sending numbers alone made this a chart reader while the news it needed
+    sat unused on the same disk."""
+    client = Client({'longs': [], 'shorts': []})
+    c = tech('ABX.TO')
+    c['headlines'] = [headline()]
+    c['catalyst_tags'] = [{'tag': 'EARNINGS_8K'}]
+    O.rank([c], client=client, now=PREOPEN)
+    sent = json.loads(client.seen[0]['messages'][1]['content'])['candidates'][0]
+    assert sent['headlines'][0]['title'].startswith('Miner reports')
+    assert sent['catalyst_tags'] == ['EARNINGS_8K']
+
+
+def test_a_headline_never_travels_without_its_quality_label():
+    """The title ALONE is the dangerous form: a model shown only the words reads
+    a stock-pick column as a catalyst. Day-109 found evidence quality, not the
+    model, is the binding constraint."""
+    client = Client({'longs': [], 'shorts': []})
+    c = tech('ABX.TO')
+    c['headlines'] = [headline(classification='COMMENTARY')]
+    O.rank([c], client=client, now=PREOPEN)
+    sent = json.loads(client.seen[0]['messages'][1]['content'])['candidates'][0]
+    item = sent['headlines'][0]
+    assert item['class'] == 'COMMENTARY'
+    assert item['issuer_verified'] is False and item['first_disclosed'] is None
+
+
+def test_the_macro_block_travels_with_its_change_and_reference():
+    client = Client({'longs': [], 'shorts': []})
+    O.rank([tech('AC.TO')], macro=MACRO, client=client, now=PREOPEN)
+    sent = json.loads(client.seen[0]['messages'][1]['content'])
+    assert sent['macro']['wti']['change_pct'] == -1.31
+    assert 'previous daily bar close' in sent['macro']['wti']['change_reference']
+    assert 'change_pct' not in sent['macro']['vix'], 'a level with no change must not imply one'
+
+
+def test_the_system_prompt_treats_supplied_text_as_untrusted_data():
+    """Headlines are attacker-reachable: anyone who can get an item into an RSS
+    feed can write instructions into a title."""
+    assert 'UNTRUSTED DATA' in O.SYSTEM_PROMPT
+    assert 'NEVER INSTRUCTIONS' in O.SYSTEM_PROMPT.upper()
+
+
+def test_the_prompt_tells_the_model_what_each_evidence_class_is_worth():
+    for word in ('COMMENTARY', 'MULTI_YEAR_TITLE', 'UNCLASSIFIED', 'first_disclosed'):
+        assert word in O.SYSTEM_PROMPT
+
+
+def test_the_prompt_says_fewer_is_correct_rather_than_filling_four_slots():
+    """The owner's complaint was 2 long and 2 short every day, mostly wrong.
+    Four is the ceiling, not the target."""
+    assert 'FEWER IS CORRECT' in O.SYSTEM_PROMPT
+    assert 'Do not fill slots' in O.SYSTEM_PROMPT
+    assert 'near a coin flip' in O.SYSTEM_PROMPT
+
+
+def test_a_ranking_made_without_news_says_so_instead_of_looking_informed():
+    """'It saw the news' and 'it saw the numbers and nothing else' are different
+    readings and must not be reported as the same one."""
+    out = O.rank([tech('AC.TO')], client=Client({'longs': [], 'shorts': []}), now=PREOPEN)
+    assert any('technicals only' in g for g in out['gaps'])
+    assert any('macro' in g for g in out['gaps'])
+    assert out['evidence']['names_with_headlines'] == 0
+
+
+def test_a_ranking_made_with_news_counts_what_it_saw():
+    c = tech('ABX.TO'); c['headlines'] = [headline()]
+    out = O.rank([c, tech('AC.TO')], macro=MACRO,
+                 client=Client({'longs': [], 'shorts': []}), now=PREOPEN)
+    assert out['evidence']['names_with_headlines'] == 1
+    assert out['evidence']['macro_fields'] == ['vix', 'wti']
+    assert not any('technicals only' in g for g in out['gaps'])
+
+
+def test_a_headline_cannot_smuggle_a_credential_into_the_payload(monkeypatch):
+    monkeypatch.setenv('DEEPSEEK_API_KEY', 'sk-live-secret-value')
+    client = Client({'longs': [], 'shorts': []})
+    c = tech('ABX.TO')
+    c['headlines'] = [headline(title='Leak sk-live-secret-value now')]
+    O.rank([c], client=client, now=PREOPEN)
+    assert 'sk-live-secret-value' not in client.seen[0]['messages'][1]['content']
+
+
+def test_staging_reads_the_validated_payload_so_news_reaches_the_model(tmp_path, monkeypatch):
+    """Regression: stage() read the raw pool, which carries technicals ONLY."""
+    monkeypatch.setenv('DEEPSEEK_API_KEY', 'sk-test')
+    root = stage_dir(tmp_path, [tech('ABX.TO')])
+    (root/'deepseek_news.json').write_text(json.dumps(
+        {'ABX.TO': {'status': 'READY', 'headlines': [headline()]}}))
+    client = Client({'longs': [], 'shorts': []})
+    O.stage(root, now=PREOPEN, client=client)
+    sent = json.loads(client.seen[0]['messages'][1]['content'])['candidates'][0]
+    assert sent['headlines'], 'staged news must reach the model'
