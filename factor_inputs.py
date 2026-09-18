@@ -327,6 +327,23 @@ def validate_payload(payload, now):
             reason = str(exc) if isinstance(exc, ValueError) else 'MISSING_TECHNICAL_FIELDS'
             gaps.append(reason[:80])
             clean['technicals'] = {}
+        # MARKET AND CURRENCY MUST SURVIVE VALIDATION. Unknown fields are
+        # dropped here by design, which was right while the pool was TSX-only.
+        # Day-111 added US biotech names from the staged snapshot, and dropping
+        # the tag would hand a model a bare ticker list mixing two exchanges and
+        # two currencies with nothing to tell them apart — a US name could then
+        # be read as a TSX board leg. Passed through from a CLOSED set of values
+        # only, so an arbitrary string cannot ride along.
+        market = item.get('market')
+        if market in ('CA', 'US'):
+            clean['market'] = market
+            currency = item.get('currency')
+            clean['currency'] = currency if currency in ('CAD', 'USD') else 'UNKNOWN'
+        elif market is not None:
+            gaps.append('UNKNOWN_MARKET_TAG')
+        sector = item.get('sector')
+        if isinstance(sector, str) and 0 < len(sector) <= 40:
+            clean['sector'] = sector
         clean['headlines'] = _evidence(item.get('headlines', []), 'headlines', now, gaps, as_of)
         clean['catalyst_tags'] = _evidence(item.get('catalyst_tags', []), 'catalyst_tags', now, gaps, as_of)
         if not clean['headlines'] and not clean['catalyst_tags']:

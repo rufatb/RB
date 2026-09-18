@@ -83,7 +83,13 @@ Percent fields are already percentages: gap 0.42 means 0.42%, not 42%.
   rsi       0-100, daily RSI
   macd_hist MACD line minus signal; positive means MACD above signal
   rvol      completed-session volume / mean of 20 previous sessions
-  vwap,last,open,orb_high,orb_low   prices in CAD
+  vwap,last,open,orb_high,orb_low   prices, in the row's own currency
+
+Each name carries `market` and `currency`. CA names are Toronto-listed and quoted
+in CAD; US names are US-listed biotech quoted in USD. They are DIFFERENT markets:
+do not compare a price or a level across them, and say which market a pick is in.
+Rows with no vwap or opening range were covered by daily bars only — that is an
+absence of intraday data, not a signal.
 
 Each name may also carry `headlines` and `catalyst_tags`. Every headline has a
 `class`. Read it and weigh it:
@@ -165,6 +171,15 @@ def _row(candidate):
     values = {k: round(float(t[k]), 4) for k in keep
               if isinstance(t.get(k), (int, float)) and not isinstance(t.get(k), bool)}
     row = {'ticker': candidate['ticker'], **values}
+    # MARKET AND CURRENCY TRAVEL WITH EVERY NAME. The pool now carries US
+    # biotech beside TSX names; they trade in USD on a different exchange and
+    # the baseline engine neither scores nor prices them. A model shown a bare
+    # ticker list would rank them as if they were the same instrument.
+    if candidate.get('market'):
+        row['market'] = safe_detail(str(candidate['market']), 8)
+        row['currency'] = safe_detail(str(candidate.get('currency') or ''), 8)
+    if candidate.get('sector'):
+        row['sector'] = safe_detail(str(candidate['sector']), 40)
     headlines = [_headline(h) for h in (candidate.get('headlines') or [])[:MAX_HEADLINES_PER_NAME]
                  if isinstance(h, dict)]
     if headlines:
@@ -233,9 +248,15 @@ def usable_candidates(candidates):
 
     RSI alone is not enough: a name with RSI but no MACD or RVOL gives the model
     a thinner row than its neighbours and makes the comparison across names
-    uneven. Require the momentum and participation trio, which is exactly the
-    set `prepare_factor_pool` counts as complete technicals."""
-    required = ('rsi', 'macd_hist', 'rvol', 'last', 'vwap')
+    uneven. Require the momentum and participation trio plus a price.
+
+    VWAP IS DELIBERATELY NOT REQUIRED. It is an intraday quantity that only the
+    five-minute panel produces, and requiring it was silently re-imposing the
+    warm-up gate that day-111's daily-bar pass exists to remove: on 2026-09-18
+    the eligible set was 38 names and was THE SAME 38 as the day before. A name
+    covered only by daily bars carries fewer fields, and `_row` already omits
+    what is absent."""
+    required = ('rsi', 'macd_hist', 'rvol', 'last')
     out = []
     for c in candidates or []:
         if not isinstance(c, dict) or not isinstance(c.get('ticker'), str):

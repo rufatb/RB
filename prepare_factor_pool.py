@@ -9,6 +9,7 @@ import json
 import re
 import time
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from bar_cache import key
@@ -18,6 +19,7 @@ from factor_inputs import _from_cache, _previous_close
 import factor_pool_policy as P
 
 ET = ZoneInfo('America/New_York')
+ROOT = Path(__file__).resolve().parent
 
 
 def fetch_history(ticker, now):
@@ -135,16 +137,19 @@ def _research_universe(root, now, *, diagnostic=False):
         'fallback_registration': P.REGISTRATION}
 
 
-def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
+def prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
+            daily_fetcher=None, biotech_snapshot=None):
     """Once/session, incremental checkpoints, bounded acquisition and no retries.
 
     Baseline cache is only read. Every requested name remains in the output,
     including failed names, so partial coverage cannot masquerade as a full pool.
     """
-    return _prepare(state_dir, cfg, now=now, fetcher=fetcher, acquire_fn=acquire_fn)
+    return _prepare(state_dir, cfg, now=now, fetcher=fetcher, acquire_fn=acquire_fn,
+                    daily_fetcher=daily_fetcher, biotech_snapshot=biotech_snapshot)
 
 
-def prepare_diagnostic(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None):
+def prepare_diagnostic(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
+                       daily_fetcher=None, biotech_snapshot=None):
     """Run the same pool preparation with real clocks in an isolated diagnostic.
 
     Diagnostic history is previous-session context acquired now, never a cache
@@ -154,11 +159,12 @@ def prepare_diagnostic(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=Non
     from diagnostic_context import require_context
     require_context(Path(state_dir))
     return _prepare(state_dir, cfg, now=now, fetcher=fetcher,
-                    acquire_fn=acquire_fn, diagnostic=True)
+                    acquire_fn=acquire_fn, diagnostic=True,
+                    daily_fetcher=daily_fetcher, biotech_snapshot=biotech_snapshot)
 
 
 def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
-             diagnostic=False):
+             diagnostic=False, daily_fetcher=None, biotech_snapshot=None):
     from bounded import acquire
     live_clock = now is None
     now = now or dt.datetime.now(ET)
@@ -322,9 +328,98 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             if refusal or unavailable == len(batch):
                 status['errors']['provider'] = 'PROVIDER_OUTAGE_FURTHER_REQUESTS_SKIPPED'
                 break
+        # ── DAILY-BAR PASS: the fix for "the same tickers every day" ────────
+        # The five-minute path above covered 38 of 130 names on 2026-09-18 and
+        # covered THE SAME 38 the day before — 38 of 38 overlap. MACD needs 35
+        # contiguous complete sessions and Yahoo serves ~41 sessions of 5-minute
+        # history, so the warm-up, not the roster, is the gate. A daily request
+        # returns ~250 sessions and is a far smaller response, so it both warms
+        # up and fails less. Probed: 25 of 25 TSX names complete this way.
+        #
+        # Daily bars fill the daily indicators ONLY. `r0`, `vwap` and the
+        # opening range are intraday quantities and stay with the five-minute
+        # panel; a name covered only daily simply carries fewer fields, which
+        # `_row` already handles by omitting what is absent.
+        status['daily_filled'] = 0
+        status['daily_errors'] = {}
+        # INJECTION, not a hard-coded adapter. The five-minute path above takes
+        # `fetcher`; a daily pass that ignored it would reach the real network
+        # from inside a test that had carefully mocked the provider, making the
+        # suite non-hermetic and its results nondeterministic. When a caller
+        # injects a fetcher it is running deterministically, so the daily pass
+        # runs only with its own injected counterpart.
+        if daily_fetcher is None and fetcher is None:
+            try:
+                import daily_technicals
+                from adapters import YahooDirectAdapter
+                adapter = YahooDirectAdapter(timeout=14)
+                daily_fetcher = lambda t, _a=adapter: daily_technicals.from_yahoo(t, _a, now)
+            except Exception as exc:
+                status['daily_errors']['pool'] = 'DAILY_PASS_UNAVAILABLE_'+type(exc).__name__
+        for ticker in tickers if daily_fetcher else ():
+            if time.monotonic() >= deadline:
+                status['daily_errors']['pool'] = 'DAILY_PASS_BUDGET_EXHAUSTED'
+                break
+            if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
+                status['daily_errors']['clock'] = 'PREOPEN_DEADLINE_REACHED'
+                break
+            existing = (rows.get(ticker) or {}).get('technicals') or {}
+            if all(existing.get(k) is not None for k in ('rsi', 'macd_hist', 'rvol')):
+                continue
+            try:
+                technicals, meta = daily_fetcher(ticker)
+            except Exception as exc:
+                status['daily_errors'][ticker] = (str(exc) if isinstance(exc, ValueError)
+                    and re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc)) else type(exc).__name__)
+                continue
+            merged = dict(rows.get(ticker) or {'ticker': ticker})
+            # Five-minute values WIN where they exist: they are the intraday
+            # facts. Daily only fills what the warm-up could not produce.
+            merged['technicals'] = {**technicals, **{k: v for k, v in existing.items()
+                                                     if v is not None}}
+            merged.setdefault('technical_source', 'python')
+            merged.setdefault('source_url',
+                'https://query1.finance.yahoo.com/v8/finance/chart/'+quote(ticker, safe=''))
+            merged['technicals_as_of'] = merged.get('technicals_as_of') or now.isoformat()
+            import daily_technicals as _dt
+            merged['technicals_scope'] = _dt.scope(technicals['daily_sessions'])
+            merged['market'] = 'CA'
+            merged['currency'] = meta.get('currency') or 'CAD'
+            rows[ticker] = merged
+            status['daily_filled'] += 1
+        # ── BIOTECH: a different market, from bars already on disk ──────────
+        # build_biotech.py stages US biotech securities with `daily_bars`
+        # attached, which is exactly this module's input, so folding them in
+        # costs no acquisition at all. They are US/USD and the baseline engine
+        # neither scores nor prices them — every row is tagged so a biotech
+        # name can never be read as a TSX board leg.
+        status['biotech_added'] = 0
+        if biotech_snapshot is None and fetcher is None:
+            try:
+                biotech_snapshot = json.loads((ROOT/'data'/'biotech_snapshot.json').read_text())
+            except (OSError, UnicodeError, ValueError):
+                biotech_snapshot = None
+        try:
+            if biotech_snapshot is None:
+                raise ValueError('BIOTECH_SNAPSHOT_NOT_SUPPLIED')
+            import daily_technicals
+            extra, biotech_gaps = daily_technicals.from_biotech_snapshot(biotech_snapshot, now)
+            for item in extra:
+                if item['ticker'] in rows:
+                    continue
+                rows[item['ticker']] = item
+                tickers = tickers + (item['ticker'],)
+                status['biotech_added'] += 1
+            status['biotech_gaps'] = len(biotech_gaps)
+        except Exception as exc:
+            status['biotech_error'] = (str(exc) if isinstance(exc, ValueError)
+                and re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc)) else type(exc).__name__)
         for ticker in tickers:
             if ticker not in rows:
                 status['errors'].setdefault(ticker, 'NOT_ACQUIRED')
+            elif 'market' not in rows[ticker]:
+                rows[ticker]['market'], rows[ticker]['currency'] = 'CA', 'CAD'
+        status['requested'] = len(tickers)
         status['status'] = ('READY' if status['complete_technicals'] == len(tickers)
                             else 'PARTIAL' if rows else 'UNAVAILABLE')
         if not diagnostic and live_clock and dt.datetime.now(ET).time() >= dt.time(9, 30):
