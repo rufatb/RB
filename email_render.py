@@ -70,6 +70,8 @@ def text(d):
     # line. The absence still appears once in the attached full report.
     if full.opportunities_reported(intra):
         lines += ['',*full.opportunities_summary(intra)]
+    if full.jev_reported(intra):
+        lines += ['',*full.jev_summary(intra)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
     if book.get('status')=='UNAVAILABLE':

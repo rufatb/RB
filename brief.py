@@ -390,6 +390,18 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         error('deepseek_opportunities', RuntimeError(type(exc).__name__))
         opportunity_evidence = deepseek_opportunities.unavailable(
             'Optional opportunity ranking failed: '+type(exc).__name__)
+    # Jev's own top-2 per side, staged pre-open by the same job. A SECOND
+    # opinion, read only: two models disagreeing is information about the
+    # instruments, and neither is adopted.
+    import jev_opportunities
+    try:
+        jev_evidence = (jev_opportunities.load_diagnostic(state_dir, now)
+                        if factor_diagnostic is not None else
+                        jev_opportunities.load_prepared(state_dir, now))
+    except Exception as exc:
+        error('jev_opportunities', RuntimeError(type(exc).__name__))
+        jev_evidence = jev_opportunities.unavailable(
+            'Optional Jev ranking failed: '+type(exc).__name__)
     # Expanded coverage is independent of model availability. Only prepared
     # local receipt/cache checks run here; preflight performs full history
     # validation before open. Older frozen reports need no new optional fields.
@@ -451,6 +463,13 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             opportunity_evidence, legs, cfg.get('scan', {}).get('universe', []))
     except Exception as exc:
         error('deepseek_opportunities_comparison', RuntimeError(type(exc).__name__))
+    try:
+        jev_evidence['comparison'] = deepseek_opportunities.compare(
+            jev_evidence, legs, cfg.get('scan', {}).get('universe', []))
+        jev_evidence['versus_deepseek'] = jev_opportunities.compare_models(
+            jev_evidence, opportunity_evidence)
+    except Exception as exc:
+        error('jev_comparison', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -468,6 +487,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                           'ledger_status':ledger_status,
                           'deepseek':factor_evidence,
                           'opportunities':opportunity_evidence,
+                          'jev':jev_evidence,
                           'historical_provider':provider_evidence},
               'biotech':bio,'positions':book,'research_calendar':calendar,
               'research':{'registration':'PREREGISTER_day90.md','status':'SHADOW — no strategy adoption',

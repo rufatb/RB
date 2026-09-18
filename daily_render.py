@@ -317,6 +317,62 @@ def opportunities_summary(intra):
     return lines
 
 
+def jev_reported(intra):
+    """True when Jev was actually asked and answered."""
+    return (intra.get('jev') or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
+
+
+def jev_summary(intra):
+    """Jev's own picks, and whether the two models agree.
+
+    Probability and abstain-probability are restated as Jev's own numbers every
+    time they are printed. Two numbers between 0 and 1 beside a ticker read as
+    calibrated odds unless something says they are not."""
+    snap = intra.get('jev') or {}
+    versus = snap.get('versus_deepseek') or {}
+    when = ('asked AFTER the open — CURRENT-TIME DIAGNOSTIC'
+            if snap.get('diagnostic') else 'asked once pre-open')
+    lines = ['### Jev opportunities — a second model, unadopted',
+             f"{safe_detail(snap.get('model') or 'Model unavailable', 60)}: {snap.get('status')}; "
+             f"{when} over {snap.get('considered', 0)} names."]
+    ev = snap.get('evidence') or {}
+    if ev.get('names_with_headlines') is not None:
+        macro = ', '.join(ev.get('macro_fields') or []) or 'none staged'
+        lines[-1] += (f" Evidence shown: {ev['names_with_headlines']} of "
+                      f"{snap.get('considered', 0)} names with news; macro {macro}.")
+    if snap.get('status') == 'NO_OPPORTUNITY':
+        lines.append('Jev declined on BOTH sides: every name came out less likely than its own '
+                     '"none of these" option. A planted long and short are both detected through '
+                     'this path, so this is a reading of the evidence, not a broken request.')
+    verdicts = {r['ticker']: r['verdict'] for r in versus.get('rows') or []}
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for row in snap.get(key) or []:
+            lines.append(f"{side} {safe_detail(row['ticker'], 24)}: Jev probability "
+                         f"{fmt(row.get('probability'), '.3f')} against "
+                         f"{fmt(row.get('abstain_probability'), '.3f')} for doing nothing — "
+                         f"{safe_detail(verdicts.get(row['ticker'], 'DeepSeek did not pick it'), 60)}.")
+    if versus.get('rows'):
+        lines.append(f"Cross-model: {versus.get('agree', 0)} agreed, {versus.get('oppose', 0)} "
+                     f"contradicted, {versus.get('alone', 0)} picked by Jev alone.")
+    lines.append('Jev\u2019s probabilities are its OWN, not calibrated win probabilities: no track '
+                 'record, never scored against an outcome, never averaged with DeepSeek\u2019s '
+                 'confidence or the engine\u2019s score. Nothing here is adopted or sized.')
+    return lines
+
+
+def _jev_detail(intra):
+    if 'jev' not in intra:
+        return []
+    snap = intra['jev'] or {}
+    if not jev_reported(intra):
+        return ['', '### Jev opportunities — a second model, unadopted',
+                safe_detail(snap.get('reason') or 'Not staged this session.', 240)]
+    lines = ['', *jev_summary(intra)]
+    for gap in list(dict.fromkeys(snap.get('gaps') or []))[:3]:
+        lines.append('Jev gap: '+safe_detail(gap, 180))
+    return lines
+
+
 def _opportunities_detail(intra):
     if 'opportunities' not in intra:
         return []
@@ -652,6 +708,7 @@ def text(d):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     lines += _deepseek_detail(intra)
     lines += _opportunities_detail(intra)
+    lines += _jev_detail(intra)
     lines += _expanded_detail(intra)
     lines += _opening_detail(intra)
     exact=intra['exact_record']

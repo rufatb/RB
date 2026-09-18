@@ -1,5 +1,46 @@
 # Working notes for this repo
 
+## Day111 — Jev, a second opinion from a DECISIONS model
+
+Read `PREREGISTER_day111_jev_opportunities.md`. `jev_opportunities.py` asks a
+second model the same question as day-110, from the same prepared evidence, and
+renders under the DeepSeek section. Neither is adopted and they are NEVER
+averaged — averaging two unmeasured opinions makes a third that looks better
+than either.
+
+**Jev is not a chat model.** `typesafe/jev-1.13` is reachable only at
+`POST https://openrouter.ai/api/alpha/decisions`; `/chat/completions` rejects it
+outright. `typesafe/jev-latest` is **NOT a valid model id** — pin the version,
+because a floating alias that 400s every morning looks exactly like an outage.
+The request is `{model, state, questions}`; answers are typed `noul` (bare 0-1),
+`choice` (an option from a supplied set, plus a probability over EVERY option
+and a confidence) or `score` (a point on a supplied ordinal scale).
+
+**The typing is the reason to use it.** With `choice`, the option set IS the
+universe, so the provider makes the invented-ticker failure unreachable rather
+than leaving it to a validator. The validator is kept anyway.
+
+**THE GATE HAS NO DIAL.** A name is reported only when its probability exceeds
+the probability the model itself assigned to `NONE`. There is deliberately no
+constant to nudge after a losing day — the day-98 side-skill family shows what
+happens when there is one.
+
+Measured 2026-09-18: **0.83 s and $0.00002** per call over 38 names, both sides
+in ONE request — two orders of magnitude faster and cheaper than the DeepSeek
+call. That is a robustness argument, not an accuracy one.
+
+Positive control passes both directions on the day-110 planted universe
+(`CTLUP.TO` 0.79 vs abstain 0.21; `CTLDN.TO` 0.54 vs 0.39; no noise name
+cleared). Re-run with `python jev_opportunities.py --control`.
+
+First live reading: Jev abstained entirely on the long side and shorted
+SHOP.TO; DeepSeek independently shorted SHOP.TO too. One agreement on one day
+is a recorded observation, not evidence.
+
+The OpenRouter credential lives at `${RB_STATE_DIR}/secrets/openrouter_api_key`,
+mode 0600, gitignored — same contract as the DeepSeek key, and it dies with the
+container the same way.
+
 ## Day110 — the model was never asked the question the owner was asking
 
 `deepseek_factors` answers "is there directional sentiment in these headlines".

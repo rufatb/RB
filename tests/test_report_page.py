@@ -517,3 +517,102 @@ def test_an_older_snapshot_without_evidence_counts_renders_no_evidence_cell():
     html = report_page._opportunities_section(
         {'opportunities': opportunities(rows=[orow('EMA.TO')])})
     assert 'Evidence shown' not in html
+
+
+# ── Jev section: a second model, under DeepSeek ─────────────────────────────
+
+def jev(status='READY', longs=(), shorts=(), **over):
+    out = {'status': status, 'model': 'typesafe/jev-1.13-20260917', 'considered': 38,
+           'adopted': False, 'longs': list(longs), 'shorts': list(shorts), 'gaps': [],
+           'evidence': {'names_with_headlines': 32, 'names_with_catalyst_tags': 0,
+                        'macro_fields': ['cadusd', 'tsx', 'vix', 'wti']},
+           'versus_deepseek': {'rows': [], 'agree': 0, 'oppose': 0, 'alone': 0,
+                               'deepseek_only': []},
+           'comparison': {'rows': []}}
+    out.update(over)
+    return out
+
+
+def jrow(ticker, probability=0.48, abstain=0.36):
+    return {'ticker': ticker, 'probability': probability, 'confidence': 0.46,
+            'abstain_probability': abstain}
+
+
+def test_the_jev_section_sits_under_deepseek():
+    d = digest([leg('AC.TO')])
+    d['intraday']['opportunities'] = opportunities(rows=[orow('EMA.TO')])
+    d['intraday']['jev'] = jev(shorts=[jrow('SHOP.TO')])
+    html = report_page.render(d)
+    assert html.index('DeepSeek opportunities') < html.index('Jev opportunities')
+    assert html.index('Jev opportunities') < html.index('How reliable is this record?')
+
+
+def test_a_jev_pick_shows_the_probability_it_had_to_beat():
+    """The gate is 'more likely than doing nothing'. Printing the pick without
+    the abstain probability hides what the number was measured against."""
+    html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO', 0.48, 0.36)])})
+    assert '0.480' in html and '0.360' in html
+    assert 'exceeded the second' in html
+
+
+def test_jev_numbers_are_never_presented_as_calibrated():
+    html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO')])})
+    assert 'NOT calibrated win probabilities' in html
+    assert 'never scored against an outcome' in html
+
+
+def test_the_two_models_are_never_averaged_on_the_page():
+    html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO')])})
+    assert 'not combined' in html or 'neither is combined' in html
+    assert 'consensus' not in html.lower()
+
+
+def test_a_jev_pick_carries_no_share_count_or_dollar_figure():
+    html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO')])})
+    assert '$' not in html and 'shares' not in html.lower()
+    assert 'no size' in html
+
+
+def test_jev_declining_both_sides_renders_the_abstention_and_its_control():
+    html = report_page._jev_section({'jev': jev('NO_OPPORTUNITY')})
+    assert 'declined on both sides' in html
+    assert 'planted long and a planted short' in html
+    assert '<table' not in html
+
+
+def test_an_unstaged_jev_ranking_states_its_reason_in_one_line():
+    html = report_page._jev_section({'jev': {'status': 'UNAVAILABLE',
+                                             'reason': 'The Jev ranking was not staged.'}})
+    assert 'not staged' in html and '<table' not in html
+
+
+def test_a_missing_jev_key_renders_a_stated_absence_not_silence():
+    html = report_page._jev_section({})
+    assert 'Not staged this session.' in html
+
+
+def test_cross_model_agreement_and_contradiction_are_distinguished():
+    agree = report_page._jev_section({'jev': jev(
+        shorts=[jrow('SHOP.TO')],
+        versus_deepseek={'rows': [{'ticker': 'SHOP.TO', 'verdict': report_page.O.AGREE}],
+                         'agree': 1, 'oppose': 0, 'alone': 0, 'deepseek_only': []})})
+    assert 'g-accent' in agree and 'same side' in agree
+    oppose = report_page._jev_section({'jev': jev(
+        longs=[jrow('CNQ.TO')],
+        versus_deepseek={'rows': [{'ticker': 'CNQ.TO',
+                                   'verdict': 'the other model took the OPPOSITE side'}],
+                         'agree': 0, 'oppose': 1, 'alone': 0, 'deepseek_only': []})})
+    assert 'g-alarm' in oppose and 'OPPOSITE' in oppose
+
+
+def test_names_only_deepseek_picked_are_named_rather_than_dropped():
+    html = report_page._jev_section({'jev': jev(
+        shorts=[jrow('SHOP.TO')],
+        versus_deepseek={'rows': [], 'agree': 0, 'oppose': 0, 'alone': 1,
+                         'deepseek_only': ['ABX.TO', 'CNQ.TO']})})
+    assert 'ABX.TO' in html and 'CNQ.TO' in html
+
+
+def test_a_jev_ranking_asked_after_the_open_is_labelled_diagnostic():
+    html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO')], diagnostic=True)})
+    assert 'Current-time diagnostic' in html and 'not a pre-open opinion' in html

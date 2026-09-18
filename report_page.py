@@ -386,6 +386,96 @@ def _opportunities_section(intra):
             + tail + f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
 
 
+JEV_NOTE = (
+    'A second model, asked the same question from the same prepared evidence. Jev is a '
+    'DECISIONS model: the option set it is given IS the candidate list, so it cannot '
+    'return a name that was never assessed, and it answers with a probability over every '
+    'option rather than free text. A name is shown here only when Jev rated it above its '
+    'own "none of these" option — that is the whole abstention gate and it has no '
+    'tunable number in it. The probabilities are Jev’s own and are NOT calibrated win '
+    'probabilities: no track record, never scored against an outcome. Two models agreeing '
+    'is a fact worth recording, not evidence of skill, and nothing here is averaged with '
+    'anything, adopted, or carried as a size.')
+
+
+def _jev_rows(snap):
+    verdicts = {r['ticker']: r['verdict'] for r in (snap.get('versus_deepseek') or {}).get('rows') or []}
+    engine = {r['ticker']: r for r in (snap.get('comparison') or {}).get('rows') or []}
+    out = ''
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for row in snap.get(key) or []:
+            agrees = verdicts.get(row['ticker'], '')
+            cls = ('g-accent' if agrees == O.AGREE else
+                   'g-alarm' if agrees in (O.OPPOSE, 'the other model took the OPPOSITE side')
+                   else 'g-quiet')
+            seen = engine.get(row['ticker']) or {}
+            out += ('<tr>'
+                    f'<td>{escape(side)}</td>'
+                    f'<td class="tick">{escape(str(row["ticker"]))}</td>'
+                    f'<td class="num">{fmt(row.get("probability"), ".3f")}</td>'
+                    f'<td class="num">{fmt(row.get("abstain_probability"), ".3f")}</td>'
+                    f'<td class="{cls}">{escape(str(agrees or "DeepSeek did not pick it"))}</td>'
+                    f'<td>{escape(str(seen.get("verdict") or ""))}</td>'
+                    '</tr>')
+    return out
+
+
+def _jev_section(intra):
+    """Jev's own top two per side, under DeepSeek and answering the same question.
+
+    Kept in its own section rather than merged into a single "models" table:
+    the two are asked through different APIs with different answer shapes, and
+    a shared table would invite their numbers to be read as the same quantity.
+    Jev returns a probability over a constrained option set; DeepSeek returns a
+    self-reported confidence in free JSON. Neither is calibrated and they are
+    not on a common scale."""
+    snap = intra.get('jev') or {}
+    head = ('<section><h2 class="head">Jev opportunities</h2>'
+            '<p class="sub">Second model · decisions API · shadow · unadopted · no size</p>')
+    status = snap.get('status')
+    if status not in ('READY', 'NO_OPPORTUNITY'):
+        reason = escape(str(snap.get('reason') or 'Not staged this session.'))
+        return head + f'<ul class="gaps"><li class="g-quiet">{reason}</li></ul></section>'
+
+    versus = snap.get('versus_deepseek') or {}
+    banner = ('<p class="note"><strong>Current-time diagnostic.</strong> Requested after '
+              '09:30 ET, so it is not a pre-open opinion.</p>') if snap.get('diagnostic') else ''
+    ev = snap.get('evidence') or {}
+    kv = (banner + '<div class="kv">'
+          f'<div><dt>Model</dt><dd>{escape(str(snap.get("model") or "unavailable"))}'
+          f'<small>one request, both sides</small></dd></div>'
+          f'<div><dt>Names offered</dt><dd>{snap.get("considered", 0)}'
+          f'<small>the option set it could choose from</small></dd></div>'
+          + (f'<div><dt>Evidence shown</dt><dd>{ev.get("names_with_headlines")} / '
+             f'{snap.get("considered", 0)} with news<small>macro: '
+             f'{escape(", ".join(ev.get("macro_fields") or []) or "none staged")}</small></dd></div>'
+             if ev.get('names_with_headlines') is not None else '')
+          + f'<div><dt>Agrees with DeepSeek</dt><dd>{versus.get("agree", 0)}'
+          f'<small>{versus.get("oppose", 0)} contradicted</small></dd></div></div>')
+
+    if status == 'NO_OPPORTUNITY':
+        return (head + kv + '<p><strong>Jev declined on both sides.</strong> Every name it was '
+                'offered came out less likely than its own "none of these" option, so nothing '
+                'is shown. A planted long and a planted short are both detected through this '
+                'exact path, so an empty result is a reading of the evidence rather than a '
+                'broken request.</p>'
+                f'<p class="note">{JEV_NOTE}</p></section>')
+
+    missed = (versus.get('deepseek_only') or [])
+    tail = ('<p class="sub" style="border:none;padding:0">DeepSeek picked, Jev did not: '
+            + escape(', '.join(missed)) + '.</p>') if missed else ''
+    return (head + kv
+            + '<div class="scroll"><table><caption>Probability is Jev’s own number over the '
+              'option set it was given, and the abstain column is what it assigned to choosing '
+              'nothing. A row exists only because the first exceeded the second. Neither number '
+              'is a calibrated win probability, and neither is combined with DeepSeek’s '
+              'confidence or with the engine’s sided score.</caption>'
+              '<thead><tr><th>Side</th><th>Name</th><th class="num">Probability</th>'
+              '<th class="num">Abstain</th><th>vs DeepSeek</th><th>vs the engine</th></tr></thead>'
+            + f'<tbody>{_jev_rows(snap)}</tbody></table></div>'
+            + tail + f'<p class="note">{JEV_NOTE}</p></section>')
+
+
 def _gap_items(digest):
     """Every gap the frozen computation recorded, in the reader's language."""
     intra = digest['intraday']
@@ -570,6 +660,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
   </section>
 
   {_opportunities_section(intra)}
+
+  {_jev_section(intra)}
 
   <section>
     <h2 class="head">How reliable is this record?</h2>

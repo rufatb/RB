@@ -128,6 +128,20 @@ else
         *) log "  DeepSeek opportunities: FAILED — that section will read UNAVAILABLE"
            stage_faults+=("DeepSeek opportunity ranking not staged") ;;
     esac
+
+    # The SECOND opinion. Jev is a decisions model on OpenRouter, reached at
+    # /api/alpha/decisions — NOT /chat/completions, which rejects it outright.
+    # It answers both sides in one request in well under a second, so unlike
+    # the DeepSeek call it is cheap; it is staged here anyway because the same
+    # pre-open contract applies to any opinion formed from these inputs.
+    timeout 180 python jev_opportunities.py --state-dir "$RB_STATE_DIR"
+    case $? in
+        0) log "  Jev opportunities: staged" ;;
+        3) log "  Jev opportunities: REFUSED (past the pre-open cutoff)"
+           stage_faults+=("Jev ranking refused: past the cutoff") ;;
+        *) log "  Jev opportunities: FAILED — that section will read UNAVAILABLE"
+           stage_faults+=("Jev ranking not staged") ;;
+    esac
 fi
 
 # ── 2. HOLD until the publication window opens ─────────────────────────────
