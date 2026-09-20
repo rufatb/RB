@@ -209,8 +209,11 @@ case $? in
     0) log "DELIVERY: email sent — $send_out" ;;
     2) log "DELIVERY: NOT EMAILED — no SMTP credential in this container."
        log "  The board IS published and the page IS updated; only the inbox"
-       log "  copy is missing. This is the single reason no report has ever"
-       log "  arrived by email. Remedy, before the next open:"
+       log "  copy is missing. Note that on a Claude Code container a credential"
+       log "  alone would NOT fix this — smtp.gmail.com is unroutable through the"
+       log "  agent proxy on 25/465/587 (measured 2026-09-20), so the send would"
+       log "  fail at the socket with a valid password. The HTTPS path is the"
+       log "  Gmail connector plus prepare_delivery.py's gmail_payload.json."
        printf '%s\n' "$send_out" | sed 's/^/    /' ;;
     *) log "DELIVERY: EMAIL FAILED — the board IS published and the record below"
        log "  still travels; only delivery failed. Do not re-run the report."

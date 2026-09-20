@@ -184,3 +184,35 @@ def test_the_secrets_directory_is_gitignored():
     out = subprocess.run(['git', 'check-ignore', '-q', '.rb-state/secrets/smtp_app_password'],
                          cwd=ROOT)
     assert out.returncode == 0, 'the app password would be committable'
+
+
+# ── a credential is necessary and NOT sufficient here ────────────────────────
+# MEASURED 2026-09-20: from a Claude Code container smtp.gmail.com times out on
+# 25, 465 AND 587 — the agent proxy tunnels HTTPS and does not route raw SMTP.
+# The obvious reading of "no SMTP credential" is that supplying one fixes it.
+# Here it would not: the send would fail at the socket with a valid password.
+# These tests exist so the remedy text cannot quietly drift back to "just add
+# an app password", which is how a whole day would be lost tomorrow morning.
+
+def test_the_remedy_says_a_container_cannot_send_smtp_at_all():
+    assert 'CANNOT SEND SMTP' in S.REMEDY
+    for port in ('25', '465', '587'):
+        assert port in S.REMEDY, 'the measured evidence must survive in the remedy'
+
+
+def test_the_remedy_names_the_transport_that_does_work_here():
+    """An HTTPS path exists and predates all of this: prepare_delivery
+    already emits gmail_payload.json for exactly this handoff."""
+    assert 'Gmail connector' in S.REMEDY and 'gmail_payload.json' in S.REMEDY
+
+
+def test_the_remedy_still_works_for_a_real_host():
+    """The SMTP path is correct and tested — it was designed for a host where
+    465 is open. Do not delete it because a container cannot use it."""
+    assert 'REAL HOST' in S.REMEDY and 'smtp_app_password' in S.REMEDY
+
+
+def test_the_morning_log_does_not_promise_that_a_password_would_fix_it():
+    commands = body('morning.sh')
+    unemailed = commands[commands.index('DELIVERY: NOT EMAILED'):]
+    assert 'unroutable' in unemailed and 'Gmail connector' in unemailed

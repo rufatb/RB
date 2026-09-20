@@ -34,6 +34,20 @@ REJECTS any credential containing whitespace, which is right for a bearer token
 and would reject every app password a user ever pastes. Whitespace is stripped
 here, not rejected.
 
+AND A CREDENTIAL IS NOT THE WHOLE STORY — MEASURED 2026-09-20. From a Claude
+Code container, `smtp.gmail.com` TIMES OUT on 25, 465 AND 587: outbound traffic
+goes through an agent proxy that tunnels HTTPS and does not route raw SMTP. So
+the credential this module loads is necessary and NOT sufficient here, and
+"just add an app password" is the wrong remedy to reach for — the send would
+fail at the socket with a perfectly valid password. `REMEDY` says so, because
+the obvious reading of "no SMTP credential" is that supplying one fixes it.
+
+Where a scheduled container CAN deliver is over HTTPS: the Gmail connector,
+handed `prepare_delivery.artifacts()`'s `gmail_payload.json` (that function
+exists for exactly this and predates all of it). This module and the SMTP path
+remain correct and tested for a real host, which is where they were designed to
+run.
+
 Nothing in this module sends anything.
 """
 from __future__ import annotations
@@ -49,10 +63,16 @@ FIELDS = {
 MAX_BYTES = 256
 
 REMEDY = (
-    'Write the three files under $RB_STATE_DIR/secrets/ (mode 0600): '
-    'smtp_user (the sending Gmail address), smtp_app_password (a Google App '
-    'Password, not the account password), report_to (the recipient). '
-    'Or export RB_SMTP_USER / RB_SMTP_PASSWORD / RB_REPORT_TO.'
+    'A CLAUDE CODE CONTAINER CANNOT SEND SMTP AT ALL — measured 2026-09-20, '
+    'smtp.gmail.com times out on 25, 465 and 587 because the agent proxy '
+    'tunnels HTTPS only. An app password does not help there; connect the '
+    'Gmail connector (claude.ai Settings -> Connectors) and have the morning '
+    'session send prepare_delivery.py\'s gmail_payload.json. '
+    'ON A REAL HOST, where port 465 is open: write the three files under '
+    '$RB_STATE_DIR/secrets/ (mode 0600) — smtp_user (the sending address), '
+    'smtp_app_password (a Google App Password, not the account password), '
+    'report_to (the recipient) — or export RB_SMTP_USER / RB_SMTP_PASSWORD / '
+    'RB_REPORT_TO.'
 )
 
 

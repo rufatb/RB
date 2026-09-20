@@ -34,13 +34,27 @@ here, not rejected. Copying that validator is the obvious mistake.
 before argparse, so the flag could not reach the load. That is the day-110c
 defect verbatim — a credential that never reaches the thing needing it.
 
-**The Routine notification channel is separate and is NOT fixed by any of
-this.** A clean one-shot with `notifications {push, email}` reported SUCCEEDED
-in 12 seconds and delivered nothing; the Gmail connector reads
-`installState: not_connected`. That is account-level plumbing, not repo code.
-Until an app password exists, **the artifact page is the only channel that has
-ever worked** and the Routine prompt now treats STEP 5 as mandatory with
-retries rather than best-effort.
+**A CREDENTIAL WOULD NOT HAVE BEEN ENOUGH — MEASURED 2026-09-20.** From a
+Claude Code container `smtp.gmail.com` TIMES OUT on 25, 465 AND 587: outbound
+traffic goes through an agent proxy that tunnels HTTPS and does not route raw
+SMTP. I said an app password would make tomorrow's report land in the inbox
+before testing the socket; that was wrong, and it is the kind of wrong that
+costs a morning. The SMTP path is correct and stays — it was designed for a
+real host, where 465 is open — but it CANNOT deliver from a scheduled
+container, and `REMEDY` and the morning log both say so now, because the
+obvious reading of "no SMTP credential" is that supplying one fixes it.
+
+**What a container CAN deliver over is HTTPS.** `prepare_delivery.artifacts()`
+already writes `gmail_payload.json` — exact subject, text, html and the full
+report as an attachment — and it predates all of this; day-95 registered that
+handoff. It has never had a connector to hand it to: Gmail reads
+`installState: not_connected`, and a clean Routine one-shot with
+`notifications {push, email}` reported SUCCEEDED in 12 seconds and delivered
+nothing. Both are account-level, not repo code.
+
+So **the artifact page remains the only channel that has ever worked**, and the
+Routine prompt now treats STEP 5 as mandatory with retries rather than
+best-effort.
 
 ### The staging timeouts summed to 63 minutes inside a 25-minute window
 
