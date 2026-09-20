@@ -159,3 +159,64 @@ def test_the_staged_cache_is_actually_pointed_at():
     body = code()
     assert 'export RB_INTRADAY_CACHE_DIR' in body
     assert body.index('RB_INTRADAY_CACHE_DIR') < body.index('bar_cache.py')
+
+
+# ── the staging budget ───────────────────────────────────────────────────────
+# The six per-step timeouts are each defensible alone and sum to 63 MINUTES
+# inside a 25-minute window. Nothing reconciled them, so a slow cache and a
+# slow biotech harvest could consume the whole window and the two sections the
+# owner actually reads — the DeepSeek and Jev rankings — would hit the 09:30
+# cutoff and refuse. The refusal is correct; the CAUSE would have been an
+# upstream overrun and nothing would have said so.
+
+def test_no_step_is_given_a_fixed_timeout_any_more():
+    body = code()
+    for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_factor_pool.py',
+                 'prepare_deepseek.py', 'deepseek_opportunities.py',
+                 'jev_opportunities.py'):
+        line = next(l for l in body.splitlines() if tool in l and 'timeout' in l)
+        assert '"$budget"' in line, f'{tool} still carries an unreconciled fixed timeout'
+
+
+def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
+    """A step given no time must be SKIPPED and named, not started and killed
+    halfway through writing its snapshot."""
+    body = code()
+    assert body.count('SKIPPED —') == 6, 'a step can still be starved in silence'
+
+
+def test_an_exhausted_budget_is_never_passed_through_as_a_number():
+    """`timeout 0` means NO TIMEOUT in GNU coreutils — the exact opposite of
+    what an exhausted budget should produce. slice() must FAIL instead."""
+    body = code()
+    assert 'return 1' in body and 'MIN_SLICE' in body
+    assert '-lt "$MIN_SLICE" ] && return 1' in body
+
+
+def probe(seconds_left):
+    """Run the real slice() from the real script against a pinned clock."""
+    body = src()
+    fn = body[body.index('slice() {'):body.index('STAGE_DEADLINE=0930')]
+    script = ('set -uo pipefail\nMIN_SLICE=15\n'
+              'seconds_left() { printf %s "$FAKE"; }\n' + fn + '\n'
+              'for spec in "600 660" "900 540" "900 360" "900 120" "300 20" "180 5"; do\n'
+              '  if v="$(slice $spec)"; then printf "%s " "$v"; else printf "SKIP "; fi\n'
+              'done\n')
+    out = subprocess.run(['bash', '-c', script], capture_output=True, text=True,
+                         env={**os.environ, 'FAKE': str(seconds_left)})
+    return out.stdout.split()
+
+
+def test_with_the_whole_window_left_every_step_gets_its_full_ceiling():
+    assert probe(1470) == ['600', '900', '900', '900', '300', '180']
+
+
+def test_a_late_start_starves_the_expensive_steps_and_protects_the_rankings():
+    """THE POINT. With 100 seconds left the cache, the biotech harvest, the
+    pool and the news refresh are all skipped — and the two model rankings,
+    measured at ~27.5s and ~1.0s over 116 names, still get a usable slice."""
+    assert probe(100) == ['SKIP', 'SKIP', 'SKIP', 'SKIP', '80', '95']
+
+
+def test_a_window_that_has_already_closed_starts_nothing():
+    assert probe(-60) == ['SKIP'] * 6

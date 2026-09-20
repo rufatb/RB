@@ -1,5 +1,67 @@
 # Working notes for this repo
 
+## Day112 — the email was never sent, and the run reported SUCCEEDED anyway
+
+**The deliveries table was EMPTY for every session ever published.** Not a
+failed send, not a bounce — no delivery has ever been ATTEMPTED. `morning.sh`
+has carried a complete, correct SMTP send since day-97 behind this guard:
+
+    if [ -n "${RB_SMTP_USER:-}" ] && [ -n "${RB_REPORT_TO:-}" ]
+
+A scheduled container is FRESH and `.rb-state/` is gitignored, so nothing ever
+set those variables. Every morning took the else branch, logged one quiet line
+in the middle of a long log, exited 0, and the Routine reported SUCCEEDED
+against an empty inbox. Same shape as the staged-then-ignored cache (110d) and
+the computed-then-dropped `cache_degraded` (110c); house rule 1 covers all of
+them, and a log line in the middle of a log is not a report.
+
+`smtp_credential.py` gives the credential the same private-file contract as the
+DeepSeek and OpenRouter keys — `$RB_STATE_DIR/secrets/{smtp_user,
+smtp_app_password,report_to}`, 0600, gitignored — because an ENV-ONLY
+credential cannot survive into a scheduled container, which is the whole reason
+this path never ran. `morning.sh` now always calls `deliver_report` and reads
+its exit code: **0 `DELIVERY: email sent`, 2 `DELIVERY: NOT EMAILED`** with the
+remedy, anything else a real failure. `morning_full.sh` checks it at the TOP,
+beside the DeepSeek check, so the remedy is named while there is still time.
+
+**A GMAIL APP PASSWORD CONTAINS SPACES** — Google shows it as four groups of
+four and that is what gets pasted. `prepare_deepseek.load_private_key` REJECTS
+any credential containing whitespace, which is right for a bearer token and
+would reject every app password anyone ever pastes. Whitespace is stripped
+here, not rejected. Copying that validator is the obvious mistake.
+
+`--state-dir` was ignored for the credential in my first cut: main() loaded
+before argparse, so the flag could not reach the load. That is the day-110c
+defect verbatim — a credential that never reaches the thing needing it.
+
+**The Routine notification channel is separate and is NOT fixed by any of
+this.** A clean one-shot with `notifications {push, email}` reported SUCCEEDED
+in 12 seconds and delivered nothing; the Gmail connector reads
+`installState: not_connected`. That is account-level plumbing, not repo code.
+Until an app password exists, **the artifact page is the only channel that has
+ever worked** and the Routine prompt now treats STEP 5 as mandatory with
+retries rather than best-effort.
+
+### The staging timeouts summed to 63 minutes inside a 25-minute window
+
+09:05 → 09:30 is 25 minutes. The six per-step timeouts (600+900+900+900+300+180)
+are each defensible alone and were never reconciled with each other, so a slow
+cache and a slow biotech harvest could legitimately eat the whole window — and
+the two sections the owner actually reads, the DeepSeek and Jev rankings, run
+LAST and would then hit the 09:30 cutoff and REFUSE. The refusal would be
+correct, the sections would read UNAVAILABLE, and nothing would say the cause
+was an upstream overrun rather than a provider outage.
+
+`slice <ceiling> <reserve>` clamps every step to the time actually left minus
+what the downstream steps still need, and **FAILS rather than returning a
+number when the budget is gone** — `timeout 0` means NO TIMEOUT in GNU
+coreutils, the exact opposite of what an exhausted budget should produce. The
+caller then SKIPS and names it. Measured against the real function: with the
+full window every step gets its ceiling; with 100 seconds left the cache, the
+harvest, the pool and the news refresh are all skipped and the two rankings
+still get 80s and 95s — which is the whole point, since they cost ~27.5s and
+~1.0s over 116 names.
+
 ## Day111b — the population was never roster-bound; it was warm-up bound
 
 **MEASURED: the eligible set was IDENTICAL day to day.** 09-17 and 09-18 both

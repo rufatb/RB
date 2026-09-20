@@ -194,19 +194,28 @@ fi
 #
 # deliver_report claims the delivery in the Store before handing DATA to SMTP,
 # so a re-run returns ALREADY_ATTEMPTED instead of sending twice.
+#
+# THE GUARD USED TO READ THE ENVIRONMENT DIRECTLY, and a scheduled container is
+# fresh, so it took the else branch EVERY morning and logged one quiet line:
+# "no RB_SMTP_USER / RB_REPORT_TO — published without emailing". The run exited
+# 0, the Routine reported SUCCEEDED, the board really was published, and the
+# inbox was empty with nothing saying an email had even been attempted. Let
+# deliver_report decide now — it reads the private files too — and make the
+# unconfigured case a NAMED line the summary can quote (house rule 1).
 session="$(TZ=America/Toronto date +%F)"
-if [ -n "${RB_SMTP_USER:-}" ] && [ -n "${RB_REPORT_TO:-}" ]; then
-    if send_out="$(TZ=America/Toronto python deliver_report.py \
-                     --state-dir "$RB_STATE_DIR" --session "$session" 2>&1)"; then
-        log "email: $send_out"
-    else
-        log "EMAIL FAILED — the board IS published and the record below still"
-        log "  travels; only delivery failed. Do not re-run the report."
-        printf '%s\n' "$send_out" | sed 's/^/    /'
-    fi
-else
-    log "no RB_SMTP_USER / RB_REPORT_TO — published without emailing"
-fi
+send_out="$(TZ=America/Toronto python deliver_report.py \
+              --state-dir "$RB_STATE_DIR" --session "$session" 2>&1)"
+case $? in
+    0) log "DELIVERY: email sent — $send_out" ;;
+    2) log "DELIVERY: NOT EMAILED — no SMTP credential in this container."
+       log "  The board IS published and the page IS updated; only the inbox"
+       log "  copy is missing. This is the single reason no report has ever"
+       log "  arrived by email. Remedy, before the next open:"
+       printf '%s\n' "$send_out" | sed 's/^/    /' ;;
+    *) log "DELIVERY: EMAIL FAILED — the board IS published and the record below"
+       log "  still travels; only delivery failed. Do not re-run the report."
+       printf '%s\n' "$send_out" | sed 's/^/    /' ;;
+esac
 
 [ "$late" -eq 1 ] && exit 5
 

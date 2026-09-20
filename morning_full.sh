@@ -44,6 +44,40 @@ export RB_INTRADAY_CACHE_DIR
 log() { printf '[%s] %s\n' "$(TZ=America/New_York date '+%F %H:%M:%S ET')" "$*"; }
 minutes_now() { TZ=America/New_York date '+%H%M'; }
 
+# ── ONE BUDGET, SHARED ─────────────────────────────────────────────────────
+# The per-step timeouts below are each defensible on their own and they sum to
+# SIXTY-THREE MINUTES inside a TWENTY-FIVE minute window (09:05 → 09:30). They
+# were written as "a hung provider must not eat the window", but they were
+# never reconciled against each other, so a slow cache and a slow biotech
+# harvest can legitimately consume the entire window and the two steps the
+# owner actually reads — the DeepSeek and Jev rankings — would then find the
+# 09:30 cutoff already passed and REFUSE. The refusal would be correct, the
+# sections would read UNAVAILABLE, and nothing would say the cause was an
+# upstream overrun rather than a provider outage.
+#
+# So every step is clamped to the time actually left, minus a reserve for the
+# steps that still have to run after it. `reserve` numbers come from measured
+# runs (day-111b: the DeepSeek payload is ~27.5s over 116 names, Jev ~1.0s),
+# with headroom. A step that would get no usable slice is SKIPPED and named,
+# rather than started and killed halfway through writing its snapshot.
+seconds_left() {
+    printf '%s' $(( $(TZ=America/New_York date -d 'today 09:29:30' +%s) \
+                    - $(TZ=America/New_York date +%s) ))
+}
+
+# $1 = the step's own ceiling, $2 = seconds the downstream steps still need.
+# Prints the timeout to use, or FAILS (prints nothing) when too little is left
+# to be worth starting. The caller must skip and name it on failure: `timeout 0`
+# means NO TIMEOUT in GNU coreutils, so a budget that has run out must never be
+# passed through as a number.
+slice() {
+    local left=$(( $(seconds_left) - $2 ))
+    [ "$left" -gt "$1" ] && left=$1
+    [ "$left" -lt "$MIN_SLICE" ] && return 1
+    printf '%s' "$left"
+}
+MIN_SLICE=15
+
 STAGE_DEADLINE=0930   # prepare_deepseek / bar_cache refuse at or after this
 PUBLISH_AT=0944       # morning.sh's own guard allows a wait from here
 
@@ -66,6 +100,21 @@ if [ -z "${DEEPSEEK_API_KEY:-}" ] && [ ! -f "$RB_STATE_DIR/secrets/deepseek_api_
     stage_faults+=("no DeepSeek credential staged")
 fi
 
+# THE EMAIL HAS NEVER BEEN SENT, and this is where that becomes visible while
+# there is still time to act. `morning.sh` has carried a complete SMTP send
+# since day-97; a scheduled container has never had the credential, so the send
+# was skipped silently every morning and the owner's inbox stayed empty against
+# a healthy, on-time, correctly published run. Say it at the TOP of the log,
+# beside the DeepSeek check, for the same reason: the remedy takes a minute and
+# only helps before the publication window.
+if ! smtp_out="$(python smtp_credential.py --state-dir "$RB_STATE_DIR" 2>&1)"; then
+    log "NO EMAIL CREDENTIAL — the report will publish but WILL NOT be emailed."
+    printf '%s\n' "$smtp_out" | sed 's/^/    /'
+    stage_faults+=("no SMTP credential: the report will not be emailed")
+else
+    log "email delivery: configured"
+fi
+
 if [ "$(minutes_now)" -ge "$STAGE_DEADLINE" ]; then
     log "PAST ${STAGE_DEADLINE} ET — staging skipped; the factor and cache sections"
     log "  will read UNAVAILABLE. This is the guard working, not a fault: staged"
@@ -74,22 +123,34 @@ if [ "$(minutes_now)" -ge "$STAGE_DEADLINE" ]; then
 else
     log "staging pre-open inputs"
 
-    if timeout 600 python bar_cache.py --directory "$RB_STATE_DIR/intraday_cache"; then
-        log "  intraday cache: staged"
+    if budget="$(slice 600 660)"; then
+        if timeout "$budget" python bar_cache.py --directory "$RB_STATE_DIR/intraday_cache"; then
+            log "  intraday cache: staged"
+        else
+            log "  intraday cache: FAILED (exit $?) — acquisition falls back to live"
+            stage_faults+=("intraday cache not staged")
+        fi
     else
-        log "  intraday cache: FAILED (exit $?) — acquisition falls back to live"
-        stage_faults+=("intraday cache not staged")
+        log "  intraday cache: SKIPPED — too little left before 09:30 to start it."
+        log "    Acquisition falls back to live; that costs latency, never the board."
+        stage_faults+=("intraday cache skipped: staging budget exhausted")
     fi
 
     # Exits 2 on an incomplete universe, which is a real partial, not a crash.
-    timeout 900 python build_biotech.py --output data/biotech_snapshot.json
-    case $? in
-        0) log "  biotech universe: complete" ;;
-        2) log "  biotech universe: PARTIAL (provider limit) — monitor stays uncertified"
-           stage_faults+=("biotech universe partial") ;;
-        *) log "  biotech universe: FAILED — Part 2 will be unavailable"
-           stage_faults+=("biotech universe failed") ;;
-    esac
+    if budget="$(slice 900 540)"; then
+        timeout "$budget" python build_biotech.py --output data/biotech_snapshot.json
+        case $? in
+            0) log "  biotech universe: complete" ;;
+            2) log "  biotech universe: PARTIAL (provider limit) — monitor stays uncertified"
+               stage_faults+=("biotech universe partial") ;;
+            *) log "  biotech universe: FAILED — Part 2 will be unavailable"
+               stage_faults+=("biotech universe failed") ;;
+        esac
+    else
+        log "  biotech universe: SKIPPED — an upstream step overran. Part 2 will be"
+        log "    unavailable and the pool loses its US biotech names."
+        stage_faults+=("biotech universe skipped: staging budget exhausted")
+    fi
 
     # THE RESEARCH POOL. This writes `deepseek_candidates.json`, the 130-name
     # pool with prepared technicals, and NOTHING ELSE WRITES IT. It was never
@@ -100,48 +161,77 @@ else
     # it is documented to use. It must precede the news refresh, so headlines
     # are fetched for the pool's names and not just the baseline twenty-one.
     # Its own budget is already clamped to the time remaining before 09:30.
-    timeout 900 python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
-    case $? in
-        0) log "  factor pool: staged" ;;
-        *) log "  factor pool: FAILED or PARTIAL — the opportunity ranking falls back"
-           log "    to the configured universe, or reads UNAVAILABLE"
-           stage_faults+=("factor research pool not staged") ;;
-    esac
+    if budget="$(slice 900 360)"; then
+        timeout "$budget" python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
+        case $? in
+            0) log "  factor pool: staged" ;;
+            3) log "  factor pool: REFUSED (past the pre-open cutoff) — correct, not a crash"
+               stage_faults+=("factor pool refused: past the cutoff") ;;
+            *) log "  factor pool: FAILED or PARTIAL — the opportunity ranking falls back"
+               log "    to the configured universe, or reads UNAVAILABLE"
+               stage_faults+=("factor research pool not staged") ;;
+        esac
+    else
+        log "  factor pool: SKIPPED — an upstream step overran. Both model sections"
+        log "    fall back to the 21-name configured universe or read UNAVAILABLE."
+        stage_faults+=("factor pool skipped: staging budget exhausted")
+    fi
 
     # Exits 2 when some names lack complete inputs. That is the ordinary
     # result, not an error: coverage is gated by contiguous session warm-up.
-    timeout 900 python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
-    case $? in
-        0) log "  DeepSeek factors: staged, full coverage" ;;
-        2) log "  DeepSeek factors: staged, PARTIAL coverage" ;;
-        *) log "  DeepSeek factors: FAILED — the factor section will read UNAVAILABLE"
-           stage_faults+=("DeepSeek snapshot not staged") ;;
-    esac
+    if budget="$(slice 900 120)"; then
+        timeout "$budget" python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
+        case $? in
+            0) log "  DeepSeek factors: staged, full coverage" ;;
+            2) log "  DeepSeek factors: staged, PARTIAL coverage" ;;
+            *) log "  DeepSeek factors: FAILED — the factor section will read UNAVAILABLE"
+               stage_faults+=("DeepSeek snapshot not staged") ;;
+        esac
+    else
+        log "  DeepSeek factors: SKIPPED — an upstream step overran. The factor"
+        log "    section will read UNAVAILABLE and the rankings lose their headlines."
+        stage_faults+=("DeepSeek snapshot skipped: staging budget exhausted")
+    fi
 
     # The model's OWN top-2 per side. A separate question from the factor
     # layer's "is there sentiment here", and a separate section. It is a
     # reasoning model: measured at ~54s over 39 names, which is why it is
     # staged here and can never sit inside the 09:46 publication window.
-    timeout 300 python deepseek_opportunities.py --state-dir "$RB_STATE_DIR"
-    case $? in
-        0) log "  DeepSeek opportunities: staged" ;;
-        *) log "  DeepSeek opportunities: FAILED — that section will read UNAVAILABLE"
-           stage_faults+=("DeepSeek opportunity ranking not staged") ;;
-    esac
+    if budget="$(slice 300 20)"; then
+        timeout "$budget" python deepseek_opportunities.py --state-dir "$RB_STATE_DIR"
+        case $? in
+            0) log "  DeepSeek opportunities: staged" ;;
+            3) log "  DeepSeek opportunities: REFUSED (past the pre-open cutoff)"
+               stage_faults+=("DeepSeek ranking refused: past the cutoff") ;;
+            *) log "  DeepSeek opportunities: FAILED — that section will read UNAVAILABLE"
+               stage_faults+=("DeepSeek opportunity ranking not staged") ;;
+        esac
+    else
+        log "  DeepSeek opportunities: SKIPPED — an upstream step ate the window."
+        log "    This is one of the two sections the owner reads; say so in the summary."
+        stage_faults+=("DeepSeek ranking skipped: staging budget exhausted")
+    fi
 
     # The SECOND opinion. Jev is a decisions model on OpenRouter, reached at
     # /api/alpha/decisions — NOT /chat/completions, which rejects it outright.
     # It answers both sides in one request in well under a second, so unlike
     # the DeepSeek call it is cheap; it is staged here anyway because the same
     # pre-open contract applies to any opinion formed from these inputs.
-    timeout 180 python jev_opportunities.py --state-dir "$RB_STATE_DIR"
-    case $? in
-        0) log "  Jev opportunities: staged" ;;
-        3) log "  Jev opportunities: REFUSED (past the pre-open cutoff)"
-           stage_faults+=("Jev ranking refused: past the cutoff") ;;
-        *) log "  Jev opportunities: FAILED — that section will read UNAVAILABLE"
-           stage_faults+=("Jev ranking not staged") ;;
-    esac
+    if budget="$(slice 180 5)"; then
+        timeout "$budget" python jev_opportunities.py --state-dir "$RB_STATE_DIR"
+        case $? in
+            0) log "  Jev opportunities: staged" ;;
+            3) log "  Jev opportunities: REFUSED (past the pre-open cutoff)"
+               stage_faults+=("Jev ranking refused: past the cutoff") ;;
+            *) log "  Jev opportunities: FAILED — that section will read UNAVAILABLE"
+               stage_faults+=("Jev ranking not staged") ;;
+        esac
+    else
+        log "  Jev opportunities: SKIPPED — an upstream step ate the window."
+        log "    Measured at ~1.0s over 116 names, so this only happens when the"
+        log "    budget was already gone before it was reached."
+        stage_faults+=("Jev ranking skipped: staging budget exhausted")
+    fi
 fi
 
 # ── 2. HOLD until the publication window opens ─────────────────────────────

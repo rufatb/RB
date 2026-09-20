@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Send one frozen multipart report; do not recompute at delivery time.
 
-SMTP credentials are environment-only. A crash/timeout after DATA has ambiguous
-acceptance: persist UNKNOWN and require provider reconciliation rather than
-blindly sending a duplicate. A deterministic Message-ID is a reconciliation
-key, not a claim of exactly-once SMTP semantics.
+A crash/timeout after DATA has ambiguous acceptance: persist UNKNOWN and
+require provider reconciliation rather than blindly sending a duplicate. A
+deterministic Message-ID is a reconciliation key, not a claim of exactly-once
+SMTP semantics.
+
+Credentials used to be environment-ONLY, which is why this module had never
+sent a single email from a scheduled run: the container is fresh, nothing
+exported them, and `morning.sh` silently took its no-credential branch every
+morning. `smtp_credential.load_private_smtp` adds the private-file contract the
+DeepSeek and OpenRouter keys already use; the environment still wins.
 """
 from __future__ import annotations
 import argparse
 import datetime as dt
 from email.message import EmailMessage
 from email.utils import format_datetime
+import json
 import os
 import smtplib
 import ssl
@@ -18,6 +25,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 import brief
 import email_render
+import smtp_credential
 from prepare_delivery import subject_state, subject, view
 from report_store import Store
 
@@ -52,10 +60,16 @@ def send(store,session,sender,recipient,*,smtp_factory=smtplib.SMTP_SSL,now=None
     view(report, clock())  # refuse pre-entry transmission before authentication
     if store.delivery(session):
         return {'status':'ALREADY_ATTEMPTED','delivery':store.delivery(session)}
+    # Private files populate the environment; the environment still wins. This
+    # runs BEFORE claim_delivery so an absent credential cannot burn the
+    # publish-once claim and make the session look already-attempted.
+    missing=smtp_credential.load_private_smtp(Path(store.path).parent)
     host=os.environ.get('RB_SMTP_HOST','smtp.gmail.com')
     user=os.environ.get('RB_SMTP_USER');password=os.environ.get('RB_SMTP_PASSWORD')
     if not user or not password:
-        raise ValueError('RB_SMTP_USER / RB_SMTP_PASSWORD missing; no email attempted')
+        raise ValueError(f"SMTP credential missing "
+                         f"({', '.join(missing) or 'RB_SMTP_USER / RB_SMTP_PASSWORD'}); "
+                         f"no email attempted. {smtp_credential.REMEDY}")
     # Authenticate before claiming. Failures here cannot have sent DATA.
     with smtp_factory(host,465,context=ssl.create_default_context(),timeout=20) as smtp:
         smtp.login(user,password)
@@ -83,16 +97,42 @@ def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--state-dir',default=os.getenv('RB_STATE_DIR','.rb-state'))
     p.add_argument('--session',default=dt.datetime.now(ZoneInfo('America/New_York')).date().isoformat())
-    p.add_argument('--to',default=os.getenv('RB_REPORT_TO'))
-    p.add_argument('--from',dest='sender',default=os.getenv('RB_SMTP_USER'))
+    # No argparse `default=` from the environment here: the defaults would be
+    # evaluated before the credential files are read, so --state-dir would be
+    # ignored for exactly the values it is supposed to supply. That is the
+    # day-110c defect — a credential that never reaches the thing needing it.
+    p.add_argument('--to')
+    p.add_argument('--from',dest='sender')
     p.add_argument('--eml',help='render a reviewable email without sending')
     a=p.parse_args(argv)
-    if not a.to or not a.sender: p.error('recipient and sender required')
+    try:
+        smtp_credential.load_private_smtp(a.state_dir)
+    except ValueError as exc:
+        print(json.dumps(dict(status='NOT_SENT', reason=str(exc))))
+        return 2
+    a.to=a.to or os.environ.get('RB_REPORT_TO')          # explicit flag wins,
+    a.sender=a.sender or os.environ.get('RB_SMTP_USER')  # then file/env
+    if not a.to or not a.sender:
+        # Exit 2, not argparse's 2-with-usage-dump: an unconfigured channel is
+        # an ordinary reportable state, not a caller error, and the morning
+        # needs to tell them apart to print the right remedy.
+        print(json.dumps(dict(status='NOT_SENT', reason='NO_SMTP_CREDENTIAL',
+                              remedy=smtp_credential.REMEDY)))
+        return 2
     store=Store(a.state_dir)
     if a.eml:
         Path(a.eml).write_bytes(message(store.get(a.session),a.sender,a.to).as_bytes())
-    else:
+        return 0
+    try:
         print(send(store,a.session,a.sender,a.to))
+    except ValueError as exc:
+        # A half-configured channel (an address but no password) is still an
+        # unconfigured channel, and the morning must not read a traceback as a
+        # provider failure — the two need different remedies.
+        if 'credential missing' not in str(exc):
+            raise
+        print(json.dumps(dict(status='NOT_SENT', reason=str(exc))))
+        return 2
     return 0
 
 if __name__=='__main__':
