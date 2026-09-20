@@ -313,17 +313,26 @@ score gate are independent and both must pass.
 
 ## Day105 — the morning run is a Routine, and the email is its summary
 
-`trig_01YZ2smjbMZXJvWKBxU4JfWj` — "RB Daily Report — weekday 09:46 ET", cron
-`40 13 * * 1-5` (UTC; 09:40 ET), fresh session per fire, notifications push +
-email. It runs `morning.sh`, which waits for the publication minute, publishes,
-pushes the record CSVs, then rewrites the owner's page at
+`trig_01YZ2smjbMZXJvWKBxU4JfWj` — "RB Daily Report — weekday 09:05 stage, 09:46
+publish", cron `5 13 * * 1-5` (UTC; 09:05 ET), fresh session per fire,
+notifications push + email. It runs `morning_full.sh`, which stages the pre-open
+inputs, holds to 09:44, hands to `morning.sh` to publish and push the record
+CSVs, then rewrites the owner's page at
 `https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9` and finishes with a short
-summary. **That summary is the email.** It is not `deliver_report.py`: no SMTP
-credential and no Gmail connector exists, so the inbox is reached through the
-Routine's own notification channel.
+summary.
+
+**That summary was SUPPOSED to be the email and it never arrived** — see
+day-112. The Routine notification channel reported SUCCEEDED and delivered
+nothing, and the Gmail connector reads `not_connected`. Both are account-level.
+`deliver_report.py` is the channel this repo controls and it now runs on every
+publication; it needs an app password in `$RB_STATE_DIR/secrets/`. Until one
+exists the page is the only delivery that has ever worked.
 
 **Cron is UTC and does not know about DST.** `trig_01AG5fGuTJtdADMJyse1Sizj`
-fires once on 2026-11-01 to shift the cron to `40 14 * * 1-5` when EDT ends,
+fires once on 2026-11-01 to shift the cron to `5 14 * * 1-5` when EDT ends,
+**not** to `40 14` — it was still carrying the old 09:40 target, which would
+have moved the fire past the 09:30 staging cutoff and emptied every staged
+section on 2026-11-02,
 and is instructed to register the reverse for 2026-03-14. Do not "tidy up"
 either Routine without replacing that mechanism.
 
