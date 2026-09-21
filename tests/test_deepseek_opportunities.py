@@ -625,3 +625,76 @@ def test_the_cut_never_silently_drops_a_name_the_model_then_picks():
     out = O.rank(many, client=Client({'longs': [pick(dropped[0])], 'shorts': []}),
                  now=PREOPEN)
     assert out['longs'] == []
+
+
+# ── the picks must survive a missing comparison ──────────────────────────────
+# THE DEFECT, found 2026-09-20 while checking the Monday email. Both renderers
+# built their rows by iterating `comparison['rows']` and nothing else. `brief`
+# computes that comparison inside a try/except, so ANY failure there dropped it
+# — and the email then printed a confident "READY over 116 names" header, the
+# evidence line and the disclaimer, WITH NOT ONE PICK, while the picks sat in
+# the snapshot two keys away. Indistinguishable from a model that found
+# nothing. The engine verdict is a JOIN onto the picks: a failed join must cost
+# the verdict column, never the pick.
+
+def _snap_without_comparison():
+    return {'status': 'READY', 'model': 'deepseek-flash', 'considered': 116,
+            'longs': [{'ticker': 'AGI.TO', 'confidence': 0.61, 'reason': 'momentum'}],
+            'shorts': [{'ticker': 'SHOP.TO', 'confidence': 0.55, 'reason': 'weak'}]}
+
+
+def test_the_email_prints_every_pick_when_the_comparison_is_missing():
+    import daily_render
+    body = '\n'.join(daily_render.opportunities_summary(
+        {'opportunities': _snap_without_comparison()}))
+    assert 'LONG AGI.TO' in body and 'SHORT SHOP.TO' in body
+    assert '0.61' in body and '0.55' in body
+    assert 'engine comparison unavailable' in body, 'the missing join must be named'
+
+
+def test_the_page_prints_every_pick_when_the_comparison_is_missing():
+    import report_page
+    rows = report_page._opportunity_rows(_snap_without_comparison())
+    assert rows.count('<tr>') == 2, 'a missing comparison emptied the table'
+    assert 'AGI.TO' in rows and 'SHOP.TO' in rows
+    assert 'engine comparison unavailable' in rows
+
+
+def test_a_present_comparison_still_supplies_the_verdict_and_engine_number():
+    import daily_render, report_page
+    snap = _snap_without_comparison()
+    snap['comparison'] = {'rows': [{'side': 'LONG', 'ticker': 'AGI.TO', 'confidence': 0.61,
+                                    'verdict': O.AGREE, 'engine_p_sided': 0.58,
+                                    'reason': 'engine agrees'}],
+                          'agree': 1, 'oppose': 0, 'unseen': 0}
+    body = '\n'.join(daily_render.opportunities_summary({'opportunities': snap}))
+    assert O.AGREE in body and 'engine agrees' in body
+    rows = report_page._opportunity_rows(snap)
+    assert '0.580' in rows and O.AGREE in rows
+    # and the unmatched short is still printed, not dropped by the join
+    assert 'SHOP.TO' in rows and 'SHOP.TO' in body
+
+
+def test_a_no_opportunity_snapshot_still_prints_no_rows():
+    """The fix must not manufacture rows out of an abstention."""
+    import daily_render, report_page
+    snap = {'status': 'NO_OPPORTUNITY', 'model': 'deepseek-flash', 'considered': 116,
+            'longs': [], 'shorts': []}
+    body = '\n'.join(daily_render.opportunities_summary({'opportunities': snap}))
+    assert 'NO OPPORTUNITY on both sides' in body
+    assert report_page._opportunity_rows(snap) == ''
+
+
+def test_the_control_loads_the_credential_the_same_way_staging_does():
+    """`--control` reported UNAVAILABLE / "DEEPSEEK_API_KEY is not set" on a
+    healthy account with the key in $RB_STATE_DIR/secrets, because main() went
+    straight to run_control() and rank() reads os.environ. House rule 4 hangs
+    off this control; one that cannot run cannot license any null."""
+    import inspect
+    # COMMANDS ONLY. The first cut of this test read the raw source and matched
+    # 'run_control()' inside the explanatory comment ABOVE the load — the exact
+    # prose-not-code trap test_morning_full.code() documents.
+    src = '\n'.join(l for l in inspect.getsource(O.main).splitlines()
+                    if not l.strip().startswith('#'))
+    assert 'load_private_key(args.state_dir)' in src
+    assert src.index('load_private_key(args.state_dir)') < src.index('run_control()')

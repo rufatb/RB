@@ -303,10 +303,32 @@ def opportunities_summary(intra):
         lines.append('The model returned NO OPPORTUNITY on both sides. A planted long and a '
                      'planted short are detected through this same path, so this is a reading '
                      'of the evidence, not a broken request.')
-    for row in comparison.get('rows') or []:
-        lines.append(f"{row['side']} {safe_detail(row['ticker'], 24)}: self-reported confidence "
-                     f"{fmt(row['confidence'], '.2f')} — {safe_detail(row['verdict'], 60)}. "
-                     f"{safe_detail(row.get('reason') or '', 160)}")
+    # ITERATE THE MODEL'S OWN PICKS, NOT THE COMPARISON. This loop used to read
+    # `comparison['rows']` and nothing else, so when the comparison was missing
+    # — and `brief` computes it inside a try/except, so ANY failure there drops
+    # it — the email printed a confident "READY over 116 names" header, the
+    # evidence line and the disclaimer, and NOT ONE PICK, while the picks sat
+    # in the snapshot two keys away. Silent, and indistinguishable from a model
+    # that found nothing. `jev_summary` below already reads its own picks and
+    # looks the verdict up; this is the same shape. Verified against the live
+    # positive control, where the comparison is absent by construction.
+    verdicts = {(r.get('side'), r['ticker']): r for r in comparison.get('rows') or []}
+    # The UNION, for the reason given above: a pick with no comparison row
+    # loses its verdict, a comparison row with no pick still prints, and
+    # neither is ever silently dropped.
+    picks = [(side, row['ticker'], row)
+             for side, key in (('LONG', 'longs'), ('SHORT', 'shorts'))
+             for row in snap.get(key) or []]
+    for (side, ticker), row in verdicts.items():
+        if not any(s == side and t == ticker for s, t, _ in picks):
+            picks.append((side, ticker, row))
+    for side, ticker, row in picks:
+            matched = verdicts.get((side, ticker)) or {}
+            verdict = matched.get('verdict') or 'engine comparison unavailable'
+            confidence = matched.get('confidence', row.get('confidence'))
+            lines.append(f"{side} {safe_detail(ticker, 24)}: self-reported confidence "
+                         f"{fmt(confidence, '.2f')} — {safe_detail(verdict, 60)}. "
+                         f"{safe_detail(matched.get('reason') or row.get('reason') or '', 160)}")
     if comparison.get('rows'):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "

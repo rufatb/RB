@@ -658,6 +658,21 @@ def main(argv=None):
     parser.add_argument('--control', action='store_true',
                         help='run the planted-edge positive control instead of the pool')
     args = parser.parse_args(argv)
+    # THE CONTROL COULD NOT REACH THE CREDENTIAL. `stage()` loads the private
+    # key; `run_control()` went straight to `rank()`, which reads os.environ,
+    # so `--control` reported UNAVAILABLE / "DEEPSEEK_API_KEY is not set" on a
+    # perfectly healthy account with the key sitting in $RB_STATE_DIR/secrets.
+    # That is the day-110c defect in the ONE place house rule 4 depends on: a
+    # control that cannot run cannot license any null, and this one failed in a
+    # way that looks exactly like a provider outage. jev_opportunities.main
+    # already loaded its key here; this is the same contract.
+    from prepare_deepseek import load_private_key, load_private_model
+    try:
+        load_private_key(args.state_dir)
+        load_private_model(args.state_dir)
+    except ValueError as exc:
+        print(json.dumps(dict(status='UNAVAILABLE', reason=str(exc))))
+        return 2
     if args.control:
         result = run_control()
         print(json.dumps(result, indent=2, sort_keys=True))

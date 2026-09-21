@@ -285,19 +285,43 @@ OPPORTUNITY_NOTE = (
     'probability with an unmeasured self-report launders the second into the first.')
 
 
-def _opportunity_rows(comparison):
+def _opportunity_rows(snap):
+    """One row per pick the MODEL made — not one row per comparison row.
+
+    This used to take the comparison and iterate `comparison['rows']`, so a
+    missing comparison produced a table with ZERO rows under a "READY over 116
+    names" header: the page said the model answered and then showed nothing it
+    said. `brief` computes the comparison inside a try/except, so any failure
+    there silently emptied the section while the picks sat in the snapshot. The
+    engine verdict is a JOIN onto the picks, and a failed join must cost the
+    verdict column, never the pick."""
     verdict_class = {O.AGREE: 'g-accent', O.OPPOSE: 'g-alarm'}
+    comparison = (snap or {}).get('comparison') or {}
+    matched = {(r.get('side'), r['ticker']): r for r in comparison.get('rows') or []}
     rows = ''
-    for r in (comparison or {}).get('rows') or []:
-        cls = verdict_class.get(r['verdict'], 'g-quiet')
-        rows += ('<tr>'
-                 f'<td>{escape(r["side"])}</td>'
-                 f'<td class="tick">{escape(str(r["ticker"]))}</td>'
-                 f'<td class="num">{fmt(r["confidence"], ".2f")}</td>'
-                 f'<td class="num">{fmt(r["engine_p_sided"], ".3f") if r.get("engine_p_sided") is not None else ABSTAIN_CELL}</td>'
-                 f'<td class="{cls}">{escape(r["verdict"])}</td>'
-                 f'<td class="reasontext">{escape(str(r.get("reason") or ""))[:200]}</td>'
-                 '</tr>')
+    # The UNION of the model's picks and the comparison's rows, keyed the same
+    # way. A pick with no comparison row loses its verdict column; a comparison
+    # row with no pick behind it still renders. Neither is ever dropped — that
+    # is the whole defect this function was rewritten for.
+    seen = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for pick in (snap or {}).get(key) or []:
+            seen.append((side, pick['ticker'], pick))
+    for (side, ticker), r in matched.items():
+        if not any(s == side and t == ticker for s, t, _ in seen):
+            seen.append((side, ticker, r))
+    for side, ticker, pick in seen:
+            r = matched.get((side, ticker)) or {}
+            verdict = r.get('verdict') or 'engine comparison unavailable'
+            engine = r.get('engine_p_sided')
+            rows += ('<tr>'
+                     f'<td>{escape(side)}</td>'
+                     f'<td class="tick">{escape(str(ticker))}</td>'
+                     f'<td class="num">{fmt(r.get("confidence", pick.get("confidence")), ".2f")}</td>'
+                     f'<td class="num">{fmt(engine, ".3f") if engine is not None else ABSTAIN_CELL}</td>'
+                     f'<td class="{verdict_class.get(verdict, "g-quiet")}">{escape(verdict)}</td>'
+                     f'<td class="reasontext">{escape(str(r.get("reason") or pick.get("reason") or ""))[:200]}</td>'
+                     '</tr>')
     return rows
 
 
@@ -382,7 +406,7 @@ def _opportunities_section(intra):
               '<thead><tr><th>Side</th><th>Name</th><th class="num">Model confidence</th>'
               '<th class="num">Engine sided</th><th>Do they agree?</th>'
               '<th>Why — the model\'s words, not verified fact</th></tr></thead>'
-            + f'<tbody>{_opportunity_rows(comparison)}</tbody></table></div>'
+            + f"<tbody>{_opportunity_rows(snap)}</tbody></table></div>"
             + tail + f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
 
 
