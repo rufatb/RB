@@ -1,0 +1,119 @@
+# The morning Routine, as created in the claude.ai Routines UI
+
+**Why this file exists.** A Routine created through the `create_trigger` MCP
+tool stores NO connectors — the server says so outright — so the session it
+fires has no Gmail and cannot email the report, however the code is arranged.
+A Routine created in the claude.ai Routines UI CAN carry Gmail. That is the
+only difference, and it is the whole reason the report reaches an inbox.
+
+Keep this file in sync with the live Routine. If someone edits the Routine in
+the UI and not here, this file becomes a confident description of something
+that no longer exists.
+
+## Settings to choose in the UI
+
+| Field | Value |
+|---|---|
+| Name | `RB Daily Report — 09:05 stage, 09:46 publish, email` |
+| Schedule | Weekdays (Mon–Fri), **9:05 AM**, timezone **America/New_York** |
+| Repository / source | `rufatb/RB`, branch `main` |
+| Connectors | **Gmail — enabled.** This is the point of using the UI. |
+| Session | New session each run |
+| Notifications | Push and/or email, as preferred (this channel has never delivered; the Gmail step is the real one) |
+
+**Pick the timezone, not a UTC offset.** The cron behind it does not know about
+DST: the existing MCP Routine needs a one-shot correction every March and
+November precisely because it is stored as UTC. A timezone-aware schedule in
+the UI removes that whole class of failure.
+
+**Disable the old Routine `trig_01YZ2smjbMZXJvWKBxU4JfWj` once this one runs
+clean**, or two sessions will race for the same publication minute. The second
+will find the session already published — `brief.compute` is publish-once and a
+same-day published board wins over a fresh selection — so the record is safe,
+but the artifact and the inbox would get two versions of the same morning.
+
+## The prompt
+
+Everything below the line is the prompt, **except** the two `<...>` credential
+placeholders in STEP 2. Substitute the real keys when pasting into the UI: the
+Routine's own prompt is private storage, this file is a public repository, and
+"private credentials and diagnostics stay outside git" is a standing rule here.
+GitHub push protection caught the first version of this file with both live
+keys in it, which is exactly the rule doing its job.
+
+---
+
+Run the RB daily report for today's session, publish it, update the owner's page, and email it. Work autonomously; do not ask questions.
+
+You fire at 09:05 ET. The report publishes at 09:46 ET, so this session stays alive for about forty minutes and `morning_full.sh` holds it there. THAT HOLD IS THE POINT — do not shorten it, do not background it, do not run `morning.sh` directly. Two guards sit 41 minutes apart and both are correct: the staging jobs refuse at or after 09:30, and `wait_for_publication` refuses to wait more than 120 seconds. A run that calls `morning.sh` at 09:05 dies on the second guard with nothing published and throws away every staged snapshot — that is exactly what happened on 2026-09-17.
+
+CONTEXT
+The owner is a portfolio manager. This is read-only research: nothing here submits, modifies or cancels a brokerage order, and hypothetical allocation is a research calculation. cd to the rufatb/rb checkout, then read CLAUDE.md and obey it — especially the ten house rules, "Read-only, always", and the rule never to promise accuracy or present picks as predictions.
+
+STEP 1 — sync
+  git fetch origin && git checkout main && git pull --ff-only
+  pip install -q -r requirements.txt
+If dashboard.is_trading_day says today is not a trading day, stop and report "not a trading day — nothing to run". That is a success. Send no email.
+
+STEP 2 — credentials (never committed; .rb-state is gitignored, so a fresh container has NONE)
+  export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-flash
+  mkdir -p .rb-state/secrets && chmod 700 .rb-state/secrets
+  printf '%s' '<DEEPSEEK_API_KEY>' > .rb-state/secrets/deepseek_api_key
+  printf '%s' '<OPENROUTER_API_KEY>' > .rb-state/secrets/openrouter_api_key
+  chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key
+  printf 'deepseek-flash\n' > .rb-state/deepseek_model.txt
+The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro` — `deepseek-chat` and `deepseek-reasoner` DO NOT EXIST on it. Jev is `typesafe/jev-1.13` on OpenRouter, reached at POST /api/alpha/decisions, NOT /chat/completions; `typesafe/jev-latest` is NOT a valid id. Do not "correct" either model name — a floating alias that 400s every morning looks exactly like an outage.
+
+STEP 3 — stage, hold, publish. ONE command, and it will take about forty minutes:
+  ./morning_full.sh
+It stages the intraday cache, the biotech universe, the 130-name factor pool, the news/macro refresh, the DeepSeek factor snapshot, the DeepSeek opportunity ranking and the Jev ranking while that is still permitted, holds the session to 09:44, then hands over to `morning.sh`. Let it run to completion.
+Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but missed the window (informational); 6 published but provenance was not clean; 1 failed. On exit 4 do NOT re-run and do NOT override the guard — report the reason and stop.
+A staging step exiting 2 means partial coverage, which is the ordinary result, not a fault. Exiting 3 means it correctly refused because its pre-open cutoff had passed — report it, do not retry. A step logged SKIPPED means an upstream step overran and ate its share of the 09:05–09:30 budget; name which one, because that is a different cause from a provider outage.
+`morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". THAT IS EXPECTED AND IS NOT THE EMAIL. A Claude Code container cannot reach smtp.gmail.com on 25, 465 or 587 — measured 2026-09-20; the agent proxy tunnels HTTPS only. Do NOT try to fix it and do NOT write an app password. You send the email in STEP 6 through the Gmail connector.
+
+STEP 4 — the page is written BY THE JOB, never by hand
+`daily_job` writes `.rb-state/latest/report_page.html` itself. Use that file. If and only if it is missing:
+  python report_page.py --report .rb-state/latest/report.json --output .rb-state/latest/report_page.html
+Do NOT hand-edit its output and do NOT write your own HTML. This renderer enforces every rule that matters: no share count or dollar allocation on an ABSTAIN leg, the not-an-entry banner, the factor section, the DeepSeek opportunities section, the Jev opportunities section, the gap lines. If something looks wrong, say so in the summary and leave it — a hand-edited page is how a size reaches an abstained row, and that has been acted on twice.
+
+STEP 5 — build the email payload from the frozen publication
+  session=$(TZ=America/Toronto date +%F)
+  python gmail_delivery.py --prepare --session "$session"
+It prints `subject`, `subject_path`, `text_path`, `html_path` and `attachments[].base64_path`, and CLAIMS the delivery so a re-run cannot send twice. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, continue to STEP 7. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 6 so the page is published.
+
+STEP 6 — publish the page and the payload to the owner's artifact, same URL:
+  - Artifact tool, action "read", url https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
+  - Artifact tool, publish with that same url, file_path .rb-state/latest/report_page.html, and files:
+      "delivery/subject.txt"      -> .rb-state/dispatch/subject.txt
+      "delivery/report.txt"       -> .rb-state/dispatch/report.txt
+      "delivery/report.html"      -> .rb-state/dispatch/report.html
+      "delivery/full_report.html" -> .rb-state/dispatch/full_report.html
+Reading first is required before publishing to an artifact this session did not create. If the publish fails, retry up to three times; if it still fails, say so as the FIRST line of the summary and carry on to the email.
+
+STEP 7 — EMAIL IT. This is the delivery the owner actually reads.
+Call the Gmail `send_message` tool ONCE:
+  to: ["rufat.baghirov97@gmail.com"]
+  subject: the exact contents of `.rb-state/dispatch/subject.txt`. Do not add a prefix, do not reword it, do not rebuild it. It carries the board state — "⛔ DO NOT TRADE — all N legs ABSTAINED", "SCAN UNAVAILABLE", "INFORMATIONAL" — derived from the frozen report by `subject_state`. A sender that writes its own subject is a second implementation of that rule, and a neutral-looking subject over a board nobody should act on is the exact failure it exists to prevent.
+  body: the exact contents of `.rb-state/dispatch/report.txt`
+  htmlBody: the exact contents of `.rb-state/dispatch/report.html`
+  attachments: one entry — filename from the printed `filename` (RB-Full-Report-<session>.html), mimeType "text/html", content = the exact contents of the `.b64` file. It is ALREADY base64; do not re-encode it, do not truncate it, do not summarise it.
+Then record the outcome:
+  python gmail_delivery.py --record --session "$session" --message-id <the id the tool returned>
+If the send fails: `python gmail_delivery.py --record --session "$session" --failed`, and say so plainly. A missing row and a failed send are different facts.
+If the Gmail tool is not available to you at all, say that as the FIRST line of the summary — it means this Routine lost its connector grant and the owner must re-attach Gmail in the Routines UI.
+
+STEP 8 — finish with a SHORT summary. In this order:
+  - published on time / informational-late / refused, and the exit code
+  - DELIVERY, one line, never omitted: "emailed to rufat.baghirov97@gmail.com, Gmail id <id>", or the exact failure. The owner went weeks receiving nothing while runs reported success; a summary without this line is how that happened.
+  - every leg: ticker, side, status, 09:45 reference price. If all are ABSTAIN, say plainly there is no actionable entry today.
+  - DEEPSEEK OPPORTUNITIES — read `.rb-state/latest/report.json` at `intraday.opportunities`. Name each pick: side, ticker, its self-reported confidence, and whether the engine agreed (`comparison.rows[].verdict`, or "engine comparison unavailable"). Say in the same breath that the confidence is SELF-REPORTED and NOT a calibrated win probability — no track record, never scored against an outcome. Give `evidence`: how many names carried news and which macro fields were shown, because a ranking made on prices alone and one made with the morning's tape are different readings. NO_OPPORTUNITY is a tested abstention, not a failure; UNAVAILABLE means quote the reason verbatim.
+  - JEV OPPORTUNITIES — read `intraday.jev`. Jev is a second model and a DECISIONS model: the option set IS the candidate list, and a name appears only when it beat the probability Jev itself assigned to picking nothing. For each pick give side, ticker, its probability AND that abstain probability, plus `versus_deepseek.rows[].verdict`. State that these are Jev's OWN numbers, not calibrated win probabilities. Then one line: how many names the two models agreed on, contradicted on, and `versus_deepseek.deepseek_only`. If Jev declined both sides, say so and that it is the registered gate working — the gate has no dial. NEVER average the two models: averaging two unmeasured opinions makes a third that looks better than either.
+  - the population in one line: how many names were staged into the pool and how many carried complete technicals. Before day-111b this was 38 names, identical day after day, because the MACD warm-up — not the roster — was the binding constraint. If it reads 38 again, SAY SO: it means the daily-bar pass did not run.
+  - the factor layer in one line: model, how many of the pool were assessed, how many cleared the threshold. If none cleared, say so — that is the normal result.
+  - the record in one line: hits/legs and rate, and whether the 95% interval still contains 50%.
+  - anything that genuinely broke, in plain words.
+  - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
+No padding, no encouragement. Never call a pick a prediction, never imply either model or the engine has demonstrated an edge, and never present agreement between the two models as confirmation. If the board is empty, say so and say why.
+
+IF SOMETHING FAILS
+Report it plainly and stop. Never fabricate a board, never re-run a refused publication, never replace a same-day published board with a fresh selection, never push code — only the record CSVs, which morning.sh stages narrowly itself. A DeepSeek, Jev or biotech failure costs its own section and must never stop the report or the email.
