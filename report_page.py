@@ -481,6 +481,45 @@ def _jev_ranking(snap):
     return blocks
 
 
+def _jev_forced(snap):
+    """Jev's forced pick per side — a name every day, by construction.
+
+    A DIFFERENT QUESTION from the gated one: the option set it was given had no
+    "none of these" in it, so it had to name something. That makes this the
+    best of the set, which on a quiet day is the least bad of a bad set. It is
+    not the selection and the table says so on every row, including whether the
+    forced pick even beat the abstain probability the gated question returned —
+    when it does not, Jev is saying it would rather have done nothing."""
+    rows = ''
+    for side in ('LONG', 'SHORT'):
+        pick = (snap or {}).get('forced_' + side.lower())
+        if not pick:
+            rows += (f'<tr><td>{side}</td><td colspan="4" class="empty">'
+                     'The forced question returned nothing usable.</td></tr>')
+            continue
+        floor = pick.get('gated_abstain_probability')
+        cleared = pick.get('cleared_gated_abstain')
+        verdict = ('also beat its own abstain' if cleared
+                   else 'below its own abstain — would rather have done nothing')
+        rows += ('<tr>'
+                 f'<td>{side}</td>'
+                 f'<td class="tick">{escape(str(pick.get("ticker", "?")))}</td>'
+                 f'<td class="num">{fmt(pick.get("probability"), ".3f")}</td>'
+                 f'<td class="num">{fmt(floor, ".3f") if floor is not None else ABSTAIN_CELL}</td>'
+                 f'<td class="{"g-accent" if cleared else "g-caution"}">{verdict}</td>'
+                 '</tr>')
+    if not rows:
+        return ''
+    return ('<h3 style="font-size:1rem;margin:1.5rem 0 .25rem">Forced choice — one name per '
+            'side, every day</h3>'
+            '<div class="scroll"><table><caption>' + escape(
+                (snap or {}).get('forced_label') or '') +
+            '</caption><thead><tr><th>Side</th><th>Name</th>'
+            '<th class="num">Forced probability</th><th class="num">Gated abstain</th>'
+            '<th>Would it have picked this anyway?</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>')
+
+
 def _jev_section(intra):
     """Jev's own top two per side, under DeepSeek and answering the same question.
 
@@ -521,13 +560,13 @@ def _jev_section(intra):
                 'exact path, so an empty selection is a reading of the evidence rather than a '
                 'broken request. Its ranking is shown below anyway — what it liked most on a '
                 'day it liked nothing enough.</p>'
-                + _jev_ranking(snap)
+                + _jev_ranking(snap) + _jev_forced(snap)
                 + f'<p class="note">{JEV_NOTE}</p></section>')
 
     missed = (versus.get('deepseek_only') or [])
     tail = ('<p class="sub" style="border:none;padding:0">DeepSeek picked, Jev did not: '
             + escape(', '.join(missed)) + '.</p>') if missed else ''
-    tail += _jev_ranking(snap)
+    tail += _jev_ranking(snap) + _jev_forced(snap)
     return (head + kv
             + '<div class="scroll"><table><caption>Probability is Jev’s own number over the '
               'option set it was given, and the abstain column is what it assigned to choosing '

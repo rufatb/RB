@@ -388,6 +388,25 @@ def jev_summary(intra):
                          f"{fmt(row.get('probability'), '.3f')} against "
                          f"{fmt(row.get('abstain_probability'), '.3f')} for doing nothing — "
                          f"{safe_detail(verdicts.get(row['ticker'], 'DeepSeek did not pick it'), 60)}.")
+    # THE FORCED CHOICE — a pick every day, from a question with no way to
+    # decline. A DIFFERENT question from the gated one above, so it is printed
+    # in its own block and never folded into the selection.
+    forced = [(side, snap.get('forced_' + side.lower()))
+              for side in ('LONG', 'SHORT')]
+    if any(pick for _, pick in forced):
+        lines.append('Forced choice — Jev had to name one per side (NOT the selection above):')
+        for side, pick in forced:
+            if not pick:
+                lines.append(f'  {side}: the forced question returned nothing usable.')
+                continue
+            floor = pick.get('gated_abstain_probability')
+            verdict = ('ALSO beat its own abstain' if pick.get('cleared_gated_abstain')
+                       else 'BELOW its own abstain — Jev would rather have done nothing')
+            lines.append(f"  {side} {safe_detail(pick['ticker'], 24)}: "
+                         f"{fmt(pick.get('probability'), '.3f')}"
+                         + (f" vs abstain {fmt(floor, '.3f')}" if floor is not None else '')
+                         + f' — {verdict}.')
+        lines.append(safe_detail(snap.get('forced_label') or '', 700))
     if versus.get('rows'):
         lines.append(f"Cross-model: {versus.get('agree', 0)} agreed, {versus.get('oppose', 0)} "
                      f"contradicted, {versus.get('alone', 0)} picked by Jev alone.")

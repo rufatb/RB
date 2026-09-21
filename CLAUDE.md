@@ -156,6 +156,32 @@ Positive controls re-verified after the change: DeepSeek CTLUP/CTLDN 0.63/0.58,
 Jev 0.79/0.54 against its own abstain, no noise name cleared, same picks as
 before.
 
+### Forcing a daily pick without touching the gate: ask a different question
+
+The owner wanted a Jev pick every day. The gate has no constant to lower, and
+lowering one would be the day-98 mistake. So the request now carries FOUR
+questions instead of two: the two GATED ones, whose option set includes `NONE`
+and which may therefore decline, and two FORCED ones built from
+`forced_criteria` — the same options with **no abstain in the set at all**, so
+the model must name something. Same request, still ~1s and $0.00002.
+
+`forced_criteria = dict(criteria)` is copied BEFORE `criteria[ABSTAIN]` is
+added, and a test pins that ordering: copy it one line later and the forced
+question can decline again, silently making the whole thing a no-op.
+
+`_forced` is a separate parser with NO code path into `longs`/`shorts`, which
+is what stops a forced pick ever being reported as a selection. It refuses a
+name outside the universe and refuses an `ABSTAIN` smuggled into an answer that
+was never offered one. Each forced pick carries the GATED question's abstain
+probability beside it and `cleared_gated_abstain`, so the comparison is visible:
+below that floor, Jev is saying it would rather have done nothing.
+
+**MEASURED 2026-09-21 on a NOISE-ONLY universe** (ten names, no planted edge):
+the gate declined both sides — `NO_OPPORTUNITY`, unchanged — and the forced
+question still named `NOIS9.TO` long at 0.670 against a 0.68 abstain (flagged
+would-rather-do-nothing) and `NOIS0.TO` short at 0.920. That is the whole
+design working: a pick every day, and an honest label on what it is worth.
+
 ### The scheduled prompt is executable instructions — check it like code
 
 `ROUTINE_PROMPT.md` carried two stale step numbers from a draft where the email

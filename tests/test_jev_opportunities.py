@@ -99,12 +99,37 @@ def test_a_ticker_outside_the_universe_is_still_rejected():
     assert any('outside the supplied universe' in g for g in out['gaps'])
 
 
-def test_both_sides_are_asked_in_one_request():
+def test_every_question_goes_in_one_request():
+    """Still ONE request — that is the robustness claim, measured at ~1s and
+    $0.00002. It now carries four questions: the two GATED ones that may
+    decline, and the two FORCED ones that may not."""
     seen = []
     J.rank([tech('AC.TO')], now=PREOPEN, poster=poster(seen=seen))
     assert len(seen) == 1
-    assert set(seen[0]['questions']) == {'long', 'short'}
+    assert set(seen[0]['questions']) == {'long', 'short', 'forced_long', 'forced_short'}
     assert all(q['type'] == 'choice' for q in seen[0]['questions'].values())
+
+
+def test_only_the_gated_questions_offer_the_abstain_option():
+    """The whole separation lives here. If NONE leaks into a forced option set
+    the model can decline again and the forced pick stops being forced; if it
+    goes missing from a gated set, the registered abstention gate is gone."""
+    seen = []
+    J.rank([tech('AC.TO')], now=PREOPEN, poster=poster(seen=seen))
+    questions = seen[0]['questions']
+    for side in ('long', 'short'):
+        assert J.ABSTAIN in questions[side]['criteria'], f'{side} lost its abstain option'
+        assert J.ABSTAIN not in questions['forced_' + side]['criteria'], \
+            f'forced_{side} can decline, so it is not forced'
+
+
+def test_the_forced_instructions_say_a_low_probability_is_the_honest_answer():
+    """Otherwise a model told it MUST pick reads that as pressure to sound
+    confident, and a confident number on a coin-flip call is the warning sign
+    this whole repo exists to avoid printing."""
+    assert 'MUST pick' in J.FORCED_INSTRUCTIONS
+    assert 'least bad' in J.FORCED_INSTRUCTIONS
+    assert 'low probability on a' in J.FORCED_INSTRUCTIONS
 
 
 def test_the_model_id_is_pinned_not_floating():
@@ -385,3 +410,85 @@ def test_both_renderers_print_the_ranking_and_label_it_as_not_a_pick():
     html = report_page._jev_section({'jev': snap})
     assert 'AAA.TO' in html and 'not selected' in html
     assert 'is NOT a pick' in html
+
+
+# ── the forced choice: a pick every day, from a DIFFERENT question ───────────
+# The owner asked for a Jev pick daily. The answer is not to lower the gate —
+# it has no constant to lower — but to ask a second question whose option set
+# contains no "none of these", so declining is not a legal answer. That is a
+# different instrument, honestly labelled: best-of-set, which on a quiet day is
+# least-bad-of-a-bad-set. Verified live 2026-09-21 on a NOISE-ONLY universe:
+# the gate declined both sides and the forced question still named NOIS9.TO
+# long and NOIS0.TO short.
+
+def test_the_forced_question_has_no_abstain_option():
+    """THE MECHANISM. If NONE is in the forced option set the model can decline
+    again and the whole change is a no-op."""
+    import inspect
+    src = inspect.getsource(J.rank)
+    assert 'forced_criteria = dict(criteria)' in src
+    assert src.index('forced_criteria = dict(criteria)') < src.index('criteria[ABSTAIN]'), \
+        'forced_criteria was copied AFTER the abstain option was added to it'
+
+
+def test_a_forced_pick_is_returned_even_when_every_name_is_hopeless():
+    pick, gaps = J._forced(ranked_answer({'AAA.TO': 0.02, 'BBB.TO': 0.01}, 0.0),
+                           {'AAA.TO', 'BBB.TO'})
+    assert pick is not None and pick['ticker'] == 'AAA.TO'
+    assert pick['forced'] is True
+
+
+def test_an_abstain_smuggled_into_the_forced_answer_is_refused():
+    """It was never offered. A name we did not put in the option set must not
+    reach the owner — that typing is the reason to use this provider."""
+    pick, gaps = J._forced(
+        {'type': 'choice', 'probabilities': {'AAA.TO': 0.3, J.ABSTAIN: 0.9}},
+        {'AAA.TO'})
+    assert pick['ticker'] == 'AAA.TO', 'the abstain won a question it was not on'
+    assert any('abstain it was not offered' in g for g in gaps)
+
+
+def test_a_name_outside_the_universe_never_becomes_the_forced_pick():
+    pick, gaps = J._forced(
+        {'type': 'choice', 'probabilities': {'GHOST.TO': 0.99, 'AAA.TO': 0.10}},
+        {'AAA.TO'})
+    assert pick['ticker'] == 'AAA.TO'
+    assert any('invalid option' in g for g in gaps)
+
+
+def test_the_forced_pick_never_enters_the_gated_selection():
+    """The two must not merge. `_forced` has no code path into longs/shorts,
+    and a forced pick below the abstain floor is exactly the case where
+    conflating them would turn 'I would rather do nothing' into a pick."""
+    picks, ranked, _ = J._side(ranked_answer({'AAA.TO': 0.10}, 0.80), {'AAA.TO'})
+    forced, _ = J._forced(ranked_answer({'AAA.TO': 0.10}, 0.0), {'AAA.TO'})
+    assert picks == [], 'the gate must still decline'
+    assert forced['ticker'] == 'AAA.TO', 'the forced question must still answer'
+
+
+def test_an_unavailable_result_still_carries_the_forced_keys():
+    """A reader that does `snap['forced_long']` must not KeyError on the one
+    day the provider is down."""
+    out = J.unavailable('provider down')
+    for key in ('forced_long', 'forced_short', 'long_ranked', 'short_ranked'):
+        assert key in out
+
+
+def test_both_renderers_print_the_forced_pick_and_say_it_is_not_the_selection():
+    import daily_render, report_page
+    snap = {'status': 'NO_OPPORTUNITY', 'model': 'typesafe/jev-1.13', 'considered': 78,
+            'longs': [], 'shorts': [], 'long_ranked': [], 'short_ranked': [],
+            'forced_label': J.FORCED_LABEL,
+            'forced_long': {'ticker': 'AAA.TO', 'probability': 0.31,
+                            'gated_abstain_probability': 0.62,
+                            'cleared_gated_abstain': False, 'forced': True},
+            'forced_short': {'ticker': 'BBB.TO', 'probability': 0.71,
+                             'gated_abstain_probability': 0.40,
+                             'cleared_gated_abstain': True, 'forced': True}}
+    text = '\n'.join(daily_render.jev_summary({'jev': snap}))
+    assert 'AAA.TO' in text and 'BBB.TO' in text
+    assert 'NOT the selection' in text
+    assert 'would rather have done nothing' in text
+    html = report_page._jev_section({'jev': snap})
+    assert 'AAA.TO' in html and 'Forced choice' in html
+    assert 'would rather have done nothing' in html
