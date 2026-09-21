@@ -17,7 +17,9 @@ that no longer exists.
 | Name | `RB Daily Report — 09:05 stage, 09:46 publish, email` |
 | Schedule | Weekdays (Mon–Fri), **9:05 AM**, timezone **America/New_York** |
 | Repository / source | `rufatb/RB`, branch `main` |
-| Connectors | **Gmail — enabled.** This is the point of using the UI. |
+| Connectors | **Gmail — enabled.** This is the point of using the UI. Attach NOTHING else: a report task with scheduled-task tools can rewrite its own schedule unattended, and one with Docs tools can create documents nobody asked for. Least privilege, and the prompt forbids both as a second line of defence. |
+| Environment | **Must match the environment holding the rb checkout** (`env_01WF9g5xRVHtN38pSVeknCz4`). A task created without it starts with no repository and dies at the `cd` in STEP 1 — verified 2026-09-21: a UI copy's stored `session_request` carried no `environment_id` at all while the original's did. Confirm it before enabling. |
+| Auto-approve | **On.** A Gmail send that waits for approval at 09:47 with nobody watching is no email. |
 | Session | New session each run |
 | Notifications | Push and/or email, as preferred (this channel has never delivered; the Gmail step is the real one) |
 
@@ -117,6 +119,10 @@ STEP 8 — finish with a SHORT summary. In this order:
   - anything that genuinely broke, in plain words.
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
 No padding, no encouragement. Never call a pick a prediction, never imply either model or the engine has demonstrated an edge, and never present agreement between the two models as confirmation. If the board is empty, say so and say why.
+
+DO NOT TOUCH THE SCHEDULE
+You may have scheduled-task tools (Claude_Code_Remote) attached alongside Gmail. DO NOT USE THEM. Never create, modify, enable, disable or delete any Routine, including this one. If the schedule looks wrong — wrong fire time, a duplicate report task, a cron you did not expect — say so plainly in the summary and STOP. An unattended job that can rewrite its own schedule can also disable itself at 09:05 and nobody would find out until the reports stopped arriving. The ONLY authorised schedule change is the twice-yearly DST correction, and that is a separate one-shot task with its own instructions.
+Likewise, do not create documents. The report is the page and the email; nothing else.
 
 IF SOMETHING FAILS
 Report it plainly and stop. Never fabricate a board, never re-run a refused publication, never replace a same-day published board with a fresh selection, never push code — only the record CSVs, which morning.sh stages narrowly itself. A DeepSeek, Jev or biotech failure costs its own section and must never stop the report or the email.
