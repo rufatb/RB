@@ -492,3 +492,26 @@ def test_both_renderers_print_the_forced_pick_and_say_it_is_not_the_selection():
     html = report_page._jev_section({'jev': snap})
     assert 'AAA.TO' in html and 'Forced choice' in html
     assert 'would rather have done nothing' in html
+
+
+def test_a_snapshot_that_was_never_asked_the_forced_question_says_nothing():
+    """NOT ASKED and ASKED-AND-FAILED are different facts. The first cut
+    rendered "the forced question returned nothing usable" for a snapshot
+    predating the feature — a report about a question that was never put, and
+    it broke the abstention test that asserts no table is manufactured on a
+    declining day."""
+    import daily_render, report_page
+    old_shape = {'status': 'NO_OPPORTUNITY', 'model': 'typesafe/jev-1.13',
+                 'considered': 78, 'longs': [], 'shorts': []}
+    assert report_page._jev_forced(old_shape) == ''
+    text = '\n'.join(daily_render.jev_summary({'jev': old_shape}))
+    assert 'Forced choice' not in text
+
+
+def test_a_forced_question_that_was_asked_and_failed_does_say_so():
+    """The other half: once the key exists, a null is a real failure and must
+    be reported, not hidden by the rule above."""
+    import report_page
+    asked_and_failed = {'status': 'READY', 'forced_long': None, 'forced_short': None}
+    html = report_page._jev_forced(asked_and_failed)
+    assert 'returned nothing usable' in html

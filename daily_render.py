@@ -393,7 +393,10 @@ def jev_summary(intra):
     # in its own block and never folded into the selection.
     forced = [(side, snap.get('forced_' + side.lower()))
               for side in ('LONG', 'SHORT')]
-    if any(pick for _, pick in forced):
+    # Same rule as the page: a snapshot that carries neither key was never
+    # asked the forced question, and silence is the honest report of that.
+    asked = any(('forced_' + side) in snap for side in ('long', 'short'))
+    if asked and any(pick for _, pick in forced):
         lines.append('Forced choice — Jev had to name one per side (NOT the selection above):')
         for side, pick in forced:
             if not pick:

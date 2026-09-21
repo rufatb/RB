@@ -490,9 +490,16 @@ def _jev_forced(snap):
     not the selection and the table says so on every row, including whether the
     forced pick even beat the abstain probability the gated question returned —
     when it does not, Jev is saying it would rather have done nothing."""
+    snap = snap or {}
+    # NOT ASKED and ASKED-AND-FAILED are different facts. A snapshot from before
+    # this existed, or an UNAVAILABLE one, carries neither key — rendering "the
+    # forced question returned nothing usable" for it would be a report about a
+    # question that was never put. Say nothing about what was never asked.
+    if not any(('forced_' + side) in snap for side in ('long', 'short')):
+        return ''
     rows = ''
     for side in ('LONG', 'SHORT'):
-        pick = (snap or {}).get('forced_' + side.lower())
+        pick = snap.get('forced_' + side.lower())
         if not pick:
             rows += (f'<tr><td>{side}</td><td colspan="4" class="empty">'
                      'The forced question returned nothing usable.</td></tr>')
