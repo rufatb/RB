@@ -64,6 +64,16 @@ def prepare(state_dir, session, output_dir, *, now=None):
     payload = prepare_delivery.artifacts(report, output_dir, now)
     if not store.claim_delivery(session, message_key(session)):
         return {'status': 'ALREADY_ATTEMPTED', 'delivery': store.delivery(session)}
+    # THE PAYLOAD HAS TO OUTLIVE THIS CONTAINER. The morning runs in a fresh
+    # scheduled session that CANNOT reach the Gmail connector — a Routine
+    # created through the MCP tool stores no connectors, and the server says so
+    # outright. So the send happens elsewhere, and everything it needs must be
+    # publishable as files beside the report page. Writing the subject to its
+    # own file is the point: whoever sends must never RECOMPUTE it. It carries
+    # the board state (DO NOT TRADE / legs ABSTAINED / INFORMATIONAL) that
+    # `subject_state` derives from the frozen report, and a sender that builds
+    # its own subject is a second, drifting implementation of that rule.
+    (Path(output_dir)/'subject.txt').write_text(payload['subject'])
     attachments = []
     for item in payload['attachments']:
         path = Path(output_dir)/(item['filename'] + '.b64')
@@ -71,6 +81,7 @@ def prepare(state_dir, session, output_dir, *, now=None):
         attachments.append({'filename': item['filename'], 'mime_type': item['mime_type'],
                             'base64_path': str(path)})
     return {'status': 'CLAIMED', 'session': session, 'subject': payload['subject'],
+            'subject_path': str(Path(output_dir)/'subject.txt'),
             'text_path': str(Path(output_dir)/'report.txt'),
             'html_path': str(Path(output_dir)/'report.html'),
             'attachments': attachments, 'checked_at': payload['checked_at']}

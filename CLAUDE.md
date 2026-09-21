@@ -44,17 +44,43 @@ real host, where 465 is open — but it CANNOT deliver from a scheduled
 container, and `REMEDY` and the morning log both say so now, because the
 obvious reading of "no SMTP credential" is that supplying one fixes it.
 
-**What a container CAN deliver over is HTTPS.** `prepare_delivery.artifacts()`
-already writes `gmail_payload.json` — exact subject, text, html and the full
-report as an attachment — and it predates all of this; day-95 registered that
-handoff. It has never had a connector to hand it to: Gmail reads
-`installState: not_connected`, and a clean Routine one-shot with
-`notifications {push, email}` reported SUCCEEDED in 12 seconds and delivered
-nothing. Both are account-level, not repo code.
+**What a container CAN deliver over is HTTPS** — the Gmail connector, fed
+`prepare_delivery.artifacts()`, which already writes the exact subject, text,
+html and the full report as an attachment and predates all of this (day-95
+registered that handoff). The owner connected Gmail on 2026-09-20 and a send
+from an interactive session WORKS: verified, Gmail id `1a0c02142e9d7581`.
 
-So **the artifact page remains the only channel that has ever worked**, and the
-Routine prompt now treats STEP 5 as mandatory with retries rather than
-best-effort.
+**But a SCHEDULED session cannot use it.** `create_trigger`'s `connectors`
+parameter is unavailable for this organization, and creating a Routine without
+it returns: *"this trigger stores no MCP connectors, so the sessions it fires
+will run without connector tools… create it from a session that holds them, or
+ask the user to create it from the claude.ai routines UI."* So the morning run
+can compute, publish and update the page, and cannot email. The remedy is the
+owner recreating the Routine from the claude.ai Routines UI with Gmail
+attached — it is not reachable from this tool.
+
+Until then the morning publishes the payload as FILES on the artifact
+(`delivery/{subject.txt,report.txt,report.html,full_report.html}`) and a
+session that holds Gmail sends them VERBATIM. `subject.txt` exists for exactly
+one reason: a sender that rebuilds the subject is a second implementation of
+`subject_state`, and that rule is what puts DO NOT TRADE in front of an
+abstained board. The state does not travel in the body.
+
+The artifact page remains the channel that has always worked, and the Routine
+prompt treats publishing it as mandatory with retries rather than best-effort.
+
+**The Routine notification channel is separate and still dead:** a clean
+one-shot with `notifications {push, email}` reported SUCCEEDED in 12 seconds
+and delivered nothing.
+
+**A Routine's prompt update does NOT reach a run already in flight.** 09-21
+fired at 13:06:30Z; the prompt was updated at 13:14 and `next_run_at` moved to
+09-22. Check `last_fired_at` before assuming an edit applies today.
+
+**The container clock can be hours off the server's.** On 09-20 the container
+read 00:52Z while the trigger service stamped 04:28Z — a `run_once_at` three
+hours in my future was rejected as "in the past". Trust `next_run_at` and the
+server's timestamps for scheduling, never `date` inside the container.
 
 ### The staging timeouts summed to 63 minutes inside a 25-minute window
 

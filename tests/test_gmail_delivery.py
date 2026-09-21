@@ -107,3 +107,17 @@ def test_both_paths_share_one_reconciliation_key(state):
 def test_preparing_an_unpublished_session_refuses(tmp_path):
     with pytest.raises(ValueError, match='no immutable publication'):
         G.prepare(str(tmp_path), '2026-09-18', str(tmp_path/'dispatch'))
+
+
+def test_the_subject_is_written_to_a_file_for_a_sender_in_another_container(state):
+    """The morning session cannot reach Gmail — a Routine created through the
+    MCP tool stores no connectors. So the send happens in a different session,
+    in a different container, and it must take the subject VERBATIM. A sender
+    that rebuilds the subject is a second implementation of `subject_state`,
+    and that rule is what puts DO NOT TRADE in front of an abstained board."""
+    import pathlib
+    directory, session = state
+    out = G.prepare(directory, session, directory + '/dispatch')
+    written = pathlib.Path(out['subject_path']).read_text()
+    assert written == out['subject']
+    assert 'RB Daily Report' in written
