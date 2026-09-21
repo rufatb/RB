@@ -28,6 +28,12 @@ DST: the existing MCP Routine needs a one-shot correction every March and
 November precisely because it is stored as UTC. A timezone-aware schedule in
 the UI removes that whole class of failure.
 
+If you do that, the DST correction task will find a schedule it does not
+recognise and **change nothing, reporting what it read** — that is the correct
+outcome, not a fault, and nobody should later "fix" that task to force a shift
+onto a schedule that does not need one. Leave it in place: it is the guard for
+the day someone recreates the report on a UTC cron again.
+
 **Disable the old Routine `trig_01YZ2smjbMZXJvWKBxU4JfWj` once this one runs
 clean**, or two sessions will race for the same publication minute. The second
 will find the session already published — `brief.compute` is publish-once and a
@@ -71,7 +77,7 @@ STEP 3 — stage, hold, publish. ONE command, and it will take about forty minut
 It stages the intraday cache, the biotech universe, the 130-name factor pool, the news/macro refresh, the DeepSeek factor snapshot, the DeepSeek opportunity ranking and the Jev ranking while that is still permitted, holds the session to 09:44, then hands over to `morning.sh`. Let it run to completion.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but missed the window (informational); 6 published but provenance was not clean; 1 failed. On exit 4 do NOT re-run and do NOT override the guard — report the reason and stop.
 A staging step exiting 2 means partial coverage, which is the ordinary result, not a fault. Exiting 3 means it correctly refused because its pre-open cutoff had passed — report it, do not retry. A step logged SKIPPED means an upstream step overran and ate its share of the 09:05–09:30 budget; name which one, because that is a different cause from a provider outage.
-`morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". THAT IS EXPECTED AND IS NOT THE EMAIL. A Claude Code container cannot reach smtp.gmail.com on 25, 465 or 587 — measured 2026-09-20; the agent proxy tunnels HTTPS only. Do NOT try to fix it and do NOT write an app password. You send the email in STEP 6 through the Gmail connector.
+`morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". THAT IS EXPECTED AND IS NOT THE EMAIL. A Claude Code container cannot reach smtp.gmail.com on 25, 465 or 587 — measured 2026-09-20; the agent proxy tunnels HTTPS only. Do NOT try to fix it and do NOT write an app password. You send the email in STEP 7 through the Gmail connector.
 
 STEP 4 — the page is written BY THE JOB, never by hand
 `daily_job` writes `.rb-state/latest/report_page.html` itself. Use that file. If and only if it is missing:
@@ -81,7 +87,7 @@ Do NOT hand-edit its output and do NOT write your own HTML. This renderer enforc
 STEP 5 — build the email payload from the frozen publication
   session=$(TZ=America/Toronto date +%F)
   python gmail_delivery.py --prepare --session "$session"
-It prints `subject`, `subject_path`, `text_path`, `html_path` and `attachments[].base64_path`, and CLAIMS the delivery so a re-run cannot send twice. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, continue to STEP 7. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 6 so the page is published.
+It prints `subject`, `subject_path`, `text_path`, `html_path` and `attachments[].base64_path`, and CLAIMS the delivery so a re-run cannot send twice. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, SKIP STEP 7 ENTIRELY and continue to STEP 8 (the summary). STEP 7 is the send; routing an already-attempted delivery into it sends the morning twice, which is the whole thing the claim exists to prevent. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 6 so the page is published.
 
 STEP 6 — publish the page and the payload to the owner's artifact, same URL:
   - Artifact tool, action "read", url https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9

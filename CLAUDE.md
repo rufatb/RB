@@ -156,6 +156,29 @@ Positive controls re-verified after the change: DeepSeek CTLUP/CTLDN 0.63/0.58,
 Jev 0.79/0.54 against its own abstain, no noise name cleared, same picks as
 before.
 
+### The scheduled prompt is executable instructions — check it like code
+
+`ROUTINE_PROMPT.md` carried two stale step numbers from a draft where the email
+was STEP 6. The artifact-files step was inserted, every heading shifted, and
+two cross-references did not. The second one was a live bug:
+
+    Exit 4 means ALREADY_ATTEMPTED — do not send, report it, continue to STEP 7
+
+**STEP 7 IS THE SEND.** The one branch whose entire job is to not send pointed
+straight back at sending — a second copy of the morning board in the inbox,
+defeating the publish-once claim that `gmail_delivery` exists to provide. It
+was caught by the session that had to paste the file, not by anything here,
+because the prompt is prose and nothing tested it.
+
+It is not prose. An unattended agent follows it at 09:05 with nobody watching,
+so a wrong number in it fails exactly like a wrong number in Python.
+`tests/test_routine_prompt.py` now checks the steps are consecutive, every
+referenced step exists, the email is sent at the step the text claims, the
+ALREADY_ATTEMPTED branch never routes into the send, no live credential is
+committed, the schedule refusal survives, every script it names exists and
+every flag it quotes is a real option. Both original defects were reintroduced
+and both tests failed — the check is verified, not assumed.
+
 ## Day111b — the population was never roster-bound; it was warm-up bound
 
 **MEASURED: the eligible set was IDENTICAL day to day.** 09-17 and 09-18 both
