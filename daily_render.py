@@ -366,6 +366,21 @@ def jev_summary(intra):
         lines.append('Jev declined on BOTH sides: every name came out less likely than its own '
                      '"none of these" option. A planted long and short are both detected through '
                      'this path, so this is a reading of the evidence, not a broken request.')
+    # THE RANKING, EVERY DAY — including the days it selects nothing, which are
+    # exactly the days the bare picks say least. A ranked name is NOT a pick:
+    # `cleared_gate` is printed on every row precisely so the two cannot be
+    # read as the same thing.
+    for side, key in (('LONG', 'long_ranked'), ('SHORT', 'short_ranked')):
+        rows = snap.get(key) or []
+        if not rows:
+            continue
+        lines.append(f"Jev's highest-ranked {side} names (a ranking, NOT a selection):")
+        for n, row in enumerate(rows, 1):
+            verdict = ('selected — beat its own abstain' if row.get('cleared_gate')
+                       else 'NOT selected — below its own abstain')
+            lines.append(f"  {n}. {safe_detail(row['ticker'], 24)} "
+                         f"{fmt(row.get('probability'), '.3f')} vs "
+                         f"{fmt(row.get('abstain_probability'), '.3f')} — {verdict}")
     verdicts = {r['ticker']: r['verdict'] for r in versus.get('rows') or []}
     for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
         for row in snap.get(key) or []:

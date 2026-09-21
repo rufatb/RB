@@ -85,7 +85,50 @@ class InputValidationError(ValueError):
 
 
 class ResponseSchemaError(ValueError):
-    """The provider did not return one complete strict assessment per ticker."""
+    """The provider did not return one complete strict assessment per ticker.
+
+    TWENTY-FOUR different checks raise this, from a duplicate JSON key to a
+    two-sentence rationale, and they call for completely different responses: a
+    style check quietly discarding a whole batch of names is a coverage bug, a
+    malformed number is a provider bug. On 2026-09-21 the factor layer assessed
+    4 of 273 staged names and the page said only "DeepSeek batch unavailable:
+    INVALID_SCHEMA (ResponseSchemaError)" — the class name, which was the one
+    thing already known. House rule 1 says count and report; a failure
+    indistinguishable from twenty-three others has not been reported.
+
+    `schema_site` recovers WHICH check fired from the traceback rather than
+    from twenty-four hand-written strings that would drift the first time
+    someone reorders a condition. The validation itself is UNCHANGED and still
+    strict — missing, duplicate, invented or partial rows still fail the whole
+    batch. Naming the reason is not loosening it."""
+
+
+def schema_site(exc):
+    """Name the check that raised, from the traceback, as file:line — source.
+
+    Automatic on purpose. Any raise added later is named without being
+    remembered about, which is the failure mode this whole function exists to
+    fix."""
+    import linecache
+    import traceback
+    frames = [f for f in traceback.extract_tb(exc.__traceback__)
+              if f.filename.endswith('deepseek_adapter.py')]
+    if not frames:
+        return type(exc).__name__
+    last = frames[-1]
+    # The raise line itself reads `raise ResponseSchemaError()`, which is not a
+    # diagnosis. The CONDITION above it is. Walk back to the nearest `if` /
+    # `except` / `try` that opens the block and quote that instead.
+    condition = ''
+    for offset in range(0, 8):
+        text = linecache.getline(last.filename, last.lineno - offset).strip()
+        if text.startswith(('if ', 'elif ', 'except ', 'try:')):
+            condition = text.rstrip(':')
+            break
+        if offset and text.endswith(':') and not text.startswith('#'):
+            condition = text.rstrip(':')
+            break
+    return f'{last.name}:{last.lineno} — {condition}' if condition else f'{last.name}:{last.lineno}'
 
 
 def _numeric(value, *, nullable=False):
@@ -322,8 +365,15 @@ def parse_assessments(content, tickers):
             rationale = _text(row['factor_rationale'], MAX_RATIONALE_CHARS)
         except InputValidationError:
             raise ResponseSchemaError() from None
-        if not -1 <= score <= 1 or _multiple_sentences(rationale):
-            raise ResponseSchemaError()
+        if not -1 <= score <= 1:
+            raise ResponseSchemaError('SCORE_OUT_OF_RANGE: sentiment_score outside [-1, 1]')
+        if _multiple_sentences(rationale):
+            # A STYLE check, and it discards the WHOLE batch. When it fires it
+            # must say so by name, or prose punctuation reads as a provider
+            # outage and gets chased in the wrong place entirely.
+            raise ResponseSchemaError(
+                'MULTI_SENTENCE_RATIONALE: the rationale had more than one sentence, '
+                'which fails the entire batch on a style rule')
         by_ticker[ticker] = {**row, 'sentiment_score': score, 'factor_rationale': rationale}
     if set(by_ticker) != set(tickers):
         raise ResponseSchemaError()
@@ -503,8 +553,12 @@ def evaluate_batch(candidates, macro, as_of, *, model=None, client=None,
                     or getattr(choices[0].message, 'refusal', None)):
                 raise ResponseSchemaError()
             rows, grounding, private = parse_grounded_assessments(choices[0].message.content, payload)
-        except (AttributeError, IndexError, TypeError, ResponseSchemaError):
-            result.update(errorcode='INVALID_SCHEMA', details='ResponseSchemaError')
+        except (AttributeError, IndexError, TypeError, ResponseSchemaError) as exc:
+            # `details` used to be the hardcoded string 'ResponseSchemaError',
+            # so whichever check actually failed was computed and thrown away
+            # right here — the same shape as the dropped cache_degraded.
+            result.update(errorcode='INVALID_SCHEMA',
+                          details=str(exc) or schema_site(exc))
             return result
         excluded = grounding['excluded']
         result.update(status=('PARTIAL' if excluded else 'READY') if rows else 'UNAVAILABLE',

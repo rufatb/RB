@@ -62,6 +62,13 @@ ENDPOINT = 'https://openrouter.ai/api/alpha/decisions'
 DEFAULT_MODEL = 'typesafe/jev-1.13'
 ABSTAIN = 'NONE'
 MAX_PER_SIDE = 2
+# DISPLAY ONLY, AND NOT A DIAL. How many of Jev's highest-probability names per
+# side are shown whether or not they cleared its own NONE. Raising it shows
+# more of the ranking; it cannot promote a declined name into `longs`/`shorts`,
+# which is decided solely by `probability > abstain_probability` and has no
+# constant at all. Keep it that way: day-98's side-skill family is the record
+# of what a tunable number invites after a losing day.
+RANKED_PER_SIDE = 3
 MAX_NAMES = 60
 MAX_SNAPSHOT_AGE_HOURS = 6
 MAX_SNAPSHOT_BYTES = 1_000_000
@@ -120,16 +127,33 @@ def _post(body, key, timeout):
 def _side(answer, allowed):
     """Rank by the model's own distribution; abstain against its own NONE.
 
-    A name is reported only when the model considers it MORE LIKELY than doing
-    nothing. That is the entire gate and it has no tunable constant, so there is
-    nothing here to quietly loosen after a losing day.
+    Returns (picks, ranked, gaps).
+
+    `picks` is the GATE's answer and is unchanged: a name is reported only when
+    the model considers it MORE LIKELY than doing nothing. That is the entire
+    gate, it has no tunable constant, and there is nothing here to quietly
+    loosen after a losing day — day-98's side-skill family is the record of
+    what happens when there is a dial.
+
+    `ranked` is the top `RANKED_PER_SIDE` names by the model's own probability
+    WHETHER OR NOT THEY CLEARED, each carrying `cleared_gate`. The owner asked
+    to see Jev's top picks every day, including days it declines everything,
+    and that is a reasonable thing to want: on 2026-09-21 Jev abstained on both
+    sides and the report showed nothing at all, which says less than it could.
+    Showing the ranking answers it honestly. Promoting a declined name into
+    `picks` would not — it would turn "nothing beat doing nothing" into a
+    recommendation, which is the one thing the gate exists to prevent.
+
+    So the two never merge. `picks` is what Jev selected. `ranked` is what Jev
+    ranked. A name can appear in the second and not the first, and the renderer
+    must say which.
     """
     gaps = []
     if not isinstance(answer, dict) or answer.get('type') != 'choice':
-        return [], ['the reply was not a choice answer']
+        return [], [], ['the reply was not a choice answer']
     probabilities = answer.get('probabilities')
     if not isinstance(probabilities, dict):
-        return [], ['the reply carried no distribution']
+        return [], [], ['the reply carried no distribution']
     floor = probabilities.get(ABSTAIN)
     floor = float(floor) if isinstance(floor, (int, float)) and not isinstance(floor, bool) else 0.0
     confidence = answer.get('confidence')
@@ -153,14 +177,21 @@ def _side(answer, allowed):
                 or not 0.0 <= float(probability) <= 1.0):
             gaps.append('%s probability outside 0-1' % safe_detail(ticker, 24))
             continue
-        if float(probability) <= floor:
-            continue
+        # NOT filtered here any more. The gate is applied below, on the sorted
+        # list, so one pass produces both the ranking and the selection and
+        # they cannot disagree about a number.
         ranked.append((float(probability), ticker))
     ranked.sort(key=lambda pair: (-pair[0], pair[1]))
-    out = [{'ticker': ticker, 'probability': round(probability, 4),
-            'confidence': confidence, 'abstain_probability': round(floor, 4)}
-           for probability, ticker in ranked[:MAX_PER_SIDE]]
-    return out, gaps
+    rows = [{'ticker': ticker, 'probability': round(probability, 4),
+             'confidence': confidence, 'abstain_probability': round(floor, 4),
+             'cleared_gate': float(probability) > floor}
+            for probability, ticker in ranked[:max(RANKED_PER_SIDE, MAX_PER_SIDE)]]
+    # The gate, unchanged: strictly greater than the model's own NONE. Taking
+    # the top N first and filtering second gives exactly the same selection as
+    # filtering first — anything above the floor outranks everything below it —
+    # so this is a reordering of the same arithmetic, not a loosening of it.
+    picks = [row for row in rows if row['cleared_gate']][:MAX_PER_SIDE]
+    return picks, rows[:RANKED_PER_SIDE], gaps
 
 
 def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
@@ -197,8 +228,8 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
         # Never echo a provider payload or a credential into the report.
         return unavailable('The Jev request failed: ' + type(exc).__name__)
 
-    longs, long_gaps = _side(reply['answers'].get('long'), allowed)
-    shorts, short_gaps = _side(reply['answers'].get('short'), allowed)
+    longs, long_ranked, long_gaps = _side(reply['answers'].get('long'), allowed)
+    shorts, short_ranked, short_gaps = _side(reply['answers'].get('short'), allowed)
     with_news = sum(1 for row in rows if row.get('headlines'))
     evidence_gaps = []
     if not with_news:
@@ -212,6 +243,10 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
                          'names_with_catalyst_tags': sum(1 for r in rows if r.get('catalyst_tags')),
                          'macro_fields': sorted(macro_block)},
             'longs': longs, 'shorts': shorts,
+            # The ranking, always present — including on a day Jev declines
+            # everything, which is exactly the day the bare picks say least.
+            # `cleared_gate` on each row is what keeps the two apart.
+            'long_ranked': long_ranked, 'short_ranked': short_ranked,
             'gaps': long_gaps + short_gaps + evidence_gaps,
             'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
             'confidence_label': CONFIDENCE_LABEL}

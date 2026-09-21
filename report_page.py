@@ -444,6 +444,43 @@ def _jev_rows(snap):
     return out
 
 
+def _jev_ranking(snap):
+    """Jev's top names by its own probability, WHETHER OR NOT THEY CLEARED.
+
+    The owner asked to see the top picks every day. On a day Jev declines
+    everything the picks table is empty and the page said only that — true, and
+    less than it could say. This shows the ranking beside the verdict.
+
+    A ranked name is NOT a pick. Every row states whether it beat Jev's own
+    "none of these", because a table of names under a heading is read as a
+    recommendation unless it says otherwise."""
+    blocks = ''
+    for side, key in (('Long', 'long_ranked'), ('Short', 'short_ranked')):
+        rows = (snap or {}).get(key) or []
+        if not rows:
+            continue
+        body = ''
+        for n, row in enumerate(rows, 1):
+            cleared = row.get('cleared_gate')
+            verdict = ('selected' if cleared else 'not selected')
+            body += ('<tr>'
+                     f'<td class="num">{n}</td>'
+                     f'<td class="tick">{escape(str(row.get("ticker", "?")))}</td>'
+                     f'<td class="num">{fmt(row.get("probability"), ".3f")}</td>'
+                     f'<td class="num">{fmt(row.get("abstain_probability"), ".3f")}</td>'
+                     f'<td class="{"g-accent" if cleared else "g-quiet"}">{verdict}</td>'
+                     '</tr>')
+        blocks += (f'<h3 style="font-size:1rem;margin:1.5rem 0 .25rem">{side} — ranked, not selected</h3>'
+                   '<div class="scroll"><table><caption>Jev\u2019s own ordering of the names it was '
+                   'offered. A row here is NOT a pick: it is shown whether or not it beat Jev\u2019s '
+                   'own "none of these" option, and the last column says which. The probabilities are '
+                   'Jev\u2019s own numbers, not calibrated win probabilities.</caption>'
+                   '<thead><tr><th class="num">#</th><th>Name</th><th class="num">Jev probability</th>'
+                   '<th class="num">Its own abstain</th><th>Cleared its own bar?</th></tr></thead>'
+                   f'<tbody>{body}</tbody></table></div>')
+    return blocks
+
+
 def _jev_section(intra):
     """Jev's own top two per side, under DeepSeek and answering the same question.
 
@@ -480,14 +517,17 @@ def _jev_section(intra):
     if status == 'NO_OPPORTUNITY':
         return (head + kv + '<p><strong>Jev declined on both sides.</strong> Every name it was '
                 'offered came out less likely than its own "none of these" option, so nothing '
-                'is shown. A planted long and a planted short are both detected through this '
-                'exact path, so an empty result is a reading of the evidence rather than a '
-                'broken request.</p>'
-                f'<p class="note">{JEV_NOTE}</p></section>')
+                'is selected. A planted long and a planted short are both detected through this '
+                'exact path, so an empty selection is a reading of the evidence rather than a '
+                'broken request. Its ranking is shown below anyway — what it liked most on a '
+                'day it liked nothing enough.</p>'
+                + _jev_ranking(snap)
+                + f'<p class="note">{JEV_NOTE}</p></section>')
 
     missed = (versus.get('deepseek_only') or [])
     tail = ('<p class="sub" style="border:none;padding:0">DeepSeek picked, Jev did not: '
             + escape(', '.join(missed)) + '.</p>') if missed else ''
+    tail += _jev_ranking(snap)
     return (head + kv
             + '<div class="scroll"><table><caption>Probability is Jev’s own number over the '
               'option set it was given, and the abstain column is what it assigned to choosing '

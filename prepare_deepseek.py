@@ -83,8 +83,20 @@ def _public_failure(exc):
         code = 'TRANSPORT_TIMEOUT'
     else:
         code = 'TRANSPORT_ERROR'
-    return {'status': 'UNAVAILABLE', 'errorcode': code,
-            'details': type(exc).__name__[:80]}
+    # CARRY OUR OWN REASON. `details` was the exception CLASS name, so eleven
+    # names on 2026-09-21 reported "INVALID_PUBLIC_DATA" and the detail behind
+    # it was the word "ValueError" — while the raise sites below had already
+    # said RSS_CHANNEL_IDENTITY_MISMATCH, RSS_SIZE_LIMIT, INVALID_RSS_XML,
+    # UNTIMED_RSS_ITEM and so on. Those are OUR constants and they are the
+    # whole diagnosis.
+    #
+    # Only a message that looks like one of our own codes is kept. A provider
+    # exception can carry a body or a URL in its message and none of that may
+    # reach a stored report, so anything else falls back to the class name.
+    message = str(exc)
+    reason = (message if re.fullmatch(r'[A-Z][A-Z0-9_]{2,63}', message)
+              else type(exc).__name__[:80])
+    return {'status': 'UNAVAILABLE', 'errorcode': code, 'details': reason}
 
 
 def _news(ticker, now, *, clock=None):
@@ -441,10 +453,16 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
             if isinstance(fresh, dict) and fresh.get('status') == 'UNAVAILABLE':
                 failed += 1
                 code = safe_detail(fresh.get('errorcode', 'UNKNOWN'))
-                gaps.append(ticker+': headline acquisition failed: '+code)
+                # The code alone said INVALID_PUBLIC_DATA for every one of
+                # eleven names; the detail says WHICH check refused, and a
+                # channel-identity mismatch and an oversize feed need entirely
+                # different responses.
+                detail = safe_detail(str(fresh.get('details') or ''), 64)
+                gaps.append(ticker+': headline acquisition failed: '+code
+                            + (' ('+detail+')' if detail else ''))
                 prior = news.get(ticker, {})
                 news[ticker] = {**(prior if isinstance(prior, dict) else {}),
-                    'status': 'UNAVAILABLE', 'errorcode': code,
+                    'status': 'UNAVAILABLE', 'errorcode': code, 'details': detail,
                     'last_attempt_at': (stamp(clock()) if clock is not None else now).isoformat()}
                 halt_provider |= code in ('PROVIDER_RATE_LIMIT', 'PROVIDER_AUTH')
             elif fresh is not None:

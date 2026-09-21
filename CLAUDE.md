@@ -102,6 +102,60 @@ harvest, the pool and the news refresh are all skipped and the two rankings
 still get 80s and 95s — which is the whole point, since they cost ~27.5s and
 ~1.0s over 116 names.
 
+## Day112b — three failures that all reported themselves as one word
+
+2026-09-21 published on time with **78 names carrying complete technicals** (the
+day-111b daily-bar pass working — it was 38 and identical day after day before
+it), and three things underneath it were broken in the same way: the diagnosis
+existed and was thrown away at the last step.
+
+**The factor layer assessed 4 of 273 and said `INVALID_SCHEMA
+(ResponseSchemaError)`** — the class name, the one thing already known.
+TWENTY-FOUR checks raise that class, from a duplicate JSON key to a
+two-sentence rationale, and they need opposite responses: a style rule
+discarding a whole batch of names is a coverage bug, a malformed number is a
+provider bug. `details` was the hardcoded literal `'ResponseSchemaError'`, so
+every reason was computed and dropped at the one place that reports it.
+
+`schema_site(exc)` recovers the failing check FROM THE TRACEBACK and quotes the
+CONDITION, not the `raise` line (which is not a diagnosis). Automatic on
+purpose: a raise added later is named without anyone remembering to. Two checks
+are named by hand because they were a single compound `if` and could not be
+told apart — `SCORE_OUT_OF_RANGE` and `MULTI_SENTENCE_RATIONALE`, the latter a
+STYLE check that fails the entire batch on punctuation. **The validation is
+unchanged.** Naming a refusal is not loosening it.
+
+**Eleven names said `headline acquisition failed: INVALID_PUBLIC_DATA`** while
+the raise sites had already said `RSS_CHANNEL_IDENTITY_MISMATCH`,
+`RSS_SIZE_LIMIT`, `INVALID_RSS_XML`, `UNTIMED_RSS_ITEM`. `_public_failure` set
+`details` to the exception CLASS name — the word "ValueError" — and the gap
+line printed only the code. Our own SHOUTING_CODES now survive; anything else
+falls back to the class name, because a provider exception can carry a response
+body or a URL with a credential in its message and none of that may reach a
+stored report.
+
+### Jev shows its ranking every day now, and the gate still has no dial
+
+The owner asked for top picks daily. On 09-21 Jev declined both sides and the
+section rendered nothing — true, and less than it could say. `_side` returns
+`(picks, ranked, gaps)`: `ranked` is the top `RANKED_PER_SIDE` names by Jev's
+own probability WHETHER OR NOT THEY CLEARED, each carrying `cleared_gate`, and
+both renderers print it labelled as a ranking and NOT a selection.
+
+**`picks` is unchanged.** Taking the top N and filtering gives exactly the same
+selection as filtering and then taking the top N, because anything above the
+floor outranks everything below it — the same arithmetic in a different order.
+Promoting a declined name would turn "nothing beat doing nothing" into a
+recommendation, which is the one thing the gate exists to prevent, and
+`RANKED_PER_SIDE` is DISPLAY ONLY: it cannot move a name into `longs`/`shorts`,
+which is decided solely by `probability > abstain_probability` and has no
+constant at all. Day-98's side-skill family is the record of what a tunable
+number invites after a losing day.
+
+Positive controls re-verified after the change: DeepSeek CTLUP/CTLDN 0.63/0.58,
+Jev 0.79/0.54 against its own abstain, no noise name cleared, same picks as
+before.
+
 ## Day111b — the population was never roster-bound; it was warm-up bound
 
 **MEASURED: the eligible set was IDENTICAL day to day.** 09-17 and 09-18 both

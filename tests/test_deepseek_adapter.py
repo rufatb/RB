@@ -367,3 +367,69 @@ def test_sdk_cleanup_failure_remains_an_explicit_warning(monkeypatch):
     assert result['status'] == 'READY'
     assert result['close_warning'] == 'ClientCloseError'
     assert 'close-exception-must-not-leak' not in json.dumps(result)
+
+
+# ── the reason must reach the page ───────────────────────────────────────────
+# 2026-09-21: the factor layer assessed 4 of 273 staged names and the page said
+# "DeepSeek batch unavailable: INVALID_SCHEMA (ResponseSchemaError)" — the
+# class name, the one thing already known. Twenty-four checks raise that class
+# and they need different responses: a style rule discarding a batch is a
+# coverage bug, a malformed number is a provider bug.
+
+def test_the_style_check_says_it_is_a_style_check():
+    """It fails the WHOLE batch on punctuation. Reading 'score out of range'
+    for it would send a diagnosis in exactly the wrong direction."""
+    body = ('{"assessments":[{"ticker":"AA.TO","directional_lean":"BULL",'
+            '"sentiment_score":0.2,"factor_rationale":"One thing. Then another."}]}')
+    with pytest.raises(D.ResponseSchemaError) as caught:
+        D.parse_assessments(body, ['AA.TO'])
+    assert 'MULTI_SENTENCE_RATIONALE' in str(caught.value)
+    assert 'style rule' in str(caught.value)
+
+
+def test_a_bad_score_and_a_bad_rationale_are_no_longer_the_same_failure():
+    """They were one compound condition, so they raised indistinguishably."""
+    body = ('{"assessments":[{"ticker":"AA.TO","directional_lean":"BULL",'
+            '"sentiment_score":4.0,"factor_rationale":"One thing."}]}')
+    with pytest.raises(D.ResponseSchemaError) as caught:
+        D.parse_assessments(body, ['AA.TO'])
+    assert 'SCORE_OUT_OF_RANGE' in str(caught.value)
+
+
+@pytest.mark.parametrize('content,expected', [
+    ('{"assessments":[]}', 'len(rows) != len(tickers)'),
+    ('not json at all', 'except (ValueError'),
+    ('{"wrong":[]}', "set(parsed) != {'assessments'}"),
+])
+def test_an_unnamed_check_is_recovered_from_the_traceback(content, expected):
+    """Automatic on purpose: a raise added later is named without anyone
+    remembering to, which is the failure mode this exists to fix. It quotes the
+    CONDITION, not the `raise` line, which is not a diagnosis."""
+    with pytest.raises(D.ResponseSchemaError) as caught:
+        D.parse_assessments(content, ['AA.TO'])
+    site = D.schema_site(caught.value)
+    assert 'parse_assessments:' in site
+    assert expected in site
+    assert 'raise ResponseSchemaError' not in site, 'quoted the raise, not the reason'
+
+
+def test_the_reason_is_not_discarded_by_the_handler():
+    """THE BUG. `details` was the hardcoded literal 'ResponseSchemaError', so
+    every reason was computed and thrown away at the one place that reports
+    it — the same shape as the dropped cache_degraded."""
+    import inspect
+    src = inspect.getsource(D)
+    assert "details='ResponseSchemaError'" not in src
+    assert 'details=str(exc) or schema_site(exc)' in src
+
+
+def test_the_validation_itself_is_unchanged():
+    """Naming a refusal is not loosening it. Every one of these must still
+    fail the whole batch."""
+    for content in ('{"assessments":[]}',
+                    '{"assessments":[{"ticker":"ZZ.TO","directional_lean":"BULL",'
+                    '"sentiment_score":0.2,"factor_rationale":"x."}]}',
+                    '{"assessments":[{"ticker":"AA.TO","directional_lean":"SIDEWAYS",'
+                    '"sentiment_score":0.2,"factor_rationale":"x."}]}'):
+        with pytest.raises(D.ResponseSchemaError):
+            D.parse_assessments(content, ['AA.TO'])

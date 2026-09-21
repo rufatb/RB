@@ -104,3 +104,40 @@ def test_receipt_clock_can_accept_item_published_during_request(monkeypatch):
     result = S._news('RY.TO', NOW, clock=lambda: NOW+dt.timedelta(seconds=5))
     assert len(result['headlines']) == 1
     assert S.stamp(result['retrieved_at']) == NOW+dt.timedelta(seconds=5)
+
+
+# ── the refusal must name which check refused ────────────────────────────────
+# 2026-09-21: eleven names reported "headline acquisition failed:
+# INVALID_PUBLIC_DATA" and nothing else. The raise sites had already said
+# RSS_CHANNEL_IDENTITY_MISMATCH, RSS_SIZE_LIMIT, INVALID_RSS_XML,
+# UNTIMED_RSS_ITEM — and `details` overwrote all of them with the exception
+# CLASS name, the word "ValueError". A wrong feed and an oversize feed need
+# completely different responses.
+
+def test_our_own_reason_survives_into_the_report():
+    out = S._public_failure(ValueError('RSS_CHANNEL_IDENTITY_MISMATCH'))
+    assert out['errorcode'] == 'INVALID_PUBLIC_DATA'
+    assert out['details'] == 'RSS_CHANNEL_IDENTITY_MISMATCH'
+
+
+def test_an_untrusted_exception_message_is_never_stored():
+    """A provider exception can carry a response body, a URL or a query string
+    with a credential in it. None of that may reach a stored report, so
+    anything that is not one of our own SHOUTING_CODES falls back to the class
+    name."""
+    leaky = ValueError('failed for https://provider.example/v1?apikey=sk-secret')
+    out = S._public_failure(leaky)
+    assert out['details'] == 'ValueError'
+    assert 'sk-secret' not in repr(out) and 'provider.example' not in repr(out)
+
+
+def test_a_lowercase_or_punctuated_message_is_not_mistaken_for_a_code():
+    assert S._public_failure(ValueError('some prose')) ['details'] == 'ValueError'
+    assert S._public_failure(ValueError('A.B.C')) ['details'] == 'ValueError'
+
+
+def test_the_gap_line_carries_the_detail_not_just_the_code():
+    import inspect
+    src = inspect.getsource(S)
+    assert "'headline acquisition failed: '+code\n" not in src, 'the bare code is back'
+    assert "fresh.get('details')" in src

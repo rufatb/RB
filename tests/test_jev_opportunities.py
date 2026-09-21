@@ -311,3 +311,77 @@ def test_the_control_reports_detection_per_side():
         long_probs={D.CONTROL_LONG: 0.8, J.ABSTAIN: 0.2},
         short_probs={J.ABSTAIN: 1.0}))
     assert out['long_detected'] is True and out['short_detected'] is False
+
+
+# ── the ranking is shown daily; the gate is untouched ────────────────────────
+# The owner asked to see Jev's top picks EVERY day, including days it declines
+# everything — which are exactly the days the bare picks say least. The answer
+# is to show the ranking beside the verdict, never to promote a declined name
+# into the selection. `cleared_gate` is what keeps those two apart.
+
+def ranked_answer(probabilities, abstain):
+    return {'type': 'choice', 'confidence': 0.5,
+            'probabilities': {**probabilities, J.ABSTAIN: abstain}}
+
+
+def test_the_ranking_is_present_even_when_nothing_clears():
+    """THE REQUEST. A day of total abstention used to render nothing at all."""
+    picks, ranked, _ = J._side(ranked_answer({'AAA.TO': 0.20, 'BBB.TO': 0.10}, 0.70),
+                               {'AAA.TO', 'BBB.TO'})
+    assert picks == [], 'the gate must still decline these'
+    assert [r['ticker'] for r in ranked] == ['AAA.TO', 'BBB.TO']
+    assert all(r['cleared_gate'] is False for r in ranked)
+
+
+def test_every_ranked_row_says_whether_it_cleared():
+    """A table of names under a heading reads as a recommendation unless it
+    says otherwise, on every row."""
+    _, ranked, _ = J._side(ranked_answer({'AAA.TO': 0.60, 'BBB.TO': 0.10}, 0.30),
+                           {'AAA.TO', 'BBB.TO'})
+    assert [r['cleared_gate'] for r in ranked] == [True, False]
+    assert all('abstain_probability' in r for r in ranked)
+
+
+def test_the_gate_is_unchanged_by_the_reordering():
+    """Picks are now taken from the sorted list and filtered, instead of
+    filtered and then sorted. Anything above the floor outranks everything
+    below it, so the selection must be identical — this is the same arithmetic
+    in a different order, not a loosening."""
+    answer = ranked_answer({'AAA.TO': 0.50, 'BBB.TO': 0.40, 'CCC.TO': 0.05}, 0.30)
+    picks, _, _ = J._side(answer, {'AAA.TO', 'BBB.TO', 'CCC.TO'})
+    assert [p['ticker'] for p in picks] == ['AAA.TO', 'BBB.TO']
+    assert len(picks) <= J.MAX_PER_SIDE
+
+
+def test_a_name_exactly_at_its_own_abstain_does_not_clear():
+    """Strictly greater. An equal probability is not a preference."""
+    picks, ranked, _ = J._side(ranked_answer({'AAA.TO': 0.30}, 0.30), {'AAA.TO'})
+    assert picks == []
+    assert ranked[0]['cleared_gate'] is False
+
+
+def test_the_display_constant_cannot_promote_a_declined_name(monkeypatch):
+    """RANKED_PER_SIDE is display only. Turning it up shows more of the
+    ranking and must never move a name into the selection — the gate has no
+    constant at all, which is the whole point of day-98."""
+    monkeypatch.setattr(J, 'RANKED_PER_SIDE', 5)
+    picks, ranked, _ = J._side(
+        ranked_answer({f'N{i}.TO': 0.05 for i in range(5)}, 0.50),
+        {f'N{i}.TO' for i in range(5)})
+    assert picks == []
+    assert len(ranked) == 5 and all(r['cleared_gate'] is False for r in ranked)
+
+
+def test_both_renderers_print_the_ranking_and_label_it_as_not_a_pick():
+    import daily_render, report_page
+    snap = {'status': 'NO_OPPORTUNITY', 'model': 'typesafe/jev-1.13', 'considered': 78,
+            'longs': [], 'shorts': [],
+            'long_ranked': [{'ticker': 'AAA.TO', 'probability': 0.2,
+                             'abstain_probability': 0.7, 'cleared_gate': False}],
+            'short_ranked': []}
+    text = '\n'.join(daily_render.jev_summary({'jev': snap}))
+    assert 'AAA.TO' in text and '0.200' in text
+    assert 'NOT a selection' in text and 'NOT selected' in text
+    html = report_page._jev_section({'jev': snap})
+    assert 'AAA.TO' in html and 'not selected' in html
+    assert 'is NOT a pick' in html
