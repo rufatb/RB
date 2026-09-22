@@ -63,8 +63,8 @@ def test_a_mid_outside_the_bar_is_refused():
 
 def test_a_stale_bar_corroborates_nothing():
     old = NOW - dt.timedelta(hours=3)
-    v = Q.validate_equity(row(), "X.TO", NOW, currency="CAD",
-                          corroborate=lambda t: bar(ts=old))
+    v = Q.validate_equity(row(regularMarketTime=old.timestamp()), "X.TO", NOW,
+                          currency="CAD", corroborate=lambda t: bar(ts=old))
     assert v["status"] == "UNAVAILABLE"
 
 
@@ -83,7 +83,9 @@ def test_a_crossed_book_is_refused_before_corroboration_is_even_tried():
 def test_a_corroborator_that_raises_is_no_proof_not_a_crash():
     def boom(t):
         raise ConnectionError("provider down")
-    v = Q.validate_equity(row(), "X.TO", NOW, currency="CAD", corroborate=boom)
+    stale = (NOW - dt.timedelta(hours=3)).timestamp()
+    v = Q.validate_equity(row(regularMarketTime=stale), "X.TO", NOW, currency="CAD",
+                          corroborate=boom)
     assert v["status"] == "UNAVAILABLE"
 
 
@@ -91,7 +93,8 @@ def test_a_missing_or_malformed_bar_is_refused():
     for b in (None, {}, {"ts": NOW.timestamp()},
               {"ts": NOW.timestamp(), "low": 10.03, "high": 9.99},   # inverted
               {"ts": NOW.timestamp(), "low": 0, "high": 10.0}):      # nonpositive
-        v = Q.validate_equity(row(), "X.TO", NOW, currency="CAD",
+        stale = (NOW - dt.timedelta(hours=3)).timestamp()
+        v = Q.validate_equity(row(regularMarketTime=stale), "X.TO", NOW, currency="CAD",
                               corroborate=lambda t, b=b: b)
         assert v["status"] == "UNAVAILABLE", b
 
@@ -153,9 +156,56 @@ def test_accepting_corroboration_does_not_excuse_an_unavailable_quote():
     assert leg["status"] == "ABSTAIN"
 
 
-def test_both_switches_default_to_off_in_the_shipped_config():
+def test_the_sizing_switch_stays_off_in_the_shipped_config():
+    """2026-09-22: VISIBILITY was turned on — a measured spread instead of
+    "unknown" on every leg, which sizes nothing. The switch that lets a
+    CORROBORATED leg clear the abstain and carry a share count is a separate,
+    owner-level decision and stays off until it is taken."""
     import yaml
     cfg = yaml.safe_load(open("config.yaml"))
     ex = cfg.get("execution") or {}
-    assert not ex.get("corroborate_bbo")
+    assert ex.get("corroborate_bbo") is True
     assert not ex.get("accept_corroborated_bbo")
+
+
+def test_visibility_without_acceptance_still_abstains_the_leg():
+    """The pairing that makes turning visibility on safe: a CORROBORATED quote
+    with acceptance off must leave the leg ABSTAIN with no size."""
+    import inspect, execution
+    src = inspect.getsource(execution)
+    assert "if q.get('status') == CORROBORATED and accept_corr:" in src
+    assert "elif q.get('status') != 'OK':" in src
+
+
+# ── 2026-09-22: the latest stamped print must sit inside the book ────────────
+
+def test_the_rows_own_venue_stamped_last_trade_is_evidence():
+    """Yahoo's TSX minute bars are sparse; the quote row's own last trade is
+    stamped by the venue and was being ignored. With no bar at all, a fresh
+    trade inside the book still bounds the quote."""
+    v = Q.validate_equity(row(), "X.TO", NOW, currency="CAD", corroborate=lambda t: None)
+    assert v["status"] == "CORROBORATED" and "last trade" in v["corroboration"]
+
+
+def test_a_trade_through_the_ask_is_refused():
+    """RY.TO printed 286.27 against an ask of 286.20 live — the book lagged the
+    tape. That is the staleness this exists to catch."""
+    v = Q.validate_equity(row(bid=10.0, ask=10.02, regularMarketPrice=10.10), "X.TO", NOW,
+                          currency="CAD", corroborate=lambda t: None)
+    assert v["status"] == "UNAVAILABLE"
+
+
+def test_one_tick_outside_the_book_is_cross_venue_noise():
+    """Yahoo's book is single-venue, its last trade consolidated: BCE.TO 30.845
+    against an ask of 30.84. One exchange tick, not a fitted threshold."""
+    v = Q.validate_equity(row(bid=10.0, ask=10.02, regularMarketPrice=10.03), "X.TO", NOW,
+                          currency="CAD", corroborate=lambda t: None)
+    assert v["status"] == "CORROBORATED"
+    v = Q.validate_equity(row(bid=10.0, ask=10.02, regularMarketPrice=10.04), "X.TO", NOW,
+                          currency="CAD", corroborate=lambda t: None)
+    assert v["status"] == "UNAVAILABLE"
+
+
+def test_corroboration_never_returns_ok():
+    v = Q.validate_equity(row(), "X.TO", NOW, currency="CAD", corroborate=lambda t: bar())
+    assert v["status"] != "OK" and v["quote_time"] is None

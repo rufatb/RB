@@ -277,3 +277,15 @@ social:
     BCE.TO: BCE
     T.TO: T
     AC.TO: ACDVF
+
+# 09:46 entry quotes. Yahoo serves a live bid/ask with NO quote timestamp, so a
+# strict validator refuses every name every session and every leg abstains —
+# measured 2026-09-22 mid-session: all names MISSING_BBO_TIMESTAMP with no rate
+# limit involved. `corroborate_bbo` checks the unstamped book against the latest
+# VENUE-STAMPED print (the row's last trade, or a one-minute trade bar) and
+# returns CORROBORATED — never OK — when that print sits inside the book within
+# one exchange tick. Live test the same afternoon: 10 of 12 names corroborated;
+# the two refusals were crossed books.
+execution:
+  corroborate_bbo: true            # visibility: a real spread instead of "unknown"; sizes nothing
+  accept_corroborated_bbo: false   # SIZING: may a CORROBORATED leg clear the abstain? Owner's decision.

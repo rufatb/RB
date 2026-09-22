@@ -187,7 +187,9 @@ def test_worker_preserves_http_status_and_category_without_provider_text():
 
         return Q.acquire_equities_raw(Market(), ['XIU.TO'])
 
-    result = bounded.acquire({'quotes': (acquire, 1)})['quotes']
+    # 5s, not 1s: a 429 now earns one retry after a 2.5s backoff inside the
+    # 8s batch deadline, and a 1s worker would be killed mid-backoff.
+    result = bounded.acquire({'quotes': (acquire, 5)})['quotes']
     assert result['error'] == 'HTTPError'
     assert result['http_status'] == 429
     assert result['reason_code'] == 'RATE_LIMITED'

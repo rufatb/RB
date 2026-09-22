@@ -293,6 +293,17 @@ def section_quote_failure(ticker, result, *, currency=None):
     return out
 
 
+RATE_LIMIT_BACKOFF_SECONDS = 2.5
+
+
+def _rate_limited(exc):
+    status = getattr(exc, 'code', None)
+    response = getattr(exc, 'response', None)
+    if status is None and response is not None:
+        status = getattr(response, 'status_code', None)
+    return status == 429
+
+
 def _transient(exc):
     status = getattr(exc, 'code', None)
     response = getattr(exc, 'response', None)
@@ -531,7 +542,8 @@ def acquire_equities_raw(client, tickers, *, max_attempts=2, budget_seconds=8,
     existing client socket timeout is increased. Unknown injected clients must
     implement their own timeout. This cooperative deadline is not a substitute
     for brief's independent killable section budget.
-    Invalid data, authentication failures and 429 responses are never retried.
+    Invalid data and authentication failures are never retried; a 429 gets ONE
+    retry after RATE_LIMIT_BACKOFF_SECONDS, only when that fits the deadline.
     ``diagnostics`` receives safe attempt counts without changing the raw schema.
     """
     from bounded import progress
@@ -567,6 +579,19 @@ def acquire_equities_raw(client, tickers, *, max_attempts=2, budget_seconds=8,
                 if time.monotonic() >= deadline:
                     failure = TimeoutError('quote acquisition deadline exceeded')
                     break
+                if _rate_limited(exc) and attempt + 1 < max_attempts:
+                    # ONE polite retry after a rate-limit refusal, and only if
+                    # the backoff still fits inside the batch deadline. This
+                    # used to be "never retried", which is right for a scraper
+                    # and wrong for a single batched request at 09:46: on
+                    # 2026-09-22 one 429 abstained all four legs, and the whole
+                    # purpose of the minute was that one request. Two requests
+                    # a few seconds apart is not hammering a provider.
+                    if time.monotonic() + RATE_LIMIT_BACKOFF_SECONDS >= deadline:
+                        break
+                    progress('equity_acquisition_rate_limited_retry')
+                    time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
+                    continue
                 if not _transient(exc):
                     break
     finally:
@@ -732,7 +757,10 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120,
     if not fresh(ts, now, max_age):
         diagnostics = {}
         corr = (corroborate_bbo(bbo, corroborate, ticker, now, max_age,
-                               diagnostics=diagnostics) if ts is None else None)
+                               diagnostics=diagnostics,
+                               last_trade=(row.get("regularMarketPrice"),
+                                           row.get("regularMarketTime")))
+                if ts is None else None)
         out.update(diagnostics)
         if corr is not None:
             out.update(corr)
@@ -753,7 +781,13 @@ def validate_equity(row, ticker, now, *, currency=None, max_age=120,
 CORROBORATED = "CORROBORATED"
 
 
-def corroborate_bbo(bbo, corroborate, ticker, now, max_age, *, diagnostics=None):
+def tsx_tick(price):
+    """TSX minimum price increment: $0.01 at or above $0.50, else $0.005."""
+    return 0.01 if price >= 0.50 else 0.005
+
+
+def corroborate_bbo(bbo, corroborate, ticker, now, max_age, *, diagnostics=None,
+                    last_trade=None):
     """Is this unstamped bid/ask consistent with a bar that IS stamped?
 
     THE PROBLEM THIS ADDRESSES. Yahoo's /v7/finance/quote serves a usable
@@ -781,6 +815,16 @@ def corroborate_bbo(bbo, corroborate, ticker, now, max_age, *, diagnostics=None)
     """
     if corroborate is None:
         return None
+    # EVERY FRESH, STAMPED PRINT IS EVIDENCE — measured 2026-09-22. Yahoo's TSX
+    # one-minute bars are SPARSE: on a live session BCE.TO, BMO.TO and AEM.TO
+    # had empty minutes in the last two and a half, so the "last traded bar"
+    # was often older than the price had since moved, and five of six names
+    # failed while their quotes were fine. The quote row itself carries one
+    # print the venue DID stamp — the last trade, `regularMarketTime`, six
+    # seconds old in that test — and it was being ignored. A stale bid/ask
+    # still has to straddle prices that were actually printing, so adding a
+    # stamped print tightens the evidence rather than loosening the rule.
+    prints = []
     try:
         bar = corroborate(ticker)
     except Exception as exc:
@@ -788,29 +832,56 @@ def corroborate_bbo(bbo, corroborate, ticker, now, max_age, *, diagnostics=None)
         log.warning('BBO corroboration %s unavailable: %s', ticker, error_class)
         if diagnostics is not None:
             diagnostics['corroboration_error_class'] = error_class
-        return None
-    if not bar:
-        return None
-    if not isinstance(bar, Mapping):
+        bar = None
+    if bar and not isinstance(bar, Mapping):
         log.warning('BBO corroboration %s unavailable: InvalidQuoteError', ticker)
         if diagnostics is not None:
             diagnostics['corroboration_error_class'] = 'InvalidQuoteError'
+        bar = None
+    if bar:
+        low, high = number(bar.get("low"), positive=True), number(bar.get("high"), positive=True)
+        if low is not None and high is not None and low <= high and fresh(bar.get("ts"), now, max_age):
+            prints.append((low, high, bar["ts"], 'trade bar'))
+    if last_trade:
+        px, when = number(last_trade[0], positive=True), last_trade[1]
+        if px is not None and fresh(when, now, max_age):
+            prints.append((px, px, when, 'last trade'))
+    if not prints:
         return None
-    low, high = number(bar.get("low"), positive=True), number(bar.get("high"), positive=True)
-    if low is None or high is None or low > high:
-        return None
-    if not fresh(bar.get("ts"), now, max_age):
+    # THE TEST: does the LATEST stamped print sit inside the quoted book?
+    #
+    # It used to ask whether the book's MID sat inside a bar's high/low, and
+    # that fails for the wrong reason on tight books: the mid of a one-tick
+    # book is never itself a traded price, so XIU.TO (book 53.76/53.79, last
+    # trade 53.77 forty seconds earlier) was refused on a quote that was fine.
+    # Measured the same minute, RY.TO and TD.TO printed THROUGH their asks
+    # (286.27 against 286.20; 172.39 against 172.26) — the book was lagging the
+    # tape, which is exactly the staleness this exists to catch — and they are
+    # still refused. A trade-through is the standard microstructure sign of a
+    # stale quote; a mid that is not itself a price is not.
+    latest = max(prints, key=lambda p: stamp(p[2]))
+    low, high = latest[0], latest[1]
+    # ONE PRICE TICK of tolerance, and it is the exchange's minimum increment,
+    # not a number fitted to a session. Measured live on 2026-09-22 across
+    # twelve names: Yahoo's bid/ask is a SINGLE-VENUE book while its last trade
+    # is consolidated, so a print one tick outside the book (BCE.TO 30.845 vs
+    # ask 30.84; CNQ.TO 67.64 vs bid 67.65) is cross-venue noise. Prints 8-14
+    # ticks through the book (RY.TO, TD.TO, BMO.TO) are a lagging quote and are
+    # still refused. Do not widen this after a day of abstentions — iterating a
+    # validation rule against live quotes until more names pass is fitting it.
+    tick = tsx_tick(bbo[0])
+    if high < bbo[0] - tick - 1e-9 or low > bbo[1] + tick + 1e-9:
         return None
     mid = (bbo[0] + bbo[1]) / 2
-    if not (low <= mid <= high):
-        return None
+    evidence = latest[3]
     return {"status": CORROBORATED, "reason_code": CORROBORATED,
             "bid": bbo[0], "ask": bbo[1], "mark": mid,
             "quote_time": None,
-            "corroborated_at": stamp(bar["ts"]).isoformat(),
-            "corroboration": (f"unstamped BBO; mid {mid:.4f} lies inside the "
-                              f"{low:.4f}-{high:.4f} range of a trade bar "
-                              f"stamped {stamp(bar['ts']).isoformat()}"),
+            "corroborated_at": stamp(latest[2]).isoformat(),
+            "corroboration": (f"unstamped BBO {bbo[0]:.4f}/{bbo[1]:.4f} contains the "
+                              f"latest stamped print ({evidence} {low:.4f}"
+                              + (f"-{high:.4f}" if high != low else '')
+                              + f", stamped {stamp(latest[2]).isoformat()}); no trade-through"),
             "reason": "BBO has no venue timestamp; recency corroborated by a "
                       "timestamped trade bar — NOT an exchange-stamped BBO",
             "spread_bps": (bbo[1] - bbo[0]) / mid * 10000}
@@ -926,7 +997,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-def minute_bar_corroborator(timeout: float = 10.0):
+def minute_bar_corroborator(timeout: float = 3.0, budget_seconds: float = 8.0):
     """A corroborate() callable backed by /v8/finance/chart 1-minute bars.
 
     The chart endpoint needs no crumb — it is the one that kept serving through
@@ -944,10 +1015,21 @@ def minute_bar_corroborator(timeout: float = 10.0):
            "?interval=1m&range=1d")
     headers = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
 
+    # ONE DEADLINE FOR THE WHOLE BOARD. This runs sequentially inside the 09:46
+    # minute, one request per unstamped name; a 10s per-name timeout over two
+    # dozen names could outlast the minute it exists to serve. Past the
+    # deadline every remaining name is refused (TimeoutError, logged by
+    # corroborate_bbo) and falls back to the row's own stamped last trade.
+    import time as _clock
+    deadline = _clock.monotonic() + budget_seconds
+
     def corroborate(ticker):
+        left = deadline - _clock.monotonic()
+        if left <= 0:
+            raise TimeoutError('corroboration budget exhausted')
         req = urllib.request.Request(
             url.format(t=urllib.parse.quote(ticker, safe="")), headers=headers)
-        payload = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+        payload = json.loads(urllib.request.urlopen(req, timeout=min(timeout, left)).read())
         results = (payload.get("chart") or {}).get("result") or []
         if not results:
             return None
@@ -960,7 +1042,12 @@ def minute_bar_corroborator(timeout: float = 10.0):
             low, high = (q.get("low") or [None])[i], (q.get("high") or [None])[i]
             vol = (q.get("volume") or [None])[i]
             if low and high and vol:
-                return {"ts": stamps[i], "low": float(low), "high": float(high)}
+                # Yahoo stamps a bar at its START; its trades run to start+60.
+                # Freshness is about the latest trade it can contain, capped at
+                # now so an in-progress bar is never stamped in the future.
+                import time as _time
+                return {"ts": min(stamps[i] + 60, int(_time.time())),
+                        "low": float(low), "high": float(high)}
         return None
 
     return corroborate

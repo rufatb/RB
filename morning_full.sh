@@ -243,6 +243,21 @@ while [ "$(minutes_now)" -lt "$PUBLISH_AT" ]; do
     sleep 60
 done
 
+# ── 2b. STAGE THE YAHOO LOGIN before the quote window ─────────────────────
+# prepare_yahoo_auth.py existed and NOTHING ran it, so every 09:46 quote check
+# began cold: cookie bootstrap, crumb fetch, then the quote — three requests
+# from a container that had just pulled a 130-name pool, daily bars, news and
+# a biotech universe from the same provider. On 2026-09-22 the quote request
+# came back 429 and all four legs ABSTAINED on "provider rate limit reached".
+# Staged here, 09:46 makes ONE request. Failure is not fatal: the quote path
+# still bootstraps on its own, exactly as before.
+if auth_out="$(timeout 40 python prepare_yahoo_auth.py --state-dir "$RB_STATE_DIR" 2>&1)"; then
+    log "  Yahoo login staged for 09:46"
+else
+    log "  Yahoo login NOT staged — 09:46 will bootstrap cold: ${auth_out:0:200}"
+    stage_faults+=("Yahoo login not staged")
+fi
+
 # ── 3. PUBLISH ─────────────────────────────────────────────────────────────
 log "handing over to morning.sh"
 TZ=America/Toronto ./morning.sh

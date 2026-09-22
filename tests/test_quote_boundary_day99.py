@@ -45,6 +45,7 @@ def test_supplied_stale_or_future_timestamp_cannot_be_corroborated(shift):
 
 def test_failed_corroboration_is_explicit_and_does_not_leak_exception_text(caplog):
     quote=raw();quote.pop('bidAskTimestamp')
+    quote['regularMarketTime']=(NOW-dt.timedelta(hours=3)).timestamp()  # isolate the bar path
     def fail(t): raise ConnectionError('https://provider.test/?api_key=PRIVATE_TOKEN')
     out=Q.validate_equity(quote,'TRP.TO',NOW,corroborate=fail)
     assert out['corroboration_error_class']=='ConnectionError'
@@ -68,7 +69,34 @@ def test_transient_error_has_one_retry_and_preserves_success(caplog):
     assert 'PRIVATE_TOKEN' not in caplog.text
 
 
-@pytest.mark.parametrize('code', [401,403,429,400])
+def test_one_rate_limit_refusal_gets_one_polite_retry(monkeypatch):
+    """2026-09-22: one 429 at 09:46 abstained all four legs, because a 429 was
+    never retried and the quote check is ONE batched request. One retry after
+    a short backoff, inside the same deadline, is not hammering a provider."""
+    monkeypatch.setattr(Q.time, 'sleep', lambda s: None)
+    error=urllib.error.HTTPError('https://host/?key=PRIVATE_TOKEN',429,'PRIVATE_TOKEN',{},None)
+    client=Client([error])
+    out=Q.fetch_equities(client,['TRP.TO'],NOW)
+    assert client.calls==2 and out['TRP.TO']['status']=='OK'
+
+
+def test_a_persistent_rate_limit_still_stops_after_two(monkeypatch):
+    monkeypatch.setattr(Q.time, 'sleep', lambda s: None)
+    errors=[urllib.error.HTTPError('https://host/',429,'x',{},None) for _ in range(5)]
+    client=Client(errors)
+    out=Q.fetch_equities(client,['TRP.TO'],NOW)
+    assert client.calls==2 and out['TRP.TO']['status']=='UNAVAILABLE'
+    assert out['TRP.TO']['reason_code']=='RATE_LIMITED'
+
+
+def test_a_rate_limit_retry_that_cannot_fit_the_deadline_is_not_attempted(monkeypatch):
+    monkeypatch.setattr(Q.time, 'sleep', lambda s: pytest.fail('slept past the deadline'))
+    client=Client([urllib.error.HTTPError('https://host/',429,'x',{},None)])
+    out=Q.fetch_equities(client,['TRP.TO'],NOW,budget_seconds=1)
+    assert client.calls==1 and out['TRP.TO']['status']=='UNAVAILABLE'
+
+
+@pytest.mark.parametrize('code', [401,403,400])
 def test_auth_rate_limit_and_bad_request_never_retry(code):
     error=urllib.error.HTTPError('https://host/?key=PRIVATE_TOKEN',code,'PRIVATE_TOKEN',{},None)
     client=Client([error])
