@@ -240,3 +240,20 @@ def test_an_unmeasurable_small_cap_still_blocks_certification(monkeypatch):
     monkeypatch.setattr(build, 'fetch_security', fetch)
     monkeypatch.setattr(build.time, 'sleep', lambda s: None)
     assert not build.build(NOW, workers=2)['universe_complete']
+
+
+def test_a_name_with_no_volume_at_all_is_validly_bounded():
+    """AMBS had a three-month ADV of 0. The reader rejected it as 'not
+    positive' while the builder had correctly bounded it out."""
+    import datetime as dt, biotech
+    from zoneinfo import ZoneInfo
+    now = dt.datetime(2026, 9, 22, 18, tzinfo=ZoneInfo('America/New_York'))
+    days = [d for d in (now.date() - dt.timedelta(days=i) for i in range(40, 0, -1)) if d.weekday() < 5]
+    secs = [{'ticker': f'S{i:03d}', 'industry': 'Biotechnology', 'exchange': 'NMS',
+             'security_type': 'COMMON', 'currency': 'USD', 'market_cap': 1e8,
+             'market_cap_asof': now.isoformat(),
+             'daily_bars': [{'date': d.isoformat(), 'adjusted_close': 10.0, 'volume': 1e6} for d in days]}
+            for i in range(100)]
+    snap = {'as_of': now.isoformat(), 'universe_complete': True, 'securities': secs,
+            'universe_count': 101, 'eligible_count': 100, 'bounded_out': {'DEAD': 0}}
+    assert len(biotech.select_universe(snap, now)) == 100

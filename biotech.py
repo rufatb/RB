@@ -111,7 +111,9 @@ def select_universe(snapshot, now):
             raise ValueError("bounded universe without 100 measured names")
         floor = rows[99]["adv20"]
         for t, adv63 in bounded.items():
-            if number(adv63, positive=True) is None or 63/20*adv63 >= floor:
+            # Non-negative, not positive: a name with NO volume in three months
+            # (AMBS, 2026-09-22) is the clearest case of all, not an invalid one.
+            if number(adv63) is None or adv63 < 0 or 63/20*adv63 >= floor:
                 raise ValueError("bound does not hold for " + t)
     # One rank fewer per unmeasurable large cap (see build_biotech): each could
     # only displace the bottom of the top-100, never appear in the monitor.
