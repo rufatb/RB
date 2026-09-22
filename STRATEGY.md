@@ -5179,3 +5179,36 @@ are development examples, not untouched confirmation. Accuracy/P&L improvement
 and numerical MDE remain UNAVAILABLE pending the registered matched forward
 sample, costs, uncertainty and confirmation. A synthetic API/schema success
 proves neither alpha nor future provider availability. See the day102 audit.
+
+## Day-113: REJECTION #42 — a volatility-scaled gap as a same-session signal
+
+Registered at `62412f1` (`PREREGISTER_day113_scaled_gap.md`) before any
+analysis; run by `validate_scaled_gap.py`; result in `data/day113_scaled_gap.json`.
+
+The question existed because day-113 began sending both models `gap_atr` and
+telling them a gap is only large relative to the name's normal move. That is
+arithmetic. Whether a large scaled gap says anything about the SAME session's
+direction had never been tested here.
+
+TSX daily bars 2016-10 → 2026-09, gap in units of the prior 20-session sd,
+`|g| >= 1`, open-to-close proxy, 1,318 sessions:
+
+| | mean `sign(g) × intraday` | session-clustered t |
+|---|---:|---:|
+| full sample | **+0.139%** (continuation) | **2.63** |
+| Q1 2016-10 → 2019-04 | +0.047% | 0.52 |
+| Q2 2019-04 → 2021-11 | +0.084% | 0.69 |
+| Q3 2021-11 → 2024-04 | +0.206% | 2.20 |
+| Q4 2024-04 → 2026-09 | +0.221% | 1.89 |
+
+Placebo p = 0.0035 (2,000 random-sign draws); beats a 10 bp cost; the planted
++0.10 sd continuation was detected at **t = 5.20**, so this is a POWERED result.
+It fails ONE check: `|t| >= 3.0`. **REJECTED, and the bar does not move.**
+
+What it is honest to say: the sign is the same in all four quarters and the
+effect is concentrated in the last two, which is the shape of either a real
+recent drift or a window. It is exactly the kind of result that tempts a
+re-test with a friendlier threshold after a good week — do not. The models are
+told a scaled gap is CONTEXT, not a signal, and nothing is wired into selection,
+sizing, the board or the email. Rejections now number **42** against **3**
+adoptions.

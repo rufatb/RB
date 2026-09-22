@@ -1,0 +1,65 @@
+{
+ "registration": "PREREGISTER_day113_scaled_gap.md",
+ "rows": 52000,
+ "qualifying_rows": 3642,
+ "names": 21,
+ "span": [
+  "2016-10-04",
+  "2026-09-09"
+ ],
+ "full": {
+  "mean": 0.13917166269973932,
+  "t": 2.6253881479781818,
+  "sessions": 1318
+ },
+ "quarters": [
+  {
+   "from": "2016-10-04",
+   "to": "2019-04-02",
+   "mean": 0.04702809186470629,
+   "t": 0.521700986401721,
+   "sessions": 330
+  },
+  {
+   "from": "2019-04-09",
+   "to": "2021-11-10",
+   "mean": 0.08350974627148466,
+   "t": 0.6947739532400522,
+   "sessions": 330
+  },
+  {
+   "from": "2021-11-11",
+   "to": "2024-04-16",
+   "mean": 0.20550331893199947,
+   "t": 2.200670355717975,
+   "sessions": 329
+  },
+  {
+   "from": "2024-04-17",
+   "to": "2026-09-08",
+   "mean": 0.22109475053095917,
+   "t": 1.888912922334437,
+   "sessions": 329
+  }
+ ],
+ "placebo": {
+  "draws": 2000,
+  "p_two_sided": 0.0035,
+  "p99_5_abs": 0.1360463264778111
+ },
+ "positive_control": {
+  "edge_sd": 0.1,
+  "mean": 0.27539381238364746,
+  "t": 5.201006829034855,
+  "sessions": 1318
+ },
+ "checks": {
+  "t_at_least_3": false,
+  "same_sign_all_four_quarters": true,
+  "placebo_p_below_0.01": true,
+  "beats_10bp_cost": true,
+  "positive_control_detected": true
+ },
+ "verdict": "REJECTED \u2014 a powered negative: failed t_at_least_3",
+ "proxy": "open-to-close daily bars; sd20 of close-to-close returns, not a true ATR"
+}
