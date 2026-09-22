@@ -136,6 +136,19 @@ else
         stage_faults+=("intraday cache skipped: staging budget exhausted")
     fi
 
+    # The evening job certifies the universe and commits it COMPRESSED
+    # (data/biotech_snapshot.json is gitignored, so an evening build never
+    # used to reach this container). Unpack it; the build below then skips.
+    if [ -f data/biotech_snapshot.json.gz ]; then
+        if gunzip -c data/biotech_snapshot.json.gz > data/biotech_snapshot.json.tmp 2>/dev/null; then
+            mv data/biotech_snapshot.json.tmp data/biotech_snapshot.json
+            log "  biotech universe: evening snapshot unpacked"
+        else
+            rm -f data/biotech_snapshot.json.tmp
+            log "  biotech universe: evening snapshot UNREADABLE — rebuilding below"
+        fi
+    fi
+
     # Exits 2 on an incomplete universe, which is a real partial, not a crash.
     if budget="$(slice 900 540)"; then
         # Built the EVENING BEFORE by the bridge session (1,005 names do not fit
