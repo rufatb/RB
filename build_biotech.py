@@ -88,6 +88,18 @@ def fetch_security(row, now):
           for i,r in frame.iterrows()]
     if [r['date'] for r in bars[-20:]]!=expected:
         raise ValueError('ADV20 history missing exchange sessions or wrong interval')
+    # A NaN from the provider is a measurement FAILURE for this name — retried
+    # once at the end like any other — never a value written to the snapshot.
+    # 2026-09-22: one non-finite field killed a 1,005-name build at name 150,
+    # because the snapshot writer (rightly) refuses non-finite JSON.
+    import math
+    finite=lambda x: isinstance(x,(int,float)) and not isinstance(x,bool) and math.isfinite(x)
+    if not all(finite(b['adjusted_close']) and finite(b['volume']) for b in bars):
+        raise ValueError('non-finite price or volume from provider')
+    if not finite(info.get('marketCap')):
+        raise ValueError('non-finite or missing market cap from provider')
+    if info.get('shortPercentOfFloat') is not None and not finite(info.get('shortPercentOfFloat')):
+        info['shortPercentOfFloat']=None
     short_time=info.get('dateShortInterest')
     # No guessed borrow fee. Its absence remains unknown in the crowding vote.
     return {'ticker':t,'company':info.get('longName',t),'industry':info['industry'],

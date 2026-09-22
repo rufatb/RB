@@ -411,6 +411,7 @@ def _opportunities_section(intra):
               '<th class="num">Engine sided</th><th>Do they agree?</th>'
               '<th>Why — the model\'s words, not verified fact</th></tr></thead>'
             + f"<tbody>{_opportunity_rows(snap)}</tbody></table></div>"
+            + _exposure(snap, 'DeepSeek')
             + tail + f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
 
 
@@ -446,6 +447,13 @@ def _jev_rows(snap):
                     f'<td>{escape(str(seen.get("verdict") or ""))}</td>'
                     '</tr>')
     return out
+
+
+def _exposure(snap, model):
+    """One bet written twice, stated where the picks are (frozen by brief)."""
+    import exposure
+    return ''.join(f'<ul class="gaps"><li class="g-caution">{escape(exposure.line(g, model))}</li></ul>'
+                   for g in (snap or {}).get('shared_exposure') or [])
 
 
 def _jev_ranking(snap):
@@ -571,13 +579,13 @@ def _jev_section(intra):
                 'exact path, so an empty selection is a reading of the evidence rather than a '
                 'broken request. Its ranking is shown below anyway — what it liked most on a '
                 'day it liked nothing enough.</p>'
-                + _jev_ranking(snap) + _jev_forced(snap)
+                + _exposure(snap, 'Jev') + _jev_ranking(snap) + _jev_forced(snap)
                 + f'<p class="note">{JEV_NOTE}</p></section>')
 
     missed = (versus.get('deepseek_only') or [])
     tail = ('<p class="sub" style="border:none;padding:0">DeepSeek picked, Jev did not: '
             + escape(', '.join(missed)) + '.</p>') if missed else ''
-    tail += _jev_ranking(snap) + _jev_forced(snap)
+    tail += _exposure(snap, 'Jev') + _jev_ranking(snap) + _jev_forced(snap)
     return (head + kv
             + '<div class="scroll"><table><caption>Probability is Jev’s own number over the '
               'option set it was given, and the abstain column is what it assigned to choosing '

@@ -470,6 +470,15 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             jev_evidence, opportunity_evidence)
     except Exception as exc:
         error('jev_comparison', RuntimeError(type(exc).__name__))
+    # One bet written down twice is disclosed here, once, from the committed
+    # sector map — so both renderers print the same line and neither computes it.
+    try:
+        import exposure
+        sectors = exposure.load_sectors()
+        for evidence in (opportunity_evidence, jev_evidence):
+            evidence['shared_exposure'] = exposure.shared_exposure(evidence, sectors)
+    except Exception as exc:
+        error('model_exposure', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),

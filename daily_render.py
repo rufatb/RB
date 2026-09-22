@@ -354,6 +354,9 @@ def opportunities_summary(intra, *, concise=False):
                          f"{fmt(confidence, '.2f')} — {safe_detail(verdict, 60)}. "
                          f"{safe_detail(matched.get('reason') or row.get('reason') or '', 160)}"
                          + claim)
+    import exposure
+    for group in snap.get('shared_exposure') or []:
+        lines.append('⚠ ' + exposure.line(group, 'DeepSeek'))
     if comparison.get('rows'):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "
@@ -434,6 +437,9 @@ def jev_summary(intra, *, concise=False):
                          + (f" vs abstain {fmt(floor, '.3f')}" if floor is not None else '')
                          + f' — {verdict}.')
         lines.append(safe_detail(snap.get('forced_label') or '', 700))
+    import exposure
+    for group in snap.get('shared_exposure') or []:
+        lines.append('⚠ ' + exposure.line(group, 'Jev'))
     if versus.get('rows'):
         lines.append(f"Cross-model: {versus.get('agree', 0)} agreed, {versus.get('oppose', 0)} "
                      f"contradicted, {versus.get('alone', 0)} picked by Jev alone.")
