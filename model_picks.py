@@ -66,6 +66,13 @@ def rows_from_report(report, source='published_report'):
                                                     pick.get('gated_abstain_probability')),
                     'invalid_at': pick.get('invalid_at'), 'source': source, **extra})
 
+    # THE ENGINE ON THE SAME YARDSTICK. Its own ledger scores against the
+    # official close; recording its board here too lets the leaderboard compare
+    # every source with one scorer, one entry bar and one exit bar.
+    for leg in intra.get('legs') or []:
+        if leg.get('side') in ('LONG', 'SHORT'):
+            add('engine', 'board', leg['side'], {'ticker': leg.get('ticker'),
+                                                 'confidence': leg.get('p_sided')})
     ds = intra.get('opportunities') or {}
     if ds.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):

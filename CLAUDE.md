@@ -1,5 +1,32 @@
 # Working notes for this repo
 
+## Day113b — Part 1's headline is DeepSeek's board, by the owner's decision
+
+The owner recorded the engine's boards and asked for the section to be
+replaced: 2026-09-22 went **0 for 4 at -1.56% per pick**, 09-21 2/4. Under the
+hood it is a k-NN over three opening features (gap, 09:30-09:45 return, volume
+participation), and its OWN research says what that earns: 809 walk-forward legs
+at 50.1% and -0.005% per leg, capture falling as the bar rises; live 48.6% over
+107 legs with win/loss 0.92. A 0/4 day is what a coin flip produces one day in
+sixteen. It is demoted, not deleted: still computed, still in the ledger, and a
+row on the leaderboard.
+
+`primary_board.py` builds the headline from DeepSeek's SELECTED picks under the
+ENGINE'S rules — venue-OK or CORROBORATED quote (owner turned
+`accept_corroborated_bbo` on the same day), eligible clock, no size on ABSTAIN —
+sized as an equal split of the engine's book. The picks' tickers ride in the one
+09:46 quote request (`staged_tickers`, a pure file read). `subject_state` and the
+email hero now describe the HEADLINE board: computed from the demoted one, the
+subject could say DO NOT TRADE over sized legs or stay neutral over abstained ones.
+
+**The owner's premise was not borne out by the verifiable record, and they were
+told so.** On one yardstick (09:45 bar close to session close) DeepSeek was 3/8
+at -0.66% and the engine 3/12 at -0.63% — both losing, neither distinguishable
+from chance. `model_picks.csv` now records the ENGINE too (`engine/board`), so
+the leaderboard compares every source with one scorer. It is printed in Part 1
+every day. Do not promote or demote a source on a handful of sessions: the
+intervals say how little they resolve.
+
 ## Day113 — why every section was empty or abstained, measured one by one
 
 The owner asked for "a real product … every section, every morning, without
@@ -16,8 +43,9 @@ corroborate, the refusals were crossed books, and names trading 8–14 ticks
 through their asks are refused — which is the staleness it exists to catch.
 Yahoo's book is SINGLE-VENUE while its last trade is consolidated, hence the
 one-tick tolerance. **Do not widen it after a bad day.**
-`corroborate_bbo: true` (visibility; sizes nothing). **`accept_corroborated_bbo`
-stays false — whether a corroborated leg may carry a size is the owner's call.**
+`corroborate_bbo: true` (visibility) and — by the owner's explicit decision
+later the same day — `accept_corroborated_bbo: true`: a CORROBORATED leg may
+carry a share count. Its status column still says CORROBORATED-derived.
 Also: `prepare_yahoo_auth.py` existed and nothing ran it (staged at 09:44 now),
 and a 429 gets one polite retry when it fits the deadline.
 

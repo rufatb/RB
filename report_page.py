@@ -449,6 +449,64 @@ def _jev_rows(snap):
     return out
 
 
+def _primary_section(intra):
+    """Part 1's headline (owner decision 2026-09-22): the primary source's picks,
+    sized under the engine's own rules, and every source's scored record."""
+    import exposure
+    p = intra.get('primary')
+    if not p:
+        return ''
+    src = escape(str(p.get('source') or 'DeepSeek'))
+    html = f'<h3 style="font-size:1.1rem;margin:1rem 0 .25rem">Today\u2019s picks — {src} (primary source)</h3>'
+    if not p.get('legs'):
+        html += (f'<p><strong>No primary picks today:</strong> {escape(str(p.get("reason") or "unavailable"))}. '
+                 'The baseline engine below is shown for comparison only.</p>')
+    else:
+        rows = ''
+        for l in p['legs']:
+            abstain = l['status'] == 'ABSTAIN'
+            wrong = (f'{"below" if l["side"] == "LONG" else "above"} {fmt(l.get("invalid_at"))}'
+                     if isinstance(l.get('invalid_at'), (int, float)) else '&mdash;')
+            rows += ('<tr>'
+                     f'<td><span class="status">{escape(l["status"])}</span></td>'
+                     f'<td class="tick">{escape(l["ticker"])}</td><td>{escape(l["side"])}</td>'
+                     f'<td class="num">{fmt(l.get("entry_reference"))} {escape(str(l.get("currency") or ""))}</td>'
+                     f'<td class="num">{fmt(l.get("entry_spread_bps"), ".1f")}</td>'
+                     f'<td class="num">{fmt(l.get("confidence"))}</td>'
+                     f'<td class="num{" withheld" if abstain else ""}">'
+                     f'{"&mdash;" if abstain else escape(str(l["baseline_shares"]))}</td>'
+                     f'<td>{wrong}</td></tr>')
+            if abstain and l.get('reasons'):
+                rows += (f'<tr class="reason"><td></td><td colspan="7">'
+                         f'{escape("; ".join(l["reasons"]))}</td></tr>')
+        html += ('<div class="scroll"><table><caption>Confidence is the model\u2019s own number, not a '
+                 'calibrated probability. Shares are a hypothetical equal split of the engine\u2019s '
+                 'book in each listing\u2019s currency; an ABSTAIN row carries no size. "Wrong if" is '
+                 'the model\u2019s own invalidation level, scored after the close — not a stop.</caption>'
+                 '<thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:46 price</th>'
+                 '<th class="num">Spread bps</th><th class="num">Confidence</th><th class="num">Shares</th>'
+                 f'<th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>')
+        html += ''.join(f'<ul class="gaps"><li class="g-caution">{escape(exposure.line(g, p.get("source", "DeepSeek")))}</li></ul>'
+                        for g in p.get('exposure') or [])
+    board = p.get('leaderboard') or []
+    if board:
+        body = ''
+        for r in board:
+            if not r['picks']:
+                body += f'<tr><td>{escape(r["source"])}</td><td colspan="4" class="empty">not yet scored</td></tr>'
+                continue
+            lo, hi = r['ci95']
+            body += (f'<tr><td>{escape(r["source"])}</td><td class="num">{r["hits"]}/{r["picks"]} '
+                     f'({r["rate"]:.0%})</td><td class="num">{r["mean_r_pct"]:+.2f}%</td>'
+                     f'<td class="num">{r["sessions"]}</td><td class="num">{lo:.0%}–{hi:.0%}</td></tr>')
+        html += ('<div class="scroll"><table><caption>Every source on one yardstick: 09:45 bar close to '
+                 'session close, no spread or cost. An interval containing 50% is a coin flip, whichever '
+                 'source it belongs to.</caption><thead><tr><th>Source</th><th class="num">Right</th>'
+                 '<th class="num">Mean per pick</th><th class="num">Sessions</th>'
+                 f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div>')
+    return html
+
+
 def _exposure(snap, model):
     """One bet written twice, and the model's scored record (both frozen by brief)."""
     import exposure
@@ -772,6 +830,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
   <section>
     <h2 class="head">Part 1 · Intraday</h2>
     <p class="sub">{escape(str(intra.get('contract','')))} · signal reference is the 09:45 completed bar</p>
+    {_primary_section(intra)}
+    {'<h3 style="font-size:1.1rem;margin:2rem 0 .25rem">Baseline engine (k-NN) — comparison only</h3><p class="note">No demonstrated edge: 809 walk-forward legs at 50.1%, live 48.6% over 107. Kept on the record and on the leaderboard; no longer the headline.</p>' if intra.get('primary') else ''}
     <p>{escape(str(intra.get('model_claim','')))}</p>
     <div class="scroll"><table>
       <thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:45 bar</th>

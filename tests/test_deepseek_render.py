@@ -94,9 +94,13 @@ def test_old_publication_without_factor_key_acquires_no_new_section():
     d=brief.build(now=NOW,services=services())
     d['intraday'].pop('deepseek',None)
     d['intraday'].pop('opportunities',None)
+    # An old publication predates the day-113b headline board as well; that
+    # key obeys the same rule, and is stripped here for the same reason.
+    d['intraday'].pop('primary',None)
     d['readiness']=readiness.assess(d)
     assert 'DeepSeek' not in brief.render_text(d)
     assert 'DeepSeek' not in email_render.text(d)
+    assert email_render.primary_lines(d['intraday']) == []
     assert daily_render.deepseek_summary(d['intraday'])==[]
     assert daily_render._opportunities_detail(d['intraday'])==[]
 

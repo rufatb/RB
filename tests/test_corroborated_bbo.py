@@ -156,16 +156,16 @@ def test_accepting_corroboration_does_not_excuse_an_unavailable_quote():
     assert leg["status"] == "ABSTAIN"
 
 
-def test_the_sizing_switch_stays_off_in_the_shipped_config():
-    """2026-09-22: VISIBILITY was turned on — a measured spread instead of
-    "unknown" on every leg, which sizes nothing. The switch that lets a
-    CORROBORATED leg clear the abstain and carry a share count is a separate,
-    owner-level decision and stays off until it is taken."""
+def test_both_switches_are_on_by_the_owners_decision():
+    """2026-09-22: visibility first (a measured spread instead of "unknown"),
+    then — as a separate, explicit owner decision the same day — acceptance:
+    a CORROBORATED leg may clear the abstain and carry a share count. Both are
+    pinned so neither can drift on or off without a visible change here."""
     import yaml
     cfg = yaml.safe_load(open("config.yaml"))
     ex = cfg.get("execution") or {}
     assert ex.get("corroborate_bbo") is True
-    assert not ex.get("accept_corroborated_bbo")
+    assert ex.get("accept_corroborated_bbo") is True
 
 
 def test_visibility_without_acceptance_still_abstains_the_leg():

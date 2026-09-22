@@ -288,4 +288,8 @@ social:
 # the two refusals were crossed books.
 execution:
   corroborate_bbo: true            # visibility: a real spread instead of "unknown"; sizes nothing
-  accept_corroborated_bbo: false   # SIZING: may a CORROBORATED leg clear the abstain? Owner's decision.
+  # SIZING: may a CORROBORATED leg clear the abstain and carry a share count?
+  # OWNER DECISION 2026-09-22: yes. The quote is recency-BOUNDED by a venue-
+  # stamped trade inside the book within one tick, not venue-certified; the
+  # status column says CORROBORATED on every such leg so the difference shows.
+  accept_corroborated_bbo: true

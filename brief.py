@@ -176,6 +176,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         tickers = set(cfg.get('scan',{}).get('universe',[])) | {'XIU.TO'}
         tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
+        # The primary board's names ride in the SAME request: they are staged
+        # pre-open, so they are known now, and a second quote round-trip at
+        # 09:46 is exactly what the rate limit punishes.
+        import primary_board
+        tickers |= primary_board.staged_tickers(state_dir, now)
         tasks = {'equity_quotes': (lambda: quotes_mod.acquire_equities_raw(
             market_client(state_dir=state_dir), sorted(tickers), budget_seconds=8), 10)}
         if not recorded_today and not ledger_status['selection_blocked'] and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
@@ -225,6 +230,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
     tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
     tickers.add('XIU.TO')
+    try:
+        import primary_board
+        tickers |= primary_board.staged_tickers(state_dir, now)
+    except Exception as exc:
+        error('primary_board_tickers', RuntimeError(type(exc).__name__))
     quotes = {}
     if not no_net and clock['status'] != 'CLOSED':
         try:
@@ -492,6 +502,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             model_picks.scorecard_line(card, 'jev_forced', 'Jev (forced)')]
     except Exception as exc:
         error('model_track_record', RuntimeError(type(exc).__name__))
+    # PART 1'S HEADLINE (owner decision 2026-09-22): the primary source's picks,
+    # sized under the engine's own eligibility rules, beside a leaderboard that
+    # scores every source on one yardstick. Built AFTER the final clock check,
+    # so a late assembly abstains the headline exactly as it abstains the engine.
+    primary = {'source': 'DeepSeek', 'status': 'UNAVAILABLE', 'legs': [],
+               'reason': 'primary board not assembled'}
+    try:
+        import primary_board, model_picks
+        primary = primary_board.build(opportunity_evidence, quotes, cfg, clock, shadow)
+        primary['exposure'] = opportunity_evidence.get('shared_exposure') or []
+        primary['leaderboard'] = primary_board.leaderboard(model_picks.scorecard())
+    except Exception as exc:
+        error('primary_board', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -501,7 +524,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                             'biotech_source':'independent staged evidence feed'},
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
-              'intraday':{'res':res,'legs':legs,'record':record,'publish':pub,
+              'intraday':{'res':res,'legs':legs,'primary':primary,'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
