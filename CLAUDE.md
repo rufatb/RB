@@ -1,5 +1,60 @@
 # Working notes for this repo
 
+## Day112d — the forced pick was computed, sealed to disk, and dropped by the reader
+
+2026-09-22 was the first morning the forced Jev question ran in production. The
+page printed *"Its ranking is shown below anyway"* **above nothing at all**, and
+the email said only that Jev declined. `rank()` computed `long_ranked`,
+`short_ranked`, `forced_long` and `forced_short`; `stage()` sealed all four into
+the snapshot; **`load_prepared` rebuilt the result dict without them.** Same
+shape as the dropped `cache_degraded` (110c) and the hardcoded
+`'ResponseSchemaError'` (112b): the answer existed and was thrown away at the
+one place that reports it.
+
+Every renderer test drove `_jev_ranking` / `_jev_forced` from a hand-built dict,
+so **the one seam that loses the data was the one seam nothing crossed.** The
+new tests go through the real `stage` → `load_prepared` round trip, and the old
+`poster` fixture answered only the two GATED questions — it never produced a
+forced pick to drop. `full_poster` answers all four.
+
+`_ranked` and `_forced_staged` revalidate against the snapshot's own universe
+and **RECOMPUTE `cleared_gate` and `cleared_gated_abstain`** rather than reading
+them. That is the one field a reader must never take on trust: it is the
+difference between a ranking and a recommendation and it costs one comparison.
+Both defects were reintroduced and both sets of tests failed.
+
+A snapshot staged before the forced question existed carries neither key, and
+the reader does not invent them — NOT ASKED and ASKED-AND-FAILED stay different
+facts, which is what 112c's renderer fix depends on.
+
+### A model-mediated send cannot carry a large attachment — MEASURED 2026-09-22
+
+The connector's `attachments[].content` is base64 the SENDING AGENT emits as
+tool input. The full report is ~348 KB → **~464 KB of base64**, far past any
+single tool call. `ROUTINE_PROMPT.md` STEP 7 said "paste the exact contents of
+the `.b64` file"; **that instruction was unrunnable from the day it was
+written.** The session that hit it sent no `attachments` array at all — the
+right call, made invisibly, over a body that still read "attached HTML report".
+
+`prepare()` now splits `attachments` from `unsendable_attachments` at
+`MAX_SENDABLE_BASE64`, and when anything is unsendable it **appends a labelled
+delivery note** to `report.txt`/`report.html` naming the missing file and the
+published copy. The frozen publication is not rewritten — the correction is an
+addition, attributed to the sender. The `.b64` file is still written: a sender
+with a real file handle can attach it, so this is a property of the SENDER, not
+of the report.
+
+### The bridge is not a delivery channel while it blocks on a permission prompt
+
+The 09:05 Routine published correctly at 09:46:09 and wrote all four
+`delivery/` files to the artifact — STEP 6 worked on its first production run.
+The 13:55Z bridge then composed the right message and **stopped on an unanswered
+`mcp__Gmail__send_message` permission prompt**, where it sat until a human
+looked. `last_run` read SUCCEEDED, because that records the wake being
+delivered, not the turn. Same failure as the silent SMTP guard: reported
+nothing wrong, delivered nothing. A bridge that needs a human to approve the
+send is not an autonomous channel and must not be described as one.
+
 ## Day112 — the email was never sent, and the run reported SUCCEEDED anyway
 
 **The deliveries table was EMPTY for every session ever published.** Not a

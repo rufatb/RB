@@ -121,3 +121,53 @@ def test_the_subject_is_written_to_a_file_for_a_sender_in_another_container(stat
     written = pathlib.Path(out['subject_path']).read_text()
     assert written == out['subject']
     assert 'RB Daily Report' in written
+
+
+# ── the attachment a model-mediated send cannot carry (2026-09-22) ───────────
+
+def test_an_attachment_too_large_to_paste_is_refused_before_the_send(state, monkeypatch):
+    """MEASURED 2026-09-22: the full report is ~348 KB, i.e. ~464 KB of base64,
+    and the sending agent has to emit every one of those characters as tool
+    input. The instruction to paste the .b64 file verbatim was unrunnable from
+    the day it was written; the session that hit it sent no attachments array
+    at all and said nothing, which is the right call made invisibly.
+
+    So the refusal happens HERE, before the send, where it can be reported."""
+    directory, session = state
+    monkeypatch.setattr(G, 'MAX_SENDABLE_BASE64', 10)
+    out = G.prepare(directory, session, directory + '/dispatch')
+    assert out['attachments'] == []
+    assert out['unsendable_attachments'], 'the oversized attachment was not named'
+    assert any('ATTACHMENT NOT SENDABLE' in g for g in out['gaps'])
+    # The file is still written: a sender with a real file handle can attach it.
+    assert open(out['unsendable_attachments'][0]['base64_path']).read()
+
+
+def test_the_body_stops_promising_an_attachment_that_cannot_be_sent(state, monkeypatch):
+    """The frozen body says "attached HTML report". With no attachment that
+    sentence is false, and a false sentence in the record is worse than a
+    missing file. The publication is NOT rewritten — the note is appended and
+    labelled as the sender's addition."""
+    directory, session = state
+    monkeypatch.setattr(G, 'MAX_SENDABLE_BASE64', 10)
+    out = G.prepare(directory, session, directory + '/dispatch')
+    text = open(out['text_path']).read()
+    html = open(out['html_path']).read()
+    for body in (text, html):
+        assert 'DELIVERY NOTE' in body
+        assert G.ARTIFACT_URL in body
+        assert G.PUBLISHED_FULL_REPORT in body
+    assert 'not part of the frozen report' in text.lower()
+    assert html.index('DELIVERY NOTE') < html.index('Part 1'), 'the note must lead'
+
+
+def test_an_attachment_that_fits_is_still_sent_and_no_note_is_added(state):
+    """The refusal must be a size decision, not a blanket one: on a small
+    report the attachment still goes, and a note about a missing attachment
+    would then be a lie in the other direction."""
+    directory, session = state
+    out = G.prepare(directory, session, directory + '/dispatch')
+    if not out['attachments']:
+        pytest.skip('the fixture report is itself over the real limit')
+    assert out['unsendable_attachments'] == [] and out['gaps'] == []
+    assert 'DELIVERY NOTE' not in open(out['text_path']).read()

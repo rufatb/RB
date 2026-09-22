@@ -35,6 +35,7 @@ import base64
 import datetime as dt
 import json
 import os
+from html import escape
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -42,6 +43,57 @@ import prepare_delivery
 from report_store import Store
 
 ET = ZoneInfo('America/New_York')
+
+
+# A MODEL-MEDIATED SEND CANNOT CARRY A LARGE ATTACHMENT, measured 2026-09-22.
+# The connector's `attachments[].content` is base64 that the SENDING AGENT has
+# to emit as tool input, token by token. The full report is ~348 KB, i.e. ~464 KB
+# of base64 — far past any single tool call. The instruction to "paste the exact
+# contents of the .b64 file" was unrunnable from the day it was written, and the
+# session that hit it silently sent no attachments array at all, which is the
+# right call made invisibly. This threshold makes the refusal explicit and
+# BEFORE the send, so the body can stop promising an attachment that cannot come.
+MAX_SENDABLE_BASE64 = 100_000
+
+# Where the full report actually is when it cannot be attached. It is published
+# as a file on the owner's page by the same morning run, so this is not a
+# consolation link: it is the same bytes, addressed differently.
+ARTIFACT_URL = os.environ.get(
+    'RB_ARTIFACT_URL', 'https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9')
+PUBLISHED_FULL_REPORT = 'delivery/full_report.html'
+
+
+def _unattachable_note(items):
+    """Plain-text note naming what is missing and where it is instead.
+
+    The frozen body says "Full board, sources and diagnostics: attached HTML
+    report." With no attachment that sentence is false, and a false sentence in
+    the record is worse than a missing file. The frozen text is NOT rewritten —
+    it is the publication — so the correction is appended and labelled as an
+    addition by the sender."""
+    names = ', '.join(sorted(i['filename'] for i in items))
+    return ('\n\n' + '-'*70 + '\n'
+            'DELIVERY NOTE — added by the sending session, NOT part of the frozen report.\n'
+            'The report above says "attached HTML report". THERE IS NO ATTACHMENT ON\n'
+            'THIS MESSAGE. %s is too large for this delivery path to carry.\n'
+            'The full report is published in full, unchanged, at:\n'
+            '  %s\n  (file: %s)\n'
+            'Every number above is the frozen publication and is untouched.\n'
+            % (names, ARTIFACT_URL, PUBLISHED_FULL_REPORT) + '-'*70 + '\n')
+
+
+def _unattachable_html(items):
+    names = escape(', '.join(sorted(i['filename'] for i in items)))
+    return ('<div style="border:2px solid #8a5f19;background:#f7efe0;padding:14px 16px;'
+            'margin:18px 0"><p style="margin:0 0 8px;font-weight:700;color:#6b4a14">'
+            'DELIVERY NOTE — added by the sending session, not part of the frozen report'
+            '</p><p style="margin:0;line-height:1.55">The report says &quot;attached HTML '
+            'report&quot;. <strong>There is no attachment on this message.</strong> %s is too '
+            'large for this delivery path to carry. The full report is published in full, '
+            'unchanged, at <a href="%s">%s</a> (file <code>%s</code>). Every number below is '
+            'the frozen publication and is untouched.</p></div>'
+            % (names, escape(ARTIFACT_URL), escape(ARTIFACT_URL),
+               escape(PUBLISHED_FULL_REPORT)))
 
 
 def message_key(session):
@@ -74,17 +126,36 @@ def prepare(state_dir, session, output_dir, *, now=None):
     # `subject_state` derives from the frozen report, and a sender that builds
     # its own subject is a second, drifting implementation of that rule.
     (Path(output_dir)/'subject.txt').write_text(payload['subject'])
-    attachments = []
+    attachments, unsendable = [], []
     for item in payload['attachments']:
         path = Path(output_dir)/(item['filename'] + '.b64')
-        path.write_text(base64.b64encode(item['content'].encode()).decode())
-        attachments.append({'filename': item['filename'], 'mime_type': item['mime_type'],
-                            'base64_path': str(path)})
+        encoded = base64.b64encode(item['content'].encode()).decode()
+        path.write_text(encoded)
+        row = {'filename': item['filename'], 'mime_type': item['mime_type'],
+               'base64_path': str(path), 'base64_chars': len(encoded),
+               'sendable': len(encoded) <= MAX_SENDABLE_BASE64}
+        (attachments if row['sendable'] else unsendable).append(row)
+    # The file is still written either way. A later path with a real file handle
+    # — a host SMTP run, a script — can attach it; only the model-mediated send
+    # cannot, and that is a property of the SENDER, not of the report.
+    text_path, html_path = Path(output_dir)/'report.txt', Path(output_dir)/'report.html'
+    gaps = []
+    if unsendable:
+        gaps.append('ATTACHMENT NOT SENDABLE: %s (%s base64 chars, limit %s). The body now '
+                    'says so and points at %s.'
+                    % (', '.join(i['filename'] for i in unsendable),
+                       max(i['base64_chars'] for i in unsendable),
+                       MAX_SENDABLE_BASE64, ARTIFACT_URL))
+        text_path.write_text(text_path.read_text() + _unattachable_note(unsendable))
+        html = html_path.read_text()
+        marker = '<body'
+        cut = html.find('>', html.find(marker)) + 1 if marker in html else 0
+        html_path.write_text(html[:cut] + _unattachable_html(unsendable) + html[cut:])
     return {'status': 'CLAIMED', 'session': session, 'subject': payload['subject'],
             'subject_path': str(Path(output_dir)/'subject.txt'),
-            'text_path': str(Path(output_dir)/'report.txt'),
-            'html_path': str(Path(output_dir)/'report.html'),
-            'attachments': attachments, 'checked_at': payload['checked_at']}
+            'text_path': str(text_path), 'html_path': str(html_path),
+            'attachments': attachments, 'unsendable_attachments': unsendable,
+            'gaps': gaps, 'checked_at': payload['checked_at']}
 
 
 def record(state_dir, session, *, message_id=None, failed=False):

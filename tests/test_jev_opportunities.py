@@ -515,3 +515,103 @@ def test_a_forced_question_that_was_asked_and_failed_does_say_so():
     asked_and_failed = {'status': 'READY', 'forced_long': None, 'forced_short': None}
     html = report_page._jev_forced(asked_and_failed)
     assert 'returned nothing usable' in html
+
+
+# ── the reader must carry what the ranker computed (2026-09-22) ──────────────
+
+def full_poster(long_probs, short_probs, forced_long=None, forced_short=None):
+    """A poster answering all FOUR questions, as the live provider does.
+
+    The original `poster` answers only the two gated ones, which is why every
+    staged-snapshot test passed while the forced picks were being dropped: the
+    fixture never produced one to drop."""
+    def post(body, key, timeout):
+        return {'model': 'typesafe/jev-1.13-20260917',
+                'answers': {'long': answer(long_probs), 'short': answer(short_probs),
+                            'forced_long': answer(forced_long or {'AC.TO': 1.0}),
+                            'forced_short': answer(forced_short or {'TD.TO': 1.0})}}
+    return post
+
+
+def test_the_ranking_and_the_forced_picks_survive_the_staged_round_trip(tmp_path, monkeypatch):
+    """THE DEFECT, live on 2026-09-22. `rank` computed the ranking and both
+    forced picks, `stage` sealed them to disk, and `load_prepared` rebuilt the
+    result dict without them — so the page printed "its ranking is shown below
+    anyway" above nothing at all, on the first morning the feature ran.
+
+    Every existing test drove the renderers from a hand-built dict, so the one
+    seam that actually loses the data was the one seam nothing crossed."""
+    monkeypatch.setenv('OPENROUTER_API_KEY', 'sk-or-test')
+    root = stage_dir(tmp_path, [tech('AC.TO'), tech('TD.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(
+        long_probs={'AC.TO': 0.2, 'TD.TO': 0.1, J.ABSTAIN: 0.7},
+        short_probs={'AC.TO': 0.1, 'TD.TO': 0.2, J.ABSTAIN: 0.7},
+        forced_long={'AC.TO': 0.66, 'TD.TO': 0.34},
+        forced_short={'TD.TO': 0.71, 'AC.TO': 0.29}))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+
+    assert out['status'] == 'NO_OPPORTUNITY'          # the gate is untouched
+    assert out['longs'] == [] and out['shorts'] == []
+    # and the ranking is there anyway, which is the whole point of the day
+    assert [r['ticker'] for r in out['long_ranked']] == ['AC.TO', 'TD.TO']
+    assert out['long_ranked'][0]['cleared_gate'] is False
+    assert out['forced_long']['ticker'] == 'AC.TO'
+    assert out['forced_long']['probability'] == 0.66
+    assert out['forced_short']['ticker'] == 'TD.TO'
+    # Jev would rather have done nothing: 0.66 against its own 0.7 abstain.
+    assert out['forced_long']['cleared_gated_abstain'] is False
+    assert out['forced_long']['gated_abstain_probability'] == 0.7
+    assert out['forced_label'] == J.FORCED_LABEL
+
+
+def test_a_forced_pick_that_beat_the_gated_abstain_is_marked_as_such(tmp_path, monkeypatch):
+    monkeypatch.setenv('OPENROUTER_API_KEY', 'sk-or-test')
+    root = stage_dir(tmp_path, [tech('AC.TO'), tech('TD.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(
+        long_probs={'AC.TO': 0.55, 'TD.TO': 0.1, J.ABSTAIN: 0.35},
+        short_probs={'AC.TO': 0.1, 'TD.TO': 0.2, J.ABSTAIN: 0.7},
+        forced_long={'AC.TO': 0.9, 'TD.TO': 0.1}))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert out['forced_long']['cleared_gated_abstain'] is True
+    assert [r['ticker'] for r in out['longs']] == ['AC.TO']   # selection unchanged
+
+
+def test_a_snapshot_from_before_the_forced_question_carries_no_forced_keys(tmp_path):
+    """NOT ASKED and ASKED-AND-FAILED are different facts. A snapshot staged by
+    the old code has no forced keys, and the reader must not invent them — the
+    renderers key off their absence to say nothing rather than report a
+    question that was never put."""
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    J.stage(root, now=PREOPEN, poster=poster(long_probs={'AC.TO': 0.8, J.ABSTAIN: 0.2}))
+    obj = json.loads((root/J.SNAPSHOT_NAME).read_text())
+    for key in ('forced_long', 'forced_short', 'forced_label'):
+        obj.pop(key, None)
+    (root/J.SNAPSHOT_NAME).write_text(json.dumps(J._seal(obj)))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert 'forced_long' not in out and 'forced_short' not in out
+    assert out['long_ranked'][0]['ticker'] == 'AC.TO'
+
+
+def test_a_staged_cleared_gate_claim_is_recomputed_not_trusted(tmp_path):
+    """The one field a reader must never take on trust: it is the difference
+    between a ranking and a recommendation, and it costs one comparison."""
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    J.stage(root, now=PREOPEN, poster=poster(long_probs={'AC.TO': 0.2, J.ABSTAIN: 0.8}))
+    obj = json.loads((root/J.SNAPSHOT_NAME).read_text())
+    obj['long_ranked'][0]['cleared_gate'] = True        # a lie on disk
+    (root/J.SNAPSHOT_NAME).write_text(json.dumps(J._seal(obj)))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert out['long_ranked'][0]['cleared_gate'] is False
+    assert out['longs'] == []
+
+
+def test_a_forced_pick_outside_the_universe_is_refused_by_the_reader(tmp_path):
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(
+        long_probs={'AC.TO': 0.8, J.ABSTAIN: 0.2}, short_probs={J.ABSTAIN: 1.0}))
+    obj = json.loads((root/J.SNAPSHOT_NAME).read_text())
+    obj['forced_long'] = {'ticker': 'NVDA', 'probability': 0.99, 'forced': True}
+    (root/J.SNAPSHOT_NAME).write_text(json.dumps(J._seal(obj)))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert out['forced_long'] is None
+    assert any('outside the supplied universe' in g for g in out['gaps'])

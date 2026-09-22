@@ -438,6 +438,71 @@ def _picks(rows, allowed):
     return out, gaps
 
 
+def _prob(value):
+    """A probability, or None. Bools are not numbers here."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return round(float(value), 4) if 0.0 <= float(value) <= 1.0 else None
+
+
+def _ranked(rows, allowed):
+    """Revalidate a staged ranking against the universe the snapshot declares.
+
+    `cleared_gate` is RECOMPUTED from the two numbers, never read. A staged
+    claim that a name cleared its own abstain is the one field a reader must
+    not take on trust: it is the difference between a ranking and a
+    recommendation, and it costs one comparison to derive."""
+    out, seen, gaps = [], set(), []
+    if rows is None:
+        return out, gaps
+    if not isinstance(rows, list):
+        return out, ['invalid ranking list']
+    for row in rows[:RANKED_PER_SIDE]:
+        if not isinstance(row, dict):
+            gaps.append('invalid ranked row'); continue
+        ticker = row.get('ticker')
+        probability = _prob(row.get('probability'))
+        floor = _prob(row.get('abstain_probability'))
+        if (not isinstance(ticker, str) or not TICKER.fullmatch(ticker)
+                or ticker not in allowed or ticker in seen):
+            gaps.append('ranked name outside the supplied universe or duplicated'); continue
+        if probability is None or floor is None:
+            gaps.append('%s ranked probability outside 0-1' % safe_detail(ticker, 24)); continue
+        confidence = _prob(row.get('confidence'))
+        seen.add(ticker)
+        out.append({'ticker': ticker, 'probability': probability,
+                    'confidence': None if confidence is None else round(confidence, 3),
+                    'abstain_probability': floor,
+                    'cleared_gate': probability > floor})
+    return out, gaps
+
+
+def _forced_staged(pick, allowed, side):
+    """Revalidate one staged forced pick. `cleared_gated_abstain` is recomputed.
+
+    Returns None for a snapshot that never carried the key — NOT ASKED and
+    ASKED-AND-FAILED are different facts and the renderers distinguish them."""
+    if pick is None:
+        return None, []
+    if not isinstance(pick, dict):
+        return None, ['invalid forced %s pick' % side]
+    ticker = pick.get('ticker')
+    probability = _prob(pick.get('probability'))
+    if (not isinstance(ticker, str) or not TICKER.fullmatch(ticker) or ticker not in allowed):
+        return None, ['the forced %s pick is outside the supplied universe' % side]
+    if probability is None:
+        return None, ['the forced %s probability is outside 0-1' % side]
+    confidence = _prob(pick.get('confidence'))
+    out = {'ticker': ticker, 'probability': probability,
+           'confidence': None if confidence is None else round(confidence, 3),
+           'forced': True}
+    floor = _prob(pick.get('gated_abstain_probability'))
+    if floor is not None:
+        out['gated_abstain_probability'] = floor
+        out['cleared_gated_abstain'] = probability > floor
+    return out, []
+
+
 def load_prepared(state_dir, now, *, diagnostic=False):
     """Revalidate the sealed snapshot. Pure: no provider call, no state written."""
     try:
@@ -478,6 +543,17 @@ def load_prepared(state_dir, now, *, diagnostic=False):
         allowed = {t for t in universe if isinstance(t, str) and TICKER.fullmatch(t)}
         longs, long_gaps = _picks(obj.get('longs'), allowed)
         shorts, short_gaps = _picks(obj.get('shorts'), allowed)
+        # THE RANKING AND THE FORCED PICKS TRAVEL TOO. `rank` computed them and
+        # `stage` sealed them to disk; until 2026-09-22 this reader rebuilt the
+        # result dict without them, so every forced pick Jev ever made was
+        # computed, written and dropped at the one place that reports it — the
+        # day-110c `cache_degraded` defect, one module over. The renderers were
+        # tested against hand-built snapshots and so never saw the gap.
+        long_ranked, lr_gaps = _ranked(obj.get('long_ranked'), allowed)
+        short_ranked, sr_gaps = _ranked(obj.get('short_ranked'), allowed)
+        asked_forced = any(('forced_' + s) in obj for s in ('long', 'short'))
+        forced_long, fl_gaps = _forced_staged(obj.get('forced_long'), allowed, 'long')
+        forced_short, fs_gaps = _forced_staged(obj.get('forced_short'), allowed, 'short')
         status = obj.get('status')
         if status not in ('READY', 'NO_OPPORTUNITY', 'UNAVAILABLE'):
             raise ValueError('unknown status')
@@ -491,8 +567,14 @@ def load_prepared(state_dir, now, *, diagnostic=False):
                 'considered': len(allowed), 'universe': sorted(allowed),
                 'evidence': D._evidence_counts(obj.get('evidence'), len(allowed)),
                 'longs': longs, 'shorts': shorts,
+                'long_ranked': long_ranked, 'short_ranked': short_ranked,
+                # A snapshot staged before the forced question existed carries
+                # neither key, and the renderers say NOTHING about a question
+                # that was never put. Only a snapshot that WAS asked gets keys.
+                **({'forced_long': forced_long, 'forced_short': forced_short,
+                    'forced_label': FORCED_LABEL} if asked_forced else {}),
                 'gaps': [safe_detail(str(g)) for g in (obj.get('gaps') or [])]
-                        + long_gaps + short_gaps,
+                        + long_gaps + short_gaps + lr_gaps + sr_gaps + fl_gaps + fs_gaps,
                 'prepared_at': prepared.isoformat(), 'adopted': False,
                 'registration': REGISTRATION, 'confidence_label': CONFIDENCE_LABEL}
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, AttributeError) as exc:
