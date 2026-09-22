@@ -479,6 +479,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             evidence['shared_exposure'] = exposure.shared_exposure(evidence, sectors)
     except Exception as exc:
         error('model_exposure', RuntimeError(type(exc).__name__))
+    # THE TRACK RECORD, frozen beside the picks. For five days the report said
+    # of both models "never scored against an outcome", and it was true
+    # because nothing kept their picks. data/model_picks.csv does now.
+    try:
+        import model_picks
+        card = model_picks.scorecard()
+        opportunity_evidence['track_record'] = [
+            model_picks.scorecard_line(card, 'deepseek_selected', 'DeepSeek')]
+        jev_evidence['track_record'] = [
+            model_picks.scorecard_line(card, 'jev_selected', 'Jev (selected)'),
+            model_picks.scorecard_line(card, 'jev_forced', 'Jev (forced)')]
+    except Exception as exc:
+        error('model_track_record', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),

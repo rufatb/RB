@@ -450,9 +450,11 @@ def _jev_rows(snap):
 
 
 def _exposure(snap, model):
-    """One bet written twice, stated where the picks are (frozen by brief)."""
+    """One bet written twice, and the model's scored record (both frozen by brief)."""
     import exposure
-    return ''.join(f'<ul class="gaps"><li class="g-caution">{escape(exposure.line(g, model))}</li></ul>'
+    record = ''.join(f'<p class="note"><strong>{escape(str(t))}</strong></p>'
+                     for t in (snap or {}).get('track_record') or [])
+    return record + ''.join(f'<ul class="gaps"><li class="g-caution">{escape(exposure.line(g, model))}</li></ul>'
                    for g in (snap or {}).get('shared_exposure') or [])
 
 

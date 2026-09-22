@@ -1,0 +1,5 @@
+session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_version,source,entry,exit,r_pct,hit,invalidated,scored_at
+2026-09-22,deepseek,selected,LONG,DOL.TO,0.56,,,,recovered_from_published_page_2026-09-22,,,,,,
+2026-09-22,deepseek,selected,LONG,STN.TO,0.53,,,,recovered_from_published_page_2026-09-22,,,,,,
+2026-09-22,deepseek,selected,SHORT,CNQ.TO,0.6,,,,recovered_from_published_page_2026-09-22,,,,,,
+2026-09-22,deepseek,selected,SHORT,SU.TO,0.62,,,,recovered_from_published_page_2026-09-22,,,,,,

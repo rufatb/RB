@@ -96,6 +96,10 @@ STEP 6 — publish the page and the payload to the owner's artifact, same URL:
       "delivery/report.txt"       -> .rb-state/dispatch/report.txt
       "delivery/report.html"      -> .rb-state/dispatch/report.html
       "delivery/full_report.html" -> .rb-state/dispatch/full_report.html
+      "record/ledger.csv"         -> ledger.csv
+      "record/universe_prints.csv"-> universe_prints.csv
+      "record/report.json"        -> .rb-state/latest/report.json
+THE record/ FILES ARE THE PERMANENT RECORD. No scheduled run has ever managed to push its ledger rows: morning.sh commits them and the push fails, so every board since 2026-09-16 died with its container and the report prints "RECORD HAS A HOLE". A session that can push reads these files after the open and merges them append-only (`record_import.py`). Publish them even if morning.sh reported a push failure — especially then — and even if STEP 5 failed. If `.rb-state/latest/report.json` is missing, publish the other two and say so.
 Reading first is required before publishing to an artifact this session did not create. If the publish fails, retry up to three times; if it still fails, say so as the FIRST line of the summary and carry on to the email.
 
 STEP 7 — EMAIL IT. This is the delivery the owner actually reads.

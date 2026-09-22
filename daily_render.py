@@ -357,6 +357,7 @@ def opportunities_summary(intra, *, concise=False):
     import exposure
     for group in snap.get('shared_exposure') or []:
         lines.append('⚠ ' + exposure.line(group, 'DeepSeek'))
+    lines.extend(safe_detail(str(t), 400) for t in snap.get('track_record') or [])
     if comparison.get('rows'):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "
@@ -440,6 +441,7 @@ def jev_summary(intra, *, concise=False):
     import exposure
     for group in snap.get('shared_exposure') or []:
         lines.append('⚠ ' + exposure.line(group, 'Jev'))
+    lines.extend(safe_detail(str(t), 400) for t in snap.get('track_record') or [])
     if versus.get('rows'):
         lines.append(f"Cross-model: {versus.get('agree', 0)} agreed, {versus.get('oppose', 0)} "
                      f"contradicted, {versus.get('alone', 0)} picked by Jev alone.")
