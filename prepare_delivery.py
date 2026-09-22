@@ -53,12 +53,12 @@ def subject_state(report):
     summary does not infer the cause of a user's trading outcome.
     """
     intraday = report.get('intraday') or {}
-    # The subject describes PART 1'S HEADLINE. Since 2026-09-22 that is the
-    # primary board when it has legs; otherwise the engine's, exactly as before.
-    # A subject computed from the demoted board could say DO NOT TRADE over a
-    # sized headline, or stay neutral over an abstained one.
-    primary = (intraday.get('primary') or {}).get('legs') or []
-    legs = primary or intraday.get('legs') or []
+    # The subject describes PART 1'S HEADLINE: the three desks' legs when any
+    # desk has one, otherwise the engine's, exactly as before. A subject computed
+    # from the demoted board could say DO NOT TRADE over a sized desk, or stay
+    # neutral over abstained ones.
+    from primary_board import headline_legs
+    legs = headline_legs(intraday)
     status = str(report.get('report_status') or '')
     if 'DATA OUTAGE' in status:
         return '⛔ DATA OUTAGE — DO NOT TRADE — '

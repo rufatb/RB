@@ -334,32 +334,16 @@ def truncation_gap(candidates):
             'in roster order, which is not a ranking.' % (eligible, MAX_NAMES))
 
 
-def rank(candidates, *, macro=None, model=None, client=None, now=None,
-         timeout=REQUEST_TIMEOUT):
-    """Ask once, validate hard, return at most two per side. Pure of state.
+def build_request(candidates, macro=None, now=None):
+    """The exact question and evidence, built ONCE for every model that answers it.
 
-    `candidates` are rows from `factor_inputs.build_from_state`, so they may
-    carry validated `headlines` and `catalyst_tags`; `macro` is that payload's
-    validated macro block. Both are optional — the ranker degrades to technicals
-    alone and SAYS SO in its gaps, rather than pretending it saw the news."""
+    Claude's desk asks the same question from the same rows (day-114): a
+    comparison between two models is only a comparison if neither was shown
+    something the other was not. Returns None when no candidate is usable."""
     now = now or dt.datetime.now(ET)
     usable = usable_candidates(candidates)
     if not usable:
-        return unavailable('No candidate carried complete prepared technicals.')
-    allowed = {c['ticker'] for c in usable}
-    model = model or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-flash'
-
-    if client is None:
-        key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
-        if not key:
-            return unavailable('DEEPSEEK_API_KEY is not set.')
-        try:
-            from openai import OpenAI
-        except ImportError:
-            return unavailable('The DeepSeek client library is not installed.')
-        client = OpenAI(api_key=key, base_url='https://api.deepseek.com',
-                        max_retries=0, timeout=timeout)
-
+        return None
     rows = [_row(c) for c in usable]
     macro_block = _macro({'macro': macro or {}})
     payload = {'session': now.date().isoformat(), 'entry': '09:46 ET', 'exit': '15:59 ET',
@@ -379,6 +363,39 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
         evidence_gaps.append('No name carried a headline; this ranking is technicals only.')
     if not macro_block:
         evidence_gaps.append('No macro context was staged; WTI, CAD/USD, TSX and VIX were not shown.')
+    return {'payload': payload, 'allowed': {c['ticker'] for c in usable},
+            'considered': len(usable),
+            'evidence': {'names_with_headlines': with_news, 'names_with_catalyst_tags': with_tags,
+                         'macro_fields': sorted(macro_block)},
+            'evidence_gaps': evidence_gaps}
+
+
+def rank(candidates, *, macro=None, model=None, client=None, now=None,
+         timeout=REQUEST_TIMEOUT):
+    """Ask once, validate hard, return at most two per side. Pure of state.
+
+    `candidates` are rows from `factor_inputs.build_from_state`, so they may
+    carry validated `headlines` and `catalyst_tags`; `macro` is that payload's
+    validated macro block. Both are optional — the ranker degrades to technicals
+    alone and SAYS SO in its gaps, rather than pretending it saw the news."""
+    now = now or dt.datetime.now(ET)
+    request = build_request(candidates, macro, now)
+    if request is None:
+        return unavailable('No candidate carried complete prepared technicals.')
+    allowed, payload = request['allowed'], request['payload']
+    model = model or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-flash'
+
+    if client is None:
+        key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
+        if not key:
+            return unavailable('DEEPSEEK_API_KEY is not set.')
+        try:
+            from openai import OpenAI
+        except ImportError:
+            return unavailable('The DeepSeek client library is not installed.')
+        client = OpenAI(api_key=key, base_url='https://api.deepseek.com',
+                        max_retries=0, timeout=timeout)
+
     try:
         response = client.chat.completions.create(
             model=model,
@@ -403,11 +420,10 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     shorts, short_gaps = _clean(body.get('shorts'), allowed, 'short')
     return {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
             'model': safe_detail(str(getattr(response, 'model', model)), 60),
-            'considered': len(usable), 'universe': sorted(allowed),
-            'evidence': {'names_with_headlines': with_news, 'names_with_catalyst_tags': with_tags,
-                         'macro_fields': sorted(macro_block)},
+            'considered': request['considered'], 'universe': sorted(allowed),
+            'evidence': request['evidence'],
             'longs': longs, 'shorts': shorts,
-            'gaps': long_gaps + short_gaps + evidence_gaps,
+            'gaps': long_gaps + short_gaps + request['evidence_gaps'],
             'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
             'confidence_label': CONFIDENCE_LABEL}
 
@@ -523,9 +539,18 @@ def load_prepared(state_dir, now, *, diagnostic=False):
     change what the report says after the report was frozen, so this path reads
     bytes and checks them and does nothing else.
     """
+    return load_snapshot(state_dir, now, diagnostic=diagnostic)
+
+
+def load_snapshot(state_dir, now, *, diagnostic=False, name=SNAPSHOT_NAME,
+                  schema=SCHEMA_VERSION, unavailable=unavailable, cutoff=PREOPEN_CUTOFF,
+                  extra=None):
+    """The one reader for every snapshot in this shape (DeepSeek's and
+    Claude's). `extra` names the fields a caller keeps beyond the common ones,
+    each passed through `safe_detail` — never trusted structure."""
     try:
         now = now.astimezone(ET) if now.tzinfo else now.replace(tzinfo=ET)
-        path = Path(state_dir)/SNAPSHOT_NAME
+        path = Path(state_dir)/name
         if not path.exists():
             return unavailable('The opportunity ranking was not staged for this session.')
         if path.stat().st_size > MAX_SNAPSHOT_BYTES:
@@ -542,7 +567,7 @@ def load_prepared(state_dir, now, *, diagnostic=False):
                          and obj.get('morning_snapshot') is False)
         if diagnostic != is_diagnostic:
             raise ValueError('diagnostic evidence is not a morning snapshot')
-        if obj.get('schema_version') != SCHEMA_VERSION:
+        if obj.get('schema_version') != schema:
             raise ValueError('unknown schema version')
         if obj.get('adopted') is not False:
             raise ValueError('a snapshot claiming adoption is not readable here')
@@ -553,7 +578,7 @@ def load_prepared(state_dir, now, *, diagnostic=False):
         if (obj.get('session') != now.date().isoformat() or prepared.date() != now.date()
                 or prepared > now
                 or (now-prepared).total_seconds() > MAX_SNAPSHOT_AGE_HOURS*3600
-                or (not is_diagnostic and prepared.time() >= PREOPEN_CUTOFF)):
+                or (not is_diagnostic and prepared.time() >= cutoff)):
             raise ValueError('snapshot identity or clock mismatch')
         universe = obj.get('universe')
         if not isinstance(universe, list):
@@ -569,7 +594,9 @@ def load_prepared(state_dir, now, *, diagnostic=False):
         if status == 'UNAVAILABLE':
             return {**unavailable(obj.get('reason') or 'Ranking unavailable.'),
                     'prepared_at': prepared.isoformat(), 'diagnostic': is_diagnostic}
-        return {'diagnostic': is_diagnostic,
+        base = unavailable('')
+        kept = {k: safe_detail(str(obj[k]), 200) for k in (extra or ()) if obj.get(k) is not None}
+        return {**kept, 'diagnostic': is_diagnostic,
                 'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
                 'model': safe_detail(str(obj.get('model') or 'unavailable'), 60),
                 'considered': len(allowed), 'universe': sorted(allowed),
@@ -583,7 +610,8 @@ def load_prepared(state_dir, now, *, diagnostic=False):
                 'gaps': [safe_detail(str(g)) for g in (obj.get('gaps') or [])]
                         + long_gaps + short_gaps,
                 'prepared_at': prepared.isoformat(), 'adopted': False,
-                'registration': REGISTRATION, 'confidence_label': CONFIDENCE_LABEL}
+                'registration': base['registration'],
+                'confidence_label': base['confidence_label']}
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, AttributeError) as exc:
         return unavailable('The staged opportunity ranking was rejected (%s).' % type(exc).__name__)
 

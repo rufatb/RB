@@ -14,8 +14,8 @@ that no longer exists.
 
 | Field | Value |
 |---|---|
-| Name | `RB Daily Report — 09:05 stage, 09:46 publish, email` |
-| Schedule | Weekdays (Mon–Fri), **9:05 AM**, timezone **America/New_York** |
+| Name | `RB Daily Report — 08:50 stage, 09:46 publish, email` |
+| Schedule | Weekdays (Mon–Fri), **8:50 AM**, timezone **America/New_York** |
 | Repository / source | `rufatb/RB`, branch `main` |
 | Connectors | **Gmail — enabled.** This is the point of using the UI. Attach NOTHING else: a report task with scheduled-task tools can rewrite its own schedule unattended, and one with Docs tools can create documents nobody asked for. Least privilege, and the prompt forbids both as a second line of defence. |
 | Environment | **Must match the environment holding the rb checkout** (`env_01WF9g5xRVHtN38pSVeknCz4`). A task created without it starts with no repository and dies at the `cd` in STEP 1 — verified 2026-09-21: a UI copy's stored `session_request` carried no `environment_id` at all while the original's did. Confirm it before enabling. |
@@ -53,7 +53,7 @@ keys in it, which is exactly the rule doing its job.
 
 Run the RB daily report for today's session, publish it, update the owner's page, and email it. Work autonomously; do not ask questions.
 
-You fire at 09:05 ET. The report publishes at 09:46 ET, so this session stays alive for about forty minutes and `morning_full.sh` holds it there. THAT HOLD IS THE POINT — do not shorten it, do not background it, do not run `morning.sh` directly. Two guards sit 41 minutes apart and both are correct: the staging jobs refuse at or after 09:30, and `wait_for_publication` refuses to wait more than 120 seconds. A run that calls `morning.sh` at 09:05 dies on the second guard with nothing published and throws away every staged snapshot — that is exactly what happened on 2026-09-17.
+You fire at 08:50 ET. The report publishes at 09:46 ET, so this session stays alive for about an hour and `morning_full.sh` holds it there. THAT HOLD IS THE POINT — do not shorten it and do not run `morning.sh` directly. Two guards sit 41 minutes apart and both are correct: the staging jobs refuse at or after 09:30, and `wait_for_publication` refuses to wait more than 120 seconds. A run that calls `morning.sh` at 08:50 dies on the second guard with nothing published and throws away every staged snapshot — that is exactly what happened on 2026-09-17.
 
 CONTEXT
 The owner is a portfolio manager. This is read-only research: nothing here submits, modifies or cancels a brokerage order, and hypothetical allocation is a research calculation. cd to the rufatb/rb checkout, then read CLAUDE.md and obey it — especially the ten house rules, "Read-only, always", and the rule never to promise accuracy or present picks as predictions.
@@ -72,24 +72,34 @@ STEP 2 — credentials (never committed; .rb-state is gitignored, so a fresh con
   printf 'deepseek-flash\n' > .rb-state/deepseek_model.txt
 The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro` — `deepseek-chat` and `deepseek-reasoner` DO NOT EXIST on it. Jev is `typesafe/jev-1.13` on OpenRouter, reached at POST /api/alpha/decisions, NOT /chat/completions; `typesafe/jev-latest` is NOT a valid id. Do not "correct" either model name — a floating alias that 400s every morning looks exactly like an outage.
 
-STEP 3 — stage, hold, publish. ONE command, and it will take about forty minutes:
-  ./morning_full.sh
-It stages the intraday cache, the biotech universe, the 130-name factor pool, the news/macro refresh, the DeepSeek factor snapshot, the DeepSeek opportunity ranking and the Jev ranking while that is still permitted, holds the session to 09:44, then hands over to `morning.sh`. Let it run to completion.
+STEP 3 — start the morning job IN THE BACKGROUND. It runs about an hour and holds itself to 09:44:
+  ./morning_full.sh > .rb-state/morning_full.log 2>&1
+Start it with your Bash tool's run_in_background option (a foreground command is cut off after ten minutes) and start exactly ONE copy. It stages the intraday cache, the biotech universe, the 130-name factor pool and the news/macro refresh, writes CLAUDE'S BRIEF, waits for your answer (STEP 4) until 09:24, then asks DeepSeek and Jev, holds to 09:44 and hands over to `morning.sh`. Never run `morning.sh` directly.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but missed the window (informational); 6 published but provenance was not clean; 1 failed. On exit 4 do NOT re-run and do NOT override the guard — report the reason and stop.
-A staging step exiting 2 means partial coverage, which is the ordinary result, not a fault. Exiting 3 means it correctly refused because its pre-open cutoff had passed — report it, do not retry. A step logged SKIPPED means an upstream step overran and ate its share of the 09:05–09:30 budget; name which one, because that is a different cause from a provider outage.
-`morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". THAT IS EXPECTED AND IS NOT THE EMAIL. A Claude Code container cannot reach smtp.gmail.com on 25, 465 or 587 — measured 2026-09-20; the agent proxy tunnels HTTPS only. Do NOT try to fix it and do NOT write an app password. You send the email in STEP 7 through the Gmail connector.
+A staging step exiting 2 means partial coverage, which is the ordinary result, not a fault. Exiting 3 means it correctly refused because its pre-open cutoff had passed — report it, do not retry. A step logged SKIPPED means an upstream step overran and ate its share of the staging budget; name which one, because that is a different cause from a provider outage.
+`morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". THAT IS EXPECTED AND IS NOT THE EMAIL. A Claude Code container cannot reach smtp.gmail.com on 25, 465 or 587 — measured 2026-09-20; the agent proxy tunnels HTTPS only. Do NOT try to fix it and do NOT write an app password. You send the email in STEP 8 through the Gmail connector.
 
-STEP 4 — the page is written BY THE JOB, never by hand
+STEP 4 — CLAUDE'S PICKS. You are the Claude desk: one of the three sections the owner compares every morning (Claude, DeepSeek, Jev).
+  python claude_opportunities.py --state-dir .rb-state --wait-brief 100
+Repeat it while it prints STILL_WAITING (each call waits up to 100 seconds, inside the Bash tool's default two-minute limit). PAST_CUTOFF or NOTHING_TO_ANSWER: skip this step and say so in the summary.
+On READY, read `.rb-state/claude_brief.txt` IN FULL — it is long; page through it with offset/limit until the end. It is the exact prompt and evidence DeepSeek will be given, and you answer it as that prompt instructs: at most 2 LONG and 2 SHORT, only tickers from the file, fewer is correct when the evidence is thin, `confidence` your own honest number (0.5 is a coin flip), `reason` one sentence naming the supplied values or headline classes that drove it, `invalid_at` anchored to a supplied level or omitted. Think like a portfolio manager: scale every move by `atr_pct`, weigh relative strength against the sector, treat COMMENTARY and UNCLASSIFIED headlines as near-zero evidence, and stand aside from a name reporting within a day or two.
+Use ONLY that file. Do not open `deepseek_opportunities.json`, `jev_opportunities.json`, any earlier report, the web or any price after the previous close before you seal — the section prints whether your answer was sealed before the other two were asked, and that is the whole value of a third opinion.
+Write the JSON object to `.rb-state/claude_answer.json`, then:
+  python claude_opportunities.py --state-dir .rb-state --seal .rb-state/claude_answer.json
+It must be sealed before 09:24 ET. REFUSED means report the reason and move on: never retry after 09:24, never edit a snapshot, never seal twice (the first answer stands). This step can cost Claude's section; it must never delay the rest of the morning.
+Then wait for `morning_full.sh` to exit — read the tail of `.rb-state/morning_full.log` now and then, and start nothing else meanwhile.
+
+STEP 5 — the page is written BY THE JOB, never by hand
 `daily_job` writes `.rb-state/latest/report_page.html` itself. Use that file. If and only if it is missing:
   python report_page.py --report .rb-state/latest/report.json --output .rb-state/latest/report_page.html
 Do NOT hand-edit its output and do NOT write your own HTML. This renderer enforces every rule that matters: no share count or dollar allocation on an ABSTAIN leg, the not-an-entry banner, the factor section, the DeepSeek opportunities section, the Jev opportunities section, the gap lines. If something looks wrong, say so in the summary and leave it — a hand-edited page is how a size reaches an abstained row, and that has been acted on twice.
 
-STEP 5 — build the email payload from the frozen publication
+STEP 6 — build the email payload from the frozen publication
   session=$(TZ=America/Toronto date +%F)
   python gmail_delivery.py --prepare --session "$session"
-It prints `subject`, `subject_path`, `text_path`, `html_path`, `attachments[]`, `unsendable_attachments[]` and `gaps[]`, and CLAIMS the delivery so a re-run cannot send twice. An attachment lands in `unsendable_attachments` when its base64 is too large for a tool call to carry — which is the normal case for the full report, ~464k characters. When that happens the step has ALREADY appended a labelled delivery note to `report.txt` and `report.html` saying there is no attachment and where the full report is, so send those files as they now stand and send NO attachment. Do not try to paste a large `.b64` file: it cannot fit, and a truncated attachment is worse than an absent one. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, SKIP STEP 7 ENTIRELY and continue to STEP 8 (the summary). STEP 7 is the send; routing an already-attempted delivery into it sends the morning twice, which is the whole thing the claim exists to prevent. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 6 so the page is published.
+It prints `subject`, `subject_path`, `text_path`, `html_path`, `attachments[]`, `unsendable_attachments[]` and `gaps[]`, and CLAIMS the delivery so a re-run cannot send twice. An attachment lands in `unsendable_attachments` when its base64 is too large for a tool call to carry — which is the normal case for the full report, ~464k characters. When that happens the step has ALREADY appended a labelled delivery note to `report.txt` and `report.html` saying there is no attachment and where the full report is, so send those files as they now stand and send NO attachment. Do not try to paste a large `.b64` file: it cannot fit, and a truncated attachment is worse than an absent one. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, SKIP STEP 8 ENTIRELY and continue to STEP 9 (the summary). STEP 8 is the send; routing an already-attempted delivery into it sends the morning twice, which is the whole thing the claim exists to prevent. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 7 so the page is published.
 
-STEP 6 — publish the page and the payload to the owner's artifact, same URL:
+STEP 7 — publish the page and the payload to the owner's artifact, same URL:
   - Artifact tool, action "read", url https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
   - Artifact tool, publish with that same url, file_path .rb-state/latest/report_page.html, and files:
       "delivery/subject.txt"      -> .rb-state/dispatch/subject.txt
@@ -99,10 +109,10 @@ STEP 6 — publish the page and the payload to the owner's artifact, same URL:
       "record/ledger.csv"         -> ledger.csv
       "record/universe_prints.csv"-> universe_prints.csv
       "record/report.json"        -> .rb-state/latest/report.json
-THE record/ FILES ARE THE PERMANENT RECORD. No scheduled run has ever managed to push its ledger rows: morning.sh commits them and the push fails, so every board since 2026-09-16 died with its container and the report prints "RECORD HAS A HOLE". A session that can push reads these files after the open and merges them append-only (`record_import.py`). Publish them even if morning.sh reported a push failure — especially then — and even if STEP 5 failed. If `.rb-state/latest/report.json` is missing, publish the other two and say so.
+THE record/ FILES ARE THE PERMANENT RECORD. No scheduled run has ever managed to push its ledger rows: morning.sh commits them and the push fails, so every board since 2026-09-16 died with its container and the report prints "RECORD HAS A HOLE". A session that can push reads these files after the open and merges them append-only (`record_import.py`). Publish them even if morning.sh reported a push failure — especially then — and even if STEP 6 failed. If `.rb-state/latest/report.json` is missing, publish the other two and say so.
 Reading first is required before publishing to an artifact this session did not create. If the publish fails, retry up to three times; if it still fails, say so as the FIRST line of the summary and carry on to the email.
 
-STEP 7 — EMAIL IT. This is the delivery the owner actually reads.
+STEP 8 — EMAIL IT. This is the delivery the owner actually reads.
 Call the Gmail `send_message` tool ONCE:
   to: ["rufat.baghirov97@gmail.com"]
   subject: the exact contents of `.rb-state/dispatch/subject.txt`. Do not add a prefix, do not reword it, do not rebuild it. It carries the board state — "⛔ DO NOT TRADE — all N legs ABSTAINED", "SCAN UNAVAILABLE", "INFORMATIONAL" — derived from the frozen report by `subject_state`. A sender that writes its own subject is a second implementation of that rule, and a neutral-looking subject over a board nobody should act on is the exact failure it exists to prevent.
@@ -112,12 +122,13 @@ Call the Gmail `send_message` tool ONCE:
 Then record the outcome:
   python gmail_delivery.py --record --session "$session" --message-id <the id the tool returned>
 If the send fails: `python gmail_delivery.py --record --session "$session" --failed`, and say so plainly. A missing row and a failed send are different facts.
-If the Gmail tool is not available to you at all, SKIP the send: the 09:50 bridge session reads the delivery/ files you published in STEP 6 and emails them verbatim, and it checks the inbox first so nothing is sent twice. Say "email: handed to the 09:50 bridge (no Gmail in this session)" as the DELIVERY line. That is why STEP 6 must never be skipped.
+If the Gmail tool is not available to you at all, SKIP the send: the 09:50 bridge session reads the delivery/ files you published in STEP 7 and emails them verbatim, and it checks the inbox first so nothing is sent twice. Say "email: handed to the 09:50 bridge (no Gmail in this session)" as the DELIVERY line. That is why STEP 7 must never be skipped.
 
-STEP 8 — finish with a SHORT summary. In this order:
+STEP 9 — finish with a SHORT summary. In this order:
   - published on time / informational-late / refused, and the exit code
   - DELIVERY, one line, never omitted: "emailed to rufat.baghirov97@gmail.com, Gmail id <id>", or the exact failure. The owner went weeks receiving nothing while runs reported success; a summary without this line is how that happened.
-  - PART 1 HEADLINE FIRST — `intraday.primary`: the primary source's (DeepSeek's) picks, each with side, status, share count, 09:46 price and its "wrong if" level; then the leaderboard rows verbatim. Then the baseline engine's legs (`intraday.legs`), introduced as "comparison only — no demonstrated edge". If every headline leg is ABSTAIN, say plainly there is no sized entry today. Never present a share count on an ABSTAIN leg.
+  - PART 1 IS THREE DESKS, in this order, each its own paragraph — `intraday.desks`: (1) Claude, (2) DeepSeek, (3) Jev. For each desk: every leg with side, status, share count, 09:46 price and its "wrong if" level; if a desk has no legs, its `reason` verbatim. Never merge the desks and never average their numbers. For Claude also give `intraday.claude.independence` verbatim. Then the scoreboard (`intraday.scoreboard`) rows verbatim. Then the baseline engine's legs (`intraday.legs`), introduced as "comparison only — no demonstrated edge". If every desk leg is ABSTAIN, say plainly there is no sized entry today. Never present a share count on an ABSTAIN leg.
+  - CLAUDE OPPORTUNITIES — `intraday.claude`: the same fields as DeepSeek's below (reason, confidence labelled as its own number, engine verdict, `track_record` verbatim, `evidence`).
   - DEEPSEEK OPPORTUNITIES — read `.rb-state/latest/report.json` at `intraday.opportunities`. Name each pick: side, ticker, its self-reported confidence, and whether the engine agreed (`comparison.rows[].verdict`, or "engine comparison unavailable"). Say in the same breath that the confidence is SELF-REPORTED and NOT a calibrated win probability. Quote `track_record` verbatim — it is the model's scored record from data/model_picks.csv, with its sample size and interval; a handful of sessions resolves nothing and the line says so. Give `evidence`: how many names carried news and which macro fields were shown, because a ranking made on prices alone and one made with the morning's tape are different readings. NO_OPPORTUNITY is a tested abstention, not a failure; UNAVAILABLE means quote the reason verbatim.
   - JEV OPPORTUNITIES — read `intraday.jev`. Jev is a second model and a DECISIONS model: the option set IS the candidate list, and a name is SELECTED only when it beat the probability Jev itself assigned to picking nothing. Report BOTH of these, and never merge them:
       (a) SELECTED — `longs` and `shorts`. For each: side, ticker, its probability AND that abstain probability, plus `versus_deepseek.rows[].verdict`.

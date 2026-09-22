@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 6, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 7, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -199,7 +199,10 @@ def probe(seconds_left):
     fn = body[body.index('slice() {'):body.index('STAGE_DEADLINE=0930')]
     script = ('set -uo pipefail\nMIN_SLICE=15\n'
               'seconds_left() { printf %s "$FAKE"; }\n' + fn + '\n'
-              'for spec in "600 660" "900 540" "900 360" "900 120" "300 20" "180 5"; do\n'
+              'CLAUDE_WINDOW=420\n'
+              'for spec in "600 $((660 + CLAUDE_WINDOW))" "900 $((540 + CLAUDE_WINDOW))" '
+              '"900 $((360 + CLAUDE_WINDOW))" "900 $((120 + CLAUDE_WINDOW))" "90 330" '
+              '"300 20" "180 5"; do\n'
               '  if v="$(slice $spec)"; then printf "%s " "$v"; else printf "SKIP "; fi\n'
               'done\n')
     out = subprocess.run(['bash', '-c', script], capture_output=True, text=True,
@@ -208,15 +211,30 @@ def probe(seconds_left):
 
 
 def test_with_the_whole_window_left_every_step_gets_its_full_ceiling():
-    assert probe(1470) == ['600', '900', '900', '900', '300', '180']
+    # 08:53 start: the whole window plus the Claude desk's seven minutes.
+    assert probe(2190) == ['600', '900', '900', '900', '90', '300', '180']
 
 
 def test_a_late_start_starves_the_expensive_steps_and_protects_the_rankings():
     """THE POINT. With 100 seconds left the cache, the biotech harvest, the
     pool and the news refresh are all skipped — and the two model rankings,
     measured at ~27.5s and ~1.0s over 116 names, still get a usable slice."""
-    assert probe(100) == ['SKIP', 'SKIP', 'SKIP', 'SKIP', '80', '95']
+    assert probe(100) == ['SKIP', 'SKIP', 'SKIP', 'SKIP', 'SKIP', '80', '95']
 
 
 def test_a_window_that_has_already_closed_starts_nothing():
-    assert probe(-60) == ['SKIP'] * 6
+    assert probe(-60) == ['SKIP'] * 7
+
+
+def test_claude_answers_before_deepseek_or_jev_is_asked():
+    """THE INDEPENDENCE ORDERING. Claude's brief is written after the news
+    refresh (so it sees the same evidence) and the script waits for the seal
+    BEFORE asking DeepSeek or Jev — so neither other answer exists on disk while
+    Claude answers. The wait ends at 09:24 whatever happens."""
+    body = code()
+    brief = body.index('claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief')
+    assert body.index('prepare_deepseek.py') < brief < body.index('deepseek_opportunities.py')
+    assert brief < body.index('jev_opportunities.py')
+    wait = body[brief:body.index('deepseek_opportunities.py')]
+    assert '--sealed' in wait and 'CLAUDE_DEADLINE' in wait and 'until' in wait
+    assert 'CLAUDE_DEADLINE=0924' in body

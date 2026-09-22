@@ -106,7 +106,7 @@ def flags_of(module):
 
 
 @pytest.mark.parametrize('module_name', ['gmail_delivery', 'report_page',
-                                         'prepare_factor_pool', 'deepseek_opportunities',
+                                         'prepare_factor_pool', 'deepseek_opportunities', 'claude_opportunities',
                                          'jev_opportunities'])
 def test_every_flag_the_prompt_quotes_is_a_real_option(module_name):
     """The prompt quotes command lines verbatim for an unattended agent to run.

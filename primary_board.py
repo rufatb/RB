@@ -1,4 +1,10 @@
-"""Part 1's headline board: the owner's chosen primary source, sized.
+"""Part 1's desks: Claude, DeepSeek and Jev, each sized from its own picks.
+
+DAY-114. The owner asked for three parallel sections — Claude's picks, DeepSeek's
+and Jev's — each from its own model and each sized, so they can be compared day
+by day. `build` makes one desk; `brief` calls it three times with the same
+quotes, clock and book, so no desk is advantaged by the sizing. The history
+below is why the engine stopped leading.
 
 OWNER DECISION, 2026-09-22. The baseline k-NN engine leads Part 1 no longer. Its
 own walk-forward research is 809 legs at 50.1% and -0.005% per leg, its live
@@ -34,23 +40,34 @@ from quotes import CORROBORATED, number
 PRIMARY_LABEL = 'DeepSeek'
 
 
+# THE THREE DESKS (owner, 2026-09-22): Claude, DeepSeek and Jev, each in its
+# own section, each sized by the same rule from its own SELECTED picks. The
+# order is the order they are printed. `key` is the report's evidence key.
+DESKS = (('claude', 'Claude', 'claude'), ('deepseek', 'DeepSeek', 'opportunities'),
+         ('jev', 'Jev', 'jev'))
+
+
 def staged_tickers(state_dir, now):
-    """Tickers the staged DeepSeek snapshot picked — known before 09:46, so they
-    can ride in the ONE equity quote request. A pure file read; never raises."""
-    try:
-        import deepseek_opportunities
-        snap = deepseek_opportunities.load_prepared(state_dir, now)
-    except Exception:
-        return set()
-    return {p['ticker'] for key in ('longs', 'shorts') for p in snap.get(key) or []
-            if isinstance(p, dict) and isinstance(p.get('ticker'), str)}
+    """Every desk's staged SELECTED picks — known before 09:46, so they ride in
+    the ONE equity quote request. Pure file reads; a desk that fails costs only
+    its own names and never raises."""
+    out = set()
+    for module in ('claude_opportunities', 'deepseek_opportunities', 'jev_opportunities'):
+        try:
+            snap = __import__(module).load_prepared(state_dir, now)
+        except Exception:
+            continue
+        out |= {p['ticker'] for key in ('longs', 'shorts') for p in snap.get(key) or []
+                if isinstance(p, dict) and isinstance(p.get('ticker'), str)}
+    return out
 
 
-def build(evidence, quotes, cfg, clock, shadow):
-    """The sized headline board from the primary source's SELECTED picks."""
+def build(evidence, quotes, cfg, clock, shadow, source=PRIMARY_LABEL):
+    """One desk's sized board from that source's SELECTED picks — never a
+    ranked or forced name, which are not selections."""
     evidence = evidence or {}
     status = evidence.get('status')
-    out = {'source': PRIMARY_LABEL, 'model': evidence.get('model'), 'status': status,
+    out = {'source': source, 'model': evidence.get('model'), 'status': status,
            'legs': [], 'reason': None, 'sizing': None}
     if status not in ('READY', 'NO_OPPORTUNITY'):
         out['reason'] = evidence.get('reason') or 'the primary ranking was not available'
@@ -58,7 +75,7 @@ def build(evidence, quotes, cfg, clock, shadow):
     picks = [('LONG', p) for p in evidence.get('longs') or []] + \
             [('SHORT', p) for p in evidence.get('shorts') or []]
     if not picks:
-        out['reason'] = 'the model returned no pick on either side'
+        out['reason'] = 'no SELECTED pick on either side today'
         return out
     risk = cfg.get('risk') or {}
     book = number(risk.get('account_equity'), positive=True)
@@ -87,19 +104,36 @@ def build(evidence, quotes, cfg, clock, shadow):
         if not reasons and shares < 1:
             reasons.append('one share exceeds the per-leg allocation')
         out['legs'].append({
-            'ticker': ticker, 'side': side, 'role': 'primary',
+            'ticker': ticker, 'side': side, 'role': 'desk', 'desk': source,
             'status': 'ABSTAIN' if reasons else ('SHADOW' if shadow else 'ELIGIBLE'),
             'reasons': reasons, 'quote': q,
             'entry_reference': fill, 'entry_spread_bps': number(q.get('spread_bps')),
             'currency': q.get('currency') or ('CAD' if ticker.endswith('.TO') else 'USD'),
             'baseline_shares': 0 if reasons else shares,
             'baseline_alloc': 0 if reasons else round(shares * fill, 2),
-            'confidence': pick.get('confidence'), 'invalid_at': pick.get('invalid_at'),
+            # Jev reports a probability where the others report a confidence;
+            # both are the model's own number and labelled so where printed.
+            'confidence': pick.get('confidence', pick.get('probability')),
+            'invalid_at': pick.get('invalid_at'),
             'reason': pick.get('reason')})
     return out
 
 
-LEADERBOARD = (('deepseek_selected', 'DeepSeek (primary)'),
+def headline_legs(intra):
+    """The legs Part 1 leads with: every desk's, else the engine's.
+
+    One function, because the subject line and the email hero must describe the
+    same board — a subject computed from a different board than the one printed
+    under it could say DO NOT TRADE over sized legs. A publication from before
+    the desks existed carries `primary` (DeepSeek alone, 2026-09-22)."""
+    intra = intra or {}
+    legs = [l for d in intra.get('desks') or [] for l in d.get('legs') or []]
+    legs = legs or (intra.get('primary') or {}).get('legs') or []
+    return legs or intra.get('legs') or []
+
+
+LEADERBOARD = (('claude_selected', 'Claude'),
+               ('deepseek_selected', 'DeepSeek'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
                ('jev_forced', 'Jev (forced)'))

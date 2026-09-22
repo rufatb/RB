@@ -5,54 +5,26 @@ import biotech
 fmt = full.fmt
 
 
-def primary_lines(intra):
-    """Part 1's headline: the primary source's picks, sized, and the leaderboard.
+def desk_sections(intra):
+    """Part 1's three desks — Claude, DeepSeek, Jev — each in its own section.
 
-    Owner decision 2026-09-22 (see primary_board). Same share-count rule as the
-    engine: an ABSTAIN leg shows no size, whatever else the row says."""
-    p = intra.get('primary')
-    if not p:
+    Every desk prints EVERY day, answered or not: the owner reads them side by
+    side, and a desk that silently vanished would look like one that had nothing
+    to say. Each section is that model's sized picks, then its own reasoning,
+    evidence and scored record. Nothing is averaged across desks."""
+    desks = intra.get('desks') or []
+    if not desks:
         return []
-    out = ['', f"### Today's picks — {p.get('source', 'DeepSeek')} (primary source)"]
-    if not p.get('legs'):
-        out.append(f"No primary picks today: {full.safe_detail(p.get('reason') or 'unavailable', 200)}. "
-                   'The baseline engine below is shown for comparison only.')
-    else:
-        sized = sum(l['status'] != 'ABSTAIN' for l in p['legs'])
-        sizing = p.get('sizing') or {}
-        out.append(f"{len(p['legs'])} picks; {sized} carry a size"
-                   + (f" (equal split of {sizing['book']:,.0f}, {sizing['per_leg']:,.0f} per leg, "
-                      "each in its listing's currency)" if sizing.get('per_leg') else '')
-                   + '. Hypothetical, not orders.')
-        out += ['', '| Status | Name / side | Shares | 09:46 price | Spread | Confidence | Wrong if |',
-                '|---|---|---:|---:|---:|---:|---|']
-        for l in p['legs']:
-            shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
-            wrong = (f"{'below' if l['side'] == 'LONG' else 'above'} {fmt(l.get('invalid_at'))}"
-                     if isinstance(l.get('invalid_at'), (int, float)) else '—')
-            out.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | "
-                       f"{fmt(l.get('entry_reference'))} {l.get('currency') or ''} | "
-                       f"{fmt(l.get('entry_spread_bps'), '.1f')} bps | {fmt(l.get('confidence'))} | {wrong} |")
-        why = sorted({r for l in p['legs'] for r in l.get('reasons') or []})
-        if why:
-            out.append('Not sized: ' + '; '.join(full.safe_detail(r, 120) for r in why))
-        import exposure
-        for g in p.get('exposure') or []:
-            out.append('⚠ ' + exposure.line(g, p.get('source', 'DeepSeek')))
-    board = p.get('leaderboard') or []
-    if board:
-        out += ['', 'Scored record, every source on one yardstick (09:45 bar to close, no costs):',
-                '| Source | Right | Mean per pick | Sessions | 95% interval |', '|---|---:|---:|---:|---|']
-        for r in board:
-            if not r['picks']:
-                out.append(f"| {r['source']} | — | — | 0 | not yet scored |")
-                continue
-            lo, hi = r['ci95']
-            out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
-                       f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
-        out.append('A handful of sessions resolves nothing: an interval that contains 50% is '
-                   'a coin flip, whichever source it belongs to.')
-    return out
+    body = {'claude': lambda: full.opportunities_summary(intra, concise=True, key='claude', name='Claude'),
+            'deepseek': lambda: full.opportunities_summary(intra, concise=True),
+            'jev': lambda: full.jev_summary(intra, concise=True)}
+    out = []
+    for n, desk in enumerate(desks, 1):
+        out += ['', f"### {n} · {desk.get('source')}'s picks", *full.desk_lines(desk)]
+        snap = intra.get(desk.get('evidence_key')) or {}
+        if snap.get('status') in ('READY', 'NO_OPPORTUNITY') and desk.get('id') in body:
+            out += body[desk['id']]()[1:]
+    return out + ['', *full.scoreboard_lines(intra.get('scoreboard'))]
 
 
 def text(d):
@@ -70,11 +42,11 @@ def text(d):
                   'Original morning computation retained; no recovered or fresh entry signal is claimed.',
                   *d['replacement']['notes']]
     lines += ['', '## Part 1 — Intraday · 09:46–15:59 ET']
-    lines += primary_lines(intra)
-    if intra.get('primary'):
+    lines += desk_sections(intra)
+    if intra.get('desks'):
         lines += ['', '### Baseline engine (k-NN) — comparison only',
                   'No demonstrated edge: 809 walk-forward legs at 50.1%, live 48.6% over 107. '
-                  'Kept on the record and on the leaderboard; no longer the headline.']
+                  'Kept on the record and on the scoreboard; no longer the headline.']
     if legs or recorded:
         valid=sum(l.get('status') in ('SHADOW','ELIGIBLE') and l.get('quote',{}).get('status')=='OK' for l in legs)
         lines += [f"{len(legs) or len(recorded)} baseline legs; {valid} execution-verified. Hypothetical selections, not orders."]
@@ -123,10 +95,13 @@ def text(d):
     # Same rule for the model's own picks: carried when it answered, silent in
     # the concise email when it did not, and never reduced to an UNAVAILABLE
     # line. The absence still appears once in the attached full report.
-    if full.opportunities_reported(intra):
-        lines += ['',*full.opportunities_summary(intra, concise=True)]
-    if full.jev_reported(intra):
-        lines += ['',*full.jev_summary(intra, concise=True)]
+    # A publication from before the desks (2026-09-23) printed the two model
+    # sections here; with desks they are already printed in Part 1.
+    if not intra.get('desks'):
+        if full.opportunities_reported(intra):
+            lines += ['',*full.opportunities_summary(intra, concise=True)]
+        if full.jev_reported(intra):
+            lines += ['',*full.jev_summary(intra, concise=True)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
     if book.get('status')=='UNAVAILABLE':
@@ -219,14 +194,18 @@ def text(d):
     # it never called. Absence of the key means absence of the note.
     terms = ['Research only. Nothing here places, modifies or cancels an order, and no row is a '
              'recommendation. An ABSTAIN leg shows no share count and no dollar figure by design.']
+    if full.claude_reported(intra):
+        terms.append(full.CLAUDE_STANDING)
     if full.opportunities_reported(intra):
         terms.append(full.OPPORTUNITIES_STANDING)
     if full.jev_reported(intra):
         terms.append(full.JEV_STANDING)
     if 'deepseek' in intra and full.factor_reported(intra):
         terms.append(full.FACTOR_STANDING)
-    if full.opportunities_reported(intra) and full.jev_reported(intra):
-        terms.append('The two models are never averaged, and agreement between them is a '
+    answered = sum((full.claude_reported(intra), full.opportunities_reported(intra),
+                    full.jev_reported(intra)))
+    if answered >= 2:
+        terms.append('The models are never averaged, and agreement between them is a '
                      'recorded observation, not confirmation.')
     lines += ['', '## How to read this', *terms,
               'Code: '+str(d.get('provenance',{}).get('code_commit') or 'not recorded')[:12]]
@@ -271,12 +250,13 @@ def _hero(d):
     abstained. A neutral hero over a board nobody should act on is the same
     failure `subject_state` exists to prevent, one surface along."""
     intra = d.get('intraday') or {}
-    legs = ((intra.get('primary') or {}).get('legs') or []) or intra.get('legs') or []
+    from primary_board import headline_legs
+    legs = headline_legs(intra)
     abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
     if legs and len(abstained) == len(legs):
         head, sub = 'No actionable entry today', (
             f'All {len(legs)} selected legs abstained. They are shown below as a record of what '
-            'the engine computed — not as entries, and with no share count.')
+            'was computed — not as entries, and with no share count.')
     elif legs and abstained:
         head, sub = (f'{len(legs) - len(abstained)} of {len(legs)} legs carry a verified entry',
                      f'{len(abstained)} abstained and show no share count.')

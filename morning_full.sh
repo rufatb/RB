@@ -78,6 +78,14 @@ slice() {
 }
 MIN_SLICE=15
 
+# CLAUDE'S DESK (day-114) sits between the news refresh and the DeepSeek and
+# Jev rankings, so every step before it leaves this much of the window free.
+# Claude answers the SAME brief DeepSeek will get, and must answer BEFORE the
+# other two are asked — that ordering is what makes the three independent.
+# The seal refuses at 09:24, so DeepSeek always keeps its own slot after it.
+CLAUDE_WINDOW=420
+CLAUDE_DEADLINE=0924
+
 STAGE_DEADLINE=0930   # prepare_deepseek / bar_cache refuse at or after this
 PUBLISH_AT=0944       # morning.sh's own guard allows a wait from here
 
@@ -123,7 +131,7 @@ if [ "$(minutes_now)" -ge "$STAGE_DEADLINE" ]; then
 else
     log "staging pre-open inputs"
 
-    if budget="$(slice 600 660)"; then
+    if budget="$(slice 600 $((660 + CLAUDE_WINDOW)))"; then
         if timeout "$budget" python bar_cache.py --directory "$RB_STATE_DIR/intraday_cache"; then
             log "  intraday cache: staged"
         else
@@ -150,7 +158,7 @@ else
     fi
 
     # Exits 2 on an incomplete universe, which is a real partial, not a crash.
-    if budget="$(slice 900 540)"; then
+    if budget="$(slice 900 $((540 + CLAUDE_WINDOW)))"; then
         # Built the EVENING BEFORE by the bridge session (1,005 names do not fit
         # a 25-minute window). This only rebuilds when that did not happen.
         timeout "$budget" python build_biotech.py --output data/biotech_snapshot.json \
@@ -177,7 +185,7 @@ else
     # it is documented to use. It must precede the news refresh, so headlines
     # are fetched for the pool's names and not just the baseline twenty-one.
     # Its own budget is already clamped to the time remaining before 09:30.
-    if budget="$(slice 900 360)"; then
+    if budget="$(slice 900 $((360 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
         case $? in
             0) log "  factor pool: staged" ;;
@@ -195,7 +203,7 @@ else
 
     # Exits 2 when some names lack complete inputs. That is the ordinary
     # result, not an error: coverage is gated by contiguous session warm-up.
-    if budget="$(slice 900 120)"; then
+    if budget="$(slice 900 $((120 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
         case $? in
             0) log "  DeepSeek factors: staged, full coverage" ;;
@@ -207,6 +215,44 @@ else
         log "  DeepSeek factors: SKIPPED — an upstream step overran. The factor"
         log "    section will read UNAVAILABLE and the rankings lose their headlines."
         stage_faults+=("DeepSeek snapshot skipped: staging budget exhausted")
+    fi
+
+    # CLAUDE'S DESK. Write the brief — the exact question and evidence DeepSeek
+    # is about to get — then WAIT for Claude's sealed answer before asking
+    # anyone else. The scheduled Routine is itself a Claude session: it reads
+    # the brief, answers, and runs `claude_opportunities.py --seal`. If a
+    # private Anthropic key is staged, the API answers instead. If nothing
+    # answers by 09:24 the desk reads UNAVAILABLE and the morning goes on —
+    # the wait can cost Claude's section, never DeepSeek's, Jev's or the board.
+    if [ "$(minutes_now)" -lt "$CLAUDE_DEADLINE" ] && budget="$(slice 90 330)"; then
+        timeout "$budget" python claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief
+        case $? in
+            0) log "  Claude brief: written — waiting for Claude's sealed answer until ${CLAUDE_DEADLINE}"
+               if [ -f "$RB_STATE_DIR/secrets/anthropic_api_key" ]; then
+                   if timeout 150 python claude_opportunities.py --state-dir "$RB_STATE_DIR" --api; then
+                       log "  Claude picks: answered through the API"
+                   else
+                       log "  Claude picks: API route FAILED — waiting for the session's answer"
+                   fi
+               fi
+               until python claude_opportunities.py --state-dir "$RB_STATE_DIR" --sealed \
+                     || [ "$(minutes_now)" -ge "$CLAUDE_DEADLINE" ]; do
+                   sleep 10
+               done
+               if python claude_opportunities.py --state-dir "$RB_STATE_DIR" --sealed; then
+                   log "  Claude picks: sealed"
+               else
+                   log "  Claude picks: NOT SEALED by ${CLAUDE_DEADLINE} — that section will read UNAVAILABLE"
+                   stage_faults+=("Claude picks not sealed by ${CLAUDE_DEADLINE}")
+               fi ;;
+            2) log "  Claude brief: nothing to answer (no usable pool) — reason sealed"
+               stage_faults+=("Claude brief: no usable candidate pool") ;;
+            *) log "  Claude brief: FAILED — that section will read UNAVAILABLE"
+               stage_faults+=("Claude brief not written") ;;
+        esac
+    else
+        log "  Claude brief: SKIPPED — past ${CLAUDE_DEADLINE} or the window was eaten upstream."
+        stage_faults+=("Claude brief skipped: past its deadline")
     fi
 
     # The model's OWN top-2 per side. A separate question from the factor

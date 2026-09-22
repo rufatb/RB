@@ -73,6 +73,11 @@ def rows_from_report(report, source='published_report'):
         if leg.get('side') in ('LONG', 'SHORT'):
             add('engine', 'board', leg['side'], {'ticker': leg.get('ticker'),
                                                  'confidence': leg.get('p_sided')})
+    cl = intra.get('claude') or {}
+    if cl.get('status') in ('READY', 'NO_OPPORTUNITY'):
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for pick in cl.get(key) or []:
+                add('claude', 'selected', side, pick, prompt_version=cl.get('route'))
     ds = intra.get('opportunities') or {}
     if ds.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):

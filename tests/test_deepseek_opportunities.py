@@ -393,7 +393,9 @@ def test_the_text_summary_restates_the_confidence_caveat_every_time():
             'comparison': {'rows': [], 'agree': 0, 'oppose': 0, 'unseen': 0}}
     body = '\n'.join(daily_render.opportunities_summary({'opportunities': snap}))
     assert 'NOT a calibrated win probability' in body
-    assert 'never blended' in body and 'not adopted, sized' in body.replace('Nothing here is ', 'not ')
+    # Day-114: the desks size these picks, so the caveat says what a size is
+    # (hypothetical research sizing, not an order) instead of denying one.
+    assert 'never blended' in body and 'not orders' in body
 
 
 # ── the credential reaches the job, not just the environment ────────────────

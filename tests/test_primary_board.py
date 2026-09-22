@@ -1,4 +1,4 @@
-"""Part 1's headline is the primary source's picks, sized under the engine's rules.
+"""Part 1 is three desks — Claude, DeepSeek, Jev — each sized under the engine's rules.
 
 Owner decision 2026-09-22 (the engine went 0/4 at -1.56% that day, and its own
 809-leg walk-forward is 50.1%). What must never change with the headline: an
@@ -65,34 +65,75 @@ def test_no_picks_is_stated_not_hidden():
     assert board['legs'] == [] and 'provider down' in board['reason']
 
 
-def digest(board):
+def desk(board, desk_id='deepseek', key='opportunities'):
+    return {**board, 'id': desk_id, 'evidence_key': key}
+
+
+def digest(*boards):
     return {'session': '2026-09-23', 'report_status': 'ON_TIME', 'generated_at': '2026-09-23T09:46:09',
-            'intraday': {'primary': board, 'legs': [{'status': 'ABSTAIN', 'ticker': 'BCE.TO', 'side': 'LONG'}]}}
+            'intraday': {'desks': [desk(b) for b in boards],
+                         'legs': [{'status': 'ABSTAIN', 'ticker': 'BCE.TO', 'side': 'LONG'}]}}
 
 
-def test_the_subject_describes_the_headline_board():
+def test_the_subject_describes_the_desks_not_the_demoted_engine():
     sized = P.build(EVIDENCE, {'DOL.TO': q('OK'), 'SU.TO': q('OK')}, CFG, OPEN, True)
-    # The engine's only leg abstained; the headline is sized — no DO NOT TRADE.
+    # The engine's only leg abstained; the desks are sized — no DO NOT TRADE.
     assert 'DO NOT TRADE' not in prepare_delivery.subject_state(digest(sized))
     unsized = P.build(EVIDENCE, {}, CFG, OPEN, True)
     assert 'DO NOT TRADE' in prepare_delivery.subject_state(digest(unsized))
+    # Across desks: one sized, one abstained, is a partial — never DO NOT TRADE.
+    assert '2/4 legs ABSTAINED' in prepare_delivery.subject_state(digest(sized, unsized))
 
 
-def test_an_abstained_headline_leg_shows_no_share_count_in_either_view():
-    board = P.build(EVIDENCE, {'DOL.TO': q('OK')}, CFG, OPEN, True)   # SU.TO unquoted
-    board['baseline_shares_probe'] = None
-    text = '\n'.join(email_render.primary_lines({'primary': board}))
+def test_empty_desks_fall_back_to_the_engine_board():
+    empty = P.build({'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}, {}, CFG, OPEN, True)
+    assert P.headline_legs(digest(empty)['intraday'])[0]['ticker'] == 'BCE.TO'
+
+
+def test_an_abstained_leg_shows_no_share_count_in_any_view():
+    board = desk(P.build(EVIDENCE, {'DOL.TO': q('OK')}, CFG, OPEN, True))   # SU.TO unquoted
+    text = '\n'.join(daily_render.desk_lines(board))
     su = next(line for line in text.splitlines() if 'SU.TO SHORT' in line)
     assert su.split('|')[3].strip() == '—'
-    html = report_page._primary_section({'primary': board})
+    dol = next(line for line in text.splitlines() if 'DOL.TO LONG' in line)
+    assert dol.split('|')[3].strip() == str(int(25000 // 100.1))
+    html = report_page._desk_table(board)
     row = re.search(r'<tr><td><span class="status">ABSTAIN</span></td><td class="tick">SU.TO.*?</tr>', html)
     assert row and '&mdash;' in row.group(0)
 
 
-def test_the_leaderboard_prints_every_source_even_unscored():
+def test_jev_selected_picks_are_sized_by_their_own_probability_and_forced_ones_never():
+    jev = {'status': 'READY', 'model': 'typesafe/jev-1.13',
+           'longs': [{'ticker': 'DOL.TO', 'probability': 0.41, 'abstain_probability': 0.2}],
+           'shorts': [], 'forced_short': {'ticker': 'SU.TO', 'probability': 0.3}}
+    board = P.build(jev, {'DOL.TO': q('OK'), 'SU.TO': q('OK')}, CFG, OPEN, True, source='Jev')
+    assert [l['ticker'] for l in board['legs']] == ['DOL.TO']
+    assert board['legs'][0]['confidence'] == 0.41 and board['source'] == 'Jev'
+
+
+def test_every_desk_prints_its_own_section_every_day_even_unanswered():
+    boards = [desk(P.build(EVIDENCE, {}, CFG, OPEN, True, source='Claude'), 'claude', 'claude'),
+              desk(P.build({'status': 'UNAVAILABLE', 'reason': 'provider down'}, {}, CFG, OPEN, True),
+                   'deepseek', 'opportunities'),
+              desk(P.build({'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}, {}, CFG, OPEN,
+                           True, source='Jev'), 'jev', 'jev')]
+    intra = {'desks': boards, 'scoreboard': P.leaderboard({}),
+             'claude': {**EVIDENCE, 'model': 'Claude (scheduled Claude Code session)',
+                        'independence': 'sealed at 09:12:00 ET, before DeepSeek or Jev had been asked'},
+             'opportunities': {'status': 'UNAVAILABLE', 'reason': 'provider down'},
+             'jev': {'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}}
+    text = '\n'.join(email_render.desk_sections(intra))
+    heads = [line for line in text.splitlines() if line.startswith('### ')]
+    assert heads[:3] == ["### 1 · Claude's picks", "### 2 · DeepSeek's picks", "### 3 · Jev's picks"]
+    assert 'provider down' in text and 'before DeepSeek or Jev had been asked' in text
+    html = report_page._desk_sections(intra)
+    assert html.index("1 · Claude") < html.index("2 · DeepSeek") < html.index("3 · Jev")
+    assert html.index("3 · Jev") < html.index('Scoreboard')
+
+
+def test_the_scoreboard_prints_every_source_even_unscored():
     rows = P.leaderboard({'deepseek_selected': {'picks': 8, 'hits': 3, 'rate': .375,
                                                 'mean_r_pct': -.66, 'sessions': 2, 'ci95': [.14, .69]}})
-    assert [r['source'] for r in rows][:2] == ['DeepSeek (primary)', 'Baseline engine (k-NN)']
-    text = '\n'.join(email_render.primary_lines({'primary': {'source': 'DeepSeek', 'legs': [],
-                                                             'reason': 'x', 'leaderboard': rows}}))
+    assert [r['source'] for r in rows][:3] == ['Claude', 'DeepSeek', 'Baseline engine (k-NN)']
+    text = '\n'.join(daily_render.scoreboard_lines(rows))
     assert '3/8 (38%)' in text and 'not yet scored' in text and 'coin flip' in text

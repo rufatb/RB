@@ -277,12 +277,16 @@ def _factor_section(intra):
 
 
 OPPORTUNITY_NOTE = (
-    'These are the model\'s own picks, not the engine\'s. The engine scores 21 names with a '
-    'recorded hit rate behind its number; this asks a 130-name pool a direct question and '
-    'prints whatever comes back. The two are shown side by side so they can be compared '
-    'GOING FORWARD — there is no forward evidence yet, nothing here is adopted, nothing here '
-    'carries a size, and the two numbers are never blended, because averaging a measured '
-    'probability with an unmeasured self-report launders the second into the first.')
+    'These are the model\'s own picks, not the engine\'s. It is asked a direct question over '
+    'the whole prepared pool and whatever comes back is printed, sized above by the same rule '
+    'as every desk. Its record is the scored line beside the picks; the engine column is a '
+    'different quantity on a different scale, and the two are never blended, because averaging '
+    'a measured probability with a self-report launders the second into the first.')
+CLAUDE_NOTE = (
+    'Claude is asked the SAME question as DeepSeek, from the SAME rows, with the SAME prompt and '
+    'validator, and its answer is sealed BEFORE DeepSeek or Jev is asked — so neither of the '
+    'other answers existed when it chose. Its confidence is its own number, not a calibrated '
+    'win probability, and it is never averaged with another model\'s.')
 
 
 def _opportunity_rows(snap):
@@ -346,7 +350,7 @@ def _evidence_cell(snap):
             f'<small>macro: {escape(detail)}</small></dd></div>')
 
 
-def _opportunities_section(intra):
+def _opportunities_section(intra, key='opportunities', name='DeepSeek', desk=None, number=None):
     """DeepSeek's own top two per side, beside the engine's board.
 
     Unlike `_factor_section` this is an OPINION, asked for directly. It exists
@@ -358,10 +362,15 @@ def _opportunities_section(intra):
     When the model returns nothing, that is stated as an abstention with its
     control recorded, never as an empty section. A missing section reads as
     "no signal", which is a different claim from "not evaluated"."""
-    snap = intra.get('opportunities') or {}
+    snap = intra.get(key) or {}
     comparison = snap.get('comparison') or {}
-    head = ('<section><h2 class="head">DeepSeek opportunities</h2>'
-            '<p class="sub">The model\'s own top 2 per side · shadow · unadopted · no size</p>')
+    note = CLAUDE_NOTE if key == 'claude' else OPPORTUNITY_NOTE
+    title = (f'{number} · {name}\'s picks' if number else f'{name} opportunities')
+    head = (f'<section><h2 class="head">{escape(title)}</h2>'
+            '<p class="sub">The model\'s own top 2 per side · its own confidence · '
+            + ('sized above' if desk else 'no size') + '</p>' + _desk_table(desk)
+            + (f'<p class="note">Independence: {escape(str(snap["independence"]))}.</p>'
+               if snap.get('independence') else ''))
     status = snap.get('status')
     if status not in ('READY', 'NO_OPPORTUNITY'):
         reason = escape(str(snap.get('reason') or 'Not staged this session.'))
@@ -394,7 +403,7 @@ def _opportunities_section(intra):
                 'planted short through this exact path, so an empty result is a reading of the '
                 'evidence. Nothing is shown here rather than the two least-bad names, because a '
                 'top two taken from names the model declined is a pick manufactured out of ties.</p>'
-                f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
+                + _exposure(snap, name) + f'<p class="note">{note}</p></section>')
 
     engine_only = comparison.get('engine_only') or []
     tail = ''
@@ -403,16 +412,16 @@ def _opportunities_section(intra):
                 + escape(', '.join(engine_only)) + ' — none of which the model picked.</p>')
     return (head + kv
             + '<div class="scroll"><table><caption>Confidence is the model\'s own stated number. '
-              'It is NOT a calibrated win probability, has no track record, and has never been '
-              'scored against an outcome. The engine column is its sided probability, a different '
+              'It is NOT a calibrated win probability; its scored record is printed beneath. '
+              'The engine column is its sided probability, a different '
               'quantity on a different scale; they are printed together for comparison and are '
               'never combined.</caption>'
               '<thead><tr><th>Side</th><th>Name</th><th class="num">Model confidence</th>'
               '<th class="num">Engine sided</th><th>Do they agree?</th>'
               '<th>Why — the model\'s words, not verified fact</th></tr></thead>'
             + f"<tbody>{_opportunity_rows(snap)}</tbody></table></div>"
-            + _exposure(snap, 'DeepSeek')
-            + tail + f'<p class="note">{OPPORTUNITY_NOTE}</p></section>')
+            + _exposure(snap, name)
+            + tail + f'<p class="note">{note}</p></section>')
 
 
 JEV_NOTE = (
@@ -422,9 +431,9 @@ JEV_NOTE = (
     'option rather than free text. A name is shown here only when Jev rated it above its '
     'own "none of these" option — that is the whole abstention gate and it has no '
     'tunable number in it. The probabilities are Jev’s own and are NOT calibrated win '
-    'probabilities: no track record, never scored against an outcome. Two models agreeing '
-    'is a fact worth recording, not evidence of skill, and nothing here is averaged with '
-    'anything, adopted, or carried as a size.')
+    'probabilities; the scored record is printed beside them. Two models agreeing is a fact '
+    'worth recording, not evidence of skill, and nothing here is averaged with anything. Only '
+    'SELECTED names are sized; a ranked or forced name never is.')
 
 
 def _jev_rows(snap):
@@ -449,62 +458,87 @@ def _jev_rows(snap):
     return out
 
 
-def _primary_section(intra):
-    """Part 1's headline (owner decision 2026-09-22): the primary source's picks,
-    sized under the engine's own rules, and every source's scored record."""
+def _desk_table(desk):
+    """One desk's sized picks (primary_board.build). An ABSTAIN row has no size."""
     import exposure
-    p = intra.get('primary')
-    if not p:
+    if not desk:
         return ''
-    src = escape(str(p.get('source') or 'DeepSeek'))
-    html = f'<h3 style="font-size:1.1rem;margin:1rem 0 .25rem">Today\u2019s picks — {src} (primary source)</h3>'
-    if not p.get('legs'):
-        html += (f'<p><strong>No primary picks today:</strong> {escape(str(p.get("reason") or "unavailable"))}. '
-                 'The baseline engine below is shown for comparison only.</p>')
-    else:
-        rows = ''
-        for l in p['legs']:
-            abstain = l['status'] == 'ABSTAIN'
-            wrong = (f'{"below" if l["side"] == "LONG" else "above"} {fmt(l.get("invalid_at"))}'
-                     if isinstance(l.get('invalid_at'), (int, float)) else '&mdash;')
-            rows += ('<tr>'
-                     f'<td><span class="status">{escape(l["status"])}</span></td>'
-                     f'<td class="tick">{escape(l["ticker"])}</td><td>{escape(l["side"])}</td>'
-                     f'<td class="num">{fmt(l.get("entry_reference"))} {escape(str(l.get("currency") or ""))}</td>'
-                     f'<td class="num">{fmt(l.get("entry_spread_bps"), ".1f")}</td>'
-                     f'<td class="num">{fmt(l.get("confidence"))}</td>'
-                     f'<td class="num{" withheld" if abstain else ""}">'
-                     f'{"&mdash;" if abstain else escape(str(l["baseline_shares"]))}</td>'
-                     f'<td>{wrong}</td></tr>')
-            if abstain and l.get('reasons'):
-                rows += (f'<tr class="reason"><td></td><td colspan="7">'
-                         f'{escape("; ".join(l["reasons"]))}</td></tr>')
-        html += ('<div class="scroll"><table><caption>Confidence is the model\u2019s own number, not a '
-                 'calibrated probability. Shares are a hypothetical equal split of the engine\u2019s '
-                 'book in each listing\u2019s currency; an ABSTAIN row carries no size. "Wrong if" is '
-                 'the model\u2019s own invalidation level, scored after the close — not a stop.</caption>'
-                 '<thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:46 price</th>'
-                 '<th class="num">Spread bps</th><th class="num">Confidence</th><th class="num">Shares</th>'
-                 f'<th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>')
-        html += ''.join(f'<ul class="gaps"><li class="g-caution">{escape(exposure.line(g, p.get("source", "DeepSeek")))}</li></ul>'
-                        for g in p.get('exposure') or [])
-    board = p.get('leaderboard') or []
-    if board:
-        body = ''
-        for r in board:
-            if not r['picks']:
-                body += f'<tr><td>{escape(r["source"])}</td><td colspan="4" class="empty">not yet scored</td></tr>'
-                continue
-            lo, hi = r['ci95']
-            body += (f'<tr><td>{escape(r["source"])}</td><td class="num">{r["hits"]}/{r["picks"]} '
-                     f'({r["rate"]:.0%})</td><td class="num">{r["mean_r_pct"]:+.2f}%</td>'
-                     f'<td class="num">{r["sessions"]}</td><td class="num">{lo:.0%}–{hi:.0%}</td></tr>')
-        html += ('<div class="scroll"><table><caption>Every source on one yardstick: 09:45 bar close to '
-                 'session close, no spread or cost. An interval containing 50% is a coin flip, whichever '
-                 'source it belongs to.</caption><thead><tr><th>Source</th><th class="num">Right</th>'
-                 '<th class="num">Mean per pick</th><th class="num">Sessions</th>'
-                 f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div>')
-    return html
+    if not desk.get('legs'):
+        return (f'<p><strong>No sized pick today:</strong> '
+                f'{escape(str(desk.get("reason") or "unavailable"))}.</p>')
+    rows = ''
+    for l in desk['legs']:
+        abstain = l['status'] == 'ABSTAIN'
+        wrong = (f'{"below" if l["side"] == "LONG" else "above"} {fmt(l.get("invalid_at"))}'
+                 if isinstance(l.get('invalid_at'), (int, float)) else '&mdash;')
+        rows += ('<tr>'
+                 f'<td><span class="status">{escape(l["status"])}</span></td>'
+                 f'<td class="tick">{escape(l["ticker"])}</td><td>{escape(l["side"])}</td>'
+                 f'<td class="num">{fmt(l.get("entry_reference"))} {escape(str(l.get("currency") or ""))}</td>'
+                 f'<td class="num">{fmt(l.get("entry_spread_bps"), ".1f")}</td>'
+                 f'<td class="num">{fmt(l.get("confidence"))}</td>'
+                 f'<td class="num{" withheld" if abstain else ""}">'
+                 f'{"&mdash;" if abstain else escape(str(l["baseline_shares"]))}</td>'
+                 f'<td>{wrong}</td></tr>')
+        if abstain and l.get('reasons'):
+            rows += (f'<tr class="reason"><td></td><td colspan="7">'
+                     f'{escape("; ".join(l["reasons"]))}</td></tr>')
+    return ('<div class="scroll"><table><caption>Own confidence is the model\u2019s number, not a '
+            'calibrated probability. Shares are a hypothetical equal split of the engine\u2019s '
+            'book in each listing\u2019s currency; an ABSTAIN row carries no size. "Wrong if" is '
+            'the model\u2019s own invalidation level, scored after the close — not a stop.</caption>'
+            '<thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:46 price</th>'
+            '<th class="num">Spread bps</th><th class="num">Own confidence</th><th class="num">Shares</th>'
+            f'<th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>')
+
+
+def _scoreboard(board):
+    if not board:
+        return ''
+    body = ''
+    for r in board:
+        if not r['picks']:
+            body += f'<tr><td>{escape(r["source"])}</td><td colspan="4" class="empty">not yet scored</td></tr>'
+            continue
+        lo, hi = r['ci95']
+        body += (f'<tr><td>{escape(r["source"])}</td><td class="num">{r["hits"]}/{r["picks"]} '
+                 f'({r["rate"]:.0%})</td><td class="num">{r["mean_r_pct"]:+.2f}%</td>'
+                 f'<td class="num">{r["sessions"]}</td><td class="num">{lo:.0%}–{hi:.0%}</td></tr>')
+    return ('<section><h2 class="head">Scoreboard</h2><p class="sub">Every source on one yardstick</p>'
+            '<div class="scroll"><table><caption>09:45 bar close to session close, no spread or '
+            'cost. An interval containing 50% is a coin flip, whichever source it belongs to.'
+            '</caption><thead><tr><th>Source</th><th class="num">Right</th>'
+            '<th class="num">Mean per pick</th><th class="num">Sessions</th>'
+            f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div></section>')
+
+
+DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '
+               'sized by the same rule from its own picks, then one scoreboard. The baseline '
+               'engine closes this part as a comparison.</p>')
+ENGINE_HEAD = ('<section><h2 class="head">Baseline engine (k-NN) — comparison only</h2>'
+               '<p class="note">No demonstrated edge: 809 walk-forward legs at 50.1%, live 48.6% '
+               'over 107. Kept on the record and on the scoreboard; no longer the headline.</p>')
+
+
+def _desk_sections(intra):
+    """Part 1's three desks, in order, each its own section; then the scoreboard.
+
+    A publication from before the desks existed renders the two model sections
+    exactly as it always did."""
+    desks = {d.get('id'): (n, d) for n, d in enumerate(intra.get('desks') or [], 1)}
+    if not desks:
+        return _opportunities_section(intra) + _jev_section(intra)
+    out = ''
+    for desk_id in ('claude', 'deepseek', 'jev'):
+        if desk_id not in desks:
+            continue
+        n, desk = desks[desk_id]
+        if desk_id == 'jev':
+            out += _jev_section(intra, desk=desk, number=n)
+        else:
+            out += _opportunities_section(intra, key=desk.get('evidence_key'),
+                                          name=desk.get('source'), desk=desk, number=n)
+    return out + _scoreboard(intra.get('scoreboard'))
 
 
 def _exposure(snap, model):
@@ -599,7 +633,7 @@ def _jev_forced(snap):
             f'<tbody>{rows}</tbody></table></div>')
 
 
-def _jev_section(intra):
+def _jev_section(intra, desk=None, number=None):
     """Jev's own top two per side, under DeepSeek and answering the same question.
 
     Kept in its own section rather than merged into a single "models" table:
@@ -609,8 +643,10 @@ def _jev_section(intra):
     self-reported confidence in free JSON. Neither is calibrated and they are
     not on a common scale."""
     snap = intra.get('jev') or {}
-    head = ('<section><h2 class="head">Jev opportunities</h2>'
-            '<p class="sub">Second model · decisions API · shadow · unadopted · no size</p>')
+    title = f'{number} · Jev\'s picks' if number else 'Jev opportunities'
+    head = (f'<section><h2 class="head">{escape(title)}</h2>'
+            '<p class="sub">Decisions API · selected picks ' + ('sized above' if desk else 'no size')
+            + ' · ranked and forced names are never sized</p>' + _desk_table(desk))
     status = snap.get('status')
     if status not in ('READY', 'NO_OPPORTUNITY'):
         reason = escape(str(snap.get('reason') or 'Not staged this session.'))
@@ -830,8 +866,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
   <section>
     <h2 class="head">Part 1 · Intraday</h2>
     <p class="sub">{escape(str(intra.get('contract','')))} · signal reference is the 09:45 completed bar</p>
-    {_primary_section(intra)}
-    {'<h3 style="font-size:1.1rem;margin:2rem 0 .25rem">Baseline engine (k-NN) — comparison only</h3><p class="note">No demonstrated edge: 809 walk-forward legs at 50.1%, live 48.6% over 107. Kept on the record and on the leaderboard; no longer the headline.</p>' if intra.get('primary') else ''}
+    {DESKS_INTRO if intra.get('desks') else ''}
+  {'</section>' + _desk_sections(intra) + ENGINE_HEAD if intra.get('desks') else ''}
     <p>{escape(str(intra.get('model_claim','')))}</p>
     <div class="scroll"><table>
       <thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:45 bar</th>
@@ -842,10 +878,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
       {len(intra.get('recorded_today') or [])} recorded qualifiers ·
       source {escape(str(res.get('source') or 'unavailable'))}</p>
   </section>
+  {'' if intra.get('desks') else _desk_sections(intra)}
 
-  {_opportunities_section(intra)}
-
-  {_jev_section(intra)}
 
   <section>
     <h2 class="head">How reliable is this record?</h2>

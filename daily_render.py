@@ -211,13 +211,68 @@ def factor_note(intra):
 # a footer; nothing is dropped and the full report is unchanged.
 FACTOR_STANDING = ('DESIGN scores are not calibrated probabilities; MDE and accuracy gain '
                    'remain unestablished.')
-OPPORTUNITIES_STANDING = ('Self-reported confidence is NOT a calibrated win probability: no track '
-                          'record, never scored against an outcome, never blended with the '
-                          'engine’s number. Nothing here is adopted, sized or recorded as a '
-                          'position.')
-JEV_STANDING = ('Jev’s probabilities are its OWN, not calibrated win probabilities: no track '
-                'record, never scored against an outcome, never averaged with DeepSeek’s '
-                'confidence or the engine’s score. Nothing here is adopted or sized.')
+OPPORTUNITIES_STANDING = ('Self-reported confidence is NOT a calibrated win probability. Its scored '
+                          'record is the track-record line beside the picks, and it is never '
+                          'blended with another model’s number or the engine’s. Share counts are '
+                          'hypothetical research sizing, not orders.')
+CLAUDE_STANDING = ('Claude answers the SAME question from the SAME evidence as DeepSeek, sealed '
+                   'before DeepSeek or Jev is asked. Its confidence is its own number, not a '
+                   'calibrated win probability, and is never averaged with another model’s.')
+JEV_STANDING = ('Jev’s probabilities are its OWN, not calibrated win probabilities, and are '
+                'never averaged with another model’s confidence or the engine’s score. A '
+                'ranked or forced name is not a selection and is never sized.')
+
+
+def desk_lines(desk):
+    """One desk's sized picks. An ABSTAIN leg shows no share count.
+
+    Shared by the email and the full report, so the two cannot disagree about
+    a size. The same rule as the engine's table: a row carrying a share count is
+    an order ticket whatever its status column says."""
+    legs = desk.get('legs') or []
+    if not legs:
+        return [f"No sized pick today — {safe_detail(desk.get('reason') or 'unavailable', 200).rstrip('.')}."]
+    sized = sum(l['status'] != 'ABSTAIN' for l in legs)
+    sizing = desk.get('sizing') or {}
+    out = [f"{len(legs)} pick{'s' if len(legs) != 1 else ''}; {sized} carr{'y' if sized != 1 else 'ies'} a size"
+           + (f" (equal split of {sizing['book']:,.0f}: {sizing['per_leg']:,.0f} per leg, in each "
+              "listing's currency)" if sizing.get('per_leg') else '')
+           + '. Hypothetical, not orders.', '',
+           '| Status | Name / side | Shares | 09:46 price | Spread | Own confidence | Wrong if |',
+           '|---|---|---:|---:|---:|---:|---|']
+    for l in legs:
+        shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
+        wrong = (f"{'below' if l['side'] == 'LONG' else 'above'} {fmt(l.get('invalid_at'))}"
+                 if isinstance(l.get('invalid_at'), (int, float)) else '—')
+        price = (f"{fmt(l['entry_reference'])} {l.get('currency') or ''}".strip()
+                 if isinstance(l.get('entry_reference'), (int, float)) else '—')
+        spread = (f"{fmt(l['entry_spread_bps'], '.1f')} bps"
+                  if isinstance(l.get('entry_spread_bps'), (int, float)) else '—')
+        out.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | {price} | "
+                   f"{spread} | {fmt(l.get('confidence'))} | {wrong} |")
+    why = sorted({r for l in legs for r in l.get('reasons') or []})
+    if why:
+        out.append('Not sized: ' + '; '.join(safe_detail(r, 120) for r in why))
+    return out
+
+
+def scoreboard_lines(board):
+    """Every source on one yardstick, with its interval, every day."""
+    if not board:
+        return []
+    out = ['### Scoreboard — every source on one yardstick',
+           '09:45 bar close to session close, no costs. Recorded in data/model_picks.csv.', '',
+           '| Source | Right | Mean per pick | Sessions | 95% interval |', '|---|---:|---:|---:|---|']
+    for r in board:
+        if not r['picks']:
+            out.append(f"| {r['source']} | — | — | 0 | not yet scored |")
+            continue
+        lo, hi = r['ci95']
+        out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
+                   f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
+    out.append('A handful of sessions resolves nothing: an interval that contains 50% is a coin '
+               'flip, whichever source it belongs to. Do not promote or demote a source on it.')
+    return out
 
 
 def deepseek_summary(intra, *, concise=False):
@@ -287,31 +342,39 @@ def deepseek_summary(intra, *, concise=False):
     return lines
 
 
-def opportunities_reported(intra):
+def opportunities_reported(intra, key='opportunities'):
     """True when the model was actually asked and answered.
 
     An UNAVAILABLE ranking says nothing the gap list does not already say, and
     five consecutive UNAVAILABLE lines in a phone-sized email crowd out the
     board — the same mistake day-105 fixed for the factor section."""
-    return (intra.get('opportunities') or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
+    return (intra.get(key) or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def opportunities_summary(intra, *, concise=False):
+def claude_reported(intra):
+    return opportunities_reported(intra, 'claude')
+
+
+def opportunities_summary(intra, *, concise=False, key='opportunities', name='DeepSeek'):
     """The model's own top two per side, and whether the engine agreed.
 
     Confidence is restated as self-reported every time it is printed. A number
     between 0 and 1 beside a ticker reads as a probability unless it is told not
     to, and this one has never been scored against an outcome."""
-    snap = intra.get('opportunities') or {}
+    snap = intra.get(key) or {}
     comparison = snap.get('comparison') or {}
     # Pre-open and after-the-bell are different instruments on the same inputs:
     # the second was formed with the morning already visible. Never print the
     # pre-open claim over a diagnostic run.
     when = ('asked AFTER the open — CURRENT-TIME DIAGNOSTIC, not evidence about the morning'
             if snap.get('diagnostic') else 'asked once pre-open')
-    lines = ['### DeepSeek opportunities — the model’s own picks, unadopted',
+    if key == 'claude' and not snap.get('diagnostic'):
+        when = 'sealed once pre-open'
+    lines = [f'### {name} opportunities — the model’s own picks',
              f"{safe_detail(snap.get('model') or 'Model unavailable', 60)}: {snap.get('status')}; "
              f"{when} over {snap.get('considered', 0)} names carrying complete technicals."]
+    if snap.get('independence'):
+        lines.append('Independence: ' + safe_detail(snap['independence'], 160) + '.')
     # What it was SHOWN, beside what it said. A ranking made on prices alone
     # and one made with the morning's headlines are different readings.
     ev = snap.get('evidence') or {}
@@ -356,14 +419,14 @@ def opportunities_summary(intra, *, concise=False):
                          + claim)
     import exposure
     for group in snap.get('shared_exposure') or []:
-        lines.append('⚠ ' + exposure.line(group, 'DeepSeek'))
+        lines.append('⚠ ' + exposure.line(group, name))
     lines.extend(safe_detail(str(t), 400) for t in snap.get('track_record') or [])
     if comparison.get('rows'):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "
                      f"{comparison.get('unseen', 0)} outside the engine universe.")
     if not concise:
-        lines.append(OPPORTUNITIES_STANDING)
+        lines.append(CLAUDE_STANDING if key == 'claude' else OPPORTUNITIES_STANDING)
     return lines
 
 
@@ -461,6 +524,31 @@ def _jev_detail(intra):
     for gap in list(dict.fromkeys(snap.get('gaps') or []))[:3]:
         lines.append('Jev gap: '+safe_detail(gap, 180))
     return lines
+
+
+def _claude_detail(intra):
+    if 'claude' not in intra:
+        return []
+    snap = intra['claude'] or {}
+    if not claude_reported(intra):
+        return ['', '### Claude opportunities — the model’s own picks',
+                safe_detail(snap.get('reason') or 'Not staged this session.', 240)]
+    lines = ['', *opportunities_summary(intra, key='claude', name='Claude')]
+    for gap in list(dict.fromkeys(snap.get('gaps') or []))[:3]:
+        lines.append('Claude gap: '+safe_detail(gap, 180))
+    return lines
+
+
+def _desks(intra):
+    """Part 1's three desks, each sized, then the scoreboard. Absent from a
+    publication made before the desks existed, and then nothing is printed."""
+    desks = intra.get('desks') or []
+    if not desks:
+        return []
+    out = []
+    for n, desk in enumerate(desks, 1):
+        out += ['', f"### {n} · {desk.get('source')}'s picks", *desk_lines(desk)]
+    return out + ['', *scoreboard_lines(intra.get('scoreboard'))]
 
 
 def _opportunities_detail(intra):
@@ -725,6 +813,8 @@ def text(d):
            '', '## Part 1 — Intraday Opportunities',
            intra['contract']+'. Signal reference: 09:45 completed bar; execution quote is separate.',
            intra['model_claim'],
+           *_desks(intra),
+           '', '### Baseline engine (k-NN)' + (' — comparison only' if intra.get('desks') else ''),
            f"Execution-verified research observations: {sum(l.get('status') in ('SHADOW','ELIGIBLE') and l.get('quote',{}).get('status')=='OK' for l in intra['legs'])}/{leg_count} selected or recorded legs at publication. "
            'This count verifies data, not predictive accuracy.', '',
            *_historical_record(rec),rec['label'],rec['benchmark_label'],
@@ -797,6 +887,7 @@ def text(d):
     for r in res.get('excluded',[]):
         lines.append(f"Excluded {r['t']}: {r.get('excluded_reason','peer conflict')}")
     lines += _deepseek_detail(intra)
+    lines += _claude_detail(intra)
     lines += _opportunities_detail(intra)
     lines += _jev_detail(intra)
     lines += _expanded_detail(intra)

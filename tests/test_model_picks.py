@@ -88,3 +88,17 @@ def test_the_record_reaches_both_renderers():
             'comparison': {}, 'track_record': ['DeepSeek track record: 3/5 picks right']}
     assert 'DeepSeek track record: 3/5' in '\n'.join(daily_render.opportunities_summary({'opportunities': snap}))
     assert 'DeepSeek track record: 3/5' in report_page._exposure(snap, 'DeepSeek')
+
+
+def test_claude_picks_are_recorded_as_their_own_source():
+    """Claude's desk is scored on the same yardstick, under its own name —
+    never pooled with DeepSeek's, which answers the same question."""
+    r = report()
+    r['intraday']['claude'] = {'status': 'READY', 'route': 'session',
+                               'longs': [{'ticker': 'CNQ.TO', 'confidence': 0.57,
+                                          'invalid_at': 44.1}], 'shorts': []}
+    rows = [x for x in M.rows_from_report(r) if x['model'] == 'claude']
+    assert [(x['kind'], x['side'], x['ticker']) for x in rows] == [('selected', 'LONG', 'CNQ.TO')]
+    assert rows[0]['invalid_at'] == 44.1
+    r['intraday']['claude'] = {'status': 'UNAVAILABLE', 'longs': [{'ticker': 'X.TO'}]}
+    assert not [x for x in M.rows_from_report(r) if x['model'] == 'claude']

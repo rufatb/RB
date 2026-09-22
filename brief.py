@@ -176,7 +176,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         tickers = set(cfg.get('scan',{}).get('universe',[])) | {'XIU.TO'}
         tickers |= {r['ticker'] for r in prows if r.get('status')==positions.OPEN}
         tickers |= {r['ticker'] for r in rows if r['date']==now.date().isoformat()}
-        # The primary board's names ride in the SAME request: they are staged
+        # Every desk's names ride in the SAME request: they are staged
         # pre-open, so they are known now, and a second quote round-trip at
         # 09:46 is exactly what the rate limit punishes.
         import primary_board
@@ -400,6 +400,16 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         error('deepseek_opportunities', RuntimeError(type(exc).__name__))
         opportunity_evidence = deepseek_opportunities.unavailable(
             'Optional opportunity ranking failed: '+type(exc).__name__)
+    # CLAUDE'S DESK (day-114): the same question and evidence DeepSeek is
+    # given, answered by Claude and sealed before DeepSeek or Jev is asked.
+    # Read only, like the other two.
+    import claude_opportunities
+    try:
+        claude_evidence = claude_opportunities.load_prepared(state_dir, now)
+    except Exception as exc:
+        error('claude_opportunities', RuntimeError(type(exc).__name__))
+        claude_evidence = claude_opportunities.unavailable(
+            'Optional Claude ranking failed: '+type(exc).__name__)
     # Jev's own top-2 per side, staged pre-open by the same job. A SECOND
     # opinion, read only: two models disagreeing is information about the
     # instruments, and neither is adopted.
@@ -474,6 +484,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     except Exception as exc:
         error('deepseek_opportunities_comparison', RuntimeError(type(exc).__name__))
     try:
+        claude_evidence['comparison'] = deepseek_opportunities.compare(
+            claude_evidence, legs, cfg.get('scan', {}).get('universe', []))
+    except Exception as exc:
+        error('claude_comparison', RuntimeError(type(exc).__name__))
+    try:
         jev_evidence['comparison'] = deepseek_opportunities.compare(
             jev_evidence, legs, cfg.get('scan', {}).get('universe', []))
         jev_evidence['versus_deepseek'] = jev_opportunities.compare_models(
@@ -485,7 +500,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     try:
         import exposure
         sectors = exposure.load_sectors()
-        for evidence in (opportunity_evidence, jev_evidence):
+        for evidence in (claude_evidence, opportunity_evidence, jev_evidence):
             evidence['shared_exposure'] = exposure.shared_exposure(evidence, sectors)
     except Exception as exc:
         error('model_exposure', RuntimeError(type(exc).__name__))
@@ -495,6 +510,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     try:
         import model_picks
         card = model_picks.scorecard()
+        claude_evidence['track_record'] = [
+            model_picks.scorecard_line(card, 'claude_selected', 'Claude')]
         opportunity_evidence['track_record'] = [
             model_picks.scorecard_line(card, 'deepseek_selected', 'DeepSeek')]
         jev_evidence['track_record'] = [
@@ -502,19 +519,30 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             model_picks.scorecard_line(card, 'jev_forced', 'Jev (forced)')]
     except Exception as exc:
         error('model_track_record', RuntimeError(type(exc).__name__))
-    # PART 1'S HEADLINE (owner decision 2026-09-22): the primary source's picks,
-    # sized under the engine's own eligibility rules, beside a leaderboard that
-    # scores every source on one yardstick. Built AFTER the final clock check,
-    # so a late assembly abstains the headline exactly as it abstains the engine.
-    primary = {'source': 'DeepSeek', 'status': 'UNAVAILABLE', 'legs': [],
-               'reason': 'primary board not assembled'}
+    # PART 1 IS THREE DESKS (owner, 2026-09-22): Claude, DeepSeek and Jev, each
+    # sized from its own SELECTED picks by the same rule, the same quotes, the
+    # same clock and the same book — beside one scoreboard that scores every
+    # source on one yardstick. Built AFTER the final clock check, so a late
+    # assembly abstains every desk exactly as it abstains the engine.
+    evidence_by_key = {'claude': claude_evidence, 'opportunities': opportunity_evidence,
+                       'jev': jev_evidence}
+    desks, scoreboard = [], []
     try:
         import primary_board, model_picks
-        primary = primary_board.build(opportunity_evidence, quotes, cfg, clock, shadow)
-        primary['exposure'] = opportunity_evidence.get('shared_exposure') or []
-        primary['leaderboard'] = primary_board.leaderboard(model_picks.scorecard())
+        for desk_id, label, key in primary_board.DESKS:
+            try:
+                board = primary_board.build(evidence_by_key[key], quotes, cfg, clock,
+                                            shadow, source=label)
+            except Exception as exc:
+                error('desk_'+desk_id, RuntimeError(type(exc).__name__))
+                board = {'source': label, 'status': 'UNAVAILABLE', 'legs': [],
+                         'reason': 'desk not assembled: '+type(exc).__name__}
+            board['id'], board['evidence_key'] = desk_id, key
+            board['exposure'] = evidence_by_key[key].get('shared_exposure') or []
+            desks.append(board)
+        scoreboard = primary_board.leaderboard(model_picks.scorecard())
     except Exception as exc:
-        error('primary_board', RuntimeError(type(exc).__name__))
+        error('desks', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -524,13 +552,15 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                             'biotech_source':'independent staged evidence feed'},
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
-              'intraday':{'res':res,'legs':legs,'primary':primary,'record':record,'publish':pub,
+              'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
+                          'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',
                           'model_claim':'No demonstrated predictive edge; score, density and sided-P are diagnostics.',
                           'recorded_today':recorded_today, 'risk_evidence':risk,
                           'ledger_status':ledger_status,
                           'deepseek':factor_evidence,
+                          'claude':claude_evidence,
                           'opportunities':opportunity_evidence,
                           'jev':jev_evidence,
                           'historical_provider':provider_evidence},

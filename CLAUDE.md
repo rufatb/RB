@@ -1,5 +1,41 @@
 # Working notes for this repo
 
+## Day114 — Part 1 is three desks: Claude, DeepSeek, Jev
+
+The owner asked for three parallel sections every morning — Claude's picks,
+DeepSeek's and Jev's — each from its own model, separated, and comparable.
+`intraday.desks` holds three boards built by `primary_board.build` with the
+SAME quotes, clock and book, from each model's SELECTED picks only (a Jev
+ranked or forced name is never sized). `intraday.scoreboard` scores all of them
+and the engine on one yardstick. The subject line and the email hero read
+`primary_board.headline_legs` — every desk's legs, else the engine's — so they
+cannot describe a different board from the one printed under them. Every desk
+prints every day, with its reason when it has no pick.
+
+**Claude's desk is `claude_opportunities.py`, and the Routine session IS the
+model.** No Anthropic key exists on this account, and inside Claude Code
+`ANTHROPIC_BASE_URL` is the SESSION's proxy — never send a job's key there
+(`--api` pins `https://api.anthropic.com` and reads only
+`$RB_STATE_DIR/secrets/anthropic_api_key`). `morning_full.sh` writes the brief
+— `deepseek_opportunities.build_request` and DeepSeek's system prompt VERBATIM,
+so both models get the same question from the same rows — and WAITS for the
+seal before asking DeepSeek or Jev. The seal records which other rankings were
+already on disk (`independence`) and the section prints it. Deadline 09:24, so
+a slow answer can cost Claude's section and never DeepSeek's slot. The answer is
+validated by DeepSeek's own `_clean` against the brief's universe; the first
+sealed answer stands.
+
+**The report Routine fires at 08:50 ET now** (`50 12 * * 1-5`), not 09:05:
+Claude's seven-minute window had to come from somewhere, and every pre-brief
+step's reserve grew by `CLAUDE_WINDOW`. `morning_full.sh` runs in the
+BACKGROUND (a foreground Bash call is cut off at ten minutes) while the session
+answers the brief (ROUTINE_PROMPT STEP 4). The DST task shifts `50 12` → `50 13`.
+
+**There is no blind positive control for the session route.** The API route can
+run one; the session route cannot, because the session knows what a control is.
+Its scored record on the scoreboard is the only evidence it will ever have —
+say so rather than implying one exists.
+
 ## Day113b — Part 1's headline is DeepSeek's board, by the owner's decision
 
 The owner recorded the engine's boards and asked for the section to be
