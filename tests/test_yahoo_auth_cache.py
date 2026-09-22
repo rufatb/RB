@@ -167,10 +167,16 @@ def test_warmed_provider_denial_does_not_reauthenticate(tmp_path, status):
             raise urllib.error.HTTPError('', status, SECRET, {}, None)
 
     client.op = Opener()
-    with pytest.raises(urllib.error.HTTPError):
-        quotes.acquire_equities_raw(client, ['XIU.TO'])
-    assert len(calls) == 1
-    assert '/v7/finance/quote?' in calls[0].full_url
+    quotes.time.sleep, real = (lambda s: None), quotes.time.sleep
+    try:
+        with pytest.raises(urllib.error.HTTPError):
+            quotes.acquire_equities_raw(client, ['XIU.TO'])
+    finally:
+        quotes.time.sleep = real
+    # The point is NO RE-AUTHENTICATION. A 429 earns one polite retry of the
+    # QUOTE (2026-09-22); it must never send the client back to cookie/crumb.
+    assert len(calls) == (2 if status == 429 else 1)
+    assert all('/v7/finance/quote?' in c.full_url for c in calls)
 
 
 def test_market_client_loads_state_and_keeps_snapshot_override(tmp_path, monkeypatch):

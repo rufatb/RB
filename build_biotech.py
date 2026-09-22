@@ -112,6 +112,33 @@ def fetch_security(row, now):
             'source':'Yahoo Finance via yfinance; captured metadata and completed daily bars'}
 
 
+# ADV20 <= (63/20) x ADV63: a 63-session average contains the last 20 sessions,
+# so even if ALL of its volume fell in those 20, ADV20 is at most 3.15x it.
+# An exact bound, not an estimate.
+ADV_BOUND = 63/20
+TOP_N = 100
+
+
+def adv20(security):
+    vols=[b['volume'] for b in security.get('daily_bars',[])[-20:]]
+    return sum(vols)/len(vols) if len(vols)==20 else None
+
+
+def bound_out(out, symbols, adv63):
+    """Record `symbols` as PROVABLY outside the top-100 and return True, or
+    change nothing and return False. Every symbol must have a screener 3-month
+    ADV, and ADV_BOUND times it must sit below the 100th measured ADV20."""
+    measured=sorted((a for a in map(adv20,out['securities']) if a is not None),reverse=True)
+    if len(measured)<TOP_N or not symbols:
+        return not symbols and len(measured)>=TOP_N
+    floor=measured[TOP_N-1]
+    if all(isinstance(adv63.get(t),(int,float)) and ADV_BOUND*adv63[t]<floor for t in symbols):
+        out.setdefault('bounded_out',{}).update({t:adv63[t] for t in symbols})
+        out['bound_floor_adv20']=floor
+        return True
+    return False
+
+
 RATE_LIMIT_PAUSES = 3
 RATE_LIMIT_PAUSE_SECONDS = 60
 
@@ -131,6 +158,12 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
     out['exclusions']={r['symbol']:'not an equity' for r in raw
                        if r.get('quoteType') not in (None,'EQUITY')}
     pending=[r for r in raw if r['symbol'] not in out['exclusions']]
+    # MOST LIQUID FIRST, so the build can stop as soon as the rest are PROVABLY
+    # outside the top-100 (see `bound_out`). Names with no screener volume are
+    # measured first of all: nothing bounds them.
+    pending.sort(key=lambda r: (r.get('averageDailyVolume3Month') is not None,
+                                -(r.get('averageDailyVolume3Month') or 0), r['symbol']))
+    adv63={r['symbol']:r.get('averageDailyVolume3Month') for r in raw}
     out['universe_count']=len(raw)
     if checkpoint: checkpoint(out)
     retry=[]
@@ -138,6 +171,9 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
     def run(rows, record_failure):
         nonlocal rate_limit_pauses
         for offset in range(0,len(rows),workers):
+            remaining=[r['symbol'] for r in rows[offset:]]
+            if bound_out(out, remaining, adv63):
+                return True
             batch=rows[offset:offset+workers]
             results=acquire({row['symbol']:(lambda row=row:fetch_security(row,now),security_budget) for row in batch})
             limited=False
@@ -168,7 +204,15 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
         run([r for r, _ in retry], lambda row, error: out['errors'].append(row['symbol']+': '+error))
     else:
         out['errors'].extend(r['symbol']+': '+e for r, e in retry)
-    out['eligible_count']=out['universe_count']-len(out['exclusions'])
+    # Whatever failed or was never requested may still be bounded out.
+    unmeasured=[r['symbol'] for r in pending
+                if r['symbol'] not in {x['ticker'] for x in out['securities']}]
+    if bound_out(out, unmeasured, adv63):
+        failed=set(out.get('bounded_out',{}))
+        out['errors']=[e for e in out['errors']
+                       if e.split(':',1)[0] not in failed and 'not requested' not in e]
+    out['eligible_count']=(out['universe_count']-len(out['exclusions'])
+                           -len(out.get('bounded_out',{})))
     out['universe_complete']=bool(raw) and not out['errors']
     if checkpoint: checkpoint(out)
     return out

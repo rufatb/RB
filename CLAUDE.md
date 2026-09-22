@@ -1,5 +1,71 @@
 # Working notes for this repo
 
+## Day113 — why every section was empty or abstained, measured one by one
+
+The owner asked for "a real product … every section, every morning, without
+fail". Each empty section had its own cause and none was the one it looked like.
+
+**The board abstained EVERY day, and not because of a rate limit.** Measured
+mid-session with no 429 involved: every name failed `MISSING_BBO_TIMESTAMP`.
+Yahoo serves a live book ("Free Realtime Quote", last trade seconds old) with
+no quote timestamp, so the strict validator refuses all of it, every session.
+`corroborate_bbo` was built for exactly this (its docstring cites 09-10 and
+09-11) and nothing turned it on. It now asks whether the LATEST VENUE-STAMPED
+print sits inside the book within ONE EXCHANGE TICK: 10 of 12 live names
+corroborate, the refusals were crossed books, and names trading 8–14 ticks
+through their asks are refused — which is the staleness it exists to catch.
+Yahoo's book is SINGLE-VENUE while its last trade is consolidated, hence the
+one-tick tolerance. **Do not widen it after a bad day.**
+`corroborate_bbo: true` (visibility; sizes nothing). **`accept_corroborated_bbo`
+stays false — whether a corroborated leg may carry a size is the owner's call.**
+Also: `prepare_yahoo_auth.py` existed and nothing ran it (staged at 09:44 now),
+and a 429 gets one polite retry when it fits the deadline.
+
+**No scheduled run has EVER pushed its record.** Not one `record:` commit since
+the Routine went live on 09-16 — every board died with its container ("RECORD
+HAS A HOLE"). The run's transcript is not readable, so the cause is not
+established; the fix does not depend on it. The morning publishes
+`record/{ledger.csv,universe_prints.csv,report.json}` on the artifact and the
+bridge (a session that CAN push) merges them with `record_import.py` —
+append-only, conflict fails the whole import before anything is written.
+Nothing ran `ledger.py --score` either; the evening job does now.
+
+**Factor layer 5/276:** one row's second sentence failed its whole batch. The
+first sentence is kept and the row flagged `rationale_truncated`.
+**11 headline failures:** 13 roster symbols no longer trade (acquired/renamed);
+pruned into `DELISTED`, pinned by a test. **CAD/USD:** Yahoo serves today twice
+(a None-close placeholder); only an empty duplicate is dropped.
+**Biotech empty every day:** 1,005 names; warrants raised "not an equity" and
+certification required ZERO errors, and one timeout stopped the fetch at ~120.
+Non-shares are exclusions now, timeouts are retried, a NaN is a per-name
+failure, the build runs the evening before, and a partial build never
+overwrites a certified snapshot.
+
+**The models now get scale and location** (`atr_pct`, `gap_atr`, `move_atr`,
+`sma50/200_pct`, `range52_pos`, prior-session levels), `days_to_earnings` (the
+date only), and sector-relative moves measured from the pool's own members.
+Every key must be admitted by BOTH whitelists — `factor_inputs` DROPS unknowns
+and the adapter RAISES on them — or a new field silently disappears or kills a
+batch. Sector LABELS stay off candidates (day-101 registration); the map in
+`data/tsx_sectors.json` expires after 62 days.
+
+**Rejection #42:** a volatility-scaled gap as a same-session signal. t = 2.63
+against a registered 3.0, same sign all four quarters, placebo p = 0.0035,
+control detected at t = 5.2. Rejected; the bar does not move. The prompt says
+scaled gaps are context, not a signal.
+
+**The models have a track record now.** `data/model_picks.csv` records every
+DeepSeek/Jev pick; `model_picks.py --score` scores it from 5-minute bars (09:45
+bar close → session close, plus whether its own `invalid_at` was hit). Forced
+Jev picks are scored separately. `exposure.py` names one bet written twice
+(09-22: both DeepSeek shorts were Energy on the same WTI move).
+
+**The email is sent from a session that holds Gmail**, not by the 09:05 run:
+a Routine made with `create_trigger` carries no connectors. The 09:50 bridge
+and the 16:20 evening job are bound to the owner's interactive session, where
+Gmail sends without a prompt; a bridge that waits on a permission prompt (as
+09-22's did) is not a delivery channel.
+
 ## Day112d — the forced pick was computed, sealed to disk, and dropped by the reader
 
 2026-09-22 was the first morning the forced Jev question ran in production. The

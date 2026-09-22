@@ -167,22 +167,40 @@ SECTORS_PATH = ROOT/'data'/'tsx_sectors.json'
 MIN_SECTOR_MEMBERS = 3
 
 
-def sector_context(rows, sectors=None):
+MAX_SECTOR_MAP_AGE_DAYS = 62   # PREREGISTER_day101: reference facts at most 62 days old
+
+
+def load_sector_map(path=None, today=None):
+    """The committed map, or {} when it is missing or older than 62 days."""
+    try:
+        import datetime as _real   # the real module: tests patch `dt`
+        doc = json.loads(Path(path or SECTORS_PATH).read_text())
+        captured = _real.date.fromisoformat(doc['captured'])
+        if today is None:
+            today = _real.date.today()
+        if not 0 <= (today - captured).days <= MAX_SECTOR_MAP_AGE_DAYS:
+            return {}
+        return doc['sectors']
+    except (OSError, ValueError, KeyError, TypeError):
+        return {}
+
+
+def sector_context(rows, sectors=None, today=None):
     """Label each CA row with its sector and its move relative to that sector.
 
     Returns how many rows received a relative move."""
     import statistics
+    # The LABEL stays off the candidate: day-101's registration keeps sector
+    # classification out of the model payload. Only the measured numbers ride.
     if sectors is None:
-        try:
-            sectors = json.loads(SECTORS_PATH.read_text())['sectors']
-        except (OSError, ValueError, KeyError):
+        sectors = load_sector_map(today=today)
+        if not sectors:
             return 0
     moves = {}
     for ticker, row in rows.items():
         label = (sectors.get(ticker) or {}).get('sector')
         if not label or row.get('market', 'CA') != 'CA':
             continue
-        row['sector'] = label[:40]
         t = row.get('technicals') or {}
         if isinstance(t.get('move_atr'), (int, float)) and isinstance(t.get('atr_pct'), (int, float)):
             moves.setdefault(label, []).append((ticker, t['move_atr']*t['atr_pct']))
@@ -502,7 +520,7 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
         # what Energy DID. Measured from the pool itself — the median last-
         # session move of the names sharing a sector — so it costs no request
         # and cannot fail on a missing ETF quote. A sector needs three members.
-        status['sector_context'] = sector_context(rows)
+        status['sector_context'] = sector_context(rows, today=now.astimezone(ET).date())
         for ticker in tickers:
             if ticker not in rows:
                 status['errors'].setdefault(ticker, 'NOT_ACQUIRED')

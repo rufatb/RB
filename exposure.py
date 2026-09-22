@@ -30,10 +30,9 @@ DRIVERS = {
 
 
 def load_sectors(path=SECTORS_PATH):
-    try:
-        return json.loads(Path(path).read_text())['sectors']
-    except (OSError, ValueError, KeyError, TypeError):
-        return {}
+    """Same freshness rule as the pool: {} when missing or older than 62 days."""
+    from prepare_factor_pool import load_sector_map
+    return load_sector_map(path)
 
 
 def shared_exposure(evidence, sectors):
@@ -52,7 +51,11 @@ def shared_exposure(evidence, sectors):
         for label, picks in sorted(by_sector.items()):
             if len(picks) < 2:
                 continue
-            reasons = [str(p.get('reason') or '') for p in picks]
+            # Strip the market tag every reason opens with ("CA/CAD: ...", as
+            # the prompt requires). Left in, it would make 'the Canadian
+            # dollar' a "shared driver" of every pair of TSX picks.
+            reasons = [re.sub(r'^\s*(CA|US)/(CAD|USD)\s*:\s*', '', str(p.get('reason') or ''))
+                       for p in picks]
             driver = next((name for name, pattern in DRIVERS.items()
                            if all(pattern.search(r) for r in reasons)), None)
             groups.append({'side': side, 'sector': label,

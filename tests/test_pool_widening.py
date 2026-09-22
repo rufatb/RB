@@ -238,7 +238,7 @@ def test_sector_context_is_measured_from_the_pools_own_members():
     assert P.sector_context(rows, sectors) == 3
     assert rows['C.TO']['technicals']['sector_move_pct'] == -3.0
     assert rows['C.TO']['technicals']['rel_sector_pct'] == 2.0
-    assert rows['C.TO']['sector'] == 'Energy'
+    assert 'sector' not in rows['C.TO'], 'day-101: the label stays off the candidate'
     # One member is not a sector.
     assert 'rel_sector_pct' not in rows['D.TO']['technicals']
 
@@ -247,3 +247,12 @@ def test_the_shipped_sector_map_covers_the_roster():
     import json, factor_pool_policy as F
     sectors = json.load(open('data/tsx_sectors.json'))['sectors']
     assert set(F.TICKERS) <= set(sectors)
+
+
+def test_a_stale_sector_map_is_refused():
+    import datetime as dt, json, prepare_factor_pool as P
+    import tempfile, pathlib
+    f = pathlib.Path(tempfile.mkdtemp()) / 's.json'
+    f.write_text(json.dumps({'captured': '2026-01-01', 'sectors': {'A.TO': {'sector': 'X'}}}))
+    assert P.load_sector_map(f, today=dt.date(2026, 9, 22)) == {}
+    assert P.load_sector_map(f, today=dt.date(2026, 1, 20)) == {'A.TO': {'sector': 'X'}}

@@ -42,3 +42,10 @@ def test_both_renderers_print_it():
 def test_an_unknown_sector_map_degrades_to_saying_nothing():
     assert exposure.shared_exposure(TODAY, {}) == []
     assert exposure.load_sectors('/nonexistent.json') == {}
+
+
+def test_the_market_tag_is_not_a_shared_driver():
+    """Every DeepSeek reason opens 'CA/CAD:'. That is the market, not a cause."""
+    snap = {'longs': [{'ticker': 'SU.TO', 'reason': 'CA/CAD: closed above vwap'},
+                      {'ticker': 'CNQ.TO', 'reason': 'CA/CAD: macd turned up'}]}
+    assert exposure.shared_exposure(snap, SECTORS)[0]['driver'] is None

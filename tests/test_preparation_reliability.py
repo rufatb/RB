@@ -171,3 +171,40 @@ def test_options_timer_can_supply_a_quote_inside_the_120_second_window():
     end=options.replace(hour=9,minute=46,second=59)
     assert 0<(end-options).total_seconds()<=120
     assert report<options
+
+
+def sec(t, volume):
+    return {'ticker': t, 'daily_bars': [{'volume': volume}] * 20}
+
+
+def test_names_provably_outside_the_top_100_are_bounded_not_failed():
+    """ADV20 <= 3.15 x ADV63 exactly. Once 100 names are measured, anything
+    whose 3.15 x 3-month ADV sits below the 100th ADV20 cannot be top-100."""
+    out = {'securities': [sec(f'S{i}', 1_000_000) for i in range(100)]}
+    adv63 = {'LOW': 300_000, 'HIGH': 400_000, 'NONE': None}
+    assert build.bound_out(out, ['LOW'], adv63) is True           # 945k < 1M
+    assert out['bounded_out'] == {'LOW': 300_000}
+    assert build.bound_out(out, ['HIGH'], adv63) is False          # 1.26M >= 1M
+    assert build.bound_out(out, ['NONE'], adv63) is False          # no screener volume: never bounded
+
+
+def test_no_bound_before_one_hundred_names_are_measured():
+    out = {'securities': [sec(f'S{i}', 1_000_000) for i in range(99)]}
+    assert build.bound_out(out, ['LOW'], {'LOW': 1}) is False
+
+
+def test_the_reader_re_checks_the_bound_rather_than_trusting_it():
+    import datetime as dt, biotech
+    from zoneinfo import ZoneInfo
+    now = dt.datetime(2026, 9, 22, 18, tzinfo=ZoneInfo('America/New_York'))
+    days = [d for d in (now.date() - dt.timedelta(days=i) for i in range(40, 0, -1)) if d.weekday() < 5]
+    def s(t, v):
+        return {'ticker': t, 'industry': 'Biotechnology', 'exchange': 'NMS', 'security_type': 'COMMON',
+                'currency': 'USD', 'market_cap': 1e8, 'market_cap_asof': now.isoformat(),
+                'daily_bars': [{'date': d.isoformat(), 'adjusted_close': 10.0, 'volume': v} for d in days]}
+    secs = [s(f'S{i:03d}', 1_000_000) for i in range(100)]
+    base = {'as_of': now.isoformat(), 'universe_complete': True, 'securities': secs,
+            'universe_count': 101, 'eligible_count': 100}
+    assert len(biotech.select_universe({**base, 'bounded_out': {'LOW': 100_000}}, now)) == 100
+    with pytest.raises(ValueError, match='bound does not hold'):
+        biotech.select_universe({**base, 'bounded_out': {'LIE': 900_000}}, now)

@@ -96,6 +96,9 @@ Percent fields are already percentages: gap 0.42 means 0.42%, not 42%.
             this name NORMALLY moves in a day. Judge every move against it.
   gap_atr   the last session's gap measured in ATRs. 0.3 is ordinary; 1.5 is not.
             A +2% gap on a name with a 5% ATR is SMALLER than +0.8% on one with 2%.
+            It is SCALE, not a forecast: a registered ten-year test on TSX bars
+            (rejection #42) found no same-session direction signal in it at
+            the required strength. Do not pick a name because its gap_atr is big.
   move_atr  the last session's close-to-close move, in ATRs
   sma50_pct, sma200_pct   percent above (+) or below (-) the 50/200-session average
   range52_pos  0 = at the 52-week low, 1 = at the 52-week high

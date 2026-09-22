@@ -100,6 +100,16 @@ def select_universe(snapshot, now):
             raise ValueError("no measurable liquidity: " + t)
         rows.append({**s, **m})
     rows.sort(key=lambda s: (-s["adv20"], s["ticker"]))
+    # RE-CHECK THE BOUND, never trust it: every name the build skipped as
+    # provably outside the top-100 must still be, against THESE measurements.
+    bounded = snapshot.get("bounded_out") or {}
+    if bounded:
+        if len(rows) < 100:
+            raise ValueError("bounded universe without 100 measured names")
+        floor = rows[99]["adv20"]
+        for t, adv63 in bounded.items():
+            if number(adv63, positive=True) is None or 63/20*adv63 >= floor:
+                raise ValueError("bound does not hold for " + t)
     return [{**s, "liquidity_rank": i+1} for i, s in enumerate(rows[:100])
             if s["market_cap"] < 500_000_000]
 
