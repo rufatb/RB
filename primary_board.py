@@ -21,7 +21,7 @@ What this does NOT change, and why each matters:
   scored forward record beside the picks, every day, so the choice can be judged
   on outcomes rather than on how the picks read.
 
-The verifiable record when this was built is in the commit message: 3 of 9 for
+The verifiable record when this was built is in the commit message: 3 of 8 for
 DeepSeek and 3 of 12 for the engine on the same yardstick — neither has shown an
 edge yet. The leaderboard exists so that stops being a matter of opinion.
 """
