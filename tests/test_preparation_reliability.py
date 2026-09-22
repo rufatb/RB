@@ -119,19 +119,46 @@ def test_biotech_timeout_is_bounded_and_checkpointed(monkeypatch):
     assert saved[-1]==out
 
 
-def test_biotech_rate_limit_preserves_successes_and_stops_further_batches(monkeypatch):
+def test_biotech_rate_limit_pauses_retries_and_keeps_every_success(monkeypatch):
+    """2026-09-22: stopping on the first rate limit or timeout ended 09-15's
+    build at ~120 of 1,005 names, and Part 2 had been empty ever since. The
+    build now runs the evening before, so it can afford to wait: pause, carry
+    on, retry the failures once at the end. A name that still fails is still
+    an error and the universe is still NOT certified."""
     class YFRateLimitError(Exception):pass
     monkeypatch.setattr(build,'discover_universe',lambda:[{'symbol':s} for s in 'ABCD'])
+    monkeypatch.setattr(build.time,'sleep',lambda s:None)
     def fetch(row,now):
         if row['symbol']=='B':raise YFRateLimitError()
         return {'ticker':row['symbol']}
     monkeypatch.setattr(build,'fetch_security',fetch)
     saved=[]
     out=build.build(NOW,workers=2,checkpoint=lambda x:saved.append(copy.deepcopy(x)))
-    assert [r['ticker'] for r in out['securities']]==['A']
+    assert [r['ticker'] for r in out['securities']]==['A','C','D']
     assert out['universe_count']==4 and not out['universe_complete']
-    assert any('remaining symbols not requested' in e for e in out['errors'])
+    assert out['errors']==['B: YFRateLimitError']
     assert saved[-1]==out
+
+
+def test_a_persistent_rate_limit_still_stops_and_says_so(monkeypatch):
+    class YFRateLimitError(Exception):pass
+    monkeypatch.setattr(build,'discover_universe',lambda:[{'symbol':s} for s in 'ABCDEFGHIJ'])
+    monkeypatch.setattr(build.time,'sleep',lambda s:None)
+    def fetch(row,now): raise YFRateLimitError()
+    monkeypatch.setattr(build,'fetch_security',fetch)
+    out=build.build(NOW,workers=2)
+    assert not out['universe_complete']
+    assert any('rate limit persisted; remaining symbols not requested' in e for e in out['errors'])
+
+
+def test_a_warrant_is_an_exclusion_not_a_failure(monkeypatch):
+    """The screener's own warrants made certification unreachable."""
+    monkeypatch.setattr(build,'discover_universe',lambda:[
+        {'symbol':'A','quoteType':'EQUITY'},{'symbol':'AW','quoteType':'WARRANT'}])
+    monkeypatch.setattr(build,'fetch_security',lambda row,now:{'ticker':row['symbol']})
+    out=build.build(NOW,workers=2)
+    assert out['exclusions']=={'AW':'not an equity'} and out['errors']==[]
+    assert out['universe_complete'] and out['eligible_count']==1
 
 
 def test_options_timer_can_supply_a_quote_inside_the_120_second_window():

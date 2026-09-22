@@ -33,20 +33,40 @@ def test_valid_abbreviated_single_sentence_is_preserved_exactly(rationale):
     assert actual[0]['factor_rationale'] == rationale
 
 
+@pytest.mark.parametrize('rationale, first', [
+    ('The issuer announced expansion. Timing remains uncertain.', 'The issuer announced expansion.'),
+    ('The issuer announced expansion! Timing remains uncertain.', 'The issuer announced expansion!'),
+    ('Will margins improve? The supplied data cannot answer.', 'Will margins improve?'),
+    ('Demand rose in the U.S. Earnings remained uncertain.', 'Demand rose in the U.S.'),
+    ('The issuer acquired Company Inc. Management has not given guidance.', 'The issuer acquired Company Inc.'),
+    ('The company sold Subsidiary Ltd. Another transaction remains uncertain.', 'The company sold Subsidiary Ltd.'),
+])
+def test_a_second_sentence_is_cut_not_a_reason_to_discard_the_batch(rationale, first):
+    """2026-09-22: this raised, and one row's second sentence discarded every
+    other row in its batch — 271 of 276 names assessed by nobody. The rule
+    guards a DISPLAY field, so the repair is a strict subset of the model's
+    own words, flagged on the row. The score and lean are untouched."""
+    out = parse_assessments(json.dumps({'assessments': [row('RY.TO', rationale)]}), ['RY.TO'])
+    assert out[0]['factor_rationale'] == first
+    assert out[0]['rationale_truncated'] is True
+    assert out[0]['sentiment_score'] == row('RY.TO', rationale)['sentiment_score']
+
+
+def test_one_multi_sentence_row_no_longer_costs_its_batch():
+    records = [row('X'+str(i), 'The supplied operating update supports the stated context.') for i in range(25)]
+    records[7]['factor_rationale'] = 'Demand rose. Guidance is pending.'
+    out = parse_assessments(json.dumps({'assessments': records}), ['X'+str(i) for i in range(25)])
+    assert len(out) == 25
+    assert [r.get('rationale_truncated') for r in out].count(True) == 1
+
+
 @pytest.mark.parametrize('rationale', [
-    'The issuer announced expansion. Timing remains uncertain.',
-    'The issuer announced expansion. timing remains uncertain.',
-    'The issuer announced expansion! Timing remains uncertain.',
-    'Will margins improve? The supplied data cannot answer.',
-    'Demand rose in the U.S. Earnings remained uncertain.',
-    'The issuer acquired Company Inc. Management has not given guidance.',
-    'The company sold Subsidiary Ltd. Another transaction remains uncertain.',
     'The issuer announced\nexpansion.',
     'The issuer announced\rexpansion.',
     'The issuer announced\texpansion.',
     'The issuer announced\x00expansion.',
 ])
-def test_real_sentence_boundaries_and_controls_are_rejected(rationale):
+def test_control_characters_are_still_rejected(rationale):
     with pytest.raises(ResponseSchemaError):
         parse_assessments(json.dumps({'assessments': [row('RY.TO', rationale)]}), ['RY.TO'])
 

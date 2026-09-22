@@ -297,8 +297,10 @@ def _nonstandard_number(value):
     raise ResponseSchemaError()
 
 
-def _multiple_sentences(text):
-    """Bounded style check that does not mistake common abbreviations for stops.
+def _sentence_break(text):
+    """Index where the first sentence ends, or None if there is only one.
+
+    Bounded style check that does not mistake common abbreviations for stops.
 
     This is deliberately a small punctuation heuristic, not a semantic grammar
     or a reason to rewrite provider output. Terminal abbreviations followed by
@@ -309,14 +311,14 @@ def _multiple_sentences(text):
     connectors = {'e.g.', 'i.e.', 'vs.'}
     for boundary in re.finditer(r'[.!?]\s+\S', text):
         if text[boundary.start()] != '.':
-            return True
+            return boundary.start() + 1
         before = text[:boundary.start()+1]
         token = re.search(r'(?<![A-Za-z.])([A-Za-z][A-Za-z.]*)\.$', before)
         if token is None:
-            return True
+            return boundary.start() + 1
         abbreviation = token.group(0).lower()
         if abbreviation not in abbreviations:
-            return True
+            return boundary.start() + 1
         after = text[boundary.end()-1:].lstrip('"\'“‘([')
         following = re.match(r'[A-Za-z0-9]+', after)
         word = following.group(0) if following else ''
@@ -327,8 +329,12 @@ def _multiple_sentences(text):
         starts_with_initialism = (abbreviation in ('u.s.', 'u.k.')
                                   and not before[:token.start()].strip())
         if starts_sentence and abbreviation not in connectors and not starts_with_initialism:
-            return True
-    return False
+            return boundary.start() + 1
+    return None
+
+
+def _multiple_sentences(text):
+    return _sentence_break(text) is not None
 
 
 def parse_assessments(content, tickers):
@@ -367,14 +373,21 @@ def parse_assessments(content, tickers):
             raise ResponseSchemaError() from None
         if not -1 <= score <= 1:
             raise ResponseSchemaError('SCORE_OUT_OF_RANGE: sentiment_score outside [-1, 1]')
-        if _multiple_sentences(rationale):
-            # A STYLE check, and it discards the WHOLE batch. When it fires it
-            # must say so by name, or prose punctuation reads as a provider
-            # outage and gets chased in the wrong place entirely.
-            raise ResponseSchemaError(
-                'MULTI_SENTENCE_RATIONALE: the rationale had more than one sentence, '
-                'which fails the entire batch on a style rule')
-        by_ticker[ticker] = {**row, 'sentiment_score': score, 'factor_rationale': rationale}
+        cut = _sentence_break(rationale)
+        truncated = cut is not None
+        if truncated:
+            # KEEP THE FIRST SENTENCE; NEVER FAIL THE BATCH ON PUNCTUATION.
+            # This used to raise, and on 2026-09-22 it cost 271 of 276 names:
+            # one row's second sentence discarded every other row in its batch,
+            # including every score and lean the model had returned. The rule
+            # protects a DISPLAY field — the rationale is shown to the owner
+            # and screened by factor_grounding, nothing is computed from it —
+            # so the conservative repair is a strict subset of the model's own
+            # words, and the row carries `rationale_truncated` so it is never
+            # silent. The score, the lean and every numeric check are untouched.
+            rationale = rationale[:cut].strip()
+        by_ticker[ticker] = {**row, 'sentiment_score': score, 'factor_rationale': rationale,
+                             **({'rationale_truncated': True} if truncated else {})}
     if set(by_ticker) != set(tickers):
         raise ResponseSchemaError()
     return [by_ticker[ticker] for ticker in tickers]

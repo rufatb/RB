@@ -145,3 +145,23 @@ def test_macro_no_bar_data_keeps_level_as_healthy_but_reports_missing_change(mon
     assert all(value['value'] == 12.5 for value in result['values'].values())
     assert all(value['change_status'] == 'UNAVAILABLE' for value in result['values'].values())
     assert len(result['gaps']) == 4
+
+
+def test_an_empty_placeholder_bar_on_today_is_not_a_duplicate():
+    """2026-09-22: Yahoo's FX series served today twice — a 00:00 bar with a None
+    close and the live bar — so cadusd read DUPLICATE_DAILY_REFERENCE_DATE and
+    UNAVAILABLE every morning."""
+    data = chart()
+    data['timestamp'].insert(2, epoch('2026-09-14T00:05:00-04:00'))
+    data['indicators']['quote'][0]['close'].insert(2, None)
+    result = M.daily_change_context(data, 103., OBSERVED, SOURCE)
+    assert result['change_status'] == 'READY'
+    assert result['change_pct'] == pytest.approx((103./101.-1)*100)
+
+
+def test_two_valued_bars_on_one_date_are_still_refused():
+    data = chart()
+    data['timestamp'].insert(2, epoch('2026-09-14T00:05:00-04:00'))
+    data['indicators']['quote'][0]['close'].insert(2, 99.)
+    result = M.daily_change_context(data, 103., OBSERVED, SOURCE)
+    assert result['change_status'] == 'UNAVAILABLE'

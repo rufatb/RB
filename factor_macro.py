@@ -48,6 +48,19 @@ def daily_change_context(chart, value, observed, source_url):
         if any(a >= b for a, b in zip(times, times[1:])):
             raise ValueError('DAILY_TIMESTAMPS_NOT_STRICTLY_INCREASING')
         dates = [ts.astimezone(zone).date() for ts in times]
+        # AN EMPTY PLACEHOLDER IS NOT A DUPLICATE. Measured 2026-09-22: Yahoo's
+        # FX series (CADUSD=X, London) serves TODAY twice — a 00:00 bar whose
+        # close is None and the live bar beside it — so `cadusd` read
+        # UNAVAILABLE every morning. Only a None-close bar that shares its date
+        # with a valued bar is dropped; two VALUED bars on one date are still
+        # an ambiguity and still refused.
+        valued = {d for d, c in zip(dates, closes) if c is not None}
+        keep = [i for i, (d, c) in enumerate(zip(dates, closes))
+                if not (c is None and d in valued and dates.count(d) > 1)]
+        if len(keep) != len(dates):
+            times = [times[i] for i in keep]
+            closes = [closes[i] for i in keep]
+            dates = [dates[i] for i in keep]
         if len(set(dates)) != len(dates):
             raise ValueError('DUPLICATE_DAILY_REFERENCE_DATE')
         observation = stamp(observed)

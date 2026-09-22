@@ -215,3 +215,12 @@ def test_injecting_only_the_acquirer_still_counts_as_deterministic(tmp_path, mon
     result = F.prepare(tmp_path, CFG, now=NOW, acquire_fn=unavailable)
     assert result['daily_filled'] == 0, 'the daily pass reached the network behind a mock'
     assert result['errors']['IFC.TO'] == 'NOT_ACQUIRED' 
+
+
+def test_delisted_symbols_stay_out_of_the_roster():
+    """2026-09-22: thirteen dead symbols produced eleven 'headline acquisition
+    failed' lines a day and fed nothing. A dead name re-added by a later edit
+    would repeat that silently."""
+    import factor_pool_policy as F
+    assert not set(F.DELISTED) & set(F.TICKERS)
+    assert len(set(F.TICKERS)) == len(F.TICKERS)

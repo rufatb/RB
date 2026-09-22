@@ -138,7 +138,10 @@ else
 
     # Exits 2 on an incomplete universe, which is a real partial, not a crash.
     if budget="$(slice 900 540)"; then
-        timeout "$budget" python build_biotech.py --output data/biotech_snapshot.json
+        # Built the EVENING BEFORE by the bridge session (1,005 names do not fit
+        # a 25-minute window). This only rebuilds when that did not happen.
+        timeout "$budget" python build_biotech.py --output data/biotech_snapshot.json \
+            --skip-if-certified-within 20
         case $? in
             0) log "  biotech universe: complete" ;;
             2) log "  biotech universe: PARTIAL (provider limit) — monitor stays uncertified"

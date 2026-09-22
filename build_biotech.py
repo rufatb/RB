@@ -11,6 +11,7 @@ dates for a sponsor's announced readout window.
 from __future__ import annotations
 import argparse
 import datetime as dt
+import time
 import json
 import os
 from pathlib import Path
@@ -56,17 +57,26 @@ def discover_universe(screen_fn=None):
     return rows
 
 
+class Excluded(ValueError):
+    """Outside the population BY DEFINITION — a warrant, a unit, a non-US or
+    non-biotech listing. Not a failure to measure anything.
+
+    Before 2026-09-22 these were ordinary errors, and `universe_complete`
+    required ZERO errors, so the screener's own warrants (APLMW, ASBPW, ...)
+    made a certified top-100 unreachable and Part 2 was empty every day."""
+
+
 def fetch_security(row, now):
     """Verify provider metadata and every one of the last 20 exchange sessions."""
     import yfinance as yf
     import pandas_market_calendars as mcal
     t=row['symbol']
     if row.get('quoteType')!='EQUITY':
-        raise ValueError('not an equity')
+        raise Excluded('not an equity')
     obj=yf.Ticker(t)
     info=obj.get_info()
     if info.get('industry')!='Biotechnology' or info.get('exchange') not in biotech.US_EXCHANGES:
-        raise ValueError('membership does not match Biotechnology/US-listing query')
+        raise Excluded('membership does not match Biotechnology/US-listing query')
     frame=obj.history(period='6mo',interval='1d',auto_adjust=True,raise_errors=True)
     frame=frame[[i.date()<now.date() for i in frame.index]]
     if frame.empty:
@@ -90,6 +100,10 @@ def fetch_security(row, now):
             'source':'Yahoo Finance via yfinance; captured metadata and completed daily bars'}
 
 
+RATE_LIMIT_PAUSES = 3
+RATE_LIMIT_PAUSE_SECONDS = 60
+
+
 def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budget=20):
     now=now or dt.datetime.now(ZoneInfo('America/New_York'))
     out={'as_of':now.isoformat(),'universe_complete':False,'universe_count':0,
@@ -101,21 +115,48 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
         if checkpoint: checkpoint(out)
         return out
     raw=discovered['value']
+    # Non-shares never enter the population; they are counted, not failed.
+    out['exclusions']={r['symbol']:'not an equity' for r in raw
+                       if r.get('quoteType') not in (None,'EQUITY')}
+    pending=[r for r in raw if r['symbol'] not in out['exclusions']]
     out['universe_count']=len(raw)
     if checkpoint: checkpoint(out)
-    for offset in range(0,len(raw),workers):
-        batch=raw[offset:offset+workers]
-        results=acquire({row['symbol']:(lambda row=row:fetch_security(row,now),security_budget) for row in batch})
-        stop=False
-        for ticker,result in results.items():
-            if result['status']=='OK': out['securities'].append(result['value'])
-            else:
-                out['errors'].append(ticker+': '+result['error'])
-                stop |= result['error'] in {'YFRateLimitError','TimeoutExpired'}
-        if checkpoint: checkpoint(out)
-        if stop:
-            out['errors'].append('provider unavailable; remaining symbols not requested')
-            break
+    retry=[]
+    rate_limit_pauses=0
+    def run(rows, record_failure):
+        nonlocal rate_limit_pauses
+        for offset in range(0,len(rows),workers):
+            batch=rows[offset:offset+workers]
+            results=acquire({row['symbol']:(lambda row=row:fetch_security(row,now),security_budget) for row in batch})
+            limited=False
+            for row in batch:
+                ticker=row['symbol']; result=results[ticker]
+                if result['status']=='OK':
+                    out['securities'].append(result['value'])
+                elif result['error']=='Excluded':
+                    out['exclusions'][ticker]='outside Biotechnology/US-listing population'
+                else:
+                    record_failure(row, result['error'])
+                    limited |= result['error']=='YFRateLimitError'
+            if checkpoint: checkpoint(out)
+            if limited:
+                # A rate limit is the provider asking us to wait, not proof
+                # the rest is unmeasurable. This runs the evening before, so
+                # waiting is affordable; the morning never runs this loop.
+                rate_limit_pauses+=1
+                if rate_limit_pauses>RATE_LIMIT_PAUSES:
+                    out['errors'].append('provider rate limit persisted; remaining symbols not requested')
+                    return False
+                time.sleep(RATE_LIMIT_PAUSE_SECONDS)
+        return True
+    # First pass collects transient failures for ONE retry at the end, instead
+    # of stopping on the first timeout — which is what stopped 09-15's build at
+    # ~120 of 1,005 names.
+    if run(pending, lambda row, error: retry.append((row, error))):
+        run([r for r, _ in retry], lambda row, error: out['errors'].append(row['symbol']+': '+error))
+    else:
+        out['errors'].extend(r['symbol']+': '+e for r, e in retry)
+    out['eligible_count']=out['universe_count']-len(out['exclusions'])
     out['universe_complete']=bool(raw) and not out['errors']
     if checkpoint: checkpoint(out)
     return out
@@ -140,21 +181,46 @@ def refresh_options(snapshot, events, now, client=None):
     return snapshot
 
 
+def certified_within(path, now, hours):
+    """True when `path` holds a COMPLETE universe prepared within `hours`."""
+    try:
+        snap=json.loads(Path(path).read_text())
+        age=(now-dt.datetime.fromisoformat(snap['as_of'])).total_seconds()
+        return bool(snap.get('universe_complete')) and 0<=age<=hours*3600
+    except (OSError,ValueError,KeyError,TypeError):
+        return False
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',default=os.getenv('RB_BIOTECH_SNAPSHOT_JSON','data/biotech_snapshot.json'))
     p.add_argument('--events',default=os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json'))
     p.add_argument('--refresh-options',action='store_true')
+    p.add_argument('--skip-if-certified-within',type=float,default=None,metavar='HOURS',
+                   help='exit 0 without fetching when the output already holds a complete universe this recent')
     a=p.parse_args(argv)
     now=dt.datetime.now(ZoneInfo('America/New_York'))
+    if a.skip_if_certified_within is not None and certified_within(a.output,now,a.skip_if_certified_within):
+        print(f"Universe already certified within {a.skip_if_certified_within:g}h; not rebuilt.")
+        return 0
     if a.refresh_options:
         snap=json.loads(Path(a.output).read_text())
         events=json.loads(Path(a.events).read_text())['events']
         snap=refresh_options(snap,events,now)
+        write_atomic(a.output,snap)
     else:
-        snap=build(now,checkpoint=lambda value:write_atomic(a.output,value))
-    write_atomic(a.output,snap)
-    print(f"Universe {len(snap['securities'])}/{snap['universe_count']}; complete={snap['universe_complete']}; errors={len(snap['errors'])}")
+        # BUILD BESIDE, PROMOTE ON MERIT. Checkpoints used to write straight to
+        # the output, so a morning run killed by its time slice would replace
+        # the evening's CERTIFIED universe with a partial one and empty Part 2.
+        # A partial build never overwrites a certified snapshot.
+        partial=str(a.output)+'.partial'
+        snap=build(now,checkpoint=lambda value:write_atomic(partial,value))
+        if snap['universe_complete'] or not certified_within(a.output,now,36):
+            write_atomic(a.output,snap)
+        else:
+            print('Build incomplete; the existing certified snapshot is kept.')
+    print(f"Universe {len(snap['securities'])}/{snap.get('eligible_count',snap['universe_count'])} eligible "
+          f"({len(snap.get('exclusions',{}))} excluded); complete={snap['universe_complete']}; errors={len(snap['errors'])}")
     for error in snap['errors'][:12]: print(error)
     return 0 if snap['universe_complete'] else 2
 

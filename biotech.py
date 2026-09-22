@@ -77,7 +77,10 @@ def select_universe(snapshot, now):
     if not fresh(snapshot.get("as_of"), now, 36*3600):
         raise ValueError("universe snapshot missing, stale or future")
     securities = snapshot.get("securities", [])
-    if not securities or len(securities) != snapshot.get("universe_count"):
+    # Exclusions (warrants, units, non-US/non-biotech listings) are outside the
+    # population by definition; every OTHER discovered name must be measured.
+    expected = snapshot.get("eligible_count", snapshot.get("universe_count"))
+    if not securities or len(securities) != expected:
         raise ValueError("universe count mismatch or empty universe")
     seen, rows = set(), []
     for s in securities:

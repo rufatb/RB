@@ -39,3 +39,4 @@ secrets/
 data/biotech_snapshot.json
 
 data/biotech_candidates.json
+data/biotech_snapshot.json.partial
