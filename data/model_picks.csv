@@ -1,5 +1,5 @@
 session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_version,source,entry,exit,r_pct,hit,invalidated,scored_at
-2026-09-22,deepseek,selected,LONG,DOL.TO,0.56,,,,recovered_from_published_page_2026-09-22,,,,,,
-2026-09-22,deepseek,selected,LONG,STN.TO,0.53,,,,recovered_from_published_page_2026-09-22,,,,,,
-2026-09-22,deepseek,selected,SHORT,CNQ.TO,0.6,,,,recovered_from_published_page_2026-09-22,,,,,,
-2026-09-22,deepseek,selected,SHORT,SU.TO,0.62,,,,recovered_from_published_page_2026-09-22,,,,,,
+2026-09-22,deepseek,selected,LONG,DOL.TO,0.56,,,,recovered_from_published_page_2026-09-22,182.14,180.525,-0.8867,0,,2026-09-22T16:22:08.931675-04:00
+2026-09-22,deepseek,selected,LONG,STN.TO,0.53,,,,recovered_from_published_page_2026-09-22,99.53,100.15,0.6229,1,,2026-09-22T16:22:08.931675-04:00
+2026-09-22,deepseek,selected,SHORT,CNQ.TO,0.6,,,,recovered_from_published_page_2026-09-22,66.78,67.23,-0.6739,0,,2026-09-22T16:22:08.931675-04:00
+2026-09-22,deepseek,selected,SHORT,SU.TO,0.62,,,,recovered_from_published_page_2026-09-22,93.14,94.16,-1.0951,0,,2026-09-22T16:22:08.931675-04:00
