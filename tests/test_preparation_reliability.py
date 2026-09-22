@@ -208,3 +208,35 @@ def test_the_reader_re_checks_the_bound_rather_than_trusting_it():
     assert len(biotech.select_universe({**base, 'bounded_out': {'LOW': 100_000}}, now)) == 100
     with pytest.raises(ValueError, match='bound does not hold'):
         biotech.select_universe({**base, 'bounded_out': {'LIE': 900_000}}, now)
+
+
+def test_an_unmeasurable_large_cap_costs_one_rank_not_the_universe(monkeypatch):
+    """2026-09-22: ETRA ($832M) failed the 20-session check and alone voided a
+    971-name universe. It cannot appear in a monitor capped at $500M; it can
+    only displace the 100th name — so certify top-99 instead."""
+    monkeypatch.setattr(build, 'discover_universe', lambda: [
+        {'symbol': 'A', 'quoteType': 'EQUITY', 'marketCap': 1e8},
+        {'symbol': 'BIG', 'quoteType': 'EQUITY', 'marketCap': 8e8}])
+    def fetch(row, now):
+        if row['symbol'] == 'BIG':
+            raise ValueError('ADV20 history missing exchange sessions')
+        return {'ticker': row['symbol']}
+    monkeypatch.setattr(build, 'fetch_security', fetch)
+    monkeypatch.setattr(build.time, 'sleep', lambda s: None)
+    out = build.build(NOW, workers=2)
+    assert out['unmeasured_large_cap'] == {'BIG': 8e8}
+    assert out['errors'] == [] and out['universe_complete'] and out['eligible_count'] == 1
+
+
+def test_an_unmeasurable_small_cap_still_blocks_certification(monkeypatch):
+    """A small cap COULD be in the monitor; not measuring it is a real gap."""
+    monkeypatch.setattr(build, 'discover_universe', lambda: [
+        {'symbol': 'A', 'quoteType': 'EQUITY', 'marketCap': 1e8},
+        {'symbol': 'SMALL', 'quoteType': 'EQUITY', 'marketCap': 1e8}])
+    def fetch(row, now):
+        if row['symbol'] == 'SMALL':
+            raise ValueError('ADV20 history missing exchange sessions')
+        return {'ticker': row['symbol']}
+    monkeypatch.setattr(build, 'fetch_security', fetch)
+    monkeypatch.setattr(build.time, 'sleep', lambda s: None)
+    assert not build.build(NOW, workers=2)['universe_complete']

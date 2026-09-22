@@ -140,6 +140,7 @@ def bound_out(out, symbols, adv63):
 
 
 RATE_LIMIT_PAUSES = 3
+MAX_UNMEASURED_LARGE_CAPS = 5   # more than this and the ranking is too uncertain to certify
 RATE_LIMIT_PAUSE_SECONDS = 60
 
 
@@ -204,15 +205,31 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
         run([r for r, _ in retry], lambda row, error: out['errors'].append(row['symbol']+': '+error))
     else:
         out['errors'].extend(r['symbol']+': '+e for r, e in retry)
+    # AN UNMEASURABLE LARGE CAP CANNOT APPEAR IN THE MONITOR (which keeps only
+    # names under $500M), so its one possible effect is to displace the
+    # 100th-ranked name. It is recorded, not failed, and the reader certifies
+    # one fewer rank for each (top-99 instead of top-100): every name it keeps
+    # is then provably inside the true top-100 wherever the unknown ranks.
+    # 2026-09-22: ETRA ($832M, 3M shares/day) failed the 20-session check and
+    # alone voided a 971-name universe.
+    failed_names={e.split(':',1)[0] for e in out['errors']}
+    caps={r['symbol']:r.get('marketCap') for r in raw}
+    large=[t for t in failed_names
+           if isinstance(caps.get(t),(int,float)) and caps[t]>=biotech.MONITOR_MAX_CAP]
+    if large and len(large)<=MAX_UNMEASURED_LARGE_CAPS:
+        out['unmeasured_large_cap']={t:caps[t] for t in large}
+        out['errors']=[e for e in out['errors'] if e.split(':',1)[0] not in large]
     # Whatever failed or was never requested may still be bounded out.
     unmeasured=[r['symbol'] for r in pending
-                if r['symbol'] not in {x['ticker'] for x in out['securities']}]
+                if r['symbol'] not in {x['ticker'] for x in out['securities']}
+                and r['symbol'] not in out.get('unmeasured_large_cap',{})]
     if bound_out(out, unmeasured, adv63):
         failed=set(out.get('bounded_out',{}))
         out['errors']=[e for e in out['errors']
                        if e.split(':',1)[0] not in failed and 'not requested' not in e]
     out['eligible_count']=(out['universe_count']-len(out['exclusions'])
-                           -len(out.get('bounded_out',{})))
+                           -len(out.get('bounded_out',{}))
+                           -len(out.get('unmeasured_large_cap',{})))
     out['universe_complete']=bool(raw) and not out['errors']
     if checkpoint: checkpoint(out)
     return out

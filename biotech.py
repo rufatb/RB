@@ -70,6 +70,9 @@ def history_metrics(bars, today):
     return m
 
 
+MONITOR_MAX_CAP = 500_000_000
+
+
 def select_universe(snapshot, now):
     """Intersection, not top-100 AFTER selecting microcaps. No partial ranking."""
     if not snapshot.get("universe_complete"):
@@ -110,8 +113,14 @@ def select_universe(snapshot, now):
         for t, adv63 in bounded.items():
             if number(adv63, positive=True) is None or 63/20*adv63 >= floor:
                 raise ValueError("bound does not hold for " + t)
-    return [{**s, "liquidity_rank": i+1} for i, s in enumerate(rows[:100])
-            if s["market_cap"] < 500_000_000]
+    # One rank fewer per unmeasurable large cap (see build_biotech): each could
+    # only displace the bottom of the top-100, never appear in the monitor.
+    large = snapshot.get("unmeasured_large_cap") or {}
+    for t, cap in large.items():
+        if number(cap, positive=True) is None or cap < MONITOR_MAX_CAP:
+            raise ValueError("unmeasured name is not a verified large cap: " + t)
+    return [{**s, "liquidity_rank": i+1} for i, s in enumerate(rows[:100-len(large)])
+            if s["market_cap"] < MONITOR_MAX_CAP]
 
 
 def evidence_url(url):
