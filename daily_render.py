@@ -200,7 +200,27 @@ def factor_note(intra):
             ' No selection, size or threshold depends on it.')
 
 
-def deepseek_summary(intra):
+# THE STANDING DISCLOSURES, named once each so they can be printed once.
+#
+# Each of these says something permanently true about its section rather than
+# anything about today, and each was appended to its own section every single
+# morning. In the full report that repetition is correct — a section of the
+# record must carry its own terms. In the EMAIL it meant the reader scrolled
+# three paragraphs of identical caveat to reach four tickers, which is how a
+# disclosure stops being read at all. The email prints them once, together, in
+# a footer; nothing is dropped and the full report is unchanged.
+FACTOR_STANDING = ('DESIGN scores are not calibrated probabilities; MDE and accuracy gain '
+                   'remain unestablished.')
+OPPORTUNITIES_STANDING = ('Self-reported confidence is NOT a calibrated win probability: no track '
+                          'record, never scored against an outcome, never blended with the '
+                          'engine’s number. Nothing here is adopted, sized or recorded as a '
+                          'position.')
+JEV_STANDING = ('Jev’s probabilities are its OWN, not calibrated win probabilities: no track '
+                'record, never scored against an outcome, never averaged with DeepSeek’s '
+                'confidence or the engine’s score. Nothing here is adopted or sized.')
+
+
+def deepseek_summary(intra, *, concise=False):
     """At most six concise lines over saved factors; older publications stay unchanged."""
     if 'deepseek' not in intra:
         return ['### TSX factor research — unadopted', _expanded_summary(intra)] if intra.get('research_coverage') else []
@@ -259,11 +279,11 @@ def deepseek_summary(intra):
             shown.append(clean if len(clean)<=140 else clean[:137].rsplit(' ',1)[0]+'…')
         remainder=f' (+{len(unique)-len(shown)} other causes)' if len(unique)>len(shown) else ''
         lines.append('Factor gaps: '+'; '.join(shown)+remainder+'. Full evidence attached.')
-    disclaimer='DESIGN scores are not calibrated probabilities; MDE and accuracy gain remain unestablished.'
-    if len(lines)>=6:
-        lines[-1]+=' '+disclaimer
-    else:
-        lines.append(disclaimer)
+    if not concise:
+        if len(lines)>=6:
+            lines[-1]+=' '+FACTOR_STANDING
+        else:
+            lines.append(FACTOR_STANDING)
     return lines
 
 
@@ -276,7 +296,7 @@ def opportunities_reported(intra):
     return (intra.get('opportunities') or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def opportunities_summary(intra):
+def opportunities_summary(intra, *, concise=False):
     """The model's own top two per side, and whether the engine agreed.
 
     Confidence is restated as self-reported every time it is printed. A number
@@ -333,9 +353,8 @@ def opportunities_summary(intra):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "
                      f"{comparison.get('unseen', 0)} outside the engine universe.")
-    lines.append('Self-reported confidence is NOT a calibrated win probability: no track record, '
-                 'never scored against an outcome, never blended with the engine’s number. '
-                 'Nothing here is adopted, sized or recorded as a position.')
+    if not concise:
+        lines.append(OPPORTUNITIES_STANDING)
     return lines
 
 
@@ -344,7 +363,7 @@ def jev_reported(intra):
     return (intra.get('jev') or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def jev_summary(intra):
+def jev_summary(intra, *, concise=False):
     """Jev's own picks, and whether the two models agree.
 
     Probability and abstain-probability are restated as Jev's own numbers every
@@ -413,9 +432,8 @@ def jev_summary(intra):
     if versus.get('rows'):
         lines.append(f"Cross-model: {versus.get('agree', 0)} agreed, {versus.get('oppose', 0)} "
                      f"contradicted, {versus.get('alone', 0)} picked by Jev alone.")
-    lines.append('Jev\u2019s probabilities are its OWN, not calibrated win probabilities: no track '
-                 'record, never scored against an outcome, never averaged with DeepSeek\u2019s '
-                 'confidence or the engine\u2019s score. Nothing here is adopted or sized.')
+    if not concise:
+        lines.append(JEV_STANDING)
     return lines
 
 

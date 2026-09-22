@@ -64,14 +64,14 @@ def text(d):
     # keeps every diagnostic verbatim, and `factor_note` states the absence in
     # one line among the gaps (house rule 1).
     if 'deepseek' in intra and full.factor_reported(intra):
-        lines += ['',*full.deepseek_summary(intra)]
+        lines += ['',*full.deepseek_summary(intra, concise=True)]
     # Same rule for the model's own picks: carried when it answered, silent in
     # the concise email when it did not, and never reduced to an UNAVAILABLE
     # line. The absence still appears once in the attached full report.
     if full.opportunities_reported(intra):
-        lines += ['',*full.opportunities_summary(intra)]
+        lines += ['',*full.opportunities_summary(intra, concise=True)]
     if full.jev_reported(intra):
-        lines += ['',*full.jev_summary(intra)]
+        lines += ['',*full.jev_summary(intra, concise=True)]
     book=d['positions']
     lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
     if book.get('status')=='UNAVAILABLE':
@@ -151,10 +151,182 @@ def text(d):
     provider=intra.get('historical_provider',{})
     if provider and provider.get('status')!='NOT CONFIGURED':
         lines.append(f"EODHD history: {provider['status']}; 5-minute history {provider['intraday_status']}. No live selection change.")
-    lines += ['H1/H2 cost overlays and earlier exits: shadow. Overnight and opening-path research: unadopted.',
+    lines += ['H1/H2 cost overlays and earlier exits: shadow. Overnight and opening-path research: unadopted.']
+    # THE STANDING TERMS, ONCE, AT THE END. Each of these used to be appended to
+    # its own section every morning, so the reader scrolled three paragraphs of
+    # identical caveat to reach four tickers — which is how a disclosure stops
+    # being read. Nothing is dropped: the attached full report still carries
+    # each note inside its own section, where the record needs it.
+    # EACH TERM IS KEYED ON THE SECTION THAT EARNED IT, exactly as the sections
+    # themselves are. Printing all three unconditionally made an old
+    # publication that never ran DeepSeek grow the words "never averaged with
+    # DeepSeek's confidence" — a frozen report acquiring a mention of a model
+    # it never called. Absence of the key means absence of the note.
+    terms = ['Research only. Nothing here places, modifies or cancels an order, and no row is a '
+             'recommendation. An ABSTAIN leg shows no share count and no dollar figure by design.']
+    if full.opportunities_reported(intra):
+        terms.append(full.OPPORTUNITIES_STANDING)
+    if full.jev_reported(intra):
+        terms.append(full.JEV_STANDING)
+    if 'deepseek' in intra and full.factor_reported(intra):
+        terms.append(full.FACTOR_STANDING)
+    if full.opportunities_reported(intra) and full.jev_reported(intra):
+        terms.append('The two models are never averaged, and agreement between them is a '
+                     'recorded observation, not confirmation.')
+    lines += ['', '## How to read this', *terms,
               'Code: '+str(d.get('provenance',{}).get('code_commit') or 'not recorded')[:12]]
     return '\n'.join(lines)
 
 
+# ── the newsletter view ──────────────────────────────────────────────────────
+#
+# The email was `markdown_html(text(d))`: the plain-text report with tags
+# wrapped round it. Every line became a paragraph of the same weight, so the
+# board, the two model sections and the standing terms all looked equally
+# urgent and the whole thing read as a wall of warnings. This renders the SAME
+# lines as a newsletter — a hero stating the one decision, then cards, then the
+# terms once at the end, small.
+#
+# It renders from `text(d)`, deliberately: a second renderer reading `d` again
+# would be a second implementation of every number in the email, and this repo
+# has been bitten by exactly that (`subject_state`, the staged cache, the
+# credential loader). One computation, two views.
+#
+# EMAIL-SAFE ONLY. Gmail strips <style> blocks, CSS variables, @media and
+# class selectors, so every rule here is an inline attribute on its own
+# element. No web fonts, no flexbox, no grid.
+
+INK, MUTED, RULE = '#17212b', '#5c6b7a', '#dde4ea'
+CARD, WASH, ACCENT = '#ffffff', '#f4f7f9', '#1f5c66'
+BADGES = {'ABSTAIN': ('#6b7280', '#eef0f2'), 'RECORDED': ('#6b7280', '#eef0f2'),
+          'SHADOW': ('#1f5c66', '#e4f0f1'), 'ELIGIBLE': ('#1f5c66', '#e4f0f1')}
+
+
+def _badge(value):
+    colour, wash = BADGES.get(value.strip().upper(), (INK, WASH))
+    return (f'<span style="display:inline-block;padding:3px 9px;border-radius:3px;'
+            f'background:{wash};color:{colour};font:600 11px/1.4 Arial,sans-serif;'
+            f'letter-spacing:.07em;text-transform:uppercase">{full.escape(value)}</span>')
+
+
+def _hero(d):
+    """The one thing the reader needs before scrolling: is there anything to do.
+
+    Derived from the legs, not from prose, and it says ABSTAINED when they are
+    abstained. A neutral hero over a board nobody should act on is the same
+    failure `subject_state` exists to prevent, one surface along."""
+    legs = (d.get('intraday') or {}).get('legs') or []
+    abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
+    if legs and len(abstained) == len(legs):
+        head, sub = 'No actionable entry today', (
+            f'All {len(legs)} selected legs abstained. They are shown below as a record of what '
+            'the engine computed — not as entries, and with no share count.')
+    elif legs and abstained:
+        head, sub = (f'{len(legs) - len(abstained)} of {len(legs)} legs carry a verified entry',
+                     f'{len(abstained)} abstained and show no share count.')
+    elif legs:
+        head, sub = f'{len(legs)} legs selected', 'Reference prices are executable only in the 09:46 minute.'
+    else:
+        head, sub = 'No legs selected', (
+            'The scan did not establish that opportunities existed — that is not the same as '
+            'establishing there were none.')
+    return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
+            f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'
+            f'<div style="font:14px/1.55 Arial,sans-serif;color:{MUTED};margin-top:7px">'
+            f'{full.escape(sub)}</div></td></tr>')
+
+
+def _cells(line):
+    return [c.strip() for c in line.strip('|').split('|')]
+
+
+def _table(rows, first):
+    """`first` is the header row. The Status column becomes a badge; everything
+    else is escaped text."""
+    out = [f'<table role="table" width="100%" cellpadding="0" cellspacing="0" '
+           f'style="width:100%;border-collapse:collapse;font:13px/1.45 Arial,sans-serif;'
+           f'margin:14px 0">'
+           '<tr>' + ''.join(
+               f'<th align="left" style="padding:8px 10px;border-bottom:2px solid {RULE};'
+               f'color:{MUTED};font:600 11px/1.4 Arial,sans-serif;letter-spacing:.07em;'
+               f'text-transform:uppercase">{full.escape(c)}</th>' for c in first) + '</tr>']
+    for row in rows:
+        cells = []
+        for n, cell in enumerate(row):
+            body = (_badge(cell) if n == 0 and cell.strip().upper() in BADGES
+                    else full.escape(cell))
+            cells.append(f'<td style="padding:9px 10px;border-bottom:1px solid {RULE};'
+                         f'color:{INK};vertical-align:top">{body}</td>')
+        out.append('<tr>' + ''.join(cells) + '</tr>')
+    return ''.join(out) + '</table>'
+
+
+def _body_blocks(body):
+    """Walk the concise report's own lines and emit newsletter blocks."""
+    import re
+    out, table, small = [], None, False
+
+    def flush():
+        nonlocal table
+        if table:
+            out.append(_table(table[1:], table[0]))
+            table = None
+
+    for line in body.splitlines()[1:]:          # the H1 is the masthead
+        if line.startswith('|'):
+            cells = _cells(line)
+            if all(re.fullmatch(r'[-:]+', c) for c in cells):
+                continue
+            table = (table or []) + [cells]
+            continue
+        flush()
+        if line.startswith('## '):
+            title = line[3:]
+            # The terms section is the one block that is deliberately quiet.
+            small = title.startswith('How to read')
+            out.append(f'</td></tr><tr><td style="padding:24px 26px 6px">'
+                       f'<div style="font:600 12px/1.4 Arial,sans-serif;color:{ACCENT};'
+                       f'letter-spacing:.11em;text-transform:uppercase">{full.escape(title)}</div>'
+                       f'<div style="height:2px;background:{ACCENT};width:34px;margin:9px 0 4px"></div>')
+        elif line.startswith('### '):
+            out.append(f'<div style="font:600 15px/1.4 Georgia,serif;color:{INK};'
+                       f'margin:20px 0 2px">{full.escape(line[4:])}</div>')
+        elif line.startswith('- ') or line.startswith('  '):
+            out.append(f'<div style="font:13px/1.55 Arial,sans-serif;color:{INK};'
+                       f'margin:3px 0 3px 14px;padding-left:10px;'
+                       f'border-left:2px solid {RULE}">{full.escape(line.strip("- ").strip())}</div>')
+        elif line:
+            size, colour = ('12px', MUTED) if small else ('14px', INK)
+            out.append(f'<p style="font:{size}/1.6 Arial,sans-serif;color:{colour};'
+                       f'margin:9px 0">{full.escape(line)}</p>')
+    flush()
+    return ''.join(out)
+
+
 def html(d):
-    return full.markdown_html(text(d))
+    body = text(d)
+    head = body.splitlines()[0].lstrip('# ')
+    status = str(d.get('report_status') or '')
+    stamp = f"Snapshot {str(d.get('generated_at') or '')[11:19]} ET"
+    delivery = d.get('delivery') or {}
+    if delivery.get('checked_at'):
+        stamp += f" · Dispatch {delivery['checked_at'][11:19]} ET"
+    return (
+        '<!doctype html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>RB Daily Report</title></head>'
+        f'<body style="margin:0;padding:0;background:{WASH}">'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        f'style="background:{WASH};padding:20px 0"><tr><td align="center">'
+        f'<table role="presentation" width="640" cellpadding="0" cellspacing="0" '
+        f'style="width:640px;max-width:100%;background:{CARD};border:1px solid {RULE}">'
+        f'<tr><td style="padding:26px 26px 20px;border-bottom:3px solid {INK}">'
+        f'<div style="font:600 11px/1.4 Arial,sans-serif;color:{ACCENT};letter-spacing:.14em;'
+        f'text-transform:uppercase">Research record · not an entry</div>'
+        f'<div style="font:600 27px/1.2 Georgia,serif;color:{INK};margin-top:8px">'
+        f'{full.escape(head)}</div>'
+        f'<div style="font:12px/1.5 Arial,sans-serif;color:{MUTED};margin-top:8px">'
+        f'{full.escape(status)} &nbsp;·&nbsp; {full.escape(stamp)}</div></td></tr>'
+        + _hero(d) +
+        f'<tr><td style="padding:0 26px 26px">{_body_blocks(body)}</td></tr>'
+        '</table></td></tr></table></body></html>')
