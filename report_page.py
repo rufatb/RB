@@ -320,7 +320,11 @@ def _opportunity_rows(snap):
                      f'<td class="num">{fmt(r.get("confidence", pick.get("confidence")), ".2f")}</td>'
                      f'<td class="num">{fmt(engine, ".3f") if engine is not None else ABSTAIN_CELL}</td>'
                      f'<td class="{verdict_class.get(verdict, "g-quiet")}">{escape(verdict)}</td>'
-                     f'<td class="reasontext">{escape(str(r.get("reason") or pick.get("reason") or ""))[:200]}</td>'
+                     f'<td class="reasontext">{escape(str(r.get("reason") or pick.get("reason") or ""))[:200]}'
+                     + (f'<br><em>Its own claim is wrong if it trades {"below" if side == "LONG" else "above"} '
+                        f'{fmt(pick.get("invalid_at"))} today — scored after the close, not a stop.</em>'
+                        if isinstance(pick.get("invalid_at"), (int, float)) else '')
+                     + '</td>'
                      '</tr>')
     return rows
 

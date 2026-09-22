@@ -163,6 +163,63 @@ def prepare_diagnostic(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=Non
                     daily_fetcher=daily_fetcher, biotech_snapshot=biotech_snapshot)
 
 
+SECTORS_PATH = ROOT/'data'/'tsx_sectors.json'
+MIN_SECTOR_MEMBERS = 3
+
+
+def sector_context(rows, sectors=None):
+    """Label each CA row with its sector and its move relative to that sector.
+
+    Returns how many rows received a relative move."""
+    import statistics
+    if sectors is None:
+        try:
+            sectors = json.loads(SECTORS_PATH.read_text())['sectors']
+        except (OSError, ValueError, KeyError):
+            return 0
+    moves = {}
+    for ticker, row in rows.items():
+        label = (sectors.get(ticker) or {}).get('sector')
+        if not label or row.get('market', 'CA') != 'CA':
+            continue
+        row['sector'] = label[:40]
+        t = row.get('technicals') or {}
+        if isinstance(t.get('move_atr'), (int, float)) and isinstance(t.get('atr_pct'), (int, float)):
+            moves.setdefault(label, []).append((ticker, t['move_atr']*t['atr_pct']))
+    placed = 0
+    for label, members in moves.items():
+        if len(members) < MIN_SECTOR_MEMBERS:
+            continue
+        median = statistics.median(m for _, m in members)
+        for ticker, move in members:
+            rows[ticker]['technicals']['sector_move_pct'] = round(median, 4)
+            rows[ticker]['technicals']['rel_sector_pct'] = round(move-median, 4)
+            placed += 1
+    return placed
+
+
+def earnings_days(rows, now, client=None):
+    """Write `days_to_earnings` into each row's technicals; return how many."""
+    import quotes
+    client = client or quotes.YahooMarketData(auth_state_dir=False)
+    today = now.astimezone(ET).date()
+    names = [t for t in rows if rows[t].get('technicals') is not None]
+    dated = 0
+    for start in range(0, len(names), 50):
+        raw = client.get(names[start:start+50])
+        for ticker, row in (raw or {}).items():
+            if not isinstance(row, dict) or ticker not in rows:
+                continue
+            stamp = row.get('earningsTimestampStart') or row.get('earningsTimestamp')
+            if type(stamp) not in (int, float) or isinstance(stamp, bool):
+                continue
+            days = (dt.datetime.fromtimestamp(stamp, ET).date() - today).days
+            if -120 <= days <= 180:
+                rows[ticker]['technicals']['days_to_earnings'] = float(days)
+                dated += 1
+    return dated
+
+
 def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
              diagnostic=False, daily_fetcher=None, biotech_snapshot=None):
     from bounded import acquire
@@ -373,7 +430,12 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
                 status['daily_errors']['clock'] = 'PREOPEN_DEADLINE_REACHED'
                 break
             existing = (rows.get(ticker) or {}).get('technicals') or {}
-            if all(existing.get(k) is not None for k in ('rsi', 'macd_hist', 'rvol')):
+            # Skip only when the daily CONTEXT is also present. Day-113 added
+            # scale and location (ATR, prior-session levels, trend distance)
+            # that only daily bars can supply; skipping every name the
+            # five-minute panel had covered would have left the best-covered
+            # names as the only ones WITHOUT it.
+            if all(existing.get(k) is not None for k in ('rsi', 'macd_hist', 'rvol', 'atr_pct')):
                 continue
             try:
                 technicals, meta = daily_fetcher(ticker)
@@ -423,6 +485,24 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
         except Exception as exc:
             status['biotech_error'] = (str(exc) if isinstance(exc, ValueError)
                 and re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc)) else type(exc).__name__)
+        # ── EARNINGS PROXIMITY: the DATE only (day-113 review, item 3) ──────
+        # A name reporting tonight is a different instrument for six hours.
+        # The quote endpoint already carries the scheduled report timestamp;
+        # one batched request per fifty names. Signed calendar days, negative
+        # when the report is behind us. No estimate, no expected move, nothing
+        # about what the report will say.
+        status['earnings_dated'] = 0
+        if not injected and rows:
+            try:
+                status['earnings_dated'] = earnings_days(rows, now)
+            except Exception as exc:
+                status['earnings_error'] = type(exc).__name__
+        # ── SECTOR CONTEXT from the pool's own constituents (item 2) ────────
+        # The model was told a name is Energy and shown WTI; it was never told
+        # what Energy DID. Measured from the pool itself — the median last-
+        # session move of the names sharing a sector — so it costs no request
+        # and cannot fail on a missing ETF quote. A sector needs three members.
+        status['sector_context'] = sector_context(rows)
         for ticker in tickers:
             if ticker not in rows:
                 status['errors'].setdefault(ticker, 'NOT_ACQUIRED')

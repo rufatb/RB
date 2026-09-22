@@ -346,9 +346,14 @@ def opportunities_summary(intra, *, concise=False):
             matched = verdicts.get((side, ticker)) or {}
             verdict = matched.get('verdict') or 'engine comparison unavailable'
             confidence = matched.get('confidence', row.get('confidence'))
+            level = row.get('invalid_at')
+            claim = (f" Its own claim is wrong if it trades {'below' if side == 'LONG' else 'above'} "
+                     f"{fmt(level)} today (scored after the close; not a stop)."
+                     if isinstance(level, (int, float)) else '')
             lines.append(f"{side} {safe_detail(ticker, 24)}: self-reported confidence "
                          f"{fmt(confidence, '.2f')} — {safe_detail(verdict, 60)}. "
-                         f"{safe_detail(matched.get('reason') or row.get('reason') or '', 160)}")
+                         f"{safe_detail(matched.get('reason') or row.get('reason') or '', 160)}"
+                         + claim)
     if comparison.get('rows'):
         lines.append(f"Agreement with the engine: {comparison.get('agree', 0)} of "
                      f"{len(comparison['rows'])}; {comparison.get('oppose', 0)} opposed; "

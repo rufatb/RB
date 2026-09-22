@@ -25,7 +25,10 @@ from metrics import macd, rsi, vwap
 ET = ZoneInfo('America/New_York')
 TECHNICAL_KEYS = frozenset(('r0', 'gap', 'vp', 'quant_probability', 'vwap', 'rsi',
     'macd', 'macd_signal', 'macd_hist', 'orb_high', 'orb_low', 'rvol', 'last',
-    'price', 'open', 'volume'))
+    'price', 'open', 'volume',
+    # Day-113 context: scale and location from completed daily bars, and the
+    # distance to the next scheduled report. Facts computed by Python.
+    'atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'sma200_pct', 'range52_pos', 'prev_high', 'prev_low', 'prev_close', 'days_to_earnings', 'sector_move_pct', 'rel_sector_pct'))
 TICKER = re.compile(r'[A-Z0-9][A-Z0-9.\-]{0,19}\Z')
 SENSITIVE = re.compile(r'api.?key|token|secret|password|signature|credential|authorization', re.I)
 
@@ -308,7 +311,9 @@ def validate_payload(payload, now):
                 if ((key == 'quant_probability' and not 0 <= value <= 1)
                         or (key == 'rsi' and not 0 <= value <= 100)
                         or (key in ('price', 'last', 'open', 'vwap', 'orb_high', 'orb_low') and value <= 0)
-                        or (key in ('volume', 'rvol', 'vp') and value < 0)):
+                        or (key in ('volume', 'rvol', 'vp', 'atr_pct') and value < 0)
+                        or (key in ('prev_high', 'prev_low', 'prev_close') and value <= 0)
+                        or (key == 'range52_pos' and not 0 <= value <= 1)):
                     raise ValueError('OUT_OF_RANGE_TECHNICAL')
                 clean_technicals[key] = float(value)
             for required in ('vwap', 'rsi', 'macd', 'macd_signal', 'macd_hist', 'orb_high', 'orb_low', 'rvol'):

@@ -30,6 +30,7 @@ TECHNICAL_KEYS = frozenset({
     'r0', 'gap', 'vp', 'quant_probability', 'vwap', 'rsi', 'macd',
     'macd_signal', 'macd_hist', 'orb_high', 'orb_low', 'rvol', 'last',
     'price', 'open', 'volume',
+    'atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'sma200_pct', 'range52_pos', 'prev_high', 'prev_low', 'prev_close', 'days_to_earnings', 'sector_move_pct', 'rel_sector_pct',
 })
 CANDIDATE_KEYS = frozenset({
     'ticker', 'technicals', 'technicals_as_of', 'technicals_scope',

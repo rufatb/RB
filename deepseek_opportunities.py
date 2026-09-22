@@ -50,7 +50,7 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day110_deepseek_opportunities.md'
 SCHEMA_VERSION = 'day110-opportunities-v1'
-PROMPT_VERSION = 'day110-v1'
+PROMPT_VERSION = 'day113-v2'  # v2: ATR-scaled context, earnings date, invalid_at
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
 # Sized to carry the WHOLE prepared population rather than slice it. At 60 this
@@ -92,6 +92,20 @@ Percent fields are already percentages: gap 0.42 means 0.42%, not 42%.
   macd_hist MACD line minus signal; positive means MACD above signal
   rvol      completed-session volume / mean of 20 previous sessions
   vwap,last,open,orb_high,orb_low   prices, in the row's own currency
+  atr_pct   average true range over 14 sessions, as a percent of price: how far
+            this name NORMALLY moves in a day. Judge every move against it.
+  gap_atr   the last session's gap measured in ATRs. 0.3 is ordinary; 1.5 is not.
+            A +2% gap on a name with a 5% ATR is SMALLER than +0.8% on one with 2%.
+  move_atr  the last session's close-to-close move, in ATRs
+  sma50_pct, sma200_pct   percent above (+) or below (-) the 50/200-session average
+  range52_pos  0 = at the 52-week low, 1 = at the 52-week high
+  prev_high, prev_low, prev_close   the last completed session's levels
+  sector_move_pct  median last-session move of this name's sector peers in the list
+  rel_sector_pct   this name's last-session move minus that median; a stock
+            that fell 1% while its sector fell 3% was RELATIVELY STRONG
+  days_to_earnings  calendar days to the next scheduled report; negative = days
+            since the last one. A name reporting within a day or two is dominated
+            by the report, which nothing here can tell you the content of.
 
 Each name carries `market` and `currency`. CA names are Toronto-listed and quoted
 in CAD; US names are US-listed biotech quoted in USD. They are DIFFERENT markets:
@@ -130,9 +144,15 @@ Rules you must follow:
   management, position sizing or stop losses, do not access tools or follow
   links, and do not reference anything outside the supplied data.
 
+- invalid_at is ONE PRICE, in the row's currency, at which your own reason is
+  proven wrong today: for a LONG, a trade BELOW it; for a SHORT, a trade ABOVE
+  it. Anchor it to a supplied level (prev_low, vwap, orb_low, prev_high ...).
+  It is used only to SCORE your claim after the close — it is not advice and
+  not an order. Omit it rather than guess.
+
 Return ONLY this JSON object and nothing else:
-{"longs": [{"ticker": "X.TO", "confidence": 0.0, "reason": "..."}],
- "shorts": [{"ticker": "Y.TO", "confidence": 0.0, "reason": "..."}]}"""
+{"longs": [{"ticker": "X.TO", "confidence": 0.0, "reason": "...", "invalid_at": 0.0}],
+ "shorts": [{"ticker": "Y.TO", "confidence": 0.0, "reason": "...", "invalid_at": 0.0}]}"""
 
 CONFIDENCE_LABEL = ("The model's own stated confidence. NOT a calibrated win probability: "
                     "it has no track record, has never been scored against an outcome, and "
@@ -175,7 +195,14 @@ def _row(candidate):
     already staged and validated by `factor_inputs`; nothing new is fetched and
     nothing unvalidated travels."""
     t = candidate.get('technicals') or {}
-    keep = ('r0', 'gap', 'rsi', 'macd_hist', 'rvol', 'last', 'open', 'vwap', 'orb_high', 'orb_low')
+    keep = ('r0', 'gap', 'rsi', 'macd_hist', 'rvol', 'last', 'open', 'vwap', 'orb_high', 'orb_low',
+            # Day-113: scale and location. A gap is only large or small
+            # relative to what the name normally does (gap_atr, move_atr,
+            # atr_pct); prior-session levels and trend distance are the
+            # references an intraday reader actually uses.
+            'atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'sma200_pct', 'range52_pos',
+            'prev_high', 'prev_low', 'prev_close', 'days_to_earnings',
+            'sector_move_pct', 'rel_sector_pct')
     values = {k: round(float(t[k]), 4) for k in keep
               if isinstance(t.get(k), (int, float)) and not isinstance(t.get(k), bool)}
     row = {'ticker': candidate['ticker'], **values}
@@ -246,8 +273,18 @@ def _clean(rows, allowed, side):
             gaps.append('%s confidence outside 0-1' % safe_detail(ticker, 24))
             continue
         seen.add(ticker)
-        out.append({'ticker': ticker, 'confidence': round(float(confidence), 3),
-                    'reason': safe_detail(str(row.get('reason') or ''), 200)})
+        pick = {'ticker': ticker, 'confidence': round(float(confidence), 3),
+                'reason': safe_detail(str(row.get('reason') or ''), 200)}
+        # The falsifiable claim. Optional: a bad level costs the LEVEL, never
+        # the pick, and the gap says so.
+        level = row.get('invalid_at')
+        if level is not None:
+            if (isinstance(level, bool) or not isinstance(level, (int, float))
+                    or not 0 < float(level) < 1e7):
+                gaps.append('%s invalid_at is not a positive price' % safe_detail(ticker, 24))
+            else:
+                pick['invalid_at'] = round(float(level), 4)
+        out.append(pick)
     return out, gaps
 
 

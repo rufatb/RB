@@ -88,7 +88,7 @@ def _finite(value):
     return value if math.isfinite(value) else None
 
 
-def from_series(dates, closes, volumes, *, now, opens=None):
+def from_series(dates, closes, volumes, *, now, opens=None, highs=None, lows=None):
     """Daily indicators from completed sessions only.
 
     `now` is used to DROP today's partial bar. A session in progress has a
@@ -100,6 +100,9 @@ def from_series(dates, closes, volumes, *, now, opens=None):
                           'volume': [ _finite(v) for v in volumes ]})
     if opens is not None:
         frame['open'] = [ _finite(o) for o in opens ]
+    if highs is not None and lows is not None:
+        frame['high'] = [ _finite(h) for h in highs ]
+        frame['low'] = [ _finite(l) for l in lows ]
     frame = frame.dropna(subset=['date', 'close'])
     frame = frame[frame['close'] > 0]
     cutoff = pd.Timestamp(now.astimezone(ET).date())
@@ -127,7 +130,48 @@ def from_series(dates, closes, volumes, *, now, opens=None):
         session_open = float(frame['open'].iloc[-1])
         out['open'] = session_open
         out['gap'] = 100.0*(session_open-previous)/previous if previous else None
+    out.update(context(frame, closes, last, previous))
     return {k: v for k, v in out.items() if v is not None}
+
+
+# ── CONTEXT: scale and location, from bars already fetched ──────────────────
+# Day-113 review, item 1. The models were handed RAW percentages and compared
+# a +0.85% gap on one name with a +1.99% gap on another as if they were the
+# same size of event. They are not: size is only meaningful against what the
+# name normally does. Everything here is arithmetic over the ~250 completed
+# sessions this module already has — no new request — and every value
+# describes the LAST COMPLETED SESSION, never today (see `now` above).
+CONTEXT_KEYS = ('atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'sma200_pct',
+                'range52_pos', 'prev_high', 'prev_low', 'prev_close')
+ATR_WINDOW = 14
+
+
+def context(frame, closes, last, previous):
+    out = {'prev_close': last}
+    n = len(closes)
+    for window, key in ((50, 'sma50_pct'), (200, 'sma200_pct')):
+        if n >= window:
+            sma = float(closes.iloc[-window:].mean())
+            out[key] = 100.0*(last/sma - 1) if sma > 0 else None
+    tail = closes.iloc[-252:]
+    hi, lo = float(tail.max()), float(tail.min())
+    out['range52_pos'] = (last-lo)/(hi-lo) if hi > lo else None
+    if 'high' in frame.columns and 'low' in frame.columns:
+        highs = frame['high'].astype(float).reset_index(drop=True)
+        lows = frame['low'].astype(float).reset_index(drop=True)
+        if _finite(highs.iloc[-1]) and _finite(lows.iloc[-1]) and highs.iloc[-1] >= lows.iloc[-1] > 0:
+            out['prev_high'], out['prev_low'] = float(highs.iloc[-1]), float(lows.iloc[-1])
+        prior = closes.shift(1)
+        tr = pd.concat([highs-lows, (highs-prior).abs(), (lows-prior).abs()], axis=1).max(axis=1)
+        window = tr.iloc[-ATR_WINDOW:]
+        if len(window) == ATR_WINDOW and window.notna().all():
+            atr = float(window.mean())
+            if atr > 0:
+                out['atr_pct'] = 100.0*atr/last
+                out['move_atr'] = (last-previous)/atr
+                if 'open' in frame.columns and _finite(frame['open'].iloc[-1]):
+                    out['gap_atr'] = (float(frame['open'].iloc[-1])-previous)/atr
+    return out
 
 
 def scope(sessions):
@@ -145,8 +189,9 @@ def from_yahoo(ticker, adapter, now, *, interval='1d', window='1y'):
     frame = adapter._bars_df(raw)
     if frame.empty:
         raise ValueError('DAILY_HISTORY_EMPTY')
+    has = lambda c: frame[c] if c in frame.columns else None
     technicals = from_series(frame.index, frame['Close'], frame['Volume'], now=now,
-                             opens=frame['Open'] if 'Open' in frame.columns else None)
+                             opens=has('Open'), highs=has('High'), lows=has('Low'))
     return technicals, {'currency': meta.get('currency'),
                         'exchange': meta.get('exchangeName')}
 

@@ -698,3 +698,48 @@ def test_the_control_loads_the_credential_the_same_way_staging_does():
                     if not l.strip().startswith('#'))
     assert 'load_private_key(args.state_dir)' in src
     assert src.index('load_private_key(args.state_dir)') < src.index('run_control()')
+
+
+# ── day-113: scale, location, and a claim that can be scored ─────────────────
+
+def test_the_new_context_reaches_the_model_row():
+    """Computed and then filtered out by a keep-list is the failure this repo
+    keeps finding. The ATR-scaled fields must actually be in what is sent."""
+    row = O._row(tech('AC.TO', atr_pct=2.4, gap_atr=0.3, move_atr=-1.0, sma50_pct=3.1,
+                      sma200_pct=15.2, range52_pos=0.88, prev_high=31.0, prev_low=29.0,
+                      prev_close=30.0, days_to_earnings=42.0))
+    for key in ('atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'sma200_pct', 'range52_pos',
+                'prev_high', 'prev_low', 'prev_close', 'days_to_earnings'):
+        assert key in row, key
+
+
+def test_every_context_field_is_explained_to_the_model():
+    """An unexplained gap_atr is just another number."""
+    for key in ('atr_pct', 'gap_atr', 'move_atr', 'sma50_pct', 'range52_pos',
+                'prev_high', 'days_to_earnings', 'invalid_at'):
+        assert key in O.SYSTEM_PROMPT, key
+
+
+def test_invalid_at_survives_the_staged_round_trip(tmp_path):
+    """The seam that dropped Jev's forced picks on 2026-09-22 is the reader."""
+    root = stage_dir(tmp_path, [tech('AC.TO')])
+    long = {**pick('AC.TO', 0.7), 'invalid_at': 29.1}
+    O.stage(root, now=PREOPEN, client=Client({'longs': [long], 'shorts': []}))
+    out = O.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert out['longs'][0]['invalid_at'] == 29.1
+
+
+def test_a_bad_invalid_at_costs_the_level_never_the_pick():
+    long = {**pick('AC.TO', 0.7), 'invalid_at': -3}
+    out = O.rank([tech('AC.TO')], client=Client({'longs': [long], 'shorts': []}), now=PREOPEN)
+    assert out['longs'][0]['ticker'] == 'AC.TO' and 'invalid_at' not in out['longs'][0]
+    assert any('invalid_at' in g for g in out['gaps'])
+
+
+def test_the_claim_is_rendered_as_a_scored_claim_not_a_stop():
+    import daily_render
+    intra = {'opportunities': {'status': 'READY', 'model': 'm', 'considered': 1,
+                               'longs': [{'ticker': 'AC.TO', 'confidence': 0.6, 'reason': 'r',
+                                          'invalid_at': 29.1}], 'shorts': [], 'comparison': {}}}
+    text = '\n'.join(daily_render.opportunities_summary(intra))
+    assert 'trades below 29.10' in text and 'not a stop' in text

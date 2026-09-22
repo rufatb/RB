@@ -224,3 +224,26 @@ def test_delisted_symbols_stay_out_of_the_roster():
     import factor_pool_policy as F
     assert not set(F.DELISTED) & set(F.TICKERS)
     assert len(set(F.TICKERS)) == len(F.TICKERS)
+
+
+def test_sector_context_is_measured_from_the_pools_own_members():
+    """Day-113 item 2. A name that fell 1% while its sector fell 3% was
+    relatively strong; the model was shown 'Energy' and never what Energy did."""
+    import prepare_factor_pool as P
+    def row(move_atr, atr=2.0):
+        return {'market': 'CA', 'technicals': {'move_atr': move_atr, 'atr_pct': atr}}
+    rows = {'A.TO': row(-1.5), 'B.TO': row(-1.5), 'C.TO': row(-0.5), 'D.TO': row(1.0)}
+    sectors = {t: {'sector': 'Energy'} for t in ('A.TO', 'B.TO', 'C.TO')}
+    sectors['D.TO'] = {'sector': 'Utilities'}
+    assert P.sector_context(rows, sectors) == 3
+    assert rows['C.TO']['technicals']['sector_move_pct'] == -3.0
+    assert rows['C.TO']['technicals']['rel_sector_pct'] == 2.0
+    assert rows['C.TO']['sector'] == 'Energy'
+    # One member is not a sector.
+    assert 'rel_sector_pct' not in rows['D.TO']['technicals']
+
+
+def test_the_shipped_sector_map_covers_the_roster():
+    import json, factor_pool_policy as F
+    sectors = json.load(open('data/tsx_sectors.json'))['sectors']
+    assert set(F.TICKERS) <= set(sectors)

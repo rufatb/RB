@@ -312,8 +312,6 @@ def test_invalid_json_missing_coverage_and_duplicate_keys_fail(content):
     ('sentiment_score', float('inf')), ('sentiment_score', float('-inf')),
     ('directional_lean', 'BUY'), ('ticker', 'ENB.TO'),
     ('factor_rationale', ''), ('factor_rationale', 'A' * 281),
-    ('factor_rationale', 'One sentence. Another sentence.'),
-    ('factor_rationale', 'one sentence. another sentence.'),
     ('factor_rationale', 'First\nSecond'),
     ('factor_rationale', 'Read sk-offline-secret-never-print.'),
 ])
@@ -376,15 +374,16 @@ def test_sdk_cleanup_failure_remains_an_explicit_warning(monkeypatch):
 # and they need different responses: a style rule discarding a batch is a
 # coverage bug, a malformed number is a provider bug.
 
-def test_the_style_check_says_it_is_a_style_check():
-    """It fails the WHOLE batch on punctuation. Reading 'score out of range'
-    for it would send a diagnosis in exactly the wrong direction."""
+def test_the_style_rule_no_longer_fails_the_batch():
+    """It used to raise MULTI_SENTENCE_RATIONALE and discard every row in the
+    batch; on 2026-09-22 that was 271 of 276 names. It now keeps the first
+    sentence and flags the row, so the repair is visible and never silent."""
     body = ('{"assessments":[{"ticker":"AA.TO","directional_lean":"BULL",'
             '"sentiment_score":0.2,"factor_rationale":"One thing. Then another."}]}')
-    with pytest.raises(D.ResponseSchemaError) as caught:
-        D.parse_assessments(body, ['AA.TO'])
-    assert 'MULTI_SENTENCE_RATIONALE' in str(caught.value)
-    assert 'style rule' in str(caught.value)
+    out = D.parse_assessments(body, ['AA.TO'])
+    assert out[0]['factor_rationale'] == 'One thing.'
+    assert out[0]['rationale_truncated'] is True
+    assert out[0]['sentiment_score'] == 0.2
 
 
 def test_a_bad_score_and_a_bad_rationale_are_no_longer_the_same_failure():
