@@ -24,8 +24,8 @@ volume summed. What that bar is and is not:
     ADV lowers it by at most a few percent, and it is disclosed on the row.
 
 Only a session the PROVIDER itself stamped (or the exchange calendar lists)
-is filled, only from a COMPLETE regular session, and at most MAX_FILLED per
-name. Anything else stays a hole and the caller's own refusal stands
+is filled, only from a regular session with both its 09:30 and 15:30 bars,
+and at most MAX_FILLED per name. Anything else stays a hole and the caller's own refusal stands
 (house rule 2: absence of data is not absence of movement).
 """
 from __future__ import annotations
@@ -37,7 +37,10 @@ import pandas as pd
 
 FIRST_BAR = dt.time(9, 30)
 LAST_BAR = dt.time(15, 30)
-MIN_BARS = 7
+# The BOOKENDS are required, not all seven hours: an illiquid name with no
+# print between 14:30 and 15:30 has no bar for that hour (DRMA, QNRX on
+# 2026-09-22), and its volume for that hour is zero, not missing.
+MIN_BARS = 2
 MAX_FILLED = 2
 
 

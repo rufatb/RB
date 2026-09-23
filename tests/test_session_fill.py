@@ -36,10 +36,19 @@ def test_complete_session_is_rebuilt_open_high_low_last_close_summed_volume():
     ('09:30', '10:30', '11:30', '12:30', '13:30', '14:30'),          # no last hour
     ('10:30', '11:30', '12:30', '13:30', '14:30', '15:30', '15:30'),  # no first hour
     ('09:30', '10:30', '11:30', '12:30'),                            # half day
+    ('09:30',),                                                      # one bar
 ])
 def test_incomplete_hourly_session_leaves_the_hole(times):
     frame, filled = session_fill.fill(daily(['2026-09-21', '2026-09-23']), hourly(times=times), [HOLE])
     assert filled == [] and len(frame) == 2
+
+
+def test_an_hour_without_a_print_is_zero_volume_not_a_hole():
+    """Illiquid names (DRMA, QNRX on 2026-09-22) have no bar for an hour with
+    no trade; the bookends still prove the session ran to 15:30."""
+    times = ('09:30', '10:30', '11:30', '12:30', '13:30', '15:30')
+    _, filled = session_fill.fill(daily(['2026-09-21', '2026-09-23']), hourly(times=times), [HOLE])
+    assert filled == [HOLE]
 
 
 def test_placeholder_dates_are_the_provider_null_closes():

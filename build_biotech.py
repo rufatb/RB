@@ -58,6 +58,9 @@ def discover_universe(screen_fn=None):
     return rows
 
 
+NASDAQ_EXCHANGES = {'NCM', 'NGM', 'NMS'}
+
+
 class Excluded(ValueError):
     """Outside the population BY DEFINITION — a warrant, a unit, a non-US or
     non-biotech listing. Not a failure to measure anything.
@@ -78,6 +81,15 @@ def fetch_security(row, now):
     info=obj.get_info()
     if info.get('industry')!='Biotechnology' or info.get('exchange') not in biotech.US_EXCHANGES:
         raise Excluded('membership does not match Biotechnology/US-listing query')
+    # Nasdaq's fifth-letter W/U/R marks a warrant, unit or right. Yahoo can
+    # label one EQUITY (ESLAW, 2026-09-23: one daily bar, so no ADV20 could
+    # ever exist and it blocked certification). Excluded only when the base
+    # symbol is listed under the SAME company name, so a common share that
+    # merely ends in W is still measured.
+    if len(t)==5 and t[-1] in 'WUR' and info.get('exchange') in NASDAQ_EXCHANGES:
+        base=yf.Ticker(t[:-1]).get_info()
+        if base.get('longName') and base.get('longName')==info.get('longName'):
+            raise Excluded('warrant/unit/right of '+t[:-1])
     frame=obj.history(period='6mo',interval='1d',auto_adjust=True,raise_errors=True)
     frame=frame[[i.date()<now.date() for i in frame.index]]
     if frame.empty:
