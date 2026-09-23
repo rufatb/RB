@@ -120,7 +120,7 @@ def test_a_standing_term_is_absent_when_its_section_did_not_run(digest, note):
 
 
 def test_the_cross_model_note_needs_both_models(digest):
-    cross = 'The two models are never averaged'
+    cross = 'The models are never averaged'
     assert cross in email_render.text(with_models(digest))
     assert cross not in email_render.text(digest)
 

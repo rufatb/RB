@@ -379,7 +379,8 @@ def test_the_confidence_is_never_presented_as_a_win_probability():
     html = report_page._opportunities_section(
         {'opportunities': opportunities(rows=[orow('EMA.TO')])})
     assert 'NOT a calibrated win probability' in html
-    assert 'never been scored against an outcome' in html
+    # Day-114: it IS scored now (data/model_picks.csv); the caption says where.
+    assert 'scored record is printed beneath' in html
 
 
 def test_the_two_numbers_are_never_blended_on_the_page():
@@ -558,7 +559,7 @@ def test_a_jev_pick_shows_the_probability_it_had_to_beat():
 def test_jev_numbers_are_never_presented_as_calibrated():
     html = report_page._jev_section({'jev': jev(shorts=[jrow('SHOP.TO')])})
     assert 'NOT calibrated win probabilities' in html
-    assert 'never scored against an outcome' in html
+    assert 'scored record is printed beside them' in html
 
 
 def test_the_two_models_are_never_averaged_on_the_page():

@@ -158,7 +158,8 @@ def test_the_styled_page_is_written_by_the_job_not_by_hand(tmp_path,monkeypatch)
     page=(tmp_path/'out'/'report_page.html')
     assert page.exists()
     body=page.read_text()
-    assert 'DeepSeek opportunities' in body
+    # Day-114: the DeepSeek section is desk 2 of Part 1 when desks exist.
+    assert "DeepSeek&#x27;s picks" in body or 'DeepSeek opportunities' in body
     assert 'Part 1' in body and 'no order was placed' in body
 
 
