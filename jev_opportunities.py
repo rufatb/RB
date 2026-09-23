@@ -42,6 +42,7 @@ import hashlib
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -133,6 +134,70 @@ def _summary(row):
     if news:
         bits.append('%d headline(s)' % news)
     return safe_detail('; '.join(bits) or 'no indicators', 200)
+
+
+RETRIES = 1
+RETRY_PAUSE_SECONDS = 3.0
+RETRY_STATUSES = {408, 409, 425, 429, 500, 502, 503, 504, 529}
+
+
+def http_reason(exc):
+    """A failure the owner can act on: HTTP status plus the provider's own error
+    code, never the response message (it can quote the request)."""
+    status = getattr(exc, 'code', None)
+    if not isinstance(status, int):
+        return type(exc).__name__
+    kind = error_type(exc)
+    return 'HTTP %d%s' % (status, ' (%s)' % kind if kind else '')
+
+
+# (headlines per name, title characters). Every number is kept at every level.
+STATE_LEVELS = ((2, 110), (1, 90), (0, 0))
+
+
+def _compact(row, headlines, title_chars):
+    """One row as Jev sees it: all the numbers, at most `headlines` titles with
+    their quality class. The class travels with the title because the title
+    alone is the dangerous form (day-110c)."""
+    out = {k: v for k, v in row.items() if k != 'headlines'}
+    if headlines and row.get('headlines'):
+        out['headlines'] = [{'title': str(h.get('title') or '')[:title_chars],
+                             'class': h.get('class')} for h in row['headlines'][:headlines]]
+    return out
+
+
+def error_type(exc):
+    """The provider's `error_type` token (e.g. max_tokens_exceeded), or None.
+    Read once and cached on the exception: an HTTPError body is a stream."""
+    if not hasattr(exc, '_rb_body'):
+        try:
+            exc._rb_body = exc.read().decode('utf-8', 'replace') if hasattr(exc, 'read') else ''
+        except Exception:
+            exc._rb_body = ''
+    match = re.search(r'error_type\\*"\s*:\s*\\*"([a-z_]{1,40})', exc._rb_body)
+    return match.group(1) if match else None
+
+
+def _ask(body, key, poster, timeout):
+    """One question set, ONE retry on a throttle or transport hiccup. A 4xx
+    that describes the request itself would say the same thing twice."""
+    failure = None
+    for attempt in range(RETRIES + 1):
+        try:
+            reply = (poster or _post)(body, key, timeout)
+            if not isinstance(reply, dict) or not isinstance(reply.get('answers'), dict):
+                raise ValueError('reply carried no answers')
+            return reply, None
+        except Exception as exc:
+            failure = exc
+            status = getattr(exc, 'code', None)
+            transient = (status in RETRY_STATUSES or (isinstance(exc, (TimeoutError, OSError))
+                                                      and not isinstance(exc, urllib.error.HTTPError)))
+            if attempt < RETRIES and transient:
+                time.sleep(RETRY_PAUSE_SECONDS)
+                continue
+            break
+    return None, failure
 
 
 def _post(body, key, timeout):
@@ -283,26 +348,43 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
     forced_criteria = dict(criteria)
     criteria[ABSTAIN] = 'no name on this side has enough evidence today'
     macro_block = D._macro({'macro': macro or {}})
-    body = {'model': model,
-            'state': {'session': now.date().isoformat(), 'entry': '09:46 ET',
-                      'exit': '15:59 ET', 'candidates': rows,
-                      **({'macro': macro_block} if macro_block else {})},
-            'questions': {
-                **{side: {'type': 'choice', 'criteria': criteria,
-                          'instructions': INSTRUCTIONS.format(side=side.upper(),
-                                                              none=ABSTAIN)}
-                   for side in ('long', 'short')},
-                **{'forced_' + side: {'type': 'choice', 'criteria': forced_criteria,
-                                      'instructions': FORCED_INSTRUCTIONS.format(
-                                          side=side.upper())}
-                   for side in ('long', 'short')}}}
-    try:
-        reply = (poster or _post)(body, key, timeout)
-        if not isinstance(reply, dict) or not isinstance(reply.get('answers'), dict):
-            raise ValueError('reply carried no answers')
-    except Exception as exc:
-        # Never echo a provider payload or a credential into the report.
-        return unavailable('The Jev request failed: ' + type(exc).__name__)
+
+    def body_for(level):
+        return {'model': model,
+                'state': {'session': now.date().isoformat(), 'entry': '09:46 ET',
+                          'exit': '15:59 ET', 'candidates': [_compact(r, *level) for r in rows],
+                          **({'macro': macro_block} if macro_block else {})},
+                'questions': {
+                    **{side: {'type': 'choice', 'criteria': criteria,
+                              'instructions': INSTRUCTIONS.format(side=side.upper(),
+                                                                  none=ABSTAIN)}
+                       for side in ('long', 'short')},
+                    **{'forced_' + side: {'type': 'choice', 'criteria': forced_criteria,
+                                          'instructions': FORCED_INSTRUCTIONS.format(
+                                              side=side.upper())}
+                       for side in ('long', 'short')}}}
+
+    # JEV'S INPUT LIMIT (MEASURED 2026-09-23). The full rows — every headline
+    # with its evidence metadata — came to ~76k characters over 81 names and the
+    # decisions endpoint answered HTTP 400 `max_tokens_exceeded`; the section
+    # read "The Jev request failed: HTTPError" every morning. Each step down
+    # keeps every NUMBER and trims only headline text; the level used is
+    # recorded, so a ranking made without headlines never reads as one made
+    # with them.
+    reply, failure, used = None, None, None
+    for level in STATE_LEVELS:
+        reply, failure = _ask(body_for(level), key, poster, timeout)
+        if failure is None:
+            used = level
+            break
+        if error_type(failure) != 'max_tokens_exceeded':
+            break
+    if failure is not None:
+        # 2026-09-23 printed only "HTTPError" — the class, the one thing already
+        # known. The status and the provider's own error code decide whether it
+        # is a throttle, an outage or a malformed request; both are safe to
+        # print. The message body is not (it can quote the request).
+        return unavailable('The Jev request failed: ' + http_reason(failure))
 
     longs, long_ranked, long_gaps = _side(reply['answers'].get('long'), allowed)
     shorts, short_ranked, short_gaps = _side(reply['answers'].get('short'), allowed)
@@ -316,8 +398,12 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
             pick['gated_abstain_probability'] = ranked[0].get('abstain_probability')
             pick['cleared_gated_abstain'] = (
                 pick['probability'] > (ranked[0].get('abstain_probability') or 0.0))
-    with_news = sum(1 for row in rows if row.get('headlines'))
+    with_news = sum(1 for row in rows if row.get('headlines')) if used[0] else 0
     evidence_gaps = []
+    if used != STATE_LEVELS[0]:
+        evidence_gaps.append('Jev input trimmed to fit its limit: '
+                             + ('%d headline title(s) per name' % used[0] if used[0]
+                                else 'technicals only, no headlines') + '.')
     if not with_news:
         evidence_gaps.append('No name carried a headline; this ranking is technicals only.')
     if not macro_block:

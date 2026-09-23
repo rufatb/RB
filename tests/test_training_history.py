@@ -135,6 +135,7 @@ def test_side_concentration_is_computed_then_rendered_next_to_legs():
     report['intraday']['risk_evidence']=risk
     before=copy.deepcopy(report)
     body=email_render.text(report)
-    assert body.index('Common exposure: TRP.TO, ENB.TO')<body.index('## Positions')
-    assert '100% of the LONG side' in body
+    assert 'TRP.TO and ENB.TO are one' in body
+    assert body.index('TRP.TO and ENB.TO are one')<body.index('## Part 2')
+    assert '100.0% of the LONG side' in brief.render_text(report)
     assert report==before

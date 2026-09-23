@@ -256,3 +256,48 @@ def test_a_stale_sector_map_is_refused():
     f.write_text(json.dumps({'captured': '2026-01-01', 'sectors': {'A.TO': {'sector': 'X'}}}))
     assert P.load_sector_map(f, today=dt.date(2026, 9, 22)) == {}
     assert P.load_sector_map(f, today=dt.date(2026, 1, 20)) == {'A.TO': {'sector': 'X'}}
+
+
+# ── the seam that broke on 2026-09-23 ────────────────────────────────────────
+
+def test_every_staged_technical_is_admitted_by_the_factor_layer(tmp_path, monkeypatch, history):
+    """The daily pass returned `daily_sessions`/`daily_close_prev` INSIDE
+    `technicals`. factor_inputs flags any key outside TECHNICAL_KEYS, the factor
+    layer refuses a flagged name, and once day-113 sent every name through the
+    daily pass the layer assessed 0 of 428. Pinned here across the real seam:
+    whatever the pool stages, the factor whitelist must admit."""
+    import factor_inputs
+    run(tmp_path, monkeypatch, history, daily_fetcher=daily_fetcher(),
+        biotech_snapshot=biotech_snapshot(NOW))
+    staged = json.loads((tmp_path / 'deepseek_candidates.json').read_text())['candidates']
+    assert staged
+    for row in staged:
+        unknown = set(row.get('technicals') or {}) - factor_inputs.TECHNICAL_KEYS
+        assert not unknown, (row['ticker'], unknown)
+
+
+def test_every_whitelisted_technical_can_be_grounded():
+    """The FOURTH list. factor_inputs admitted the day-113 fields, the adapter
+    admitted them, and factor_grounding.technical_facts() raised KeyError on the
+    first of them — every factor batch failed on 2026-09-23. A field is only
+    real when every seam that reads it knows it."""
+    import factor_grounding
+    import factor_inputs
+    from adapters import deepseek_adapter
+    assert factor_inputs.TECHNICAL_KEYS <= set(factor_grounding.TECHNICAL_DEFINITIONS)
+    assert factor_inputs.TECHNICAL_KEYS == deepseek_adapter.TECHNICAL_KEYS
+
+
+def test_factor_batches_are_split_until_each_fits_the_prompt_cap(monkeypatch):
+    """2026-09-23: 25 grounded names were 310-345k characters against a 300k
+    cap and two of three batches were refused before any request was sent."""
+    import prepare_deepseek
+    from adapters import deepseek_adapter
+    import factor_grounding
+    monkeypatch.setattr(deepseek_adapter, 'public_payload', lambda batch, macro, as_of: batch)
+    monkeypatch.setattr(factor_grounding, 'request_payload', lambda batch: ['x' * 10_000] * len(batch))
+    monkeypatch.setattr(deepseek_adapter, 'MAX_PROMPT_CHARS', 100_000 + len(deepseek_adapter.SYSTEM_PROMPT))
+    names = [{'ticker': 'N%d.TO' % i} for i in range(25)]
+    batches = prepare_deepseek.fitting_batches(names, None, None)
+    assert [t for b in batches for t in b] == names          # nothing lost, order kept
+    assert all(len(b) * 10_004 <= 100_000 for b in batches)

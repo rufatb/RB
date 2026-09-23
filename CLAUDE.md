@@ -1,5 +1,52 @@
 # Working notes for this repo
 
+## Day114b — 2026-09-23: two desks empty, no auto-send, fluff — each cause measured
+
+**DeepSeek "cut off (length)" was the reasoning mode, not the budget.** On
+81 names `deepseek-flash` thought through 65,536 tokens in 261s and never
+emitted the JSON. `THINKING = {'type': 'disabled'}` → 4.2s, a complete answer,
+positive control still passes. Do not "fix" a length cut-off by raising
+`MAX_COMPLETION_TOKENS` again.
+
+**Jev "HTTPError" was HTTP 400 `max_tokens_exceeded`** — its INPUT limit
+(~32k tokens), which the old error path reduced to the class name. The state is
+now built at `STATE_LEVELS` (headlines per name, then titles only, then none),
+retried down on that exact error, and the trim is disclosed in the gaps.
+`http_reason` names status and `error_type` for every other failure.
+
+**The factor layer read 0/428 because of four whitelists that did not agree.**
+Day-113 added fields to the staged rows and not to `factor_grounding`
+(KeyError), and let bookkeeping keys (`daily_sessions`, `daily_close_prev`)
+reach the adapter, which RAISES on unknown fields. `daily_technicals.model_fields`
+strips bookkeeping; a seam test pins staged keys ⊆ every whitelist. The prompt
+then exceeded 300k chars; `prepare_deepseek.fitting_batches` halves until it fits.
+
+**The 09:46 quote hit 429 at `getcrumb`** (a shared egress IP). The crumb is
+also embedded in the quote page, so `quotes._page_crumb` reads it there.
+
+**Claude's own `invalid_at` levels were wrong on 3 of 4** (on the wrong side of
+the last close, or copied from another row). `check_levels` drops such a level
+with a gap line for every desk, and `claude_opportunities --check` lets the
+session fix its answer before sealing. The first sealed answer still stands.
+
+**It did not send because loading a deferred tool ends the bridge's turn** until
+something wakes it. The 09:47 warm-up Routine (`trig_01Ktm32SuCVjK1fwaVcfFVCj`)
+loads the Gmail tools three minutes before the 09:50 bridge; the report Routine
+loads them at STEP 1.
+
+**"INFORMATIONAL" every day was the 09:46-minute rule.** A delivery sent at
+09:50 is the normal path now; `DISPATCH_GRACE_END = 10:00` separates on-time
+from late. Status lines, PARTIAL labels and caveat walls left the concise email;
+the full report keeps every one of them.
+
+**Part 2 had no events because nothing reviewed any.** `biotech_review.py`
+merges an issuer/FDA event only when its `source_quote` is found VERBATIM on the
+re-fetched source page, then runs the registered `validate_event`. `--reverify`
+must run at least weekly (the 7-day rule) or every event expires. A
+MarketBeat-style write-up is a lead, never a source. The universe snapshot is
+only good for 36 hours, and the evening build can be rate-limited; the morning
+retries it.
+
 ## Day114 — Part 1 is three desks: Claude, DeepSeek, Jev
 
 The owner asked for three parallel sections every morning — Claude's picks,

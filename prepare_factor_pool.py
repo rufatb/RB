@@ -464,8 +464,9 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             merged = dict(rows.get(ticker) or {'ticker': ticker})
             # Five-minute values WIN where they exist: they are the intraday
             # facts. Daily only fills what the warm-up could not produce.
-            merged['technicals'] = {**technicals, **{k: v for k, v in existing.items()
-                                                     if v is not None}}
+            import daily_technicals as _dt
+            merged['technicals'] = {**_dt.model_fields(technicals),
+                                    **{k: v for k, v in existing.items() if v is not None}}
             merged.setdefault('technical_source', 'python')
             merged.setdefault('source_url',
                 'https://query1.finance.yahoo.com/v8/finance/chart/'+quote(ticker, safe=''))

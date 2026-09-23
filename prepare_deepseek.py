@@ -302,6 +302,37 @@ def candidate_roster(state_dir, cfg, now, *, diagnostic=False):
     return tickers
 
 
+def fitting_batches(eligible, macro, as_of):
+    """BATCH_SIZE-name batches, halved until each fits the adapter's prompt cap.
+
+    MEASURED 2026-09-23: with the day-113 context fields grounded per name, 25
+    names came to 310-345k characters against MAX_PROMPT_CHARS 300k, and the
+    adapter refused two of three batches as INVALID_INPUT before any request.
+    A fixed smaller size would break again the next time a field is added;
+    measuring the real payload cannot. A batch whose size cannot be measured is
+    passed through unchanged, so the adapter reports its own refusal."""
+    from adapters import deepseek_adapter as A
+    import factor_grounding as G
+
+    def fits(batch):
+        try:
+            payload = G.request_payload(A.public_payload(batch, macro, as_of))
+        except Exception:
+            return True
+        return len(json.dumps(payload, ensure_ascii=False)) + len(A.SYSTEM_PROMPT) <= A.MAX_PROMPT_CHARS
+
+    queue = [eligible[i:i+P.BATCH_SIZE] for i in range(0, len(eligible), P.BATCH_SIZE)]
+    out = []
+    while queue:
+        batch = queue.pop(0)
+        if len(batch) == 1 or fits(batch):
+            out.append(batch)
+        else:
+            half = len(batch) // 2
+            queue[0:0] = [batch[:half], batch[half:]]
+    return out
+
+
 def _read_json(path):
     """One strict parser for staged evidence, CLI input and replay receipts."""
     from factor_inputs import _read
@@ -610,7 +641,7 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
         if not key_ok:
             gaps.append('DEEPSEEK_API_KEY unavailable in environment/private host state.')
         elif model_ok:
-            pending = [eligible[start:start+P.BATCH_SIZE] for start in range(0, len(eligible), P.BATCH_SIZE)]
+            pending = fitting_batches(eligible, macro, clean['as_of'])
             for start in range(0, len(pending), P.MODEL_BATCH_CONCURRENCY):
                 remaining = deadline-time.monotonic()
                 if remaining <= 0:

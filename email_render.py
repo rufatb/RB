@@ -5,210 +5,222 @@ import biotech
 fmt = full.fmt
 
 
+ARTIFACT_URL = 'https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9'
+
+# THE EMAIL IS THE PICKS (day-114b). The owner, 2026-09-23: "there are warnings
+# and fluff in the email body". It carried a dispatch disclaimer, the engine's
+# historical record, MDE, cache and provider faults, the shadow factor layer's
+# UNAVAILABLE lines, a record-hole warning, five standing disclosures and a code
+# hash — around four tickers. Every one of those facts is still in the full
+# report (brief.render_text / the artifact page); the email now carries what a
+# portfolio manager reads at 09:50: each desk's sized picks and why, the
+# scoreboard, the engine as one comparison table, biotech, one footer line.
+
+
+def _reason_lines(snap):
+    out = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for pick in snap.get(key) or []:
+            reason = full.safe_detail(pick.get('reason') or '', 170)
+            out.append(f"- {side} {pick['ticker']}" + (f": {reason}" if reason else ''))
+    return out
+
+
+def _jev_lines(snap):
+    """Jev's selection, and — when it declined — its ranking and forced pick,
+    each labelled for what it is. Never sized, never merged into a selection."""
+    out = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for pick in snap.get(key) or []:
+            out.append(f"- {side} {pick['ticker']}: probability {fmt(pick.get('probability'))} "
+                       f"vs {fmt(pick.get('abstain_probability'))} for choosing nothing")
+    if snap.get('longs') or snap.get('shorts'):
+        return out
+    ranked = []
+    for side, key in (('LONG', 'long_ranked'), ('SHORT', 'short_ranked')):
+        top = (snap.get(key) or [None])[0]
+        if top:
+            ranked.append(f"{side} {top['ticker']} {fmt(top.get('probability'))} "
+                          f"vs none {fmt(top.get('abstain_probability'))}")
+    if ranked:
+        out.append('Jev selected nothing: every name ranked below its own "none". '
+                   'Top-ranked (not selections): ' + '; '.join(ranked) + '.')
+    forced = []
+    for side, key in (('LONG', 'forced_long'), ('SHORT', 'forced_short')):
+        f = snap.get(key)
+        if f:
+            forced.append(f"{side} {f['ticker']} {fmt(f.get('probability'))}"
+                          + ('' if f.get('cleared_gated_abstain') else ' (below its "none")'))
+    if forced:
+        out.append('If forced to pick: ' + '; '.join(forced) + '. Not selections; never sized.')
+    return out
+
+
 def desk_sections(intra):
     """Part 1's three desks — Claude, DeepSeek, Jev — each in its own section.
 
     Every desk prints EVERY day, answered or not: the owner reads them side by
     side, and a desk that silently vanished would look like one that had nothing
-    to say. Each section is that model's sized picks, then its own reasoning,
-    evidence and scored record. Nothing is averaged across desks."""
+    to say. Nothing is averaged across desks."""
     desks = intra.get('desks') or []
     if not desks:
         return []
-    body = {'claude': lambda: full.opportunities_summary(intra, concise=True, key='claude', name='Claude'),
-            'deepseek': lambda: full.opportunities_summary(intra, concise=True),
-            'jev': lambda: full.jev_summary(intra, concise=True)}
     out = []
     for n, desk in enumerate(desks, 1):
-        out += ['', f"### {n} · {desk.get('source')}'s picks", *full.desk_lines(desk)]
         snap = intra.get(desk.get('evidence_key')) or {}
-        if snap.get('status') in ('READY', 'NO_OPPORTUNITY') and desk.get('id') in body:
-            out += body[desk['id']]()[1:]
-    return out + ['', *full.scoreboard_lines(intra.get('scoreboard'))]
+        out += ['', f"### {n} · {desk.get('source')}"]
+        if desk.get('legs'):
+            # The table only: the sizing sentence is in the footer and the
+            # reason for a missing size is said once, just below.
+            out += [l for l in full.desk_lines(desk)[2:] if not l.startswith('Not sized:')]
+            why = sorted({r for l in desk['legs'] for r in l.get('reasons') or []})
+            if why:
+                out.append('No share count: ' + '; '.join(full.safe_detail(r, 90) for r in why) + '.')
+        elif snap.get('status') == 'NO_OPPORTUNITY' and desk.get('id') != 'jev':
+            out.append('No pick today: the model found nothing worth a position on either side.')
+        elif desk.get('id') != 'jev' or snap.get('status') not in ('READY', 'NO_OPPORTUNITY'):
+            out.append(f"Unavailable today — {full.safe_detail(desk.get('reason') or 'no answer', 160).rstrip('.')}.")
+        out += _jev_lines(snap) if desk.get('id') == 'jev' else _reason_lines(snap)
+        if snap.get('independence'):
+            out.append('Sealed ' + full.safe_detail(snap['independence'], 120)
+                       .replace('sealed at ', '') + '.')
+    return out + _scoreboard(intra.get('scoreboard'))
+
+
+def _scoreboard(board):
+    if not board:
+        return []
+    out = ['', '### Scoreboard', '| Source | Right | Mean per pick | Sessions | 95% range |',
+           '|---|---:|---:|---:|---|']
+    for r in board:
+        if not r['picks']:
+            out.append(f"| {r['source']} | — | — | 0 | not yet scored |")
+            continue
+        lo, hi = r['ci95']
+        out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
+                   f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
+    out.append('09:45 price to the close, no costs. A range that contains 50% is a coin flip.')
+    return out
+
+
+def _engine_lines(intra):
+    legs = intra.get('legs') or []
+    recorded = [r for r in intra.get('recorded_today', []) if r.get('role') == 'pair']
+    out = ['', '### Baseline engine (k-NN) — comparison only']
+    if legs:
+        out += ['| Status | Name / side | Shares | 09:45 bar |', '|---|---|---:|---:|']
+        for l in legs:
+            # No share count on an abstained leg: a row with a size is an order
+            # ticket whatever its status says (acted on twice, day-98).
+            shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
+            out.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | "
+                       f"{fmt(l.get('signal_reference'))} |")
+    elif recorded:
+        out.append('Recorded board: ' + ', '.join(f"{r['ticker']} {r['side']}" for r in recorded) + '.')
+    else:
+        res = intra.get('res') or {}
+        out.append('No selection today.' if res.get('n_names') and not res.get('coverage_fail')
+                   else 'SCAN UNAVAILABLE — not evaluated today; that is not a finding of '
+                        'no opportunities.')
+    for g in (intra.get('risk_evidence') or {}).get('concentration', []):
+        out.append(f"{' and '.join(g['tickers'])} are one {str(g['group']).replace('_', ' ')} bet, "
+                   f"not {len(g['tickers'])}.")
+    return out
+
+
+def _factor_lines(intra):
+    """The factor layer only when it produced a lean. It is shadow research;
+    an UNAVAILABLE or all-neutral day belongs in the full report, not here."""
+    rows = [r for r in (intra.get('deepseek') or {}).get('assessments') or []
+            if r.get('directional_lean') in ('BULL', 'BEAR')]
+    if not rows:
+        return []
+    out = ['', '### Headline sentiment — DeepSeek factor layer (research only)']
+    for r in sorted(rows, key=lambda r: -abs(r.get('sentiment_score') or 0))[:4]:
+        out.append(f"- {r['directional_lean']} {r['ticker']} {fmt(r.get('sentiment_score'), '+.2f')}: "
+                   f"{full.safe_detail(r.get('factor_rationale') or '', 150)}")
+    return out
+
+
+def _biotech_lines(d):
+    bio = d.get('biotech') or {}
+    out = ['', '## Part 2 — Biotech catalysts · 3–6 months',
+           'Factual scheduled events; no directional call.']
+    for e in bio.get('monitor') or []:
+        out += ['', '### ' + e['ticker']]
+        for i, (label, value) in enumerate(zip(biotech.LABELS, e['bullets'])):
+            out.append(f"- **{label}:** {value}" + (f" [Source]({e['source_url']})" if i == 0 else ''))
+    calendar = (d.get('research_calendar') or {}).get('events') or []
+    if calendar:
+        out += ['', '### Upcoming calendar — unranked, uncertified']
+    for e in calendar[:4]:
+        out.append(f"- {e['ticker']} · {e['window_start']}–{e['window_end']}: "
+                   f"{e['asset']} / {e['stage']}, {e['kind']}. [Source]({e['source_url']})")
+    if not bio.get('monitor') and not calendar:
+        n = bio.get('universe_n')
+        out.append('No reviewed catalyst event in the window today'
+                   + (f" across {n} certified names." if n else '.'))
+    return out
+
+
+def _positions_lines(d):
+    book = d.get('positions') or {}
+    broken = book.get('status') in ('UNAVAILABLE', 'PARTIAL')
+    if not book.get('legs') and not book.get('recent_closed') and not broken:
+        return []
+    out = ['', '## Positions']
+    # A ledger that could not be read is NOT an empty book: say so, or an
+    # absence of rows reads as "no positions" (house rule 2).
+    if book.get('status') == 'UNAVAILABLE':
+        out.append('Position ledger UNAVAILABLE; current holdings are unknown.')
+    elif book.get('status') == 'PARTIAL':
+        out.append(f"Position ledger PARTIAL; {book.get('invalid_rows', 0)} malformed rows "
+                   'excluded. Holdings may be incomplete.')
+    for p in book.get('legs') or []:
+        out.append(f"- {p['ticker']} {p['side']}: {p['shares']:g} @ {p['entry_px']:.2f}; "
+                   f"mark {fmt(p.get('mark'))}; P&L {fmt(p.get('pnl_pct'), '+.2f')}%"
+                   + ('; RECONCILE — exit date passed' if p.get('event_overdue') else ''))
+    for p in book.get('recent_closed') or []:
+        out.append(f"- Recorded CLOSED {p['ticker']}: {p['shares']:g} @ {p['exit_px']:.2f} on "
+                   f"{p['exit_date']}, {p['pnl_pct']:+.2f}% before costs")
+    return out
 
 
 def text(d):
-    intra=d['intraday']; res=intra['res']; legs=intra.get('legs',[])
-    recorded=[r for r in intra.get('recorded_today',[]) if r.get('role')=='pair']
-    delivery=d.get('delivery',{})
-    lines=[f"# RB Daily Report — {d['session']}", d['report_status'],
-           f"Snapshot {d['generated_at'][11:19]} ET"+
-           (f" · Dispatch {delivery['checked_at'][11:19]} ET" if delivery else ''),
-           'Full board, sources and diagnostics: attached HTML report.']
-    if d.get('report_status') != 'ON_TIME':
-        lines.append('Informational; no fresh morning entry claim.')
+    intra = d['intraday']
+    delivery = d.get('delivery') or {}
+    status = str(d.get('report_status') or '')
+    lines = [f"# RB Daily Report — {d['session']}",
+             delivery.get('note') or f"Published {str(d.get('generated_at') or '')[11:16]} ET."]
+    # A late, offline or diagnostic board says so in the body, not only the
+    # subject — the day-95 rule, kept. An on-time board carries no label.
+    if status and not status.startswith('ON_TIME'):
+        lines.insert(1, status)
     if d.get('replacement'):
-        lines += ['','## Requested replacement',
+        lines += ['', '## Requested replacement',
                   'Original morning computation retained; no recovered or fresh entry signal is claimed.',
                   *d['replacement']['notes']]
-    lines += ['', '## Part 1 — Intraday · 09:46–15:59 ET']
-    lines += desk_sections(intra)
+    lines += ['', '## Part 1 — Intraday picks · enter 09:46, exit 15:59 ET']
     if intra.get('desks'):
-        lines += ['', '### Baseline engine (k-NN) — comparison only',
-                  'No demonstrated edge: 809 walk-forward legs at 50.1%, live 48.6% over 107. '
-                  'Kept on the record and on the scoreboard; no longer the headline.']
-    if legs or recorded:
-        valid=sum(l.get('status') in ('SHADOW','ELIGIBLE') and l.get('quote',{}).get('status')=='OK' for l in legs)
-        lines += [f"{len(legs) or len(recorded)} baseline legs; {valid} execution-verified. Hypothetical selections, not orders."]
-        if not valid:
-            lines.append('ABSTAIN / RECORDED ONLY — entries are unverified.')
-        lines += ['', '| Status | Name / side | Shares | 09:45 bar | 09:46 quote | Spread |',
-                  '|---|---|---:|---:|---:|---:|']
-        for l in legs:
-            # No share count on an abstained leg. The email is what gets read
-            # at 09:46 on a phone, and a row with a share count is an order
-            # ticket no matter what the Status column says — twice now it was
-            # acted on. See daily_render for the full note.
-            shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
-            lines.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | "
-                         f"{fmt(l.get('signal_reference'))} | {fmt(l.get('entry_reference'))} | {fmt(l.get('entry_spread_bps'))} bps |")
-        if not legs:
-            for r in recorded:
-                lines.append(f"| RECORDED | {r['ticker']} {r['side']} | {r.get('shares') or 'unknown'} | "
-                             f"{r.get('p945') or 'unknown'} | unverified | {r.get('spread_bps') or 'unknown'} proxy bps |")
-        reasons=sorted({reason for leg in legs for reason in leg.get('reasons',[])})
-        if reasons: lines.append('Entry gaps: '+'; '.join(reasons))
-    elif res.get('coverage_fail') or res.get('clock_error') or not res.get('n_names'):
-        lines += ['SCAN UNAVAILABLE — no validated new entries; the scan did not establish whether opportunities existed.']
+        lines += desk_sections(intra)
+        lines += _engine_lines(intra)
     else:
-        lines.append(f"Evaluated {res['n_names']} names; no qualifying baseline selections.")
-    lines.append(f"Coverage: {res.get('n_names',0)} evaluated; {len(intra.get('recorded_today',[]))} recorded qualifiers.")
-    groups = intra.get('risk_evidence', {}).get('concentration', [])
-    for g in groups:
-        lines.append(f"Common exposure: {', '.join(g['tickers'])} — {g['side']} {g['group']}; "
-                     f"{fmt(g['gross_share'], '.0%')} of gross allocation"+
-                     (f", {fmt(g['side_share'], '.0%')} of the {g['side']} side" if g.get('side_share') is not None else '')+
-                     '. These names can lose together.')
-    history = res.get('training_history', [])
-    if history:
-        lines.append(f"Training: {sum(h['accepted_sessions'] for h in history)} complete ticker-sessions; "
-                     f"{sum(h['rejected_sessions'] for h in history)} excluded; audit attached.")
-    # The concise email carries the FACTOR SECTION only when the factor layer
-    # has something to say. It is shadow, unadopted, and changes no selection,
-    # so with no staged snapshot it produced five consecutive UNAVAILABLE lines
-    # describing an experiment that did not run — noise that crowded out the
-    # board on a phone at 09:46. Nothing is swallowed: the attached full report
-    # keeps every diagnostic verbatim, and `factor_note` states the absence in
-    # one line among the gaps (house rule 1).
-    if 'deepseek' in intra and full.factor_reported(intra):
-        lines += ['',*full.deepseek_summary(intra, concise=True)]
-    # Same rule for the model's own picks: carried when it answered, silent in
-    # the concise email when it did not, and never reduced to an UNAVAILABLE
-    # line. The absence still appears once in the attached full report.
-    # A publication from before the desks (2026-09-23) printed the two model
-    # sections here; with desks they are already printed in Part 1.
-    if not intra.get('desks'):
+        # A publication from before the desks: the engine board, then the two
+        # model sections exactly as they were printed at the time.
+        lines += _engine_lines(intra)[2:]
         if full.opportunities_reported(intra):
-            lines += ['',*full.opportunities_summary(intra, concise=True)]
+            lines += ['', *full.opportunities_summary(intra, concise=True)]
         if full.jev_reported(intra):
-            lines += ['',*full.jev_summary(intra, concise=True)]
-    book=d['positions']
-    lines += ['', '## Positions'+(' — original snapshot' if d.get('replacement') else '')]
-    if book.get('status')=='UNAVAILABLE':
-        lines.append('Position ledger UNAVAILABLE; current holdings are unknown.')
-    elif book.get('status')=='PARTIAL':
-        lines.append(f"Position ledger PARTIAL; {book.get('invalid_rows',0)} malformed rows excluded. Holdings may be incomplete.")
-    elif not book['legs']:
-        lines.append('No open positions recorded; current holdings are not independently reconciled.')
-    if book.get('gaps'):
-        lines.append('Position gap: '+full.safe_detail(book['gaps'][0],180))
-    for p in book['legs']:
-        lines.append(f"{p['ticker']} {p['side']}: {p['shares']:g} shares @ {p['entry_px']:.2f}; "
-                     f"{p['days']} days in ledger; live mark {fmt(p.get('mark'))}; P&L {fmt(p.get('pnl_pct'),'+.2f')}%.")
-        ref=p.get('reference',{})
-        if ref.get('status')=='OK':
-            lines.append(f"Prior-session reference: {ref['session']} close {ref['close']:.2f}; not live. [{ref.get('provider','Data source')}]({ref['source_url']})")
-        if p.get('event_overdue'): lines.append('RECONCILE: recorded exit/event date has passed.')
-    for p in book.get('recent_closed',[]):
-        lines.append(f"Recorded CLOSED {p['ticker']}: {p['shares']:g} shares @ {p['exit_px']:.2f} on {p['exit_date']}; gross {p['pnl_usd']:+.2f} / {p['pnl_pct']:+.2f}% before costs.")
-    bio=d['biotech']
-    lines += ['', '## Part 2 — Biotech Monitor · 3–6 months',
-              f"{len(bio['monitor'])}/2 certified Monitor issuers. Factual events; no directional call."]
-    if not bio['monitor']:
-        lines.append('Certification unavailable; see data gaps.' if bio['status']=='UNAVAILABLE' or not bio.get('screened_events')
-                     else 'No Monitor result among the evaluated events; crowded and unverified events remain separate.')
-    for e in bio['monitor']:
-        lines += ['', '### '+e['ticker']]
-        for i,(label,value) in enumerate(zip(biotech.LABELS,e['bullets'])):
-            lines.append(f"- **{label}:** {value}"+(f" [Source]({e['source_url']})" if i==0 else ''))
-    if bio['crowded']:
-        lines += ['', '### Crowded / High-Expectations appendix',
-                  '; '.join(e['ticker'] for e in bio['crowded'])+' — suppressed; indicators in attachment.']
-    calendar=d.get('research_calendar',{}).get('events',[])
-    if calendar:
-        lines += ['', '### Upcoming calendar — unranked, uncertified']
-        for e in calendar[:4]:
-            lines.append(f"- **{e['ticker']} · {e['window_start']}–{e['window_end']}:** "
-                         f"{e['asset']} / {e['stage']}, {e['kind']}. [Issuer/event source]({e['source_url']})")
-        if len(calendar)>4:lines.append(f"{len(calendar)-4} further reviewed events in attachment.")
-    rec=intra['record']; risk=intra.get('risk_evidence',{}); rate=risk.get('rate',{}); exact=intra['exact_record']
-    lines += ['', '## Evidence & gaps']
-    if rec.get('status')=='UNAVAILABLE':
-        lines.append('Historical record UNAVAILABLE; hit rates and returns are unknown.')
-    else:
-        if rec.get('status')=='PARTIAL':
-            lines.append(f"Historical record PARTIAL: {rec.get('invalid_rows',0)} invalid rows excluded; source records retained.")
-        lines.append(f"Historical gross proxy: {rec['hits']}/{rec['n']} hits ({fmt(rec['rate'],'.1%')}); "
-              f"mean {fmt(rec.get('mean'),'+.3f')}% per leg. "
-              f"Net proxy {fmt(rec.get('net_rate'),'.1%')}, mean {fmt(rec.get('net_mean'),'+.3f')}% "
-              f"on {rec['net_n']} legs, {rec['net_unpriced']} unpriced. "
-              f"MDE80 {fmt(rate.get('mde80_pp'))} percentage points; scores are not calibrated win probabilities.")
-    gap = full.record_gap_line(rec)
-    if gap:
-        lines.append(gap)
-    lines += full.cache_lines(res)
-    # Exact-window evidence begins at zero and stays there until collect_execution
-    # has captured matched entry and exit BBOs. Saying "0 scored legs, net
-    # unknown%, selection unknown%" every morning reads as a fault; it is a
-    # study that has not started. Say that once, plainly.
-    if exact['scored_legs']:
-        lines.append(f"Exact net/index evidence: {exact['scored_legs']} scored legs / {exact['complete_sessions']} sessions; "
-                     f"net {fmt(exact.get('mean_net_pct'),'+.3f')}%, selection versus index {fmt(exact.get('mean_selection_net_pct'),'+.3f')}%.")
-    else:
-        lines.append('Exact net/index evidence: not yet accumulating — matched 09:46/15:59 '
-                     'execution quotes are required and none are recorded. The proxy record above is what exists.')
-    note = full.factor_note(intra)
-    if note:
-        lines.append(note)
-    errors=d.get('errors',[])
-    if errors:
-        from collections import Counter
-        counts=Counter((e['layer'],full.plain_fault(e)) for e in errors)
-        lines.append('Acquisition faults: '+'; '.join(f"{layer} — {fault}"+(f" (×{n})" if n>1 else '') for (layer,fault),n in counts.items())+'.')
-    if bio.get('errors'):
-        lines.append('Biotech coverage: '+full.plain_fault({'error':bio['errors'][0],'layer':'biotech'})+
-                     ('' if len(bio['errors'])==1 else f" (+{len(bio['errors'])-1} more, attached)")+'.')
-    provider=intra.get('historical_provider',{})
-    if provider and provider.get('status')!='NOT CONFIGURED':
-        lines.append(f"EODHD history: {provider['status']}; 5-minute history {provider['intraday_status']}. No live selection change.")
-    lines += ['H1/H2 cost overlays and earlier exits: shadow. Overnight and opening-path research: unadopted.']
-    # THE STANDING TERMS, ONCE, AT THE END. Each of these used to be appended to
-    # its own section every morning, so the reader scrolled three paragraphs of
-    # identical caveat to reach four tickers — which is how a disclosure stops
-    # being read. Nothing is dropped: the attached full report still carries
-    # each note inside its own section, where the record needs it.
-    # EACH TERM IS KEYED ON THE SECTION THAT EARNED IT, exactly as the sections
-    # themselves are. Printing all three unconditionally made an old
-    # publication that never ran DeepSeek grow the words "never averaged with
-    # DeepSeek's confidence" — a frozen report acquiring a mention of a model
-    # it never called. Absence of the key means absence of the note.
-    terms = ['Research only. Nothing here places, modifies or cancels an order, and no row is a '
-             'recommendation. An ABSTAIN leg shows no share count and no dollar figure by design.']
-    if full.claude_reported(intra):
-        terms.append(full.CLAUDE_STANDING)
-    if full.opportunities_reported(intra):
-        terms.append(full.OPPORTUNITIES_STANDING)
-    if full.jev_reported(intra):
-        terms.append(full.JEV_STANDING)
-    if 'deepseek' in intra and full.factor_reported(intra):
-        terms.append(full.FACTOR_STANDING)
-    answered = sum((full.claude_reported(intra), full.opportunities_reported(intra),
-                    full.jev_reported(intra)))
-    if answered >= 2:
-        terms.append('The models are never averaged, and agreement between them is a '
-                     'recorded observation, not confirmation.')
-    lines += ['', '## How to read this', *terms,
-              'Code: '+str(d.get('provenance',{}).get('code_commit') or 'not recorded')[:12]]
+            lines += ['', *full.jev_summary(intra, concise=True)]
+    lines += _factor_lines(intra)
+    lines += _biotech_lines(d)
+    lines += _positions_lines(d)
+    sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
+    lines += ['', '---',
+              'Research only: share counts are hypothetical'
+              + (f" (an equal split of {sizing['book']:,.0f} per desk)" if sizing else '')
+              + ', not orders. Confidences are each model\'s own number and are never averaged.',
+              f'Full report, sources and history: {ARTIFACT_URL}']
     return '\n'.join(lines)
 
 
@@ -253,19 +265,18 @@ def _hero(d):
     from primary_board import headline_legs
     legs = headline_legs(intra)
     abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
+    why = sorted({r for l in abstained for r in l.get('reasons') or []})
     if legs and len(abstained) == len(legs):
-        head, sub = 'No actionable entry today', (
-            f'All {len(legs)} selected legs abstained. They are shown below as a record of what '
-            'was computed — not as entries, and with no share count.')
+        head = 'No sized pick today'
+        sub = (f'All {len(legs)} picks are shown below without share counts'
+               + (f' — {why[0]}.' if len(why) == 1 else '.'))
     elif legs and abstained:
-        head, sub = (f'{len(legs) - len(abstained)} of {len(legs)} legs carry a verified entry',
-                     f'{len(abstained)} abstained and show no share count.')
+        head = f'{len(legs) - len(abstained)} of {len(legs)} picks carry a share count'
+        sub = f'{len(abstained)} are shown without one; the reason is under each desk.'
     elif legs:
-        head, sub = f'{len(legs)} legs selected', 'Reference prices are executable only in the 09:46 minute.'
+        head, sub = f'{len(legs)} picks sized', 'Share counts use the 09:46 ET prices.'
     else:
-        head, sub = 'No legs selected', (
-            'The scan did not establish that opportunities existed — that is not the same as '
-            'establishing there were none.')
+        head, sub = 'No picks today', 'Each desk below says why.'
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
             f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'
             f'<div style="font:14px/1.55 Arial,sans-serif;color:{MUTED};margin-top:7px">'
@@ -308,7 +319,7 @@ def _body_blocks(body):
             out.append(_table(table[1:], table[0]))
             table = None
 
-    for line in body.splitlines()[1:]:          # the H1 is the masthead
+    for line in body.splitlines()[2:]:          # the H1 and send line are the masthead
         if line.startswith('|'):
             cells = _cells(line)
             if all(re.fullmatch(r'[-:]+', c) for c in cells):
@@ -316,6 +327,10 @@ def _body_blocks(body):
             table = (table or []) + [cells]
             continue
         flush()
+        if line == '---':
+            small = True
+            out.append(f'<div style="height:1px;background:{RULE};margin:22px 0 8px"></div>')
+            continue
         if line.startswith('## '):
             title = line[3:]
             # The terms section is the one block that is deliberately quiet.
@@ -342,11 +357,7 @@ def _body_blocks(body):
 def html(d):
     body = text(d)
     head = body.splitlines()[0].lstrip('# ')
-    status = str(d.get('report_status') or '')
-    stamp = f"Snapshot {str(d.get('generated_at') or '')[11:19]} ET"
-    delivery = d.get('delivery') or {}
-    if delivery.get('checked_at'):
-        stamp += f" · Dispatch {delivery['checked_at'][11:19]} ET"
+    stamp = body.splitlines()[1] if len(body.splitlines()) > 1 else ''
     return (
         '<!doctype html><html><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -358,11 +369,11 @@ def html(d):
         f'style="width:640px;max-width:100%;background:{CARD};border:1px solid {RULE}">'
         f'<tr><td style="padding:26px 26px 20px;border-bottom:3px solid {INK}">'
         f'<div style="font:600 11px/1.4 Arial,sans-serif;color:{ACCENT};letter-spacing:.14em;'
-        f'text-transform:uppercase">Research record · not an entry</div>'
+        f'text-transform:uppercase">Morning research note · not an order</div>'
         f'<div style="font:600 27px/1.2 Georgia,serif;color:{INK};margin-top:8px">'
         f'{full.escape(head)}</div>'
         f'<div style="font:12px/1.5 Arial,sans-serif;color:{MUTED};margin-top:8px">'
-        f'{full.escape(status)} &nbsp;·&nbsp; {full.escape(stamp)}</div></td></tr>'
+        f'{full.escape(stamp)}</div></td></tr>'
         + _hero(d) +
         f'<tr><td style="padding:0 26px 26px">{_body_blocks(body)}</td></tr>'
         '</table></td></tr></table></body></html>')

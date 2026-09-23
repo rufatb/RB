@@ -232,8 +232,8 @@ def test_actual_history_pool_to_shortlist_to_model_loader_and_digest(tmp_path, m
     assert loaded['research_shortlist']['rows'][0]['sector'] == 'Financials'
     mail = prepare_delivery.artifacts(d, tmp_path/'dispatch', clock)
     assert 'GWO.TO' in mail['attachments'][0]['content']
-    assert all('3/3 assessed' in body for body in (mail['text'], mail['html']))
-    assert 'prepared technicals 3' in mail['text']
+    assert '3/3 assessed' in mail['attachments'][0]['content']
+    assert 'prepared technicals 3' in mail['attachments'][0]['content']
     assert not (tmp_path/'reports.sqlite3').exists()
 
 

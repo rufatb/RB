@@ -83,12 +83,12 @@ def test_preparation_to_real_loader_to_digest_to_email(tmp_path, monkeypatch, mo
         # attached full report.
         for body in (bodies[0], bodies[1], bodies[4]):
             assert 'UNAVAILABLE' in body and 'NOT EVALUATED' in body
-        # CONCISE views drop a section that produced nothing, but a failed
-        # preparation must still be visible in one line — otherwise the reader
-        # cannot tell "the experiment abstained" from "the experiment broke".
+        # DAY-114b: the EMAIL carries the shadow factor layer only when it
+        # produced a lean (the owner: "warnings and fluff in the email body").
+        # The failure stays visible in full in the report above and the
+        # attachment; the email must simply never imply a reading it lacks.
         for body in (bodies[2], bodies[3]):
-            assert 'not evaluated' in body
-            assert 'No selection, size or threshold depends on it' in body
+            assert 'Headline sentiment' not in body and 'NO EDGE' not in body
         assert not loaded['research_watchlist']['threshold_evaluated']
     assert calls == [['X0', 'X1']] and snapshot.read_bytes() == before and encode(d) == frozen
     assert not (tmp_path/'reports.sqlite3').exists()
@@ -190,8 +190,8 @@ def test_grounding_exclusion_survives_sealed_load_and_email_without_raw_prose(tm
     d = brief.build(now=at_report, state_dir=tmp_path, services=services())
     mail = prepare_delivery.artifacts(d, tmp_path/'dispatch', at_report)
     assert 'X1' in mail['text']
-    assert '2/2 assessed' in mail['text']
-    assert '1 accepted after grounding' in mail['text']
+    # Coverage counts live in the full report (day-114b); the email prints the lean.
+    assert '2/2 assessed' in mail['attachments'][0]['content']
     assert '2 model-assessed; 1 accepted after grounding; 1 usable assessments' in mail['attachments'][0]['content']
     assert loaded['research_watchlist']['assessed'] == loaded['research_watchlist']['evaluated'] == 1
     assert 'negative MACD histogram' not in json.dumps(d)+json.dumps(mail)

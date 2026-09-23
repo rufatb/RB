@@ -105,7 +105,11 @@ def brief_text(brief):
     out = [SYSTEM_PROMPT, '', '=' * 72,
            f"SESSION {payload['session']} · entry {payload['entry']} · exit {payload['exit']}",
            f"{brief['considered']} candidates. Answer by writing ONE JSON object to "
-           f"{brief['answer_path']} and running:", f"  {brief['seal_command']}",
+           f"{brief['answer_path']}, then CHECK it (fix anything it reports):",
+           f"  {brief['seal_command'].replace('--seal', '--check')}",
+           "then seal it — the first sealed answer stands:", f"  {brief['seal_command']}",
+           "Each invalid_at must sit on the losing side of that row's `last` (below it for a "
+           "LONG, above it for a SHORT) and be anchored to THAT row's own levels.",
            f"The seal refuses at or after {CUTOFF:%H:%M} ET. Use ONLY this file: do not open "
            'any other snapshot, report, web page or price feed before sealing.', '']
     if payload.get('macro'):
@@ -220,6 +224,9 @@ def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session'):
     allowed = set(brief['universe'])
     longs, long_gaps = O._clean(answer.get('longs'), allowed, 'long')
     shorts, short_gaps = O._clean(answer.get('shorts'), allowed, 'short')
+    rows = brief['payload']['candidates']
+    long_gaps += O.check_levels(longs, 'LONG', rows)
+    short_gaps += O.check_levels(shorts, 'SHORT', rows)
     result = {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
               'model': safe_detail(str(model), 60), 'considered': brief['considered'],
               'universe': sorted(allowed), 'evidence': brief['evidence'],
@@ -230,6 +237,25 @@ def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session'):
     snapshot = _seal_snapshot(result, now, route=route, independence=independence(root, now))
     _write(root/SNAPSHOT_NAME, snapshot)
     return snapshot
+
+
+def check(state_dir, answer, *, now=None):
+    """Everything the seal would refuse or drop, WITHOUT sealing. Pure.
+
+    The seal is publish-once, so a session that seals a wrong level lives with
+    it (2026-09-23: three of four levels were on the wrong side of the close or
+    30% away). Checking first lets it fix the answer while it still can."""
+    now = _now(now)
+    brief = read_brief(state_dir, now)
+    allowed = set(brief['universe'])
+    problems = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        picks, gaps = O._clean(answer.get(key), allowed, side.lower())
+        problems += gaps + O.check_levels(picks, side, brief['payload']['candidates'])
+        if isinstance(answer.get(key), list) and len(answer[key]) > O.MAX_PER_SIDE:
+            problems.append('more than %d %s picks; only the first %d count'
+                            % (O.MAX_PER_SIDE, side, O.MAX_PER_SIDE))
+    return problems
 
 
 def load_api_key(state_dir):
@@ -312,6 +338,7 @@ def main(argv=None):
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument('--brief', action='store_true', help='write the brief (pre-09:24 only)')
     g.add_argument('--seal', metavar='ANSWER_JSON', help="seal Claude's answer")
+    g.add_argument('--check', metavar='ANSWER_JSON', help='report problems without sealing')
     g.add_argument('--api', action='store_true', help='answer through the Messages API')
     g.add_argument('--wait-brief', type=int, metavar='SECONDS',
                    help='wait for the brief: 0 ready, 2 still waiting, 3 past cutoff, 4 nothing to answer')
@@ -326,6 +353,11 @@ def main(argv=None):
                               'read': str(root/BRIEF_TEXT) if brief else None,
                               'considered': brief and brief['considered']}))
             return 0 if brief else 2
+        if a.check:
+            problems = check(root, parse_answer(Path(a.check).read_text()))
+            print(json.dumps({'status': 'CLEAN' if not problems else 'FIX_BEFORE_SEALING',
+                              'problems': problems}, indent=1))
+            return 0 if not problems else 2
         if a.seal:
             path = Path(a.seal)
             if path.stat().st_size > MAX_ANSWER_BYTES:

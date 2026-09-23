@@ -88,6 +88,19 @@ def _finite(value):
     return value if math.isfinite(value) else None
 
 
+# BOOKKEEPING, NOT EVIDENCE. `from_series` returns these so the caller can
+# derive `technicals_scope`; they are not model inputs and no whitelist admits
+# them. Staged inside `technicals` they made factor_inputs flag every name
+# UNKNOWN_TECHNICAL_FIELD — on 2026-09-23 the factor layer assessed 0 of 428,
+# because day-113 routed EVERY name through this pass to get its ATR.
+BOOKKEEPING = ('daily_sessions', 'daily_close_prev')
+
+
+def model_fields(technicals):
+    """The technicals minus bookkeeping: what may be staged for a model."""
+    return {k: v for k, v in technicals.items() if k not in BOOKKEEPING}
+
+
 def from_series(dates, closes, volumes, *, now, opens=None, highs=None, lows=None):
     """Daily indicators from completed sessions only.
 
@@ -237,7 +250,7 @@ def from_biotech_snapshot(snapshot, now, *, max_age_hours=30, limit=None):
             gaps[ticker] = ('BIOTECH_' + (str(exc) if isinstance(exc, ValueError)
                                           and str(exc).isupper() else type(exc).__name__))
             continue
-        out.append({'ticker': ticker, 'technicals': technicals,
+        out.append({'ticker': ticker, 'technicals': model_fields(technicals),
                     'technicals_as_of': observed.isoformat(),
                     'technicals_scope': scope(technicals['daily_sessions']),
                     'technical_source': 'python',

@@ -71,6 +71,15 @@ REQUEST_TIMEOUT = 150.0
 # read UNAVAILABLE with a healthy provider. Size this for the thinking, not the
 # answer, and never parse a truncated reply.
 MAX_COMPLETION_TOKENS = 32768
+# REASONING OFF — MEASURED 2026-09-23 on the real 81-name pool: with thinking on,
+# deepseek-flash spent ALL 65,536 output tokens reasoning (261 s) and never wrote
+# the answer; the 32,768 budget in production was cut off the same way, and the
+# section read "The model response was cut off (length)". With thinking
+# disabled the same request answered in 3 s, 376 tokens, well-formed. Raising
+# the budget cannot fix a reasoning pass that does not converge on this many
+# names, and a section that times out every morning is not a section.
+THINKING = {'type': 'disabled'}
+MODE = 'non-thinking'
 TICKER = re.compile(r'[A-Z0-9][A-Z0-9.\-]{0,19}\Z')
 PREOPEN_CUTOFF = dt.time(9, 30)
 
@@ -291,6 +300,37 @@ def _clean(rows, allowed, side):
     return out, gaps
 
 
+MAX_LEVEL_DISTANCE_PCT = 15.0
+
+
+def check_levels(picks, side, rows):
+    """Drop an `invalid_at` that cannot be the claim it says it is. Mutates picks.
+
+    A LONG's level must sit BELOW the last close and a SHORT's ABOVE it, or the
+    claim is "wrong" before the open. And it must be within
+    max(3 x ATR, 15%) of that close: 2026-09-23 sealed TECK-B.TO "wrong below
+    65.58" on a stock closing at 96.95 — a level from another row. A bad level
+    costs the LEVEL (with a gap saying so), never the pick."""
+    last = {r.get('ticker'): r for r in rows or []}
+    gaps = []
+    for pick in picks:
+        level = pick.get('invalid_at')
+        row = last.get(pick['ticker']) or {}
+        close = row.get('last')
+        if not isinstance(level, (int, float)) or not isinstance(close, (int, float)) or close <= 0:
+            continue
+        atr = row.get('atr_pct') if isinstance(row.get('atr_pct'), (int, float)) else 0.0
+        limit = max(3 * atr, MAX_LEVEL_DISTANCE_PCT)
+        distance = abs(level / close - 1) * 100
+        wrong_side = level >= close if side == 'LONG' else level <= close
+        if wrong_side or distance > limit:
+            pick.pop('invalid_at', None)
+            gaps.append('%s %s invalid_at %.2f dropped: %s the last close %.2f' % (
+                side, safe_detail(pick['ticker'], 24), level,
+                'on the wrong side of' if wrong_side else '%.0f%% away from' % distance, close))
+    return gaps
+
+
 def usable_candidates(candidates):
     """Names carrying enough prepared technicals to be worth asking about.
 
@@ -402,7 +442,8 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
             messages=[{'role': 'system', 'content': SYSTEM_PROMPT},
                       {'role': 'user', 'content': json.dumps(payload, sort_keys=True, allow_nan=False)}],
             response_format={'type': 'json_object'},
-            max_tokens=MAX_COMPLETION_TOKENS, timeout=timeout)
+            max_tokens=MAX_COMPLETION_TOKENS, timeout=timeout,
+            extra_body={'thinking': THINKING})
         choice = response.choices[0]
         if choice.finish_reason != 'stop':
             # A truncated reasoning model emits half an object. Parsing it would
@@ -418,7 +459,10 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
 
     longs, long_gaps = _clean(body.get('longs'), allowed, 'long')
     shorts, short_gaps = _clean(body.get('shorts'), allowed, 'short')
+    long_gaps += check_levels(longs, 'LONG', payload['candidates'])
+    short_gaps += check_levels(shorts, 'SHORT', payload['candidates'])
     return {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
+            'mode': MODE,
             'model': safe_detail(str(getattr(response, 'model', model)), 60),
             'considered': request['considered'], 'universe': sorted(allowed),
             'evidence': request['evidence'],

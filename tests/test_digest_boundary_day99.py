@@ -140,9 +140,10 @@ def test_smtp_authentication_minute_crossing_updates_both_views(tmp_path,monkeyp
         def send_message(self,msg):sent.append(msg);return {}
     deliver_report.send(store,original['session'],'sender@example.org','recipient@example.org',
                         smtp_factory=SMTP,clock=lambda:clock[0])
-    assert 'INFORMATIONAL' in str(sent[0]['Subject'])
-    assert '09:47' in sent[0].get_body(('plain',)).get_content()
-    assert 'no fresh morning entry claim' in sent[0].get_body(('plain',)).get_content()
+    # The SMTP login crossed into 09:47: the body re-labels with the real send
+    # minute (day-114b grace: before 10:00 that is not INFORMATIONAL).
+    assert 'INFORMATIONAL' not in str(sent[0]['Subject'])
+    assert 'sent 09:47 ET' in sent[0].get_body(('plain',)).get_content()
     assert store.get(original['session'])==original
 
 

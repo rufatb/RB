@@ -58,7 +58,10 @@ def test_the_prefix_reaches_the_real_subject_header():
     r = brief.compute(no_net=True)
     msg = D.message(r, "a@b.com", "c@d.com")
     assert msg["Subject"].startswith(f"RB Daily Report — {r['session']} — ")
-    assert "⛔" in msg["Subject"], "a board with no legs must be flagged"
+    # A session whose board was already recorded (the ledger carries today's
+    # rows) is flagged RECORDED BOARD instead — also never a neutral subject.
+    assert "⛔" in msg["Subject"] or "RECORDED BOARD" in msg["Subject"], \
+        "a board with no fresh legs must be flagged"
     assert len(msg.get_body(("plain",)).get_content()) > 500
 
 

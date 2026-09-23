@@ -37,6 +37,23 @@ TECHNICAL_DEFINITIONS = {
     'price': ('quote_currency', 'supplied price in the declared technical scope'),
     'open': ('quote_currency', 'open of the declared technical session'),
     'volume': ('shares', 'volume over the declared technical scope'),
+    # Day-113 context. MISSING UNTIL 2026-09-23: technical_facts() indexed this
+    # table and raised KeyError on the first new field, so every factor batch
+    # failed as BOUNDED_REQUEST_FAILURE (KeyError) — the fourth whitelist a new
+    # field has to reach (factor_inputs, the adapter, the opportunities row and
+    # this one). tests/test_pool_widening pins all four together now.
+    'atr_pct': ('percent', 'average true range over 14 completed sessions / last close; typical daily move'),
+    'gap_atr': ('ratio', 'last completed session gap measured in ATRs; scale context, not a signal'),
+    'move_atr': ('ratio', 'last completed session close-to-close move measured in ATRs'),
+    'sma50_pct': ('percent', '100 * (last close / 50-session simple average - 1)'),
+    'sma200_pct': ('percent', '100 * (last close / 200-session simple average - 1)'),
+    'range52_pos': ('bounded_score', 'position in the 52-week range: 0 at the low, 1 at the high'),
+    'prev_high': ('quote_currency', 'high of the last completed session'),
+    'prev_low': ('quote_currency', 'low of the last completed session'),
+    'prev_close': ('quote_currency', 'close of the last completed session'),
+    'days_to_earnings': ('days', 'calendar days to the next scheduled report; negative means since the last'),
+    'sector_move_pct': ('percent', 'median last-session move of this name\'s sector peers in the pool'),
+    'rel_sector_pct': ('percent', 'this name\'s last-session move minus its sector median'),
 }
 
 # Deliberately conservative, bounded vocabulary refusal. This catches the

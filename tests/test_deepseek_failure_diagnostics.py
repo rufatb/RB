@@ -50,9 +50,12 @@ def test_failure_reason_reaches_existing_concise_and_full_renderers(tmp_path):
     digest['intraday']['deepseek'] = result
     before = encode(digest)
     for body in (brief.render_text(digest), brief.render_html(digest),
-                 email_render.text(digest), '\n'.join(daily_render.deepseek_summary(digest['intraday']))):
+                 '\n'.join(daily_render.deepseek_summary(digest['intraday']))):
         assert CAUSE in body
         assert 'invalid model identifier' not in body
+    # Day-114b: the email carries the shadow layer only when it produced a lean.
+    mail = email_render.text(digest)
+    assert 'Headline sentiment' not in mail and 'invalid model identifier' not in mail
     assert encode(digest) == before
 
 

@@ -124,7 +124,7 @@ def test_every_desk_prints_its_own_section_every_day_even_unanswered():
              'jev': {'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}}
     text = '\n'.join(email_render.desk_sections(intra))
     heads = [line for line in text.splitlines() if line.startswith('### ')]
-    assert heads[:3] == ["### 1 · Claude's picks", "### 2 · DeepSeek's picks", "### 3 · Jev's picks"]
+    assert heads[:3] == ["### 1 · Claude", "### 2 · DeepSeek", "### 3 · Jev"]
     assert 'provider down' in text and 'before DeepSeek or Jev had been asked' in text
     html = report_page._desk_sections(intra)
     assert html.index("1 · Claude") < html.index("2 · DeepSeek") < html.index("3 · Jev")

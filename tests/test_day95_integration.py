@@ -29,11 +29,18 @@ def test_dispatch_clock_updates_both_bodies_without_rewriting_publication(tmp_pa
     d = brief.compute(now=NOW, services=services())
     original = copy.deepcopy(d)
     store = Store(tmp_path/'state');store.publish(d['session'], d)
+    # Day-114b dispatch grace: 09:48 is the ordinary send time — the body says
+    # the prices are the 09:46 snapshot and when it went out, with no label.
     payload = P.artifacts(store.get(d['session']), tmp_path/'out', NOW.replace(minute=48))
-    assert 'INFORMATIONAL' in payload['subject']
+    assert 'INFORMATIONAL' not in payload['subject']
     for key in ('text','html'):
-        assert 'INFORMATIONAL' in payload[key]
-        assert 'no fresh morning entry claim' in payload[key]
+        assert '09:46 ET snapshot; sent 09:48 ET' in payload[key]
+    # After 10:00 it is late, and both the subject and the body say so.
+    late = P.artifacts(store.get(d['session']), tmp_path/'late', NOW.replace(hour=10, minute=5))
+    assert 'INFORMATIONAL' in late['subject']
+    for key in ('text','html'):
+        assert 'INFORMATIONAL' in late[key]
+        assert 'not a fresh entry claim' in late[key]
     assert store.get(d['session']) == original
     assert json.loads((tmp_path/'out'/'gmail_payload.json').read_text()) == payload
 

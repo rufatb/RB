@@ -62,6 +62,7 @@ STEP 1 — sync
   git fetch origin && git checkout main && git pull --ff-only
   pip install -q -r requirements.txt
 If dashboard.is_trading_day says today is not a trading day, stop and report "not a trading day — nothing to run". That is a success. Send no email.
+Load the Gmail tools NOW, not at 09:47: if `send_message` is listed as a deferred tool, fetch it with ToolSearch (`select:mcp__Gmail__send_message,mcp__Gmail__search_threads`) and carry straight on in the same turn. On 2026-09-23 loading it at send time stalled the delivery until a person typed; loaded here, a stall costs nothing.
 
 STEP 2 — credentials (never committed; .rb-state is gitignored, so a fresh container has NONE)
   export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-flash
@@ -84,8 +85,10 @@ STEP 4 — CLAUDE'S PICKS. You are the Claude desk: one of the three sections th
 Repeat it while it prints STILL_WAITING (each call waits up to 100 seconds, inside the Bash tool's default two-minute limit). PAST_CUTOFF or NOTHING_TO_ANSWER: skip this step and say so in the summary.
 On READY, read `.rb-state/claude_brief.txt` IN FULL — it is long; page through it with offset/limit until the end. It is the exact prompt and evidence DeepSeek will be given, and you answer it as that prompt instructs: at most 2 LONG and 2 SHORT, only tickers from the file, fewer is correct when the evidence is thin, `confidence` your own honest number (0.5 is a coin flip), `reason` one sentence naming the supplied values or headline classes that drove it, `invalid_at` anchored to a supplied level or omitted. Think like a portfolio manager: scale every move by `atr_pct`, weigh relative strength against the sector, treat COMMENTARY and UNCLASSIFIED headlines as near-zero evidence, and stand aside from a name reporting within a day or two.
 Use ONLY that file. Do not open `deepseek_opportunities.json`, `jev_opportunities.json`, any earlier report, the web or any price after the previous close before you seal — the section prints whether your answer was sealed before the other two were asked, and that is the whole value of a third opinion.
-Write the JSON object to `.rb-state/claude_answer.json`, then:
+Write the JSON object to `.rb-state/claude_answer.json`, CHECK it, fix whatever it reports, then seal:
+  python claude_opportunities.py --state-dir .rb-state --check .rb-state/claude_answer.json
   python claude_opportunities.py --state-dir .rb-state --seal .rb-state/claude_answer.json
+Every `invalid_at` must be taken from THAT row's own levels and sit on the losing side of its `last` — below it for a LONG, above it for a SHORT. On 2026-09-23 three of four sealed levels were already "wrong" before the open or taken from another row; the check exists because of that.
 It must be sealed before 09:24 ET. REFUSED means report the reason and move on: never retry after 09:24, never edit a snapshot, never seal twice (the first answer stands). This step can cost Claude's section; it must never delay the rest of the morning.
 Then wait for `morning_full.sh` to exit — read the tail of `.rb-state/morning_full.log` now and then, and start nothing else meanwhile.
 
@@ -97,7 +100,7 @@ Do NOT hand-edit its output and do NOT write your own HTML. This renderer enforc
 STEP 6 — build the email payload from the frozen publication
   session=$(TZ=America/Toronto date +%F)
   python gmail_delivery.py --prepare --session "$session"
-It prints `subject`, `subject_path`, `text_path`, `html_path`, `attachments[]`, `unsendable_attachments[]` and `gaps[]`, and CLAIMS the delivery so a re-run cannot send twice. An attachment lands in `unsendable_attachments` when its base64 is too large for a tool call to carry — which is the normal case for the full report, ~464k characters. When that happens the step has ALREADY appended a labelled delivery note to `report.txt` and `report.html` saying there is no attachment and where the full report is, so send those files as they now stand and send NO attachment. Do not try to paste a large `.b64` file: it cannot fit, and a truncated attachment is worse than an absent one. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, SKIP STEP 8 ENTIRELY and continue to STEP 9 (the summary). STEP 8 is the send; routing an already-attempted delivery into it sends the morning twice, which is the whole thing the claim exists to prevent. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 7 so the page is published.
+It prints `subject`, `subject_path`, `text_path`, `html_path`, `attachments[]`, `unsendable_attachments[]` and `gaps[]`, and CLAIMS the delivery so a re-run cannot send twice. An attachment lands in `unsendable_attachments` when its base64 is too large for a tool call to carry — which is the normal case for the full report, ~464k characters. The body links the published full report instead of promising an attachment, so send `report.txt` and `report.html` exactly as they stand and send NO attachment. Do not try to paste a large `.b64` file: it cannot fit, and a truncated attachment is worse than an absent one. Exit 4 means ALREADY_ATTEMPTED — do not send, report it, SKIP STEP 8 ENTIRELY and continue to STEP 9 (the summary). STEP 8 is the send; routing an already-attempted delivery into it sends the morning twice, which is the whole thing the claim exists to prevent. It refuses before 09:46 ET by design. If it fails outright, say so and still do STEP 7 so the page is published.
 
 STEP 7 — publish the page and the payload to the owner's artifact, same URL:
   - Artifact tool, action "read", url https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
@@ -113,7 +116,7 @@ THE record/ FILES ARE THE PERMANENT RECORD. No scheduled run has ever managed to
 Reading first is required before publishing to an artifact this session did not create. If the publish fails, retry up to three times; if it still fails, say so as the FIRST line of the summary and carry on to the email.
 
 STEP 8 — EMAIL IT. This is the delivery the owner actually reads.
-Call the Gmail `send_message` tool ONCE:
+First search Gmail (`search_threads`, query `subject:"RB Daily Report — <session>"`): if today's report email already exists, do NOT send another — record nothing and say so. Otherwise call the Gmail `send_message` tool ONCE:
   to: ["rufat.baghirov97@gmail.com"]
   subject: the exact contents of `.rb-state/dispatch/subject.txt`. Do not add a prefix, do not reword it, do not rebuild it. It carries the board state — "⛔ DO NOT TRADE — all N legs ABSTAINED", "SCAN UNAVAILABLE", "INFORMATIONAL" — derived from the frozen report by `subject_state`. A sender that writes its own subject is a second implementation of that rule, and a neutral-looking subject over a board nobody should act on is the exact failure it exists to prevent.
   body: the exact contents of `.rb-state/dispatch/report.txt`

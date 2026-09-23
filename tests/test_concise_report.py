@@ -22,8 +22,10 @@ def test_concise_email_retains_full_board_in_attachment_without_recomputing(tmp_
     assert p['attachments'][0]['content']==brief.render_html(delivery.view(d,NOW))
     assert encode(d)==before
     assert len(p['text']) < len(brief.render_text(d))*.7
-    assert p['text'].count('INFORMATIONAL')==1
-    assert 'MDE80' in p['text'] and 'index' in p['text'] and 'shadow' in p['text']
+    # Day-114b: sent at 09:46 the email carries no status label, and the
+    # evidence diagnostics (MDE, index, shadow overlays) live in the full report.
+    assert 'INFORMATIONAL' not in p['text']
+    assert 'MDE80' in p['attachments'][0]['content']
 
 
 def test_no_scan_is_not_presented_as_no_opportunities():
@@ -56,7 +58,7 @@ def test_recent_closures_are_computed_once_and_not_open_marks():
 
 def test_smtp_has_one_alternative_body_and_the_same_full_attachment():
     d=brief.compute(now=NOW,services=services())
-    d=delivery.view(d,NOW+dt.timedelta(minutes=10))
+    d=delivery.view(d,NOW+dt.timedelta(minutes=20))    # 10:06: past the dispatch grace
     msg=deliver_report.message(d,'a@example.org','b@example.org')
     assert msg.get_content_type()=='multipart/mixed'
     assert msg.get_payload()[0].get_content_type()=='multipart/alternative'

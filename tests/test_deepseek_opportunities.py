@@ -745,3 +745,25 @@ def test_the_claim_is_rendered_as_a_scored_claim_not_a_stop():
                                           'invalid_at': 29.1}], 'shorts': [], 'comparison': {}}}
     text = '\n'.join(daily_render.opportunities_summary(intra))
     assert 'trades below 29.10' in text and 'not a stop' in text
+
+
+# ── day-114b: the request that never finished, and levels that could not be claims ──
+
+def test_the_ranking_is_asked_with_reasoning_disabled():
+    """MEASURED 2026-09-23: with thinking on, 81 names burned all 65,536 output
+    tokens in 261 s and never answered; off, 3 s and a clean answer."""
+    client = Client({'longs': [], 'shorts': []})
+    O.rank([tech('AC.TO')], client=client, now=PREOPEN)
+    assert client.seen[0]['extra_body'] == {'thinking': {'type': 'disabled'}}
+
+
+@pytest.mark.parametrize('side,level,kept', [
+    ('LONG', 29.0, True), ('LONG', 30.5, False),      # a LONG's level sits BELOW the close
+    ('SHORT', 31.0, True), ('SHORT', 29.5, False),    # a SHORT's ABOVE it
+    ('LONG', 20.0, False),                            # 33% away: another row's level
+])
+def test_an_invalid_at_that_cannot_be_the_claim_is_dropped_not_the_pick(side, level, kept):
+    picks = [{'ticker': 'AC.TO', 'confidence': 0.6, 'reason': 'r', 'invalid_at': level}]
+    gaps = O.check_levels(picks, side, [{'ticker': 'AC.TO', 'last': 30.0, 'atr_pct': 2.0}])
+    assert picks[0]['ticker'] == 'AC.TO'
+    assert ('invalid_at' in picks[0]) is kept and bool(gaps) is (not kept)

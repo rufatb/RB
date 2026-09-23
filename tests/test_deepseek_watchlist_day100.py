@@ -100,8 +100,8 @@ def test_concise_and_full_views_use_saved_watchlist_when_scan_and_costs_fail(mon
     monkeypatch.setattr(D,'load_prepared',forbidden)
     concise=email_render.text(d)
     full=brief.render_html(d)
-    assert 'SHADOW sentiment watchlist: BULL EXPANDED.TO' in concise
-    assert 'entries unverified' in concise and 'not calibrated probabilities' in concise
+    assert 'BULL EXPANDED.TO' in concise and 'research only' in concise
+    assert 'SHADOW sentiment watchlist: BULL EXPANDED.TO' in brief.render_text(d)
     assert 'no quantitative probability' in full and 'PREREGISTER_day100' in full
     assert len(daily_render.deepseek_summary(d['intraday']))<=6
     assert encode(d)==before

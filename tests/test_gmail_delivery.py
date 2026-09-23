@@ -153,12 +153,12 @@ def test_the_body_stops_promising_an_attachment_that_cannot_be_sent(state, monke
     out = G.prepare(directory, session, directory + '/dispatch')
     text = open(out['text_path']).read()
     html = open(out['html_path']).read()
+    # Day-114b: the body no longer promises an attachment at all — it links
+    # the published report — so there is nothing false left to correct and no
+    # note is appended. The oversized file is still named in `gaps`.
     for body in (text, html):
-        assert 'DELIVERY NOTE' in body
+        assert 'attached' not in body.lower() and 'DELIVERY NOTE' not in body
         assert G.ARTIFACT_URL in body
-        assert G.PUBLISHED_FULL_REPORT in body
-    assert 'not part of the frozen report' in text.lower()
-    assert html.index('DELIVERY NOTE') < html.index('Part 1'), 'the note must lead'
 
 
 def test_an_attachment_that_fits_is_still_sent_and_no_note_is_added(state):

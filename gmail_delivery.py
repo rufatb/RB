@@ -146,11 +146,15 @@ def prepare(state_dir, session, output_dir, *, now=None):
                     % (', '.join(i['filename'] for i in unsendable),
                        max(i['base64_chars'] for i in unsendable),
                        MAX_SENDABLE_BASE64, ARTIFACT_URL))
-        text_path.write_text(text_path.read_text() + _unattachable_note(unsendable))
-        html = html_path.read_text()
-        marker = '<body'
-        cut = html.find('>', html.find(marker)) + 1 if marker in html else 0
-        html_path.write_text(html[:cut] + _unattachable_html(unsendable) + html[cut:])
+        # The note corrects a body that PROMISES an attachment. The day-114b
+        # email points at the published report instead, so there is nothing to
+        # correct and the note would be one more warning in front of the picks.
+        if 'attached' in text_path.read_text().lower():
+            text_path.write_text(text_path.read_text() + _unattachable_note(unsendable))
+            html = html_path.read_text()
+            marker = '<body'
+            cut = html.find('>', html.find(marker)) + 1 if marker in html else 0
+            html_path.write_text(html[:cut] + _unattachable_html(unsendable) + html[cut:])
     return {'status': 'CLAIMED', 'session': session, 'subject': payload['subject'],
             'subject_path': str(Path(output_dir)/'subject.txt'),
             'text_path': str(text_path), 'html_path': str(html_path),

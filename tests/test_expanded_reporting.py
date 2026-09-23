@@ -183,9 +183,10 @@ def test_full_and_concise_views_consume_one_digest_without_files_or_network(tmp_
     monkeypatch.setattr(R,'load_prepared',forbidden)
     full=brief.render_text(d);html=brief.render_html(d);mail=email_render.text(d)
     assert encode(d)==before
-    for body in (full,html,mail):
+    for body in (full,html):
         assert 'target 150' in body and 'Industrials 0/1' in body
         assert 'prepared technicals 1' in body and 'shortlisted unknown' in body
+    assert 'target 150' not in mail   # day-114b: coverage counts live in the full report
     assert 'Airlines' in full and 'PREFERRED_SECURITY' in full
     assert len(daily_render.deepseek_summary(d['intraday']))<=6
 

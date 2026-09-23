@@ -53,9 +53,10 @@ def test_zero_assessments_keeps_requested_pool_and_does_not_score_threshold(tmp_
     # The CONCISE email omits the section when the layer produced nothing and
     # states the absence in one line instead of several UNAVAILABLE lines about
     # an experiment that changes no selection. The absence must still be there.
-    assert 'not evaluated' in concise
-    assert 'No selection, size or threshold depends on it' in concise
-    assert 'Threshold NOT EVALUATED' not in concise
+    # Day-114b: the email prints the shadow layer only when it produced a
+    # lean; its failures are stated in full in the report.
+    assert 'Headline sentiment' not in concise and 'NO EDGE' not in concise
+    assert 'NOT EVALUATED' in full
 def test_failed_public_evidence_count_differs_from_no_model_response(tmp_path, monkeypatch):
     obj = snapshot(('A.TO', 'B.TO', 'C.TO'))
     obj.update(status='PARTIAL', covered=2,
@@ -69,7 +70,7 @@ def test_failed_public_evidence_count_differs_from_no_model_response(tmp_path, m
             watch['evaluated'],watch['eligible']) == (3,3,2,2,1)
     assert watch['threshold_evaluated'] is True
     concise, full, html = render_factor(loaded, monkeypatch)
-    assert '2/3 assessed' in concise
+    assert '2/3 assessed' in full
     assert '3 requested; 3 complete inputs; 2 model-assessed; 2 usable assessments' in full
     assert '1 of 2 usable assessments clear absolute sentiment support 0.50' in full
     assert 'Threshold NOT EVALUATED' not in concise
@@ -87,9 +88,9 @@ def test_candidate_only_failure_reaches_concise_view_without_fake_no_edge(tmp_pa
     assert loaded['research_watchlist']['assessed'] == 1
     assert loaded['research_watchlist']['evaluated'] == 0
     concise, full, html = render_factor(loaded, monkeypatch)
-    assert 'TECHNICAL_UNAVAILABLE:rsi' in concise
-    assert 'Threshold NOT EVALUATED' in concise
-    assert 'NO EDGE - WAIT' not in concise
+    assert 'TECHNICAL_UNAVAILABLE:rsi' in full
+    assert 'Threshold NOT EVALUATED' in full
+    assert 'NO EDGE - WAIT' not in concise and 'NO EDGE - WAIT' not in full
     assert '0 complete inputs; 1 model-assessed; 0 usable assessments' in full
 
 

@@ -210,6 +210,7 @@ def summarise(quotes: list, feed_live: bool, feed_why: str) -> list:
 # A last-trade timestamp does NOT certify the timestamp of a bid/ask quote.
 import math
 import json
+import re
 import logging
 import time
 from collections.abc import Mapping
@@ -437,12 +438,40 @@ class YahooMarketData:
         progress('yahoo_cookie_completed')
         # text/plain, NOT json — see _get. Asking for json here returns 406.
         progress('yahoo_crumb_started')
-        crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb",
-                          accept="*/*").decode().strip()
+        try:
+            crumb = self._get("https://query2.finance.yahoo.com/v1/test/getcrumb",
+                              accept="*/*").decode().strip()
+        except urllib.error.HTTPError as exc:
+            # MEASURED 2026-09-23: /v1/test/getcrumb answered 429 on BOTH
+            # query hosts, from plain urllib AND a Chrome-impersonating client,
+            # while the public quote page served normally and carried a working
+            # crumb. The throttle sits on the crumb endpoint for the shared
+            # egress IP, not on the client — so every 09:46 board ABSTAINED on
+            # "provider rate limit reached" with a healthy quote endpoint
+            # behind it. Read the crumb the page itself uses instead.
+            if exc.code != 429:
+                raise
+            progress('yahoo_crumb_rate_limited')
+            crumb = self._page_crumb()
         if not crumb or "<" in crumb or len(crumb) > 256:
             raise ValueError("invalid Yahoo authentication response")
         self.crumb = crumb
         progress('yahoo_crumb_completed')
+
+    PAGE_CRUMB = re.compile(r'"crumb":"([^"\\]{1,64}(?:\\.[^"\\]{0,64}){0,8})"')
+
+    def _page_crumb(self):
+        """The crumb embedded in Yahoo's own public quote page, same cookie jar.
+
+        One ~1 MB page read inside the same deadline as every other request.
+        The value is JSON-escaped in the page (`\\u002F` for `/`), so it is
+        decoded as a JSON string, never with ad-hoc replacement."""
+        html = self._get("https://finance.yahoo.com/quote/XIU.TO/",
+                         accept="text/html").decode('utf-8', 'replace')
+        match = self.PAGE_CRUMB.search(html)
+        if not match:
+            raise ValueError("invalid Yahoo authentication response")
+        return json.loads('"%s"' % match.group(1)).strip()
 
     def _json(self, path, params):
         self.auth()

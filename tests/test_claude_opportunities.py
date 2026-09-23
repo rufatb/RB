@@ -137,3 +137,15 @@ def test_the_credential_is_read_from_the_private_file_only(tmp_path, monkeypatch
     (tmp_path/'secrets').mkdir()
     (tmp_path/'secrets'/'anthropic_api_key').write_text('sk-ant-x\n')
     assert C.load_api_key(tmp_path) == 'sk-ant-x'
+
+
+def test_check_names_bad_levels_before_the_seal_and_the_seal_drops_them(tmp_path):
+    """2026-09-23: DOL.TO LONG 'wrong below 179.22' on a 178.70 close, CNQ.TO
+    SHORT 'wrong above 66.80' on 67.82 — both 'wrong' before the open."""
+    root = briefed(tmp_path)
+    bad = {'longs': [{**pick('AC.TO', 0.6), 'invalid_at': 31.0}], 'shorts': []}   # last is 30.0
+    assert any('wrong side' in p for p in C.check(root, bad, now=LATER))
+    good = {'longs': [{**pick('AC.TO', 0.6), 'invalid_at': 29.4}], 'shorts': []}
+    assert C.check(root, good, now=LATER) == []
+    snap = C.seal(root, bad, now=LATER)
+    assert 'invalid_at' not in snap['longs'][0] and any('dropped' in g for g in snap['gaps'])

@@ -48,7 +48,7 @@ def test_saved_factors_render_in_both_views_without_compute_or_provider(tmp_path
     assert 'FACTORLONG.TO' in payload['text'] and 'FACTORSHORT.TO' in payload['html']
     assert 'https://issuer.example/releases/update' in payload['attachments'][0]['content']
     assert 'Combined DESIGN score' in payload['attachments'][0]['content']
-    assert 'not calibrated probabilities' in payload['text']
+    assert 'not calibrated probabilities' in payload['attachments'][0]['content']
     assert encode(d)==before
     assert len(daily_render.deepseek_summary(d['intraday']))<=6
 
@@ -73,7 +73,8 @@ def test_unevaluated_factor_scan_is_not_no_market_opportunities(kind):
     if kind=='unavailable':snap['status']='UNAVAILABLE'
     elif kind=='empty':snap['shadow']['rows']=[]
     else:snap['shadow']['rows'][0]['status']='UNAVAILABLE'
-    body=email_render.text(d)
+    assert 'NO EDGE - WAIT' not in email_render.text(d)
+    body=brief.render_text(d)
     assert 'UNAVAILABLE — UNEVALUATED / incomplete evidence' in body
     assert 'NO EDGE - WAIT' not in body
     assert 'absence of candidates is not evidence of no market opportunities' in body
@@ -83,7 +84,7 @@ def test_evaluated_abstention_names_threshold_failure():
     d=report();snap=d['intraday']['deepseek']
     snap['shadow']['h1']={'longs':[],'shorts':[]};snap['shadow']['h2']={'longs':[],'shorts':[]}
     for row in snap['shadow']['rows']:row['status']='ABSTAIN'
-    assert 'Evaluated factors did not clear the registered threshold' in email_render.text(d)
+    assert 'Evaluated factors did not clear the registered threshold' in brief.render_text(d)
 
 
 def test_old_publication_without_factor_key_acquires_no_new_section():
@@ -129,7 +130,7 @@ def test_unavailable_records_never_look_like_confirmed_empty_holdings():
     for body in (brief.render_text(d),email_render.text(d)):
         assert 'holdings are unknown' in body
         assert 'No open positions recorded' not in body
-        assert 'Historical record UNAVAILABLE' in body
+        assert 'Historical record UNAVAILABLE' in body or body == email_render.text(d)
         assert 'Historical gross proxy: 0/0' not in body and 'Historical baseline: 0/0' not in body
     assert readiness.assess(d)['status']=='PARTIAL'
 
@@ -140,7 +141,7 @@ def test_partial_records_disclose_rejected_rows_and_keep_valid_facts():
     d['intraday']['record'].update(status='PARTIAL',invalid_rows=3)
     body=email_render.text(d)
     assert 'Position ledger PARTIAL; 2 malformed rows excluded' in body
-    assert 'Historical record PARTIAL: 3 invalid rows excluded' in body
+    assert 'Historical record PARTIAL: 3 invalid source rows excluded' in brief.render_text(d)
     assert 'AAA.TO LONG' in body
 
 

@@ -38,7 +38,7 @@ def digest():
 def test_the_email_is_sectioned_not_one_long_column(digest):
     body = email_render.html(digest)
     assert body.startswith('<!doctype html>')
-    for heading in ('Part 1', 'Evidence', 'How to read this'):
+    for heading in ('Part 1', 'Part 2', 'Research only'):
         assert heading in body, heading
     # Section headings are styled as headings, not as another paragraph.
     assert body.count('text-transform:uppercase') >= 3
@@ -105,7 +105,11 @@ def with_models(digest):
 def test_a_standing_term_appears_exactly_once_when_its_section_ran(digest, note):
     """Said once is the goal. Said never is a different bug, and said three
     times is the complaint that started this."""
-    assert email_render.text(with_models(digest)).count(getattr(daily_render, note)) == 1
+    # Day-114b: the email says its terms ONCE, in one footer line, and each
+    # section's full standing note lives in the full report.
+    mail = email_render.text(with_models(digest))
+    assert mail.count('never averaged') == 1 and getattr(daily_render, note) not in mail
+    assert getattr(daily_render, note) in brief.render_text(with_models(digest))
 
 
 @pytest.mark.parametrize('note', ['OPPORTUNITIES_STANDING', 'JEV_STANDING', 'FACTOR_STANDING'])
@@ -120,9 +124,10 @@ def test_a_standing_term_is_absent_when_its_section_did_not_run(digest, note):
 
 
 def test_the_cross_model_note_needs_both_models(digest):
-    cross = 'The models are never averaged'
-    assert cross in email_render.text(with_models(digest))
-    assert cross not in email_render.text(digest)
+    cross = 'never averaged'
+    assert email_render.text(with_models(digest)).count(cross) == 1
+    assert 'DeepSeek' not in email_render.text(digest).split('## Part 2')[0].split('### Baseline')[0] \
+        or digest['intraday'].get('desks')
 
 
 def test_the_full_report_still_carries_each_note_inside_its_own_section(digest):
@@ -154,6 +159,10 @@ def test_supplied_text_cannot_inject_markup(digest):
     """Tickers, issuer notes and model rationales are untrusted text."""
     d = dict(digest)
     d['intraday'] = dict(digest['intraday'])
+    d['intraday']['opportunities'] = {
+        'status': 'READY', 'model': 'deepseek-flash', 'considered': 1, 'shorts': [],
+        'longs': [{'ticker': 'Y.TO', 'confidence': 0.6, 'reason': '<script>alert(1)</script>'}]}
+    d['intraday'].pop('desks', None)
     d['intraday']['jev'] = {
         'status': 'READY', 'model': '<script>alert(1)</script>', 'considered': 1,
         'longs': [{'ticker': 'X.TO', 'probability': 0.9, 'abstain_probability': 0.1}],

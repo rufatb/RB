@@ -68,9 +68,11 @@ def test_headless_single_digest_contains_same_baseline_and_shadow_views(tmp_path
     assert factors['shadow']['h2']['longs'][0]['ticker']=='CCC.TO'
     before=encode(d)
     payload=prepare_delivery.artifacts(d,tmp_path/'dispatch',NOW)
-    for body in (brief.render_text(d),brief.render_html(d),payload['text'],payload['html']):
+    for body in (brief.render_text(d),brief.render_html(d)):
         assert 'AAA.TO' in body and 'BBB.TO' in body and 'CCC.TO' in body
         assert 'unadopted' in body
+    for body in (payload['text'],payload['html']):
+        assert 'AAA.TO' in body and 'BBB.TO' in body
     assert 'Unique staged catalyst context' in payload['attachments'][0]['content']
     assert 'https://issuer.example/news/update' in payload['attachments'][0]['content']
     assert counts=={'quant':1,'quotes':1,'prepared':1} and encode(d)==before
@@ -88,8 +90,10 @@ def test_unavailable_optional_model_preserves_baseline_and_visible_gap(tmp_path,
     # needs to: the concise view drops a section with nothing in it and states
     # the absence, with its reason, in one line. The full report keeps the
     # section verbatim.
-    assert 'preparation timed out' in body and 'AAA.TO LONG' in body
-    assert 'not evaluated' in body and 'NO EDGE - WAIT' not in body
+    # Day-114b: the email names no factor reading it lacks; the full report
+    # keeps the fault and its reason verbatim.
+    assert 'AAA.TO LONG' in body and 'NO EDGE - WAIT' not in body
+    assert 'preparation timed out' in brief.render_text(d)
     assert 'UNAVAILABLE' in brief.render_text(d)
     assert counts['quant']==1 and counts['quotes']==1
 
