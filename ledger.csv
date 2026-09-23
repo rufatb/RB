@@ -375,3 +375,16 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-09-08,AEM.TO,SHORT,0.614,dense,283.3200,pair,primary,0.1870,33,26.8,-1.782,1
 2026-09-08,NTR.TO,SHORT,0.585,sparse,112.2300,pair,extra,0.3103,140,5.4,-0.829,1
 2026-09-08,CNQ.TO,SHORT,0.563,sparse,71.4200,board,,,,4.2,-1.750,1
+2026-09-23,AEM.TO,LONG,0.606,sparse,274.6900,board,,,,,,
+2026-09-23,SU.TO,LONG,0.577,sparse,95.3100,pair,primary,0.2519,132,,,
+2026-09-23,CNQ.TO,LONG,0.561,sparse,67.6900,pair,extra,0.2465,182,,,
+2026-09-23,CNR.TO,SHORT,0.617,mid,168.7100,board,,,,,,
+2026-09-23,TD.TO,SHORT,0.612,dense,172.6600,board,,,,,,
+2026-09-23,BNS.TO,SHORT,0.612,mid,132.4500,board,,,,,,
+2026-09-23,SLF.TO,SHORT,0.610,mid,113.7400,board,,,,,,
+2026-09-23,CM.TO,SHORT,0.597,mid,161.3000,board,,,,,,
+2026-09-23,BMO.TO,SHORT,0.586,mid,245.0100,board,,,,,,
+2026-09-23,MFC.TO,SHORT,0.586,mid,62.1600,board,,,,,,
+2026-09-23,CP.TO,SHORT,0.577,dense,124.4100,pair,extra,0.2189,88,,,
+2026-09-23,ENB.TO,SHORT,0.575,dense,67.6200,pair,primary,0.2775,205,,,
+2026-09-23,RY.TO,SHORT,0.571,mid,286.2500,board,,,,,,
