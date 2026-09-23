@@ -472,7 +472,8 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
                 'https://query1.finance.yahoo.com/v8/finance/chart/'+quote(ticker, safe=''))
             merged['technicals_as_of'] = merged.get('technicals_as_of') or now.isoformat()
             import daily_technicals as _dt
-            merged['technicals_scope'] = _dt.scope(technicals['daily_sessions'])
+            merged['technicals_scope'] = _dt.scope(technicals['daily_sessions'],
+                                                 meta.get('rebuilt_sessions') or ())
             merged['market'] = 'CA'
             merged['currency'] = meta.get('currency') or 'CAD'
             rows[ticker] = merged

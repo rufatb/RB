@@ -47,6 +47,19 @@ MarketBeat-style write-up is a lead, never a source. The universe snapshot is
 only good for 36 hours, and the evening build can be rate-limited; the morning
 retries it.
 
+**The evening biotech build failed on 371 of 971 names — not a rate limit.**
+Yahoo served 2026-09-22 as a NULL PLACEHOLDER (timestamp, `close: null`) on
+many names a full day later — SHOP.TO, RY.TO, ALLO, OTLK — and not on SPY,
+AAPL or INO. yfinance drops the row; the ADV20 check correctly refused every
+such name, and `daily_technicals` silently measured the "last move" across TWO
+sessions. `session_fill` rebuilds such a session from its hourly bars, and only
+from a COMPLETE one (09:30 through 15:30). Its close is the last regular-session
+trade. Its volume is a LOWER BOUND, measured at 41–99% of the daily figure. The
+rebuilt date travels in `technicals_scope` / `rebuilt_sessions`. An unfillable
+hole in the last two sessions refuses the name. `technicals_scope` is capped at
+160 characters by `factor_inputs`; a longer disclosure would have dropped every
+rebuilt name.
+
 ## Day114 — Part 1 is three desks: Claude, DeepSeek, Jev
 
 The owner asked for three parallel sections every morning — Claude's picks,

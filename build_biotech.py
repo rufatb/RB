@@ -18,6 +18,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 import biotech
+import session_fill
 from quotes import stamp
 from report_store import encode
 
@@ -84,6 +85,16 @@ def fetch_security(row, now):
     sessions=mcal.get_calendar('NYSE').valid_days(
         start_date=now.date()-dt.timedelta(days=45),end_date=now.date()-dt.timedelta(days=1))
     expected=[i.date().isoformat() for i in sessions[-20:]]
+    # A session Yahoo serves as a NULL PLACEHOLDER is dropped by yfinance;
+    # 2026-09-22 was one on 371 of 971 names a day later. Rebuild it from
+    # that session's hourly bars (session_fill); the ADV check below still
+    # refuses anything that could not be rebuilt from a complete session.
+    have={i.date().isoformat() for i in frame.index}
+    holes=[dt.date.fromisoformat(d) for d in expected if d not in have]
+    rebuilt=[]
+    if holes:
+        hourly=obj.history(period='1mo',interval='60m',auto_adjust=True)
+        frame,rebuilt=session_fill.fill(frame,hourly,holes)
     bars=[{'date':i.date().isoformat(),'adjusted_close':float(r['Close']),'volume':float(r['Volume'])}
           for i,r in frame.iterrows()]
     if [r['date'] for r in bars[-20:]]!=expected:
@@ -109,7 +120,10 @@ def fetch_security(row, now):
             'daily_bars':bars,'short_float':info.get('shortPercentOfFloat'),
             'short_asof':stamp(short_time).isoformat() if short_time else None,
             'borrow_apr':None,'borrow_asof':None,
-            'source':'Yahoo Finance via yfinance; captured metadata and completed daily bars'}
+            'rebuilt_sessions':[d.isoformat() for d in rebuilt],
+            'source':'Yahoo Finance via yfinance; captured metadata and completed daily bars'
+                     +('; %s rebuilt from hourly bars (volume a lower bound)'%','.join(d.isoformat() for d in rebuilt)
+                       if rebuilt else '')}
 
 
 # ADV20 <= (63/20) x ADV63: a 63-session average contains the last 20 sessions,

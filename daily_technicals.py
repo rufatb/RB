@@ -44,6 +44,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from metrics import macd, rsi
+import session_fill
 
 ET = ZoneInfo('America/New_York')
 
@@ -187,10 +188,14 @@ def context(frame, closes, last, previous):
     return out
 
 
-def scope(sessions):
+def scope(sessions, rebuilt=()):
     """The provenance line that travels with these numbers."""
-    return ('previous_completed_session; daily RSI/MACD/RVOL from %d completed DAILY bars '
+    line = ('previous_completed_session; daily RSI/MACD/RVOL from %d completed DAILY bars '
             '(granularity asserted)' % sessions)
+    if rebuilt:
+        # factor_inputs refuses a scope over 160 characters; two dates fit.
+        line += '; %s from hourly bars (vol. lower bound)' % ','.join(rebuilt)
+    return line
 
 
 def from_yahoo(ticker, adapter, now, *, interval='1d', window='1y'):
@@ -202,11 +207,29 @@ def from_yahoo(ticker, adapter, now, *, interval='1d', window='1y'):
     frame = adapter._bars_df(raw)
     if frame.empty:
         raise ValueError('DAILY_HISTORY_EMPTY')
+    # A NULL-PLACEHOLDER session (2026-09-22 on SHOP.TO, RY.TO …) is dropped
+    # by `_bars_df`, and the "last move" would then span two sessions while
+    # being labelled as one. Rebuild it from that session's hourly bars; if
+    # that cannot be done for one of the last two sessions, refuse the name.
+    today = now.astimezone(ET).date()
+    holes = [d for d in session_fill.placeholder_dates(raw, getattr(adapter, 'exchange_tz', 'America/Toronto')) if d < today]
+    rebuilt = []
+    if holes:
+        try:
+            hourly = adapter._bars_df(adapter._chart(ticker, '60m', '1mo'))
+        except Exception:
+            hourly = None
+        frame, rebuilt = session_fill.fill(frame, hourly, holes)
+        completed = sorted({i.date() for i in frame.index if i.date() < today})
+        recent_hole = [d for d in holes if d not in rebuilt and completed and d >= completed[-2]]
+        if recent_hole:
+            raise ValueError('DAILY_SESSION_PLACEHOLDER_UNFILLED')
     has = lambda c: frame[c] if c in frame.columns else None
     technicals = from_series(frame.index, frame['Close'], frame['Volume'], now=now,
                              opens=has('Open'), highs=has('High'), lows=has('Low'))
     return technicals, {'currency': meta.get('currency'),
-                        'exchange': meta.get('exchangeName')}
+                        'exchange': meta.get('exchangeName'),
+                        'rebuilt_sessions': [d.isoformat() for d in rebuilt]}
 
 
 def from_biotech_snapshot(snapshot, now, *, max_age_hours=30, limit=None):
