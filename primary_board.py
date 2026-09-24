@@ -139,10 +139,18 @@ LEADERBOARD = (('claude_selected', 'Claude'),
                ('jev_forced', 'Jev (forced)'))
 
 
+# Late picks (late_picks.py: asked AFTER the open because the report did not
+# publish) are a different instrument, scored from the bar they were sent in.
+# Shown only once they exist, and never pooled with the pre-open rows above.
+LATE_BOARD = (('claude_late', 'Claude (late, after the open)'),
+              ('deepseek_late', 'DeepSeek (late, after the open)'))
+
+
 def leaderboard(card):
     """Every source on ONE yardstick: 09:45 bar close to session close, no cost."""
     rows = []
-    for key, name in LEADERBOARD:
+    late = [(k, n) for k, n in LATE_BOARD if ((card or {}).get(k) or {}).get('picks')]
+    for key, name in LEADERBOARD + tuple(late):
         c = (card or {}).get(key)
         rows.append({'source': name, 'picks': (c or {}).get('picks', 0),
                      'hits': (c or {}).get('hits', 0), 'rate': (c or {}).get('rate'),

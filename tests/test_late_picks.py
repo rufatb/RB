@@ -47,7 +47,24 @@ def test_compose_is_labelled_late_and_never_sized(root, monkeypatch):
                                        'invalid_at': 98.0}], 'shorts': []}, now=NOW, reason='test')
     text = open(out['text_path']).read()
     assert 'LATE PICKS' in out['subject'] and '2026-09-24' in out['subject']
-    assert 'AFTER the open' in text and 'not sized, not recorded, not scored' in text
+    assert 'AFTER the open' in text and 'not sized' in text and 'scored separately' in text
     assert 'LONG AAA.TO' in text and 'LONG BBB.TO' in text
     assert 'would rather have done nothing' in text and 'never a selection' in text
     assert 'shares' not in text.lower() and '$' not in text
+
+
+def test_late_rows_are_their_own_kind_and_enter_at_the_bar_they_were_sent(root, monkeypatch):
+    import deepseek_opportunities as O
+    import jev_opportunities as J
+    monkeypatch.setattr(O, 'load_diagnostic', lambda r, n: {
+        'status': 'READY', 'longs': [{'ticker': 'BBB.TO', 'confidence': 0.6, 'basis': 'news'}], 'shorts': []})
+    monkeypatch.setattr(J, 'load_diagnostic', lambda r, n: {
+        'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': [],
+        'forced_short': {'ticker': 'AAA.TO', 'probability': 0.2, 'gated_abstain_probability': 0.5}})
+    rows = L.late_rows(root, {'longs': [{'ticker': 'AAA.TO', 'confidence': 0.55, 'reason': 'r',
+                                          'basis': 'technical'}], 'shorts': []}, now=NOW)
+    kinds = sorted((r['model'], r['kind']) for r in rows)
+    assert kinds == [('claude', 'late'), ('deepseek', 'late'), ('jev', 'late_forced')]
+    assert {r['entry_time'] for r in rows} == {'10:10'}          # asked 10:12 -> the 10:10 bar
+    assert {r['source'] for r in rows} == {'late_picks'}
+    assert next(r for r in rows if r['model'] == 'claude')['basis'] == 'technical'

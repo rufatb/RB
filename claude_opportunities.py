@@ -225,8 +225,8 @@ def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session'):
     longs, long_gaps = O._clean(answer.get('longs'), allowed, 'long')
     shorts, short_gaps = O._clean(answer.get('shorts'), allowed, 'short')
     rows = brief['payload']['candidates']
-    long_gaps += O.check_levels(longs, 'LONG', rows)
-    short_gaps += O.check_levels(shorts, 'SHORT', rows)
+    long_gaps += O.check_levels(longs, 'LONG', rows) + O.check_basis(longs, rows)
+    short_gaps += O.check_levels(shorts, 'SHORT', rows) + O.check_basis(shorts, rows)
     result = {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
               'model': safe_detail(str(model), 60), 'considered': brief['considered'],
               'universe': sorted(allowed), 'evidence': brief['evidence'],
@@ -251,7 +251,8 @@ def check(state_dir, answer, *, now=None):
     problems = []
     for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
         picks, gaps = O._clean(answer.get(key), allowed, side.lower())
-        problems += gaps + O.check_levels(picks, side, brief['payload']['candidates'])
+        problems += (gaps + O.check_levels(picks, side, brief['payload']['candidates'])
+                     + O.check_basis(picks, brief['payload']['candidates']))
         if isinstance(answer.get(key), list) and len(answer[key]) > O.MAX_PER_SIDE:
             problems.append('more than %d %s picks; only the first %d count'
                             % (O.MAX_PER_SIDE, side, O.MAX_PER_SIDE))

@@ -43,7 +43,13 @@ ROOT = Path(__file__).resolve().parent
 LEDGER = ROOT / 'data' / 'model_picks.csv'
 FIELDS = ('session', 'model', 'kind', 'side', 'ticker', 'confidence', 'abstain_probability',
           'invalid_at', 'prompt_version', 'source', 'entry', 'exit', 'r_pct', 'hit',
-          'invalidated', 'scored_at')
+          'invalidated', 'scored_at', 'basis', 'entry_time')
+# `basis` (day-114): what the pick's reason rests on — news / technical / macro,
+# declared by the model and checked against what it was shown
+# (deepseek_opportunities.check_basis). PREREGISTER_day114_basis.md compares
+# them. `entry_time`: a LATE pick (asked after the open, late_picks.py) is
+# scored from the bar it was asked in, never from 09:45 — a 09:45 entry would
+# credit it with a move that happened before it existed.
 KEY = ('session', 'model', 'kind', 'side', 'ticker')
 ENTRY_BAR, EXIT_BAR = dt.time(9, 40), dt.time(15, 55)
 
@@ -64,7 +70,8 @@ def rows_from_report(report, source='published_report'):
                     'confidence': pick.get('confidence', pick.get('probability')),
                     'abstain_probability': pick.get('abstain_probability',
                                                     pick.get('gated_abstain_probability')),
-                    'invalid_at': pick.get('invalid_at'), 'source': source, **extra})
+                    'invalid_at': pick.get('invalid_at'), 'basis': pick.get('basis'),
+                    'source': source, **extra})
 
     # THE ENGINE ON THE SAME YARDSTICK. Its own ledger scores against the
     # official close; recording its board here too lets the leaderboard compare
@@ -154,15 +161,18 @@ def score_one(row, bars):
         return None
     local = frame.tz_convert(ET)
     times = [ts.time() for ts in local.index]
-    if ENTRY_BAR not in times or EXIT_BAR not in times:
+    entry_bar = ENTRY_BAR
+    if row.get('entry_time'):
+        entry_bar = dt.time.fromisoformat(row['entry_time'])
+    if entry_bar not in times or EXIT_BAR not in times or entry_bar >= EXIT_BAR:
         return None
-    entry = float(local['Close'].iloc[times.index(ENTRY_BAR)])
+    entry = float(local['Close'].iloc[times.index(entry_bar)])
     exit_ = float(local['Close'].iloc[times.index(EXIT_BAR)])
     if not (math.isfinite(entry) and math.isfinite(exit_)) or entry <= 0:
         return None
     sign = 1 if row['side'] == 'LONG' else -1
     r = sign * (exit_ / entry - 1) * 100
-    after = local[[ENTRY_BAR < t <= EXIT_BAR for t in times]]
+    after = local[[entry_bar < t <= EXIT_BAR for t in times]]
     invalidated = None
     level = _float(row.get('invalid_at'))
     if level is not None and not after.empty:
@@ -249,6 +259,28 @@ def scorecard(rows=None):
                        'invalidated': e['invalidated'],
                        'label': 'proxy: 09:45 bar close to session close; no spread, fill or cost'}
     return result
+
+
+def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):
+    """Hit rate by declared basis over the registered population
+    (PREREGISTER_day114_basis.md). Descriptive until the registered bar is met."""
+    rows = read() if rows is None else rows
+    out = {}
+    for row in rows:
+        if (not row.get('scored_at') or row.get('model') not in models
+                or row.get('kind') not in kinds or not row.get('basis')):
+            continue
+        e = out.setdefault(row['basis'], {'picks': 0, 'hits': 0, 'r': [], 'sessions': set()})
+        e['picks'] += 1
+        e['hits'] += row.get('hit') == '1'
+        r = _float(row.get('r_pct'))
+        if r is not None:
+            e['r'].append(r)
+        e['sessions'].add(row['session'])
+    return {b: {'picks': e['picks'], 'hits': e['hits'],
+                'rate': e['hits'] / e['picks'] if e['picks'] else None,
+                'mean_r_pct': sum(e['r']) / len(e['r']) if e['r'] else None,
+                'sessions': len(e['sessions'])} for b, e in out.items()}
 
 
 def scorecard_line(card, model_kind, name):

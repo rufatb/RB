@@ -767,3 +767,21 @@ def test_an_invalid_at_that_cannot_be_the_claim_is_dropped_not_the_pick(side, le
     gaps = O.check_levels(picks, side, [{'ticker': 'AC.TO', 'last': 30.0, 'atr_pct': 2.0}])
     assert picks[0]['ticker'] == 'AC.TO'
     assert ('invalid_at' in picks[0]) is kept and bool(gaps) is (not kept)
+
+
+def test_basis_is_kept_from_a_closed_set_and_news_needs_news():
+    import deepseek_opportunities as O
+    picks, gaps = O._clean([{'ticker': 'A.TO', 'confidence': .6, 'reason': 'r', 'basis': 'news'},
+                            {'ticker': 'B.TO', 'confidence': .6, 'reason': 'r', 'basis': 'vibes'}],
+                           {'A.TO', 'B.TO'}, 'long')
+    assert picks[0]['basis'] == 'news' and 'basis' not in picks[1]
+    assert any('basis is not one of' in g for g in gaps)
+    rows = [{'ticker': 'A.TO', 'headlines': []}, {'ticker': 'B.TO', 'headlines': [{'title': 't'}]}]
+    gaps = O.check_basis(picks, rows)
+    assert picks[0]['basis'] == 'technical' and "recorded as 'technical'" in gaps[0]
+
+
+def test_the_prompt_asks_for_basis_and_warns_about_priced_in_reasons():
+    import deepseek_opportunities as O
+    assert '"basis"' in O.SYSTEM_PROMPT and 'priced into' in O.SYSTEM_PROMPT
+    assert O.PROMPT_VERSION == 'day114-v3'

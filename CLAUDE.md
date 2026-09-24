@@ -1,5 +1,29 @@
 # Working notes for this repo
 
+## Day114d — late picks are recorded; every pick declares its BASIS (registered)
+
+2026-09-24's late picks split on one line: DeepSeek's winners rested on company
+news (WSP, ATZ), Claude's losers on technicals (SU.TO long bought after an oil
+gap-up it was built on; SSRM.TO short after the flush). Four picks on one day
+is an anecdote, so it is REGISTERED, not acted on: `PREREGISTER_day114_basis.md`.
+
+- Every Claude/DeepSeek pick declares `basis` ∈ news/technical/macro (prompt
+  `day114-v3`). `check_basis` records a "news" claim on a name shown no headline
+  as technical — the tested group cannot be inflated by assertion.
+- The prompt warns that everything supplied is the PREVIOUS session and the
+  entry is after the open: say why a reason is not already priced in, or do not
+  rely on it. Guidance, not a rule; the scoring is unchanged.
+- Late picks go into `data/model_picks.csv` as kind `late` (`late_forced` for
+  Jev), scored from the five-minute bar they were SENT in (`entry_time`), never
+  from 09:45, and shown on the scoreboard only once they exist, never pooled.
+  09-24 recorded: Claude late 1/4 (−0.40%), DeepSeek late 3/4 (+0.88%).
+
+Positive control re-run on `day114-v3` (house rule 4), five runs: CTLUP found
+4/5, CTLDN 3/5, one run abstained entirely, no noise name ever picked. The old
+v2 prompt, four runs: CTLUP 4/4, CTLDN 3/4 (once put LONG). Comparable within
+the control's own run-to-run noise; v3 abstains a little more readily, which
+is the direction the new warning intends.
+
 ## Day114c — 2026-09-24: the run ended its own turn at 08:54 and nothing published
 
 The report session started `morning_full.sh` in the background as told, then
@@ -32,7 +56,8 @@ A dead report must not also be a missing morning. From 09:58 the 09:50 bridge
 runs `late_picks.py`: the same pool, news, DeepSeek and Jev in the diagnostic
 context, plus its own Claude answer, emailed as LATE PICKS. It is labelled
 after-the-open, never sized, never recorded or scored — a ranking asked at
-10:05 knows the first half hour. The official report path still refuses
+10:05 knows the first half hour (day-114d: they ARE recorded, as kind `late`,
+never pooled). The official report path still refuses
 diagnostic snapshots; that refusal is correct and was not loosened.
 
 ## Day114b — 2026-09-23: two desks empty, no auto-send, fluff — each cause measured

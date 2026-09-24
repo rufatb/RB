@@ -102,3 +102,30 @@ def test_claude_picks_are_recorded_as_their_own_source():
     assert rows[0]['invalid_at'] == 44.1
     r['intraday']['claude'] = {'status': 'UNAVAILABLE', 'longs': [{'ticker': 'X.TO'}]}
     assert not [x for x in M.rows_from_report(r) if x['model'] == 'claude']
+
+
+def test_a_late_pick_is_scored_from_its_own_bar_not_from_0945():
+    import datetime as dt
+    import pandas as pd
+    import model_picks as M
+    idx = pd.date_range('2026-09-24 09:30', '2026-09-24 15:55', freq='5min', tz='America/New_York')
+    close = [100.0] * len(idx)
+    close[list(idx.strftime('%H:%M')).index('09:40')] = 90.0     # the 09:45 bar
+    close[list(idx.strftime('%H:%M')).index('10:10')] = 110.0    # when the late pick was sent
+    bars = pd.DataFrame({'Open': close, 'High': close, 'Low': close, 'Close': close}, index=idx)
+    base = {'session': '2026-09-24', 'side': 'LONG', 'ticker': 'X'}
+    assert M.score_one(base, bars)['entry'] == 90.0
+    late = M.score_one({**base, 'entry_time': '10:10'}, bars)
+    assert late['entry'] == 110.0 and late['hit'] is False
+
+
+def test_basis_is_recorded_and_carded_only_for_the_registered_population():
+    import model_picks as M
+    rows = [{'model': 'claude', 'kind': 'selected', 'basis': 'news', 'scored_at': 'x', 'hit': '1', 'r_pct': '1', 'session': 'a'},
+            {'model': 'deepseek', 'kind': 'selected', 'basis': 'technical', 'scored_at': 'x', 'hit': '0', 'r_pct': '-1', 'session': 'a'},
+            {'model': 'claude', 'kind': 'late', 'basis': 'news', 'scored_at': 'x', 'hit': '0', 'r_pct': '-1', 'session': 'a'},
+            {'model': 'jev', 'kind': 'selected', 'basis': 'news', 'scored_at': 'x', 'hit': '0', 'r_pct': '-1', 'session': 'a'}]
+    card = M.basis_card(rows)
+    assert card['news']['picks'] == 1 and card['news']['hits'] == 1
+    assert card['technical']['picks'] == 1
+    assert 'basis' in M.FIELDS and 'entry_time' in M.FIELDS

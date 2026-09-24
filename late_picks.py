@@ -11,9 +11,11 @@ morning.
 WHAT THIS IS NOT. It is not the report. The report's picks are asked BEFORE the
 open and sealed; these are asked AFTER it, in the isolated diagnostic context,
 with the same code and the same question. Every line says so. Nothing here is
-sized, recorded in the ledger, or scored on the scoreboard — a ranking asked at
-10:05 knows the first half hour, and scoring it beside pre-open picks would
-flatter it. Read-only research: nothing places an order.
+sized or written to the engine's ledger. The picks ARE recorded in
+data/model_picks.csv, as kind `late` (`late_forced` for Jev's forced pick),
+scored from the bar they were composed in and never pooled with the pre-open
+record — so the question "are after-the-open picks worse?" can be answered
+instead of guessed. Read-only research: nothing places an order.
 
     python late_picks.py --state-dir DIR --stage          pool, news, DeepSeek, Jev; writes the Claude brief
     python late_picks.py --state-dir DIR --check ANSWER   what the compose step would drop, without composing
@@ -121,7 +123,7 @@ def claude_picks(root, answer):
     out, problems = {}, []
     for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
         picks, gaps = O._clean(answer.get(key), allowed, side.lower())
-        gaps += O.check_levels(picks, side, rows)
+        gaps += O.check_levels(picks, side, rows) + O.check_basis(picks, rows)
         out[key] = picks
         problems += gaps
     return out, problems, brief
@@ -213,8 +215,9 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
     head = ['RB Daily Report — %s — LATE PICKS' % session,
             'The 09:46 report did not publish today: %s.' % reason,
             'These picks were asked at %s ET, AFTER the open, by the same pipeline in its '
-            'diagnostic mode, from %d names. They are not the frozen report: not sized, not '
-            'recorded, not scored. Research only — not orders.' % (now.strftime('%H:%M'), brief['considered']),
+            'diagnostic mode, from %d names. They are not the frozen report and are not sized; '
+            'they are scored separately from the pre-open record, from the time they were sent. '
+            'Research only — not orders.' % (now.strftime('%H:%M'), brief['considered']),
             'Confidence numbers are each model\'s own, not calibrated win probabilities; the '
             'models are never averaged.']
     body = (head + _desk('1 · Claude', {'status': 'READY'}, picks)
@@ -235,6 +238,41 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             'claude_dropped': problems}
 
 
+def late_rows(root, answer, *, now=None):
+    """The late picks as model_picks rows: kind `late` (Jev's forced: `late_forced`),
+    scored from the five-minute bar the email was composed in — never from
+    09:45, which would credit a late pick with a move made before it existed.
+    Recorded so the question "are after-the-open picks worse?" gets an answer."""
+    import jev_opportunities as J
+    now = _now(now)
+    root = Path(root)
+    bar = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+    base = {'session': now.date().isoformat(), 'source': 'late_picks',
+            'entry_time': bar.strftime('%H:%M')}
+    def row(model, kind, side, p, **extra):
+        return {**base, 'model': model, 'kind': kind, 'side': side, 'ticker': p['ticker'],
+                'confidence': p.get('confidence', p.get('probability')),
+                'abstain_probability': p.get('abstain_probability', p.get('gated_abstain_probability')),
+                'invalid_at': p.get('invalid_at'), 'basis': p.get('basis'), **extra}
+    out = []
+    picks, _, _ = claude_picks(root, answer)
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        out += [row('claude', 'late', side, p) for p in picks.get(key) or []]
+    deepseek = O.load_diagnostic(root, now)
+    if deepseek.get('status') in ('READY', 'NO_OPPORTUNITY'):
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            out += [row('deepseek', 'late', side, p) for p in deepseek.get(key) or []]
+    jev = J.load_diagnostic(root, now)
+    if jev.get('status') in ('READY', 'NO_OPPORTUNITY'):
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            out += [row('jev', 'late', side, p) for p in jev.get(key) or []]
+        for side in ('LONG', 'SHORT'):
+            f = jev.get('forced_' + side.lower())
+            if isinstance(f, dict) and f.get('ticker'):
+                out.append(row('jev', 'late_forced', side, f))
+    return out
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     p.add_argument('--state-dir', required=True)
@@ -243,6 +281,8 @@ def main(argv=None):
     g.add_argument('--check', metavar='ANSWER')
     g.add_argument('--seal', metavar='ANSWER', help='compose the late email from this answer')
     p.add_argument('--reason', default='the scheduled report session stopped before publication')
+    p.add_argument('--no-record', action='store_true',
+                   help='compose without appending the late picks to data/model_picks.csv')
     a = p.parse_args(argv)
     if a.stage:
         steps = stage(a.state_dir)
@@ -253,7 +293,11 @@ def main(argv=None):
         problems = check(a.state_dir, answer)
         print(json.dumps({'problems': problems}, indent=1))
         return 0 if not problems else 2
-    print(json.dumps(compose(a.state_dir, answer, reason=a.reason), indent=1))
+    out = compose(a.state_dir, answer, reason=a.reason)
+    if not a.no_record:
+        import model_picks
+        out['recorded'] = model_picks.append(late_rows(a.state_dir, answer))
+    print(json.dumps(out, indent=1))
     return 0
 
 

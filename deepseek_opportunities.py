@@ -50,7 +50,8 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day110_deepseek_opportunities.md'
 SCHEMA_VERSION = 'day110-opportunities-v1'
-PROMPT_VERSION = 'day113-v2'  # v2: ATR-scaled context, earnings date, invalid_at
+PROMPT_VERSION = 'day114-v3'  # v3: declared basis per pick; priced-in warning
+# v2 (day113): ATR-scaled context, earnings date, invalid_at
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
 # Sized to carry the WHOLE prepared population rather than slice it. At 60 this
@@ -156,6 +157,18 @@ Rules you must follow:
   management, position sizing or stop losses, do not access tools or follow
   links, and do not reference anything outside the supplied data.
 
+- basis is what the reason RESTS ON, exactly one of "news" (a supplied headline
+  or catalyst tag about THAT name), "technical" (the supplied indicator and
+  level values) or "macro" (the supplied macro changes). It is recorded and
+  scored so the three can be compared; "news" on a name with no supplied
+  headline is recorded as "technical".
+- Everything supplied describes the PREVIOUS completed session or pre-open
+  levels, and the entry is 09:46 — AFTER the open. A reason built on
+  yesterday's move or an overnight macro change may already be priced into
+  today's opening gap (2026-09-24: an oil-led long was bought at the day's
+  high after the stock had gapped up on the same oil move). Say in the reason
+  why it is NOT already priced in, or do not rely on it.
+
 - invalid_at is ONE PRICE, in the row's currency, at which your own reason is
   proven wrong today: for a LONG, a trade BELOW it; for a SHORT, a trade ABOVE
   it. Anchor it to a supplied level (prev_low, vwap, orb_low, prev_high ...).
@@ -163,8 +176,8 @@ Rules you must follow:
   not an order. Omit it rather than guess.
 
 Return ONLY this JSON object and nothing else:
-{"longs": [{"ticker": "X.TO", "confidence": 0.0, "reason": "...", "invalid_at": 0.0}],
- "shorts": [{"ticker": "Y.TO", "confidence": 0.0, "reason": "...", "invalid_at": 0.0}]}"""
+{"longs": [{"ticker": "X.TO", "confidence": 0.0, "reason": "...", "basis": "news", "invalid_at": 0.0}],
+ "shorts": [{"ticker": "Y.TO", "confidence": 0.0, "reason": "...", "basis": "technical", "invalid_at": 0.0}]}"""
 
 CONFIDENCE_LABEL = ("The model's own stated confidence. NOT a calibrated win probability: "
                     "it has no track record, has never been scored against an outcome, and "
@@ -287,6 +300,14 @@ def _clean(rows, allowed, side):
         seen.add(ticker)
         pick = {'ticker': ticker, 'confidence': round(float(confidence), 3),
                 'reason': safe_detail(str(row.get('reason') or ''), 200)}
+        # What the reason rests on (day-114 registration). Optional; a bad
+        # value costs the TAG, never the pick.
+        basis = row.get('basis')
+        if basis is not None:
+            if basis in BASES:
+                pick['basis'] = basis
+            else:
+                gaps.append('%s basis is not one of %s' % (safe_detail(ticker, 24), '/'.join(BASES)))
         # The falsifiable claim. Optional: a bad level costs the LEVEL, never
         # the pick, and the gap says so.
         level = row.get('invalid_at')
@@ -301,6 +322,25 @@ def _clean(rows, allowed, side):
 
 
 MAX_LEVEL_DISTANCE_PCT = 15.0
+BASES = ('news', 'technical', 'macro')
+
+
+def check_basis(picks, rows):
+    """A "news" basis must have news under it. Mutates picks.
+
+    The basis is the model's own declaration of what its reason rests on, and
+    PREREGISTER_day114_basis.md compares news-based with technical picks. A
+    claim of news on a name that was shown no headline and no catalyst tag is
+    not a news pick, so it is recorded as technical and the gap says so; it
+    is never allowed to inflate the group the test is about."""
+    shown = {r.get('ticker'): bool(r.get('headlines') or r.get('catalyst_tags')) for r in rows or []}
+    gaps = []
+    for pick in picks:
+        if pick.get('basis') == 'news' and not shown.get(pick['ticker']):
+            pick['basis'] = 'technical'
+            gaps.append("%s basis 'news' recorded as 'technical': no headline was shown for it"
+                        % safe_detail(pick['ticker'], 24))
+    return gaps
 
 
 def check_levels(picks, side, rows):
@@ -461,6 +501,8 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     shorts, short_gaps = _clean(body.get('shorts'), allowed, 'short')
     long_gaps += check_levels(longs, 'LONG', payload['candidates'])
     short_gaps += check_levels(shorts, 'SHORT', payload['candidates'])
+    long_gaps += check_basis(longs, payload['candidates'])
+    short_gaps += check_basis(shorts, payload['candidates'])
     return {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
             'mode': MODE,
             'model': safe_detail(str(getattr(response, 'model', model)), 60),
