@@ -1,5 +1,23 @@
 # Working notes for this repo
 
+## Day114c — 2026-09-24: the run ended its own turn at 08:54 and nothing published
+
+The report session started `morning_full.sh` in the background as told, then
+ENDED ITS TURN three and a half minutes in (it ran on Sonnet; the Routine has
+no pinned model). An idle scheduled session's container is reclaimed and the
+background job dies with it: no staging, no page, no email, `last_run`
+SUCCEEDED. "Read the tail of the log now and then" is an instruction a model
+can satisfy once. `morning_wait.py` makes waiting a COMMAND that blocks up to
+nine minutes and prints RUNNING / DONE <code> / NOT_STARTED / STALLED; the
+prompt loops on it and says the turn ends only after STEP 9.
+
+A dead report must not also be a missing morning. From 09:58 the 09:50 bridge
+runs `late_picks.py`: the same pool, news, DeepSeek and Jev in the diagnostic
+context, plus its own Claude answer, emailed as LATE PICKS. It is labelled
+after-the-open, never sized, never recorded or scored — a ranking asked at
+10:05 knows the first half hour. The official report path still refuses
+diagnostic snapshots; that refusal is correct and was not loosened.
+
 ## Day114b — 2026-09-23: two desks empty, no auto-send, fluff — each cause measured
 
 **DeepSeek "cut off (length)" was the reasoning mode, not the budget.** On

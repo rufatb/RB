@@ -122,3 +122,11 @@ def test_every_flag_the_prompt_quotes_is_a_real_option(module_name):
         for flag in re.findall(r'(--[a-z-]+)', line):
             assert flag in accepted, (
                 f'the prompt runs {module_name}.py {flag}, which it does not accept')
+
+
+def test_the_session_waits_by_command_and_is_told_not_to_end_its_turn():
+    """2026-09-24: the session ended its turn at 08:54 with the job in the
+    background; the container was reclaimed and nothing published."""
+    text = open(PROMPT, encoding='utf-8').read()
+    assert 'python morning_wait.py' in text
+    assert 'NEVER END YOUR TURN WHILE IT SAYS RUNNING' in text

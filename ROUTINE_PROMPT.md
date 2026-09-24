@@ -52,6 +52,7 @@ keys in it, which is exactly the rule doing its job.
 ---
 
 Run the RB daily report for today's session, publish it, update the owner's page, and email it. Work autonomously; do not ask questions.
+YOUR TURN ENDS ONLY AFTER STEP 9. Ending it earlier, even while a background job is running, gets this container reclaimed and kills the job: on 2026-09-24 that cost the whole morning.
 
 You fire at 08:50 ET. The report publishes at 09:46 ET, so this session stays alive for about an hour and `morning_full.sh` holds it there. THAT HOLD IS THE POINT — do not shorten it and do not run `morning.sh` directly. Two guards sit 41 minutes apart and both are correct: the staging jobs refuse at or after 09:30, and `wait_for_publication` refuses to wait more than 120 seconds. A run that calls `morning.sh` at 08:50 dies on the second guard with nothing published and throws away every staged snapshot — that is exactly what happened on 2026-09-17.
 
@@ -90,7 +91,10 @@ Write the JSON object to `.rb-state/claude_answer.json`, CHECK it, fix whatever 
   python claude_opportunities.py --state-dir .rb-state --seal .rb-state/claude_answer.json
 Every `invalid_at` must be taken from THAT row's own levels and sit on the losing side of its `last` — below it for a LONG, above it for a SHORT. On 2026-09-23 three of four sealed levels were already "wrong" before the open or taken from another row; the check exists because of that.
 It must be sealed before 09:24 ET. REFUSED means report the reason and move on: never retry after 09:24, never edit a snapshot, never seal twice (the first answer stands). This step can cost Claude's section; it must never delay the rest of the morning.
-Then wait for `morning_full.sh` to exit — read the tail of `.rb-state/morning_full.log` now and then, and start nothing else meanwhile.
+Then WAIT BY COMMAND until the job has finished:
+  python morning_wait.py --log .rb-state/morning_full.log --timeout 540
+It blocks up to nine minutes and prints one line. RUNNING: run the same command again, immediately, as many times as it takes (about six calls between the seal and 09:46). DONE <code>: the job has exited with that code; go on to STEP 5. NOT_STARTED: STEP 3 never started the job; start it now. STALLED: the log has not moved for 25 minutes; report it and go on to STEP 5.
+NEVER END YOUR TURN WHILE IT SAYS RUNNING. On 2026-09-24 this session ended its turn at 08:54 with the job running in the background; an idle scheduled session's container is reclaimed, the job died with it, and nothing was published or emailed. Your turn ends after STEP 9, never before.
 
 STEP 5 — the page is written BY THE JOB, never by hand
 `daily_job` writes `.rb-state/latest/report_page.html` itself. Use that file. If and only if it is missing:
