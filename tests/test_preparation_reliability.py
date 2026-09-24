@@ -151,6 +151,29 @@ def test_a_persistent_rate_limit_still_stops_and_says_so(monkeypatch):
     assert any('rate limit persisted; remaining symbols not requested' in e for e in out['errors'])
 
 
+def test_patient_build_waits_out_a_rate_limit_that_lifts(monkeypatch):
+    """--patient (evening only): the default three pauses stopped every
+    2026-09-23 evening attempt; a limit that lifts after five pauses must not
+    cost the universe when there is time to wait."""
+    class YFRateLimitError(Exception):pass
+    monkeypatch.setattr(build,'discover_universe',lambda:[{'symbol':s} for s in 'ABCDEFGHIJ'])
+    slept=[]
+    monkeypatch.setattr(build.time,'sleep',slept.append)
+    # Each fetch runs in its own process (bounded.acquire), so the limit is
+    # keyed on the pauses the parent has taken, not on a counter in the child.
+    def fetch(row,now):
+        if len(slept)<5: raise YFRateLimitError()
+        return {'ticker':row['symbol']}
+    monkeypatch.setattr(build,'fetch_security',fetch)
+    impatient=build.build(NOW,workers=2)
+    assert any('persisted' in e for e in impatient['errors'])
+    slept.clear()
+    out=build.build(NOW,workers=2,max_pauses=build.PATIENT_PAUSES,pause_seconds=build.PATIENT_PAUSE_SECONDS)
+    assert not any('persisted' in e for e in out['errors'])
+    assert sorted(r['ticker'] for r in out['securities'])==list('ABCDEFGHIJ')
+    assert slept and set(slept)=={build.PATIENT_PAUSE_SECONDS}
+
+
 def test_a_warrant_is_an_exclusion_not_a_failure(monkeypatch):
     """The screener's own warrants made certification unreachable."""
     monkeypatch.setattr(build,'discover_universe',lambda:[

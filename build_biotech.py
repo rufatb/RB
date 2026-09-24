@@ -168,9 +168,16 @@ def bound_out(out, symbols, adv63):
 RATE_LIMIT_PAUSES = 3
 MAX_UNMEASURED_LARGE_CAPS = 5   # more than this and the ranking is too uncertain to certify
 RATE_LIMIT_PAUSE_SECONDS = 60
+# --patient, for the EVENING build only. 2026-09-23: the container's shared
+# egress IP was rate-limited all evening and three one-minute pauses stopped
+# every attempt at 224–308 of ~311 names. The evening has hours; the morning
+# (which runs without --patient) does not.
+PATIENT_PAUSES = 30
+PATIENT_PAUSE_SECONDS = 180
 
 
-def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budget=20):
+def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budget=20,
+          max_pauses=None,pause_seconds=None):
     now=now or dt.datetime.now(ZoneInfo('America/New_York'))
     out={'as_of':now.isoformat(),'universe_complete':False,'universe_count':0,
          'securities':[],'errors':[],'options':{}}
@@ -219,10 +226,10 @@ def build(now=None,workers=4,*,checkpoint=None,discovery_budget=15,security_budg
                 # the rest is unmeasurable. This runs the evening before, so
                 # waiting is affordable; the morning never runs this loop.
                 rate_limit_pauses+=1
-                if rate_limit_pauses>RATE_LIMIT_PAUSES:
+                if rate_limit_pauses>(RATE_LIMIT_PAUSES if max_pauses is None else max_pauses):
                     out['errors'].append('provider rate limit persisted; remaining symbols not requested')
                     return False
-                time.sleep(RATE_LIMIT_PAUSE_SECONDS)
+                time.sleep(RATE_LIMIT_PAUSE_SECONDS if pause_seconds is None else pause_seconds)
         return True
     # First pass collects transient failures for ONE retry at the end, instead
     # of stopping on the first timeout — which is what stopped 09-15's build at
@@ -295,6 +302,9 @@ def main(argv=None):
     p.add_argument('--output',default=os.getenv('RB_BIOTECH_SNAPSHOT_JSON','data/biotech_snapshot.json'))
     p.add_argument('--events',default=os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json'))
     p.add_argument('--refresh-options',action='store_true')
+    p.add_argument('--patient',action='store_true',
+                   help='evening build: wait out a persistent provider rate limit (up to %d x %ds)'
+                        % (PATIENT_PAUSES, PATIENT_PAUSE_SECONDS))
     p.add_argument('--skip-if-certified-within',type=float,default=None,metavar='HOURS',
                    help='exit 0 without fetching when the output already holds a complete universe this recent')
     a=p.parse_args(argv)
@@ -313,7 +323,8 @@ def main(argv=None):
         # the evening's CERTIFIED universe with a partial one and empty Part 2.
         # A partial build never overwrites a certified snapshot.
         partial=str(a.output)+'.partial'
-        snap=build(now,checkpoint=lambda value:write_atomic(partial,value))
+        patience=dict(max_pauses=PATIENT_PAUSES,pause_seconds=PATIENT_PAUSE_SECONDS) if a.patient else {}
+        snap=build(now,checkpoint=lambda value:write_atomic(partial,value),**patience)
         if snap['universe_complete'] or not certified_within(a.output,now,36):
             write_atomic(a.output,snap)
         else:
