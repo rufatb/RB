@@ -191,7 +191,7 @@ def test_grounding_exclusion_survives_sealed_load_and_email_without_raw_prose(tm
     mail = prepare_delivery.artifacts(d, tmp_path/'dispatch', at_report)
     assert 'X1' in mail['text']
     # Coverage counts live in the full report (day-114b); the email prints the lean.
-    assert '2/2 assessed' in mail['attachments'][0]['content']
+    assert '2/2 eligible names assessed' in mail['attachments'][0]['content']
     assert '2 model-assessed; 1 accepted after grounding; 1 usable assessments' in mail['attachments'][0]['content']
     assert loaded['research_watchlist']['assessed'] == loaded['research_watchlist']['evaluated'] == 1
     assert 'negative MACD histogram' not in json.dumps(d)+json.dumps(mail)

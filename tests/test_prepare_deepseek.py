@@ -165,11 +165,14 @@ def test_live_path_calls_analyst_delegate_inside_killable_budget(tmp_path, monke
     monkeypatch.setattr(analyst, 'analyze_factors', evaluate)
     def acquire(jobs):
         assert list(jobs) == ['deepseek']
-        fn, budget = jobs['deepseek']; assert 0 < budget <= S.P.REQUEST_TIMEOUT
+        # Room for one INVALID_SCHEMA retry (2026-09-24); each REQUEST keeps
+        # its own timeout, and the job is still killable.
+        fn, budget = jobs['deepseek']; assert 0 < budget <= 2*S.P.REQUEST_TIMEOUT
         return {'deepseek': {'value': fn(), 'error': None}}
     monkeypatch.setattr(S, 'acquire', acquire)
     result = S.prepare(tmp_path, CFG, now=NOW, inputs=pool(1))
     assert result['status'] == 'READY' and len(calls) == 1
+    assert all(0 < t <= S.P.REQUEST_TIMEOUT for t in calls)
 
 
 def test_partial_macro_refresh_preserves_previous_valid_fields(tmp_path, monkeypatch):

@@ -301,3 +301,28 @@ def test_factor_batches_are_split_until_each_fits_the_prompt_cap(monkeypatch):
     batches = prepare_deepseek.fitting_batches(names, None, None)
     assert [t for b in batches for t in b] == names          # nothing lost, order kept
     assert all(len(b) * 10_004 <= 100_000 for b in batches)
+
+
+def test_a_malformed_factor_reply_is_retried_once_and_only_that():
+    """2026-09-24: three runs each lost a different batch to a malformed reply.
+    One retry recovers it; a refusal is never repeated; the retry is said."""
+    import prepare_deepseek as PD
+    calls = []
+    def flaky():
+        calls.append(1)
+        return ({'errorcode': 'INVALID_SCHEMA', 'details': 'extra key', 'status': 'UNAVAILABLE'}
+                if len(calls) == 1 else {'status': 'READY', 'assessments': [1]})
+    out = PD._with_schema_retry(flaky, 60, 30)
+    assert len(calls) == 2 and out['status'] == 'READY' and 'retried once' in out['details']
+
+    calls.clear()
+    refused = lambda: calls.append(1) or {'errorcode': 'PROVIDER_RATE_LIMIT', 'status': 'UNAVAILABLE'}
+    assert PD._with_schema_retry(refused, 60, 30)['errorcode'] == 'PROVIDER_RATE_LIMIT' and len(calls) == 1
+
+    calls.clear()
+    t = {'now': 0.0}
+    def slow():
+        calls.append(1); t['now'] += 25
+        return {'errorcode': 'INVALID_SCHEMA', 'status': 'UNAVAILABLE'}
+    out = PD._with_schema_retry(slow, 40, 30, clock=lambda: t['now'])
+    assert len(calls) == 1 and out['errorcode'] == 'INVALID_SCHEMA'   # no room for a full second request

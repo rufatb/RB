@@ -233,3 +233,51 @@ def test_matching_evidence_id_is_not_claimed_to_validate_arbitrary_natural_langu
     assert 'could still be wrong' not in accepted[0]['factor_rationale']
     assert 'could still be wrong' in private['provider_rows'][0]['factor_rationale']
     assert 'no semantic truth' in grounding['per_ticker']['ENB.TO']['verification_scope']
+
+
+def test_a_truncated_rationale_survives_the_grounded_round_trip_and_keeps_its_siblings():
+    """2026-09-24: ATZ.TO's two-sentence rationale was cut and flagged by
+    parse_assessments, then the grounded path fed the flagged row back into
+    parse_assessments, which refused the unknown key and raised — the whole
+    13-name batch was lost. The first test only ever called the parser alone,
+    so the seam that loses the data was never crossed."""
+    request = payload()
+    output = rows(request)
+    output[1]['factor_rationale'] = ('An earnings-date notice establishes no intraday catalyst. '
+                                     'A scheduled date is not a same-session event.')
+    accepted, grounding, _ = parse(request, output)
+    assert [row['ticker'] for row in accepted] == ['ENB.TO', 'TRP.TO', 'TD.TO']
+    trp = accepted[1]
+    assert trp['rationale_truncated'] is True
+    assert 'A scheduled date' not in trp['factor_rationale']
+    # A stored snapshot replays through the same parser.
+    assert D.parse_assessments(json.dumps({'assessments': accepted}), [r['ticker'] for r in accepted]) == accepted
+
+
+@pytest.mark.parametrize('flag', [False, 'yes', 1, None])
+def test_only_a_literal_true_truncation_flag_is_accepted(flag):
+    row = {'ticker': 'TD.TO', 'directional_lean': 'NO_EDGE', 'sentiment_score': 0,
+           'factor_rationale': 'No directional evidence.', 'rationale_truncated': flag}
+    with pytest.raises(D.ResponseSchemaError):
+        D.parse_assessments(json.dumps({'assessments': [row]}), ['TD.TO'])
+
+
+def test_a_truncated_row_replays_through_validate_result():
+    """The second half of the 2026-09-24 loss: prepare_deepseek replays every
+    batch from its stored provider rows (grounded_records.validate_result).
+    A cut row's stored copy carries `rationale_truncated`; the grounded
+    contract refused the seventh key and the batch was dropped on replay."""
+    from grounded_records import validate_result
+    from grounded_helpers import response
+    from test_deepseek_adapter import AS_OF, candidate, macro
+    names = [candidate(t) for t in ('ENB.TO', 'TRP.TO', 'TD.TO')]
+    rows = [{'ticker': c['ticker'], 'directional_lean': 'NO_EDGE', 'sentiment_score': 0.,
+             'factor_rationale': 'The supplied issuer evidence does not establish directional support.'}
+            for c in names]
+    rows[2]['factor_rationale'] = 'An unverified claim of a new U.S. contract. Its timing is unknown.'
+    result = response(names, macro(), AS_OF, assessments=rows)
+    assert [r['ticker'] for r in result['assessments']] == ['ENB.TO', 'TRP.TO', 'TD.TO']
+    stored = result['private_grounding_receipt']['provider_rows']
+    assert any(r.get('rationale_truncated') is True for r in stored)
+    replayed, _, _ = validate_result(result, names, macro(), AS_OF)
+    assert replayed == result['assessments']

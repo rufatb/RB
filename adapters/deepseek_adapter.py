@@ -360,7 +360,15 @@ def parse_assessments(content, tickers):
         raise ResponseSchemaError()
     by_ticker = {}
     for row in rows:
-        if not isinstance(row, dict) or set(row) != ASSESSMENT_KEYS:
+        # `rationale_truncated` is OUR flag, set below when a second sentence
+        # was cut. The grounded path and every snapshot replay feed accepted
+        # rows back through here, so the flag must survive that round trip:
+        # 2026-09-24 one two-sentence rationale (ATZ.TO) made its re-check
+        # fail and discarded the other twelve names in its batch — the exact
+        # loss the truncation was written to prevent. Only the literal True.
+        if (not isinstance(row, dict)
+                or set(row) - {'rationale_truncated'} != ASSESSMENT_KEYS
+                or row.get('rationale_truncated', True) is not True):
             raise ResponseSchemaError()
         ticker = row['ticker']
         if not isinstance(ticker, str) or ticker not in tickers or ticker in by_ticker:
@@ -430,10 +438,14 @@ def parse_grounded_assessments(content, payload):
                'provider_rows': []}
     for ticker, candidate in candidates.items():
         row = by_ticker[ticker]
-        if set(row) != GROUNDED_ASSESSMENT_KEYS:
+        # Stored provider rows replay through here (grounded_records), and a
+        # row whose rationale was cut carries our `rationale_truncated` flag.
+        if (set(row) - {'rationale_truncated'} != GROUNDED_ASSESSMENT_KEYS
+                or row.get('rationale_truncated', True) is not True):
             raise ResponseSchemaError()
         checked = parse_assessments(json.dumps({'assessments': [
-            {key: row[key] for key in ASSESSMENT_KEYS}]}), [ticker])[0]
+            {key: row[key] for key in ASSESSMENT_KEYS | ({'rationale_truncated'} & set(row))}]}),
+            [ticker])[0]
         try:
             ids = row['evidence_ids']
             if (not isinstance(ids, list)

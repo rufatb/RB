@@ -11,6 +11,23 @@ can satisfy once. `morning_wait.py` makes waiting a COMMAND that blocks up to
 nine minutes and prints RUNNING / DONE <code> / NOT_STARTED / STALLED; the
 prompt loops on it and says the turn ends only after STEP 9.
 
+The report Routine is pinned to `claude-opus-5-5` (owner's decision, 09-24);
+it had no model set and ran on the default.
+
+**The factor layer lost whole batches to MY day-113 truncation fix.** Cutting
+a two-sentence rationale adds `rationale_truncated` to the row; the grounded
+path re-feeds that row through `parse_assessments`, and snapshot replay
+(`grounded_records.validate_result`) feeds it through the grounded contract —
+both demanded exact key sets and raised, discarding every sibling in the batch.
+That is the exact loss the truncation existed to prevent, and its test only
+ever called the parser alone, never the round trip. Both checks now accept the
+flag as the literal `True` only. A different batch also failed on each run from
+a genuine provider slip (extra top-level key, row count off by one), so
+`_with_schema_retry` gives an INVALID_SCHEMA reply ONE fresh request inside its
+own budget; refusals are never retried. Measured on the 09-24 pool: 49 → 65 of
+67 eligible (the other 2 were grounding exclusions, correctly). The page now
+prints assessed / ELIGIBLE with the pool beside it — "65/428" read as a failure.
+
 A dead report must not also be a missing morning. From 09:58 the 09:50 bridge
 runs `late_picks.py`: the same pool, news, DeepSeek and Jev in the diagnostic
 context, plus its own Claude answer, emailed as LATE PICKS. It is labelled

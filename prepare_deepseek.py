@@ -302,6 +302,34 @@ def candidate_roster(state_dir, cfg, now, *, diagnostic=False):
     return tickers
 
 
+SCHEMA_RETRY_MIN_SECONDS = 8.0
+
+
+def _with_schema_retry(call, budget, per_call, *, clock=time.monotonic):
+    """Run one factor request; repeat it ONCE if the reply broke the response
+    contract and the batch's budget still holds a full request.
+
+    MEASURED 2026-09-24: three runs of the same 81-name pool each lost a
+    DIFFERENT batch to a malformed reply (an extra top-level key, a row count
+    off by one) — the provider's occasional slip, not a property of the batch.
+    One fresh request recovers it. Only INVALID_SCHEMA is retried: an auth,
+    payment or rate-limit refusal must stop the provider, not be repeated. The
+    second answer is validated exactly like the first, and the result says a
+    retry happened (house rule 1)."""
+    start = clock()
+    first = call()
+    if not (isinstance(first, dict) and first.get('errorcode') == 'INVALID_SCHEMA'):
+        return first
+    if budget - (clock() - start) < max(per_call, SCHEMA_RETRY_MIN_SECONDS):
+        return first
+    second = call()
+    if isinstance(second, dict):
+        second = {**second, 'details': safe_detail(
+            'retried once after INVALID_SCHEMA (%s); %s' % (first.get('details') or 'no details',
+                                                           second.get('details') or 'second reply accepted'))}
+    return second
+
+
 def fitting_batches(eligible, macro, as_of):
     """BATCH_SIZE-name batches, halved until each fits the adapter's prompt cap.
 
@@ -649,10 +677,15 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
                 wave = pending[start:start+P.MODEL_BATCH_CONCURRENCY]
                 submitted.extend(c['ticker'] for batch in wave for c in batch)
                 timeout = min(P.REQUEST_TIMEOUT, remaining)
+                # Room for ONE retry of a reply that failed the response
+                # contract (see _with_schema_retry), never beyond the deadline.
+                budget = min(2*P.REQUEST_TIMEOUT, remaining)
                 if evaluator is None:
                     jobs = {('deepseek' if len(wave) == 1 else 'deepseek_'+str(i)):
-                            (lambda batch=batch: analyze_factors(batch, macro, clean['as_of'],
-                             model=model, timeout=timeout), timeout) for i, batch in enumerate(wave)}
+                            (lambda batch=batch: _with_schema_retry(
+                                lambda: analyze_factors(batch, macro, clean['as_of'],
+                                                        model=model, timeout=timeout),
+                                budget, timeout), budget) for i, batch in enumerate(wave)}
                     completed = acquire(jobs)
                     received = [completed.get(name, {'value': None, 'error': 'MISSING_BATCH_RESULT'})
                                 for name in jobs]
@@ -716,8 +749,9 @@ def _prepare(state_dir, cfg, *, now=None, inputs=None, refresh=False, evaluator=
                     gaps.append(reason)
                     for c in batch:
                         candidate_gaps.setdefault(c['ticker'], []).append(reason)
-                # Concurrent successes survive a neighbour's failure. No failed
-                # batch is retried, and refusal/full-wave outage stops new work.
+                # Concurrent successes survive a neighbour's failure. Only a
+                # malformed reply is retried (once, inside its own job); a
+                # refusal or full-wave outage stops new work.
                 if stop_provider or failed == len(wave):
                     break
         covered = {a['ticker'] for a in assessments}

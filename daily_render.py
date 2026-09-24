@@ -284,7 +284,11 @@ def deepseek_summary(intra, *, concise=False):
     watch=snap.get('research_watchlist') or {}
     lines=['### DeepSeek factor research — unadopted',
            f"{safe_detail(snap.get('model') or 'Model unavailable',60)}: {snap.get('status','UNAVAILABLE')}; "
-           f"{_model_assessed_count(snap)}/{snap.get('requested',0)} assessed. Contextual leans, not forecasts."]
+           + (f"{_model_assessed_count(snap)}/{snap['eligible']} eligible names assessed "
+            f"({snap.get('requested',0)} in the pool; the rest lack complete evidence). "
+            if isinstance(snap.get('eligible'), int) and not isinstance(snap.get('eligible'), bool)
+            else f"{_model_assessed_count(snap)}/{snap.get('requested',0)} assessed. ")
+           + "Contextual leans, not forecasts."]
     if watch and 'input_complete' in watch:
         lines[-1] += (f" Complete inputs: {fmt(watch.get('input_complete'),'d')}; "
                       f"usable assessments: {watch.get('evaluated',0)}.")
