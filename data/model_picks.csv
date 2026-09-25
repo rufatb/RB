@@ -37,3 +37,13 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-09-24,deepseek,late,SHORT,WSP.TO,0.6,,190.34,,late_picks,181.75,179.74,1.1059,1,0,2026-09-24T17:25:40.050333-04:00,,10:10
 2026-09-24,jev,late_forced,LONG,FTT.TO,0.28,0.58,,,late_picks,105.02,104.75,-0.2571,0,,2026-09-24T17:25:40.050333-04:00,,10:10
 2026-09-24,jev,late_forced,SHORT,AEM.TO,0.11,0.48,,,late_picks,271.81,273.92,-0.7763,0,,2026-09-24T17:25:40.050333-04:00,,10:10
+2026-09-25,claude,selected,LONG,LUG.TO,0.52,,89.8,session,published_report,,,,,,,news,
+2026-09-25,deepseek,selected,LONG,AC.TO,0.53,,28.24,,published_report,,,,,,,technical,
+2026-09-25,deepseek,selected,LONG,ATZ.TO,0.56,,114.9,,published_report,,,,,,,technical,
+2026-09-25,deepseek,selected,SHORT,GIL.TO,0.6,,58.03,,published_report,,,,,,,technical,
+2026-09-25,deepseek,selected,SHORT,K.TO,0.55,,34.81,,published_report,,,,,,,news,
+2026-09-25,engine,board,LONG,NTR.TO,0.55,,,,published_report,,,,,,,,
+2026-09-25,engine,board,SHORT,CP.TO,0.624,,,,published_report,,,,,,,,
+2026-09-25,engine,board,SHORT,ENB.TO,0.589,,,,published_report,,,,,,,,
+2026-09-25,jev,forced,LONG,DOL.TO,0.25,0.56,,,published_report,,,,,,,,
+2026-09-25,jev,forced,SHORT,GIL.TO,0.58,0.44,,,published_report,,,,,,,,
