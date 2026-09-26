@@ -1,5 +1,32 @@
 # Working notes for this repo
 
+## Day115 — Part 3: the owner's strategy picks, at the end of every email
+
+The owner asked for one more section naming 1–2 stocks every day, never empty,
+by their rule: flagged by more than one model, LONG only above VWAP and SHORT
+only below it with rvol > 1.2, Claude leading when its sealed pick is among the
+flags, else DeepSeek. `consensus_picks.py`; registered in
+`PREREGISTER_day115_consensus.md`. A name that missed the rule still fills a
+slot and says RULE NOT MET in capitals; both kinds are recorded (`consensus`,
+`rule_met` / `rule_not_met`) and scored as separate scoreboard rows. No share
+count — the desks are the sized boards.
+
+**VWAP and rvol are measured AT THE OPEN, not read from staging.** The staged
+`rvol`/`vwap` are the previous session's. `brief` runs `consensus_picks.measure`
+as its own killable task beside the quotes and the engine (3s delay so the
+engine's fetch goes first, 16s cap, a 429 stops it); 9 names measured in 1.9s.
+A failure makes every name NOT MEASURED — never confirmed by default.
+
+**Yahoo's 09:30 TSX bar is not a volume.** 0 on 23 of 25 CP.TO sessions and the
+whole opening auction on the others (1,017,019 on 09-18; NTR.TO 1,637,051 on
+09-22). Counting it read most mornings as rvol 0.2–0.6 and one as rvol 51. The
+measurement uses the 09:35 and 09:40 bars and a MEDIAN baseline.
+
+**The owner's premise was not borne out, and they were told.** Replayed on the
+38 recorded picks: rule met 3/7 (−0.40%), not met 17/31. K.TO met it and lost;
+AC.TO (+3.53%) and all five Claude winners failed it. Seven picks resolve
+nothing; the section is scored, not adopted.
+
 ## Day114d — late picks are recorded; every pick declares its BASIS (registered)
 
 2026-09-24's late picks split on one line: DeepSeek's winners rested on company

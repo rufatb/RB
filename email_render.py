@@ -215,6 +215,9 @@ def text(d):
     lines += _factor_lines(intra)
     lines += _biotech_lines(d)
     lines += _positions_lines(d)
+    if 'consensus' in intra:                # absent from publications before 2026-09-28
+        import consensus_picks
+        lines += consensus_picks.lines(intra['consensus'])
     sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
     lines += ['', '---',
               'Research only: share counts are hypothetical'

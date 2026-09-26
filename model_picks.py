@@ -97,6 +97,12 @@ def rows_from_report(report, source='published_report'):
                 add('jev', 'selected', side, pick)
         for side in ('LONG', 'SHORT'):
             add('jev', 'forced', side, jev.get('forced_' + side.lower()))
+    # Part 3's strategy picks (consensus_picks): a name that met the owner's rule
+    # and one printed only so the section is never empty answer different
+    # questions, so they are different kinds.
+    for pick in (intra.get('consensus') or {}).get('picks') or []:
+        add('consensus', 'rule_met' if pick.get('rule_met') else 'rule_not_met',
+            pick.get('side'), pick, prompt_version=pick.get('tier'))
     return out
 
 

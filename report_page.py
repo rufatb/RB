@@ -20,6 +20,7 @@ from html import escape
 
 import daily_render as R
 import deepseek_opportunities as O
+from diagnostics import safe_detail
 
 fmt = R.fmt
 
@@ -512,6 +513,41 @@ def _scoreboard(board):
             f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div></section>')
 
 
+def _consensus_section(intra):
+    """Part 3 (consensus_picks): the owner's strategy picks. Absent from a
+    publication made before it existed; never sized."""
+    if 'consensus' not in intra:
+        return ''
+    c = intra['consensus']
+    head = ('<section><h2 class="head">Part 3 · Strategy picks</h2>'
+            '<p class="sub">Consensus of the desks, confirmed at the open by VWAP and opening rvol</p>')
+    if not c:
+        return head + '<p>Not computed in this publication.</p></section>'
+    intro = (f'<p>{escape(c.get("rule", ""))} {escape(c.get("measured", ""))}.'
+             + (f' {escape(c["measured_note"])}' if c.get('measured_note') else '') + '</p>')
+    if not c.get('picks'):
+        return head + intro + f'<p><strong>No pick:</strong> {escape(str(c.get("reason")))}.</p></section>'
+    rows = ''
+    for p in c['picks']:
+        level = '&mdash;' if p.get('invalid_at') is None else fmt(p['invalid_at'])
+        if p.get('past_invalid_at_entry'):
+            level += ' (already past)'
+        verdict = 'meets the rule' if p['rule_met'] else 'RULE NOT MET — do not enter by the rule'
+        rows += (f'<tr><td><span class="status">{escape(p["tier_label"])}</span></td>'
+                 f'<td class="tick">{escape(p["ticker"])}</td><td>{escape(p["side"])}</td>'
+                 f'<td>{escape("; ".join(p["flags"]))}</td><td>{escape(p["confirmation"])}</td>'
+                 f'<td>{level}</td></tr>'
+                 f'<tr class="reason"><td></td><td colspan="5">{escape(verdict)}. Lead: '
+                 f'{escape(p["lead"])}. {escape(safe_detail(p.get("reason") or "", 150))}</td></tr>')
+    conflicts = (f'<p>Excluded, models on opposite sides: {escape(", ".join(c["conflicts"]))}.</p>'
+                 if c.get('conflicts') else '')
+    return (head + intro + '<div class="scroll"><table><caption>No share count: an overlay on the '
+            'desks above, scored separately as rule met / rule not met. The hit rates claimed for '
+            'this rule rest on two sessions.</caption><thead><tr><th>Tier</th><th>Name</th>'
+            '<th>Side</th><th>Flagged by</th><th>At the open</th><th>Wrong if</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>{conflicts}</section>')
+
+
 DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '
                'sized by the same rule from its own picks, then one scoreboard. The baseline '
                'engine closes this part as a comparison.</p>')
@@ -905,6 +941,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
   </section>
 
   {_factor_section(intra)}
+
+  {_consensus_section(intra)}
 
   <section>
     <h2 class="head">Gaps and faults</h2>

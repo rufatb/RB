@@ -136,7 +136,11 @@ LEADERBOARD = (('claude_selected', 'Claude'),
                ('deepseek_selected', 'DeepSeek'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
-               ('jev_forced', 'Jev (forced)'))
+               ('jev_forced', 'Jev (forced)'),
+               # Part 3 (consensus_picks, owner 2026-09-26). Met and not met are
+               # separate rows: pooling them would hide whether the rule does anything.
+               ('consensus_rule_met', 'Strategy picks (rule met)'),
+               ('consensus_rule_not_met', 'Strategy picks (rule not met)'))
 
 
 # Late picks (late_picks.py: asked AFTER the open because the report did not

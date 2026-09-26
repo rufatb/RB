@@ -943,6 +943,9 @@ def text(d):
         for p in book['recent_closed']:
             lines.append(f"{p['ticker']} {p['side']}: {p['shares']:g} shares, entry {p['entry_px']:.2f}, "
                          f"exit {p['exit_px']:.2f} on {p['exit_date']}; gross P&L {p['pnl_usd']:+.2f} / {p['pnl_pct']:+.2f}% before costs.")
+    if 'consensus' in intra:                # absent from publications before 2026-09-28
+        import consensus_picks
+        lines += consensus_picks.lines(intra['consensus'])
     if d.get('readiness',{}).get('gaps'):
         lines += ['', '## Readiness gaps']+d['readiness']['gaps']
     history = res.get('training_history', [])
