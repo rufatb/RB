@@ -22,6 +22,15 @@ whole opening auction on the others (1,017,019 on 09-18; NTR.TO 1,637,051 on
 09-22). Counting it read most mornings as rvol 0.2–0.6 and one as rvol 51. The
 measurement uses the 09:35 and 09:40 bars and a MEDIAN baseline.
 
+**Every desk pick is verified at the open too (day-115b).** Each desk table
+carries an "Open check" column and a ★ TOP PICK: the most confident pick that
+passed, else the most confident labelled NOT VERIFIED. Display and record only
+— sizes and statuses never move. `open_check` is filled at SCORING from the same
+bars (old rows back-filled, no existing value changed; late picks never get
+one), `top_pick` is recorded from the report, and the scoreboard carries three
+more rows: passed / failed / top picks. `names_from` measures SELECTED picks
+first so no desk pick is crowded out by Jev's ranked names (cap 20).
+
 **The owner's premise was not borne out, and they were told.** Replayed on the
 38 recorded picks: rule met 3/7 (−0.40%), not met 17/31. K.TO met it and lost;
 AC.TO (+3.53%) and all five Claude winners failed it. Seven picks resolve

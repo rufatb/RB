@@ -467,6 +467,8 @@ def _desk_table(desk):
     if not desk.get('legs'):
         return (f'<p><strong>No sized pick today:</strong> '
                 f'{escape(str(desk.get("reason") or "unavailable"))}.</p>')
+    import consensus_picks
+    top = consensus_picks.top_line(desk)
     rows = ''
     for l in desk['legs']:
         abstain = l['status'] == 'ABSTAIN'
@@ -474,15 +476,17 @@ def _desk_table(desk):
                  if isinstance(l.get('invalid_at'), (int, float)) else '&mdash;')
         rows += ('<tr>'
                  f'<td><span class="status">{escape(l["status"])}</span></td>'
-                 f'<td class="tick">{escape(l["ticker"])}</td><td>{escape(l["side"])}</td>'
+                 f'<td class="tick">{escape(l["ticker"])}{" &#9733;" if l.get("top_pick") else ""}</td>'
+                 f'<td>{escape(l["side"])}</td>'
                  f'<td class="num">{fmt(l.get("entry_reference"))} {escape(str(l.get("currency") or ""))}</td>'
                  f'<td class="num">{fmt(l.get("entry_spread_bps"), ".1f")}</td>'
                  f'<td class="num">{fmt(l.get("confidence"))}</td>'
                  f'<td class="num{" withheld" if abstain else ""}">'
                  f'{"&mdash;" if abstain else escape(str(l["baseline_shares"]))}</td>'
+                 f'<td>{escape((l.get("open_check") or {}).get("cell") or "not checked")}</td>'
                  f'<td>{wrong}</td></tr>')
         if abstain and l.get('reasons'):
-            rows += (f'<tr class="reason"><td></td><td colspan="7">'
+            rows += (f'<tr class="reason"><td></td><td colspan="8">'
                      f'{escape("; ".join(l["reasons"]))}</td></tr>')
     return ('<div class="scroll"><table><caption>Own confidence is the model\u2019s number, not a '
             'calibrated probability. Shares are a hypothetical equal split of the engine\u2019s '
@@ -490,7 +494,8 @@ def _desk_table(desk):
             'the model\u2019s own invalidation level, scored after the close — not a stop.</caption>'
             '<thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:46 price</th>'
             '<th class="num">Spread bps</th><th class="num">Own confidence</th><th class="num">Shares</th>'
-            f'<th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>')
+            f'<th>Open check</th><th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>'
+            + (f'<p><strong>&#9733; {escape(top)}</strong></p>' if top else ''))
 
 
 def _scoreboard(board):

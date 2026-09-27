@@ -43,13 +43,19 @@ ROOT = Path(__file__).resolve().parent
 LEDGER = ROOT / 'data' / 'model_picks.csv'
 FIELDS = ('session', 'model', 'kind', 'side', 'ticker', 'confidence', 'abstain_probability',
           'invalid_at', 'prompt_version', 'source', 'entry', 'exit', 'r_pct', 'hit',
-          'invalidated', 'scored_at', 'basis', 'entry_time')
+          'invalidated', 'scored_at', 'basis', 'entry_time', 'open_check', 'top_pick')
 # `basis` (day-114): what the pick's reason rests on — news / technical / macro,
 # declared by the model and checked against what it was shown
 # (deepseek_opportunities.check_basis). PREREGISTER_day114_basis.md compares
 # them. `entry_time`: a LATE pick (asked after the open, late_picks.py) is
 # scored from the bar it was asked in, never from 09:45 — a 09:45 entry would
 # credit it with a move that happened before it existed.
+# `open_check` (day-115): did the pick pass the owner's rule at 09:45 — LONG
+# above VWAP / SHORT below it, opening rvol > 1.2 (consensus_picks.opening)?
+# `met` / `not_met` / `not_measured`, filled at SCORING from the same bars, so
+# every row is checked by one implementation, old rows included. `top_pick`:
+# the desk's top pick as the 09:46 report named it (a decision made then, so
+# recorded from the report, never recomputed).
 KEY = ('session', 'model', 'kind', 'side', 'ticker')
 ENTRY_BAR, EXIT_BAR = dt.time(9, 40), dt.time(15, 55)
 
@@ -80,21 +86,31 @@ def rows_from_report(report, source='published_report'):
         if leg.get('side') in ('LONG', 'SHORT'):
             add('engine', 'board', leg['side'], {'ticker': leg.get('ticker'),
                                                  'confidence': leg.get('p_sided')})
+    tops = {(d.get('id'), l.get('side'), l.get('ticker'))
+            for d in intra.get('desks') or [] for l in d.get('legs') or [] if l.get('top_pick')}
+    has_tops = any(d.get('top_pick') is not None for d in intra.get('desks') or [])
+
+    def top(model, side, pick):
+        if not has_tops:
+            return {}
+        return {'top_pick': (model, side, (pick or {}).get('ticker')) in tops}
     cl = intra.get('claude') or {}
     if cl.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
             for pick in cl.get(key) or []:
-                add('claude', 'selected', side, pick, prompt_version=cl.get('route'))
+                add('claude', 'selected', side, pick, prompt_version=cl.get('route'),
+                    **top('claude', side, pick))
     ds = intra.get('opportunities') or {}
     if ds.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
             for pick in ds.get(key) or []:
-                add('deepseek', 'selected', side, pick, prompt_version=ds.get('prompt_version'))
+                add('deepseek', 'selected', side, pick, prompt_version=ds.get('prompt_version'),
+                    **top('deepseek', side, pick))
     jev = intra.get('jev') or {}
     if jev.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
             for pick in jev.get(key) or []:
-                add('jev', 'selected', side, pick)
+                add('jev', 'selected', side, pick, **top('jev', side, pick))
         for side in ('LONG', 'SHORT'):
             add('jev', 'forced', side, jev.get('forced_' + side.lower()))
     # Part 3's strategy picks (consensus_picks): a name that met the owner's rule
@@ -188,33 +204,59 @@ def score_one(row, bars):
             'hit': r > 0, 'invalidated': invalidated}
 
 
+def open_check(row, bars):
+    """The owner's rule at 09:45 for a pick entered at 09:45; None for a late
+    pick (entered at a later bar, so a 09:45 check says nothing about it)."""
+    if row.get('entry_time'):
+        return None
+    import consensus_picks
+    measured = consensus_picks.opening(bars, dt.date.fromisoformat(row['session']))
+    if measured.get('status') != 'OK':
+        return 'not_measured'
+    return 'met' if consensus_picks.passes(row['side'], measured)[0] else 'not_met'
+
+
 def score(path=LEDGER, *, now=None, bars_for=None):
     """Score every unscored pick whose session has closed. Returns a count."""
     now = now or dt.datetime.now(ET)
     bars_for = bars_for or _yahoo_bars
     rows = read(path)
-    cache, scored = {}, 0
+    cache, scored, filled = {}, 0, 0
     for row in rows:
         if row.get('scored_at'):
+            if not row.get('open_check') and not row.get('entry_time'):
+                # A row scored before the check existed: fill the blank from the
+                # same bars. Only blanks — a filled value is never rewritten.
+                bars = _bars(cache, row['ticker'], bars_for)
+                check = open_check(row, bars) if bars is not None else None
+                if check:
+                    row['open_check'] = check
+                    filled += 1
             continue
         session = dt.date.fromisoformat(row['session'])
         if session > now.date() or (session == now.date() and now.time() < dt.time(16, 5)):
             continue
-        ticker = row['ticker']
-        if ticker not in cache:
-            try:
-                cache[ticker] = bars_for(ticker)
-            except Exception:
-                cache[ticker] = None
-        if cache[ticker] is None:
+        bars = _bars(cache, row['ticker'], bars_for)
+        if bars is None:
             continue
-        result = score_one(row, cache[ticker])
+        result = score_one(row, bars)
         if result:
-            row.update({k: _cell(v) for k, v in result.items()}, scored_at=now.isoformat())
+            check = open_check(row, bars)
+            row.update({k: _cell(v) for k, v in result.items()}, scored_at=now.isoformat(),
+                       **({'open_check': check} if check else {}))
             scored += 1
-    if scored:
+    if scored or filled:
         write(rows, path)
     return scored
+
+
+def _bars(cache, ticker, bars_for):
+    if ticker not in cache:
+        try:
+            cache[ticker] = bars_for(ticker)
+        except Exception:
+            cache[ticker] = None
+    return cache[ticker]
 
 
 def _float(value):
@@ -265,6 +307,21 @@ def scorecard(rows=None):
                        'invalidated': e['invalidated'],
                        'label': 'proxy: 09:45 bar close to session close; no spread, fill or cost'}
     return result
+
+
+DESK_MODELS = ('claude', 'deepseek', 'jev')
+
+
+def verification_card(rows=None):
+    """The desks' SELECTED picks split by the open check, and the top picks —
+    on the same scorer as everything else. Keys: check_met, check_not_met,
+    check_top."""
+    rows = read() if rows is None else rows
+    desk = [r for r in rows if r.get('model') in DESK_MODELS and r.get('kind') == 'selected']
+    split = [{**r, 'model': 'check', 'kind': r['open_check']} for r in desk
+             if r.get('open_check') in ('met', 'not_met')]
+    top = [{**r, 'model': 'check', 'kind': 'top'} for r in desk if r.get('top_pick') == '1']
+    return scorecard(split + top)
 
 
 def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):

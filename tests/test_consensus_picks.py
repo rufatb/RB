@@ -202,3 +202,117 @@ def test_an_older_publication_renders_without_the_section():
     d = dict(brief.build(now=NOW, services=services()))
     d['intraday'] = {k: v for k, v in d['intraday'].items() if k != 'consensus'}
     assert 'Part 3' not in email_render.text(d) and 'Part 3' not in report_page.render(d)
+
+
+# ── every desk pick verified at the open; each desk's top pick named (day-115b) ──
+
+def desk(legs, id_='deepseek'):
+    return {'id': id_, 'source': 'DeepSeek', 'legs': [
+        {'ticker': t, 'side': s, 'status': 'SHADOW', 'confidence': c, 'reasons': [],
+         'baseline_shares': 10, 'entry_reference': 10.0, 'currency': 'CAD'}
+        for t, s, c in legs], 'sizing': None}
+
+
+def test_the_top_pick_is_the_most_confident_that_passed_not_the_most_confident():
+    d = desk([('AC.TO', 'LONG', 0.70), ('ATZ.TO', 'LONG', 0.56), ('GIL.TO', 'SHORT', 0.60)])
+    C.verify_desks([d], {'AC.TO': ok(26.35, 26.55, 13.8), 'ATZ.TO': ok(116.62, 116.40, 1.89),
+                         'GIL.TO': ok(58.26, 58.45, 3.02)})
+    assert d['top_pick']['ticker'] == 'GIL.TO' and d['top_pick']['verified']
+    assert d['top_pick']['passed'] == 2 and d['top_pick']['of'] == 3
+    ac = d['legs'][0]['open_check']
+    assert not ac['met'] and ac['cell'].startswith('NO — below VWAP')
+    # Display only: nothing about the sized board moved.
+    assert [l['status'] for l in d['legs']] == ['SHADOW'] * 3
+    assert [l['baseline_shares'] for l in d['legs']] == [10] * 3
+
+
+def test_with_nothing_verified_the_top_pick_says_not_verified():
+    d = desk([('AC.TO', 'LONG', 0.53), ('K.TO', 'SHORT', 0.55)])
+    C.verify_desks([d], {})
+    assert d['top_pick']['ticker'] == 'K.TO' and not d['top_pick']['verified']
+    assert 'NOT VERIFIED' in C.top_line(d)
+    assert all(l['open_check']['cell'] == 'not measured' for l in d['legs'])
+
+
+def test_a_desk_without_picks_has_no_top_pick():
+    d = {'id': 'jev', 'legs': [], 'reason': 'no SELECTED pick'}
+    C.verify_desks([d], {})
+    assert d['top_pick'] is None and C.top_line(d) is None
+
+
+def test_the_desk_table_prints_the_check_and_the_star():
+    import daily_render
+    d = desk([('GIL.TO', 'SHORT', 0.60), ('AC.TO', 'LONG', 0.53)])
+    C.verify_desks([d], {'GIL.TO': ok(58.26, 58.45, 3.02)})
+    text = '\n'.join(daily_render.desk_lines(d))
+    assert 'Open check' in text and 'GIL.TO SHORT ★' in text and 'YES — below VWAP' in text
+    assert '★ Top pick: SHORT GIL.TO — VERIFIED' in text
+
+
+def test_selected_picks_are_measured_before_ranked_and_forced_names():
+    jev = {'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': [],
+           'long_ranked': [{'ticker': 'A%02d.TO' % n, 'probability': .1} for n in range(30)]}
+    names = C.names_from([CLAUDE, DS, jev])
+    assert set(names[:5]) == {'LUG.TO', 'AC.TO', 'ATZ.TO', 'GIL.TO', 'K.TO'}
+    assert len(names) == C.MAX_MEASURED
+
+
+def test_top_picks_are_recorded_and_open_checks_filled_at_scoring(tmp_path):
+    import model_picks
+    import primary_board
+    d = desk([('GIL.TO', 'SHORT', 0.60), ('K.TO', 'SHORT', 0.55)])
+    C.verify_desks([d], {'GIL.TO': ok(58.26, 58.45, 3.02)})
+    report = {'session': '2026-09-25', 'intraday': {'desks': [d], 'opportunities': {
+        'status': 'READY', 'longs': [], 'shorts': [{'ticker': 'GIL.TO', 'confidence': 0.6},
+                                                    {'ticker': 'K.TO', 'confidence': 0.55}]}}}
+    rows = model_picks.rows_from_report(report)
+    assert {r['ticker']: r['top_pick'] for r in rows} == {'GIL.TO': True, 'K.TO': False}
+    path = tmp_path / 'picks.csv'
+    model_picks.append(rows, path)
+    frame = bars(today_close=10.0)                     # price == VWAP -> SHORT not met
+    extra = bars(today_close=9.0).iloc[-1:].copy()
+    extra.index = [pd.Timestamp('2026-09-25 15:55', tz=ET)]
+    frame = pd.concat([frame, extra])
+    now = dt.datetime(2026, 9, 25, 17, 0, tzinfo=ET)
+    assert model_picks.score(path, now=now, bars_for=lambda t: frame) == 2
+    stored = model_picks.read(path)
+    assert {r['open_check'] for r in stored} == {'not_met'}
+    card = model_picks.verification_card(stored)
+    assert card['check_not_met']['picks'] == 2 and card['check_top']['picks'] == 1
+    board = primary_board.leaderboard(model_picks.scorecard(stored), card)
+    assert board[-1]['source'] == 'Desk top picks' and board[-1]['picks'] == 1
+
+
+def test_a_row_scored_before_the_check_existed_gets_its_blank_filled_once(tmp_path):
+    import model_picks
+    path = tmp_path / 'picks.csv'
+    row = {'session': '2026-09-25', 'model': 'deepseek', 'kind': 'selected', 'side': 'LONG',
+           'ticker': 'AAA.TO', 'r_pct': 1.0, 'hit': True, 'scored_at': '2026-09-25T16:21'}
+    late = {**row, 'kind': 'late', 'entry_time': '10:10'}
+    model_picks.write([row, late], path)
+    now = dt.datetime(2026, 9, 27, 12, 0, tzinfo=ET)
+    rising = bars()
+    first = rising.index[[i.date() == DAY and i.time() == dt.time(9, 35) for i in rising.index]][0]
+    rising.loc[first, ['Open', 'High', 'Low', 'Close']] = [9.5, 9.6, 9.4, 9.5]   # 09:45 above VWAP
+    assert model_picks.score(path, now=now, bars_for=lambda t: rising) == 0     # nothing NEWLY scored
+    stored = {r['kind']: r for r in model_picks.read(path)}
+    assert stored['selected']['open_check'] == 'met'
+    assert stored['late']['open_check'] == ''                 # a 10:10 entry is not a 09:45 check
+    # A filled value is never rewritten by a later pass, whatever the bars say now.
+    model_picks.score(path, now=now, bars_for=lambda t: bars())
+    assert {r['kind']: r for r in model_picks.read(path)}['selected']['open_check'] == 'met'
+
+
+def test_a_late_pick_scored_fresh_gets_no_0945_check(tmp_path):
+    import model_picks
+    path = tmp_path / 'picks.csv'
+    frame = bars()
+    for t in ('10:10', '15:55'):
+        extra = frame.iloc[-1:].copy()
+        extra.index = [pd.Timestamp('2026-09-25 %s' % t, tz=ET)]
+        frame = pd.concat([frame, extra])
+    model_picks.write([{'session': '2026-09-25', 'model': 'claude', 'kind': 'late', 'side': 'LONG',
+                        'ticker': 'AAA.TO', 'entry_time': '10:10'}], path)
+    now = dt.datetime(2026, 9, 25, 17, 0, tzinfo=ET)
+    assert model_picks.score(path, now=now, bars_for=lambda t: frame) == 1
+    assert model_picks.read(path)[0]['open_check'] == ''

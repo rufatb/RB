@@ -67,3 +67,23 @@ scored `rule_met` picks. The rule is described as having an edge only if ALL of:
 Otherwise the section stays what it is today: an observation printed because
 the owner asked for one every morning. The threshold, the bars and the tiers do
 not change after a losing day (the day-98 lesson).
+
+## Amendment, 2026-09-27 — before any session carried the section
+
+The owner asked to "verify top picks out of the 4 usually listed by each
+section". Every desk's SELECTED pick is now checked by the same rule at 09:45
+(`consensus_picks.verify_desks`) and each desk names a TOP pick: the most
+confident pick that passed, else — labelled NOT VERIFIED — the most confident.
+Nothing about a desk's picks, sizes or statuses changes.
+
+`model_picks.open_check` (`met` / `not_met` / `not_measured`) is filled at
+scoring from the same bars, for every pick entered at 09:45 — back-filled onto
+the 48 recorded rows without changing any existing value. That gives the rule a
+population about five times larger than the two strategy picks a day, so the
+bar above is applied to it as well, as a SECOND population on the same
+thresholds (≥ 60 sessions, ≥ 60 `met` desk picks, every criterion 1–5), with
+`not_met` desk picks as the comparison. Neither population may be used to
+rescue the other. The top-pick row is descriptive only.
+
+Back-filled desk picks at registration (Claude, DeepSeek, Jev selected):
+passed 2/4 (−0.11%), failed 8/12 (+0.16%). Descriptive; resolves nothing.

@@ -552,7 +552,9 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             board['id'], board['evidence_key'] = desk_id, key
             board['exposure'] = evidence_by_key[key].get('shared_exposure') or []
             desks.append(board)
-        scoreboard = primary_board.leaderboard(model_picks.scorecard())
+        rows = model_picks.read()
+        scoreboard = primary_board.leaderboard(model_picks.scorecard(rows),
+                                               model_picks.verification_card(rows))
     except Exception as exc:
         error('desks', RuntimeError(type(exc).__name__))
     # PART 3 (owner, 2026-09-26): one or two names the models agree on,
@@ -573,6 +575,13 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                                            legs, opened.get('value'), measured_note=note)
     except Exception as exc:
         error('consensus', RuntimeError(type(exc).__name__))
+    # Every desk pick checked by the same rule, and each desk's top pick named
+    # (owner, 2026-09-27). Display and record only — no size or status changes.
+    try:
+        import consensus_picks
+        consensus_picks.verify_desks(desks, (section_status.get('consensus_open') or {}).get('value'))
+    except Exception as exc:
+        error('desk_verification', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),

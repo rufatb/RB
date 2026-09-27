@@ -238,8 +238,8 @@ def desk_lines(desk):
            + (f" (equal split of {sizing['book']:,.0f}: {sizing['per_leg']:,.0f} per leg, in each "
               "listing's currency)" if sizing.get('per_leg') else '')
            + '. Hypothetical, not orders.', '',
-           '| Status | Name / side | Shares | 09:46 price | Spread | Own confidence | Wrong if |',
-           '|---|---|---:|---:|---:|---:|---|']
+           '| Status | Name / side | Shares | 09:46 price | Spread | Own confidence | Open check | Wrong if |',
+           '|---|---|---:|---:|---:|---:|---|---|']
     for l in legs:
         shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
         wrong = (f"{'below' if l['side'] == 'LONG' else 'above'} {fmt(l.get('invalid_at'))}"
@@ -248,11 +248,18 @@ def desk_lines(desk):
                  if isinstance(l.get('entry_reference'), (int, float)) else '—')
         spread = (f"{fmt(l['entry_spread_bps'], '.1f')} bps"
                   if isinstance(l.get('entry_spread_bps'), (int, float)) else '—')
-        out.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | {price} | "
-                   f"{spread} | {fmt(l.get('confidence'))} | {wrong} |")
+        check = (l.get('open_check') or {}).get('cell') or 'not checked'
+        name = f"{l['ticker']} {l['side']}" + (' ★' if l.get('top_pick') else '')
+        out.append(f"| {l['status']} | {name} | {shares} | {price} | "
+                   f"{spread} | {fmt(l.get('confidence'))} | {check} | {wrong} |")
     why = sorted({r for l in legs for r in l.get('reasons') or []})
     if why:
         out.append('Not sized: ' + '; '.join(safe_detail(r, 120) for r in why))
+    import consensus_picks
+    top = consensus_picks.top_line(desk)
+    if top:
+        out.append('★ ' + top + ' Open check: LONG above VWAP / SHORT below it, rvol > '
+                   f'{consensus_picks.RVOL_MIN:g}, at 09:45.')
     return out
 
 

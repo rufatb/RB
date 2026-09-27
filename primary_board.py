@@ -150,11 +150,20 @@ LATE_BOARD = (('claude_late', 'Claude (late, after the open)'),
               ('deepseek_late', 'DeepSeek (late, after the open)'))
 
 
-def leaderboard(card):
+# The desks' own picks split by the owner's open check, and each desk's top pick
+# (model_picks.verification_card, day-115). Same scorer, same picks, cut three ways.
+VERIFY_BOARD = (('check_met', 'Desk picks that passed the open check'),
+                ('check_not_met', 'Desk picks that failed it'),
+                ('check_top', 'Desk top picks'))
+
+
+def leaderboard(card, verify=None):
     """Every source on ONE yardstick: 09:45 bar close to session close, no cost."""
     rows = []
     late = [(k, n) for k, n in LATE_BOARD if ((card or {}).get(k) or {}).get('picks')]
-    for key, name in LEADERBOARD + tuple(late):
+    card = {**(card or {}), **(verify or {})}
+    board = LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
+    for key, name in board:
         c = (card or {}).get(key)
         rows.append({'source': name, 'picks': (c or {}).get('picks', 0),
                      'hits': (c or {}).get('hits', 0), 'rate': (c or {}).get('rate'),

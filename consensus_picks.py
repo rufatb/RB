@@ -68,7 +68,7 @@ BASELINE_MAX, BASELINE_MIN = 20, 5
 PICKS = 2
 MODELS = ('claude', 'deepseek', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'jev': 'Jev'}
-MAX_MEASURED = 16                   # names fetched at 09:46; the rest are NOT MEASURED
+MAX_MEASURED = 20                   # names fetched at 09:46; the rest are NOT MEASURED
 TIERS = {
     'A': 'CONSENSUS + CONFIRMED',
     'B': 'ONE MODEL + CONFIRMED',
@@ -118,12 +118,16 @@ def flags(claude, deepseek, jev, engine_legs=()):
 
 
 def names_from(snaps):
-    """The tickers worth measuring, most-flagged first, capped at MAX_MEASURED."""
-    counted = {}
+    """The tickers worth measuring: every desk's SELECTED picks first (each desk
+    verifies all of them), then the most-flagged, capped at MAX_MEASURED."""
+    counted, selected = {}, set()
     for (ticker, _side), who in flags(*snaps).items():
         counted[ticker] = max(counted.get(ticker, 0),
                               len({w['model'] for w in who if w['model'] in MODELS}))
-    return [t for t, _ in sorted(counted.items(), key=lambda kv: (-kv[1], kv[0]))][:MAX_MEASURED]
+        if any(w['kind'] == 'selected' for w in who):
+            selected.add(ticker)
+    order = sorted(counted, key=lambda t: (t not in selected, -counted[t], t))
+    return order[:MAX_MEASURED]
 
 
 def staged_names(state_dir, now):
@@ -228,6 +232,59 @@ def measure(tickers, now, *, fetch=None, delay=0.0, budget=12.0, workers=4):
             return t, {'status': 'FETCH_FAILED: ' + type(exc).__name__}
     with ThreadPoolExecutor(max_workers=max(1, min(workers, len(tickers)))) as ex:
         return dict(ex.map(one, tickers))
+
+
+def check_cell(side, measured):
+    """The one-cell verdict printed beside a desk's pick."""
+    m = measured or {}
+    if m.get('status') != 'OK':
+        return 'not measured'
+    met, _ = passes(side, m)
+    where = 'above' if m['price'] > m['vwap'] else 'below' if m['price'] < m['vwap'] else 'at'
+    return '%s — %s VWAP %+.2f%%, rvol %.2f' % ('YES' if met else 'NO', where,
+                                                 m['price_vs_vwap_pct'], m['rvol'])
+
+
+def verify_desks(desks, measured):
+    """Verify EVERY desk pick at the open by the owner's rule and name each
+    desk's TOP pick: the one that passed with the highest own confidence, else —
+    labelled NOT VERIFIED — the highest own confidence. Mutates the boards.
+
+    Display and record only: it never changes a share count, a status or which
+    picks a desk has (the owner, 2026-09-27: "verify top picks out of the 4")."""
+    measured = measured or {}
+    for desk in desks or []:
+        legs = desk.get('legs') or []
+        for leg in legs:
+            m = measured.get(leg['ticker']) or {'status': 'NOT_FETCHED'}
+            met, text = passes(leg['side'], m)
+            leg['open_check'] = {'met': met, 'measured': m.get('status') == 'OK',
+                                 'text': text, 'cell': check_cell(leg['side'], m)}
+            leg['top_pick'] = False
+        if not legs:
+            desk['top_pick'] = None
+            continue
+        top = min(legs, key=lambda l: (not l['open_check']['met'],
+                                       -(float(l['confidence']) if l.get('confidence') is not None else 0),
+                                       l['ticker']))
+        top['top_pick'] = True
+        desk['top_pick'] = {'ticker': top['ticker'], 'side': top['side'],
+                            'verified': top['open_check']['met'],
+                            'text': top['open_check']['text'],
+                            'passed': sum(l['open_check']['met'] for l in legs), 'of': len(legs)}
+    return desks
+
+
+def top_line(desk):
+    t = (desk or {}).get('top_pick')
+    if not t:
+        return None
+    head = 'Top pick: %s %s' % (t['side'], t['ticker'])
+    if t['verified']:
+        return head + ' — VERIFIED at the open (%s). %d of %d picks passed.' % (
+            t['text'], t['passed'], t['of'])
+    return head + (' — NOT VERIFIED: none of the %d picks passed the open check, so this is '
+                   'the highest own confidence (%s).' % (t['of'], t['text']))
 
 
 # ── the selection ───────────────────────────────────────────────────────────
