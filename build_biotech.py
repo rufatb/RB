@@ -70,6 +70,24 @@ class Excluded(ValueError):
     made a certified top-100 unreachable and Part 2 was empty every day."""
 
 
+def drop_event_rows(frame):
+    """Remove corporate-action rows that are not sessions. yfinance serves a
+    split or dividend as its own row with NaN prices and zero volume (ONCO's
+    2026-03-25 reverse split, 2026-09-27) and the finite check then failed the
+    whole name. Only rows with NO price at all AND a split or dividend on them
+    are dropped; a NaN on an ordinary row is still a failure."""
+    import pandas as pd
+    if frame.empty:
+        return frame
+    prices=[c for c in ('Open','High','Low','Close') if c in frame]
+    no_price=frame[prices].isna().all(axis=1)
+    event=pd.Series(False,index=frame.index)
+    for col in ('Stock Splits','Dividends'):
+        if col in frame:
+            event|=frame[col].fillna(0)!=0
+    return frame[~(no_price&event)]
+
+
 def fetch_security(row, now):
     """Verify provider metadata and every one of the last 20 exchange sessions."""
     import yfinance as yf
@@ -92,11 +110,18 @@ def fetch_security(row, now):
             raise Excluded('warrant/unit/right of '+t[:-1])
     frame=obj.history(period='6mo',interval='1d',auto_adjust=True,raise_errors=True)
     frame=frame[[i.date()<now.date() for i in frame.index]]
+    frame=drop_event_rows(frame)
     if frame.empty:
         raise ValueError('no completed daily bars')
     sessions=mcal.get_calendar('NYSE').valid_days(
         start_date=now.date()-dt.timedelta(days=45),end_date=now.date()-dt.timedelta(days=1))
     expected=[i.date().isoformat() for i in sessions[-20:]]
+    # A NEW LISTING cannot have an ADV20 yet (ADRX, 2026-09-27: IPO 09-25, one
+    # bar). That is a fact about the name, not a measurement failure, so it is
+    # an exclusion with its reason — like the ESLAW warrant — and never blocks
+    # certification. Only when the provider's FIRST bar is inside the window.
+    if frame.index[0].date().isoformat()>expected[0]:
+        raise Excluded('listed fewer than 20 sessions (first bar %s)'%frame.index[0].date())
     # A session Yahoo serves as a NULL PLACEHOLDER is dropped by yfinance;
     # 2026-09-22 was one on 371 of 971 names a day later. Rebuild it from
     # that session's hourly bars (session_fill); the ADV check below still

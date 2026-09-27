@@ -280,3 +280,75 @@ def test_a_name_with_no_volume_at_all_is_validly_bounded():
     snap = {'as_of': now.isoformat(), 'universe_complete': True, 'securities': secs,
             'universe_count': 101, 'eligible_count': 100, 'bounded_out': {'DEAD': 0}}
     assert len(biotech.select_universe(snap, now)) == 100
+
+
+class _FakeTicker:
+    """yfinance.Ticker for one name: fixed info and a fixed daily frame."""
+    def __init__(self, frame, info):
+        self.frame, self.info = frame, info
+
+    def get_info(self):
+        return self.info
+
+    def history(self, period=None, interval=None, **kw):
+        return self.frame
+
+
+def _nyse_frame(end, n, extra=None):
+    import pandas as pd
+    import pandas_market_calendars as mcal
+    days = mcal.get_calendar('NYSE').valid_days(start_date=end - dt.timedelta(days=400),
+                                                end_date=end - dt.timedelta(days=1))[-n:]
+    idx = [pd.Timestamp(d.date(), tz='America/New_York') for d in days]
+    frame = pd.DataFrame({'Open': 1.0, 'High': 1.1, 'Low': 0.9, 'Close': 1.0, 'Volume': 1e5,
+                          'Dividends': 0.0, 'Stock Splits': 0.0}, index=idx)
+    if extra is not None:
+        frame = pd.concat([frame, extra]).sort_index()
+    return frame
+
+
+def _fetch(monkeypatch, frame):
+    import sys, types
+    info = {'industry': 'Biotechnology', 'exchange': 'NMS', 'longName': 'X Inc.',
+            'marketCap': 5e8, 'currency': 'USD'}
+    fake = types.SimpleNamespace(Ticker=lambda t: _FakeTicker(frame, info))
+    monkeypatch.setitem(sys.modules, 'yfinance', fake)
+    now = dt.datetime(2026, 9, 27, 16, 20, tzinfo=ZoneInfo('America/New_York'))
+    return build.fetch_security({'symbol': 'XYZ', 'quoteType': 'EQUITY'}, now)
+
+
+def test_a_split_only_row_is_not_a_session_and_does_not_fail_the_name(monkeypatch):
+    """ONCO 2026-09-27: yfinance served its 03-25 reverse split as a row with
+    NaN prices and zero volume, and the finite check failed the whole name."""
+    import pandas as pd
+    split = pd.DataFrame({'Open': [float('nan')], 'High': [float('nan')], 'Low': [float('nan')],
+                          'Close': [float('nan')], 'Volume': [0.0], 'Dividends': [0.0],
+                          'Stock Splits': [0.2]}, index=[pd.Timestamp('2026-03-25', tz='America/New_York')])
+    frame = _nyse_frame(dt.date(2026, 9, 27), 100, extra=split)
+    out = _fetch(monkeypatch, frame)
+    assert out['ticker'] == 'XYZ' and '2026-03-25' not in {b['date'] for b in out['daily_bars']}
+
+
+def test_a_nan_on_an_ordinary_row_still_fails_the_name(monkeypatch):
+    frame = _nyse_frame(dt.date(2026, 9, 27), 100)
+    frame.iloc[50, frame.columns.get_loc('Close')] = float('nan')
+    with pytest.raises(ValueError, match='non-finite'):
+        _fetch(monkeypatch, frame)
+    # A row with NO price and no corporate action is a provider hole, not an event.
+    frame = _nyse_frame(dt.date(2026, 9, 27), 100)
+    for col in ('Open', 'High', 'Low', 'Close'):
+        frame.iloc[50, frame.columns.get_loc(col)] = float('nan')
+    with pytest.raises(ValueError, match='non-finite'):
+        _fetch(monkeypatch, frame)
+
+
+def test_a_new_listing_is_an_exclusion_not_a_failure(monkeypatch):
+    """ADRX 2026-09-27: IPO on 09-25, one bar. No ADV20 can exist yet."""
+    with pytest.raises(build.Excluded, match='listed fewer than 20 sessions'):
+        _fetch(monkeypatch, _nyse_frame(dt.date(2026, 9, 27), 2))
+    # A long-listed name with a hole in the window is still a FAILURE, never excluded.
+    frame = _nyse_frame(dt.date(2026, 9, 27), 100)
+    frame = frame.drop(frame.index[-5])
+    with pytest.raises(ValueError) as exc:
+        _fetch(monkeypatch, frame)
+    assert not isinstance(exc.value, build.Excluded)
