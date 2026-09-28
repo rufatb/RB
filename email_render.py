@@ -21,11 +21,18 @@ def _cell(text, n=200):
     return full.safe_detail(str(text or ''), n).replace('|', '/') or '—'
 
 
-def _desk_table(desk):
+def wire_cell(wire, ticker):
+    """The issuer's own overnight release, if the wire carried one (day-118):
+    time and title, or a dash. Read from the frozen report, never fetched."""
+    w = (wire or {}).get(ticker)
+    return _cell(f"{w['at']} {w['title']}", 90) if w else '—'
+
+
+def _desk_table(desk, wire=None):
     """One desk's picks as ONE table, the reason in the last column (owner,
     2026-09-28: "a table for each section with picks"). An ABSTAIN row has no
     share count — a row with a size is an order ticket."""
-    out = ['| Status | Pick | Shares | 09:46 price | Own conf. | Open check | Wrong if | Why |',
+    out = ['| Status | Pick | Shares | 09:46 price | Own conf. | Wire release | Wrong if | Why |',
            '|---|---|---:|---:|---:|---|---|---|']
     for l in desk['legs']:
         shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
@@ -33,25 +40,19 @@ def _desk_table(desk):
                  if isinstance(l.get('entry_reference'), (int, float)) else '—')
         wrong = (f"{'below' if l['side'] == 'LONG' else 'above'} {fmt(l.get('invalid_at'))}"
                  if isinstance(l.get('invalid_at'), (int, float)) else '—')
-        check = (l.get('open_check') or {}).get('cell') or 'not checked'
-        star = ' ★' if l.get('top_pick') else ''
-        out.append(f"| {l['status']} | {l['side']} {l['ticker']}{star} | {shares} | {price} | "
-                   f"{fmt(l.get('confidence'))} | {check} | {wrong} | {_cell(l.get('reason'))} |")
+        out.append(f"| {l['status']} | {l['side']} {l['ticker']} | {shares} | {price} | "
+                   f"{fmt(l.get('confidence'))} | {wire_cell(wire, l['ticker'])} | {wrong} | "
+                   f"{_cell(l.get('reason'))} |")
     why = sorted({r for l in desk['legs'] for r in l.get('reasons') or []})
     if why:
         out.append('No share count: ' + '; '.join(full.safe_detail(r, 90) for r in why) + '.')
-    import consensus_picks
-    top = consensus_picks.top_line(desk)
-    if top:
-        out.append('★ ' + top)
     return out
 
 
-def _jev_table(snap, measured):
+def _jev_table(snap, wire=None):
     """Jev shows its FORCED picks only (owner, 2026-09-28). A forced pick is the
     best of the set when Jev may not abstain — never a selection, never sized —
     and the table says when Jev rated it below its own "none"."""
-    import consensus_picks
     rows = []
     for side, key in (('LONG', 'forced_long'), ('SHORT', 'forced_short')):
         f = snap.get(key)
@@ -62,10 +63,10 @@ def _jev_table(snap, measured):
                 'below its own "none" — Jev would rather have done nothing')
         rows.append(f"| {side} {f['ticker']} | {fmt(f.get('probability'))} | "
                     f"{fmt(f.get('gated_abstain_probability'))} | "
-                    f"{consensus_picks.check_cell(side, (measured or {}).get(f['ticker']))} | {note} |")
+                    f"{wire_cell(wire, f['ticker'])} | {note} |")
     if not rows:
         return ['No forced pick today — ' + _cell(snap.get('reason') or 'Jev did not answer', 140) + '.']
-    return ['| Forced pick | Jev probability | Its "none" | Open check | Note |',
+    return ['| Forced pick | Jev probability | Its "none" | Wire release | Note |',
             '|---|---:|---:|---|---|', *rows,
             'Forced picks: Jev had to name one per side — never a selection, never sized.']
 
@@ -84,7 +85,7 @@ def desk_sections(intra):
             if snap.get('status') not in ('READY', 'NO_OPPORTUNITY'):
                 out.append(f"Unavailable today — {_cell(desk.get('reason') or snap.get('reason') or 'no answer', 160).rstrip('.')}.")
                 continue
-            out += _jev_table(snap, intra.get('open_measured'))
+            out += _jev_table(snap, intra.get('wire_releases'))
             # A Jev SELECTION is sized on its desk; say so in one line rather
             # than hide a sized leg the subject line counts.
             sized = [l for l in desk.get('legs') or [] if l['status'] != 'ABSTAIN']
@@ -93,7 +94,7 @@ def desk_sections(intra):
                            + ', '.join(f"{l['side']} {l['ticker']}" for l in sized) + '.')
             continue
         if desk.get('legs'):
-            out += _desk_table(desk)
+            out += _desk_table(desk, intra.get('wire_releases'))
         elif snap.get('status') == 'NO_OPPORTUNITY':
             out.append('No pick today: the model found nothing worth a position on either side.')
         else:
@@ -240,9 +241,6 @@ def text(d):
     lines += _factor_lines(intra)
     lines += _biotech_lines(d)
     lines += _positions_lines(d)
-    if 'consensus' in intra:                # absent from publications before 2026-09-28
-        import consensus_picks
-        lines += consensus_picks.lines(intra['consensus'])
     sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
     lines += ['', '---',
               'Research only: share counts are hypothetical'
@@ -396,8 +394,8 @@ def pick_table(snap):
     return ['| Pick | Own conf. | Wrong if | Why |', '|---|---:|---|---|', *rows]
 
 
-def jev_forced_table(snap, measured=None):
-    return _jev_table(snap or {}, measured)
+def jev_forced_table(snap, wire=None):
+    return _jev_table(snap or {}, wire)
 
 
 def html(d):

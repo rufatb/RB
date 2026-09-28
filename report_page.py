@@ -369,7 +369,7 @@ def _opportunities_section(intra, key='opportunities', name='DeepSeek', desk=Non
     title = (f'{number} · {name}\'s picks' if number else f'{name} opportunities')
     head = (f'<section><h2 class="head">{escape(title)}</h2>'
             '<p class="sub">The model\'s own top 2 per side · its own confidence · '
-            + ('sized above' if desk else 'no size') + '</p>' + _desk_table(desk)
+            + ('sized above' if desk else 'no size') + '</p>' + _desk_table(desk, intra.get('wire_releases'))
             + (f'<p class="note">Independence: {escape(str(snap["independence"]))}.</p>'
                if snap.get('independence') else ''))
     status = snap.get('status')
@@ -459,7 +459,7 @@ def _jev_rows(snap):
     return out
 
 
-def _desk_table(desk):
+def _desk_table(desk, wire=None):
     """One desk's sized picks (primary_board.build). An ABSTAIN row has no size."""
     import exposure
     if not desk:
@@ -467,23 +467,22 @@ def _desk_table(desk):
     if not desk.get('legs'):
         return (f'<p><strong>No sized pick today:</strong> '
                 f'{escape(str(desk.get("reason") or "unavailable"))}.</p>')
-    import consensus_picks
-    top = consensus_picks.top_line(desk)
     rows = ''
     for l in desk['legs']:
+        w = (wire or {}).get(l['ticker'])
         abstain = l['status'] == 'ABSTAIN'
         wrong = (f'{"below" if l["side"] == "LONG" else "above"} {fmt(l.get("invalid_at"))}'
                  if isinstance(l.get('invalid_at'), (int, float)) else '&mdash;')
         rows += ('<tr>'
                  f'<td><span class="status">{escape(l["status"])}</span></td>'
-                 f'<td class="tick">{escape(l["ticker"])}{" &#9733;" if l.get("top_pick") else ""}</td>'
+                 f'<td class="tick">{escape(l["ticker"])}</td>'
                  f'<td>{escape(l["side"])}</td>'
                  f'<td class="num">{fmt(l.get("entry_reference"))} {escape(str(l.get("currency") or ""))}</td>'
                  f'<td class="num">{fmt(l.get("entry_spread_bps"), ".1f")}</td>'
                  f'<td class="num">{fmt(l.get("confidence"))}</td>'
                  f'<td class="num{" withheld" if abstain else ""}">'
                  f'{"&mdash;" if abstain else escape(str(l["baseline_shares"]))}</td>'
-                 f'<td>{escape((l.get("open_check") or {}).get("cell") or "not checked")}</td>'
+                 f'<td>{escape(safe_detail(w["at"] + " " + w["title"], 120)) if w else "&mdash;"}</td>'
                  f'<td>{wrong}</td></tr>')
         if abstain and l.get('reasons'):
             rows += (f'<tr class="reason"><td></td><td colspan="8">'
@@ -494,8 +493,7 @@ def _desk_table(desk):
             'the model\u2019s own invalidation level, scored after the close — not a stop.</caption>'
             '<thead><tr><th>Status</th><th>Name</th><th>Side</th><th class="num">09:46 price</th>'
             '<th class="num">Spread bps</th><th class="num">Own confidence</th><th class="num">Shares</th>'
-            f'<th>Open check</th><th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>'
-            + (f'<p><strong>&#9733; {escape(top)}</strong></p>' if top else ''))
+            f'<th>Wire release</th><th>Wrong if</th></tr></thead><tbody>{rows}</tbody></table></div>')
 
 
 def _scoreboard(board):
@@ -549,41 +547,6 @@ def _biotech_section(digest):
             '</caption><thead><tr><th>Name</th><th>Event</th><th>Window</th><th>Call</th>'
             '<th class="num">Own confidence</th><th>Why</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div></section>')
-
-
-def _consensus_section(intra):
-    """Part 3 (consensus_picks): the owner's strategy picks. Absent from a
-    publication made before it existed; never sized."""
-    if 'consensus' not in intra:
-        return ''
-    c = intra['consensus']
-    head = ('<section><h2 class="head">Part 3 · Strategy picks</h2>'
-            '<p class="sub">Consensus of the desks, confirmed at the open by VWAP and opening rvol</p>')
-    if not c:
-        return head + '<p>Not computed in this publication.</p></section>'
-    intro = (f'<p>{escape(c.get("rule", ""))} {escape(c.get("measured", ""))}.'
-             + (f' {escape(c["measured_note"])}' if c.get('measured_note') else '') + '</p>')
-    if not c.get('picks'):
-        return head + intro + f'<p><strong>No pick:</strong> {escape(str(c.get("reason")))}.</p></section>'
-    rows = ''
-    for p in c['picks']:
-        level = '&mdash;' if p.get('invalid_at') is None else fmt(p['invalid_at'])
-        if p.get('past_invalid_at_entry'):
-            level += ' (already past)'
-        verdict = 'meets the rule' if p['rule_met'] else 'RULE NOT MET — do not enter by the rule'
-        rows += (f'<tr><td><span class="status">{escape(p["tier_label"])}</span></td>'
-                 f'<td class="tick">{escape(p["ticker"])}</td><td>{escape(p["side"])}</td>'
-                 f'<td>{escape("; ".join(p["flags"]))}</td><td>{escape(p["confirmation"])}</td>'
-                 f'<td>{level}</td></tr>'
-                 f'<tr class="reason"><td></td><td colspan="5">{escape(verdict)}. Lead: '
-                 f'{escape(p["lead"])}. {escape(safe_detail(p.get("reason") or "", 150))}</td></tr>')
-    conflicts = (f'<p>Excluded, models on opposite sides: {escape(", ".join(c["conflicts"]))}.</p>'
-                 if c.get('conflicts') else '')
-    return (head + intro + '<div class="scroll"><table><caption>No share count: an overlay on the '
-            'desks above, scored separately as rule met / rule not met. The hit rates claimed for '
-            'this rule rest on two sessions.</caption><thead><tr><th>Tier</th><th>Name</th>'
-            '<th>Side</th><th>Flagged by</th><th>At the open</th><th>Wrong if</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table></div>{conflicts}</section>')
 
 
 DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '
@@ -720,7 +683,7 @@ def _jev_section(intra, desk=None, number=None):
     title = f'{number} · Jev\'s picks' if number else 'Jev opportunities'
     head = (f'<section><h2 class="head">{escape(title)}</h2>'
             '<p class="sub">Decisions API · selected picks ' + ('sized above' if desk else 'no size')
-            + ' · ranked and forced names are never sized</p>' + _desk_table(desk))
+            + ' · ranked and forced names are never sized</p>' + _desk_table(desk, intra.get('wire_releases')))
     status = snap.get('status')
     if status not in ('READY', 'NO_OPPORTUNITY'):
         reason = escape(str(snap.get('reason') or 'Not staged this session.'))
@@ -980,7 +943,6 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
 
   {_factor_section(intra)}
 
-  {_consensus_section(intra)}
 
   {_biotech_section(digest)}
 

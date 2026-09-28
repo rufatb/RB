@@ -136,11 +136,9 @@ LEADERBOARD = (('claude_selected', 'Claude'),
                ('deepseek_selected', 'DeepSeek'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
-               ('jev_forced', 'Jev (forced)'),
-               # Part 3 (consensus_picks, owner 2026-09-26). Met and not met are
-               # separate rows: pooling them would hide whether the rule does anything.
-               ('consensus_rule_met', 'Strategy picks (rule met)'),
-               ('consensus_rule_not_met', 'Strategy picks (rule not met)'))
+               ('jev_forced', 'Jev (forced)'))
+# Part 3's rows (consensus_rule_met / _not_met) left the board on 2026-09-28
+# with the section itself: rejection #44. Their recorded rows stay in the CSV.
 
 
 # Late picks (late_picks.py: asked AFTER the open because the report did not
@@ -157,12 +155,18 @@ VERIFY_BOARD = (('check_met', 'Desk picks that passed the open check'),
                 ('check_top', 'Desk top picks'))
 
 
-def leaderboard(card, verify=None):
+# Day-118: the desks' pre-open picks on a name with an overnight wire release
+# (model_picks.wire_card). The registered forward population, printed daily.
+WIRE_BOARD = (('wire_release', 'Desk picks on an overnight wire release'),)
+
+
+def leaderboard(card, verify=None, wire=None):
     """Every source on ONE yardstick: 09:45 bar close to session close, no cost."""
     rows = []
     late = [(k, n) for k, n in LATE_BOARD if ((card or {}).get(k) or {}).get('picks')]
-    card = {**(card or {}), **(verify or {})}
-    board = LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
+    card = {**(card or {}), **(verify or {}), **(wire or {})}
+    board = (LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
+             + (WIRE_BOARD if wire is not None else ()))
     for key, name in board:
         c = (card or {}).get(key)
         rows.append({'source': name, 'picks': (c or {}).get('picks', 0),

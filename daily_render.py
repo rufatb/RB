@@ -223,7 +223,7 @@ JEV_STANDING = ('Jev’s probabilities are its OWN, not calibrated win probabili
                 'ranked or forced name is not a selection and is never sized.')
 
 
-def desk_lines(desk):
+def desk_lines(desk, wire=None):
     """One desk's sized picks. An ABSTAIN leg shows no share count.
 
     Shared by the email and the full report, so the two cannot disagree about
@@ -238,7 +238,7 @@ def desk_lines(desk):
            + (f" (equal split of {sizing['book']:,.0f}: {sizing['per_leg']:,.0f} per leg, in each "
               "listing's currency)" if sizing.get('per_leg') else '')
            + '. Hypothetical, not orders.', '',
-           '| Status | Name / side | Shares | 09:46 price | Spread | Own confidence | Open check | Wrong if |',
+           '| Status | Name / side | Shares | 09:46 price | Spread | Own confidence | Wire release | Wrong if |',
            '|---|---|---:|---:|---:|---:|---|---|']
     for l in legs:
         shares = '—' if l['status'] == 'ABSTAIN' else l['baseline_shares']
@@ -248,18 +248,13 @@ def desk_lines(desk):
                  if isinstance(l.get('entry_reference'), (int, float)) else '—')
         spread = (f"{fmt(l['entry_spread_bps'], '.1f')} bps"
                   if isinstance(l.get('entry_spread_bps'), (int, float)) else '—')
-        check = (l.get('open_check') or {}).get('cell') or 'not checked'
-        name = f"{l['ticker']} {l['side']}" + (' ★' if l.get('top_pick') else '')
-        out.append(f"| {l['status']} | {name} | {shares} | {price} | "
-                   f"{spread} | {fmt(l.get('confidence'))} | {check} | {wrong} |")
+        w = (wire or {}).get(l['ticker'])
+        release = safe_detail(f"{w['at']} {w['title']}", 120).replace('|', '/') if w else '—'
+        out.append(f"| {l['status']} | {l['ticker']} {l['side']} | {shares} | {price} | "
+                   f"{spread} | {fmt(l.get('confidence'))} | {release} | {wrong} |")
     why = sorted({r for l in legs for r in l.get('reasons') or []})
     if why:
         out.append('Not sized: ' + '; '.join(safe_detail(r, 120) for r in why))
-    import consensus_picks
-    top = consensus_picks.top_line(desk)
-    if top:
-        out.append('★ ' + top + ' Open check: LONG above VWAP / SHORT below it, rvol > '
-                   f'{consensus_picks.RVOL_MIN:g}, at 09:45.')
     return out
 
 
@@ -562,7 +557,8 @@ def _desks(intra):
         return []
     out = []
     for n, desk in enumerate(desks, 1):
-        out += ['', f"### {n} · {desk.get('source')}'s picks", *desk_lines(desk)]
+        out += ['', f"### {n} · {desk.get('source')}'s picks",
+                *desk_lines(desk, intra.get('wire_releases'))]
     return out + ['', *scoreboard_lines(intra.get('scoreboard'))]
 
 
@@ -957,9 +953,6 @@ def text(d):
         for p in book['recent_closed']:
             lines.append(f"{p['ticker']} {p['side']}: {p['shares']:g} shares, entry {p['entry_px']:.2f}, "
                          f"exit {p['exit_px']:.2f} on {p['exit_date']}; gross P&L {p['pnl_usd']:+.2f} / {p['pnl_pct']:+.2f}% before costs.")
-    if 'consensus' in intra:                # absent from publications before 2026-09-28
-        import consensus_picks
-        lines += consensus_picks.lines(intra['consensus'])
     if d.get('readiness',{}).get('gaps'):
         lines += ['', '## Readiness gaps']+d['readiness']['gaps']
     history = res.get('training_history', [])

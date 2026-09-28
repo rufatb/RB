@@ -183,18 +183,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         tickers |= primary_board.staged_tickers(state_dir, now)
         tasks = {'equity_quotes': (lambda: quotes_mod.acquire_equities_raw(
             market_client(state_dir=state_dir), sorted(tickers), budget_seconds=8), 10)}
-        # Part 3's opening confirmation (owner, 2026-09-26): its own killable
-        # process beside the others, so it adds no wall time and a failure costs
-        # only that section's confirmation. It waits 3s so the engine's fetch
-        # goes first on the shared egress IP.
-        try:
-            import consensus_picks
-            consensus_names = consensus_picks.staged_names(state_dir, now)
-            if consensus_names:
-                tasks['consensus_open'] = (lambda: consensus_picks.measure(
-                    consensus_names, now, delay=3), 16)
-        except Exception as exc:
-            error('consensus_names', RuntimeError(type(exc).__name__))
+        # Part 3's opening measurement (consensus_picks.measure) is no longer
+        # fetched: its rule is rejection #44 (AUDIT_day117_accuracy.md).
         if not recorded_today and not ledger_status['selection_blocked'] and not clock['status'].startswith(('SHORT_SESSION','CALENDAR','PREPARING')):
             tasks['intraday'] = (lambda: r945.run(cfg,require_cache=publish), 22)
         section_status = acquire(tasks)
@@ -560,36 +550,29 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             board['exposure'] = evidence_by_key[key].get('shared_exposure') or []
             desks.append(board)
         rows = model_picks.read()
-        scoreboard = primary_board.leaderboard(model_picks.scorecard(rows),
-                                               model_picks.verification_card(rows))
+        try:
+            wire = model_picks.wire_card(rows)
+        except Exception as exc:
+            wire = None
+            error('wire_card', RuntimeError(type(exc).__name__))
+        scoreboard = primary_board.leaderboard(model_picks.scorecard(rows), wire=wire)
     except Exception as exc:
         error('desks', RuntimeError(type(exc).__name__))
-    # PART 3 (owner, 2026-09-26): one or two names the models agree on,
-    # confirmed at the open by VWAP and opening rvol. Never empty while any
-    # candidate exists; a name that missed the rule is labelled so. Its own try:
-    # nothing here can cost a desk, the engine or the email.
-    consensus, open_measured = None, {}
+    # Day-118: the issuer's own overnight wire release beside each pick, read
+    # from the committed archive (newswire.py), never fetched here.
+    wire_releases = {}
     try:
-        import consensus_picks
-        opened = section_status.get('consensus_open') or {}
-        note = None
-        if opened.get('error'):
-            note = ('Opening bars were not fetched (%s), so every name reads NOT MEASURED '
-                    'and none can meet the rule today.' % opened['error'])
-        elif 'consensus_open' not in section_status:
-            note = 'Opening bars were not fetched in this publication; no name can meet the rule.'
-        consensus = consensus_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
-                                           legs, opened.get('value'), measured_note=note)
+        import newswire
+        picked = {l['ticker'] for d in desks for l in d.get('legs') or []}
+        picked |= {(jev_evidence.get(k) or {}).get('ticker') for k in ('forced_long', 'forced_short')}
+        wire_releases = newswire.release_cells(sorted(t for t in picked if t), now.date())
     except Exception as exc:
-        error('consensus', RuntimeError(type(exc).__name__))
-    # Every desk pick checked by the same rule, and each desk's top pick named
-    # (owner, 2026-09-27). Display and record only — no size or status changes.
-    try:
-        import consensus_picks
-        consensus_picks.verify_desks(desks, (section_status.get('consensus_open') or {}).get('value'))
-        open_measured = dict((section_status.get('consensus_open') or {}).get('value') or {})
-    except Exception as exc:
-        error('desk_verification', RuntimeError(type(exc).__name__))
+        error('wire_releases', RuntimeError(type(exc).__name__))
+    # PART 3 (the owner's VWAP/rvol strategy picks) and the per-pick open check
+    # were UNWIRED on 2026-09-28 at the owner's request ("drop what is proven
+    # not to work"): over 1,676 replayed name-days the rule was 48.3% right,
+    # placebo p = 0.90, a powered negative (rejection #44). consensus_picks.py
+    # and its tests are kept as the record (Day-90 contract).
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
               'provenance':{'code_commit':release,
                             'config_sha256':hashlib.sha256(encode(cfg).encode()).hexdigest(),
@@ -600,7 +583,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
-                          'consensus':consensus,'open_measured':open_measured,
+                          'wire_releases':wire_releases,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

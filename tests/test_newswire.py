@@ -89,6 +89,16 @@ def test_collect_archives_once_counts_failures_and_stops_at_since(tmp_path):
     assert out['reached_since'] is True and out['new_releases'] == 0 and out['archived'] == 0
 
 
+def test_a_list_page_that_keeps_failing_ends_the_walk_but_keeps_what_came_before(tmp_path):
+    pages = {N.LIST_URL.format(page=1): LIST.split('<div class="row newsCards" lang="en"><a class="newsreleaseconsolidatelink" href="/news-releases/gov-2.html">')[0],
+             N.LIST_URL.format(page=2): ValueError('HTTP_502'),
+             'https://www.newswire.ca/news-releases/acme-q3-1.html': release()}
+    out = N.collect(dt.date(2026, 9, 20), today=dt.date(2026, 9, 28), root=tmp_path,
+                    fetch=fake_fetch(pages), pause=0)
+    assert out['list_error'] == 'page 2: ValueError' and out['reached_since'] is False
+    assert out['archived'] == 1 and len(N.read(tmp_path)) == 1
+
+
 def archive(tmp_path, **kw):
     row = {'url': 'https://www.newswire.ca/news-releases/acme-q3-1.html',
            'title': 'ACME Mining reports record third quarter',
@@ -169,3 +179,51 @@ def test_the_models_are_shown_the_class_and_the_wire_time(tmp_path, monkeypatch)
     shown = O._headline(ev[0])
     assert shown['class'] == 'ISSUER_RELEASE' and shown['issuer_verified'] is True
     assert shown['first_disclosed'] == row['published_at']
+
+
+def test_release_cells_name_the_newest_release_in_the_window(tmp_path):
+    archive(tmp_path)
+    N.append([{'url': 'https://www.newswire.ca/news-releases/acme-fri-2.html', 'title': 'ACME files',
+               'published_at': '2026-09-25T17:30:00-04:00', 'tickers': ['ACM.TO'], 'source': 'newswire.ca'},
+              {'url': 'https://www.newswire.ca/news-releases/acme-late-3.html', 'title': 'ACME later',
+               'published_at': '2026-09-28T10:00:00-04:00', 'tickers': ['ACM.TO'], 'source': 'newswire.ca'}],
+             tmp_path)
+    cells = N.release_cells(['ACM.TO', 'ZZZ.TO'], dt.date(2026, 9, 28), tmp_path)
+    assert set(cells) == {'ACM.TO'}
+    assert cells['ACM.TO']['at'] == '07:00' and cells['ACM.TO']['releases'] == 2   # 10:00 is after the open
+    assert N.release_cells(['ACM.TO'], dt.date(2026, 9, 25), tmp_path) == {}
+    friday = N.release_cells(['ACM.TO'], dt.date(2026, 9, 28), tmp_path / 'none')
+    assert friday == {}
+
+
+def test_every_desk_table_carries_the_wire_release_column():
+    import daily_render
+    import email_render
+    import report_page
+    desk = {'id': 'deepseek', 'source': 'DeepSeek', 'sizing': None, 'legs': [
+        {'ticker': 'ACM.TO', 'side': 'LONG', 'status': 'SHADOW', 'confidence': 0.6, 'reasons': [],
+         'baseline_shares': 10, 'entry_reference': 10.0, 'currency': 'CAD'},
+        {'ticker': 'ZZZ.TO', 'side': 'SHORT', 'status': 'SHADOW', 'confidence': 0.55, 'reasons': [],
+         'baseline_shares': 10, 'entry_reference': 10.0, 'currency': 'CAD'}]}
+    wire = {'ACM.TO': {'at': '07:00', 'title': 'ACME reports record quarter'}}
+    for text in ('\n'.join(email_render._desk_table(desk, wire)),
+                 '\n'.join(daily_render.desk_lines(desk, wire)),
+                 report_page._desk_table(desk, wire)):
+        assert 'Wire release' in text and '07:00 ACME reports record quarter' in text
+    jev = {'forced_long': {'ticker': 'ACM.TO', 'probability': 0.4, 'gated_abstain_probability': 0.5}}
+    assert '07:00 ACME' in '\n'.join(email_render.jev_forced_table(jev, wire))
+
+
+def test_the_wire_card_is_placed_by_the_archive_and_shown_on_the_board(tmp_path):
+    import model_picks
+    import primary_board
+    archive(tmp_path)
+    base = {'session': '2026-09-28', 'side': 'LONG', 'scored_at': 'x', 'hit': '1', 'r_pct': '0.5'}
+    rows = [{**base, 'model': 'deepseek', 'kind': 'selected', 'ticker': 'ACM.TO'},
+            {**base, 'model': 'claude', 'kind': 'selected', 'ticker': 'ZZZ.TO', 'basis': 'news'},
+            {**base, 'model': 'jev', 'kind': 'ranked', 'ticker': 'ACM.TO'},
+            {**base, 'model': 'deepseek', 'kind': 'selected', 'ticker': 'ACM.TO', 'session': '2026-09-29'}]
+    card = model_picks.wire_card(rows, tmp_path)
+    assert card['wire_release']['picks'] == 1            # not the ranked row, not the next day
+    board = primary_board.leaderboard({}, wire=card)
+    assert board[-1]['source'] == 'Desk picks on an overnight wire release' and board[-1]['picks'] == 1

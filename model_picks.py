@@ -205,7 +205,8 @@ def score_one(row, bars):
 
 
 def open_check(row, bars):
-    """The owner's rule at 09:45 for a pick entered at 09:45; None for a late
+    """UNWIRED 2026-09-28 (rejection #44); kept as the record of what the
+    recorded `open_check` values mean. The owner's rule at 09:45 for a pick entered at 09:45; None for a late
     pick (entered at a later bar, so a 09:45 check says nothing about it)."""
     if row.get('entry_time'):
         return None
@@ -221,17 +222,9 @@ def score(path=LEDGER, *, now=None, bars_for=None):
     now = now or dt.datetime.now(ET)
     bars_for = bars_for or _yahoo_bars
     rows = read(path)
-    cache, scored, filled = {}, 0, 0
+    cache, scored = {}, 0
     for row in rows:
         if row.get('scored_at'):
-            if not row.get('open_check') and not row.get('entry_time'):
-                # A row scored before the check existed: fill the blank from the
-                # same bars. Only blanks — a filled value is never rewritten.
-                bars = _bars(cache, row['ticker'], bars_for)
-                check = open_check(row, bars) if bars is not None else None
-                if check:
-                    row['open_check'] = check
-                    filled += 1
             continue
         session = dt.date.fromisoformat(row['session'])
         if session > now.date() or (session == now.date() and now.time() < dt.time(16, 5)):
@@ -241,11 +234,11 @@ def score(path=LEDGER, *, now=None, bars_for=None):
             continue
         result = score_one(row, bars)
         if result:
-            check = open_check(row, bars)
-            row.update({k: _cell(v) for k, v in result.items()}, scored_at=now.isoformat(),
-                       **({'open_check': check} if check else {}))
+            # The open check (rejection #44) is no longer filled at scoring
+            # (2026-09-28); rows that carry one keep it, as recorded.
+            row.update({k: _cell(v) for k, v in result.items()}, scored_at=now.isoformat())
             scored += 1
-    if scored or filled:
+    if scored:
         write(rows, path)
     return scored
 
@@ -322,6 +315,23 @@ def verification_card(rows=None):
              if r.get('open_check') in ('met', 'not_met')]
     top = [{**r, 'model': 'check', 'kind': 'top'} for r in desk if r.get('top_pick') == '1']
     return scorecard(split + top)
+
+
+def wire_card(rows=None, root=None):
+    """The desks' pre-open picks on a name the issuer's own wire release named
+    overnight (newswire.window: prior 16:00 -> 09:30), on the same scorer.
+    PREREGISTER_day118_wire.md's forward population; one key, `wire_release`.
+    A pick is placed by the ARCHIVE, never by what the model said its basis was."""
+    import newswire
+    rows = read() if rows is None else rows
+    picked = [r for r in rows if (r.get('model'), r.get('kind')) in
+              (('claude', 'selected'), ('deepseek', 'selected'), ('jev', 'forced'))]
+    hit = []
+    for r in picked:
+        start, end = newswire.window(dt.date.fromisoformat(r['session']))
+        if newswire.releases_for(r['ticker'], start, end, root):
+            hit.append({**r, 'model': 'wire', 'kind': 'release'})
+    return scorecard(hit)
 
 
 def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):

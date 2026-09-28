@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 7, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 8, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():

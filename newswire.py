@@ -229,6 +229,22 @@ def headlines(ticker, now, root=None, *, hours=72):
             for r in reversed(rows)]
 
 
+def release_cells(tickers, session, root=None):
+    """{ticker: {at, title, url}} — each name's NEWEST release in
+    `window(session)`, for the report's "Wire release" column. `at` carries the
+    weekday when the release came out before the session's own day."""
+    start, end = window(session)
+    out = {}
+    for t in tickers:
+        rows = releases_for(t, start, end, root)
+        if rows:
+            r = rows[-1]
+            at = dt.datetime.fromisoformat(r['published_at']).astimezone(ET)
+            out[t] = {'at': at.strftime('%H:%M' if at.date() == session else '%a %H:%M'),
+                      'title': r['title'], 'url': r['url'], 'releases': len(rows)}
+    return out
+
+
 # ── staging ──────────────────────────────────────────────────────────────────
 
 def merge_into_news(state_dir, tickers, now, root=None, *, maximum=8):
@@ -257,39 +273,40 @@ def merge_into_news(state_dir, tickers, now, root=None, *, maximum=8):
         news[t] = entry
         gained.append(t)
     if gained:
-        path.write_text(json.dumps(news, indent=1, default=str))
+        tmp = path.with_suffix('.json.tmp')
+        tmp.write_text(json.dumps(news, indent=1, default=str))
+        tmp.replace(path)
     return gained
 
 
 # ── collection ───────────────────────────────────────────────────────────────
 
+def _retrying(fetch, tries=3, pause=2.0):
+    def get(url):
+        for n in range(tries):
+            try:
+                return fetch(url)
+            except Exception:
+                if n == tries - 1:
+                    raise
+                time.sleep(pause * (2 ** n))
+    return get
+
+
 def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
             workers=WORKERS, pause=0.5):
     """Walk the list back to `since` (a date), fetch every release page not yet
-    archived, append. Failures are COUNTED and returned, never swallowed; a
-    failed page is not archived, so the next run retries it."""
+    archived, append. Each list page is archived before the next is read, so a
+    failure keeps what came before it. Failures are COUNTED and returned, never
+    swallowed; a failed release page is not archived, so the next run retries
+    it. A list page that fails three times ends the walk (`list_error`)."""
     import requests
     session = requests.Session()
-    fetch = fetch or (lambda u: _get(u, session))
+    fetch = _retrying(fetch or (lambda u: _get(u, session)), pause=2.0 if pause else 0)
     today = today or dt.datetime.now(ET).date()
     known = {r['url'] for r in read(root)}
-    cards, pages, stop = [], 0, False
-    for page in range(1, max_pages + 1):
-        listing = parse_list(fetch(LIST_URL.format(page=page)))
-        pages += 1
-        if not listing:
-            break
-        for url, listed, title in listing:
-            if listed_date(listed, today) < since:
-                stop = True
-                break
-            if url not in known:
-                cards.append((url, title))
-        if stop:
-            break
-        time.sleep(pause)
-    reached = stop
-    failures, rows = {}, []
+    pages = seen = written = with_symbol = 0
+    reached, list_error, failures = False, None, {}
 
     def one(card):
         url, title = card
@@ -300,15 +317,38 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
             return None, code
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for row, code in pool.map(one, dict.fromkeys(cards)):
-            if row:
-                rows.append(row)
-            else:
-                failures[code] = failures.get(code, 0) + 1
-    written = append(rows, root)
+        for page in range(1, max_pages + 1):
+            try:
+                listing = parse_list(fetch(LIST_URL.format(page=page)))
+            except Exception as exc:
+                list_error = f'page {page}: {type(exc).__name__}'
+                break
+            pages += 1
+            if not listing:
+                break
+            cards = []
+            for url, listed, title in listing:
+                if listed_date(listed, today) < since:
+                    reached = True
+                    break
+                if url not in known:
+                    cards.append((url, title))
+                    known.add(url)
+            seen += len(cards)
+            rows = []
+            for row, code in pool.map(one, cards):
+                if row:
+                    rows.append(row)
+                else:
+                    failures[code] = failures.get(code, 0) + 1
+            written += append(rows, root)
+            with_symbol += sum(1 for r in rows if r['tickers'])
+            if reached:
+                break
+            time.sleep(pause)
     return {'since': since.isoformat(), 'list_pages': pages, 'reached_since': reached,
-            'new_releases': len(set(cards)), 'archived': written,
-            'with_tsx_symbol': sum(1 for r in rows if r['tickers']),
+            'list_error': list_error, 'new_releases': seen, 'archived': written,
+            'with_tsx_symbol': with_symbol,
             'failed': sum(failures.values()), 'failures': failures}
 
 

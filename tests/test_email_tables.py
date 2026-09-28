@@ -42,8 +42,8 @@ def test_a_desk_is_one_table_with_its_reason_in_the_row():
 def test_jev_prints_its_forced_picks_only():
     text = '\n'.join(email_render.desk_sections(intra(JEV)))
     jev = text[text.index('### 3 · Jev'):]
-    assert '| LONG DOL.TO | 0.27 | 0.56 | not measured | below its own "none"' in jev
-    assert '| SHORT GIL.TO | 0.60 | 0.44 | YES — below VWAP' in jev
+    assert '| LONG DOL.TO | 0.27 | 0.56 | — | below its own "none"' in jev
+    assert '| SHORT GIL.TO | 0.60 | 0.44 | — | cleared its own' in jev
     assert 'SHOP.TO' not in jev and 'Top-ranked' not in jev
 
 

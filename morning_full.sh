@@ -201,6 +201,23 @@ else
         stage_faults+=("factor pool skipped: staging budget exhausted")
     fi
 
+    # THE WIRE (day-118): the issuers' own press releases since the last
+    # archived day, from newswire.ca's list. prepare_deepseek then puts each
+    # pool name's releases FIRST in its staged headlines, so all three desks see
+    # them. ~10-20s. A failure costs the releases, never the headlines or a desk.
+    if budget="$(slice 60 $((240 + CLAUDE_WINDOW)))"; then
+        timeout "$budget" python newswire.py --collect >>"$RB_STATE_DIR/newswire.log" 2>&1
+        case $? in
+            0) log "  wire releases: collected" ;;
+            3) log "  wire releases: collected, some release pages failed (retried next run)" ;;
+            *) log "  wire releases: NOT collected or incomplete — the desks see yesterday's archive"
+               stage_faults+=("wire releases not collected") ;;
+        esac
+    else
+        log "  wire releases: SKIPPED — an upstream step overran"
+        stage_faults+=("wire releases skipped: staging budget exhausted")
+    fi
+
     # Exits 2 when some names lack complete inputs. That is the ordinary
     # result, not an error: coverage is gated by contiguous session warm-up.
     if budget="$(slice 900 $((120 + CLAUDE_WINDOW)))"; then

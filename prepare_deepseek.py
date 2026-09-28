@@ -552,6 +552,14 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
             gaps.append('Stopped headline acquisition after provider failure; remaining names not queried.'); break
     if len(queried) < len(tickers):
         gaps.append(f'Headline coverage: {len(queried)}/{len(tickers)} queried; remaining names unassessed.')
+    # Day-118: the issuer's own wire releases (newswire.py's committed archive)
+    # go FIRST in each name's staged headlines. A file read; no network here.
+    wire = []
+    try:
+        import newswire
+        wire = newswire.merge_into_news(root, tickers, now, maximum=P.MAX_NEWS_PER_CANDIDATE)
+    except Exception as exc:
+        gaps.append('Wire releases not merged: '+type(exc).__name__)
     reviewed_at = stamp(clock()) if clock is not None else now
     write_atomic(root/'deepseek_public_status.json', {
         'session': now.date().isoformat(), 'as_of': now.isoformat(),
@@ -559,6 +567,7 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
         'requested': len(tickers), 'queried': len(queried), 'queried_tickers': queried,
         'unqueried_tickers': [t for t in tickers if t not in queried],
         'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps))),
+        'wire_release_tickers': wire,
         'news_status': {ticker: news.get(ticker, {}).get('status', 'UNAVAILABLE')
                         if ticker in queried else 'NOT_QUERIED' for ticker in tickers},
         **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})
