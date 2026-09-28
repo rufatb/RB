@@ -146,7 +146,7 @@ def validated_macro_change(item, value, observed):
         return {'change_status': 'UNAVAILABLE', 'change_gap': 'INVALID_DAILY_CHANGE_REFERENCE'}
 
 
-def _evidence(items, field, now, gaps, cutoff):
+def _evidence(items, field, now, gaps, cutoff, ticker=None):
     if not isinstance(items, list):
         gaps.append('INVALID_'+field.upper())
         return []
@@ -175,7 +175,7 @@ def _evidence(items, field, now, gaps, cutoff):
                 # Recompute limited title classifications; a staged claim of
                 # verified issuer relevance or novelty is not source evidence.
                 from factor_news import classify_headline
-                evidence['evidence_metadata'] = classify_headline(text.strip(), source)
+                evidence['evidence_metadata'] = classify_headline(text.strip(), source, ticker)
             output.append(evidence)
         except (KeyError, TypeError, ValueError) as exc:
             # Never echo rejected user/provider values (which may include secrets).
@@ -183,7 +183,7 @@ def _evidence(items, field, now, gaps, cutoff):
             gaps.append(field.upper()+':'+reason[:80])
     if field == 'headlines':
         from factor_news import prepare_headlines
-        output, _ = prepare_headlines(output, maximum)
+        output, _ = prepare_headlines(output, maximum, ticker)
     return output
 
 
@@ -349,7 +349,7 @@ def validate_payload(payload, now):
         sector = item.get('sector')
         if isinstance(sector, str) and 0 < len(sector) <= 40:
             clean['sector'] = sector
-        clean['headlines'] = _evidence(item.get('headlines', []), 'headlines', now, gaps, as_of)
+        clean['headlines'] = _evidence(item.get('headlines', []), 'headlines', now, gaps, as_of, ticker)
         clean['catalyst_tags'] = _evidence(item.get('catalyst_tags', []), 'catalyst_tags', now, gaps, as_of)
         if not clean['headlines'] and not clean['catalyst_tags']:
             gaps.append('NO_CURRENT_CATALYST_EVIDENCE')

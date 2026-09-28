@@ -50,7 +50,7 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day110_deepseek_opportunities.md'
 SCHEMA_VERSION = 'day110-opportunities-v1'
-PROMPT_VERSION = 'day114-v3'  # v3: declared basis per pick; priced-in warning
+PROMPT_VERSION = 'day118-v1'  # day118: ISSUER_RELEASE class (wire releases); v3 basis + priced-in kept
 # v2 (day113): ATR-scaled context, earnings date, invalid_at
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
@@ -131,6 +131,10 @@ Each name may also carry `headlines` and `catalyst_tags`. Every headline has a
   COMMENTARY       opinion or a stock-pick column. NOT an event. Near zero weight.
   MULTI_YEAR_TITLE a long-horizon thesis. Irrelevant to one session.
   UNCLASSIFIED     UNVERIFIED, not a certified catalyst. It does not oblige a lean.
+  ISSUER_RELEASE   the company's own press release from the Canadian wire.
+                   `first_disclosed` is the wire's dissemination time and
+                   `issuer_verified: true` means the release names this symbol.
+                   A release out before 09:30 has had the open to be priced in.
   Anything else    weigh on its merits.
 `first_disclosed: null` means the disclosure time is UNKNOWN, so you cannot tell
 whether the market has already absorbed it. `issuer_verified: false` means it is

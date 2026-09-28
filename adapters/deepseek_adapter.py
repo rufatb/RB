@@ -203,7 +203,7 @@ def _published(value, as_of, *, news=False):
     return observed.isoformat()
 
 
-def _evidence(rows, kind, limit, as_of):
+def _evidence(rows, kind, limit, as_of, ticker=None):
     if not isinstance(rows, list) or len(rows) > limit:
         raise InputValidationError()
     cleaned = []
@@ -218,7 +218,7 @@ def _evidence(rows, kind, limit, as_of):
         if kind == 'title':
             from factor_news import classify_headline
             try:
-                item['evidence_metadata'] = classify_headline(item[kind], item['source_url'])
+                item['evidence_metadata'] = classify_headline(item[kind], item['source_url'], ticker)
             except ValueError:
                 raise InputValidationError() from None
         cleaned.append(item)
@@ -272,7 +272,7 @@ def public_payload(candidates, macro, as_of):
             'technicals_scope': _text(candidate['technicals_scope'], MAX_TITLE_CHARS),
             'technical_source': 'python',
             'source_url': _source(candidate['source_url']),
-            'headlines': _evidence(candidate['headlines'], 'title', MAX_NEWS_PER_CANDIDATE, clock),
+            'headlines': _evidence(candidate['headlines'], 'title', MAX_NEWS_PER_CANDIDATE, clock, ticker),
             'catalyst_tags': _evidence(candidate['catalyst_tags'], 'tag', MAX_TAGS_PER_CANDIDATE, clock),
         })
     payload = {'as_of': clock.isoformat(), 'candidates': cleaned, 'macro': clean_macro}

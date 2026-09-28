@@ -786,7 +786,8 @@ def test_basis_is_kept_from_a_closed_set_and_news_needs_news():
 def test_the_prompt_asks_for_basis_and_warns_about_priced_in_reasons():
     import deepseek_opportunities as O
     assert '"basis"' in O.SYSTEM_PROMPT and 'priced into' in O.SYSTEM_PROMPT
-    assert O.PROMPT_VERSION == 'day114-v3'
+    assert O.PROMPT_VERSION.startswith('day118')
+    assert 'ISSUER_RELEASE' in O.SYSTEM_PROMPT
 
 
 def test_a_noise_level_says_it_was_noise():

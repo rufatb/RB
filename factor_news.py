@@ -40,8 +40,39 @@ def normalized_title(value):
     return ' '.join(re.findall(r'\w+', unicodedata.normalize('NFKC', value).casefold()))
 
 
-def classify_headline(title, source_url):
-    """Labels are derived from explicit title words, never claimed as facts."""
+def wire_release(title, source_url, ticker=None, archive=None):
+    """The archived wire row this headline IS, or None.
+
+    Recomputed from `data/newswire/` (collected by `newswire.py` from the wire
+    itself), never from a staged claim: the URL must be an archived release AND
+    the title must be that release's title. Anything else is not a release."""
+    try:
+        import newswire
+        row = newswire.index(archive).get(canonical_url(source_url))
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if not row or normalized_title(row.get('title') or '') != normalized_title(title):
+        return None
+    return row
+
+
+def classify_headline(title, source_url, ticker=None, archive=None):
+    """Labels are derived from explicit title words, never claimed as facts —
+    except an ISSUER_RELEASE, which is derived from the wire archive (day-118):
+    its disclosure time is the wire's own, and the issuer is VERIFIED only when
+    the release's lead names `ticker`."""
+    wire = wire_release(title, source_url, ticker, archive)
+    if wire:
+        return {
+            'classification': 'ISSUER_RELEASE',
+            'issuer_role': 'VERIFIED' if ticker and ticker in (wire.get('tickers') or []) else 'UNVERIFIED',
+            'novelty': 'UNVERIFIED',
+            'first_disclosed_at': wire['published_at'], 'updated_at': None,
+            'impact_horizon': 'MULTI_YEAR_TITLE' if _MULTI_YEAR.search(title) else 'UNSPECIFIED',
+            'primary_source_verified': True,
+            'classification_basis': 'archived newswire.ca release; symbol named in its lead',
+            'canonical_url': canonical_url(source_url),
+        }
     commentary = bool(_COMMENTARY.search(title))
     return {
         'classification': 'COMMENTARY' if commentary else 'UNCLASSIFIED',
@@ -54,7 +85,13 @@ def classify_headline(title, source_url):
     }
 
 
-def prepare_headlines(items, maximum):
+def _rank(row):
+    """Wire releases first, commentary last; provider order otherwise."""
+    c = row['evidence_metadata']['classification']
+    return 0 if c == 'ISSUER_RELEASE' else 2 if c == 'COMMENTARY' else 1
+
+
+def prepare_headlines(items, maximum, ticker=None, archive=None):
     """Deduplicate validated rows before capping; expose every removed row.
 
     Retain provider order within the unclassified/commentary groups. An
@@ -63,7 +100,7 @@ def prepare_headlines(items, maximum):
     """
     unique, urls, titles, reasons = [], set(), set(), {}
     for item in items:
-        metadata = classify_headline(item['title'], item['source_url'])
+        metadata = classify_headline(item['title'], item['source_url'], ticker, archive)
         url, title = metadata['canonical_url'], normalized_title(item['title'])
         duplicate = ('DUPLICATE_CANONICAL_URL' if url in urls else
                      'DUPLICATE_NORMALIZED_TITLE' if title in titles else None)
@@ -72,7 +109,7 @@ def prepare_headlines(items, maximum):
             continue
         urls.add(url); titles.add(title)
         unique.append({**item, 'evidence_metadata': metadata})
-    unique.sort(key=lambda row: row['evidence_metadata']['classification'] == 'COMMENTARY')
+    unique.sort(key=_rank)
     if len(unique) > maximum:
         reasons['ITEM_LIMIT'] = len(unique)-maximum
     return unique[:maximum], reasons
