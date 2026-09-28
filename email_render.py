@@ -117,6 +117,10 @@ def _scoreboard(board):
         out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
                    f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
     out.append('09:45 price to the close, no costs. A range that contains 50% is a coin flip.')
+    import model_picks
+    base = model_picks.replay_line()
+    if base:
+        out.append(base)
     return out
 
 

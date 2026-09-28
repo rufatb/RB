@@ -1,5 +1,31 @@
 # Working notes for this repo
 
+## Day117 — accuracy: the desks are random draws because the inputs carry no signal
+
+The owner asked why every desk's accuracy is poor. Read
+`AUDIT_day117_accuracy.md`. Registered (`PREREGISTER_day117_replay.md`) and run
+by `replay_models.py`: 59 past sessions rebuilt with the PRODUCTION pool
+builder fed history cut off before each session (the 09-28 replay pool equals
+that morning's live brief field for field), the LIVE prompts asked, the
+PRODUCTION scorer used. **DeepSeek 109/221 (49.3%) vs 49.5% for random picks
+from the same pools; Jev forced 62/116 (53.4%) vs 49.4%. Both fail the bar.**
+Oracle 100% / anti-oracle 0%; DeepSeek MDE80 ≈ 0.31%/pick.
+
+**Why:** no field the models see — nor anything measurable by 09:45 — has a
+rank correlation with the 09:45 → close return above |t| = 1.89 over 4,601
+name-days (a planted IC of 0.045 shows at t = 3.0). The owner's VWAP/rvol rule
+over 1,676 name-days: 48.3%, placebo p = 0.90, detects a planted +0.10% at
+t = 2.07. Rejections #43 and #44. **Do not tune the prompts against the
+replay** — there is nothing to fit but noise. Only new information (e.g. a
+timestamped press-release wire, forward-collected and registered) could move
+accuracy; that is the owner's decision.
+
+The replay rows lack sector context before 2026-09-22 (the sector map is
+correctly refused for earlier sessions); rebuilt for all 59 it has t = −0.17.
+The email prints the replay base rate under the scoreboard every day
+(`model_picks.replay_line`, `data/replay_day117.json`), and a "wrong if" level
+within 0.5 ATR of the last close is dropped as noise (`check_levels`).
+
 ## Day116 — the morning runs in the owner's session; an email by 10:00 is a ladder
 
 2026-09-28 was the second morning in four that the fresh 08:50 session ended its

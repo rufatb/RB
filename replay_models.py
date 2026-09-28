@@ -404,3 +404,112 @@ def run_analysis(days):
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+# ── EXPLORATORY (day-117b): is there ANY signal in the rows the models see? ──
+#
+# Not part of the registered bar. A scan across every name-day of the replay:
+# the rank correlation (IC) of each input field with the 09:45 → 15:55 return,
+# averaged over sessions, plus the owner's VWAP/rvol rule on every name rather
+# than seven picks. Fifteen fields are scanned, so |t| < 3 is noise by
+# construction (Bonferroni at 5% two-sided is ~3.1); anything above it is a
+# hypothesis to REGISTER and test forward, never something to adopt from here.
+
+ROW_FIELDS = ('move_atr', 'gap', 'gap_atr', 'r0', 'rsi', 'macd_hist', 'rvol', 'sma50_pct',
+              'sma200_pct', 'range52_pos', 'atr_pct', 'last_vs_vwap')
+OPEN_FIELDS = ('gap_today', 'r0_today', 'vwap_pos_today', 'open_rvol_today')
+
+
+def _opening_frame(ticker, cache):
+    """Only the bars `consensus_picks.opening` reads, per ticker, once."""
+    import consensus_picks
+    if ticker not in cache:
+        try:
+            f = bars(ticker)
+            cache[ticker] = {'open_bars': f[[i.time() in consensus_picks.OPEN_BARS for i in f.index]],
+                             'first': f.groupby(f.index.date)['Open'].first(),
+                             'last_close': f.groupby(f.index.date)['Close'].last()}
+        except Exception:
+            cache[ticker] = None
+    return cache[ticker]
+
+
+def panel(days):
+    """One row per (session, pool name): the fields the models saw at 08:55,
+    today's opening measures at 09:45, and the realized 09:45 → close return."""
+    import consensus_picks
+    import deepseek_opportunities as O
+    rows, cache, open_cache = [], {}, {}
+    for d in days:
+        pool_path = CACHE/'pools'/f'{d}.json'
+        if not pool_path.exists():
+            continue
+        s = d.isoformat()
+        for c in O.usable_candidates(json.loads(pool_path.read_text())['candidates']):
+            t, tech = c['ticker'], c.get('technicals') or {}
+            sc = realized(s, t, 'LONG', cache)
+            of = _opening_frame(t, open_cache)
+            if not sc or of is None:
+                continue
+            m = consensus_picks.opening(of['open_bars'], d)
+            prior = [x for x in of['last_close'].index if x < d]
+            row = {'session': s, 'ticker': t, 'r': sc['r_pct']}
+            for k in ROW_FIELDS[:-1]:
+                v = tech.get(k)
+                row[k] = v if isinstance(v, (int, float)) else None
+            row['last_vs_vwap'] = ((tech['last']/tech['vwap'] - 1)*100
+                                   if tech.get('last') and tech.get('vwap') else None)
+            row['gap_today'] = ((of['first'][d]/of['last_close'][prior[-1]] - 1)*100
+                                if prior and d in of['first'].index else None)
+            row['r0_today'] = ((m['price']/of['first'][d] - 1)*100
+                               if m.get('price') and d in of['first'].index else None)
+            row['vwap_pos_today'] = m.get('price_vs_vwap_pct') if m.get('status') == 'OK' else None
+            row['open_rvol_today'] = m.get('rvol') if m.get('status') == 'OK' else None
+            rows.append(row)
+    return rows
+
+
+def feature_scan(rows):
+    import pandas as pd
+    df = pd.DataFrame(rows)
+    out = {}
+    for f in ROW_FIELDS + OPEN_FIELDS:
+        ics = []
+        for _s, g in df.groupby('session'):
+            g = g[[f, 'r']].dropna()
+            if len(g) >= 10 and g[f].nunique() > 1:
+                ics.append(g[f].rank().corr(g['r'].rank()))
+        if len(ics) >= 5:
+            m = sum(ics)/len(ics)
+            sd = (sum((x-m)**2 for x in ics)/(len(ics)-1))**0.5
+            out[f] = {'sessions': len(ics), 'mean_ic': round(m, 4),
+                      't': round(m/(sd/len(ics)**0.5), 2) if sd else None}
+    return out
+
+
+def vwap_rule(rows, rvol_min=1.2, draws=2000, seed=1172):
+    """The owner's rule on every name-day: LONG above today's VWAP, SHORT below,
+    opening rvol > rvol_min. Placebo: the same flagged names, random sides."""
+    by_session = {}
+    for r in rows:
+        if r['vwap_pos_today'] is None or r['open_rvol_today'] is None:
+            continue
+        if r['open_rvol_today'] > rvol_min and r['vwap_pos_today'] != 0:
+            sign = 1 if r['vwap_pos_today'] > 0 else -1
+            by_session.setdefault(r['session'], []).append((sign, r['r']))
+    flat = [(s, sign, x) for s, v in by_session.items() for sign, x in v]
+    if not flat:
+        return {'flagged': 0}
+    signed = [sign*x for _, sign, x in flat]
+    rng = random.Random(seed)
+    null = []
+    for _ in range(draws):
+        rs = [rng.choice((1, -1))*x for _, _, x in flat]
+        null.append(sum(v > 0 for v in rs)/len(rs))
+    rate = sum(v > 0 for v in signed)/len(signed)
+    c = clustered({s: [sign*x for sign, x in v] for s, v in by_session.items()})
+    return {'flagged': len(flat), 'sessions': len(by_session), 'hit_rate': round(rate, 4),
+            'mean_signed_pct': round(sum(signed)/len(signed), 4), 'clustered_t': c['t'] and round(c['t'], 2),
+            'placebo_p': sum(x >= rate for x in null)/draws,
+            'long': _side_stats([(None, 'LONG', sign*x, None) for _, sign, x in flat if sign == 1], 'LONG'),
+            'short': _side_stats([(None, 'SHORT', sign*x, None) for _, sign, x in flat if sign == -1], 'SHORT')}

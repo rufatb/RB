@@ -346,6 +346,27 @@ def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):
                 'sessions': len(e['sessions'])} for b, e in out.items()}
 
 
+REPLAY = ROOT / 'data' / 'replay_day117.json'
+
+
+def replay_line(path=REPLAY):
+    """The base rate the live scoreboard is read against (day-117 replay,
+    house rule 8): the same question asked over 59 past sessions. One line,
+    or None when the summary is missing — never an invented number."""
+    try:
+        r = json.loads(Path(path).read_text())
+        ds, jev, rule = r['deepseek_selected'], r['jev_forced'], r['vwap_rvol_rule']
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return ('Base rate — replay of %d past sessions, same question, technicals only: '
+            'DeepSeek %d/%d (%.0f%%) vs %.0f%% for random picks from the same list; '
+            'Jev forced %d/%d (%.0f%%) vs %.0f%%; the VWAP/rvol rule %.0f%% over %d name-days. '
+            'None beat random, so a day\'s hits and misses are noise (%s).'
+            % (r['sessions'], ds['hits'], ds['picks'], ds['hit_rate']*100, ds['placebo_hit_rate']*100,
+               jev['hits'], jev['picks'], jev['hit_rate']*100, jev['placebo_hit_rate']*100,
+               rule['hit_rate']*100, rule['name_days'], r['audit']))
+
+
 def scorecard_line(card, model_kind, name):
     c = (card or {}).get(model_kind)
     if not c or not c['picks']:

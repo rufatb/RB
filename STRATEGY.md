@@ -5212,3 +5212,41 @@ re-test with a friendlier threshold after a good week — do not. The models are
 told a scaled gap is CONTEXT, not a signal, and nothing is wired into selection,
 sizing, the board or the email. Rejections now number **42** against **3**
 adoptions.
+
+## Day-117: REJECTIONS #43 and #44 — the LLM desks, and the owner's VWAP/rvol rule
+
+The owner: "the accuracy was not good for all LLMs and sections — research why
+and fix it". Registered at `PREREGISTER_day117_replay.md` before any replay pick
+existed; run by `replay_models.py`; summary in `data/replay_day117.json`;
+write-up `AUDIT_day117_accuracy.md`.
+
+Every session in Yahoo's five-minute history (59, 2026-07-06 → 09-28) was
+replayed: the PRODUCTION pool builder, fed history cut off before the session,
+rebuilt the rows the models saw at 08:55 (verified: the 09-28 replay pool equals
+that morning's live brief field for field), the LIVE prompts were asked, and the
+PRODUCTION scorer scored every pick (09:45 bar → 15:55 bar, no costs).
+
+| | right | mean / pick | clustered t | random picks, same pools |
+|---|---:|---:|---:|---:|
+| **#43** DeepSeek selected | 109/221 (49.3%) | −0.078% | −0.68 | 49.5% (p = 0.55) |
+| **#43** Jev forced | 62/116 (53.4%) | +0.002% | −0.09 | 49.4% (p = 0.20) |
+| **#44** VWAP/rvol rule, every name | 809/1,676 flags (48.3%) | −0.013% | −0.27 | p = 0.90 |
+
+Harness controls: oracle 100%, anti-oracle 0%; the statistic passes a planted
+skill and fails a coin flip; the VWAP rule test detects a planted +0.10%/trade
+at t = 2.07 and +0.20% at t = 4.4; DeepSeek's MDE80 ≈ 0.31%/pick. These are
+POWERED negatives down to those sizes, not shrugs. DeepSeek's own confidence is
+not calibrated (0.55–0.60: 44%; <0.55: 58%).
+
+WHY, measured: an exploratory scan of all 16 fields the models see or could
+see at 09:45 — every prior-session technical and today's gap, first fifteen
+minutes, VWAP position and opening rvol — found no rank correlation with the
+09:45 → close return above |t| = 1.89 (Bonferroni ≈ 3.1; a planted IC of 0.045
+is detected at t = 3.0). Rebuilt sector-relative moves: t = −0.17. There is no
+signal in these inputs at this horizon for a model to find; the desks behave
+like random draws from the list because nothing better is available to them.
+
+Claude cannot be replayed blind (this session has seen the outcomes) and its
+live 5/5 stays unverified; the replay says its prior should be ~50%. Nothing
+is adopted; the email now prints this base rate under the scoreboard every day.
+Rejections now number **44** against **3** adoptions.

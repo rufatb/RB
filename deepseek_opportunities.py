@@ -343,6 +343,11 @@ def check_basis(picks, rows):
     return gaps
 
 
+# A "wrong if" level nearer the last close than this many daily ATRs is noise
+# (day-117: the live levels sat a median 0.37 ATR out and 7 of 9 were hit).
+MIN_LEVEL_ATR = 0.5
+
+
 def check_levels(picks, side, rows):
     """Drop an `invalid_at` that cannot be the claim it says it is. Mutates picks.
 
@@ -350,7 +355,12 @@ def check_levels(picks, side, rows):
     claim is "wrong" before the open. And it must be within
     max(3 x ATR, 15%) of that close: 2026-09-23 sealed TECK-B.TO "wrong below
     65.58" on a stock closing at 96.95 — a level from another row. A bad level
-    costs the LEVEL (with a gap saying so), never the pick."""
+    costs the LEVEL (with a gap saying so), never the pick.
+
+    Day-117: and at least MIN_LEVEL_ATR x ATR away. The live record's levels
+    sat a median 0.37 ATR from entry; 7 of 9 were traded through on the day,
+    winners included, so "wrong if" was naming ordinary noise, not a thesis
+    failing."""
     last = {r.get('ticker'): r for r in rows or []}
     gaps = []
     for pick in picks:
@@ -363,11 +373,14 @@ def check_levels(picks, side, rows):
         limit = max(3 * atr, MAX_LEVEL_DISTANCE_PCT)
         distance = abs(level / close - 1) * 100
         wrong_side = level >= close if side == 'LONG' else level <= close
-        if wrong_side or distance > limit:
+        noise = atr > 0 and distance < MIN_LEVEL_ATR * atr
+        if wrong_side or distance > limit or noise:
             pick.pop('invalid_at', None)
+            why = ('on the wrong side of' if wrong_side
+                   else 'inside ordinary noise (%.2f ATR) of' % (distance / atr) if noise
+                   else '%.0f%% away from' % distance)
             gaps.append('%s %s invalid_at %.2f dropped: %s the last close %.2f' % (
-                side, safe_detail(pick['ticker'], 24), level,
-                'on the wrong side of' if wrong_side else '%.0f%% away from' % distance, close))
+                side, safe_detail(pick['ticker'], 24), level, why, close))
     return gaps
 
 

@@ -1,0 +1,44 @@
+{
+ "registration": "PREREGISTER_day117_replay.md",
+ "audit": "AUDIT_day117_accuracy.md",
+ "sessions": 59,
+ "first": "2026-07-06",
+ "last": "2026-09-28",
+ "yardstick": "09:45 bar close to 15:55 bar close, no costs",
+ "inputs": "technicals only (no headlines, no macro)",
+ "oracle": {
+  "oracle_hit_rate": 1.0,
+  "anti_oracle_hit_rate": 0.0,
+  "picks": 236
+ },
+ "deepseek_selected": {
+  "picks": 221,
+  "hits": 109,
+  "hit_rate": 0.4932,
+  "mean_r_pct": -0.0784,
+  "clustered_t": -0.68,
+  "placebo_hit_rate": 0.4948,
+  "placebo_p_hit": 0.546,
+  "passes_registered_bar": false
+ },
+ "jev_forced": {
+  "picks": 116,
+  "hits": 62,
+  "hit_rate": 0.5345,
+  "mean_r_pct": 0.0022,
+  "clustered_t": -0.09,
+  "placebo_hit_rate": 0.4937,
+  "placebo_p_hit": 0.1995,
+  "passes_registered_bar": false
+ },
+ "vwap_rvol_rule": {
+  "name_days": 1676,
+  "hit_rate": 0.4827,
+  "mean_signed_pct": -0.0126,
+  "clustered_t": -0.27,
+  "placebo_p": 0.8965,
+  "detects_planted_pct": 0.1
+ },
+ "feature_scan_max_abs_t": 1.89,
+ "fields_scanned": 16
+}

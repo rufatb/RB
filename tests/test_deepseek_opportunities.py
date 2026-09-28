@@ -761,6 +761,8 @@ def test_the_ranking_is_asked_with_reasoning_disabled():
     ('LONG', 29.0, True), ('LONG', 30.5, False),      # a LONG's level sits BELOW the close
     ('SHORT', 31.0, True), ('SHORT', 29.5, False),    # a SHORT's ABOVE it
     ('LONG', 20.0, False),                            # 33% away: another row's level
+    ('LONG', 29.8, False), ('SHORT', 30.2, False),    # day-117: 0.33 ATR out is noise
+    ('LONG', 29.7, True),                             # exactly 0.5 ATR is kept
 ])
 def test_an_invalid_at_that_cannot_be_the_claim_is_dropped_not_the_pick(side, level, kept):
     picks = [{'ticker': 'AC.TO', 'confidence': 0.6, 'reason': 'r', 'invalid_at': level}]
@@ -785,3 +787,9 @@ def test_the_prompt_asks_for_basis_and_warns_about_priced_in_reasons():
     import deepseek_opportunities as O
     assert '"basis"' in O.SYSTEM_PROMPT and 'priced into' in O.SYSTEM_PROMPT
     assert O.PROMPT_VERSION == 'day114-v3'
+
+
+def test_a_noise_level_says_it_was_noise():
+    picks = [{'ticker': 'AC.TO', 'confidence': 0.6, 'reason': 'r', 'invalid_at': 29.8}]
+    gaps = O.check_levels(picks, 'LONG', [{'ticker': 'AC.TO', 'last': 30.0, 'atr_pct': 2.0}])
+    assert 'inside ordinary noise (0.33 ATR)' in gaps[0]

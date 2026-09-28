@@ -279,6 +279,10 @@ def scoreboard_lines(board):
                    f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
     out.append('A handful of sessions resolves nothing: an interval that contains 50% is a coin '
                'flip, whichever source it belongs to. Do not promote or demote a source on it.')
+    import model_picks
+    base = model_picks.replay_line()
+    if base:
+        out.append(base)
     return out
 
 

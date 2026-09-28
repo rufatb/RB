@@ -510,12 +510,16 @@ def _scoreboard(board):
         body += (f'<tr><td>{escape(r["source"])}</td><td class="num">{r["hits"]}/{r["picks"]} '
                  f'({r["rate"]:.0%})</td><td class="num">{r["mean_r_pct"]:+.2f}%</td>'
                  f'<td class="num">{r["sessions"]}</td><td class="num">{lo:.0%}–{hi:.0%}</td></tr>')
+    import model_picks
+    base = model_picks.replay_line()
+    body_note = f'<p>{escape(base)}</p>' if base else ''
     return ('<section><h2 class="head">Scoreboard</h2><p class="sub">Every source on one yardstick</p>'
             '<div class="scroll"><table><caption>09:45 bar close to session close, no spread or '
             'cost. An interval containing 50% is a coin flip, whichever source it belongs to.'
             '</caption><thead><tr><th>Source</th><th class="num">Right</th>'
             '<th class="num">Mean per pick</th><th class="num">Sessions</th>'
-            f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div></section>')
+            f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div>'
+            f'{body_note}</section>')
 
 
 def _biotech_section(digest):

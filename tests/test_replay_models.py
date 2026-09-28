@@ -85,3 +85,20 @@ def test_rule_picks_take_the_extremes_and_the_reversal_flips_them():
              for t, v in (('A', 3), ('B', 1), ('C', -1), ('D', -3), ('E', 0))]
     assert R.rule_picks(cands, k=1) == [('LONG', 'A'), ('SHORT', 'D')]
     assert R.rule_picks(cands, k=1, reverse=True) == [('LONG', 'D'), ('SHORT', 'A')]
+
+
+def test_the_base_rate_line_prints_the_replay_or_nothing(tmp_path):
+    import json
+    import model_picks
+    assert model_picks.replay_line(tmp_path/'missing.json') is None
+    line = model_picks.replay_line()
+    summary = json.load(open(model_picks.REPLAY))
+    assert f"{summary['deepseek_selected']['hits']}/{summary['deepseek_selected']['picks']}" in line
+    assert 'None beat random' in line
+
+
+def test_the_email_scoreboard_carries_the_base_rate():
+    import email_render
+    import primary_board
+    text = '\n'.join(email_render._scoreboard(primary_board.leaderboard({})))
+    assert 'Base rate — replay of 59 past sessions' in text
