@@ -518,6 +518,35 @@ def _scoreboard(board):
             f'<th class="num">95% interval</th></tr></thead><tbody>{body}</tbody></table></div></section>')
 
 
+def _biotech_section(digest):
+    """Part 2: each reviewed catalyst event with the model's own call."""
+    import biotech_leans
+    leans = (digest.get('biotech') or {}).get('leans')
+    events = (digest.get('research_calendar') or {}).get('events') or []
+    if leans is None and not events:
+        return ''
+    calls = {c['ticker']+c['window_end']+c['kind']: c for c in (leans or {}).get('calls') or []}
+    rows = ''
+    for e in events:
+        c = calls.get(e['ticker']+e['window_end']+e['kind'])
+        when = (e['window_start'] if e['window_start'] == e['window_end']
+                else f"{e['window_start']} → {e['window_end']}")
+        rows += (f'<tr><td class="tick">{escape(e["ticker"])}</td>'
+                 f'<td>{escape(e["kind"])} — {escape(safe_detail(e.get("asset") or "", 60))}</td>'
+                 f'<td>{escape(when)}</td>'
+                 f'<td><span class="status">{escape(c["side"]) if c else "&mdash;"}</span></td>'
+                 f'<td class="num">{fmt(c["confidence"]) if c else "&mdash;"}</td>'
+                 f'<td>{escape(c["reason"]) if c else escape("no call: " + str((leans or {}).get("reason") or "not staged"))}'
+                 f' <a href="{escape(e["source_url"])}">source</a></td></tr>')
+    return ('<section><h2 class="head">Part 2 · Biotech catalysts</h2>'
+            '<p class="sub">Reviewed events, 3–6 months, with the model&#x27;s own side into each</p>'
+            '<div class="scroll"><table><caption>DeepSeek&#x27;s forced LONG or SHORT per event; '
+            '0.50 is a coin flip. Not a forecast. ' + escape(biotech_leans.record_line()) +
+            '</caption><thead><tr><th>Name</th><th>Event</th><th>Window</th><th>Call</th>'
+            '<th class="num">Own confidence</th><th>Why</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div></section>')
+
+
 def _consensus_section(intra):
     """Part 3 (consensus_picks): the owner's strategy picks. Absent from a
     publication made before it existed; never sized."""
@@ -948,6 +977,8 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
   {_factor_section(intra)}
 
   {_consensus_section(intra)}
+
+  {_biotech_section(digest)}
 
   <section>
     <h2 class="head">Gaps and faults</h2>

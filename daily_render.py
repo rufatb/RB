@@ -912,7 +912,10 @@ def text(d):
               'Gross = tide + selection; net = gross − spread − fees − slippage. '
               'Long-minus-short and net exposure are evaluated separately on original capacity.',
               '09:46→15:30 and 09:46→15:45 remain shadow experiments. Overnight remains unadopted.',
-              '', biotech.render(d['biotech'])]
+              '', biotech.render(d['biotech']),
+              '', '### Calls into each reviewed event (the model\'s own side)',
+              *__import__('biotech_leans').table_lines((d['biotech'] or {}).get('leans'),
+                                                       (d.get('research_calendar') or {}).get('events'))]
     calendar=d.get('research_calendar',{})
     lines += ['', '## Daily / weekly catalyst calendar',
               calendar.get('label','Unranked research calendar — not certified Monitor picks.')]

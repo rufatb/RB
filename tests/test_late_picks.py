@@ -41,15 +41,20 @@ def test_compose_is_labelled_late_and_never_sized(root, monkeypatch):
     monkeypatch.setattr(J, 'load_diagnostic', lambda r, n: {
         'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': [],
         'forced_long': {'ticker': 'AAA.TO', 'probability': 0.3, 'gated_abstain_probability': 0.6,
-                        'cleared_gated_abstain': False}})
-    monkeypatch.setattr(L, '_biotech', lambda now: [])
+                        'cleared_gated_abstain': False},
+        'long_ranked': [{'ticker': 'RANKED.TO', 'probability': 0.1}]})
+    monkeypatch.setattr(L, 'biotech_part', lambda root, now: [])
     out = L.compose(root, {'longs': [{'ticker': 'AAA.TO', 'confidence': 0.55, 'reason': 'why',
                                        'invalid_at': 98.0}], 'shorts': []}, now=NOW, reason='test')
     text = open(out['text_path']).read()
     assert 'LATE PICKS' in out['subject'] and '2026-09-24' in out['subject']
     assert 'AFTER the open' in text and 'not sized' in text and 'scored separately' in text
-    assert 'LONG AAA.TO' in text and 'LONG BBB.TO' in text
+    assert '| LONG AAA.TO | 0.55 | below 98.00 | why |' in text      # Claude, one table row
+    assert '| LONG BBB.TO | 0.60 | below 49.00 | r |' in text         # DeepSeek
+    assert '| LONG AAA.TO | 0.30 | 0.60 |' in text                    # Jev: FORCED only
+    assert 'RANKED.TO' not in text
     assert 'would rather have done nothing' in text and 'never a selection' in text
+    assert '<table' in open(out['html_path']).read()
     assert 'shares' not in text.lower() and '$' not in text
 
 

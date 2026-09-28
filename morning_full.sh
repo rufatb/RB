@@ -296,6 +296,17 @@ else
     fi
 fi
 
+# ── 1b. BIOTECH CALLS (owner, 2026-09-28) ─────────────────────────────────
+# A LONG/SHORT per reviewed catalyst event. Its horizon is the event window,
+# months away, so it is not bound to the 09:30 cutoff and runs outside the
+# staging budget. ~6s measured; a failure costs Part 2's call column only.
+if timeout 150 python biotech_leans.py --state-dir "$RB_STATE_DIR" >/dev/null; then
+    log "  biotech calls: staged and recorded"
+else
+    log "  biotech calls: NOT staged — Part 2 prints its events without a call"
+    stage_faults+=("biotech calls not staged")
+fi
+
 # ── 2. HOLD until the publication window opens ─────────────────────────────
 # The session must stay alive: the staged snapshot is on this filesystem and
 # nowhere else. Poll rather than sleep in one block so the wait is visible in

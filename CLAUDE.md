@@ -1,5 +1,43 @@
 # Working notes for this repo
 
+## Day116 — the morning runs in the owner's session; an email by 10:00 is a ladder
+
+2026-09-28 was the second morning in four that the fresh 08:50 session ended its
+turn at 08:53 and died with its job. The owner asked for the email "100% every
+morning before 10am". **The report Routine now fires INTO the owner's session**
+(`persistent_session_id`), which has Gmail, can push, and keeps background work
+alive across turns; the fresh Routine `trig_01YZ2smjbMZXJvWKBxU4JfWj` is
+DISABLED, not deleted. `ROUTINE_PROMPT.md` is the prompt; `ROUTINE_FALLBACKS.md`
+holds the 09:38 watchdog and 09:50 bridge, which queue behind a live morning
+turn and do work only when it died.
+
+**What to send is decided by ONE command, `delivery_plan.py`:** REPORT (today's
+publication, claimed through `gmail_delivery.prepare`) → PICKS_ONLY (no report,
+but the desks' picks were sealed before the open: `picks_only.py` composes them
+in under a second, no network, recorded as source `picks_only`) → LATE
+(`late_picks.py`). At 09:58 with nothing sent, a ⛔ NOT PUBLISHED notice goes out
+first. A failed `morning.sh` no longer throws away pre-open picks to rebuild
+worse after-the-open ones.
+
+**09-28's email was 14 minutes late because of a tool load, not the report.**
+The bridge loaded `send_later` through ToolSearch at 09:51; a deferred-tool load
+pauses the turn until "Tool loaded." arrives. The morning prompt loads Gmail at
+08:50 and nothing afterwards; the new bridge needs no deferred tool but Gmail.
+
+**Part 2 has a side now** (`biotech_leans.py`, owner's request): DeepSeek gives
+one forced LONG/SHORT per REVIEWED event with its own confidence and a reason
+from the supplied facts (~6s, thinking disabled). Staged after the 09:30 cutoff
+— its horizon is the event window. Recorded in `data/biotech_calls.csv`, scored
+by the evening job from the call day's close to the first close after the
+window; the scorecard counts each event ONCE (first call) because daily calls
+on one event are not independent. It is the model's call, not a forecast.
+
+**Every picks section of the email is one table** (reason in the last column),
+and **Jev shows its forced picks only** — a Jev SELECTION still gets one line so
+a sized leg the subject counts is never hidden. The late and picks-only emails
+use the same tables (`email_render.pick_table` / `jev_forced_table` /
+`html_from_text`).
+
 ## Day115 — Part 3: the owner's strategy picks, at the end of every email
 
 The owner asked for one more section naming 1–2 stocks every day, never empty,

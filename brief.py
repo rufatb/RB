@@ -343,6 +343,13 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             calendar = biotech.research_calendar(json.loads(Path(path).read_text())['events'],now)
         except Exception as event_exc:
             calendar = {'events':[], 'gaps':[type(event_exc).__name__]}
+    # Part 2's calls (owner, 2026-09-28): the model's own LONG/SHORT into each
+    # reviewed event, staged before 09:44 and read here as a pure file read.
+    try:
+        import biotech_leans
+        bio['leans'] = biotech_leans.load_prepared(state_dir, now)
+    except Exception as exc:
+        error('biotech_leans', RuntimeError(type(exc).__name__))
     # Deadline checked after acquisition, not just when the process started.
     if live_clock:
         now = dt.datetime.now(ZoneInfo('America/New_York'))
@@ -561,7 +568,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     # confirmed at the open by VWAP and opening rvol. Never empty while any
     # candidate exists; a name that missed the rule is labelled so. Its own try:
     # nothing here can cost a desk, the engine or the email.
-    consensus = None
+    consensus, open_measured = None, {}
     try:
         import consensus_picks
         opened = section_status.get('consensus_open') or {}
@@ -580,6 +587,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     try:
         import consensus_picks
         consensus_picks.verify_desks(desks, (section_status.get('consensus_open') or {}).get('value'))
+        open_measured = dict((section_status.get('consensus_open') or {}).get('value') or {})
     except Exception as exc:
         error('desk_verification', RuntimeError(type(exc).__name__))
     report = {'schema_version':2,'session':now.date().isoformat(),'generated_at':now.isoformat(),
@@ -592,7 +600,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
-                          'consensus':consensus,
+                          'consensus':consensus,'open_measured':open_measured,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import html
 import json
 import os
 import shutil
@@ -39,13 +38,13 @@ from zoneinfo import ZoneInfo
 import yaml
 
 import claude_opportunities as C
+from diagnostics import safe_detail
 import deepseek_opportunities as O
 
 ET = ZoneInfo('America/New_York')
 ROOT = Path(__file__).resolve().parent
 ARTIFACT_URL = 'https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9'
 BRIEF_JSON = 'late_claude_brief.json'
-RANKED_SHOWN = 3
 
 
 def _now(now=None):
@@ -88,6 +87,8 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     step('claude_brief', lambda: write_brief(root, cfg, _now(now)))
     step('deepseek', lambda: O.stage(root, diagnostic=True))
     step('jev', lambda: J.stage(root, diagnostic=True))
+    import biotech_leans
+    step('biotech_calls', lambda: biotech_leans.stage(root))
     (root/'late_steps.json').write_text(json.dumps(steps))
     return steps
 
@@ -133,71 +134,22 @@ def check(root, answer):
     return claude_picks(root, answer)[1]
 
 
-def _pick_line(side, p):
-    wrong = (' Wrong if %s %s.' % ('below' if side == 'LONG' else 'above', p['invalid_at'])
-             if p.get('invalid_at') is not None else '')
-    conf = p.get('confidence')
-    conf = ' (own confidence %.2f)' % conf if isinstance(conf, (int, float)) else ''
-    return '- %s %s%s — %s%s' % (side, p['ticker'], conf, p.get('reason') or '', wrong)
-
-
-def _desk(title, result, picks=None):
-    lines = ['', title]
-    if picks is None and not isinstance(result, dict):
-        return lines + ['Unavailable.']
-    picks = picks if picks is not None else result
-    if result is not None and isinstance(result, dict) and result.get('status') == 'UNAVAILABLE':
-        return lines + ['Unavailable — %s' % (result.get('reason') or 'no reason given')]
-    rows = ([_pick_line('LONG', p) for p in picks.get('longs') or []]
-            + [_pick_line('SHORT', p) for p in picks.get('shorts') or []])
-    return lines + (rows or ['No pick: nothing cleared its own bar today.'])
-
-
-def _jev(result):
-    lines = ['', '3 · Jev']
-    if not isinstance(result, dict) or result.get('status') == 'UNAVAILABLE':
-        return lines + ['Unavailable — %s' % ((result or {}).get('reason') or 'not staged')]
-    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
-        for p in result.get(key) or []:
-            lines.append('- SELECTED %s %s — probability %.2f vs its own "none" %.2f'
-                         % (side, p['ticker'], p.get('probability', 0), p.get('abstain_probability', 0)))
-    if not (result.get('longs') or result.get('shorts')):
-        lines.append('Selected nothing: no name beat its own "none of these" option (the registered gate).')
-    for side, key in (('LONG', 'long_ranked'), ('SHORT', 'short_ranked')):
-        ranked = (result.get(key) or [])[:RANKED_SHOWN]
-        if ranked:
-            lines.append('Ranked %s (a ranking, NOT a selection): ' % side + ', '.join(
-                '%s %.2f%s' % (r['ticker'], r.get('probability', 0),
-                               '' if r.get('cleared_gate') else ' (below its own "none")') for r in ranked))
-    for side, key in (('LONG', 'forced_long'), ('SHORT', 'forced_short')):
-        f = result.get(key)
-        if isinstance(f, dict) and f.get('ticker'):
-            tail = ('' if f.get('cleared_gated_abstain')
-                    else ' — below its own abstain: Jev would rather have done nothing')
-            lines.append('Forced %s (best of the set, never a selection): %s %.2f vs abstain %.2f%s'
-                         % (side, f['ticker'], f.get('probability', 0),
-                            f.get('gated_abstain_probability', 0), tail))
-    return lines
-
-
-def _biotech(now):
+def biotech_part(root, now):
+    """Part 2 as the report prints it: every reviewed event, one row, with the
+    model's call when one was staged."""
+    import biotech
+    import biotech_leans
     try:
-        import biotech
-        snap_path = ROOT/'data'/'biotech_snapshot.json'
-        universe = {s['ticker'] for s in biotech.select_universe(json.loads(snap_path.read_text()), now)}
         events = json.loads((ROOT/'data'/'biotech_events.json').read_text())['events']
+        calendar = biotech.research_calendar(events, now)['events']
     except Exception as exc:
-        return ['', 'Biotech catalysts', 'Unavailable (%s).' % type(exc).__name__]
-    rows = [e for e in events if e['ticker'] in universe]
-    lines = ['', 'Biotech catalysts (3–6 months; factual, no directional call)']
-    for e in sorted(rows, key=lambda e: e['window_end']):
-        when = e['window_start'] if e['window_start'] == e['window_end'] else '%s to %s' % (e['window_start'], e['window_end'])
-        lines.append('- %s %s — %s (%s), %s. Source: %s' % (e['ticker'], e['kind'], e['asset'],
-                                                          e['indication'], when, e['source_url']))
-    return lines + ([] if rows else ['No reviewed event on a monitored name.'])
+        return ['', '## Part 2 — Biotech catalysts', 'Unavailable (%s).' % type(exc).__name__]
+    table = biotech_leans.table_lines(biotech_leans.load_prepared(root, now), calendar)
+    return ['', '## Part 2 — Biotech catalysts · 3–6 months'] + (table or ['No reviewed event today.'])
 
 
 def compose(root, answer, *, now=None, reason='the scheduled report session stopped before publication'):
+    import email_render as E
     now = _now(now)
     root = Path(root)
     import jev_opportunities as J
@@ -212,7 +164,8 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
         jev = J.unavailable('diagnostic snapshot unreadable (%s)' % type(exc).__name__)
     session = now.date().isoformat()
     subject = 'RB Daily Report — %s — LATE PICKS (the 09:46 report did not publish)' % session
-    head = ['RB Daily Report — %s — LATE PICKS' % session,
+    head = ['# RB Daily Report — %s — LATE PICKS' % session,
+            'Asked at %s ET, after the open. Not sized; scored separately.' % now.strftime('%H:%M'),
             'The 09:46 report did not publish today: %s.' % reason,
             'These picks were asked at %s ET, AFTER the open, by the same pipeline in its '
             'diagnostic mode, from %d names. They are not the frozen report and are not sized; '
@@ -220,14 +173,23 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             'Research only — not orders.' % (now.strftime('%H:%M'), brief['considered']),
             'Confidence numbers are each model\'s own, not calibrated win probabilities; the '
             'models are never averaged.']
-    body = (head + _desk('1 · Claude', {'status': 'READY'}, picks)
-            + (['  (dropped: %s)' % '; '.join(problems)] if problems else [])
-            + _desk('2 · DeepSeek', deepseek) + _jev(jev) + _biotech(now)
-            + ['', 'Page: ' + ARTIFACT_URL])
+
+    def desk(title, snap):
+        out = ['', '### ' + title]
+        if snap.get('status') not in ('READY', 'NO_OPPORTUNITY'):
+            return out + ['Unavailable — %s' % safe_detail(snap.get('reason') or 'no answer', 160)]
+        return out + (E.pick_table(snap) or ['No pick on either side.'])
+    body = (head + ['', '## Part 1 — Picks, asked after the open']
+            + desk('1 · Claude', {'status': 'READY', **picks})
+            + (['Dropped from Claude\'s answer: %s' % '; '.join(problems)] if problems else [])
+            + desk('2 · DeepSeek', deepseek)
+            + ['', '### 3 · Jev']
+            + (E.jev_forced_table(jev) if jev.get('status') in ('READY', 'NO_OPPORTUNITY')
+               else ['Unavailable — %s' % safe_detail(jev.get('reason') or 'no answer', 160)])
+            + biotech_part(root, now)
+            + ['', '---', 'Research only, not orders. Page: ' + ARTIFACT_URL])
     text = '\n'.join(body) + '\n'
-    html_body = '<html><body style="font-family:sans-serif">' + ''.join(
-        ('<h3>%s</h3>' % html.escape(l)) if l[:2] in ('1 ', '2 ', '3 ') or l.startswith('Biotech')
-        else ('<p>%s</p>' % html.escape(l) if l else '') for l in body) + '</body></html>'
+    html_body = E.html_from_text(text)
     out = root/'late'
     out.mkdir(exist_ok=True)
     (out/'subject.txt').write_text(subject)

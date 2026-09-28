@@ -130,3 +130,33 @@ def test_the_session_waits_by_command_and_is_told_not_to_end_its_turn():
     text = open(PROMPT, encoding='utf-8').read()
     assert 'python morning_wait.py' in text
     assert 'NEVER END YOUR TURN WHILE IT SAYS RUNNING' in text
+
+
+FALLBACKS = os.path.join(ROOT, 'ROUTINE_FALLBACKS.md')
+
+
+def test_the_send_is_decided_by_one_command_and_every_mode_is_handled():
+    """2026-09-28: the owner asked for an email "100% ... before 10am". The
+    rung is chosen by delivery_plan.py, so every mode it can print must have
+    an instruction, and the 09:58 rule must survive."""
+    import inspect
+    import delivery_plan
+    modes = set(re.findall(r"'mode': '([A-Z_]+)'", inspect.getsource(delivery_plan)))
+    assert modes == {'REPORT', 'PICKS_ONLY', 'LATE'}
+    for body in (text(), open(FALLBACKS, encoding='utf-8').read()):
+        assert 'python delivery_plan.py' in body
+        for mode in modes:
+            assert mode in body, mode
+        assert '09:58' in body and '⛔ NOT PUBLISHED' in body
+
+
+def test_the_fallback_prompts_carry_no_live_credential():
+    body = open(FALLBACKS, encoding='utf-8').read()
+    assert 'sk-f8691' not in body and 'sk-or-v1-' not in body
+    assert '<DEEPSEEK_API_KEY>' in body and '<OPENROUTER_API_KEY>' in body
+
+
+def test_every_command_the_fallbacks_name_exists():
+    body = open(FALLBACKS, encoding='utf-8').read()
+    for script in re.findall(r'python (\w+\.py)', body):
+        assert os.path.exists(os.path.join(ROOT, script)), script
