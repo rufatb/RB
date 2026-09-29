@@ -45,12 +45,12 @@ If dashboard.is_trading_day says today is not a trading day, stop and report "no
 Load the Gmail tools NOW: if `mcp__Gmail__send_message` is not callable, run ToolSearch `select:mcp__Gmail__send_message,mcp__Gmail__search_threads`. Loading a deferred tool pauses the turn until "Tool loaded." arrives — at 08:50 that costs nothing; at 09:50 it cost the 09-28 email fourteen minutes. Load nothing else later in the morning.
 
 STEP 2 — credentials (a container restart wipes .rb-state, so write them every morning)
-  export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-flash
+  export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-v4-pro
   mkdir -p .rb-state/secrets && chmod 700 .rb-state/secrets
   printf '%s' '<DEEPSEEK_API_KEY>' > .rb-state/secrets/deepseek_api_key
   printf '%s' '<OPENROUTER_API_KEY>' > .rb-state/secrets/openrouter_api_key
   chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key
-  printf 'deepseek-flash\n' > .rb-state/deepseek_model.txt
+  printf 'deepseek-v4-pro\n' > .rb-state/deepseek_model.txt
 The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is `typesafe/jev-1.13` on OpenRouter at POST /api/alpha/decisions. Do not "correct" either model name.
 
 STEP 3 — start the morning job IN THE BACKGROUND
@@ -113,6 +113,7 @@ Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on netwo
 STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
   - the job's exit code, and what broke if anything, in plain words.
+  - TOP 2 — the two names at the top of the email: side, ticker, how many models back each ("3 of 3" … "1 of 3") and who.
   - PART 1 — each desk in order, Claude, DeepSeek, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9

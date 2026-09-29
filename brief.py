@@ -568,6 +568,24 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         wire_releases = newswire.release_cells(sorted(t for t in picked if t), now.date())
     except Exception as exc:
         error('wire_releases', RuntimeError(type(exc).__name__))
+    # TOP 2 (owner, 2026-09-29): the two names the models agree on most, at the
+    # top of every email. Counted, never averaged; its own try so nothing here
+    # can cost a desk, the engine or the email.
+    top_two = None
+    try:
+        import top_picks
+        top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence)
+        try:
+            import newswire
+            extra = [p['ticker'] for p in top_two['picks'] if p['ticker'] not in wire_releases]
+            wire_releases.update(newswire.release_cells(extra, now.date()))
+        except Exception as exc:
+            error('wire_releases_top2', RuntimeError(type(exc).__name__))
+        for p in top_two['picks']:
+            if wire_releases.get(p['ticker']):
+                p['wire'] = wire_releases[p['ticker']]
+    except Exception as exc:
+        error('top_two', RuntimeError(type(exc).__name__))
     # PART 3 (the owner's VWAP/rvol strategy picks) and the per-pick open check
     # were UNWIRED on 2026-09-28 at the owner's request ("drop what is proven
     # not to work"): over 1,676 replayed name-days the rule was 48.3% right,
@@ -583,7 +601,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'clock':clock,'offline':no_net,'shadow':shadow,'errors':errors,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
-                          'wire_releases':wire_releases,
+                          'wire_releases':wire_releases,'top_two':top_two,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

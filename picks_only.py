@@ -50,7 +50,8 @@ def load(state_dir, now):
 
 
 def has_picks(snaps):
-    return any(s.get(k) for s in snaps.values() for k in ('longs', 'shorts')) or bool(
+    return any(s.get(k) for s in snaps.values() if isinstance(s, dict)
+               for k in ('longs', 'shorts')) or bool(
         snaps['jev'].get('forced_long') or snaps['jev'].get('forced_short'))
 
 
@@ -60,7 +61,7 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
     from diagnostics import safe_detail
     now = now or dt.datetime.now(ET)
     root = Path(state_dir)
-    snaps = load(root, now)
+    snaps = dict(load(root, now))
     session = now.date().isoformat()
     subject = 'RB Daily Report — %s — PICKS ONLY (%s)' % (session, safe_detail(reason, 80))
 
@@ -70,11 +71,14 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
             return out + ['Unavailable — %s' % safe_detail(snap.get('reason') or 'not staged', 160)]
         return out + (E.pick_table(snap) or ['No pick today: nothing worth a position on either side.'])
     jev = snaps['jev']
+    import top_picks
+    snaps['top_two'] = top_picks.select(snaps['claude'], snaps['opportunities'], jev)
     body = (['# RB Daily Report — %s — PICKS ONLY' % session,
              'Sent %s ET from the picks sealed before the open.' % now.strftime('%H:%M'),
              'The full 09:46 report did not publish today: %s. These are the desks\' own '
              'picks, sealed BEFORE the open and unchanged; without the 09:46 quote check '
              'nothing is sized. Research only — not orders.' % safe_detail(reason, 160),
+             '', *top_picks.table(snaps['top_two']),
              '', '## Part 1 — Picks, sealed before the open']
             + desk('1 · Claude', snaps['claude'])
             + desk('2 · DeepSeek', snaps['opportunities'])

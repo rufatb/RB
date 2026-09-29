@@ -80,6 +80,13 @@ MAX_COMPLETION_TOKENS = 32768
 # the budget cannot fix a reasoning pass that does not converge on this many
 # names, and a section that times out every morning is not a section.
 THINKING = {'type': 'disabled'}
+# THE ACCOUNT MODEL (owner's decision, 2026-09-29): deepseek-v4-pro, replacing
+# deepseek-flash. Measured that day with thinking disabled: 2.3-5.0 s on the
+# 75-name 09-28 pool (flash 2.7 s), so the morning's budget is unchanged. The
+# planted control: both planted names found cleanly in 2 of 4 runs, once the
+# short name put LONG, once a noise name picked (flash: 2 of 3 clean, 1
+# abstention). It also abstained more on the real pool. CLAUDE.md Day119.
+DEFAULT_MODEL = 'deepseek-v4-pro'
 MODE = 'non-thinking'
 TICKER = re.compile(r'[A-Z0-9][A-Z0-9.\-]{0,19}\Z')
 PREOPEN_CUTOFF = dt.time(9, 30)
@@ -480,7 +487,7 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     if request is None:
         return unavailable('No candidate carried complete prepared technicals.')
     allowed, payload = request['allowed'], request['payload']
-    model = model or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-flash'
+    model = model or os.environ.get('DEEPSEEK_MODEL') or DEFAULT_MODEL
 
     if client is None:
         key = os.environ.get('DEEPSEEK_API_KEY', '').strip()

@@ -821,6 +821,7 @@ def text(d):
               *d['replacement']['notes'],
               'Review: '+d['replacement']['review_url']]
              if d.get('replacement') else []),
+           *(['', *__import__('top_picks').table(intra['top_two'])] if intra.get('top_two') else []),
            '', '## Part 1 — Intraday Opportunities',
            intra['contract']+'. Signal reference: 09:45 completed bar; execution quote is separate.',
            intra['model_claim'],

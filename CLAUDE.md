@@ -1,5 +1,50 @@
 # Working notes for this repo
 
+## Day119 — DeepSeek is deepseek-v4-pro; Top 2 at the top of every email
+
+**Model (owner's decision, 2026-09-29):** `deepseek-v4-pro` replaced
+`deepseek-flash` everywhere:
+* `deepseek_opportunities.DEFAULT_MODEL`, biotech_leans, late_picks' model file;
+* ROUTINE_PROMPT/FALLBACKS STEP 2, and the live morning, watchdog and bridge
+  Routines.
+
+v4-pro THINKS by default (388 reasoning tokens on a one-line reply), so the
+factor adapter now disables thinking for it as it does for flash. The
+opportunities and biotech calls already did. Measured with thinking off: 2–5 s
+on the 75-name pool, so the morning budget is unchanged.
+
+The owner said it "works better"; the evidence does not show that, and they
+were told:
+* **Replay, same 59 sessions and inputs as day-118:** v4-pro 51/100 (51%),
+  −0.15%/pick, t = −1.30, random 49.6%, p = 0.43 — FAILS the day-117 bar, like
+  flash (114/213, −0.04%). It abstained on 14 of 59 sessions and makes about
+  half as many picks.
+* **Planted control, 4 runs:** clean 2/4, once the planted short put LONG, once
+  a noise name picked. Flash was cleaner (2/3 clean, 1 abstention).
+
+Nothing about scoring changed. Its record starts 2026-09-29 under the same
+`deepseek_selected` row; `prompt_version` is unchanged, so split by date if
+comparing the two models.
+
+**Top 2 (`top_picks.py`, registered in `PREREGISTER_day119_top2.md`):** exactly
+two names, first in every email, the full report, the page, the picks-only email
+and the late email. The hero line reads "Top 2 today: …".
+
+Agreement is COUNTED from each model's backing on the same side:
+* Claude's selection;
+* DeepSeek's selection;
+* Jev's selection, forced pick or ranked name.
+
+Names are ranked by backers, then the strongest kind of backing, then Jev's
+rank, then the strongest single number — never an average. Opposite sides are
+SPLIT and go last. "1 of 3" is printed as no agreement. With every model down
+it says so and invents nothing.
+
+It is recorded as `top2/pick` with the new `agreement` column, and it is the
+first scoreboard row. It reuses `consensus_picks.flags` (pure) — NOT the
+rejected VWAP rule, which stays unwired. The engine is not an LLM and never
+backs a name here.
+
 ## Day118 — the wire: the issuer's own releases, and Part 3 dropped
 
 The owner: "yes to press-release feed, and drop what is proven not to work".

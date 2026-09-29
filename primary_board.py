@@ -132,7 +132,8 @@ def headline_legs(intra):
     return legs or intra.get('legs') or []
 
 
-LEADERBOARD = (('claude_selected', 'Claude'),
+LEADERBOARD = (('top2_pick', 'Top 2 (where the models agree)'),
+               ('claude_selected', 'Claude'),
                ('deepseek_selected', 'DeepSeek'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),

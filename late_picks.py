@@ -68,7 +68,8 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
             if src.exists():
                 shutil.copy(src, root/'secrets'/name)
                 os.chmod(root/'secrets'/name, 0o600)
-        (root/'deepseek_model.txt').write_text('deepseek-flash\n')
+        import deepseek_opportunities
+        (root/'deepseek_model.txt').write_text(deepseek_opportunities.DEFAULT_MODEL + '\n')
     cfg = _cfg()
     steps = []
     def step(name, fn):
@@ -179,7 +180,12 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
         if snap.get('status') not in ('READY', 'NO_OPPORTUNITY'):
             return out + ['Unavailable — %s' % safe_detail(snap.get('reason') or 'no answer', 160)]
         return out + (E.pick_table(snap) or ['No pick on either side.'])
-    body = (head + ['', '## Part 1 — Picks, asked after the open']
+    import top_picks
+    top = top_picks.select({'status': 'READY', **picks}, deepseek, jev)
+    body = (head + ['', *top_picks.table(top),
+                    'These, too, were asked after the open; not recorded separately '
+                    '(each desk\'s late pick is).']
+            + ['', '## Part 1 — Picks, asked after the open']
             + desk('1 · Claude', {'status': 'READY', **picks})
             + (['Dropped from Claude\'s answer: %s' % '; '.join(problems)] if problems else [])
             + desk('2 · DeepSeek', deepseek)

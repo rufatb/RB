@@ -226,6 +226,9 @@ def text(d):
         lines += ['', '## Requested replacement',
                   'Original morning computation retained; no recovered or fresh entry signal is claimed.',
                   *d['replacement']['notes']]
+    if intra.get('top_two'):                # absent from publications before 2026-09-29
+        import top_picks
+        lines += ['', *top_picks.table(intra['top_two'])]
     lines += ['', '## Part 1 — Intraday picks · enter 09:46, exit 15:59 ET']
     if intra.get('desks'):
         lines += desk_sections(intra)
@@ -303,7 +306,12 @@ def _hero(d):
         head, sub = f'{len(legs)} picks sized', 'Share counts use the 09:46 ET prices.'
     else:
         head, sub = 'No picks today', 'Each desk below says why.'
+    top = [f"{p['side']} {p['ticker']} ({p['agreement']})"
+           for p in (intra.get('top_two') or {}).get('picks') or []]
+    top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
+                f'Top 2 today: {full.escape(" · ".join(top))}</div>' if top else '')
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
+            f'{top_line}'
             f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'
             f'<div style="font:14px/1.55 Arial,sans-serif;color:{MUTED};margin-top:7px">'
             f'{full.escape(sub)}</div></td></tr>')

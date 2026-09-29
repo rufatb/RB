@@ -43,7 +43,8 @@ ROOT = Path(__file__).resolve().parent
 LEDGER = ROOT / 'data' / 'model_picks.csv'
 FIELDS = ('session', 'model', 'kind', 'side', 'ticker', 'confidence', 'abstain_probability',
           'invalid_at', 'prompt_version', 'source', 'entry', 'exit', 'r_pct', 'hit',
-          'invalidated', 'scored_at', 'basis', 'entry_time', 'open_check', 'top_pick')
+          'invalidated', 'scored_at', 'basis', 'entry_time', 'open_check', 'top_pick',
+          'agreement')
 # `basis` (day-114): what the pick's reason rests on — news / technical / macro,
 # declared by the model and checked against what it was shown
 # (deepseek_opportunities.check_basis). PREREGISTER_day114_basis.md compares
@@ -113,6 +114,11 @@ def rows_from_report(report, source='published_report'):
                 add('jev', 'selected', side, pick, **top('jev', side, pick))
         for side in ('LONG', 'SHORT'):
             add('jev', 'forced', side, jev.get('forced_' + side.lower()))
+    # TOP 2 (top_picks, day-119): the two names the models agree on most. One
+    # kind; how many models backed each is its own column, so the scoreboard
+    # can split it without two kinds that change as models go up and down.
+    for pick in (intra.get('top_two') or {}).get('picks') or []:
+        add('top2', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'))
     # Part 3's strategy picks (consensus_picks): a name that met the owner's rule
     # and one printed only so the section is never empty answer different
     # questions, so they are different kinds.

@@ -28,6 +28,12 @@ def test_the_email_is_built_from_the_sealed_snapshots(tmp_path, monkeypatch):
     assert '| SHORT AC.TO | 0.25 | 0.42 |' in text and 'RANKED.TO' not in text
     assert 'sealed BEFORE the open' in text and 'shares' not in text.lower()
     assert '<table' in open(out['html_path']).read() and out['has_picks']
+    assert text.index('## Top 2') < text.index('## Part 1')
+    assert 'LONG QSR.TO' in text.split('## Part 1')[0] and 'SHORT AC.TO' in text.split('## Part 1')[0]
+    assert 'top_two' not in SNAPS                   # the loaded snapshots are not mutated
+    ledger = tmp_path/'picks.csv'
+    PO.record(out['snaps'], '2026-09-28', ledger)
+    assert {r['ticker'] for r in model_picks.read(ledger) if r['model'] == 'top2'} == {'QSR.TO', 'AC.TO'}
 
 
 def test_the_picks_are_recorded_as_the_report_would_have(tmp_path):

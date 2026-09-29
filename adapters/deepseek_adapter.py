@@ -543,11 +543,12 @@ def evaluate_batch(candidates, macro, as_of, *, model=None, client=None,
         except Exception as exc:
             return {**result, 'errorcode': _failure_code(exc), 'details': type(exc).__name__[:80]}
     try:
-        # Flash enables thinking by default. This bounded classification path
+        # Flash and v4-pro enable thinking by default (v4-pro measured
+        # 2026-09-29: 388 reasoning tokens on a one-line reply). This bounded classification path
         # explicitly uses non-thinking mode; never silently switch the model.
         # https://api-docs.deepseek.com/guides/thinking_mode/
         mode = ({'extra_body': {'thinking': {'type': 'disabled'}}}
-                if selected_model in ('deepseek-flash', 'deepseek-v4-flash') else {})
+                if selected_model in ('deepseek-flash', 'deepseek-v4-flash', 'deepseek-v4-pro') else {})
         result['inference_mode'] = 'thinking_disabled' if mode else 'model_default'
         response = client.chat.completions.create(
             model=selected_model,

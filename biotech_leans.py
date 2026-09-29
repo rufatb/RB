@@ -154,7 +154,7 @@ def parse(body, rows):
 
 
 def ask(rows, *, client=None, model=None, timeout=REQUEST_TIMEOUT):
-    model = model or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-flash'
+    model = model or os.environ.get('DEEPSEEK_MODEL') or 'deepseek-v4-pro'
     if client is None:
         key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
         if not key:

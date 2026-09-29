@@ -5278,3 +5278,16 @@ and its precondition has failed.
 
 Also on day-118: Part 3's section, the per-pick open check and their scoreboard
 rows left the report (#44). `consensus_picks.py` and every recorded row are kept.
+
+## Day-119: deepseek-v4-pro in place of flash (owner's decision), not an accuracy result
+
+The owner switched DeepSeek's model to `deepseek-v4-pro`. On the same 59
+replayed sessions and inputs as day-118, v4-pro went **51/100 (51%),
+−0.15%/pick, t = −1.30**. Random picks from the same pools scored 49.6%
+(p = 0.43), so v4-pro fails the day-117 bar, like flash (114/213, −0.04%). It
+abstained on 14 of 59 sessions. In the planted control it was clean in 2 of 4
+runs, once put the planted short LONG, and once picked a noise name.
+
+No evidence that it works better, none that it works worse. The switch is
+recorded, not adopted as an improvement. Rejections remain **44** against **3**
+adoptions.

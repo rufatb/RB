@@ -549,6 +549,37 @@ def _biotech_section(digest):
             f'<tbody>{rows}</tbody></table></div></section>')
 
 
+def _top_two_section(intra):
+    """TOP 2 (top_picks): the two names the models agree on most. Absent from
+    a publication made before it existed."""
+    import top_picks
+    sec = intra.get('top_two')
+    if not sec:
+        return ''
+    head = ('<section><h2 class="head">Top 2 · where the models agree</h2>'
+            '<p class="sub">Ranked by how many of Claude, DeepSeek and Jev back each name. '
+            'Agreement is not confirmation: they read the same brief, and none has beaten '
+            'random picks on the replay.</p>')
+    picks = sec.get('picks') or []
+    if not picks:
+        return head + f'<p>{escape(str(sec.get("reason") or "No pick today."))}</p></section>'
+    rows = ''
+    for p in picks:
+        wrong = (f'{"below" if p["side"] == "LONG" else "above"} {fmt(p.get("invalid_at"))}'
+                 if isinstance(p.get('invalid_at'), (int, float)) else '&mdash;')
+        w = p.get('wire')
+        rows += (f'<tr><td class="tick">{escape(p["ticker"])}</td><td>{escape(p["side"])}</td>'
+                 f'<td><span class="status">{escape(top_picks._verdict(p, sec.get("answered") or []))}</span></td>'
+                 f'<td>{escape(", ".join(p["backing"]))}</td><td>{wrong}</td>'
+                 f'<td>{escape(safe_detail(w["at"] + " " + w["title"], 120)) if w else "&mdash;"}</td></tr>'
+                 f'<tr class="reason"><td></td><td colspan="5">{escape(p["lead"])}: '
+                 f'{escape(safe_detail(str(p.get("reason") or "no reason given"), 200))}</td></tr>')
+    note = f'<p>{escape(sec["reason"])}</p>' if sec.get('reason') else ''
+    return (head + '<div class="scroll"><table><thead><tr><th>Name</th><th>Side</th>'
+            '<th>Agreement</th><th>Backed by</th><th>Wrong if</th><th>Wire release</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>{note}</section>')
+
+
 DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '
                'sized by the same rule from its own picks, then one scoreboard. The baseline '
                'engine closes this part as a comparison.</p>')
@@ -899,6 +930,7 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
     </div>
   </header>
   {banner}
+  {_top_two_section(intra)}
 
   <section>
     <h2 class="head">Part 1 · Intraday</h2>

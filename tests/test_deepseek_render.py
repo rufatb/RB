@@ -99,7 +99,7 @@ def test_old_publication_without_factor_key_acquires_no_new_section():
     # key obeys the same rule, and is stripped here for the same reason.
     d['intraday'].pop('primary',None)
     # ...and the day-114 desks (Claude, DeepSeek, Jev), for the same reason.
-    for key in ('desks', 'scoreboard', 'claude'):
+    for key in ('desks', 'scoreboard', 'claude', 'top_two'):
         d['intraday'].pop(key,None)
     d['readiness']=readiness.assess(d)
     assert 'DeepSeek' not in brief.render_text(d)
