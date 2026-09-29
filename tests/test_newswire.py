@@ -227,3 +227,14 @@ def test_the_wire_card_is_placed_by_the_archive_and_shown_on_the_board(tmp_path)
     assert card['wire_release']['picks'] == 1            # not the ranked row, not the next day
     board = primary_board.leaderboard({}, wire=card)
     assert board[-1]['source'] == 'Desk picks on an overnight wire release' and board[-1]['picks'] == 1
+
+
+def test_jev_is_shown_the_wire_time_beside_a_release_and_nothing_extra_otherwise():
+    import jev_opportunities as J
+    row = {'ticker': 'ACM.TO', 'last': 10.0, 'headlines': [
+        {'title': 'ACME reports', 'class': 'ISSUER_RELEASE', 'first_disclosed': '2026-09-28T07:00:00-04:00'},
+        {'title': 'Miners slip', 'class': 'UNCLASSIFIED', 'first_disclosed': None}]}
+    heads = J._compact(row, 2, 110)['headlines']
+    assert heads[0] == {'title': 'ACME reports', 'class': 'ISSUER_RELEASE',
+                        'first_disclosed': '2026-09-28T07:00:00-04:00'}
+    assert heads[1] == {'title': 'Miners slip', 'class': 'UNCLASSIFIED'}

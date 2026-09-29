@@ -164,7 +164,12 @@ def _compact(row, headlines, title_chars):
     out = {k: v for k, v in row.items() if k != 'headlines'}
     if headlines and row.get('headlines'):
         out['headlines'] = [{'title': str(h.get('title') or '')[:title_chars],
-                             'class': h.get('class')} for h in row['headlines'][:headlines]]
+                             'class': h.get('class'),
+                             # Day-118: a wire release carries the wire's own
+                             # time; the instructions tell Jev what it means.
+                             **({'first_disclosed': h['first_disclosed']}
+                                if h.get('first_disclosed') else {})}
+                            for h in row['headlines'][:headlines]]
     return out
 
 
