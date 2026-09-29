@@ -23,8 +23,8 @@ B. Gmail `search_threads` `subject:"RB Daily Report — <today>"` (load the Gmai
 C. If `pgrep -f morning_full.sh` finds the job, stop silently: it is alive and the 09:50 bridge will send whatever it produces.
 D. Otherwise the morning run is dead. Write the credentials exactly as the 08:50 prompt's STEP 2 does (DeepSeek `<DEEPSEEK_API_KEY>`, OpenRouter `<OPENROUTER_API_KEY>`, mode 0600, `.rb-state/deepseek_model.txt` = deepseek-v4-pro). Run `python delivery_plan.py --state-dir .rb-state --reason "the 08:50 run died before publication"`. If it says PICKS_ONLY, send that email now (step F). If it says LATE and `.rb-state/late-<today>` does not exist, run `python late_picks.py --state-dir .rb-state/late-<today> --stage` (3–10 minutes; foreground is fine, it is under ten).
 E. You are the Claude desk: read `.rb-state/late-<today>/claude_brief.txt` IN FULL, answer it exactly as it instructs, `--check`, fix, `--seal` (late_picks.py). Use only that file.
-F. Gmail search again; if still nothing for today, `send_message` ONCE to ["rufat.baghirov97@gmail.com"] with the subject / body / htmlBody files VERBATIM (`late/` or `picks_only/`), no attachments.
-G. Push the record: `git add data/model_picks.csv data/biotech_calls.csv && git commit -m "record: <today> fallback picks" && git push origin main` (only those files). Then tell the owner in three lines what died, what was sent and the Gmail id.
+F. Gmail search again; if still nothing for today, `send_message` ONCE to ["rufat.baghirov97@gmail.com"] with the subject / body / htmlBody files VERBATIM (`late/` or `picks_only/`), no attachments. Both carry the Top 2 section at the top.
+G. Push the record: `git add data/model_picks.csv data/biotech_calls.csv && git commit -m "record: <today> fallback picks" && git push origin main` (only those files). Then tell the owner in three lines what died, what was sent (with the Top 2) and the Gmail id.
 Never create, modify, enable, disable or delete any Routine. Never call a pick a prediction.
 
 ## Bridge prompt
@@ -39,5 +39,5 @@ D. Write the credentials (a container restart wipes them): `mkdir -p .rb-state/s
 E. Gmail search again; if still nothing, `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject / body / htmlBody VERBATIM from the files, no attachments. For REPORT, `python gmail_delivery.py --record --message-id <id>`.
    THE 09:58 RULE: at 09:58 ET or later with nothing sent, send at once whatever is ready; if nothing is, send "RB Daily Report — <today> — ⛔ NOT PUBLISHED" with what you observed, then send the picks when ready.
 F. REPORT mode: do the 08:50 prompt's STEP 8 (publish the page) and STEP 9 (record and push). Other modes: `git add data/model_picks.csv data/biotech_calls.csv`, commit, push.
-G. Tell the owner in a few lines: mode, Gmail id, each desk's picks (Jev forced only), the biotech calls, anything that broke.
+G. Tell the owner in a few lines: mode, Gmail id, the Top 2 (side, ticker, how many models back each), each desk's picks (Jev forced only), the biotech calls, anything that broke.
 Never create, modify, enable, disable or delete any Routine. Never call a pick a prediction, never average the models.
