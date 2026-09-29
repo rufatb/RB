@@ -116,7 +116,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - TOP 2 — the two names at the top of the email: side, ticker, how many models back each ("3 of 3" … "1 of 3") and who.
   - PART 1 — each desk in order, Claude, DeepSeek, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
-  - PARTS 3 and 4 — the gap signals and the post-earnings drift signals (new and still held), or why there were none.
+  - PARTS 3, 4 and 5 — the gap signals, the post-earnings drift signals (new and still held) and the debate's final picks, or why there were none.
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
 Never call a pick a prediction, never average the models, never present agreement as confirmation.
 

@@ -1,0 +1,36 @@
+{
+ "registration": "PREREGISTER_day119_debate.md",
+ "sessions": 59,
+ "first": "2026-07-06",
+ "last": "2026-09-28",
+ "yardstick": "09:45 bar close to 15:55 bar close, no costs",
+ "models": "round 1: DeepSeek v4-pro + Jev (cached); round 2 DeepSeek v4-pro; round 3 Jev",
+ "debate": {
+  "picks": 43,
+  "hits": 21,
+  "hit_rate": 0.4884,
+  "mean_r_pct": 0.0377,
+  "clustered_t": 0.62,
+  "placebo_hit_rate": 0.4967,
+  "placebo_p_hit": 0.6035,
+  "sessions_with_final": 30,
+  "passes": false
+ },
+ "comparison": {
+  "all_proposals": {
+   "picks": 196,
+   "hits": 101,
+   "mean_r_pct": 0.0246
+  },
+  "deepseek_kept": {
+   "picks": 49,
+   "hits": 24,
+   "mean_r_pct": -0.0413
+  },
+  "deepseek_rejected": {
+   "picks": 147,
+   "hits": 77,
+   "mean_r_pct": 0.0465
+  }
+ }
+}

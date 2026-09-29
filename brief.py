@@ -584,6 +584,13 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         pead_section = pead.section(state_dir, now)
     except Exception as exc:
         error('pead', RuntimeError(type(exc).__name__))
+    debate_section = None
+    try:
+        import debate
+        debate_section = debate.load(state_dir, now)
+        debate_section['record'] = debate.replay_line()
+    except Exception as exc:
+        error('debate', RuntimeError(type(exc).__name__))
     top_two = None
     try:
         import top_picks
@@ -615,7 +622,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
-                          'gap_signal':gap_section,'pead':pead_section,
+                          'gap_signal':gap_section,'pead':pead_section,'debate':debate_section,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

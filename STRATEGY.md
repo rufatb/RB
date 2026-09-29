@@ -5303,3 +5303,15 @@ At the owner's request it now runs as a separate, unsized forward-tested
 section (Part 3), beside a post-earnings drift test built on the wire archive
 (Part 4). Both are registered in `PREREGISTER_day119_extra.md`. Rejections
 remain 44 against 3 adoptions.
+
+## Day-119c: the model debate — no better than its inputs
+
+Registered (`PREREGISTER_day119_debate.md`) and replayed on the same 59
+sessions. Each desk proposes, DeepSeek cross-examines (KEEP/REJECT), and Jev
+judges. The final picks went **21/43 (49%), +0.04%/pick**, against 50% for
+random picks from the same lists: fails the day-117 bar.
+
+The cross-examiner's KEEPs (49%) did no better than its REJECTs (52%). Making
+the models argue adds no information that neither model has. It is kept as a
+separate, recorded forward section (Part 5) at the owner's request.
+Rejections remain 44 against 3 adoptions.

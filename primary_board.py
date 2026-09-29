@@ -137,7 +137,8 @@ LEADERBOARD = (('top2_pick', 'Top 2 (where the models agree)'),
                ('deepseek_selected', 'DeepSeek'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
-               ('jev_forced', 'Jev (forced)'))
+               ('jev_forced', 'Jev (forced)'),
+               ('debate_final', 'Debate (final)'))
 # Part 3's rows (consensus_rule_met / _not_met) left the board on 2026-09-28
 # with the section itself: rejection #44. Their recorded rows stay in the CSV.
 

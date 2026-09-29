@@ -67,6 +67,29 @@ at staging, and both are scored by the evening job. Neither is on the desks'
 scoreboard, and neither is sized. The picks-only and late emails do not carry
 them (no 09:46 gap exists there).
 
+### Day119c — Part 5: the models debate before they finalize (owner's idea)
+
+`debate.py`, registered in `PREREGISTER_day119_debate.md` BEFORE it ran.
+* **Round 1:** each desk's own picks are the proposals (Claude's sealed ones
+  live only).
+* **Round 2:** DeepSeek v4-pro cross-examines every proposal and rules KEEP or
+  REJECT.
+* **Round 3:** Jev judges each side among the proposals or NONE.
+* **Final:** KEEP and above Jev's NONE, at most 2, never padded.
+
+About 5–9 s per morning. It is staged in `morning_full.sh` after the desks.
+
+**Replay, 59 sessions (DeepSeek and Jev only):** it finalized on 30 sessions
+and went 21/43 (49%), +0.04%/pick, against 50% for random picks — FAILS. The
+cross-examiner's KEEPs went 24/49 (49%) and its REJECTs 77/147 (52%): the
+argument does not sort good proposals from bad, because the inputs carry
+nothing to argue from (day-117).
+
+It ships anyway as Part 5, as registered and because the owner tests sections
+in parallel. It is recorded as `debate/final` and is the last scoreboard row.
+Summary: `data/replay_day119_debate.json`. Do not re-tune its prompts against
+this replay.
+
 ## Day118 — the wire: the issuer's own releases, and Part 3 dropped
 
 The owner: "yes to press-release feed, and drop what is proven not to work".

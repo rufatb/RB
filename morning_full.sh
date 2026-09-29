@@ -333,6 +333,12 @@ else
     log "  gap signal: NOT staged — Part 3 reads unavailable"
     stage_faults+=("gap signal not staged")
 fi
+if timeout 90 python debate.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
+    log "  debate: staged"
+else
+    log "  debate: NOT staged — Part 5 reads unavailable"
+    stage_faults+=("debate not staged")
+fi
 if timeout 120 python pead.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
     log "  post-earnings drift: staged"
 else
