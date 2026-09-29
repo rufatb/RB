@@ -571,6 +571,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     # TOP 2 (owner, 2026-09-29): the two names the models agree on most, at the
     # top of every email. Counted, never averaged; its own try so nothing here
     # can cost a desk, the engine or the email.
+    # EXTRA SECTIONS (owner, 2026-09-29): separate tests beside the desks, each
+    # in its own try — none can cost a desk, the engine or the email.
+    gap_section = pead_section = None
+    try:
+        import gap_signal
+        gap_section = gap_signal.section(state_dir, now, res)
+    except Exception as exc:
+        error('gap_signal', RuntimeError(type(exc).__name__))
+    try:
+        import pead
+        pead_section = pead.section(state_dir, now)
+    except Exception as exc:
+        error('pead', RuntimeError(type(exc).__name__))
     top_two = None
     try:
         import top_picks
@@ -602,6 +615,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
+                          'gap_signal':gap_section,'pead':pead_section,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

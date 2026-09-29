@@ -917,6 +917,10 @@ def text(d):
               '', '### Calls into each reviewed event (the model\'s own side)',
               *__import__('biotech_leans').table_lines((d['biotech'] or {}).get('leans'),
                                                        (d.get('research_calendar') or {}).get('events'))]
+    if intra.get('gap_signal') or intra.get('pead'):       # absent before 2026-09-29
+        import gap_signal
+        import pead
+        lines += gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
     calendar=d.get('research_calendar',{})
     lines += ['', '## Daily / weekly catalyst calendar',
               calendar.get('label','Unranked research calendar — not certified Monitor picks.')]

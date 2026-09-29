@@ -45,6 +45,28 @@ first scoreboard row. It reuses `consensus_picks.flags` (pure) — NOT the
 rejected VWAP rule, which stays unwired. The engine is not an LLM and never
 backs a name here.
 
+### Day119b — Parts 3 and 4: two separate tests beside the desks (owner's request)
+
+The owner wants picks that beat a coin flip, and to test candidate sections in
+parallel from the email without touching the existing system. Registered in
+`PREREGISTER_day119_extra.md`.
+
+* **Part 3 `gap_signal.py`:** rejection #42's rule, unchanged, on the TSX-21. It
+  uses the engine's measured 09:46 gap and a staged sd20. **I misquoted #42 to
+  the owner as +0.14% per trade: that is the per-SESSION mean.** Per trade it
+  is 48.7% right and +0.03% over 10 years, and 44% / −0.07% over the last 12
+  months. The section prints the per-trade record every day.
+* **Part 4 `pead.py`:** post-earnings drift from the wire archive's results
+  releases, with a 5-session hold. Unproven here (24 archive signals, 50%).
+
+Each section is staged in `morning_full.sh` after the biotech calls, computed
+in `brief` in its own try, and frozen with its record line; renderers never
+read the ledgers. The ledgers are `data/gap_calls.csv` and
+`data/pead_calls.csv`: gap is recorded by `model_picks --record-report`, PEAD
+at staging, and both are scored by the evening job. Neither is on the desks'
+scoreboard, and neither is sized. The picks-only and late emails do not carry
+them (no 09:46 gap exists there).
+
 ## Day118 — the wire: the issuer's own releases, and Part 3 dropped
 
 The owner: "yes to press-release feed, and drop what is proven not to work".

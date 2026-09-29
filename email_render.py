@@ -243,6 +243,10 @@ def text(d):
             lines += ['', *full.jev_summary(intra, concise=True)]
     lines += _factor_lines(intra)
     lines += _biotech_lines(d)
+    if intra.get('gap_signal') or intra.get('pead'):       # absent before 2026-09-29
+        import gap_signal
+        import pead
+        lines += gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
     lines += _positions_lines(d)
     sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
     lines += ['', '---',

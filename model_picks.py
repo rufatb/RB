@@ -423,6 +423,14 @@ def main(argv=None):
     if a.record_report:
         report = json.loads(Path(a.record_report).read_text())
         out['recorded'] = append(rows_from_report(report, a.source), a.ledger)
+        if a.ledger == str(LEDGER):
+            # Part 3's gap signals keep their own ledger (two entries, open and
+            # 09:45); a failure there must not cost the desks' record.
+            try:
+                import gap_signal
+                out['gap_recorded'] = gap_signal.record(report)
+            except Exception as exc:
+                out['gap_recorded'] = 'FAILED: ' + type(exc).__name__
     if a.score:
         out['scored'] = score(a.ledger)
     out['scorecard'] = scorecard(read(a.ledger))

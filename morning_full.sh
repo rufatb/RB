@@ -324,6 +324,22 @@ else
     stage_faults+=("biotech calls not staged")
 fi
 
+# EXTRA SECTIONS (day-119): the gap signal's normal daily moves and today's
+# post-earnings signals. Prior closes only, so staging after 09:30 is fine; a
+# failure costs only its own section.
+if timeout 120 python gap_signal.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
+    log "  gap signal: staged"
+else
+    log "  gap signal: NOT staged — Part 3 reads unavailable"
+    stage_faults+=("gap signal not staged")
+fi
+if timeout 120 python pead.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
+    log "  post-earnings drift: staged"
+else
+    log "  post-earnings drift: NOT staged — Part 4 reads unavailable"
+    stage_faults+=("post-earnings drift not staged")
+fi
+
 # ── 2. HOLD until the publication window opens ─────────────────────────────
 # The session must stay alive: the staged snapshot is on this filesystem and
 # nowhere else. Poll rather than sleep in one block so the wait is visible in

@@ -106,7 +106,7 @@ If `report_page.html` is missing: `python report_page.py --report .rb-state/late
 
 STEP 9 — push the record (this session can push; nothing else will)
   python model_picks.py --record-report .rb-state/latest/report.json     (REPORT mode only)
-  git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/
+  git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv
   git commit -m "record: <today> morning (report run)" && git push origin main
 Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on network errors only.
 
@@ -116,6 +116,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - TOP 2 — the two names at the top of the email: side, ticker, how many models back each ("3 of 3" … "1 of 3") and who.
   - PART 1 — each desk in order, Claude, DeepSeek, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
+  - PARTS 3 and 4 — the gap signals and the post-earnings drift signals (new and still held), or why there were none.
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
 Never call a pick a prediction, never average the models, never present agreement as confirmation.
 

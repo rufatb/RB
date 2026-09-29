@@ -189,7 +189,9 @@ def test_the_report_has_no_part_3_no_open_check_and_fetches_no_opening_bars():
     assert 'consensus' not in d['intraday'] and 'open_measured' not in d['intraday']
     assert 'consensus_open' not in d.get('sections', {})
     for body in (email_render.text(d), brief.render_text(d), report_page.render(d)):
-        assert 'Part 3' not in body and 'Open check' not in body and '★' not in body
+        # "Part 3" is now the gap signal (day-119); the consensus section is gone.
+        assert 'Strategy picks' not in body and 'RULE NOT MET' not in body
+        assert 'Open check' not in body and '★' not in body
     assert not any(r['source'].startswith('Desk picks that') for r in d['intraday']['scoreboard'])
 
 

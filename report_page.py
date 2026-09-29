@@ -580,6 +580,39 @@ def _top_two_section(intra):
             f'<tbody>{rows}</tbody></table></div>{note}</section>')
 
 
+def _extra_sections(intra):
+    """Parts 3 and 4 (gap_signal, pead): separate tests, rendered from the same
+    text lines the email prints, so the three views cannot disagree."""
+    import gap_signal
+    import pead
+    text = gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
+    if not text:
+        return ''
+    out, rows = '', []
+
+    def flush():
+        nonlocal out, rows
+        if rows:
+            head, body = rows[0], [r for r in rows[2:]]
+            cells = lambda r: [c.strip() for c in r.strip('|').split('|')]
+            out += ('<div class="scroll"><table><thead><tr>'
+                    + ''.join(f'<th>{escape(c)}</th>' for c in cells(head)) + '</tr></thead><tbody>'
+                    + ''.join('<tr>' + ''.join(f'<td>{escape(c)}</td>' for c in cells(r)) + '</tr>'
+                              for r in body) + '</tbody></table></div>')
+            rows = []
+    for line in text:
+        if line.startswith('|'):
+            rows.append(line)
+            continue
+        flush()
+        if line.startswith('## '):
+            out += ('</section>' if out else '') + f'<section><h2 class="head">{escape(line[3:])}</h2>'
+        elif line:
+            out += f'<p>{escape(line)}</p>'
+    flush()
+    return out + '</section>'
+
+
 DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '
                'sized by the same rule from its own picks, then one scoreboard. The baseline '
                'engine closes this part as a comparison.</p>')
@@ -977,6 +1010,7 @@ footer{{border-top:2px solid var(--ink);margin-top:3.5rem;padding-top:1.25rem;
 
 
   {_biotech_section(digest)}
+  {_extra_sections(intra)}
 
   <section>
     <h2 class="head">Gaps and faults</h2>

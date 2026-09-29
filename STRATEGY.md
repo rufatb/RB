@@ -5291,3 +5291,15 @@ runs, once put the planted short LONG, and once picked a noise name.
 No evidence that it works better, none that it works worse. The switch is
 recorded, not adopted as an improvement. Rejections remain **44** against **3**
 adoptions.
+
+## Day-119b: a correction to how #42 was quoted, and two forward tests
+
+Rejection #42's "+0.139%" is a SESSION-clustered mean. Per trade, over 3,642
+signals across 10 years, the rule was right **48.7%** and made **+0.03%**
+before costs, below the 10 bp cost. Over the last 12 months it was 44% and
+−0.07%. The verdict stands.
+
+At the owner's request it now runs as a separate, unsized forward-tested
+section (Part 3), beside a post-earnings drift test built on the wire archive
+(Part 4). Both are registered in `PREREGISTER_day119_extra.md`. Rejections
+remain 44 against 3 adoptions.
