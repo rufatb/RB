@@ -1,5 +1,63 @@
 # Working notes for this repo
 
+## Day118 — the wire: the issuer's own releases, and Part 3 dropped
+
+The owner: "yes to press-release feed, and drop what is proven not to work".
+Read `AUDIT_day118_wire.md`.
+
+**`newswire.py` collects newswire.ca's paginated release LIST, not its RSS.**
+The RSS is PR Newswire's global channel: 20 items, about two minutes of a busy
+morning, no TSX symbols. The list is the Canadian wire, 100 per page, reaching
+back months. Each release page carries:
+* the wire's time in `<meta name='date'>`;
+* the issuer's symbol in the lead ("(TSX: APTX)").
+
+Symbols are taken from the first 700 characters only; a fund naming its
+holdings is not news about them. The archive `data/newswire/YYYY-MM-DD.jsonl`
+is committed, one release per line, deduplicated by URL. The morning
+(`morning_full.sh`, before the news refresh) and the evening job both collect,
+and both push `data/newswire/`. Collection writes page by page and retries a
+list page three times: the first backfill held everything in memory and lost
+it to one timeout.
+
+**`ISSUER_RELEASE` is recomputed, never trusted.** The class is set by
+`factor_news.classify_headline(title, url, ticker)` only when the ARCHIVE holds
+that URL with that exact title:
+* `first_disclosed` is the wire time;
+* `issuer_verified` is true only when the release names that ticker.
+
+`prepare_deepseek.refresh_public_inputs` merges each pool name's releases
+FIRST in the staged headlines, because staged news is capped BEFORE it is
+classified. `tests/conftest.py` points every test at an empty archive — a
+release collected tomorrow must not change today's fixture.
+
+**The replay (registered) says the open prices a release.** Names with an
+overnight release moved no more after 09:45 than the rest (+0.15%, t = 0.73;
+MDE ~0.6%). DeepSeek's 20 picks on them went 8/20 — UNDERPOWERED, not null.
+The forward test decides at 40 live sessions (~2026-11-24), where Claude is
+judged for the first time. Do not tune the ISSUER_RELEASE wording against the
+replay. The email's base-rate line says this in one sentence.
+
+**A container restart kills background jobs silently.** On 09-28 at ~23:26Z
+the VM rebooted (uptime reset) as the session's Routines connection dropped.
+The first backfill died with an EMPTY log: no traceback, no exit line. I first
+misread this as the container pausing between tool calls; the clocks disproved
+that (container time matched server `Date` headers to the second). Long jobs
+must be resumable: the collector skips archived URLs, and replay answers are
+cached per session. The morning's own defence against this is the
+watchdog/bridge ladder (day-116).
+
+**Dropped (rejection #44):** Part 3, the per-pick open check, the ★ top pick,
+the 09:46 opening-bar fetch and their scoreboard rows. `consensus_picks.py`,
+`model_picks.open_check`/`verification_card` and every recorded row are kept
+(Day-90). The desk tables' Open check column is now **Wire release**. The
+scoreboard's new row, "Desk picks on an overnight wire release"
+(`model_picks.wire_card`), is the registered forward population. It is placed
+by the archive, never by what a model said its basis was.
+
+`newswire.window` is the PRIOR WEEKDAY's 16:00 → 09:30, as registered. After a
+holiday Monday it starts Monday 16:00; do not "fix" it mid-test.
+
 ## Day117 — accuracy: the desks are random draws because the inputs carry no signal
 
 The owner asked why every desk's accuracy is poor. Read
@@ -65,6 +123,9 @@ use the same tables (`email_render.pick_table` / `jev_forced_table` /
 `html_from_text`).
 
 ## Day115 — Part 3: the owner's strategy picks, at the end of every email
+
+**UNWIRED on day-118 (rejection #44).** What follows is the record of what the
+recorded `consensus` rows and `open_check` values mean; nothing below runs now.
 
 The owner asked for one more section naming 1–2 stocks every day, never empty,
 by their rule: flagged by more than one model, LONG only above VWAP and SHORT

@@ -210,9 +210,11 @@ def releases_for(ticker, start, end, root=None):
 
 
 def window(session):
-    """The overnight window a 09:30 open can not yet have traded: from the
-    PRIOR session's 16:00 close to 09:30 on `session`. The prior session is the
-    previous weekday; a holiday makes the window longer, never shorter."""
+    """The overnight window before a 09:30 open: from the previous WEEKDAY's
+    16:00 to 09:30 on `session`, exactly as PREREGISTER_day118_wire.md fixed it.
+    After a holiday Monday that is Monday 16:00, not Friday's close, so a
+    long weekend's earlier releases are not EVENTS (the desks are still shown
+    them — `headlines` looks back 72 hours). Registered; not changed after."""
     prior = session - dt.timedelta(days=1)
     while prior.weekday() >= 5:
         prior -= dt.timedelta(days=1)

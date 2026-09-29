@@ -5250,3 +5250,31 @@ Claude cannot be replayed blind (this session has seen the outcomes) and its
 live 5/5 stays unverified; the replay says its prior should be ~50%. Nothing
 is adopted; the email now prints this base rate under the scoreboard every day.
 Rejections now number **44** against **3** adoptions.
+
+## Day-118: the issuer's own wire release — the open prices it (H1 open, H3 fails)
+
+The owner approved a press-release feed. `newswire.py` archives newswire.ca
+(8,477 releases since 2026-07-01, 1,522 naming a TSX symbol). The desks see a
+release as `ISSUER_RELEASE`, with the wire's own time and a verified issuer.
+Registered at `PREREGISTER_day118_wire.md` before any release met a price;
+`replay_wire.py`; write-up `AUDIT_day118_wire.md`; summary
+`data/replay_day118_wire.json`.
+
+Over the same 59 replayed sessions:
+* DeepSeek's picks on names with an overnight release went **8/20 (−0.96%,
+  t = −1.09)**. That is UNDERPOWERED under the registered 30-pick floor, not a
+  null.
+* Jev forced went 6/10.
+* The model-free precondition FAILS: across 146 event name-days, names with a
+  release moved **+0.15% more (|r|, t = 0.73)** than the rest after 09:45, and
+  an excess above ~0.6% is ruled out.
+
+The releases are real news — Intact −8.1%, TELUS −7.3%, Aritzia +4.6% at the
+open. The auction prices them, and a 09:46 entry buys what is left. DeepSeek
+over ALL picks with the wire: 114/213, −0.04%/pick, the day-117 base rate.
+Nothing is adopted. H1 is decided forward at 40 live sessions. Rejections
+remain **44** against **3** adoptions; this family's live question is open,
+and its precondition has failed.
+
+Also on day-118: Part 3's section, the per-pick open check and their scoreboard
+rows left the report (#44). `consensus_picks.py` and every recorded row are kept.

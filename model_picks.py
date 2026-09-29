@@ -357,24 +357,35 @@ def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):
 
 
 REPLAY = ROOT / 'data' / 'replay_day117.json'
+WIRE_REPLAY = ROOT / 'data' / 'replay_day118_wire.json'
 
 
-def replay_line(path=REPLAY):
+def replay_line(path=REPLAY, wire_path=None):
     """The base rate the live scoreboard is read against (day-117 replay,
-    house rule 8): the same question asked over 59 past sessions. One line,
-    or None when the summary is missing — never an invented number."""
+    house rule 8): the same question asked over 59 past sessions — and, from
+    day-118, what adding the issuers' own wire releases did. One line, or None
+    when the summary is missing — never an invented number."""
     try:
         r = json.loads(Path(path).read_text())
-        ds, jev, rule = r['deepseek_selected'], r['jev_forced'], r['vwap_rvol_rule']
+        ds, jev = r['deepseek_selected'], r['jev_forced']
     except (OSError, ValueError, KeyError, TypeError):
         return None
-    return ('Base rate — replay of %d past sessions, same question, technicals only: '
+    line = ('Base rate — replay of %d past sessions, same question, technicals only: '
             'DeepSeek %d/%d (%.0f%%) vs %.0f%% for random picks from the same list; '
-            'Jev forced %d/%d (%.0f%%) vs %.0f%%; the VWAP/rvol rule %.0f%% over %d name-days. '
+            'Jev forced %d/%d (%.0f%%) vs %.0f%%. '
             'None beat random, so a day\'s hits and misses are noise (%s).'
             % (r['sessions'], ds['hits'], ds['picks'], ds['hit_rate']*100, ds['placebo_hit_rate']*100,
-               jev['hits'], jev['picks'], jev['hit_rate']*100, jev['placebo_hit_rate']*100,
-               rule['hit_rate']*100, rule['name_days'], r['audit']))
+               jev['hits'], jev['picks'], jev['hit_rate']*100, jev['placebo_hit_rate']*100, r['audit']))
+    try:
+        w = json.loads(Path(wire_path or WIRE_REPLAY).read_text())
+        h1, h3 = w['H1_deepseek_event'], w['H3_event_names_move_more']
+        line += (' With the issuers\' own overnight wire releases added: the open prices them — '
+                 'names with a release moved no more after 09:45 than the rest (%+.2f%%, t = %.2f), '
+                 'and DeepSeek\'s picks on them went %d/%d, too few to judge (%s).'
+                 % (h3['mean_abs_r_diff_pct'], h3['clustered_t'], h1['hits'], h1['picks'], w['audit']))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return line
 
 
 def scorecard_line(card, model_kind, name):

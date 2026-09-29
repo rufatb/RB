@@ -1,0 +1,69 @@
+{
+ "registration": "PREREGISTER_day118_wire.md",
+ "audit": "AUDIT_day118_wire.md",
+ "sessions": 59,
+ "first": "2026-07-06",
+ "last": "2026-09-28",
+ "yardstick": "09:45 bar close to 15:55 bar close, no costs",
+ "archive": "data/newswire (newswire.ca, 2026-07-01 -> 2026-09-28, 8,477 releases)",
+ "event_name_days": 199,
+ "scoreable_event_name_days": 146,
+ "names_shown_a_release": 467,
+ "controls": {
+  "planted": "PASS",
+  "coin": "FAIL",
+  "event_name_days": 146
+ },
+ "oracle": {
+  "oracle_hit_rate": 1.0,
+  "anti_oracle_hit_rate": 0.0,
+  "picks": 236
+ },
+ "H1_deepseek_event": {
+  "picks": 20,
+  "hits": 8,
+  "hit_rate": 0.4,
+  "mean_r_pct": -0.9578,
+  "clustered_t": -1.09,
+  "side_flip_p": 0.8735,
+  "mde80_pct": 2.24,
+  "verdict": "UNDERPOWERED"
+ },
+ "H2_jev_forced_event": {
+  "picks": 10,
+  "hits": 6,
+  "hit_rate": 0.6,
+  "mean_r_pct": -0.5153,
+  "clustered_t": -0.44,
+  "side_flip_p": 0.3825,
+  "mde80_pct": 4.23,
+  "verdict": "UNDERPOWERED"
+ },
+ "H3_event_names_move_more": {
+  "sessions": 51,
+  "mean_abs_r_diff_pct": 0.151,
+  "clustered_t": 0.73,
+  "mde80_pct": 0.58,
+  "verdict": "FAIL"
+ },
+ "deepseek_selected_all_with_wire": {
+  "picks": 213,
+  "hits": 114,
+  "hit_rate": 0.5352,
+  "mean_r_pct": -0.0441,
+  "clustered_t": -0.23,
+  "side_flip_p": 0.167,
+  "mde80_pct": 0.36,
+  "verdict": "FAIL"
+ },
+ "jev_forced_all_with_wire": {
+  "picks": 115,
+  "hits": 59,
+  "hit_rate": 0.513,
+  "mean_r_pct": 0.0707,
+  "clustered_t": 0.29,
+  "side_flip_p": 0.386,
+  "mde80_pct": 0.58,
+  "verdict": "FAIL"
+ }
+}

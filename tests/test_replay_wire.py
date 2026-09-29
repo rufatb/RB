@@ -51,3 +51,14 @@ def test_event_names_moving_more_is_measured_per_session():
     events = {s: {'E'} for s in pools}
     out = W.moves_more(pools, events)
     assert out['mean'] == 2.5 and out['event_name_days'] == 10
+
+
+def test_the_base_rate_line_adds_the_wire_result_or_leaves_it_out(tmp_path):
+    import json
+    import model_picks
+    line = model_picks.replay_line()
+    w = json.load(open(model_picks.WIRE_REPLAY))
+    assert 'None beat random' in line and 'the open prices them' in line
+    assert f"{w['H1_deepseek_event']['hits']}/{w['H1_deepseek_event']['picks']}" in line
+    alone = model_picks.replay_line(wire_path=tmp_path / 'missing.json')
+    assert 'None beat random' in alone and 'wire' not in alone
