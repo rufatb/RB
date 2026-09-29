@@ -95,7 +95,7 @@ def test_one_day_never_makes_a_lesson_and_duplicates_count_once(tmp_path):
     # AAA.TO long appears as Top 2 and as a desk pick: one outcome, counted once.
     assert q["today's open agreed with the pick"]['yes']['n'] == 1
     # CCC.TO has no 'wrong if': excluded from that question, not counted as 'no'.
-    crossed = q["its 'wrong if' was NOT already crossed at entry"]
+    crossed = q["its 'wrong if' was NOT already crossed at entry (day-120 E1)"]
     assert crossed['yes']['n'] == 1 and crossed['no']['n'] == 1
 
 
@@ -107,6 +107,6 @@ def test_a_lesson_needs_the_bar_across_many_days():
                       r_pct=1.0 + 0.1 * (d % 3)),
                  dict(session=s, section='Desk', ticker='B', side='LONG', gap=-1, first15=0,
                       r_pct=-1.0)]
-    q = dr.lessons(rows)[0]
+    q = dr.lessons(rows)[1]
     assert q['days'] == 25 and q['t'] > dr.LESSON_T and q['verdict'] == 'LESSON'
-    assert dr.lessons(rows[:2 * (dr.MIN_DAYS - 1)])[0]['verdict'] == 'not established'
+    assert dr.lessons(rows[:2 * (dr.MIN_DAYS - 1)])[1]['verdict'] == 'not established'

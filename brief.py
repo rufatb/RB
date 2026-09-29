@@ -589,12 +589,19 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         import debate
         debate_section = debate.load(state_dir, now)
         debate_section['record'] = debate.replay_line()
+        # Day-120 entry checks, at 09:46 when the quotes exist.
+        if quotes:
+            import entry_checks
+            debate.entry_filter(debate_section, entry_checks.marks(quotes),
+                                debate.levels(claude_evidence, opportunity_evidence))
     except Exception as exc:
         error('debate', RuntimeError(type(exc).__name__))
     top_two = None
     try:
         import top_picks
-        top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence)
+        import entry_checks
+        top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
+                                   prices=entry_checks.marks(quotes) if quotes else None)
         try:
             import newswire
             extra = [p['ticker'] for p in top_two['picks'] if p['ticker'] not in wire_releases]

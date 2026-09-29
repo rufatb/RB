@@ -5315,3 +5315,19 @@ The cross-examiner's KEEPs (49%) did no better than its REJECTs (52%). Making
 the models argue adds no information that neither model has. It is kept as a
 separate, recorded forward section (Part 5) at the owner's request.
 Rejections remain 44 against 3 adoptions.
+
+## Day-120: two entry checks on the Top 2 and the debate — hygiene, not a signal
+
+The 2026-09-29 review (`daily_review.py`) found Claude's AC.TO short entered at
+26.77, already past its own "wrong if" of 26.63. On the same day Claude and
+DeepSeek took opposite sides of BCE.TO. From 2026-09-30 two checks run at
+09:46 (`entry_checks.py`, registered in `PREREGISTER_day120_entry_checks.md`):
+* **E1 void at entry:** a Top 2 pick sorts last and is labelled; a debate final
+  is dropped.
+* **E2 conflict:** the Top 2 already excluded such names; a debate final is now
+  dropped.
+
+The desks are untouched. The replay showed no accuracy difference (crossed at
+entry 47% vs 49%), and none is claimed. The rules are kept unless the dropped
+picks beat the kept ones at a clustered t ≥ 3 by 40 sessions. This is not an
+adoption in the accuracy sense: rejections 44, adoptions 3.

@@ -74,8 +74,15 @@ def _describe(model, w, rank):
     return NAMES[model] + num
 
 
-def select(claude, deepseek, jev, *, wire=None):
-    """The section as a dict: exactly two picks whenever two names exist."""
+def select(claude, deepseek, jev, *, wire=None, prices=None):
+    """The section as a dict: exactly two picks whenever two names exist.
+
+    `prices` ({ticker: 09:46 mark}) turns on the day-120 entry check: a pick
+    whose lead model's own "wrong if" is already crossed is VOID AT ENTRY and
+    sorts after every clean name, as a SPLIT one does. Without prices (the
+    picks-only and late emails) nothing is checked and nothing moves.
+    """
+    import entry_checks
     snaps = {'claude': claude, 'deepseek': deepseek, 'jev': jev}
     answered = [m for m in MODELS if _answered(snaps[m])]
     flagged = flags(claude, deepseek, jev)
@@ -102,7 +109,11 @@ def select(claude, deepseek, jev, *, wire=None):
             'selected': selected, 'best_kind': best_kind, 'jev_rank': rank, 'strength': strength, 'lead': NAMES[lead],
             'reason': support[lead].get('reason'), 'invalid_at': support[lead].get('invalid_at'),
             'confidence': support[lead].get('strength')})
-    candidates.sort(key=lambda c: (c['split'], -c['votes'], c['best_kind'],
+        if prices is not None:
+            c = candidates[-1]
+            c['entry_price'] = prices.get(ticker)
+            c['entry_check'] = entry_checks.check(side, c['invalid_at'], c['entry_price'])
+    candidates.sort(key=lambda c: (c['split'], c.get('entry_check') == 'VOID', -c['votes'], c['best_kind'],
                                    c['jev_rank'] or 99, -c['strength'], c['ticker']))
     picks, seen = [], set()
     for c in candidates:
@@ -118,6 +129,11 @@ def select(claude, deepseek, jev, *, wire=None):
             p['wire'] = wire[p['ticker']]
     out = {'picks': picks, 'answered': [NAMES[m] for m in answered],
            'status': 'READY' if len(picks) == PICKS else 'SHORT'}
+    if prices is not None:
+        out['rule_version'] = entry_checks.RULE_VERSION
+        passed_over = [c for c in candidates if c.get('entry_check') == 'VOID' and c not in picks]
+        if passed_over:
+            out['void_at_entry'] = [f"{c['side']} {c['ticker']}" for c in passed_over]
     if len(picks) < PICKS:
         out['reason'] = ('No model answered today, so there is no name to put here.'
                          if not answered else
@@ -129,6 +145,8 @@ def _verdict(p, answered):
     n = len(answered)
     if p['split']:
         return 'SPLIT — models took opposite sides'
+    if p.get('entry_check') == 'VOID':
+        return 'VOID AT ENTRY — already past its own "wrong if"'
     if p['votes'] == n and n > 1:
         return f'ALL {n} AGREE'
     if p['votes'] >= 2:
@@ -161,4 +179,7 @@ def table(section):
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
     if section.get('reason'):
         out.append(section['reason'])
+    if section.get('void_at_entry'):
+        out.append('Passed over at 09:46, already past their own "wrong if": '
+                   + ', '.join(section['void_at_entry']) + '.')
     return out

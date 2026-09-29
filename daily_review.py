@@ -166,10 +166,17 @@ def lessons(all_rows):
             picks.append(r)
     # Each test returns True / False, or None when the question does not apply
     # (a pick with no "wrong if" level, a name with no sector reading).
+    # Day-120 E2: a name the desks put on both sides the same session.
+    sides = {}
+    for r in all_rows:
+        if r['section'] == 'Desk':
+            sides.setdefault((r['session'], r['ticker']), set()).add(r['side'])
     splits = [
+        ("the desks did NOT put the name on both sides (day-120 E2)",
+         lambda r: len(sides.get((r['session'], r['ticker']), ())) < 2),
         ("today's open agreed with the pick", lambda r: r['gap'] > 0),
         ('the first 15 minutes agreed with the pick', lambda r: r['first15'] > 0),
-        ("its 'wrong if' was NOT already crossed at entry",
+        ("its 'wrong if' was NOT already crossed at entry (day-120 E1)",
          lambda r: None if r.get('crossed') is None else not r['crossed']),
         ("its sector agreed with the pick",
          lambda r: None if r.get('sector_r') is None else r['sector_r'] > 0),

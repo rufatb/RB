@@ -186,6 +186,50 @@ def finalize(props, rulings, judged):
     return final[:MAX_FINAL]
 
 
+def levels(claude, deepseek):
+    """{(ticker, side): "wrong if" level}, Claude's first, as the Top 2 leads."""
+    out = {}
+    for snap in (claude, deepseek):
+        if not isinstance(snap, dict):
+            continue
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for p in snap.get(key) or []:
+                if isinstance(p, dict) and isinstance(p.get('invalid_at'), (int, float)):
+                    out.setdefault((p.get('ticker'), side), p['invalid_at'])
+    return out
+
+
+def entry_filter(sec, prices, levels_by_pick):
+    """Day-120 entry checks on the final, at 09:46 (PREREGISTER_day120_entry_checks.md).
+
+    A final whose own "wrong if" is already crossed (E1), or whose name was
+    proposed on both sides (E2), moves to `dropped_at_entry` with its reason.
+    Never padded: the final may shrink. Returns the section, changed in place.
+    """
+    import entry_checks as E
+    if not isinstance(sec, dict) or sec.get('status') != 'READY':
+        return sec
+    both = E.conflicted((p.get('ticker'), p.get('side')) for p in sec.get('proposals') or [])
+    kept, dropped = [], []
+    for f in sec.get('final') or []:
+        key = (f['ticker'], f['side'])
+        verdict = E.check(f['side'], levels_by_pick.get(key), prices.get(f['ticker']))
+        f['entry_check'] = verdict
+        if f['ticker'] in both:
+            dropped.append({**f, 'dropped_because': 'proposed on both sides'})
+        elif verdict == 'VOID':
+            dropped.append({**f, 'dropped_because': (
+                f"already past its own \"wrong if\" {levels_by_pick[key]:g} at 09:46 "
+                f"({prices[f['ticker']]:g})")})
+        else:
+            kept.append(f)
+    sec['final'], sec['dropped_at_entry'] = kept, dropped
+    sec['entry_rule'] = E.RULE_VERSION
+    if dropped and not kept:
+        sec['reason'] = 'every final pick was dropped by the 09:46 entry checks'
+    return sec
+
+
 def run(claude, deepseek, jev, candidates, *, now=None, client=None, poster=None):
     """All three rounds on the brief's rows. Never raises: a failure is a status."""
     import deepseek_opportunities as O
@@ -281,8 +325,11 @@ def lines(sec):
            sec.get('record') or replay_line()]
     if sec.get('status') not in ('READY', 'NO_PROPOSALS'):
         return out + [f"Unavailable today — {sec.get('reason')}."]
+    dropped = ['Dropped at entry (09:46): ' + '; '.join(
+        f"{d['side']} {d['ticker']} — {d['dropped_because']}" for d in sec.get('dropped_at_entry') or []) + '.'
+               ] if sec.get('dropped_at_entry') else []
     if not sec.get('final'):
-        return out + [f"No final pick today: {sec.get('reason')}."]
+        return out + [f"No final pick today: {sec.get('reason')}."] + dropped
     out += ['', '| Final | Proposed by | Cross-examiner | Jev vs its NONE | For | Against |',
             '|---|---|---|---|---|---|']
     for f in sec['final']:
@@ -296,7 +343,7 @@ def lines(sec):
     if rejected:
         out.append('Rejected in cross-examination: ' + ', '.join(
             f"{x['side']} {x['ticker']}" for x in rejected) + '.')
-    return out
+    return out + dropped
 
 
 def main(argv=None):

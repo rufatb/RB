@@ -118,12 +118,14 @@ def rows_from_report(report, source='published_report'):
     # kind; how many models backed each is its own column, so the scoreboard
     # can split it without two kinds that change as models go up and down.
     for pick in (intra.get('top_two') or {}).get('picks') or []:
-        add('top2', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'))
+        add('top2', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
+            prompt_version=(intra.get('top_two') or {}).get('rule_version'))
     # Part 5's debate (debate.py): what survived cross-examination and the judge.
     for pick in (intra.get('debate') or {}).get('final') or []:
         add('debate', 'final', pick.get('side'),
             {'ticker': pick.get('ticker'), 'confidence': pick.get('jev_probability')},
-            prompt_version=(intra.get('debate') or {}).get('prompt_version'))
+            prompt_version='+'.join(x for x in ((intra.get('debate') or {}).get('prompt_version'),
+                                                (intra.get('debate') or {}).get('entry_rule')) if x) or None)
     # Part 3's strategy picks (consensus_picks): a name that met the owner's rule
     # and one printed only so the section is never empty answer different
     # questions, so they are different kinds.

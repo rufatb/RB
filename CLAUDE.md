@@ -90,6 +90,35 @@ in parallel. It is recorded as `debate/final` and is the last scoreboard row.
 Summary: `data/replay_day119_debate.json`. Do not re-tune its prompts against
 this replay.
 
+### Day120 — two entry checks at 09:46 on the Top 2 and the debate (owner: "do it all")
+
+`entry_checks.py`, registered in `PREREGISTER_day120_entry_checks.md` before
+any session ran with it.
+* **E1:** the 09:46 mark (a validated OK/CORROBORATED quote's mid) is already
+  past the pick's own "wrong if" → VOID AT ENTRY. The Top 2 sorts it after
+  every clean name (still two whenever two exist, labelled if it must fill a
+  slot, and "Passed over" otherwise). The debate drops it from the final.
+* **E2:** a name proposed on both sides. The Top 2 already excluded it (SPLIT);
+  the debate now drops it.
+
+The debate's levels come from the desks' own picks (`debate.levels`, Claude
+first). They were NOT added to the cross-examiner's prompt, which stays as
+registered. With no quotes (picks-only, late, closed market) nothing is
+checked and nothing moves.
+
+The desks, the engine and Parts 2–4 are UNCHANGED. The records are:
+* `top2` rows: `prompt_version = day120-entry`;
+* debate finals: `day119-debate-v1+day120-entry`.
+
+These rules are hygiene, not a signal. The replay showed no accuracy
+difference and none is claimed. The evening review prints E1 and E2 splits
+daily. They are withdrawn only if the dropped picks beat the kept ones at
+t ≥ 3 by 40 sessions.
+
+`tests/conftest.py` now also points `RB_STATE_DIR` at an empty directory. Two
+legacy-report tests had been failing only on days a morning staged research
+into the container.
+
 ### Day119d — the evening review: every pick scored and explained, lessons only at the bar
 
 The owner asked for every pick in the email to be scored by section and model,
