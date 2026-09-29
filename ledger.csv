@@ -392,9 +392,9 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-09-25,CP.TO,SHORT,0.624,dense,123.7500,pair,extra,0.2180,88,4.0,-0.687,1
 2026-09-25,ENB.TO,SHORT,0.589,dense,66.8600,pair,primary,0.2806,210,4.5,-1.092,1
 2026-09-25,TRP.TO,SHORT,0.572,mid,83.9800,board,,,,4.8,-0.965,1
-2026-09-29,CNR.TO,SHORT,0.615,mid,172.0500,board,,,,,,
-2026-09-29,RY.TO,SHORT,0.609,mid,284.5100,board,,,,7.0,,
-2026-09-29,BMO.TO,SHORT,0.588,dense,242.3000,pair,primary,0.2276,47,8.3,,
-2026-09-29,MFC.TO,SHORT,0.587,mid,61.6100,board,,,,3.2,,
-2026-09-29,CVE.TO,SHORT,0.564,mid,43.9100,board,,,,,,
-2026-09-29,SLF.TO,SHORT,0.552,dense,112.1450,pair,extra,0.2693,120,16.9,,
+2026-09-29,CNR.TO,SHORT,0.615,mid,172.0500,board,,,,,-0.529,1
+2026-09-29,RY.TO,SHORT,0.609,mid,284.5100,board,,,,7.0,-0.432,1
+2026-09-29,BMO.TO,SHORT,0.588,dense,242.3000,pair,primary,0.2276,47,8.3,-0.664,1
+2026-09-29,MFC.TO,SHORT,0.587,mid,61.6100,board,,,,3.2,-0.065,1
+2026-09-29,CVE.TO,SHORT,0.564,mid,43.9100,board,,,,,0.182,0
+2026-09-29,SLF.TO,SHORT,0.552,dense,112.1450,pair,extra,0.2693,120,16.9,-0.085,1
