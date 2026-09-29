@@ -90,6 +90,33 @@ in parallel. It is recorded as `debate/final` and is the last scoreboard row.
 Summary: `data/replay_day119_debate.json`. Do not re-tune its prompts against
 this replay.
 
+### Day119d — the evening review: every pick scored and explained, lessons only at the bar
+
+The owner asked for every pick in the email to be scored by section and model,
+with P&L and reasons, "and keep learning". `daily_review.py --session DATE`:
+* reads the frozen `report.json`;
+* scores every printed pick (Top 2, desks, Jev forced, engine, gap signal,
+  debate final AND each KEEP/REJECT ruling, factor leans) on the scoreboard's
+  yardstick;
+* explains each from measured facts only: the open signed to the pick,
+  open → 09:45, best/worst after entry, whether its own "wrong if" was already
+  crossed at entry, and the sector-peer median (`data/tsx_sectors.json`, ≤ 6
+  peers);
+* writes `data/reviews/DATE.{json,md}`.
+
+The LEARNING table re-splits every reviewed day. It keeps one row per
+(session, name, side), so HBM as a desk pick, the Top 2 and the debate final is
+ONE outcome. A split is a LESSON only at a clustered |t| ≥ 3 over ≥ 20 days;
+nothing it prints feeds a prompt or a rule.
+
+**2026-09-29, the first review.** Every split looked decisive for one day:
+* open agreed 3/4 vs 1/6;
+* "wrong if" not crossed 2/2 vs 0/1;
+* KEEP 1/1 vs REJECT 2/7.
+
+On the replay's 649 picks the same splits are 52/51, 47/49 and KEEP 49 / REJECT
+52 (`REPLAY_NOTE`). That contrast is the reason the bar exists.
+
 ## Day118 — the wire: the issuer's own releases, and Part 3 dropped
 
 The owner: "yes to press-release feed, and drop what is proven not to work".
