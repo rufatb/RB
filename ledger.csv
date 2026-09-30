@@ -398,3 +398,11 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-09-29,MFC.TO,SHORT,0.587,mid,61.6100,board,,,,3.2,-0.065,1
 2026-09-29,CVE.TO,SHORT,0.564,mid,43.9100,board,,,,,0.182,0
 2026-09-29,SLF.TO,SHORT,0.552,dense,112.1450,pair,extra,0.2693,120,16.9,-0.085,1
+2026-09-30,CNQ.TO,LONG,0.599,mid,67.6200,pair,extra,0.3245,240,,,
+2026-09-30,AEM.TO,LONG,0.564,mid,264.3500,board,,,,,,
+2026-09-30,CVE.TO,LONG,0.561,sparse,44.6600,board,,,,13.4,,
+2026-09-30,SHOP.TO,LONG,0.553,mid,212.3000,pair,primary,0.1737,41,27.4,,
+2026-09-30,ENB.TO,SHORT,0.600,dense,66.3400,pair,primary,0.2668,201,3.0,,
+2026-09-30,CM.TO,SHORT,0.565,dense,157.8600,board,,,,8.9,,
+2026-09-30,TRP.TO,SHORT,0.563,dense,82.9400,pair,extra,0.2320,140,,,
+2026-09-30,T.TO,SHORT,0.555,sparse,11.7200,board,,,,8.5,,
