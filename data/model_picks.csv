@@ -68,19 +68,19 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-09-29,jev,forced,SHORT,WPM.TO,0.23,0.39,,,published_report,191.25,191.79,-0.2823,0,,2026-09-29T16:48:12.498836-04:00,,,,,
 2026-09-29,top2,pick,LONG,HBM.TO,0.52,,35.78,,published_report,38.23,38.3,0.1831,1,0,2026-09-29T16:48:12.498836-04:00,,,,,2 of 3
 2026-09-29,top2,pick,LONG,RY.TO,0.55,,,,published_report,284.51,283.22,-0.4534,0,,2026-09-29T16:48:12.498836-04:00,,,,,1 of 3
-2026-09-30,claude,selected,LONG,TD.TO,0.53,,,session,published_report,,,,,,,news,,,,
-2026-09-30,debate,final,LONG,SHOP.TO,0.96,,,day119-debate-v1+day120-entry,published_report,,,,,,,,,,,
-2026-09-30,debate,final,SHORT,BCE.TO,0.89,,,day119-debate-v1+day120-entry,published_report,,,,,,,,,,,
-2026-09-30,deepseek,selected,LONG,SHOP.TO,0.45,,202.03,,published_report,,,,,,,technical,,,,
-2026-09-30,deepseek,selected,LONG,TD.TO,0.55,,,,published_report,,,,,,,news,,,,
-2026-09-30,deepseek,selected,SHORT,BCE.TO,0.6,,29.13,,published_report,,,,,,,technical,,,,
-2026-09-30,deepseek,selected,SHORT,WSP.TO,0.5,,,,published_report,,,,,,,technical,,,,
-2026-09-30,engine,board,LONG,CNQ.TO,0.599,,,,published_report,,,,,,,,,,,
-2026-09-30,engine,board,LONG,SHOP.TO,0.553,,,,published_report,,,,,,,,,,,
-2026-09-30,engine,board,SHORT,ENB.TO,0.6,,,,published_report,,,,,,,,,,,
-2026-09-30,engine,board,SHORT,TRP.TO,0.563,,,,published_report,,,,,,,,,,,
-2026-09-30,jev,forced,LONG,SHOP.TO,0.83,0.37,,,published_report,,,,,,,,,,,
-2026-09-30,jev,forced,SHORT,WSP.TO,0.66,0.4,,,published_report,,,,,,,,,,,
-2026-09-30,jev,selected,LONG,SHOP.TO,0.39,0.37,,,published_report,,,,,,,,,,,
-2026-09-30,top2,pick,LONG,TD.TO,0.53,,,day120-entry,published_report,,,,,,,,,,,3 of 3
-2026-09-30,top2,pick,SHORT,WSP.TO,0.5,,,day120-entry,published_report,,,,,,,,,,,2 of 3
+2026-09-30,claude,selected,LONG,TD.TO,0.53,,,session,published_report,168.5,167.23,-0.7537,0,,2026-09-30T16:20:58.767437-04:00,news,,,,
+2026-09-30,debate,final,LONG,SHOP.TO,0.96,,,day119-debate-v1+day120-entry,published_report,212.3,211.3,-0.471,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,debate,final,SHORT,BCE.TO,0.89,,,day119-debate-v1+day120-entry,published_report,28.795,28.97,-0.6077,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,deepseek,selected,LONG,SHOP.TO,0.45,,202.03,,published_report,212.3,211.3,-0.471,0,0,2026-09-30T16:20:58.767437-04:00,technical,,,,
+2026-09-30,deepseek,selected,LONG,TD.TO,0.55,,,,published_report,168.5,167.23,-0.7537,0,,2026-09-30T16:20:58.767437-04:00,news,,,,
+2026-09-30,deepseek,selected,SHORT,BCE.TO,0.6,,29.13,,published_report,28.795,28.97,-0.6077,0,1,2026-09-30T16:20:58.767437-04:00,technical,,,,
+2026-09-30,deepseek,selected,SHORT,WSP.TO,0.5,,,,published_report,172.44,174.18,-1.009,0,,2026-09-30T16:20:58.767437-04:00,technical,,,,
+2026-09-30,engine,board,LONG,CNQ.TO,0.599,,,,published_report,67.62,66.98,-0.9465,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,engine,board,LONG,SHOP.TO,0.553,,,,published_report,212.3,211.3,-0.471,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,engine,board,SHORT,ENB.TO,0.6,,,,published_report,66.34,66.14,0.3015,1,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,engine,board,SHORT,TRP.TO,0.563,,,,published_report,82.94,82.3,0.7716,1,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,jev,forced,LONG,SHOP.TO,0.83,0.37,,,published_report,212.3,211.3,-0.471,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,jev,forced,SHORT,WSP.TO,0.66,0.4,,,published_report,172.44,174.18,-1.009,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,jev,selected,LONG,SHOP.TO,0.39,0.37,,,published_report,212.3,211.3,-0.471,0,,2026-09-30T16:20:58.767437-04:00,,,,,
+2026-09-30,top2,pick,LONG,TD.TO,0.53,,,day120-entry,published_report,168.5,167.23,-0.7537,0,,2026-09-30T16:20:58.767437-04:00,,,,,3 of 3
+2026-09-30,top2,pick,SHORT,WSP.TO,0.5,,,day120-entry,published_report,172.44,174.18,-1.009,0,,2026-09-30T16:20:58.767437-04:00,,,,,2 of 3
