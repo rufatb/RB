@@ -34,22 +34,18 @@ DEEPSEEK = snap(longs=[{'ticker': 'HBM.TO', 'confidence': 0.52, 'invalid_at': 35
 
 
 def test_top2_passes_over_a_void_pick_and_says_so():
-    before = top_picks.select(CLAUDE, DEEPSEEK, None)
-    assert 'AC.TO' in [p['ticker'] for p in before['picks']]      # 0.60 leads without the check
-    after = top_picks.select(CLAUDE, DEEPSEEK, None,
-                             prices={'AC.TO': 26.78, 'HBM.TO': 38.13, 'RY.TO': 284.5})
-    assert [p['ticker'] for p in after['picks']] == ['RY.TO', 'HBM.TO']
-    assert after['void_at_entry'] == ['SHORT AC.TO'] and after['rule_version'] == E.RULE_VERSION
+    claude = snap(longs=[{'ticker': 'HBM.TO', 'confidence': 0.6}],
+                  shorts=[{'ticker': 'AC.TO', 'confidence': 0.60, 'invalid_at': 26.63}])
+    deepseek = snap(longs=[{'ticker': 'HBM.TO', 'confidence': 0.52, 'invalid_at': 35.78}],
+                    shorts=[{'ticker': 'AC.TO', 'confidence': 0.55, 'invalid_at': 26.9}])
+    before = top_picks.select(claude, deepseek, None)
+    assert [p['ticker'] for p in before['picks']] == ['AC.TO', 'HBM.TO']      # both agreed
+    after = top_picks.select(claude, deepseek, None, prices={'AC.TO': 26.78, 'HBM.TO': 38.13})
+    assert [p['ticker'] for p in after['picks']] == ['HBM.TO']              # AC void: left out
+    assert after['void_at_entry'] == ['SHORT AC.TO']
+    assert after['rule_version'] == 'day121-agreement+' + E.RULE_VERSION
+    assert before['rule_version'] == 'day121-agreement'                      # picks-only / late
     assert 'Passed over at 09:46' in '\n'.join(top_picks.table(after))
-    assert 'rule_version' not in before                            # picks-only / late: unchanged
-
-
-def test_top2_still_fills_two_with_a_labelled_void_pick():
-    out = top_picks.select(snap(shorts=[{'ticker': 'AC.TO', 'confidence': 0.6, 'invalid_at': 26.63}]),
-                           snap(longs=[{'ticker': 'RY.TO', 'confidence': 0.55}]), None,
-                           prices={'AC.TO': 26.78})
-    assert [p['ticker'] for p in out['picks']] == ['RY.TO', 'AC.TO']
-    assert 'VOID AT ENTRY' in '\n'.join(top_picks.table(out))
 
 
 def debate_section(final, proposals):

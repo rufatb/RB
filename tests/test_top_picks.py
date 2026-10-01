@@ -1,4 +1,4 @@
-"""TOP 2: exactly two names, ranked by how many models back them, honestly labelled."""
+"""TOP 2: at most two names the models AGREE on (2026-10-01), never padded, honestly labelled."""
 import top_picks as T
 
 
@@ -36,29 +36,42 @@ def test_never_more_than_two_even_when_many_names_agree():
     assert len(out['picks']) == 2
 
 
-def test_with_no_agreement_it_still_fills_two_and_says_so():
+def test_with_no_agreement_it_is_empty_and_says_so():
+    """2026-10-01: both slots were one model's forced pick, one was traded and
+    lost. A name one model backs is not agreement and never fills a slot."""
     out = T.select(snap(status='NO_OPPORTUNITY'), snap(status='NO_OPPORTUNITY'),
                    jev('X.TO', 'Y.TO', long_ranked=['X.TO', 'Z.TO']))
-    assert len(out['picks']) == 2 and {p['ticker'] for p in out['picks']} == {'X.TO', 'Y.TO'}
-    assert all(p['agreement'] == '1 of 3' for p in out['picks'])
+    assert out['picks'] == [] and out['status'] == 'NO_AGREEMENT'
     text = '\n'.join(T.table(out))
-    assert '1 of 3 — no agreement on this slot' in text
-    assert 'gives probabilities, not reasons' in text
+    assert 'No agreement today' in text and 'nothing here to act on' in text
+    assert 'X.TO' not in text
 
 
-def test_a_selection_outranks_a_ranked_name_at_equal_backing():
+def test_one_agreed_name_leaves_the_second_slot_empty():
+    out = T.select(snap([('AC.TO', .6), ('K.TO', .7)]), snap([('AC.TO', .55)], [('SU.TO', .6)]),
+                   jev('Q.TO', 'R.TO'))
+    assert [p['ticker'] for p in out['picks']] == ['AC.TO'] and out['status'] == 'PARTIAL'
+    assert 'second slot is left empty' in '\n'.join(T.table(out))
+
+
+def test_a_selection_and_a_jev_rank_count_as_agreement():
     out = T.select(snap([('SEL.TO', .52)]), snap(status='NO_OPPORTUNITY'),
-                   jev(long_ranked=['RNK.TO']))
-    assert [p['ticker'] for p in out['picks']] == ['SEL.TO', 'RNK.TO']
+                   jev(long_ranked=['SEL.TO', 'RNK.TO']))
+    assert [p['ticker'] for p in out['picks']] == ['SEL.TO']
+    assert out['picks'][0]['agreement'] == '2 of 3'
 
 
-def test_opposite_sides_are_split_and_go_last():
-    out = T.select(snap([('AC.TO', .6)]), snap([], [('AC.TO', .6)]),
-                   jev('K.TO', 'SU.TO'))
-    assert {p['ticker'] for p in out['picks']} == {'K.TO', 'SU.TO'}
-    only = T.select(snap([('AC.TO', .6)]), snap([], [('AC.TO', .6)]), {'status': 'UNAVAILABLE'})
-    assert len(only['picks']) == 1 and only['picks'][0]['split'] is True
-    assert 'SPLIT' in '\n'.join(T.table(only)) and only['status'] == 'SHORT'
+def test_jev_alone_never_agrees_with_itself():
+    """Jev's forced pick and its own ranked list are ONE model, not two."""
+    out = T.select(snap(status='NO_OPPORTUNITY'), snap(status='NO_OPPORTUNITY'),
+                   jev('X.TO', long_ranked=['X.TO']))
+    assert out['picks'] == []
+
+
+def test_opposite_sides_are_split_and_left_out():
+    out = T.select(snap([('AC.TO', .6)]), snap([], [('AC.TO', .6)]), jev(long_ranked=['AC.TO']))
+    assert out['picks'] == [] and out['split'] == ['AC.TO']
+    assert 'opposite sides of: AC.TO' in '\n'.join(T.table(out))
 
 
 def test_with_every_model_down_it_says_why_and_invents_nothing():
@@ -79,8 +92,8 @@ def test_top_two_is_recorded_scored_and_on_the_board():
     import primary_board
     out = T.select(snap([('AC.TO', .6)]), snap([('AC.TO', .58)]), jev('AC.TO', 'SU.TO'))
     rows = model_picks.rows_from_report({'session': '2026-09-29', 'intraday': {'top_two': out}})
-    assert {(r['model'], r['kind'], r['ticker'], r['agreement']) for r in rows} == {
-        ('top2', 'pick', 'AC.TO', '3 of 3'), ('top2', 'pick', 'SU.TO', '1 of 3')}
+    assert {(r['model'], r['kind'], r['ticker'], r['agreement'], r['prompt_version']) for r in rows} == {
+        ('top2', 'pick', 'AC.TO', '3 of 3', 'day121-agreement')}
     assert primary_board.leaderboard({})[0]['source'] == 'Top 2 (where the models agree)'
 
 
@@ -113,5 +126,8 @@ def test_the_email_hero_names_the_top_two_first():
     import email_render
     out = T.select(snap([('AC.TO', .6)]), snap([('AC.TO', .58)]), jev('AC.TO', 'SU.TO'))
     hero = email_render._hero({'intraday': {'top_two': out}})
-    assert 'Top 2 today: LONG AC.TO (3 of 3) · SHORT SU.TO (1 of 3)' in hero
+    assert 'Top 2 today: LONG AC.TO (3 of 3)' in hero and 'SU.TO' not in hero
     assert hero.index('Top 2 today') < hero.index('No picks today')
+    none = T.select(snap(status='NO_OPPORTUNITY'), snap(status='NO_OPPORTUNITY'), jev('X.TO', 'Y.TO'))
+    assert 'no agreement between the models — nothing to act on' in email_render._hero(
+        {'intraday': {'top_two': none}})

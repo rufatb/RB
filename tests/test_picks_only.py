@@ -29,11 +29,13 @@ def test_the_email_is_built_from_the_sealed_snapshots(tmp_path, monkeypatch):
     assert 'sealed BEFORE the open' in text and 'shares' not in text.lower()
     assert '<table' in open(out['html_path']).read() and out['has_picks']
     assert text.index('## Top 2') < text.index('## Part 1')
-    assert 'LONG QSR.TO' in text.split('## Part 1')[0] and 'SHORT AC.TO' in text.split('## Part 1')[0]
+    # Each name here has one model behind it: agreement-only (2026-10-01) leaves
+    # the Top 2 empty and says so, rather than filling it with one model's pick.
+    assert 'No agreement today' in text.split('## Part 1')[0]
     assert 'top_two' not in SNAPS                   # the loaded snapshots are not mutated
     ledger = tmp_path/'picks.csv'
     PO.record(out['snaps'], '2026-09-28', ledger)
-    assert {r['ticker'] for r in model_picks.read(ledger) if r['model'] == 'top2'} == {'QSR.TO', 'AC.TO'}
+    assert not [r for r in model_picks.read(ledger) if r['model'] == 'top2']
 
 
 def test_the_picks_are_recorded_as_the_report_would_have(tmp_path):

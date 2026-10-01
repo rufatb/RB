@@ -13,21 +13,25 @@ a desk collects the models that back it:
             top-ranked list for that side (Jev ranks every name; a place in its
             ranked list is its stated preference, labelled as a rank)
 
-The two DISTINCT names with the most backing models lead, ties broken by
-the strongest kind of backing (a selection, then a forced pick, then a ranked
-name), then by Jev's rank, then by the strongest single model's own number (never an
-average — house rule), then alphabetically. A name two models put on OPPOSITE
-sides is excluded while any other name remains, and labelled SPLIT if it has
-to fill a slot.
+The names with the most backing models lead, ties broken by the strongest kind
+of backing (a selection, then a forced pick, then a ranked name), then by Jev's
+rank, then by the strongest single model's own number (never an average — house
+rule), then alphabetically.
 
-Exactly two whenever two names exist at all. When all three models are down
-there are none, and the section says why rather than inventing a name. Every
-pick says how many of the models that answered back it: "3 of 3" is the
-owner's case; "1 of 3" is printed as such, with who, because a slot filled by
-one model is not agreement. The three models read the SAME brief, so agreement
-is not independent confirmation, and day-117's replay found each of them no
-better than random on these inputs. The section is recorded (model `top2`) and
-scored on the same yardstick as every desk (PREREGISTER_day119_top2.md).
+AGREEMENT ONLY (owner's decision, 2026-10-01, after a "1 of 3" filler slot was
+traded and lost): a name fills a slot only when at least TWO models back it on
+the same side, at least one of them with a real selection, the models did not
+split on it, and it is not void at entry (day-120). At most two, NEVER padded:
+on a day with no agreement the section says so in place of a name, and the
+email hero says "no agreement — nothing to act on". The earlier rule ("exactly
+two every day", 2026-09-29) filled empty slots with one model's forced pick,
+labelled "1 of 3"; those recorded rows stay as they are.
+
+The three models read the SAME brief, so agreement is not independent
+confirmation, and day-117's replay found each of them no better than random on
+these inputs. The section is recorded (model `top2`, `prompt_version`
+day121-agreement) and scored on the same yardstick as every desk
+(PREREGISTER_day119_top2.md and its 2026-10-01 amendment).
 """
 from __future__ import annotations
 
@@ -35,7 +39,8 @@ from consensus_picks import flags
 
 MODELS = ('claude', 'deepseek', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'jev': 'Jev'}
-PICKS = 2
+PICKS = 2                      # at most; never padded (2026-10-01)
+RULE_VERSION = 'day121-agreement'
 KIND_ORDER = {'selected': 0, 'forced': 1, 'ranked': 2}
 
 
@@ -75,7 +80,7 @@ def _describe(model, w, rank):
 
 
 def select(claude, deepseek, jev, *, wire=None, prices=None):
-    """The section as a dict: exactly two picks whenever two names exist.
+    """The section as a dict: up to two names the models AGREE on, never padded.
 
     `prices` ({ticker: 09:46 mark}) turns on the day-120 entry check: a pick
     whose lead model's own "wrong if" is already crossed is VOID AT ENTRY and
@@ -115,9 +120,13 @@ def select(claude, deepseek, jev, *, wire=None, prices=None):
             c['entry_check'] = entry_checks.check(side, c['invalid_at'], c['entry_price'])
     candidates.sort(key=lambda c: (c['split'], c.get('entry_check') == 'VOID', -c['votes'], c['best_kind'],
                                    c['jev_rank'] or 99, -c['strength'], c['ticker']))
+    # AGREEMENT ONLY (owner's decision, 2026-10-01): a slot is filled only by a
+    # name at least two models back on the same side, one of them a real
+    # selection, not split and not void at entry. A day without one prints
+    # that there is no agreement; it is never filled with one model's pick.
     picks, seen = [], set()
     for c in candidates:
-        if c['ticker'] in seen:
+        if c['ticker'] in seen or not _agreed(c):
             continue
         seen.add(c['ticker'])
         picks.append(c)
@@ -128,17 +137,30 @@ def select(claude, deepseek, jev, *, wire=None, prices=None):
         if wire and wire.get(p['ticker']):
             p['wire'] = wire[p['ticker']]
     out = {'picks': picks, 'answered': [NAMES[m] for m in answered],
-           'status': 'READY' if len(picks) == PICKS else 'SHORT'}
-    if prices is not None:
-        out['rule_version'] = entry_checks.RULE_VERSION
-        passed_over = [c for c in candidates if c.get('entry_check') == 'VOID' and c not in picks]
-        if passed_over:
-            out['void_at_entry'] = [f"{c['side']} {c['ticker']}" for c in passed_over]
-    if len(picks) < PICKS:
-        out['reason'] = ('No model answered today, so there is no name to put here.'
-                         if not answered else
-                         f'Only {len(picks)} name(s) were put forward by any model today.')
+           'rule_version': RULE_VERSION + ('+' + entry_checks.RULE_VERSION if prices is not None else ''),
+           'status': ('READY' if len(picks) == PICKS else 'PARTIAL' if picks
+                      else 'NO_AGREEMENT' if answered else 'UNAVAILABLE')}
+    passed_over = [c for c in candidates if c.get('entry_check') == 'VOID' and c['votes'] >= 2]
+    if passed_over:
+        out['void_at_entry'] = [f"{c['side']} {c['ticker']}" for c in passed_over]
+    split = sorted({c['ticker'] for c in candidates if c['split']})
+    if split:
+        out['split'] = split
+    if not answered:
+        out['reason'] = 'No model answered today, so there is no name to put here.'
+    elif not picks:
+        out['reason'] = ('No agreement today: no two models backed the same name on the same side, '
+                         'so there is nothing here to act on. Each model\'s own picks are in Part 1, '
+                         'and a single model\'s pick has not beaten random picks on the replay.')
+    elif len(picks) < PICKS:
+        out['reason'] = ('Only one name had agreement today; the second slot is left empty rather '
+                         'than filled with one model\'s pick.')
     return out
+
+
+def _agreed(c):
+    return (c['votes'] >= 2 and c['selected'] and not c['split']
+            and c.get('entry_check') != 'VOID')
 
 
 def _verdict(p, answered):
@@ -162,12 +184,12 @@ def table(section):
     if not section:
         return []
     out = ['## Top 2 — where the models agree',
-           'Ranked by how many of the models back each name (Claude, DeepSeek, Jev on the '
-           'same brief). Agreement is not confirmation: they read the same inputs, and none '
-           'has beaten random picks on the replay.']
+           'A name appears only when at least two of the models (Claude, DeepSeek, Jev on the '
+           'same brief) back it on the same side. Agreement is not confirmation: they read the '
+           'same inputs, and none has beaten random picks on the replay.']
     picks = section.get('picks') or []
     if not picks:
-        return out + [section.get('reason') or 'No pick today.']
+        return out + ['', section.get('reason') or 'No pick today.'] + _notes(section)
     answered = section.get('answered') or []
     out += ['', '| # | Pick | Agreement | Backed by | Wrong if | Wire release | Why (lead model) |',
             '|---|---|---|---|---|---|---|']
@@ -182,6 +204,13 @@ def table(section):
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
     if section.get('reason'):
         out.append(section['reason'])
+    return out + _notes(section)
+
+
+def _notes(section):
+    out = []
+    if section.get('split'):
+        out.append('The models took opposite sides of: ' + ', '.join(section['split']) + ' — left out.')
     if section.get('void_at_entry'):
         out.append('Passed over at 09:46, already past their own "wrong if": '
                    + ', '.join(section['void_at_entry']) + '.')

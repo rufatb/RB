@@ -39,3 +39,36 @@ found the open prices overnight releases. The three models read the same
 brief, so their agreement is not independent evidence. The expected result is
 a coin flip; the section is printed because the owner asked for it, and
 nothing is sized from it.
+
+## Amendment 2026-10-01 — agreement only (owner's decision)
+
+On 2026-10-01 both Top 2 slots were filled by Jev's forced picks ("1 of 3 — no
+agreement"), because the rule above required exactly two names every day. The
+owner traded the SHOP.TO long and it lost 1.90%; SHOP was 0.09% below its own
+sector, and its sector fell 1.8%. Asked how the Top 2 should work, the owner
+chose AGREEMENT ONLY.
+
+From 2026-10-02 a name fills a slot only when ALL of these hold:
+* at least two models back it on the same side;
+* at least one of them has a real selection (Jev's forced pick and its ranked
+  list are one model, never two);
+* the models did not split on it;
+* it is not void at entry (day-120 E1).
+
+The section holds at most two names and is NEVER padded. With none, the section
+and the email hero say there is no agreement and nothing to act on. Split names
+are listed as left out.
+
+This is not claimed to raise accuracy. On the three live days so far it would
+have shown:
+* HBM (2026-09-29, +0.18%);
+* TD and WSP (2026-09-30, −0.75% and −1.01%);
+* nothing on 2026-10-01.
+
+That is 1/3, against 2/6 for the filled rule. It changes what the section
+CLAIMS: a slot now always means agreement.
+
+Recorded rows carry `prompt_version = day121-agreement`, or
+`day121-agreement+day120-entry` when the 09:46 quotes exist. Rows before
+2026-10-02 used the filled rule and are split by `agreement` / `prompt_version`
+when compared. The yardstick does not change.

@@ -557,9 +557,9 @@ def _top_two_section(intra):
     if not sec:
         return ''
     head = ('<section><h2 class="head">Top 2 · where the models agree</h2>'
-            '<p class="sub">Ranked by how many of Claude, DeepSeek and Jev back each name. '
-            'Agreement is not confirmation: they read the same brief, and none has beaten '
-            'random picks on the replay.</p>')
+            '<p class="sub">A name appears only when at least two of Claude, DeepSeek and Jev '
+            'back it on the same side. Agreement is not confirmation: they read the same brief, '
+            'and none has beaten random picks on the replay.</p>')
     picks = sec.get('picks') or []
     if not picks:
         return head + f'<p>{escape(str(sec.get("reason") or "No pick today."))}</p></section>'

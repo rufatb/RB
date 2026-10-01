@@ -5342,3 +5342,14 @@ Registered before running. Over 341 replay picks:
 The evening review now scores each pick against its sector. A Top 2 name where
 every model saw the same release is labelled not independent. Rejections 44,
 adoptions 3.
+
+## Day-121: the Top 2 is agreement only (owner's decision)
+
+2026-10-01 filled both slots with one model's forced pick. One was traded and
+lost 1.9%, mostly to its sector (−1.8%). From 10-02 a slot needs ≥ 2 models on
+the same side, with at least one real selection, no split and not void at
+entry. The section is never padded.
+
+No accuracy is claimed: on the three live days it would have gone 1/3, against
+2/6 filled. This is a presentation rule, not a signal. Rejections 44,
+adoptions 3.

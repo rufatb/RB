@@ -314,8 +314,11 @@ def _hero(d):
         head, sub = 'No picks today', 'Each desk below says why.'
     top = [f"{p['side']} {p['ticker']} ({p['agreement']})"
            for p in (intra.get('top_two') or {}).get('picks') or []]
+    no_agreement = (intra.get('top_two') or {}).get('status') == 'NO_AGREEMENT'
+    top_text = (f'Top 2 today: {" · ".join(top)}' if top else
+                'Top 2 today: no agreement between the models — nothing to act on' if no_agreement else '')
     top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
-                f'Top 2 today: {full.escape(" · ".join(top))}</div>' if top else '')
+                f'{full.escape(top_text)}</div>' if top_text else '')
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
             f'{top_line}'
             f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'

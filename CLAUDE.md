@@ -26,8 +26,9 @@ Nothing about scoring changed. Its record starts 2026-09-29 under the same
 `deepseek_selected` row; `prompt_version` is unchanged, so split by date if
 comparing the two models.
 
-**Top 2 (`top_picks.py`, registered in `PREREGISTER_day119_top2.md`):** exactly
-two names, first in every email, the full report, the page, the picks-only email
+**Top 2 (`top_picks.py`, registered in `PREREGISTER_day119_top2.md`):** first
+in every email (AGREEMENT ONLY since 2026-10-01, see Day121 — the "exactly two"
+below is the original rule), the full report, the page, the picks-only email
 and the late email. The hero line reads "Top 2 today: …".
 
 Agreement is COUNTED from each model's backing on the same side:
@@ -89,6 +90,38 @@ It ships anyway as Part 5, as registered and because the owner tests sections
 in parallel. It is recorded as `debate/final` and is the last scoreboard row.
 Summary: `data/replay_day119_debate.json`. Do not re-tune its prompts against
 this replay.
+
+### Day121 — the Top 2 is AGREEMENT ONLY (owner's decision, 2026-10-01)
+
+On 10-01 both Top 2 slots were Jev's forced picks ("1 of 3 — no agreement"),
+because the rule said exactly two every day. The owner traded the SHOP long:
+* it lost 1.90%;
+* it was bought near the day's high (217.31 at 09:40, entry 216.33);
+* tech fell all day and SHOP was only −0.09% against its sector.
+
+The label "no agreement on this slot" was not enough to stop a filler slot
+being traded.
+
+`top_picks.select` now fills a slot only when ALL hold:
+* ≥ 2 models back the name on the same side;
+* one of them has a real selection;
+* the models did not split on it;
+* it is not void at entry.
+
+The section holds at most two names and is never padded. With none:
+* status `NO_AGREEMENT`;
+* the section and the hero read "no agreement between the models — nothing to
+  act on";
+* split names are listed as left out.
+
+Jev's forced pick and its ranked list are ONE model. The rule is recorded as
+`prompt_version day121-agreement`, and the amendment sits at the end of
+`PREREGISTER_day119_top2.md`. It is not claimed to raise accuracy: on the three
+live days it would have gone 1/3, against 2/6 filled. A slot now always means
+agreement.
+
+The owner trades these picks. Every source is still a coin flip, so say so
+plainly when asked, and never present a Top 2 name as more than what it is.
 
 ### Day120b — after the 0/2 Top 2 of 09-30: two fixes tested, neither survives
 
