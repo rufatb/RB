@@ -110,3 +110,14 @@ def test_a_lesson_needs_the_bar_across_many_days():
     q = dr.lessons(rows)[1]
     assert q['days'] == 25 and q['t'] > dr.LESSON_T and q['verdict'] == 'LESSON'
     assert dr.lessons(rows[:2 * (dr.MIN_DAYS - 1)])[1]['verdict'] == 'not established'
+
+
+def test_vs_sector_separates_the_name_from_its_sector(tmp_path):
+    """2026-09-30: TD long lost 0.75% while its banks lost ~0.7% — a sector
+    move, not a stock-picking miss. The review must show both numbers."""
+    peers = {'P1.TO': bars(1, 1, 1, 0.99), 'P2.TO': bars(1, 1, 1, 0.99), **BARS}
+    out = dr.review(DAY, REPORT, bars_for=peers.__getitem__, root=tmp_path,
+                    sector_map={'AAA.TO': 'X', 'P1.TO': 'X', 'P2.TO': 'X'})
+    a = next(r for r in out['rows'] if r['ticker'] == 'AAA.TO' and r['section'] == 'Desk')
+    assert a['vs_sector'] == round(a['r_pct'] + 1.0, 3)        # long, peers -1%
+    assert 'beat by' in dr.why(a) and 'Mean vs sector' in out['markdown']

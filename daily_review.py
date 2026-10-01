@@ -118,6 +118,9 @@ def score(p, x, sector=None):
             'mae': round(((x['lo'] / e - 1) if s == 1 else (1 - x['hi'] / e)) * 100, 3),
             'crossed': (None if not isinstance(lvl, (int, float)) else (e < lvl if s == 1 else e > lvl)),
             'sector_r': None if sector is None else round(s * sector, 3),
+            # Day-120b: the pick against its own sector, so a good name in a
+            # falling sector is not read as a bad pick (2026-09-30, TD).
+            'vs_sector': None if sector is None else round(s * ((x['close'] / e - 1) * 100 - sector), 3),
             'pnl_cad': round(s * (x['close'] - e) * p['shares'], 2) if p.get('shares') else None,
             'entry': round(e, 4), 'close': round(x['close'], 4)}
 
@@ -136,6 +139,9 @@ def why(row):
     if row.get('sector_r') is not None and abs(row['sector_r']) >= 0.5:
         bits.append(f"its sector moved {row['sector_r']:+.1f}% its way" if row['sector_r'] > 0
                     else f"its sector moved {abs(row['sector_r']):.1f}% against it")
+    if row.get('vs_sector') is not None:
+        bits.append(f"against its sector it {'beat' if row['vs_sector'] > 0 else 'trailed'} by "
+                    f"{abs(row['vs_sector']):.2f}%")
     verdict = 'RIGHT' if row['r_pct'] > 0 else 'WRONG'
     return f"{verdict} {row['r_pct']:+.2f}%" + (': ' + '; '.join(bits) if bits else '')
 
@@ -217,12 +223,18 @@ def markdown(session, rows, market, learn, replay_note):
     groups = {}
     for r in rows:
         groups.setdefault((r['section'], r['model']), []).append(r)
-    out += ['## By section and model', '| Section | Model | Picks | Right | Mean | P&L (sized) | per $10k each |',
-            '|---|---|---:|---:|---:|---:|---:|']
+    out += ['## By section and model',
+            'Vs sector is each pick against the median of its sector peers over the same window: '
+            'it separates picking the wrong name from the whole sector moving.',
+            '| Section | Model | Picks | Right | Mean | Beat its sector | Mean vs sector | P&L (sized) | per $10k each |',
+            '|---|---|---:|---:|---:|---:|---:|---:|---:|']
     for (sec, model), v in groups.items():
         pnl = [r['pnl_cad'] for r in v if r.get('pnl_cad') is not None]
+        rel = [r['vs_sector'] for r in v if r.get('vs_sector') is not None]
         out.append(f"| {sec} | {model} | {len(v)} | {sum(r['r_pct'] > 0 for r in v)} | "
-                   f"{st.mean(r['r_pct'] for r in v):+.2f}% | {('%+.2f CAD' % sum(pnl)) if pnl else '—'} | "
+                   f"{st.mean(r['r_pct'] for r in v):+.2f}% | "
+                   f"{f'{sum(x > 0 for x in rel)}/{len(rel)}' if rel else '—'} | "
+                   f"{f'{st.mean(rel):+.2f}%' if rel else '—'} | {('%+.2f CAD' % sum(pnl)) if pnl else '—'} | "
                    f"{sum(r['r_pct'] for r in v) * 100:+.0f} |")
     out += ['', '## Every pick, and why it went the way it did',
             '| Section | Model | Pick | Result | Best / worst after entry | Why |', '|---|---|---|---:|---|---|']

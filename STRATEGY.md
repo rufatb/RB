@@ -5331,3 +5331,14 @@ The desks are untouched. The replay showed no accuracy difference (crossed at
 entry 47% vs 49%), and none is claimed. The rules are kept unless the dropped
 picks beat the kept ones at a clustered t ≥ 3 by 40 sessions. This is not an
 adoption in the accuracy sense: rejections 44, adoptions 3.
+
+## Day-120b: the 0/2 Top 2 of 2026-09-30 — sector hedge and "chasing" tested
+
+Registered before running. Over 341 replay picks:
+* **Sector hedge:** cuts sd by 6% (bar 15%), measurement only.
+* **"Chasing yesterday" filter:** the wrong sign (+0.29%, t = +1.29) and
+  underpowered (planted −0.5% at t = −0.97). Not adopted.
+
+The evening review now scores each pick against its sector. A Top 2 name where
+every model saw the same release is labelled not independent. Rejections 44,
+adoptions 3.

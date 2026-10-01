@@ -147,10 +147,13 @@ def _verdict(p, answered):
         return 'SPLIT — models took opposite sides'
     if p.get('entry_check') == 'VOID':
         return 'VOID AT ENTRY — already past its own "wrong if"'
+    # Day-120b H3: models that all had the same issuer release in front of them
+    # are one reading of one fact, not independent opinions (2026-09-30, TD).
+    same = ' — all saw the same release, not independent' if p.get('wire') else ''
     if p['votes'] == n and n > 1:
-        return f'ALL {n} AGREE'
+        return f'ALL {n} AGREE{same}'
     if p['votes'] >= 2:
-        return f"{p['votes']} of {n} agree"
+        return f"{p['votes']} of {n} agree{same}"
     return f'1 of {n} — no agreement on this slot'
 
 

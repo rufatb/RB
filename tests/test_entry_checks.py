@@ -90,3 +90,13 @@ def test_recorded_under_the_new_rule_version():
     rows = model_picks.rows_from_report({'session': '2026-09-30', 'intraday': intra})
     pv = {r['model']: r['prompt_version'] for r in rows}
     assert pv == {'top2': 'day120-entry', 'debate': 'day119-debate-v1+day120-entry'}
+
+
+def test_agreement_on_one_release_is_labelled_not_independent():
+    claude = snap(longs=[{'ticker': 'TD.TO', 'confidence': 0.53}])
+    deepseek = snap(longs=[{'ticker': 'TD.TO', 'confidence': 0.55}])
+    sec = top_picks.select(claude, deepseek, None)
+    td = next(p for p in sec['picks'] if p['ticker'] == 'TD.TO')
+    assert 'not independent' not in '\n'.join(top_picks.table(sec))
+    td['wire'] = {'at': '08:30', 'title': 'TD buyback'}
+    assert 'all saw the same release, not independent' in '\n'.join(top_picks.table(sec))

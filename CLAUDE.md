@@ -90,6 +90,24 @@ in parallel. It is recorded as `debate/final` and is the last scoreboard row.
 Summary: `data/replay_day119_debate.json`. Do not re-tune its prompts against
 this replay.
 
+### Day120b — after the 0/2 Top 2 of 09-30: two fixes tested, neither survives
+
+The owner said "change and make it better". Registered first
+(`PREREGISTER_day120b_pick_quality.md`); see `AUDIT_day120b_pick_quality.md`.
+
+* **H1, picks against their sector:** cuts per-pick sd by only 6.1% (bar 15%);
+  correlation with the market drops 0.24 → 0.05. It is a MEASUREMENT: the
+  evening review prints "Beat its sector" and "Mean vs sector" per section and
+  per pick (`vs_sector`). TD on 09-30 was −0.75% raw and −0.12% against its
+  sector.
+* **H2, chasing yesterday (≥ 1 ATR):** the wrong sign. Chasing picks did
+  +0.10% vs −0.14% for the rest, t = +1.29, and it is UNDERPOWERED (a planted
+  −0.5% shows at t = −0.97). There is no rule and no flag. Do not add one after
+  a bounce day.
+* **H3, single-source agreement:** display only. A Top 2 name with a
+  same-morning issuer release reads "all saw the same release, not
+  independent".
+
 ### Day120 — two entry checks at 09:46 on the Top 2 and the debate (owner: "do it all")
 
 `entry_checks.py`, registered in `PREREGISTER_day120_entry_checks.md` before

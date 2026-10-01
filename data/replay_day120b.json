@@ -1,0 +1,9 @@
+{"registration": "PREREGISTER_day120b_pick_quality.md", "computed": "2026-10-01", "sessions": 59, "picks": 341, "missing": 4,
+ "H1": {"raw": {"hit": 174, "n": 341, "mean_pct": -0.046, "sd": 1.657, "t": -0.33},
+        "hedged": {"hit": 163, "n": 341, "mean_pct": -0.097, "sd": 1.556, "t": -0.92},
+        "corr_with_market": {"raw": 0.238, "hedged": 0.048}, "sd_cut_pct": 6.1, "bar_sd_cut_pct": 15, "verdict": "MEASUREMENT ONLY"},
+ "H2": {"chasing": {"n": 136, "hit": 68, "mean_pct": 0.102}, "rest": {"n": 205, "hit": 106, "mean_pct": -0.143},
+        "clustered_diff": {"sessions": 47, "mean_pct": 0.285, "t": 1.29}, "planted_minus_0_5_t": -0.97, "placebo_p_worse": 0.89,
+        "panel_continuation": {"name_days": 711, "right_pct": 53.7, "mean_pct": 0.198, "t": 1.12},
+        "verdict": "UNDERPOWERED, wrong sign; no rule, no flag"},
+ "H3": {"verdict": "DISPLAY ONLY: agreement on a pick with a same-morning issuer release is labelled not independent"}}
