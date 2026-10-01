@@ -123,6 +123,19 @@ agreement.
 The owner trades these picks. Every source is still a coin flip, so say so
 plainly when asked, and never present a Top 2 name as more than what it is.
 
+### Day121b — agreement and an at-the-open entry, replayed: both null
+
+Registered first, on the day-117 replay (DeepSeek and Jev):
+* **Agreement-only Top 2:** 35/76 (46%), against 45% filled.
+* **Agreed names:** 49% right, against 50% for DeepSeek alone (t = −0.58,
+  underpowered below ~1%). The models agree on 50 of 59 sessions because they
+  read the same brief.
+* **Entering the same picks at the open:** 52%, +0.02%, t = 0.44, random-pool
+  p = 0.42. Powered (planted +0.5% at t = 3.74).
+
+Do not pitch agreement as accuracy, or an earlier delivery as a lever.
+`AUDIT_day121b_agreement_and_open.md`.
+
 ### Day120b — after the 0/2 Top 2 of 09-30: two fixes tested, neither survives
 
 The owner said "change and make it better". Registered first

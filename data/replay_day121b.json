@@ -1,0 +1,10 @@
+{"registration": "PREREGISTER_day121b_agreement_and_open.md", "computed": "2026-10-01", "sessions": 59,
+ "T1_rule_vs_rule": {"agreement_only": {"right": 35, "n": 76, "mean_pct": -0.134, "t": -0.94, "sessions_with_a_name": 50},
+                     "old_filled": {"right": 53, "n": 117, "mean_pct": -0.184, "t": -1.06}},
+ "T1_agreed_vs_single": {"agreed": {"right": 42, "n": 86, "mean_pct": -0.057}, "single": {"right": 67, "n": 135, "mean_pct": -0.092},
+                         "clustered_diff": {"sessions": 49, "mean_pct": -0.144, "t": -0.58}, "planted_plus_0_5_t": 1.44,
+                         "placebo_p": 0.70, "verdict": "NO MEASURED DIFFERENCE; underpowered below ~1%"},
+ "T2_entry_at_open": {"open_to_0945": {"right": 177, "n": 334, "mean_pct": 0.071, "t": 1.08},
+                      "0945_to_close": {"right": 170, "n": 334, "mean_pct": -0.052, "t": -0.36},
+                      "open_to_close": {"right": 175, "n": 334, "mean_pct": 0.019, "t": 0.44, "random_pool_median_pct": 0.001, "random_pool_p": 0.416},
+                      "planted_plus_0_5_t": 3.74, "verdict": "POWERED NULL: entering at the open is not a lever"}}

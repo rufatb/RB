@@ -5353,3 +5353,15 @@ entry. The section is never padded.
 No accuracy is claimed: on the three live days it would have gone 1/3, against
 2/6 filled. This is a presentation rule, not a signal. Rejections 44,
 adoptions 3.
+
+## Day-121b: agreement and an at-the-open entry, replayed — both null
+
+Registered before running (59 sessions, DeepSeek and Jev):
+* **Agreement-only Top 2:** 35/76 (46%), against 45% for the old filled rule.
+* **Names both models back:** 49% right, against 50% for DeepSeek alone
+  (t = −0.58). Underpowered below ~1%.
+* **The same picks entered at the open:** open → close 52%, +0.02%, t = 0.44,
+  random-pool p = 0.42. Powered: a planted +0.5% shows at t = 3.74.
+
+Agreement stays a presentation rule. An earlier entry is not a lever.
+`AUDIT_day121b_agreement_and_open.md`.
