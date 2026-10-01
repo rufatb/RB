@@ -84,3 +84,12 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-09-30,jev,selected,LONG,SHOP.TO,0.39,0.37,,,published_report,212.3,211.3,-0.471,0,,2026-09-30T16:20:58.767437-04:00,,,,,
 2026-09-30,top2,pick,LONG,TD.TO,0.53,,,day120-entry,published_report,168.5,167.23,-0.7537,0,,2026-09-30T16:20:58.767437-04:00,,,,,3 of 3
 2026-09-30,top2,pick,SHORT,WSP.TO,0.5,,,day120-entry,published_report,172.44,174.18,-1.009,0,,2026-09-30T16:20:58.767437-04:00,,,,,2 of 3
+2026-10-01,deepseek,selected,SHORT,T.TO,0.55,,12.09,,published_report,,,,,,,technical,,,,
+2026-10-01,engine,board,LONG,BCE.TO,0.554,,,,published_report,,,,,,,,,,,
+2026-10-01,engine,board,LONG,BMO.TO,0.591,,,,published_report,,,,,,,,,,,
+2026-10-01,engine,board,SHORT,CNQ.TO,0.564,,,,published_report,,,,,,,,,,,
+2026-10-01,engine,board,SHORT,CVE.TO,0.6,,,,published_report,,,,,,,,,,,
+2026-10-01,jev,forced,LONG,SHOP.TO,0.63,0.39,,,published_report,,,,,,,,,,,
+2026-10-01,jev,forced,SHORT,ELD.TO,0.56,0.47,,,published_report,,,,,,,,,,,
+2026-10-01,top2,pick,LONG,SHOP.TO,0.63,,,day120-entry,published_report,,,,,,,,,,,1 of 3
+2026-10-01,top2,pick,SHORT,ELD.TO,0.56,,,day120-entry,published_report,,,,,,,,,,,1 of 3
