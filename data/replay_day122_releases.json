@@ -1,0 +1,283 @@
+{
+ "registered": "PREREGISTER_day122_releases.md",
+ "prompt_version": "day122-v1",
+ "model": "deepseek-v4-pro",
+ "events": 420,
+ "excluded": {
+  "traded value under C$3M a day": 287,
+  "fewer than 21 prior sessions": 20,
+  "price under C$2": 74,
+  "not quoted in CAD": 13,
+  "bars failed: ChartAcquisitionError": 6,
+  "not an equity": 9,
+  "no bar for the session": 4
+ },
+ "bodies_failed": {},
+ "five_minute_bars_failed": {},
+ "problems": {
+  "full": {
+   "id answered twice": 2
+  },
+  "headline": {
+   "confidence outside 0.5-1": 4
+  }
+ },
+ "arms": {
+  "full": {
+   "w945": {
+    "mean": 0.1106,
+    "t": 0.83,
+    "sessions": 59,
+    "sd_session_means": 1.0276,
+    "n": 381,
+    "right": 200,
+    "hit": 0.525
+   },
+   "w945_raw": {
+    "mean": 0.0699,
+    "t": 0.48,
+    "sessions": 59,
+    "sd_session_means": 1.1119,
+    "n": 381,
+    "right": 197,
+    "hit": 0.517
+   },
+   "w_day": {
+    "mean": 0.0932,
+    "t": 0.71,
+    "sessions": 63,
+    "sd_session_means": 1.0436,
+    "n": 419,
+    "right": 213,
+    "hit": 0.508,
+    "placebo_p": 0.265
+   },
+   "w_day_raw": {
+    "mean": 0.0406,
+    "t": 0.31,
+    "sessions": 63,
+    "sd_session_means": 1.0556,
+    "n": 419,
+    "right": 215,
+    "hit": 0.513
+   },
+   "w5d": {
+    "mean": -0.018,
+    "t": -0.07,
+    "sessions": 58,
+    "sd_session_means": 1.9858,
+    "n": 387,
+    "right": 181,
+    "hit": 0.468
+   },
+   "w5d_raw": {
+    "mean": -0.0402,
+    "t": -0.15,
+    "sessions": 58,
+    "sd_session_means": 2.1013,
+    "n": 387,
+    "right": 181,
+    "hit": 0.468
+   },
+   "gap": {
+    "mean": 0.2149,
+    "t": 2.71,
+    "sessions": 63,
+    "sd_session_means": 0.6296,
+    "n": 419,
+    "right": 217,
+    "hit": 0.518,
+    "placebo_p": 0.0035
+   },
+   "gap_raw": {
+    "mean": 0.2614,
+    "t": 2.96,
+    "sessions": 63,
+    "sd_session_means": 0.7019,
+    "n": 419,
+    "right": 217,
+    "hit": 0.518
+   },
+   "material_w945": {
+    "mean": 0.0356,
+    "t": 0.2,
+    "sessions": 58,
+    "sd_session_means": 1.3392,
+    "n": 256,
+    "right": 129,
+    "hit": 0.504
+   },
+   "material_w_day": {
+    "mean": -0.0514,
+    "t": -0.3,
+    "sessions": 62,
+    "sd_session_means": 1.3414,
+    "n": 274,
+    "right": 137,
+    "hit": 0.5
+   },
+   "confidence_0.6_w945": {
+    "mean": 0.064,
+    "t": 0.34,
+    "sessions": 57,
+    "sd_session_means": 1.4142,
+    "n": 222,
+    "right": 123,
+    "hit": 0.554
+   },
+   "confidence_0.6_w_day": {
+    "mean": 0.1243,
+    "t": 0.68,
+    "sessions": 61,
+    "sd_session_means": 1.4303,
+    "n": 234,
+    "right": 126,
+    "hit": 0.538
+   },
+   "long_share": 0.642
+  },
+  "headline": {
+   "w945": {
+    "mean": 0.0524,
+    "t": 0.39,
+    "sessions": 59,
+    "sd_session_means": 1.0246,
+    "n": 380,
+    "right": 201,
+    "hit": 0.529
+   },
+   "w945_raw": {
+    "mean": 0.0362,
+    "t": 0.27,
+    "sessions": 59,
+    "sd_session_means": 1.0487,
+    "n": 380,
+    "right": 208,
+    "hit": 0.547
+   },
+   "w_day": {
+    "mean": 0.1778,
+    "t": 1.24,
+    "sessions": 63,
+    "sd_session_means": 1.1345,
+    "n": 416,
+    "right": 230,
+    "hit": 0.553
+   },
+   "w_day_raw": {
+    "mean": 0.1433,
+    "t": 1.02,
+    "sessions": 63,
+    "sd_session_means": 1.1186,
+    "n": 416,
+    "right": 237,
+    "hit": 0.57
+   },
+   "w5d": {
+    "mean": -0.2386,
+    "t": -0.81,
+    "sessions": 58,
+    "sd_session_means": 2.2367,
+    "n": 384,
+    "right": 179,
+    "hit": 0.466
+   },
+   "w5d_raw": {
+    "mean": -0.1505,
+    "t": -0.51,
+    "sessions": 58,
+    "sd_session_means": 2.2336,
+    "n": 384,
+    "right": 180,
+    "hit": 0.469
+   },
+   "gap": {
+    "mean": 0.1338,
+    "t": 1.7,
+    "sessions": 63,
+    "sd_session_means": 0.6246,
+    "n": 416,
+    "right": 214,
+    "hit": 0.514
+   },
+   "gap_raw": {
+    "mean": 0.158,
+    "t": 1.84,
+    "sessions": 63,
+    "sd_session_means": 0.6828,
+    "n": 416,
+    "right": 212,
+    "hit": 0.51
+   },
+   "material_w945": {
+    "mean": 0.0214,
+    "t": 0.11,
+    "sessions": 58,
+    "sd_session_means": 1.4261,
+    "n": 254,
+    "right": 128,
+    "hit": 0.504
+   },
+   "material_w_day": {
+    "mean": 0.0067,
+    "t": 0.03,
+    "sessions": 62,
+    "sd_session_means": 1.5195,
+    "n": 271,
+    "right": 145,
+    "hit": 0.535
+   },
+   "confidence_0.6_w945": {
+    "mean": 0.1209,
+    "t": 0.63,
+    "sessions": 57,
+    "sd_session_means": 1.44,
+    "n": 199,
+    "right": 101,
+    "hit": 0.508
+   },
+   "confidence_0.6_w_day": {
+    "mean": 0.2212,
+    "t": 1.21,
+    "sessions": 61,
+    "sd_session_means": 1.4319,
+    "n": 213,
+    "right": 117,
+    "hit": 0.549
+   },
+   "long_share": 0.587
+  }
+ },
+ "full_minus_headline_w945": {
+  "mean": 0.0623,
+  "t": 0.45,
+  "sessions": 59,
+  "sd_session_means": 1.0673
+ },
+ "same_side_as_headline": 0.745,
+ "contamination": {
+  "asked": 12,
+  "answered": 12,
+  "median_abs_error_pct": 48.49,
+  "void": false
+ },
+ "primary": {
+  "mean": 0.1106,
+  "t": 0.83,
+  "sessions": 59,
+  "sd_session_means": 1.0276,
+  "n": 381,
+  "right": 200,
+  "hit": 0.525,
+  "placebo_p": 0.158,
+  "blocks": [
+   0.0627,
+   0.1095,
+   0.082,
+   0.1744
+  ],
+  "planted_t": 4.56,
+  "verdict": "FAIL"
+ },
+ "line": "Backtest on 420 overnight releases (Jul\u2013Sep 2026), full text read: 09:45 to the close against the market 200/381 right (52%), +0.11% per call, t = 0.83, placebo p = 0.158 \u2014 does NOT beat chance. On the overnight gap the release caused (before the open, not tradable) it was +0.21% per call, t = 2.71: it reads which way a release points, and the open has already priced it."
+}

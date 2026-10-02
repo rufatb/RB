@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 8, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 9, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -238,3 +238,13 @@ def test_claude_answers_before_deepseek_or_jev_is_asked():
     wait = body[brief:body.index('deepseek_opportunities.py')]
     assert '--sealed' in wait and 'CLAUDE_DEADLINE' in wait and 'until' in wait
     assert 'CLAUDE_DEADLINE=0924' in body
+
+
+def test_the_news_desk_waits_for_its_window_and_cannot_delay_publication():
+    """Day-122 Part 6: the overnight window closes at 09:30, so the step waits
+    for it, and its timeout ends by 09:43 — before the 09:44 handover."""
+    body = code()
+    at = body.index('news_desk.py --stage')
+    assert body.index('-lt 0931 ]') < at < body.index('-lt "$PUBLISH_AT" ]')
+    assert "today 09:43:00" in body and 'news_left < 300 ? news_left : 300' in body
+    assert body.index('news_desk.py --stage') < body.index('./morning.sh')

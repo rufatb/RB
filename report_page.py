@@ -581,13 +581,14 @@ def _top_two_section(intra):
 
 
 def _extra_sections(intra):
-    """Parts 3 and 4 (gap_signal, pead): separate tests, rendered from the same
+    """Parts 3–6 (gap_signal, pead, debate, news_desk): separate tests, rendered from the same
     text lines the email prints, so the three views cannot disagree."""
     import debate
     import gap_signal
+    import news_desk
     import pead
     text = (gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
-            + debate.lines(intra.get('debate')))
+            + debate.lines(intra.get('debate')) + news_desk.lines(intra.get('news_desk')))
     if not text:
         return ''
     out, rows = '', []

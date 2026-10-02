@@ -246,9 +246,10 @@ def text(d):
     if intra.get('gap_signal') or intra.get('pead') or intra.get('debate'):   # absent before 2026-09-29
         import debate
         import gap_signal
+        import news_desk
         import pead
         lines += (gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
-                  + debate.lines(intra.get('debate')))
+                  + debate.lines(intra.get('debate')) + news_desk.lines(intra.get('news_desk')))
     lines += _positions_lines(d)
     sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
     lines += ['', '---',

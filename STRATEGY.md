@@ -5365,3 +5365,17 @@ Registered before running (59 sessions, DeepSeek and Jev):
 
 Agreement stays a presentation rule. An earlier entry is not a lever.
 `AUDIT_day121b_agreement_and_open.md`.
+
+## Day-122: REJECTION #45 — full-text release reading after the open
+
+Registered first (`PREREGISTER_day122_releases.md`). 420 overnight releases
+on liquid TSX names, Jul–Oct 1 2026; DeepSeek v4-pro read each full release
+and was forced to a side:
+* **09:45 → close vs XIU:** 200/381 (52%), +0.11%, t = 0.83, placebo p =
+  0.16. Planted +0.5% at t = 4.56: a POWERED negative.
+* **Title only:** the same (FULL − HEADLINE +0.06%, t = 0.45).
+* **Prior close → open (not tradable):** +0.21%, t = 2.71, placebo p =
+  0.004. It reads the direction; the open prices it.
+
+Part 6 (`news_desk.py`) runs forward as the owner's parallel test, decided at
+40 sessions. `AUDIT_day122_releases.md`.

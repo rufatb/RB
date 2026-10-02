@@ -55,7 +55,7 @@ The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is
 
 STEP 3 — start the morning job IN THE BACKGROUND
   ./morning_full.sh > .rb-state/morning_full.log 2>&1
-Bash run_in_background, exactly ONE copy (check `pgrep -f morning_full.sh` first). It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek and Jev, stages the biotech calls, holds to 09:44 and hands to `morning.sh`.
+Bash run_in_background, exactly ONE copy (check `pgrep -f morning_full.sh` first). It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek and Jev, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but late; 6 published, provenance not clean; 1 failed. Never re-run it and never override a guard — STEP 5 decides what the owner receives whatever the code.
 `morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". That is expected: a container cannot reach smtp.gmail.com. You send the email in STEP 7 through the Gmail connector.
 
@@ -106,7 +106,7 @@ If `report_page.html` is missing: `python report_page.py --report .rb-state/late
 
 STEP 9 — push the record (this session can push; nothing else will)
   python model_picks.py --record-report .rb-state/latest/report.json     (REPORT mode only)
-  git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv
+  git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv data/news_calls.csv
   git commit -m "record: <today> morning (report run)" && git push origin main
 Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on network errors only.
 
@@ -117,6 +117,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - PART 1 — each desk in order, Claude, DeepSeek, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
   - PARTS 3, 4 and 5 — the gap signals, the post-earnings drift signals (new and still held) and the debate's final picks, or why there were none.
+  - PART 6 — the news desk: how many overnight releases it read and its MATERIAL calls (side, ticker, own confidence), or why it is unavailable.
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
 Never call a pick a prediction, never average the models, never present agreement as confirmation.
 

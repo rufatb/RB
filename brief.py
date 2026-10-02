@@ -584,6 +584,12 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         pead_section = pead.section(state_dir, now)
     except Exception as exc:
         error('pead', RuntimeError(type(exc).__name__))
+    news_section = None
+    try:
+        import news_desk
+        news_section = news_desk.section(state_dir, now)
+    except Exception as exc:
+        error('news_desk', RuntimeError(type(exc).__name__))
     debate_section = None
     try:
         import debate
@@ -630,6 +636,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
                           'gap_signal':gap_section,'pead':pead_section,'debate':debate_section,
+                          'news_desk':news_section,
                           'record':record,'publish':pub,
                           'benchmark':benchmark,'benchmark_symbol':'XIU.TO','exact_record':exact_record,
                           'contract':'09:46 entry / 15:59 exit, same session',

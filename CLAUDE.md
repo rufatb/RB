@@ -1,5 +1,58 @@
 # Working notes for this repo
 
+## Day122 — a model reads the whole release: it understands it, and the open has priced it
+
+The owner chose three tests ("Read full releases", "Widen the news test",
+"Biotech catalyst finder"). All three were registered in
+`PREREGISTER_day122_releases.md` (bc85a4f) before anything ran. Read
+`AUDIT_day122_releases.md`.
+
+**The backtest (`replay_news.py`, rejection #45): FAILS, and it was powered.**
+* Setup: 420 overnight releases on liquid TSX names (first lead symbol, ≥ C$3M
+  a day, ≥ C$2), Jul–Oct 1. DeepSeek v4-pro read the full text and was forced
+  to a side.
+* Result, 09:45 → close against XIU: 200/381 (52%), +0.11%, t = 0.83, placebo
+  p = 0.16. A planted +0.5% shows at t = 4.56.
+* The title-only arm is no different (FULL − HEADLINE +0.06%, t = 0.45).
+* The contamination probe missed prices by a median of 39–49%, so the model
+  does not remember the period.
+
+**It does understand the news.** It calls the overnight gap the release caused
+at +0.21% per call, t = 2.7, placebo p = 0.004. The title alone manages
+t = 1.7. That move is over by the open. Day-118's "the open prices a release"
+holds even for a model that reads. Do not re-word the prompt against this
+replay.
+
+**Part 6, `news_desk.py` (forward, from 2026-10-02), is the owner's parallel
+test.**
+* Staging: `morning_full.sh` waits for the window to close (09:31), then runs
+  `news_desk.py --stage` with a timeout ending by 09:43, so it can never delay
+  publication. ~28 s live for 11 events and both arms.
+* Each event is asked twice: FULL text and HEADLINE only. The FULL arm is
+  printed; the table shows where the title alone chose differently.
+* Records go to `data/news_calls.csv`, one row per event and arm.
+  `news_desk.py --score` fills W945 / W_day / gap that evening, and W_5d once
+  due.
+* It is never sized, never in the Top 2 and never on the desks' scoreboard.
+  The decision comes at 40 live sessions.
+* The section prints the backtest line every day
+  (`data/replay_day122_releases.json`).
+
+**The biotech catalyst finder, `biotech_finder.py`, is coverage, not accuracy.**
+1. It reads only pages with a wire dateline.
+2. DeepSeek copies the sentence stating a catalyst's timing.
+3. Everything then goes through `biotech_review.add`: re-fetch, verbatim
+   quote, `validate_event`.
+
+Two mechanical refusals came from reading its first output:
+* the quote must name what its kind claims;
+* a quote stating MORE THAN ONE timing is refused. TPST's "dosing in Q4 2026
+  and data in H1 2027" was merged as a Q4 data window and removed by hand.
+
+The newest release supersedes older ones for the same asset. First run: AIM
+(DURIPANC topline, Q1 2027) added; Part 2 holds six events. It runs in the
+evening job after `--reverify`.
+
 ## Day119 — DeepSeek is deepseek-v4-pro; Top 2 at the top of every email
 
 **Model (owner's decision, 2026-09-29):** `deepseek-v4-pro` replaced

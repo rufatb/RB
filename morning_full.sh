@@ -346,6 +346,28 @@ else
     stage_faults+=("post-earnings drift not staged")
 fi
 
+# ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
+# A model reads every liquid TSX name's overnight release. The window runs to
+# 09:30, so this waits for it to close, then has until 09:43 — it can never
+# delay publication. A failure costs Part 6 only.
+while [ "$(minutes_now)" -lt 0931 ]; do
+    log "holding for the overnight news window to close (now $(minutes_now))"
+    sleep 60
+done
+news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
+if [ "$news_left" -gt 30 ]; then
+    if timeout "$(( news_left < 300 ? news_left : 300 ))" python news_desk.py --stage \
+            --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1; then
+        log "  news desk: staged and recorded"
+    else
+        log "  news desk: NOT staged — Part 6 reads unavailable (news_desk.log)"
+        stage_faults+=("news desk not staged")
+    fi
+else
+    log "  news desk: SKIPPED — too close to publication"
+    stage_faults+=("news desk skipped: too close to publication")
+fi
+
 # ── 2. HOLD until the publication window opens ─────────────────────────────
 # The session must stay alive: the staged snapshot is on this filesystem and
 # nowhere else. Poll rather than sleep in one block so the wait is visible in
