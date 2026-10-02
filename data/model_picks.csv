@@ -93,3 +93,9 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-01,jev,forced,SHORT,ELD.TO,0.56,0.47,,,published_report,54.17,53.5,1.2368,1,,2026-10-01T16:21:45.284468-04:00,,,,,
 2026-10-01,top2,pick,LONG,SHOP.TO,0.63,,,day120-entry,published_report,216.33,212.21,-1.9045,0,,2026-10-01T16:21:45.284468-04:00,,,,,1 of 3
 2026-10-01,top2,pick,SHORT,ELD.TO,0.56,,,day120-entry,published_report,54.17,53.5,1.2368,1,,2026-10-01T16:21:45.284468-04:00,,,,,1 of 3
+2026-10-02,engine,board,LONG,CM.TO,0.562,,,,published_report,,,,,,,,,,,
+2026-10-02,engine,board,LONG,SLF.TO,0.564,,,,published_report,,,,,,,,,,,
+2026-10-02,engine,board,SHORT,BCE.TO,0.636,,,,published_report,,,,,,,,,,,
+2026-10-02,engine,board,SHORT,ENB.TO,0.601,,,,published_report,,,,,,,,,,,
+2026-10-02,jev,forced,LONG,GIB-A.TO,0.41,0.52,,,published_report,,,,,,,,,,,
+2026-10-02,jev,forced,SHORT,SAP.TO,0.42,0.45,,,published_report,,,,,,,,,,,
