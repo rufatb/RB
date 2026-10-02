@@ -1,5 +1,26 @@
 # Working notes for this repo
 
+## Day122b — an empty morning says so; the background jobs get a real timeout
+
+**2026-10-02: every model declined, and the email looked like it held picks.**
+`headline_legs` fell back to the demoted engine's legs when no desk had any,
+so the hero read "1 of 4 picks carry a share count" and the subject "3/4 legs
+ABSTAINED". The owner read it as "I got nothing in the email". When the desks
+exist and none picked anything:
+* `headline_legs` returns NO legs;
+* the subject reads "⛔ NO MODEL PICKS — nothing to act on";
+* the hero reads "No model picked anything today".
+
+The engine fallback remains only for publications from before the desks
+existed.
+
+**The morning job was killed at 09:21 by the 30-minute default background
+limit.** Staging had finished, so the tail of `morning_full.sh` (Part 6, the
+Yahoo login, `morning.sh`) was run by hand and the report went out at 09:49.
+The morning Routine (STEP 3) and the evening Routine's biotech build now pass
+`timeout 7200000`. The evening job also runs `news_desk.py --score` and
+`biotech_finder.py`, and pushes `data/news_calls.csv`.
+
 ## Day122 — a model reads the whole release: it understands it, and the open has priced it
 
 The owner chose three tests ("Read full releases", "Widen the news test",

@@ -125,10 +125,16 @@ def headline_legs(intra):
     One function, because the subject line and the email hero must describe the
     same board — a subject computed from a different board than the one printed
     under it could say DO NOT TRADE over sized legs. A publication from before
-    the desks existed carries `primary` (DeepSeek alone, 2026-09-22)."""
+    the desks existed carries `primary` (DeepSeek alone, 2026-09-22).
+
+    When the desks exist and none picked anything, the answer is NO legs — never
+    the engine's. On 2026-10-02 every model declined and the hero and subject
+    fell back to the demoted engine ("1 of 4 picks carry a share count",
+    "3/4 legs ABSTAINED"), which read as picks nobody had made."""
     intra = intra or {}
-    legs = [l for d in intra.get('desks') or [] for l in d.get('legs') or []]
-    legs = legs or (intra.get('primary') or {}).get('legs') or []
+    if intra.get('desks'):
+        return [l for d in intra['desks'] for l in d.get('legs') or []]
+    legs = (intra.get('primary') or {}).get('legs') or []
     return legs or intra.get('legs') or []
 
 

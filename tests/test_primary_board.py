@@ -85,9 +85,19 @@ def test_the_subject_describes_the_desks_not_the_demoted_engine():
     assert '2/4 legs ABSTAINED' in prepare_delivery.subject_state(digest(sized, unsized))
 
 
-def test_empty_desks_fall_back_to_the_engine_board():
+def test_empty_desks_never_fall_back_to_the_engine_board():
+    """2026-10-02: every model declined, and the hero and subject described the
+    demoted engine's legs as if they were the day's picks."""
+    import email_render
     empty = P.build({'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}, {}, CFG, OPEN, True)
-    assert P.headline_legs(digest(empty)['intraday'])[0]['ticker'] == 'BCE.TO'
+    d = digest(empty)
+    assert P.headline_legs(d['intraday']) == []
+    assert prepare_delivery.subject_state(d) == '⛔ NO MODEL PICKS — nothing to act on — '
+    hero = email_render._hero(d)
+    assert 'No model picked anything today' in hero and 'share count' not in hero
+    # a publication from before the desks existed still reads the engine
+    old = {'intraday': {'legs': d['intraday']['legs']}}
+    assert P.headline_legs(old['intraday'])[0]['ticker'] == 'BCE.TO'
 
 
 def test_an_abstained_leg_shows_no_share_count_in_any_view():

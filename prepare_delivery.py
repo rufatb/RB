@@ -74,6 +74,8 @@ def subject_state(report):
     status = str(report.get('report_status') or '')
     if 'DATA OUTAGE' in status:
         return '⛔ DATA OUTAGE — DO NOT TRADE — '
+    if not legs and intraday.get('desks'):
+        return '⛔ NO MODEL PICKS — nothing to act on — '
     if not legs:
         if any(r.get('role') == 'pair' for r in intraday.get('recorded_today', [])):
             return 'RECORDED BOARD — no fresh entry validation — '

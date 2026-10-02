@@ -55,7 +55,7 @@ The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is
 
 STEP 3 — start the morning job IN THE BACKGROUND
   ./morning_full.sh > .rb-state/morning_full.log 2>&1
-Bash run_in_background, exactly ONE copy (check `pgrep -f morning_full.sh` first). It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek and Jev, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
+Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek and Jev, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but late; 6 published, provenance not clean; 1 failed. Never re-run it and never override a guard — STEP 5 decides what the owner receives whatever the code.
 `morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". That is expected: a container cannot reach smtp.gmail.com. You send the email in STEP 7 through the Gmail connector.
 
