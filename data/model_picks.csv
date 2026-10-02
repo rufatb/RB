@@ -93,9 +93,9 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-01,jev,forced,SHORT,ELD.TO,0.56,0.47,,,published_report,54.17,53.5,1.2368,1,,2026-10-01T16:21:45.284468-04:00,,,,,
 2026-10-01,top2,pick,LONG,SHOP.TO,0.63,,,day120-entry,published_report,216.33,212.21,-1.9045,0,,2026-10-01T16:21:45.284468-04:00,,,,,1 of 3
 2026-10-01,top2,pick,SHORT,ELD.TO,0.56,,,day120-entry,published_report,54.17,53.5,1.2368,1,,2026-10-01T16:21:45.284468-04:00,,,,,1 of 3
-2026-10-02,engine,board,LONG,CM.TO,0.562,,,,published_report,,,,,,,,,,,
-2026-10-02,engine,board,LONG,SLF.TO,0.564,,,,published_report,,,,,,,,,,,
-2026-10-02,engine,board,SHORT,BCE.TO,0.636,,,,published_report,,,,,,,,,,,
-2026-10-02,engine,board,SHORT,ENB.TO,0.601,,,,published_report,,,,,,,,,,,
-2026-10-02,jev,forced,LONG,GIB-A.TO,0.41,0.52,,,published_report,,,,,,,,,,,
-2026-10-02,jev,forced,SHORT,SAP.TO,0.42,0.45,,,published_report,,,,,,,,,,,
+2026-10-02,engine,board,LONG,CM.TO,0.562,,,,published_report,157.42,158.15,0.4637,1,,2026-10-02T16:21:03.580649-04:00,,,,,
+2026-10-02,engine,board,LONG,SLF.TO,0.564,,,,published_report,111.21,111.97,0.6834,1,,2026-10-02T16:21:03.580649-04:00,,,,,
+2026-10-02,engine,board,SHORT,BCE.TO,0.636,,,,published_report,28.43,28.15,0.9849,1,,2026-10-02T16:21:03.580649-04:00,,,,,
+2026-10-02,engine,board,SHORT,ENB.TO,0.601,,,,published_report,65.995,65.54,0.6894,1,,2026-10-02T16:21:03.580649-04:00,,,,,
+2026-10-02,jev,forced,LONG,GIB-A.TO,0.41,0.52,,,published_report,100.46,100.13,-0.3285,0,,2026-10-02T16:21:03.580649-04:00,,,,,
+2026-10-02,jev,forced,SHORT,SAP.TO,0.42,0.45,,,published_report,38.51,38.68,-0.4414,0,,2026-10-02T16:21:03.580649-04:00,,,,,
