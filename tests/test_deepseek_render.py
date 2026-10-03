@@ -45,7 +45,10 @@ def test_saved_factors_render_in_both_views_without_compute_or_provider(tmp_path
     monkeypatch.setattr(deepseek_factors,'load_prepared',no_pass)
     monkeypatch.setattr(deepseek_factors,'rank_shadow',no_pass)
     payload=prepare_delivery.artifacts(d,tmp_path,NOW)
-    assert 'FACTORLONG.TO' in payload['text'] and 'FACTORSHORT.TO' in payload['html']
+    # The factor table left the EMAIL on 2026-10-03 (owner); the full report keeps it.
+    full = payload['attachments'][0]['content']
+    assert 'FACTORLONG.TO' in full and 'FACTORSHORT.TO' in full
+    assert 'FACTORLONG.TO' not in payload['text']
     assert 'https://issuer.example/releases/update' in payload['attachments'][0]['content']
     assert 'Combined DESIGN score' in payload['attachments'][0]['content']
     assert 'not calibrated probabilities' in payload['attachments'][0]['content']

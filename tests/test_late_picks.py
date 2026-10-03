@@ -53,7 +53,7 @@ def test_compose_is_labelled_late_and_never_sized(root, monkeypatch):
     assert '| LONG BBB.TO | 0.60 | below 49.00 | r |' in text         # DeepSeek
     assert '| LONG AAA.TO | 0.30 | 0.60 |' in text                    # Jev: FORCED only
     assert 'RANKED.TO' not in text
-    assert 'would rather have done nothing' in text and 'never a selection' in text
+    assert 'would rather have done nothing' in text and '| Forced pick |' in text   # caveat line left the email 2026-10-03
     assert '<table' in open(out['html_path']).read()
     assert 'shares' not in text.lower() and '$' not in text
 

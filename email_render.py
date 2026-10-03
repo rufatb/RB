@@ -67,8 +67,7 @@ def _jev_table(snap, wire=None):
     if not rows:
         return ['No forced pick today — ' + _cell(snap.get('reason') or 'Jev did not answer', 140) + '.']
     return ['| Forced pick | Jev probability | Its "none" | Wire release | Note |',
-            '|---|---:|---:|---|---|', *rows,
-            'Forced picks: Jev had to name one per side — never a selection, never sized.']
+            '|---|---:|---:|---|---|', *rows]
 
 
 def desk_sections(intra):
@@ -117,11 +116,9 @@ def _scoreboard(board):
         lo, hi = r['ci95']
         out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
                    f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
+    # The replay base-rate paragraph left the email on 2026-10-03 (owner: no
+    # needless warnings or accuracy text); the full report keeps it.
     out.append('09:45 price to the close, no costs. A range that contains 50% is a coin flip.')
-    import model_picks
-    base = model_picks.replay_line()
-    if base:
-        out.append(base)
     return out
 
 
@@ -171,17 +168,13 @@ def _biotech_lines(d):
     import biotech_leans
     bio = d.get('biotech') or {}
     calendar = (d.get('research_calendar') or {}).get('events') or []
-    out = ['', '## Part 2 — Biotech catalysts · 3–6 months',
-           'Reviewed events; each carries the model\'s own directional call (LONG or SHORT), '
-           'not a forecast.']
-    table = biotech_leans.table_lines(bio.get('leans'), calendar)
+    out = ['', '## Part 2 — Biotech catalysts · 3–6 months']
+    table = biotech_leans.table_lines(bio.get('leans'), calendar, concise=True)
     out += table
     for e in bio.get('monitor') or []:
         out += ['', '### ' + e['ticker'] + ' — Monitor']
         for i, (label, value) in enumerate(zip(biotech.LABELS, e['bullets'])):
             out.append(f"- **{label}:** {value}" + (f" [Source]({e['source_url']})" if i == 0 else ''))
-    if calendar:
-        out.append('Sources: ' + ' · '.join(f"{e['ticker']} {e['source_url']}" for e in calendar))
     if not table and not bio.get('monitor'):
         n = bio.get('universe_n')
         out.append('No reviewed catalyst event in the window today'
@@ -228,7 +221,7 @@ def text(d):
                   *d['replacement']['notes']]
     if intra.get('top_two'):                # absent from publications before 2026-09-29
         import top_picks
-        lines += ['', *top_picks.table(intra['top_two'])]
+        lines += ['', *top_picks.table(intra['top_two'], concise=True)]
     lines += ['', '## Part 1 — Intraday picks · enter 09:46, exit 15:59 ET']
     if intra.get('desks'):
         lines += desk_sections(intra)
@@ -241,21 +234,24 @@ def text(d):
             lines += ['', *full.opportunities_summary(intra, concise=True)]
         if full.jev_reported(intra):
             lines += ['', *full.jev_summary(intra, concise=True)]
-    lines += _factor_lines(intra)
+    # The factor layer's sentiment table left the email on 2026-10-03 (owner: no
+    # needless text); it is shadow research and stays in the full report.
     lines += _biotech_lines(d)
     if intra.get('gap_signal') or intra.get('pead') or intra.get('debate'):   # absent before 2026-09-29
         import debate
         import gap_signal
         import news_desk
         import pead
-        lines += (gap_signal.lines(intra.get('gap_signal')) + pead.lines(intra.get('pead'))
-                  + debate.lines(intra.get('debate')) + news_desk.lines(intra.get('news_desk')))
+        lines += (gap_signal.lines(intra.get('gap_signal'), concise=True)
+                  + pead.lines(intra.get('pead'), concise=True)
+                  + debate.lines(intra.get('debate'), concise=True)
+                  + news_desk.lines(intra.get('news_desk'), concise=True))
     lines += _positions_lines(d)
     sizing = next((dk.get('sizing') for dk in intra.get('desks') or [] if dk.get('sizing')), None)
     lines += ['', '---',
               'Research only: share counts are hypothetical'
               + (f" (an equal split of {sizing['book']:,.0f} per desk)" if sizing else '')
-              + ', not orders. Confidences are each model\'s own number and are never averaged.',
+              + ', not orders.',
               f'Full report, sources and history: {ARTIFACT_URL}']
     return '\n'.join(lines)
 
@@ -320,8 +316,13 @@ def _hero(d):
     top = [f"{p['side']} {p['ticker']} ({p['agreement']})"
            for p in (intra.get('top_two') or {}).get('picks') or []]
     no_agreement = (intra.get('top_two') or {}).get('status') == 'NO_AGREEMENT'
+    singles = [f"{x['side']} {x['ticker']} ({x['by'].split(' ')[0]})"
+               for x in (intra.get('top_two') or {}).get('single') or []]
     top_text = (f'Top 2 today: {" · ".join(top)}' if top else
-                'Top 2 today: no agreement between the models — nothing to act on' if no_agreement else '')
+                ('Top 2 today: no agreement — single-model picks: ' + ' · '.join(singles)
+                 if no_agreement and singles else
+                 'Top 2 today: no agreement between the models — nothing to act on'
+                 if no_agreement else ''))
     top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
                 f'{full.escape(top_text)}</div>' if top_text else '')
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'

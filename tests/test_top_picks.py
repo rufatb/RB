@@ -131,3 +131,23 @@ def test_the_email_hero_names_the_top_two_first():
     none = T.select(snap(status='NO_OPPORTUNITY'), snap(status='NO_OPPORTUNITY'), jev('X.TO', 'Y.TO'))
     assert 'no agreement between the models — nothing to act on' in email_render._hero(
         {'intraday': {'top_two': none}})
+
+
+def test_a_day_without_agreement_points_at_each_models_own_picks():
+    """Owner, 2026-10-03: an active trader wants the single-model names named on
+    a no-agreement day — as pointers, never as Top 2 slots."""
+    import email_render
+    out = T.select(snap([('AC.TO', .6)]), snap([('SU.TO', .58)]), None)
+    assert out['status'] == 'NO_AGREEMENT' and out['picks'] == []
+    text = '\n'.join(T.table(out, concise=True))
+    assert 'No agreement today — nothing to act on.' in text
+    assert 'Single-model picks (one model only, no agreement): LONG AC.TO (Claude 0.60)' in text
+    assert 'LONG SU.TO (DeepSeek 0.58)' in text and 'Agreement is not confirmation' not in text
+    hero = email_render._hero({'intraday': {'top_two': out}})
+    assert 'single-model picks: LONG AC.TO (Claude)' in hero
+    none = T.select(snap(status='NO_OPPORTUNITY'), snap(status='NO_OPPORTUNITY'), jev('X.TO', 'Y.TO'))
+    assert none['single'] == []                      # forced Jev names are not selections
+    assert 'Single-model picks: none' in '\n'.join(T.table(none, concise=True))
+    # an older publication without the field prints no single-model line
+    old = {k: v for k, v in out.items() if k != 'single'}
+    assert 'Single-model' not in '\n'.join(T.table(old, concise=True))

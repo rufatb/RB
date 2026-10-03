@@ -128,7 +128,7 @@ def test_frozen_reread_never_acquires_or_reanalyses_factors(tmp_path,monkeypatch
     s['intraday']=forbidden;s['market'].get=forbidden;s['ledger']=forbidden;s['positions']=forbidden
     second=brief.build(now=NOW,services=s,state_dir=tmp_path,publish=True)
     payload=prepare_delivery.artifacts(second,tmp_path/'dispatch',NOW)
-    assert 'CCC.TO' in payload['text']
+    assert 'CCC.TO' in payload['attachments'][0]['content']   # factor table: full report only
     assert second==before and Store(tmp_path).get(first['session'])==before
     assert counts=={'quant':1,'quotes':1,'prepared':1}
 

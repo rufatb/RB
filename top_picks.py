@@ -146,6 +146,17 @@ def select(claude, deepseek, jev, *, wire=None, prices=None):
     split = sorted({c['ticker'] for c in candidates if c['split']})
     if split:
         out['split'] = split
+    # SINGLE-MODEL PICKS (owner, 2026-10-03): on a day without full agreement
+    # the email points at each model's own SELECTED names, labelled as one
+    # model only. Pointers, never slots: they are not recorded as top2 rows
+    # and never fill the section. Jev's forced and ranked names are not
+    # selections and are not listed here.
+    if len(picks) < PICKS:
+        taken = {p['ticker'] for p in picks}
+        out['single'] = [{'side': c['side'], 'ticker': c['ticker'], 'by': c['backing'][0]}
+                         for c in candidates
+                         if c['votes'] == 1 and c['selected'] and not c['split']
+                         and c.get('entry_check') != 'VOID' and c['ticker'] not in taken]
     if not answered:
         out['reason'] = 'No model answered today, so there is no name to put here.'
     elif not picks:
@@ -179,17 +190,39 @@ def _verdict(p, answered):
     return f'1 of {n} — no agreement on this slot'
 
 
-def table(section):
-    """The section as text lines, one table. Used by every email and view."""
+def single_line(section):
+    """One line naming each model's own picks on a day without full agreement,
+    or None when the publication predates the field (2026-10-03)."""
+    if 'single' not in (section or {}):
+        return None
+    s = section['single']
+    if not s:
+        return 'Single-model picks: none — no model picked a name on its own today.'
+    return ('Single-model picks (one model only, no agreement): '
+            + ' · '.join(f"{x['side']} {x['ticker']} ({x['by']})" for x in s) + '.')
+
+
+def table(section, concise=False):
+    """The section as text lines, one table. Used by every email and view.
+    `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
     if not section:
         return []
-    out = ['## Top 2 — where the models agree',
-           'A name appears only when at least two of the models (Claude, DeepSeek, Jev on the '
-           'same brief) back it on the same side. Agreement is not confirmation: they read the '
-           'same inputs, and none has beaten random picks on the replay.']
+    if concise:
+        out = ['## Top 2 — where the models agree',
+               'Only names at least two models back on the same side.']
+    else:
+        out = ['## Top 2 — where the models agree',
+               'A name appears only when at least two of the models (Claude, DeepSeek, Jev on the '
+               'same brief) back it on the same side. Agreement is not confirmation: they read the '
+               'same inputs, and none has beaten random picks on the replay.']
     picks = section.get('picks') or []
+    single = single_line(section)
     if not picks:
-        return out + ['', section.get('reason') or 'No pick today.'] + _notes(section)
+        if concise and section.get('status') == 'NO_AGREEMENT':
+            head = 'No agreement today — nothing to act on.'
+        else:
+            head = section.get('reason') or 'No pick today.'
+        return out + ['', head] + ([single] if single else []) + _notes(section)
     answered = section.get('answered') or []
     out += ['', '| # | Pick | Agreement | Backed by | Wrong if | Wire release | Why (lead model) |',
             '|---|---|---|---|---|---|---|']
@@ -204,6 +237,8 @@ def table(section):
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
     if section.get('reason'):
         out.append(section['reason'])
+    if single and section.get('single'):
+        out.append(single)
     return out + _notes(section)
 
 

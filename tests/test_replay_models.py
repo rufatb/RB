@@ -97,8 +97,11 @@ def test_the_base_rate_line_prints_the_replay_or_nothing(tmp_path):
     assert 'None beat random' in line
 
 
-def test_the_email_scoreboard_carries_the_base_rate():
+def test_the_base_rate_left_the_email_and_stays_in_the_full_report():
+    """Owner, 2026-10-03: no accuracy paragraphs in the email. The scoreboard
+    table stays there; the replay base rate lives in the full report."""
     import email_render
     import primary_board
     text = '\n'.join(email_render._scoreboard(primary_board.leaderboard({})))
-    assert 'Base rate — replay of 59 past sessions' in text
+    assert 'Base rate — replay of 59 past sessions' not in text
+    assert 'coin flip' in text

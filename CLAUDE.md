@@ -1,5 +1,35 @@
 # Working notes for this repo
 
+## Day122c — the email: single-model pointers, and no accuracy prose (owner, 2026-10-03)
+
+The owner is an active trader and asked two things.
+
+**On a day without full agreement, name each model's own picks.**
+`top_picks.select` adds `single`: every name ONE model SELECTED on its own side
+(not split, not void at entry). The concise Top 2 then prints, for example,
+"Single-model picks (one model only, no agreement): LONG AC.TO (Claude 0.60)",
+and the hero reads "Top 2 today: no agreement — single-model picks: …".
+* They are POINTERS, never slots: not recorded as `top2` rows, and they never
+  fill the section. The agreement-only rule is unchanged.
+* Jev's forced and ranked names are not selections and are not listed.
+* A publication without the field prints no line.
+
+**No needless warnings or accuracy text in the email.** `concise=True` (the
+email, picks-only and late views) drops:
+* the Top 2 caveat paragraph;
+* the replay base-rate paragraph under the scoreboard;
+* Jev's "Forced picks…" line;
+* Part 2's caveat-and-record line and source URLs;
+* Parts 3–6's backtest, replay and record lines;
+* the factor layer's sentiment table;
+* the "never averaged" footer sentence.
+
+The scoreboard table and its one line ("a range that contains 50% is a coin
+flip") STAY: it is the one place the email shows each source's record, and
+the repo's rule is that picks are never shown without it. The full report and
+the page keep every line removed here. Email 9,660 → 5,833 characters on
+2026-10-02.
+
 ## Day122b — an empty morning says so; the background jobs get a real timeout
 
 **2026-10-02: every model declined, and the email looked like it held picks.**

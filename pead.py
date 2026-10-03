@@ -216,13 +216,15 @@ def record_line(path=LEDGER):
     return base + f' Live: {sum(x > 0 for x in v)}/{len(v)} right, {sum(v)/len(v):+.2f}% per 5-day hold.'
 
 
-def lines(sec):
+def lines(sec, concise=False):
+    """`concise` is the email: the rule in one line, no backtest or record text."""
     if not sec:
         return []
     out = ['', '## Part 4 — Post-earnings drift (a separate test, 5-day hold)',
            'Rule: after a company\'s results release, if the stock moved more than one normal '
-           'day in reaction, bet it keeps going: enter at today\'s 09:45 price, hold five sessions.',
-           sec.get('record') or '']
+           'day in reaction, bet it keeps going: enter at today\'s 09:45 price, hold five sessions.']
+    if not concise:
+        out.append(sec.get('record') or '')
     if sec.get('status') != 'READY':
         out.append(f"Unavailable today — {sec.get('reason')}.")
     elif sec.get('new'):

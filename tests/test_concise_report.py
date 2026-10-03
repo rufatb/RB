@@ -43,7 +43,7 @@ def test_monitor_keeps_exact_five_bullets_and_calendar_is_separate():
     body=email_render.text(d)
     section=body.split('### BIO')[1].split('## Evidence')[0]
     assert sum(line.startswith('- **') for line in section.splitlines())==5
-    assert '3–6 months' in body and 'directional' in body
+    assert '3–6 months' in body   # the caveat line left the email on 2026-10-03 (owner)
 
 
 def test_recent_closures_are_computed_once_and_not_open_marks():

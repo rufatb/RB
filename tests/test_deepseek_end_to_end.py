@@ -74,7 +74,9 @@ def test_preparation_to_real_loader_to_digest_to_email(tmp_path, monkeypatch, mo
     if mode == 'success':
         assert loaded['covered'] == d['intraday']['deepseek']['covered'] == 2
         assert loaded['research_watchlist']['evaluated'] == 2
-        assert all('X0' in body and 'X1' in body for body in bodies)
+        # The factor table left the EMAIL on 2026-10-03 (owner); the full text,
+        # full HTML and the attachment keep it.
+        assert all('X0' in body and 'X1' in body for body in (bodies[0], bodies[1], bodies[4]))
         assert 'X2' in mail['attachments'][0]['content']
     else:
         assert loaded['covered'] == 0 and loaded['status'] == 'UNAVAILABLE'
@@ -116,7 +118,7 @@ def test_diagnostic_snapshot_loads_only_in_explicit_unpublished_view(tmp_path, m
     assert d['report_status'].startswith('CURRENT-TIME DEEPSEEK DIAGNOSTIC')
     assert not d['clock']['eligible'] and d['intraday']['deepseek']['covered'] == 2
     mail = prepare_delivery.artifacts(d, root/'dispatch', current)
-    assert 'X0' in mail['text'] and 'CURRENT-TIME' in mail['html']
+    assert 'X0' in mail['attachments'][0]['content'] and 'CURRENT-TIME' in mail['html']  # factor table: full report only (2026-10-03)
     assert (root/'deepseek_snapshot.json').read_bytes() == before
     assert not (root/'reports.sqlite3').exists()
     for kwargs in ({'publish': True, 'no_net': True}, {'publish': False, 'no_net': False}):
@@ -189,7 +191,7 @@ def test_grounding_exclusion_survives_sealed_load_and_email_without_raw_prose(tm
     assert next(iter(catalog.values()))['source_url'] == source
     d = brief.build(now=at_report, state_dir=tmp_path, services=services())
     mail = prepare_delivery.artifacts(d, tmp_path/'dispatch', at_report)
-    assert 'X1' in mail['text']
+    assert 'X1' in mail['attachments'][0]['content']   # factor table: full report only (2026-10-03)
     # Coverage counts live in the full report (day-114b); the email prints the lean.
     assert '2/2 eligible names assessed' in mail['attachments'][0]['content']
     assert '2 model-assessed; 1 accepted after grounding; 1 usable assessments' in mail['attachments'][0]['content']

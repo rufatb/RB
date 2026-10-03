@@ -216,13 +216,20 @@ def record_line(path=LEDGER):
             f'from 09:45 {h9}/{n9}, {m9:+.2f}%.')
 
 
-def lines(sec):
+def lines(sec, concise=False):
+    """`concise` is the email (owner, 2026-10-03: no needless warnings or
+    accuracy text there). The full report keeps the record line every day."""
     if not sec:
         return []
-    out = ['', '## Part 3 — Gap signal (a separate test, not a desk)',
-           'Rule: a TSX-21 stock that opens more than one normal day\'s move away from its '
-           'close is bet to keep going until the close. Enter at the open; 09:46 prices shown.',
-           sec.get('record') or '']
+    if concise:
+        out = ['', '## Part 3 — Gap signal (a separate test, not a desk)',
+               'A TSX-21 stock that opened more than one normal day\'s move from its close; '
+               'the bet is that it keeps going to the close.']
+    else:
+        out = ['', '## Part 3 — Gap signal (a separate test, not a desk)',
+               'Rule: a TSX-21 stock that opens more than one normal day\'s move away from its '
+               'close is bet to keep going until the close. Enter at the open; 09:46 prices shown.',
+               sec.get('record') or '']
     if sec.get('status') != 'READY':
         return out + [f"Unavailable today — {sec.get('reason')}."]
     if not sec.get('picks'):

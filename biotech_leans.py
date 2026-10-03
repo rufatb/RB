@@ -361,8 +361,9 @@ def record_line(card=None):
 
 # ── rendering (one text implementation for every view) ─────────────────────────
 
-def table_lines(leans, calendar_events=None):
-    """Part 2's table: one row per reviewed event, with the model's call."""
+def table_lines(leans, calendar_events=None, concise=False):
+    """Part 2's table: one row per reviewed event, with the model's call.
+    `concise` (the email) drops the closing caveat-and-record line."""
     leans = leans or {}
     calls = {c['ticker']+c['window_end']+c['kind']: c for c in leans.get('calls') or []}
     events = calendar_events or []
@@ -383,8 +384,9 @@ def table_lines(leans, calendar_events=None):
             out.append('| %s | %s | %s | — | — | %s |' % (
                 e['ticker'], what, when, 'no call: ' + safe_detail(
                     leans.get('reason') or 'not staged', 90).replace('|', '/')))
-    out.append('Calls are the model\'s own side into each event (DeepSeek, forced LONG or '
-               'SHORT; 0.50 = coin flip), not forecasts. ' + record_line())
+    if not concise:
+        out.append('Calls are the model\'s own side into each event (DeepSeek, forced LONG or '
+                   'SHORT; 0.50 = coin flip), not forecasts. ' + record_line())
     return out
 
 

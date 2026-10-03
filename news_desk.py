@@ -336,13 +336,15 @@ def section(state_dir, now, path=LEDGER):
             'prompt_version': PROMPT_VERSION}
 
 
-def lines(sec):
+def lines(sec, concise=False):
+    """`concise` is the email: no backtest, record or caveat lines."""
     if not sec:
         return []
     out = ['', '## Part 6 — The news desk (a separate test: a model reads every overnight release)',
            'DeepSeek reads the full text of each liquid TSX name\'s overnight release and must '
-           'take a side, 09:45 to the close. Not sized, not in the Top 2.',
-           sec.get('replay') or '', sec.get('record') or '']
+           'take a side, 09:45 to the close. Not sized, not in the Top 2.']
+    if not concise:
+        out += [sec.get('replay') or '', sec.get('record') or '']
     if sec.get('status') != 'READY':
         out.append(f"Unavailable today — {sec.get('reason')}.")
         return out
@@ -361,8 +363,9 @@ def lines(sec):
                    f"{'yes' if c.get('material') else 'routine'} | {same} | "
                    f"{str(c.get('title'))[:80].replace('|', '/')} | "
                    f"{str(c.get('reason'))[:160].replace('|', '/')} |")
-    out.append('Forced sides, the model\'s own confidence; a day\'s hits and misses are noise. '
-               'Decision at 40 live sessions (PREREGISTER_day122_releases.md).')
+    if not concise:
+        out.append('Forced sides, the model\'s own confidence; a day\'s hits and misses are noise. '
+                   'Decision at 40 live sessions (PREREGISTER_day122_releases.md).')
     return out
 
 

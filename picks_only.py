@@ -78,7 +78,7 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
              'The full 09:46 report did not publish today: %s. These are the desks\' own '
              'picks, sealed BEFORE the open and unchanged; without the 09:46 quote check '
              'nothing is sized. Research only — not orders.' % safe_detail(reason, 160),
-             '', *top_picks.table(snaps['top_two']),
+             '', *top_picks.table(snaps['top_two'], concise=True),
              '', '## Part 1 — Picks, sealed before the open']
             + desk('1 · Claude', snaps['claude'])
             + desk('2 · DeepSeek', snaps['opportunities'])

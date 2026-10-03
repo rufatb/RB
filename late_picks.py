@@ -182,7 +182,7 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
         return out + (E.pick_table(snap) or ['No pick on either side.'])
     import top_picks
     top = top_picks.select({'status': 'READY', **picks}, deepseek, jev)
-    body = (head + ['', *top_picks.table(top),
+    body = (head + ['', *top_picks.table(top, concise=True),
                     'These, too, were asked after the open; not recorded separately '
                     '(each desk\'s late pick is).']
             + ['', '## Part 1 — Picks, asked after the open']

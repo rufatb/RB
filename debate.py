@@ -316,13 +316,15 @@ def replay_line(path=REPLAY):
                 'passes the registered bar' if d['passes'] else 'does NOT beat random'))
 
 
-def lines(sec):
+def lines(sec, concise=False):
+    """`concise` is the email: no replay record line (the full report keeps it)."""
     if not sec:
         return []
     out = ['', '## Part 5 — The debate (models argue, then finalize)',
            'DeepSeek cross-examines every desk\'s proposal and rules KEEP or REJECT; Jev judges '
-           'what survives. Final only when both agree. Never padded to fill a quota.',
-           sec.get('record') or replay_line()]
+           'what survives. Final only when both agree. Never padded to fill a quota.']
+    if not concise:
+        out.append(sec.get('record') or replay_line())
     if sec.get('status') not in ('READY', 'NO_PROPOSALS'):
         return out + [f"Unavailable today — {sec.get('reason')}."]
     dropped = ['Dropped at entry (09:46): ' + '; '.join(

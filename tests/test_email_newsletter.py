@@ -107,8 +107,9 @@ def test_a_standing_term_appears_exactly_once_when_its_section_ran(digest, note)
     times is the complaint that started this."""
     # Day-114b: the email says its terms ONCE, in one footer line, and each
     # section's full standing note lives in the full report.
+    # 2026-10-03 (owner): the email's footer is one line, no standing terms.
     mail = email_render.text(with_models(digest))
-    assert mail.count('never averaged') == 1 and getattr(daily_render, note) not in mail
+    assert mail.count('never averaged') == 0 and getattr(daily_render, note) not in mail
     assert getattr(daily_render, note) in brief.render_text(with_models(digest))
 
 
@@ -125,7 +126,8 @@ def test_a_standing_term_is_absent_when_its_section_did_not_run(digest, note):
 
 def test_the_cross_model_note_needs_both_models(digest):
     cross = 'never averaged'
-    assert email_render.text(with_models(digest)).count(cross) == 1
+    assert email_render.text(with_models(digest)).count(cross) == 0      # email: 2026-10-03
+    assert cross in brief.render_text(with_models(digest))               # the record keeps it
     assert 'DeepSeek' not in email_render.text(digest).split('## Part 2')[0].split('### Baseline')[0] \
         or digest['intraday'].get('desks')
 
