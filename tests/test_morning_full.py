@@ -173,7 +173,7 @@ def test_no_step_is_given_a_fixed_timeout_any_more():
     body = code()
     for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_factor_pool.py',
                  'prepare_deepseek.py', 'deepseek_opportunities.py',
-                 'jev_opportunities.py'):
+                 'jev_opportunities.py', 'gemini_opportunities.py'):
         line = next(l for l in body.splitlines() if tool in l and 'timeout' in l)
         assert '"$budget"' in line, f'{tool} still carries an unreconciled fixed timeout'
 
@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 9, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 10, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():

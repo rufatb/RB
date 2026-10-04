@@ -38,10 +38,11 @@ def load(state_dir, now):
     """The three sealed snapshots, each through its own pure reader."""
     import claude_opportunities
     import deepseek_opportunities
+    import gemini_opportunities
     import jev_opportunities
     out = {}
     for key, module in (('claude', claude_opportunities), ('opportunities', deepseek_opportunities),
-                        ('jev', jev_opportunities)):
+                        ('gemini', gemini_opportunities), ('jev', jev_opportunities)):
         try:
             out[key] = module.load_prepared(state_dir, now)
         except Exception as exc:
@@ -72,7 +73,8 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
         return out + (E.pick_table(snap) or ['No pick today: nothing worth a position on either side.'])
     jev = snaps['jev']
     import top_picks
-    snaps['top_two'] = top_picks.select(snaps['claude'], snaps['opportunities'], jev)
+    snaps['top_two'] = top_picks.select(snaps['claude'], snaps['opportunities'], jev,
+                                        gemini=snaps.get('gemini'))
     body = (['# RB Daily Report — %s — PICKS ONLY' % session,
              'Sent %s ET from the picks sealed before the open.' % now.strftime('%H:%M'),
              'The full 09:46 report did not publish today: %s. These are the desks\' own '
@@ -82,7 +84,8 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
              '', '## Part 1 — Picks, sealed before the open']
             + desk('1 · Claude', snaps['claude'])
             + desk('2 · DeepSeek', snaps['opportunities'])
-            + ['', '### 3 · Jev']
+            + desk('3 · Gemini', snaps.get('gemini') or {'status': 'UNAVAILABLE', 'reason': 'not staged'})
+            + ['', '### 4 · Jev']
             + (E.jev_forced_table(jev) if jev.get('status') in ('READY', 'NO_OPPORTUNITY')
                else ['Unavailable — %s' % safe_detail(jev.get('reason') or 'not staged', 160)])
             + late_picks.biotech_part(root, now)

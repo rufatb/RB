@@ -63,7 +63,7 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     if not root.exists():
         diagnostic_context.create_context(root)
         (root/'secrets').mkdir(mode=0o700)
-        for name in ('deepseek_api_key', 'openrouter_api_key'):
+        for name in ('deepseek_api_key', 'openrouter_api_key', 'gemini_api_key'):
             src = Path(secrets_from)/name
             if src.exists():
                 shutil.copy(src, root/'secrets'/name)
@@ -88,6 +88,8 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     step('claude_brief', lambda: write_brief(root, cfg, _now(now)))
     step('deepseek', lambda: O.stage(root, diagnostic=True))
     step('jev', lambda: J.stage(root, diagnostic=True))
+    import gemini_opportunities as G
+    step('gemini', lambda: G.stage(root, diagnostic=True))
     import biotech_leans
     step('biotech_calls', lambda: biotech_leans.stage(root))
     (root/'late_steps.json').write_text(json.dumps(steps))
@@ -163,6 +165,11 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
         jev = J.load_diagnostic(root, now)
     except Exception as exc:
         jev = J.unavailable('diagnostic snapshot unreadable (%s)' % type(exc).__name__)
+    import gemini_opportunities as G
+    try:
+        gemini = G.load_diagnostic(root, now)
+    except Exception as exc:
+        gemini = G.unavailable('diagnostic snapshot unreadable (%s)' % type(exc).__name__)
     session = now.date().isoformat()
     subject = 'RB Daily Report — %s — LATE PICKS (the 09:46 report did not publish)' % session
     head = ['# RB Daily Report — %s — LATE PICKS' % session,
@@ -181,7 +188,7 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             return out + ['Unavailable — %s' % safe_detail(snap.get('reason') or 'no answer', 160)]
         return out + (E.pick_table(snap) or ['No pick on either side.'])
     import top_picks
-    top = top_picks.select({'status': 'READY', **picks}, deepseek, jev)
+    top = top_picks.select({'status': 'READY', **picks}, deepseek, jev, gemini=gemini)
     body = (head + ['', *top_picks.table(top, concise=True),
                     'These, too, were asked after the open; not recorded separately '
                     '(each desk\'s late pick is).']
@@ -189,7 +196,8 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             + desk('1 · Claude', {'status': 'READY', **picks})
             + (['Dropped from Claude\'s answer: %s' % '; '.join(problems)] if problems else [])
             + desk('2 · DeepSeek', deepseek)
-            + ['', '### 3 · Jev']
+            + desk('3 · Gemini', gemini)
+            + ['', '### 4 · Jev']
             + (E.jev_forced_table(jev) if jev.get('status') in ('READY', 'NO_OPPORTUNITY')
                else ['Unavailable — %s' % safe_detail(jev.get('reason') or 'no answer', 160)])
             + biotech_part(root, now)
@@ -230,6 +238,14 @@ def late_rows(root, answer, *, now=None):
     if deepseek.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
             out += [row('deepseek', 'late', side, p) for p in deepseek.get(key) or []]
+    import gemini_opportunities as G
+    try:
+        gemini = G.load_diagnostic(root, now)
+    except Exception:            # a missing Gemini snapshot costs Gemini's rows only
+        gemini = {}
+    if gemini.get('status') in ('READY', 'NO_OPPORTUNITY'):
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            out += [row('gemini', 'late', side, p) for p in gemini.get(key) or []]
     jev = J.load_diagnostic(root, now)
     if jev.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):

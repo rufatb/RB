@@ -107,6 +107,12 @@ def rows_from_report(report, source='published_report'):
             for pick in ds.get(key) or []:
                 add('deepseek', 'selected', side, pick, prompt_version=ds.get('prompt_version'),
                     **top('deepseek', side, pick))
+    gm = intra.get('gemini') or {}           # the fourth desk, from 2026-10-05
+    if gm.get('status') in ('READY', 'NO_OPPORTUNITY'):
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for pick in gm.get(key) or []:
+                add('gemini', 'selected', side, pick, prompt_version=gm.get('prompt_version'),
+                    **top('gemini', side, pick))
     jev = intra.get('jev') or {}
     if jev.get('status') in ('READY', 'NO_OPPORTUNITY'):
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):

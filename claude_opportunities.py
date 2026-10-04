@@ -69,7 +69,8 @@ API_MODEL = 'claude-opus-5-5'
 API_TIMEOUT = 150.0
 MAX_BRIEF_BYTES = 4_000_000
 MAX_ANSWER_BYTES = 50_000
-OTHERS = (('DeepSeek', O.SNAPSHOT_NAME), ('Jev', 'jev_opportunities.json'))
+OTHERS = (('DeepSeek', O.SNAPSHOT_NAME), ('Gemini', 'gemini_opportunities.json'),
+          ('Jev', 'jev_opportunities.json'))
 
 CONFIDENCE_LABEL = ("Claude's own stated confidence. NOT a calibrated win probability: its "
                     "track record is the scored line beside it, and it is never averaged "
@@ -191,7 +192,7 @@ def independence(state_dir, now):
             continue
     stamp = now.strftime('%H:%M:%S ET')
     if not present:
-        return f'sealed at {stamp}, before DeepSeek or Jev had been asked'
+        return f'sealed at {stamp}, before DeepSeek, Gemini or Jev had been asked'
     return (f"sealed at {stamp}; {' and '.join(present)}'s ranking was already on disk — "
             'not independent by construction')
 

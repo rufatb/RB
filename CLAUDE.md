@@ -1,5 +1,41 @@
 # Working notes for this repo
 
+## Day123 — Gemini is the fourth desk; agreement is still two models (owner, 2026-10-03)
+
+`gemini_opportunities.py` asks `gemini-3.8-flash` (Gemini API v1beta,
+generateContent; found by models.list on 2026-10-03) DeepSeek's exact question:
+* the same rows (`deepseek_opportunities.build_request`) and system prompt
+  verbatim (`PROMPT_VERSION` shared);
+* the same `_clean`, `check_levels` and `check_basis`;
+* JSON mode, `thinkingLevel: low`; thought parts are never parsed as the answer.
+
+The credential lives at `$RB_STATE_DIR/secrets/gemini_api_key` (0600,
+gitignored) or `GEMINI_API_KEY`. The morning, watchdog and bridge Routines
+write it every morning; the repo prompts carry `<GEMINI_API_KEY>`, and
+`test_routine_prompt` refuses the live key.
+
+Staging and use:
+* Staged by `morning_full.sh` LAST in the desk block (`slice 120 0`), after
+  Claude's seal, so DeepSeek's and Jev's budgets are untouched.
+* Sealed to `gemini_opportunities.json` (schema `day123-gemini-v1`) and read
+  by the shared `load_snapshot`.
+* Measured live: 3.7 s on 89 names with 68 headlines and the macro block.
+* Positive control 3/3 clean (CTLUP 0.62–0.68, CTLDN 0.61–0.67, no noise name).
+
+It is wired everywhere DeepSeek is:
+* `primary_board.DESKS` (desk 3, sized by the same rule), `staged_tickers`;
+* the scoreboard row `gemini_selected` and the late row `gemini_late`;
+* `model_picks` rows;
+* the Top 2 (`top_picks.MODELS`, `consensus_picks.flags(gemini=)`);
+* the debate's proposals and entry levels;
+* the picks-only and late emails;
+* Claude's independence line, the report page and the brief.
+
+**The Top 2 rule is unchanged: a slot needs at least TWO models on the same
+side**, now out of four ("2 of 4"). Gemini counts like Claude and DeepSeek (a
+selection); Jev's forced and ranked names still count only alongside a real
+selection. Its record starts 2026-10-05. Confidences are never averaged.
+
 ## Day122c — the email: single-model pointers, and no accuracy prose (owner, 2026-10-03)
 
 The owner is an active trader and asked two things.

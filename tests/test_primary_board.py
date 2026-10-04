@@ -144,7 +144,7 @@ def test_every_desk_prints_its_own_section_every_day_even_unanswered():
 def test_the_scoreboard_prints_every_source_even_unscored():
     rows = P.leaderboard({'deepseek_selected': {'picks': 8, 'hits': 3, 'rate': .375,
                                                 'mean_r_pct': -.66, 'sessions': 2, 'ci95': [.14, .69]}})
-    assert [r['source'] for r in rows][:4] == ['Top 2 (where the models agree)', 'Claude',
-                                               'DeepSeek', 'Baseline engine (k-NN)']
+    assert [r['source'] for r in rows][:5] == ['Top 2 (where the models agree)', 'Claude',
+                                               'DeepSeek', 'Gemini', 'Baseline engine (k-NN)']
     text = '\n'.join(daily_render.scoreboard_lines(rows))
     assert '3/8 (38%)' in text and 'not yet scored' in text and 'coin flip' in text

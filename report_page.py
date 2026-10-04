@@ -633,7 +633,7 @@ def _desk_sections(intra):
     if not desks:
         return _opportunities_section(intra) + _jev_section(intra)
     out = ''
-    for desk_id in ('claude', 'deepseek', 'jev'):
+    for desk_id in ('claude', 'deepseek', 'gemini', 'jev'):
         if desk_id not in desks:
             continue
         n, desk = desks[desk_id]

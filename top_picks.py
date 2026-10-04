@@ -37,8 +37,10 @@ from __future__ import annotations
 
 from consensus_picks import flags
 
-MODELS = ('claude', 'deepseek', 'jev')
-NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'jev': 'Jev'}
+# Gemini joined as the fourth model on 2026-10-03 (owner). The rule is
+# unchanged: a slot needs at least TWO models on the same side.
+MODELS = ('claude', 'deepseek', 'gemini', 'jev')
+NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
 PICKS = 2                      # at most; never padded (2026-10-01)
 RULE_VERSION = 'day121-agreement'
 KIND_ORDER = {'selected': 0, 'forced': 1, 'ranked': 2}
@@ -79,7 +81,7 @@ def _describe(model, w, rank):
     return NAMES[model] + num
 
 
-def select(claude, deepseek, jev, *, wire=None, prices=None):
+def select(claude, deepseek, jev, *, gemini=None, wire=None, prices=None):
     """The section as a dict: up to two names the models AGREE on, never padded.
 
     `prices` ({ticker: 09:46 mark}) turns on the day-120 entry check: a pick
@@ -88,9 +90,9 @@ def select(claude, deepseek, jev, *, wire=None, prices=None):
     picks-only and late emails) nothing is checked and nothing moves.
     """
     import entry_checks
-    snaps = {'claude': claude, 'deepseek': deepseek, 'jev': jev}
+    snaps = {'claude': claude, 'deepseek': deepseek, 'gemini': gemini, 'jev': jev}
     answered = [m for m in MODELS if _answered(snaps[m])]
-    flagged = flags(claude, deepseek, jev)
+    flagged = flags(claude, deepseek, jev, gemini=gemini)
     sides_of = {}
     for (ticker, side), who in flagged.items():
         if _support(who):
@@ -106,7 +108,7 @@ def select(claude, deepseek, jev, *, wire=None, prices=None):
                         if isinstance(w.get('strength'), (int, float))), default=0.0)
         selected = any(w['kind'] == 'selected' for w in support.values())
         best_kind = min(KIND_ORDER[w['kind']] for w in support.values())
-        lead = next((m for m in ('claude', 'deepseek') if m in support), 'jev')
+        lead = next((m for m in ('claude', 'deepseek', 'gemini') if m in support), 'jev')
         candidates.append({
             'ticker': ticker, 'side': side, 'split': split,
             'votes': len(support), 'models': [m for m in MODELS if m in support],
@@ -212,7 +214,7 @@ def table(section, concise=False):
                'Only names at least two models back on the same side.']
     else:
         out = ['## Top 2 — where the models agree',
-               'A name appears only when at least two of the models (Claude, DeepSeek, Jev on the '
+               'A name appears only when at least two of the models (Claude, DeepSeek, Gemini, Jev on the '
                'same brief) back it on the same side. Agreement is not confirmation: they read the '
                'same inputs, and none has beaten random picks on the replay.']
     picks = section.get('picks') or []

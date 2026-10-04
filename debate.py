@@ -32,7 +32,7 @@ SNAPSHOT = 'debate.json'
 REPLAY = ROOT / 'data' / 'replay_day119_debate.json'
 MAX_FINAL = 2
 PROMPT_VERSION = 'day119-debate-v1'
-NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'jev': 'Jev'}
+NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
 
 CROSS_PROMPT = """You are the cross-examiner in a debate between trading desks on the Toronto Stock Exchange.
 
@@ -64,7 +64,7 @@ JEV_INSTRUCTIONS = (
     'or {none} if none is better than doing nothing — a same-session call is near a coin flip.')
 
 
-def proposals(claude, deepseek, jev):
+def proposals(claude, deepseek, jev, gemini=None):
     """Round 1: every (ticker, side) a model put forward, with proposers and reasons."""
     out = {}
 
@@ -80,7 +80,7 @@ def proposals(claude, deepseek, jev):
         if pick.get('reason'):
             p['reasons'].append(f"{NAMES[model]}: {str(pick['reason'])[:240]}")
 
-    for model, snap in (('claude', claude), ('deepseek', deepseek), ('jev', jev)):
+    for model, snap in (('claude', claude), ('deepseek', deepseek), ('gemini', gemini), ('jev', jev)):
         if not isinstance(snap, dict) or snap.get('status') not in ('READY', 'NO_OPPORTUNITY'):
             continue
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
@@ -186,10 +186,10 @@ def finalize(props, rulings, judged):
     return final[:MAX_FINAL]
 
 
-def levels(claude, deepseek):
+def levels(claude, deepseek, gemini=None):
     """{(ticker, side): "wrong if" level}, Claude's first, as the Top 2 leads."""
     out = {}
-    for snap in (claude, deepseek):
+    for snap in (claude, deepseek, gemini):
         if not isinstance(snap, dict):
             continue
         for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
@@ -230,11 +230,11 @@ def entry_filter(sec, prices, levels_by_pick):
     return sec
 
 
-def run(claude, deepseek, jev, candidates, *, now=None, client=None, poster=None):
+def run(claude, deepseek, jev, candidates, *, now=None, client=None, poster=None, gemini=None):
     """All three rounds on the brief's rows. Never raises: a failure is a status."""
     import deepseek_opportunities as O
     now = now or dt.datetime.now(ET)
-    props = proposals(claude, deepseek, jev)
+    props = proposals(claude, deepseek, jev, gemini)
     base = {'prompt_version': PROMPT_VERSION, 'session': now.date().isoformat(),
             'asked_at': now.isoformat(), 'proposals': props}
     if not props:
@@ -270,6 +270,7 @@ def stage(state_dir, now=None):
     """After the three desks are staged: read them and the brief's pool, debate."""
     import claude_opportunities
     import deepseek_opportunities as O
+    import gemini_opportunities as G
     import jev_opportunities as J
     import yaml
     from factor_inputs import build_from_state
@@ -279,14 +280,15 @@ def stage(state_dir, now=None):
     load_private_key(root)
     J.load_private_key(root)
     snaps = {}
-    for k, mod in (('claude', claude_opportunities), ('deepseek', O), ('jev', J)):
+    for k, mod in (('claude', claude_opportunities), ('deepseek', O), ('gemini', G), ('jev', J)):
         try:
             snaps[k] = mod.load_prepared(root, now)
         except Exception as exc:
             snaps[k] = {'status': 'UNAVAILABLE', 'reason': type(exc).__name__}
     cfg = yaml.safe_load((ROOT / 'config.yaml').read_text())
     payload = build_from_state(root, cfg, now)
-    out = run(snaps['claude'], snaps['deepseek'], snaps['jev'], payload.get('candidates') or [], now=now)
+    out = run(snaps['claude'], snaps['deepseek'], snaps['jev'], payload.get('candidates') or [], now=now,
+              gemini=snaps['gemini'])
     (root / SNAPSHOT).write_text(json.dumps(out, indent=1, default=str))
     return out
 

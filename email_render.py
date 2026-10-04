@@ -309,7 +309,7 @@ def _hero(d):
         head, sub = f'{len(legs)} picks sized', 'Share counts use the 09:46 ET prices.'
     elif intra.get('desks'):
         head = 'No model picked anything today'
-        sub = ('Claude, DeepSeek and Jev each declined; each desk below says why. '
+        sub = ('Every model declined; each desk below says why. '
                'The baseline engine further down is a comparison only.')
     else:
         head, sub = 'No picks today', 'Each desk below says why.'

@@ -49,13 +49,14 @@ STEP 2 — credentials (a container restart wipes .rb-state, so write them every
   mkdir -p .rb-state/secrets && chmod 700 .rb-state/secrets
   printf '%s' '<DEEPSEEK_API_KEY>' > .rb-state/secrets/deepseek_api_key
   printf '%s' '<OPENROUTER_API_KEY>' > .rb-state/secrets/openrouter_api_key
-  chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key
+  printf '%s' '<GEMINI_API_KEY>' > .rb-state/secrets/gemini_api_key
+  chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key .rb-state/secrets/gemini_api_key
   printf 'deepseek-v4-pro\n' > .rb-state/deepseek_model.txt
 The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is `typesafe/jev-1.13` on OpenRouter at POST /api/alpha/decisions. Do not "correct" either model name.
 
 STEP 3 — start the morning job IN THE BACKGROUND
   ./morning_full.sh > .rb-state/morning_full.log 2>&1
-Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek and Jev, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
+Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek, Jev and Gemini, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but late; 6 published, provenance not clean; 1 failed. Never re-run it and never override a guard — STEP 5 decides what the owner receives whatever the code.
 `morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". That is expected: a container cannot reach smtp.gmail.com. You send the email in STEP 7 through the Gmail connector.
 
@@ -114,7 +115,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
   - the job's exit code, and what broke if anything, in plain words.
   - TOP 2 — the two names at the top of the email: side, ticker, how many models back each ("3 of 3" … "1 of 3") and who.
-  - PART 1 — each desk in order, Claude, DeepSeek, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
+  - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
   - PARTS 3, 4 and 5 — the gap signals, the post-earnings drift signals (new and still held) and the debate's final picks, or why there were none.
   - PART 6 — the news desk: how many overnight releases it read and its MATERIAL calls (side, ticker, own confidence), or why it is unavailable.

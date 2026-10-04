@@ -311,6 +311,23 @@ else
         log "    budget was already gone before it was reached."
         stage_faults+=("Jev ranking skipped: staging budget exhausted")
     fi
+
+    # The FOURTH desk (owner, 2026-10-03): Gemini (gemini-3.8-flash), asked the
+    # same question from the same rows as DeepSeek. ~2s over 89 names; it runs
+    # last so the DeepSeek and Jev budgets are untouched.
+    if budget="$(slice 120 0)"; then
+        timeout "$budget" python gemini_opportunities.py --state-dir "$RB_STATE_DIR"
+        case $? in
+            0) log "  Gemini opportunities: staged" ;;
+            3) log "  Gemini opportunities: REFUSED (past the pre-open cutoff)"
+               stage_faults+=("Gemini ranking refused: past the cutoff") ;;
+            *) log "  Gemini opportunities: FAILED — that section will read UNAVAILABLE"
+               stage_faults+=("Gemini ranking not staged") ;;
+        esac
+    else
+        log "  Gemini opportunities: SKIPPED — an upstream step ate the window."
+        stage_faults+=("Gemini ranking skipped: staging budget exhausted")
+    fi
 fi
 
 # ── 1b. BIOTECH CALLS (owner, 2026-09-28) ─────────────────────────────────

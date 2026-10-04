@@ -409,6 +409,17 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         error('deepseek_opportunities', RuntimeError(type(exc).__name__))
         opportunity_evidence = deepseek_opportunities.unavailable(
             'Optional opportunity ranking failed: '+type(exc).__name__)
+    # GEMINI'S DESK (owner, 2026-10-03): the same question, the same rows, the
+    # same validator as DeepSeek, staged beside it after Claude's seal. Read only.
+    import gemini_opportunities
+    try:
+        gemini_evidence = (gemini_opportunities.load_diagnostic(state_dir, now)
+                           if factor_diagnostic is not None else
+                           gemini_opportunities.load_prepared(state_dir, now))
+    except Exception as exc:
+        error('gemini_opportunities', RuntimeError(type(exc).__name__))
+        gemini_evidence = gemini_opportunities.unavailable(
+            'Optional Gemini ranking failed: '+type(exc).__name__)
     # CLAUDE'S DESK (day-114): the same question and evidence DeepSeek is
     # given, answered by Claude and sealed before DeepSeek or Jev is asked.
     # Read only, like the other two.
@@ -493,6 +504,11 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     except Exception as exc:
         error('deepseek_opportunities_comparison', RuntimeError(type(exc).__name__))
     try:
+        gemini_evidence['comparison'] = deepseek_opportunities.compare(
+            gemini_evidence, legs, cfg.get('scan', {}).get('universe', []))
+    except Exception as exc:
+        error('gemini_comparison', RuntimeError(type(exc).__name__))
+    try:
         claude_evidence['comparison'] = deepseek_opportunities.compare(
             claude_evidence, legs, cfg.get('scan', {}).get('universe', []))
     except Exception as exc:
@@ -509,7 +525,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     try:
         import exposure
         sectors = exposure.load_sectors()
-        for evidence in (claude_evidence, opportunity_evidence, jev_evidence):
+        for evidence in (claude_evidence, opportunity_evidence, gemini_evidence, jev_evidence):
             evidence['shared_exposure'] = exposure.shared_exposure(evidence, sectors)
     except Exception as exc:
         error('model_exposure', RuntimeError(type(exc).__name__))
@@ -523,6 +539,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             model_picks.scorecard_line(card, 'claude_selected', 'Claude')]
         opportunity_evidence['track_record'] = [
             model_picks.scorecard_line(card, 'deepseek_selected', 'DeepSeek')]
+        gemini_evidence['track_record'] = [
+            model_picks.scorecard_line(card, 'gemini_selected', 'Gemini')]
         jev_evidence['track_record'] = [
             model_picks.scorecard_line(card, 'jev_selected', 'Jev (selected)'),
             model_picks.scorecard_line(card, 'jev_forced', 'Jev (forced)')]
@@ -534,7 +552,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     # source on one yardstick. Built AFTER the final clock check, so a late
     # assembly abstains every desk exactly as it abstains the engine.
     evidence_by_key = {'claude': claude_evidence, 'opportunities': opportunity_evidence,
-                       'jev': jev_evidence}
+                       'gemini': gemini_evidence, 'jev': jev_evidence}
     desks, scoreboard = [], []
     try:
         import primary_board, model_picks
@@ -599,7 +617,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         if quotes:
             import entry_checks
             debate.entry_filter(debate_section, entry_checks.marks(quotes),
-                                debate.levels(claude_evidence, opportunity_evidence))
+                                debate.levels(claude_evidence, opportunity_evidence,
+                                              gemini_evidence))
     except Exception as exc:
         error('debate', RuntimeError(type(exc).__name__))
     top_two = None
@@ -607,6 +626,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         import top_picks
         import entry_checks
         top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
+                                   gemini=gemini_evidence,
                                    prices=entry_checks.marks(quotes) if quotes else None)
         try:
             import newswire
@@ -646,6 +666,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                           'deepseek':factor_evidence,
                           'claude':claude_evidence,
                           'opportunities':opportunity_evidence,
+                          'gemini':gemini_evidence,
                           'jev':jev_evidence,
                           'historical_provider':provider_evidence},
               'biotech':bio,'positions':book,'research_calendar':calendar,

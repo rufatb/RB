@@ -43,7 +43,7 @@ def test_an_answer_seals_and_reads_back_with_its_independence(tmp_path):
     out = C.load_prepared(root, LATER + dt.timedelta(minutes=40))
     assert out['status'] == 'READY' and out['longs'][0]['ticker'] == 'AC.TO'
     assert out['model'] == C.SESSION_LABEL and out['route'] == 'session'
-    assert 'before DeepSeek or Jev had been asked' in out['independence']
+    assert 'before DeepSeek, Gemini or Jev had been asked' in out['independence']
     assert 'NOT a calibrated' in out['confidence_label']
 
 

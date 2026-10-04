@@ -85,7 +85,7 @@ def _usable(snap):
     return (snap or {}).get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def flags(claude, deepseek, jev, engine_legs=()):
+def flags(claude, deepseek, jev, engine_legs=(), gemini=None):
     """Every (ticker, side) any source put forward, with who flagged it. Pure."""
     out = {}
 
@@ -98,7 +98,7 @@ def flags(claude, deepseek, jev, engine_legs=()):
             else pick.get('confidence', pick.get('probability')),
             'invalid_at': pick.get('invalid_at'), 'reason': pick.get('reason')})
 
-    for model, snap in (('claude', claude), ('deepseek', deepseek)):
+    for model, snap in (('claude', claude), ('deepseek', deepseek), ('gemini', gemini)):
         if _usable(snap):
             for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
                 for pick in snap.get(key) or []:

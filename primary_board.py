@@ -44,7 +44,7 @@ PRIMARY_LABEL = 'DeepSeek'
 # own section, each sized by the same rule from its own SELECTED picks. The
 # order is the order they are printed. `key` is the report's evidence key.
 DESKS = (('claude', 'Claude', 'claude'), ('deepseek', 'DeepSeek', 'opportunities'),
-         ('jev', 'Jev', 'jev'))
+         ('gemini', 'Gemini', 'gemini'), ('jev', 'Jev', 'jev'))
 
 
 def staged_tickers(state_dir, now):
@@ -52,7 +52,8 @@ def staged_tickers(state_dir, now):
     the ONE equity quote request. Pure file reads; a desk that fails costs only
     its own names and never raises."""
     out = set()
-    for module in ('claude_opportunities', 'deepseek_opportunities', 'jev_opportunities'):
+    for module in ('claude_opportunities', 'deepseek_opportunities', 'gemini_opportunities',
+                   'jev_opportunities'):
         try:
             snap = __import__(module).load_prepared(state_dir, now)
         except Exception:
@@ -141,6 +142,7 @@ def headline_legs(intra):
 LEADERBOARD = (('top2_pick', 'Top 2 (where the models agree)'),
                ('claude_selected', 'Claude'),
                ('deepseek_selected', 'DeepSeek'),
+               ('gemini_selected', 'Gemini'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
                ('jev_forced', 'Jev (forced)'),
@@ -153,7 +155,8 @@ LEADERBOARD = (('top2_pick', 'Top 2 (where the models agree)'),
 # publish) are a different instrument, scored from the bar they were sent in.
 # Shown only once they exist, and never pooled with the pre-open rows above.
 LATE_BOARD = (('claude_late', 'Claude (late, after the open)'),
-              ('deepseek_late', 'DeepSeek (late, after the open)'))
+              ('deepseek_late', 'DeepSeek (late, after the open)'),
+              ('gemini_late', 'Gemini (late, after the open)'))
 
 
 # The desks' own picks split by the owner's open check, and each desk's top pick
