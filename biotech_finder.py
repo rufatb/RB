@@ -190,7 +190,7 @@ def run(*, now=None, fetch=R._get, client=None, dry_run=False, tickers=None):
     # kind is superseded, never a second event
     latest, superseded = {}, 0
     for c in cands:
-        key = (c['ticker'], re.sub(r'[^A-Z0-9]', '', str(c['asset']).upper())[:8], c['kind'])
+        key = R.asset_key(c)
         if key in latest:
             superseded += 1
         else:

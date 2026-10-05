@@ -220,7 +220,15 @@ Two mechanical refusals came from reading its first output:
 * a quote stating MORE THAN ONE timing is refused. TPST's "dosing in Q4 2026
   and data in H1 2027" was merged as a Q4 data window and removed by hand.
 
-The newest release supersedes older ones for the same asset. First run: AIM
+The newest release supersedes older ones for the same asset. Since 2026-10-05
+there is ONE stored event per (ticker, asset, kind) (`biotech_review.asset_key`):
+* asset spellings are normalized ("TN-401 (gene therapy)" = "TN401");
+* `add` refuses a twin;
+* `--reverify` drops one, keeping the reviewed event over a finder event.
+
+The first wide finder run had stored TNYA RIDGE-1 and ZURA tibulizumab twice.
+
+First run: AIM
 (DURIPANC topline, Q1 2027) added; Part 2 holds six events. It runs in the
 evening job after `--reverify`.
 

@@ -117,14 +117,44 @@ def save(obj):
     write_atomic(EVENTS, obj)
 
 
+def asset_key(e):
+    """(ticker, asset, kind) with the asset's spelling normalized: a parenthetical
+    gloss dropped, letters and digits only, first 8. "TN-401 (gene therapy)" and
+    "TN-401" are one asset; "NMRA-511" and "NMRA-898" are two (2026-10-05)."""
+    asset = re.sub(r'\(.*?\)', '', str(e.get('asset') or ''))
+    return (e.get('ticker'), re.sub(r'[^A-Z0-9]', '', asset.upper())[:8], e.get('kind'))
+
+
+def _dedupe(events):
+    """One event per asset_key. A reviewed (non-finder) event is kept over a
+    finder one, then the first stored. Returns (kept, dropped)."""
+    order = sorted(range(len(events)), key=lambda i: (bool(events[i].get('finder')), i))
+    seen, keep, dropped = {}, set(), []
+    for i in order:
+        k = asset_key(events[i])
+        if k in seen:
+            dropped.append({'event_id': events[i].get('event_id'),
+                            'reason': 'same asset and kind as ' + str(seen[k])})
+        else:
+            seen[k] = events[i].get('event_id')
+            keep.add(i)
+    return [e for i, e in enumerate(events) if i in keep], dropped
+
+
 def add(candidates, *, now=None, fetch=_get):
     """Verify each candidate against its own source, validate, merge. Returns a report."""
     now = now or dt.datetime.now(ET)
     obj = load()
     by_id = {e['event_id']: e for e in obj['events']}
+    stored_keys = {asset_key(e): e['event_id'] for e in obj['events']}
     accepted, rejected = [], []
     for c in candidates:
         c = {**c, 'review_status': 'verified', 'verified_at': now.isoformat()}
+        twin = stored_keys.get(asset_key(c))
+        if twin and twin != c.get('event_id'):
+            rejected.append({'event_id': c.get('event_id'), 'ticker': c.get('ticker'),
+                             'reason': 'same asset and kind already stored as ' + twin})
+            continue
         try:
             if not quote_on_page(c.get('source_quote'), c.get('source_url', ''), fetch):
                 raise ValueError('source_quote is not on the source page')
@@ -134,6 +164,7 @@ def add(candidates, *, now=None, fetch=_get):
                              'reason': str(exc)[:160] or type(exc).__name__})
             continue
         by_id[c['event_id']] = c
+        stored_keys[asset_key(c)] = c['event_id']
         accepted.append(c['event_id'])
     obj['events'] = sorted(by_id.values(), key=lambda e: (e['window_end'], e['ticker']))
     save(obj)
@@ -153,9 +184,10 @@ def reverify(*, now=None, fetch=_get):
             kept.append(e)
         except Exception as exc:
             dropped.append({'event_id': e.get('event_id'), 'reason': str(exc)[:160]})
+    kept, twins = _dedupe(kept)
     obj['events'] = kept
     save(obj)
-    return {'kept': len(kept), 'dropped': dropped}
+    return {'kept': len(kept), 'dropped': dropped + twins}
 
 
 def main(argv=None):

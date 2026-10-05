@@ -71,7 +71,7 @@ def test_add_merges_by_event_id_and_stamps_review(store):
 
 
 def test_reverify_drops_a_vanished_quote_and_refreshes_the_rest(store):
-    R.add([event(), event(event_id='ABC-OTHER', source_url='https://issuer.example/other')],
+    R.add([event(), event(event_id='ABC-OTHER', asset='ABC-2', source_url='https://issuer.example/other')],
           now=NOW, fetch=lambda url: PAGE)
     later = NOW + dt.timedelta(days=6)
     pages = {URL: PAGE, 'https://issuer.example/other': '<p>Release withdrawn.</p>'}
@@ -85,3 +85,27 @@ def test_reverify_drops_a_passed_window(store):
     R.add([event(window_start='2026-09-24', window_end='2026-09-30')], now=NOW, fetch=fetch_page())
     out = R.reverify(now=dt.datetime(2026, 10, 1, 17, tzinfo=NOW.tzinfo), fetch=fetch_page())
     assert out['kept'] == 0 and 'window' in out['dropped'][0]['reason']
+
+
+def test_one_event_per_asset_however_the_asset_is_spelled(store):
+    """2026-10-05: the finder stored TN-401 again as "TN401" beside the reviewed
+    "TN-401 (gene therapy)" event, and tibulizumab twice."""
+    assert R.asset_key(event(asset='TN-401 (gene therapy)')) == R.asset_key(event(asset='TN-401'))
+    assert R.asset_key(event(asset='NMRA-511')) != R.asset_key(event(asset='NMRA-898'))
+    R.add([event(asset='ABC-1 (a gloss)')], now=NOW, fetch=fetch_page())
+    out = R.add([event(event_id='ABC-ABC1-topline-2026-12-31', asset='ABC1', finder='v1')],
+                now=NOW, fetch=fetch_page())
+    assert out['accepted'] == [] and 'already stored' in out['rejected'][0]['reason']
+    assert R.add([event(event_id='ABC-OTHER', asset='ABC-2')], now=NOW,
+                 fetch=fetch_page())['accepted'] == ['ABC-OTHER']
+
+
+def test_reverify_drops_a_stored_twin_and_keeps_the_reviewed_one(store):
+    seal = {'review_status': 'verified', 'verified_at': NOW.isoformat()}
+    twin = event(event_id='ABC-ABC1-topline-2026-12-31', asset='ABC1', finder='v1', **seal)
+    R.save({'events': [twin, event(**seal)]})
+    out = R.reverify(now=NOW, fetch=fetch_page())
+    stored = json.loads(store.read_text())['events']
+    assert [e['event_id'] for e in stored] == ['ABC-TRIAL1-TOPLINE-2026Q4']
+    assert out['dropped'] == [{'event_id': 'ABC-ABC1-topline-2026-12-31',
+                               'reason': 'same asset and kind as ABC-TRIAL1-TOPLINE-2026Q4'}]
