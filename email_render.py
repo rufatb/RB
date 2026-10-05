@@ -307,6 +307,10 @@ def _hero(d):
         sub = f'{len(abstained)} are shown without one; the reason is under each desk.'
     elif legs:
         head, sub = f'{len(legs)} picks sized', 'Share counts use the 09:46 ET prices.'
+    elif intra.get('desks') and (intra.get('top_two') or {}).get('council') \
+            and (intra.get('top_two') or {}).get('picks'):
+        head = 'No desk sized a pick; the council agreed on the Top 2'
+        sub = 'Its positions are above, unsized; each desk below says why it declined.'
     elif intra.get('desks'):
         head = 'No model picked anything today'
         sub = ('Every model declined; each desk below says why. '
@@ -318,8 +322,14 @@ def _hero(d):
     no_agreement = (intra.get('top_two') or {}).get('status') == 'NO_AGREEMENT'
     singles = [f"{x['side']} {x['ticker']} ({x['by'].split(' ')[0]})"
                for x in (intra.get('top_two') or {}).get('single') or []]
+    near = [f"{x['side']} {x['ticker']} ({x['by']})"
+            for x in (intra.get('top_two') or {}).get('near') or []]
     top_text = (f'Top 2 today: {" · ".join(top)}' if top else
-                ('Top 2 today: no agreement — single-model picks: ' + ' · '.join(singles)
+                ('Top 2 today: no council consensus — closest: ' + ' · '.join(near)
+                 if no_agreement and near else
+                 'Top 2 today: no council consensus — nothing to act on'
+                 if no_agreement and (intra.get('top_two') or {}).get('council') else
+                 'Top 2 today: no agreement — single-model picks: ' + ' · '.join(singles)
                  if no_agreement and singles else
                  'Top 2 today: no agreement between the models — nothing to act on'
                  if no_agreement else ''))

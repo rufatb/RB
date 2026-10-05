@@ -74,6 +74,13 @@ def subject_state(report):
     status = str(report.get('report_status') or '')
     if 'DATA OUTAGE' in status:
         return '⛔ DATA OUTAGE — DO NOT TRADE — '
+    council_picks = len(((intraday.get('top_two') or {}).get('picks') or [])
+                        if (intraday.get('top_two') or {}).get('council') else [])
+    if not legs and intraday.get('desks') and council_picks:
+        # Day-124: the council can agree on Jev's forced picks when no desk
+        # selected anything; the subject must not say there is nothing.
+        return 'COUNCIL TOP 2 ONLY — %d position%s, no sized desk leg — ' % (
+            council_picks, '' if council_picks == 1 else 's')
     if not legs and intraday.get('desks'):
         return '⛔ NO MODEL PICKS — nothing to act on — '
     if not legs:

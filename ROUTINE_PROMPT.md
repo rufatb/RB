@@ -67,6 +67,12 @@ On READY, read `.rb-state/claude_brief.txt` IN FULL (page through it with offset
   python claude_opportunities.py --state-dir .rb-state --check .rb-state/claude_answer.json
   python claude_opportunities.py --state-dir .rb-state --seal .rb-state/claude_answer.json
 Seal before 09:24 ET; the first sealed answer stands.
+Then THE COUNCIL BALLOT (day-124): the models deliberate on the Top 2 and you are a member.
+  python council.py --state-dir .rb-state --wait-ballot 100
+Repeat while it prints STILL_WAITING. CLOSED: skip to the wait. On READY, read `.rb-state/council_brief.txt` IN FULL and answer it exactly as it instructs: a stance on EVERY position id (ENDORSE / OPPOSE / ABSTAIN), conviction 0.5–1 (null for ABSTAIN), one-sentence argument, and top_two. Judge each position on the supplied rows and the other members' arguments; use ONLY that file. Write `.rb-state/claude_ballot_answer.json`, then:
+  python council.py --state-dir .rb-state --check-ballot .rb-state/claude_ballot_answer.json
+  python council.py --state-dir .rb-state --seal-ballot .rb-state/claude_ballot_answer.json
+Seal before 09:27 ET; the first sealed ballot stands.
 Then WAIT BY COMMAND:
   python morning_wait.py --log .rb-state/morning_full.log --timeout 540
 RUNNING: run it again immediately. DONE <code>: go to STEP 5 with that code. NOT_STARTED: start STEP 3 now. STALLED: go to STEP 5.
@@ -114,7 +120,7 @@ Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on netwo
 STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
   - the job's exit code, and what broke if anything, in plain words.
-  - TOP 2 — the two names at the top of the email: side, ticker, how many models back each ("3 of 3" … "1 of 3") and who.
+  - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
   - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
   - PARTS 3, 4 and 5 — the gap signals, the post-earnings drift signals (new and still held) and the debate's final picks, or why there were none.

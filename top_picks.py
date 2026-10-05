@@ -178,6 +178,8 @@ def _agreed(c):
 
 def _verdict(p, answered):
     n = len(answered)
+    if p.get('council'):            # day-124: the room's own count, after two rounds
+        return p['verdict'] + (' — all saw the same release, not independent' if p.get('wire') else '')
     if p['split']:
         return 'SPLIT — models took opposite sides'
     if p.get('entry_check') == 'VOID':
@@ -209,6 +211,8 @@ def table(section, concise=False):
     `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
     if not section:
         return []
+    if section.get('council'):
+        return _council_table(section, concise)
     if concise:
         out = ['## Top 2 — where the models agree',
                'Only names at least two models back on the same side.']
@@ -244,8 +248,48 @@ def table(section, concise=False):
     return out + _notes(section)
 
 
+def _council_table(section, concise):
+    """Day-124: the council chose. Who sat, what won, who objected and why."""
+    import council
+    out = ['## Top 2 — the council\'s decision',
+           'The four models argued over every proposed position for two rounds; a position is '
+           'here only when most of those present endorsed it and at most one objected.']
+    if not concise:
+        out.append('Consensus is not confirmation: the members read the same brief, and none has '
+                   'beaten random picks on the replay. Convictions are never averaged.')
+    sat = section.get('answered') or []
+    absent = section.get('absent') or []
+    out.append('Sat: %s%s.' % (', '.join(sat) or 'nobody',
+                               ('; absent: ' + ', '.join(absent)) if absent else ''))
+    picks = section.get('picks') or []
+    near = council.near_line(section)
+    if not picks:
+        head = ('No consensus today — nothing to act on.' if concise
+                else section.get('reason') or 'No pick today.')
+        return out + ['', head] + ([near] if near else []) + _notes(section)
+    out += ['', '| # | Pick | Council vote | Endorsed by | Wrong if | Wire release | Why (lead proposer) |',
+            '|---|---|---|---|---|---|---|']
+    for i, p in enumerate(picks, 1):
+        wrong = (f"{'below' if p['side'] == 'LONG' else 'above'} {p['invalid_at']:g}"
+                 if isinstance(p.get('invalid_at'), (int, float)) else '—')
+        w = p.get('wire')
+        release = f"{w['at']} {w['title']}"[:90].replace('|', '/') if w else '—'
+        why = str(p.get('reason') or ('gives probabilities, not reasons' if p['lead'] == 'Jev'
+                                      else '—')).replace('|', '/')[:200]
+        out.append(f"| {i} | {p['side']} {p['ticker']} | {_verdict(p, sat)} | "
+                   f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
+    out += council.council_lines(section, concise=concise)
+    if section.get('reason'):
+        out.append(section['reason'])
+    if near:
+        out.append(near)
+    return out + _notes(section)
+
+
 def _notes(section):
     out = []
+    if section.get('council_note'):
+        out.append(section['council_note'])
     if section.get('split'):
         out.append('The models took opposite sides of: ' + ', '.join(section['split']) + ' — left out.')
     if section.get('void_at_entry'):

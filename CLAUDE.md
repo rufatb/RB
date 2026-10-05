@@ -1,5 +1,62 @@
 # Working notes for this repo
 
+## Day124 — the council: the four models deliberate on the Top 2 (owner, 2026-10-04)
+
+The owner asked for more than a count of "two out of four": a room where the
+models read each other's positions and reasons, argue, and agree on the two
+positions that are best for the day. `council.py` was registered in
+`PREREGISTER_day124_council.md` (781a981) BEFORE it ran.
+
+**The table.** Every (ticker, side) any desk SELECTED, plus Jev's forced pick
+per side. Each position carries its proposers, their own confidences and
+reasons, and the brief's evidence rows for those names.
+
+**The rounds.**
+1. DeepSeek and Gemini cast blind ballots on every position.
+2. Claude and Jev ballot after reading Round 1:
+   * Claude answers from `council_brief.txt` in the morning session (STEP 4,
+     after its seal, by 09:27);
+   * Jev answers one choice question over the ids plus NONE, and endorses
+     whatever it rates above its own NONE.
+3. DeepSeek and Gemini read everything and cast final ballots.
+
+**A ballot** gives ENDORSE / OPPOSE / ABSTAIN on every position, with a
+conviction from 0.5 to 1, a one-sentence argument, and `top_two`. It must vote
+on every id or it is invalid, and the member is counted absent.
+
+**The rule (frozen).** CONSENSUS needs all of:
+* V ≥ 2;
+* E ≥ 2;
+* E > V/2;
+* O ≤ 1 and O < E.
+
+If both sides of a ticker reach consensus, neither is taken. Ranking is by
+top-two seats, then E, then fewest O, then the WEAKEST endorser's conviction —
+never an average. At most two, never padded; the day-120 entry check still
+voids at 09:46.
+
+**Where it runs and what is recorded.**
+* Staged in `morning_full.sh` after PEAD, ending by 09:34 so Part 6 keeps its
+  window. ~12 s live without Claude's wait.
+* `brief` reads `council.json`; `council.decide` returns the council's section
+  when it sat (two or more valid members), else the counted rule with
+  "The council did not sit today (…)".
+* `top2/pick` rows carry `day124-council`. The counted rule is recorded every
+  day as `top2count/pick`, a shadow that is never printed.
+* The ballots are frozen into the report as `intraday.council`.
+* The email prints, per position, who endorsed and who objected, with each
+  argument. On a day without consensus it prints "Short of consensus: …", and
+  the hero names the closest positions.
+
+**Dry run on 2026-10-02's state** (Claude absent):
+* five positions on the table; SHOP.TO long and T.TO short reached 3 of 3;
+* Gemini OPPOSED the SU.TO short its own desk had proposed, after reading the
+  rows.
+
+Consensus is not confirmation: the members read the same brief. The test comes
+at 40 sessions (~2026-11-30): council vs counted shadow, clustered t ≥ 3, plus
+a within-session placebo. Do not re-word the prompt against results.
+
 ## Day123 — Gemini is the fourth desk; agreement is still two models (owner, 2026-10-03)
 
 `gemini_opportunities.py` asks `gemini-3.8-flash` (Gemini API v1beta,

@@ -621,13 +621,22 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                                               gemini_evidence))
     except Exception as exc:
         error('debate', RuntimeError(type(exc).__name__))
-    top_two = None
+    top_two = top_two_counted = council_snapshot = None
     try:
         import top_picks
         import entry_checks
+        prices = entry_checks.marks(quotes) if quotes else None
         top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
-                                   gemini=gemini_evidence,
-                                   prices=entry_checks.marks(quotes) if quotes else None)
+                                   gemini=gemini_evidence, prices=prices)
+        # Day-124: the council decides the Top 2 when it sat; the counted
+        # rule is kept beside it as the registered shadow.
+        top_two_counted = top_two
+        try:
+            import council
+            council_snapshot = council.load(state_dir, now)
+            top_two = council.decide(top_two_counted, council_snapshot, prices=prices)
+        except Exception as exc:
+            error('council', RuntimeError(type(exc).__name__))
         try:
             import newswire
             extra = [p['ticker'] for p in top_two['picks'] if p['ticker'] not in wire_releases]
@@ -655,6 +664,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'sections':{k:{a:b for a,b in v.items() if a!='value'} for k,v in section_status.items()},
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
+                          'top_two_counted':top_two_counted,'council':council_snapshot,
                           'gap_signal':gap_section,'pead':pead_section,'debate':debate_section,
                           'news_desk':news_section,
                           'record':record,'publish':pub,

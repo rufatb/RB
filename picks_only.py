@@ -75,6 +75,11 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
     import top_picks
     snaps['top_two'] = top_picks.select(snaps['claude'], snaps['opportunities'], jev,
                                         gemini=snaps.get('gemini'))
+    try:                      # day-124: the council's decision when it sat this morning
+        import council
+        snaps['top_two'] = council.decide(snaps['top_two'], council.load(root, now))
+    except Exception as exc:
+        snaps['top_two']['council_note'] = 'The council could not be read (%s).' % type(exc).__name__
     body = (['# RB Daily Report — %s — PICKS ONLY' % session,
              'Sent %s ET from the picks sealed before the open.' % now.strftime('%H:%M'),
              'The full 09:46 report did not publish today: %s. These are the desks\' own '

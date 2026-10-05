@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 10, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 11, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -248,3 +248,12 @@ def test_the_news_desk_waits_for_its_window_and_cannot_delay_publication():
     assert body.index('-lt 0931 ]') < at < body.index('-lt "$PUBLISH_AT" ]')
     assert "today 09:43:00" in body and 'news_left < 300 ? news_left : 300' in body
     assert body.index('news_desk.py --stage') < body.index('./morning.sh')
+
+
+def test_the_council_sits_after_every_desk_and_ends_before_part_6():
+    """Day-124: the council needs every desk's picks, and must leave Part 6
+    its window — it ends by 09:34 and never blocks publication."""
+    body = code()
+    at = body.index('council.py --stage')
+    assert body.index('gemini_opportunities.py') < at < body.index('news_desk.py --stage')
+    assert "today 09:34:00" in body and 'council_left < 900 ? council_left : 900' in body

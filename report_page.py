@@ -560,9 +560,17 @@ def _top_two_section(intra):
             '<p class="sub">A name appears only when at least two of Claude, DeepSeek and Jev '
             'back it on the same side. Agreement is not confirmation: they read the same brief, '
             'and none has beaten random picks on the replay.</p>')
+    if sec.get('council'):
+        head = ('<section><h2 class="head">Top 2 · the council\'s decision</h2>'
+                '<p class="sub">The four models argued over every proposed position for two rounds; '
+                'a position is here only when most of those present endorsed it and at most one '
+                'objected. Consensus is not confirmation: they read the same brief, and none has '
+                'beaten random picks on the replay.</p>')
+    extra = ''.join(f'<p>{escape(x)}</p>' for x in top_picks.table(sec)[2:]
+                    if not x.startswith('|') and x and not x.startswith('Consensus is not'))
     picks = sec.get('picks') or []
     if not picks:
-        return head + f'<p>{escape(str(sec.get("reason") or "No pick today."))}</p></section>'
+        return head + f'{extra}</section>'
     rows = ''
     for p in picks:
         wrong = (f'{"below" if p["side"] == "LONG" else "above"} {fmt(p.get("invalid_at"))}'
@@ -574,7 +582,7 @@ def _top_two_section(intra):
                  f'<td>{escape(safe_detail(w["at"] + " " + w["title"], 120)) if w else "&mdash;"}</td></tr>'
                  f'<tr class="reason"><td></td><td colspan="5">{escape(p["lead"])}: '
                  f'{escape(safe_detail(str(p.get("reason") or "no reason given"), 200))}</td></tr>')
-    note = f'<p>{escape(sec["reason"])}</p>' if sec.get('reason') else ''
+    note = extra
     return (head + '<div class="scroll"><table><thead><tr><th>Name</th><th>Side</th>'
             '<th>Agreement</th><th>Backed by</th><th>Wrong if</th><th>Wire release</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div>{note}</section>')

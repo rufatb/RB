@@ -126,6 +126,11 @@ def rows_from_report(report, source='published_report'):
     for pick in (intra.get('top_two') or {}).get('picks') or []:
         add('top2', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
             prompt_version=(intra.get('top_two') or {}).get('rule_version'))
+    # Day-124: the counted rule beside the council, a SHADOW recorded for the
+    # registered 40-session comparison and never printed in the email.
+    for pick in (intra.get('top_two_counted') or {}).get('picks') or []:
+        add('top2count', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
+            prompt_version=(intra.get('top_two_counted') or {}).get('rule_version'))
     # Part 5's debate (debate.py): what survived cross-examination and the judge.
     for pick in (intra.get('debate') or {}).get('final') or []:
         add('debate', 'final', pick.get('side'),

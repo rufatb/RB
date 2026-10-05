@@ -363,6 +363,26 @@ else
     stage_faults+=("post-earnings drift not staged")
 fi
 
+# ── 1b'. THE COUNCIL (day-124, PREREGISTER_day124_council.md) ────────────
+# The four models deliberate on the Top 2: DeepSeek and Gemini ballot every
+# proposed position, Claude (this session, from council_brief.txt) and Jev
+# answer after reading them, then DeepSeek and Gemini cast final ballots.
+# Claude's ballot is waited for until 09:27 at most. It must end by 09:34 so
+# Part 6 keeps its window; without it the counted rule decides the Top 2.
+council_left=$(( $(TZ=America/New_York date -d 'today 09:34:00' +%s) - $(date +%s) ))
+if [ "$council_left" -gt 30 ]; then
+    if timeout "$(( council_left < 900 ? council_left : 900 ))" python council.py --stage \
+            --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/council.log" 2>&1; then
+        log "  council: sat — the Top 2 is its decision (council.log)"
+    else
+        log "  council: did NOT sit — the counted rule decides the Top 2 (council.log)"
+        stage_faults+=("council did not sit")
+    fi
+else
+    log "  council: SKIPPED — too close to the open; the counted rule decides the Top 2"
+    stage_faults+=("council skipped: too late")
+fi
+
 # ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
 # A model reads every liquid TSX name's overnight release. The window runs to
 # 09:30, so this waits for it to close, then has until 09:43 — it can never
