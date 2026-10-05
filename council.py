@@ -36,7 +36,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo('America/New_York')
-PROMPT_VERSION = 'day124-council-v1'
+PROMPT_VERSION = 'day124-council-v2'
 RULE_VERSION = 'day124-council'
 SNAPSHOT = 'council.json'
 BRIEF_TXT = 'council_brief.txt'
@@ -51,9 +51,9 @@ MEMBERS = ('Claude', 'DeepSeek', 'Gemini', 'Jev')
 LEAD_ORDER = ('claude', 'deepseek', 'gemini', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
 
-COUNCIL_PROMPT = """You sit on a four-member trading committee that meets before the 09:30 ET open of the Toronto Stock Exchange. Its members are Claude, DeepSeek, Gemini and Jev. Each member has already proposed positions for today from the same evidence. Together the committee must agree on at most TWO positions it would put forward as the best for today, entered at 09:46 ET and exited at 15:59 ET the same day.
+COUNCIL_PROMPT = """You sit on a four-member trading committee that meets before the 09:30 ET open of the Toronto Stock Exchange. Its members are four language models from different makers. In this room they are known only by seat letters, A to D, assigned at random each day, so that no member's name sways a vote. Each member has already proposed positions for today from the same evidence. Together the committee must agree on at most TWO positions it would put forward as the best for today, entered at 09:46 ET and exited at 15:59 ET the same day.
 
-You are {member}. You are given every proposed position, with its proposers' own confidence and reason, and the evidence rows for those names. {round_note}
+You are one of the four members. You are given every proposed position, with its proposers' seats, their own confidence and reason, and the evidence rows for those names. {round_note}
 
 For EACH position give your stance: ENDORSE (you would put this position forward for today), OPPOSE (you think it is wrong, or worse than doing nothing) or ABSTAIN (no view). conviction is your own number from 0.5 to 1 for an ENDORSE or OPPOSE, where 0.5 means barely; use null for ABSTAIN. argument is ONE sentence under 200 characters naming the supplied values, or the other members' points you agree or disagree with. Judge the position, not who proposed it; you may oppose your own proposal if the discussion persuaded you.
 
@@ -75,7 +75,33 @@ JEV_INSTRUCTIONS = (
 
 
 def prompt(member, round_note):
-    return COUNCIL_PROMPT.format(member=member, round_note=round_note)
+    """`member` is kept for the call sites' readability; v2 never names the
+    member to itself (day-124 amendment: no name, no seat)."""
+    return COUNCIL_PROMPT.format(round_note=round_note)
+
+
+# ── no leader (day-124 amendment, owner 2026-10-04) ──────────────────────────
+
+SEATS = ('A', 'B', 'C', 'D')
+
+
+def seats(session):
+    """{model: seat letter}, shuffled by the session date and reproducible.
+    No model is first by construction: the order is a hash of the date."""
+    import hashlib
+    order = sorted(LEAD_ORDER, key=lambda m: hashlib.sha256(
+        ('%s|%s' % (session, m)).encode()).hexdigest())
+    return dict(zip(order, SEATS))
+
+
+def lead_order(session=None):
+    """Whose reason and "wrong if" a position shows when several proposed it.
+    Rotates daily among the three models that give reasons and levels; Jev
+    (probabilities only) is last. Without a session: the old fixed order."""
+    if session is None:
+        return LEAD_ORDER
+    s = seats(session)
+    return tuple(sorted(('claude', 'deepseek', 'gemini'), key=s.get)) + ('jev',)
 
 
 # ── the table ────────────────────────────────────────────────────────────────
@@ -84,9 +110,11 @@ def _usable(snap):
     return isinstance(snap, dict) and snap.get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def positions(claude, deepseek, gemini, jev):
+def positions(claude, deepseek, gemini, jev, session=None):
     """Every (ticker, side) a desk SELECTED, plus Jev's forced pick per side."""
     table = {}
+    order = lead_order(session)
+    seat = seats(session) if session else {m: m for m in LEAD_ORDER}
 
     def add(model, how, side, pick):
         if not isinstance(pick, dict) or not isinstance(pick.get('ticker'), str):
@@ -114,8 +142,10 @@ def positions(claude, deepseek, gemini, jev):
     out = sorted(table.values(), key=lambda p: (p['ticker'], p['side']))
     for i, p in enumerate(out, 1):
         p['id'] = 'P%d' % i
-        p['proposers'].sort(key=lambda x: LEAD_ORDER.index(x['model']))
+        p['proposers'].sort(key=lambda x: order.index(x['model']))
         lead = p['proposers'][0]
+        for x in p['proposers']:
+            x['seat'] = seat[x['model']]
         p['lead'] = NAMES[lead['model']]
         p['reason'] = lead['reason']
         p['invalid_at'] = next((x['invalid_at'] for x in p['proposers']
@@ -124,11 +154,13 @@ def positions(claude, deepseek, gemini, jev):
 
 
 def public(positions_):
-    """A position as a member sees it."""
+    """A position as a member sees it: proposers by SEAT, never by name, in
+    seat order."""
     return [{'id': p['id'], 'position': '%s %s' % (p['side'], p['ticker']),
-             'proposed_by': [{'member': NAMES[x['model']], 'how': x['how'],
+             'proposed_by': [{'seat': x.get('seat', '?'), 'how': x['how'],
                               'confidence': x['confidence'], 'reason': x['reason']}
-                             for x in p['proposers']]} for p in positions_]
+                             for x in sorted(p['proposers'], key=lambda x: str(x.get('seat')))]}
+            for p in positions_]
 
 
 def evidence_rows(state_dir, now, tickers):
@@ -211,8 +243,9 @@ def ask_jev(table, rows, discussion, *, poster=None):
     key = os.environ.get('OPENROUTER_API_KEY', '').strip()
     if poster is None and not key:
         raise RuntimeError('NO_OPENROUTER_CREDENTIAL')
-    opts = {p['id']: '%s %s, proposed by %s' % (p['side'], p['ticker'],
-                                                ', '.join(NAMES[x['model']] for x in p['proposers']))
+    opts = {p['id']: '%s %s, proposed by seat %s' % (
+                p['side'], p['ticker'],
+                ', '.join(sorted(str(x.get('seat', '?')) for x in p['proposers'])))
             for p in table}
     opts[J.ABSTAIN] = 'no proposed position is better than doing nothing today'
     body = {'model': os.environ.get('JEV_MODEL') or J.DEFAULT_MODEL,
@@ -244,15 +277,17 @@ def ask_jev(table, rows, discussion, *, poster=None):
             'none': round(float(none), 3)}
 
 
-def discussion_of(ballots):
-    """Every cast ballot as the next readers see it: member, stance, conviction, argument."""
+def discussion_of(ballots, seat=None):
+    """Every cast ballot as the next readers see it: SEAT, stance, conviction,
+    argument — in seat order, so no member is always read first."""
+    seat = seat or {}
     out = []
     for member, b in ballots.items():
         if not isinstance(b, dict) or 'votes' not in b:
             continue
-        out.append({'member': member, 'top_two': b['top_two'],
+        out.append({'seat': seat.get(member.lower(), member), 'top_two': b['top_two'],
                     'ballots': [{'id': i, **v} for i, v in b['votes'].items()]})
-    return out
+    return sorted(out, key=lambda d: str(d['seat']))
 
 
 # ── the tally ────────────────────────────────────────────────────────────────
@@ -305,7 +340,9 @@ def brief_text(brief):
              'Write ONE JSON object to .rb-state/claude_ballot_answer.json, then:',
              '  python council.py --state-dir .rb-state --check-ballot .rb-state/claude_ballot_answer.json',
              '  python council.py --state-dir .rb-state --seal-ballot .rb-state/claude_ballot_answer.json',
-             'Vote on EVERY position id below. Use only this file.', '',
+             'Vote on EVERY position id below. Use only this file.',
+             'Members are named only by seat. Refer to them by seat, never by name, and give a '
+             'position you proposed at your desk no more weight than any other.', '',
              'POSITIONS ' + json.dumps(brief['positions'], ensure_ascii=False, indent=1), '',
              'DISCUSSION ' + json.dumps(brief['discussion'], ensure_ascii=False, indent=1), '']
     lines += ['ROW ' + json.dumps(r, ensure_ascii=False, sort_keys=True) for r in brief['rows']]
@@ -335,9 +372,12 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
             snaps[k] = mod.load_prepared(root, now)
         except Exception as exc:
             snaps[k] = {'status': 'UNAVAILABLE', 'reason': type(exc).__name__}
-    table = positions(snaps['claude'], snaps['deepseek'], snaps['gemini'], snaps['jev'])
-    base = {'prompt_version': PROMPT_VERSION, 'session': now.date().isoformat(),
-            'asked_at': now.isoformat(), 'positions': table}
+    session = now.date().isoformat()
+    seat = seats(session)
+    table = positions(snaps['claude'], snaps['deepseek'], snaps['gemini'], snaps['jev'], session)
+    base = {'prompt_version': PROMPT_VERSION, 'session': session,
+            'asked_at': now.isoformat(), 'positions': table, 'seats': seat,
+            'lead_order': list(lead_order(session))}
     if not table:
         out = {**base, 'status': 'NO_POSITIONS', 'picks': [],
                'reason': 'no model proposed a position today'}
@@ -371,7 +411,7 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     with cf.ThreadPoolExecutor(2) as pool:
         r1 = dict(pool.map(lambda m: run('R1 ' + m, lambda: chat(m, ROUND_1)), ['DeepSeek', 'Gemini']))
     round1 = {m.split(' ', 1)[1]: b for m, b in r1.items() if b}
-    discussion1 = discussion_of(round1)
+    discussion1 = discussion_of(round1, seat)
 
     # Claude and Jev, after reading Round 1.
     brief = {'session': base['session'], 'positions': pub, 'discussion': discussion1, 'rows': rows,
@@ -396,7 +436,7 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
         heard['Claude'] = claude
     if jev:
         heard['Jev'] = jev
-    discussion2 = discussion_of(heard)
+    discussion2 = discussion_of(heard, seat)
     with cf.ThreadPoolExecutor(2) as pool:
         r2 = dict(pool.map(lambda m: run('R2 ' + m, lambda: chat(m, ROUND_2, discussion2)),
                            ['DeepSeek', 'Gemini']))

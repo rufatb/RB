@@ -627,7 +627,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         import entry_checks
         prices = entry_checks.marks(quotes) if quotes else None
         top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
-                                   gemini=gemini_evidence, prices=prices)
+                                   gemini=gemini_evidence, prices=prices,
+                                   session=now.date().isoformat())
         # Day-124: the council decides the Top 2 when it sat; the counted
         # rule is kept beside it as the registered shadow.
         top_two_counted = top_two

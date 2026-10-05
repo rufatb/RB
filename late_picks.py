@@ -188,7 +188,8 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             return out + ['Unavailable — %s' % safe_detail(snap.get('reason') or 'no answer', 160)]
         return out + (E.pick_table(snap) or ['No pick on either side.'])
     import top_picks
-    top = top_picks.select({'status': 'READY', **picks}, deepseek, jev, gemini=gemini)
+    top = top_picks.select({'status': 'READY', **picks}, deepseek, jev, gemini=gemini,
+                           session=now.date().isoformat())
     body = (head + ['', *top_picks.table(top, concise=True),
                     'These, too, were asked after the open; not recorded separately '
                     '(each desk\'s late pick is).']

@@ -53,6 +53,33 @@ voids at 09:46.
 * Gemini OPPOSED the SU.TO short its own desk had proposed, after reading the
   rows.
 
+**No leader (amendment 1, owner 2026-10-04, registered before the first run).**
+The owner asked whether Claude leads the pack. It did in display and order,
+never in the count:
+* its reason and "wrong if" were shown first, and so drove the entry check;
+* it was listed first in every proposal the others read.
+
+Now:
+* members see each other only by SEAT LETTER, shuffled daily by a hash of the
+  date (`council.seats`; the mapping is only in `council.json`);
+* lists are in seat order;
+* the lead (reason and "wrong if") rotates daily among Claude, DeepSeek and
+  Gemini, with Jev last, in the council and the counted Top 2
+  (`top_picks.select(session=)`);
+* the prompt is version `day124-council-v2`.
+
+On the same dry-run state, with names showing, DeepSeek's Round 2 SHOP.TO
+argument cited "Gemini and Jev concur" (3 of 3 endorse). Anonymous, DeepSeek
+and Gemini both OPPOSED it on its rows (below vwap, rvol 0.68). One run is not
+evidence; it is the herd effect the amendment exists to remove.
+
+**One asymmetry remains.** Claude votes in the same session that sealed its
+desk picks, so it can recognise its own proposals. The others are stateless
+calls. The fix is the `--api` route with a clean context, which needs an
+Anthropic key the account does not have.
+
+Part 5's debate is a separate registered test and keeps its frozen prompts.
+
 Consensus is not confirmation: the members read the same brief. The test comes
 at 40 sessions (~2026-11-30): council vs counted shadow, clustered t ≥ 3, plus
 a within-session placebo. Do not re-word the prompt against results.

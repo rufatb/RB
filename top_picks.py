@@ -81,7 +81,7 @@ def _describe(model, w, rank):
     return NAMES[model] + num
 
 
-def select(claude, deepseek, jev, *, gemini=None, wire=None, prices=None):
+def select(claude, deepseek, jev, *, gemini=None, wire=None, prices=None, session=None):
     """The section as a dict: up to two names the models AGREE on, never padded.
 
     `prices` ({ticker: 09:46 mark}) turns on the day-120 entry check: a pick
@@ -90,6 +90,10 @@ def select(claude, deepseek, jev, *, gemini=None, wire=None, prices=None):
     picks-only and late emails) nothing is checked and nothing moves.
     """
     import entry_checks
+    # No leader (day-124 amendment): whose reason and "wrong if" a shared name
+    # shows rotates daily; without a session it is the old fixed order.
+    import council
+    order = council.lead_order(session)
     snaps = {'claude': claude, 'deepseek': deepseek, 'gemini': gemini, 'jev': jev}
     answered = [m for m in MODELS if _answered(snaps[m])]
     flagged = flags(claude, deepseek, jev, gemini=gemini)
@@ -108,7 +112,7 @@ def select(claude, deepseek, jev, *, gemini=None, wire=None, prices=None):
                         if isinstance(w.get('strength'), (int, float))), default=0.0)
         selected = any(w['kind'] == 'selected' for w in support.values())
         best_kind = min(KIND_ORDER[w['kind']] for w in support.values())
-        lead = next((m for m in ('claude', 'deepseek', 'gemini') if m in support), 'jev')
+        lead = next((m for m in order if m in support), 'jev')
         candidates.append({
             'ticker': ticker, 'side': side, 'split': split,
             'votes': len(support), 'models': [m for m in MODELS if m in support],

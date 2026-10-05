@@ -74,7 +74,7 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
     jev = snaps['jev']
     import top_picks
     snaps['top_two'] = top_picks.select(snaps['claude'], snaps['opportunities'], jev,
-                                        gemini=snaps.get('gemini'))
+                                        gemini=snaps.get('gemini'), session=session)
     try:                      # day-124: the council's decision when it sat this morning
         import council
         snaps['top_two'] = council.decide(snaps['top_two'], council.load(root, now))

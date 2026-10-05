@@ -195,8 +195,14 @@ def test_two_rounds_then_a_tally(staged):
     assert [p['ticker'] for p in out['positions']] == ['AC.TO', 'CNQ.TO', 'SU.TO']
     # round 1 is blind; round 2 reads every member's ballot
     assert 'discussion' not in gm.seen[0][1]
-    assert {d['member'] for d in gm.seen[1][1]['discussion']} == {'DeepSeek', 'Gemini', 'Claude', 'Jev'}
-    assert K.ROUND_2 in gm.seen[1][0] and 'You are Gemini.' in gm.seen[1][0]
+    seat = K.seats('2026-10-05')
+    assert [d['seat'] for d in gm.seen[1][1]['discussion']] == sorted(seat.values())
+    assert K.ROUND_2 in gm.seen[1][0] and 'You are one of the four members.' in gm.seen[1][0]
+    # no member is named to another: not in the prompt, the payload or Jev's options
+    for name in ('Claude', 'DeepSeek', 'Gemini', 'Jev'):
+        assert name not in gm.seen[1][0] and name not in json.dumps(gm.seen[1][1])
+        assert name not in json.dumps(post.body)
+    assert 'Claude' not in (staged/K.BRIEF_TXT).read_text().split('=' * 72)[1]
     assert ds.seen[0]['extra_body'] == {'thinking': {'type': 'disabled'}}
     # Jev endorsed P1 only (0.5 > NONE 0.2); P3 at 0.2 is not above NONE
     assert out['rounds']['jev']['votes']['P1']['stance'] == 'ENDORSE'
@@ -355,3 +361,23 @@ def test_a_council_only_day_does_not_say_nothing_to_act_on():
     assert prepare_delivery.subject_state(report).startswith('COUNCIL TOP 2 ONLY — 2 positions')
     assert 'the council agreed on the Top 2' in E._hero(report)
     assert K._clip('one two three', 9) == 'one two…'
+
+
+def test_no_model_leads_seats_and_the_lead_rotate_by_day():
+    days = ['2026-10-%02d' % d for d in range(5, 31)]
+    firsts = {K.lead_order(d)[0] for d in days}
+    assert firsts == {'claude', 'deepseek', 'gemini'}          # each leads on some day
+    assert all(K.lead_order(d)[-1] == 'jev' for d in days)      # no reasons, no levels
+    assert K.seats('2026-10-05') == K.seats('2026-10-05')       # reproducible
+    assert sorted(K.seats('2026-10-05').values()) == ['A', 'B', 'C', 'D']
+    assert K.lead_order(None) == K.LEAD_ORDER                    # old publications unchanged
+
+
+def test_the_counted_top_two_lead_rotates_too():
+    import top_picks
+    a = desk([pick('AC.TO', 0.6, 'claude reason', 10.0)])
+    b_ = desk([pick('AC.TO', 0.6, 'deepseek reason', 11.0)])
+    g = desk([pick('AC.TO', 0.6, 'gemini reason', 12.0)])
+    leads = {top_picks.select(a, b_, {'status': 'UNAVAILABLE'}, gemini=g,
+                              session='2026-10-%02d' % d)['picks'][0]['lead'] for d in range(5, 31)}
+    assert leads == {'Claude', 'DeepSeek', 'Gemini'}
