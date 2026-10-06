@@ -262,7 +262,18 @@ else
         timeout "$budget" python claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief
         case $? in
             0) log "  Claude brief: written — waiting for Claude's sealed answer until ${CLAUDE_DEADLINE}"
-               if [ -f "$RB_STATE_DIR/secrets/anthropic_api_key" ]; then
+               # DAY-126: Claude answers STATELESS through OpenRouter, with the
+               # research round. The session's own answer is the fallback.
+               if [ -f "$RB_STATE_DIR/secrets/openrouter_api_key" ]; then
+                   if timeout 180 python claude_opportunities.py --state-dir "$RB_STATE_DIR" --openrouter \
+                           >>"$RB_STATE_DIR/claude_openrouter.log" 2>&1; then
+                       log "  Claude picks: answered stateless through OpenRouter"
+                   else
+                       log "  Claude picks: OpenRouter route FAILED — waiting for the session's answer (claude_openrouter.log)"
+                   fi
+               fi
+               if [ -f "$RB_STATE_DIR/secrets/anthropic_api_key" ] && \
+                  ! python claude_opportunities.py --state-dir "$RB_STATE_DIR" --sealed; then
                    if timeout 150 python claude_opportunities.py --state-dir "$RB_STATE_DIR" --api; then
                        log "  Claude picks: answered through the API"
                    else
@@ -332,7 +343,7 @@ else
     # The FOURTH desk (owner, 2026-10-03): Gemini (gemini-3.8-flash), asked the
     # same question from the same rows as DeepSeek. ~2s over 89 names; it runs
     # last so the DeepSeek and Jev budgets are untouched.
-    if budget="$(slice 120 0)"; then
+    if budget="$(slice 150 0)"; then
         timeout "$budget" python gemini_opportunities.py --state-dir "$RB_STATE_DIR"
         case $? in
             0) log "  Gemini opportunities: staged" ;;

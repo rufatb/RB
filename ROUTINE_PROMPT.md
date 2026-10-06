@@ -53,24 +53,27 @@ STEP 2 — credentials (a container restart wipes .rb-state, so write them every
   printf '%s' '<FMP_API_KEY>' > .rb-state/secrets/fmp_api_key
   chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key .rb-state/secrets/gemini_api_key .rb-state/secrets/fmp_api_key
   printf 'deepseek-v4-pro\n' > .rb-state/deepseek_model.txt
-The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is `typesafe/jev-1.13` on OpenRouter at POST /api/alpha/decisions. Do not "correct" either model name.
+The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`; the owner chose `deepseek-v4-pro` on 2026-09-29. Jev is `typesafe/jev-1.13` on OpenRouter at POST /api/alpha/decisions; the same OpenRouter key answers Claude's desk and ballot (`anthropic/claude-opus-5.5`, stateless) and the web scout (`perplexity/sonar-pro`). Gemini is `gemini-3.8-flash` on the Gemini API (owner, 2026-10-03). FMP Premium (owner, 2026-10-06) feeds analyst changes, earnings and today's releases into the brief, and the research tools. Do not "correct" any model name.
 
 STEP 3 — start the morning job IN THE BACKGROUND
   ./morning_full.sh > .rb-state/morning_full.log 2>&1
-Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, writes CLAUDE'S BRIEF, waits for your seal until 09:24, asks DeepSeek, Jev and Gemini, stages the biotech calls and the extra sections, reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
+Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, the FMP context (day-125: analyst rating changes, earnings, today's scheduled releases — in every model's rows), writes CLAUDE'S BRIEF and has it answered statelessly through OpenRouter (day-126: Claude and Gemini look things up with read-only FMP tools before they answer; DeepSeek answers single-shot), waits for a seal until 09:24, asks DeepSeek, Jev and Gemini, stages the biotech calls, the gap signal, the debate and the post-earnings drift signals, convenes THE COUNCIL (day-124: the four models deliberate on the Top 2, with a web scout's dated, sourced news on each position; Claude's ballot is cast through OpenRouter, yours only as the fallback in STEP 4), reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but late; 6 published, provenance not clean; 1 failed. Never re-run it and never override a guard — STEP 5 decides what the owner receives whatever the code.
 `morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". That is expected: a container cannot reach smtp.gmail.com. You send the email in STEP 7 through the Gmail connector.
 
-STEP 4 — CLAUDE'S PICKS, then wait by command
+STEP 4 — CLAUDE'S PICKS (fallback only since day-126), then wait by command
+Claude's desk is answered STATELESS through OpenRouter by `morning_full.sh` (day-126: the same brief as DeepSeek and Gemini, the same research round as Gemini, no memory of this session). You answer only if that route fails.
   python claude_opportunities.py --state-dir .rb-state --wait-brief 100
-Repeat while it prints STILL_WAITING. PAST_CUTOFF or NOTHING_TO_ANSWER: skip to the wait and say so in the summary.
-On READY, read `.rb-state/claude_brief.txt` IN FULL (page through it with offset/limit). Answer exactly as it instructs: at most 2 LONG and 2 SHORT, only its tickers, fewer when the evidence is thin, `confidence` your own honest number (0.5 is a coin flip), one-sentence `reason` naming the supplied values, `basis`, and `invalid_at` from THAT row's own levels on the losing side of its `last`. Use ONLY that file — no other snapshot, report, earlier conversation about today's names, web page or price feed before you seal; the section prints whether you sealed before DeepSeek and Jev were asked.
+Repeat while it prints STILL_WAITING. NOTHING_TO_ANSWER: the desk is already sealed (normally by the OpenRouter route) — go to the council ballot. PAST_CUTOFF: skip to the wait and say so in the summary.
+On READY:
+  python claude_opportunities.py --state-dir .rb-state --wait-sealed 200
+SEALED: the OpenRouter route answered — go to the council ballot. NOT_SEALED: answer it yourself as the fallback. Read `.rb-state/claude_brief.txt` IN FULL (page through it with offset/limit). Answer exactly as it instructs: at most 2 LONG and 2 SHORT, only its tickers, fewer when the evidence is thin, `confidence` your own honest number (0.5 is a coin flip), one-sentence `reason` naming the supplied values, `basis`, and `invalid_at` from THAT row's own levels on the losing side of its `last`. Use ONLY that file — no other snapshot, report, earlier conversation about today's names, web page, price feed or FMP connector call before you seal.
   python claude_opportunities.py --state-dir .rb-state --check .rb-state/claude_answer.json
   python claude_opportunities.py --state-dir .rb-state --seal .rb-state/claude_answer.json
 Seal before 09:24 ET; the first sealed answer stands.
 Then THE COUNCIL BALLOT (day-124): the models deliberate on the Top 2 and you are a member.
   python council.py --state-dir .rb-state --wait-ballot 100
-Repeat while it prints STILL_WAITING. CLOSED: skip to the wait. On READY, read `.rb-state/council_brief.txt` IN FULL and answer it exactly as it instructs: a stance on EVERY position id (ENDORSE / OPPOSE / ABSTAIN), conviction 0.5–1 (null for ABSTAIN), one-sentence argument, and top_two. Judge each position on the supplied rows and the other members' arguments; use ONLY that file. Write `.rb-state/claude_ballot_answer.json`, then:
+Repeat while it prints STILL_WAITING. CLOSED: Claude's ballot was already cast statelessly through OpenRouter (day-126), or the council closed — skip to the wait. On READY (the OpenRouter ballot failed), read `.rb-state/council_brief.txt` IN FULL and answer it exactly as it instructs: a stance on EVERY position id (ENDORSE / OPPOSE / ABSTAIN), conviction 0.5–1 (null for ABSTAIN), one-sentence argument, and top_two. Judge each position on the supplied rows and the other members' arguments; use ONLY that file. Write `.rb-state/claude_ballot_answer.json`, then:
   python council.py --state-dir .rb-state --check-ballot .rb-state/claude_ballot_answer.json
   python council.py --state-dir .rb-state --seal-ballot .rb-state/claude_ballot_answer.json
 Seal before 09:27 ET; the first sealed ballot stands.
@@ -113,14 +116,14 @@ STEP 8 — publish the page (REPORT mode only; skip otherwise)
 If `report_page.html` is missing: `python report_page.py --report .rb-state/latest/report.json --output .rb-state/latest/report_page.html`. Never hand-edit it. Retry a failed publish up to three times; it never delays the email, which went first.
 
 STEP 9 — push the record (this session can push; nothing else will)
-  python model_picks.py --record-report .rb-state/latest/report.json     (REPORT mode only)
+  python model_picks.py --record-report .rb-state/latest/report.json     (REPORT mode only; it also records Part 3's gap signals)
   git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv data/news_calls.csv
   git commit -m "record: <today> morning (report run)" && git push origin main
 Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on network errors only.
 
 STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
-  - the job's exit code, and what broke if anything, in plain words.
+  - the job's exit code, and what broke if anything, in plain words (including whether the FMP context was staged, and whether Claude's desk and ballot came through OpenRouter or from you).
   - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
   - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PART 2 — each biotech call (ticker, event, side, own confidence).
@@ -133,4 +136,4 @@ DO NOT TOUCH THE SCHEDULE
 Never create, modify, enable, disable or delete any Routine, including this one. If the schedule looks wrong, say so in the summary. The only authorised schedule change is the twice-yearly DST task, which has its own instructions.
 
 IF SOMETHING FAILS
-Say so plainly. Never fabricate a board, never re-run a refused publication, never replace a same-day published board, never push code. A DeepSeek, Jev or biotech failure costs its own section — never the email.
+Say so plainly. Never fabricate a board, never re-run a refused publication, never replace a same-day published board, never push code. A DeepSeek, Gemini, Jev, FMP, OpenRouter, scout, council or biotech failure costs its own section — never the email.

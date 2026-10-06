@@ -64,6 +64,68 @@ and consensus are untested context. The deeper FMP bars (back to 2024-01)
 would let the day-117 replay run on ~600 sessions instead of 59 — registered
 work for another day.
 
+## Day126 — the desks look things up; Claude answers stateless; a web scout (owner, 2026-10-05)
+
+The owner asked whether the models use FMP "dynamically" or from a fixed
+snapshot. Day-125 was a fixed snapshot. The owner authorised replacing it from
+2026-10-06, and asked what else the OpenRouter key could add. Registered in
+`PREREGISTER_day126_research.md` before anything ran; read its amendment 1.
+
+**`research.py`: a read-only FMP research round before a desk answers.**
+* Tools: analyst_history, earnings_history, key_metrics, daily_prices,
+  reaction_history (gap and 09:45 → close vs XIU after the name's last
+  analyst changes or reports), news (UNVERIFIED), peers, sector_performance.
+* Scope:
+  * brief tickers only;
+  * data cut before the session;
+  * 8 calls, 75 s, then the model MUST answer (`tool_choice none`).
+* The answer goes through the same `_clean` / `check_levels` / `check_basis`.
+* Every call is logged to `research_<desk>.json`; the snapshot carries
+  `research_summary`, and prompt_version is `day126-research-v1`.
+* Any failure falls back to the single-shot call, and the gaps say so.
+* Gemini's loop sends model turns back WHOLE: a dropped `thoughtSignature`
+  breaks the next turn.
+
+**The paired replay PASSED; DeepSeek's control did NOT.**
+* Replay, 59 sessions: single-shot 73 picks, 52.1%, +0.069%; research 122
+  picks, 49.2%, −0.001%. Difference −0.07% against a −0.30% bar, 95% CI
+  [−0.60, +0.47] (`data/replay_day126_research.json`). That means "no worse",
+  not better.
+* Planted control through the research path:
+  * DeepSeek: 1 clean of 8, once the planted short put LONG; single-shot 3/4
+    the same night.
+  * Gemini: 2/2. Claude via OpenRouter: 2/3.
+* So DeepSeek ships SINGLE-SHOT (`deepseek_opportunities.RESEARCH_LIVE =
+  False`); Gemini and Claude research. Re-enabling DeepSeek needs a passing
+  control first.
+
+**Claude is stateless now (`claude_opportunities --openrouter`,
+`anthropic/claude-opus-5.5`).** This removes day-124's last asymmetry:
+* the desk seals as route `openrouter`;
+* the council ballot is asked through OpenRouter with the same prompt as the
+  others and written to `claude_ballot.json`, so `--wait-ballot` prints
+  CLOSED;
+* the session answers only as the fallback (`--wait-sealed 200` →
+  NOT_SEALED);
+* it abstains readily: twice on live state, with 0 tool calls.
+
+**The web scout (`scout.py`, Perplexity `sonar-pro` via OpenRouter).**
+* One call per council position (≤ 8, parallel) for dated news from the last
+  72 hours, with citation URLs.
+* Results enter the council rows as `web_news`, labelled UNVERIFIED, beside
+  the desks' `research` facts (`council.enrich`, `EVIDENCE_LEGEND`).
+* It missed the Cenovus–Athabasca deal on its probe: web text is evidence to
+  weigh, never a fact.
+* On the 10-05 dry run the members cited its SU.TO asset sale and TRP.TO
+  Coastal GasLink lines when they OPPOSED those shorts.
+
+**Dry run on 10-05's state.**
+* Timings: Claude-OR 8.9 s, DeepSeek 5.6 s, Jev 2.7 s, Gemini 10.0 s (4
+  calls), council 30.7 s with 4 members.
+* Consensus: SHORT AC.TO 4/4, LONG SHOP.TO 3 endorse (Claude abstained).
+
+No accuracy gain is claimed, and the email claims none.
+
 ## Day124 — the council: the four models deliberate on the Top 2 (owner, 2026-10-04)
 
 The owner asked for more than a count of "two out of four": a room where the
@@ -137,10 +199,9 @@ argument cited "Gemini and Jev concur" (3 of 3 endorse). Anonymous, DeepSeek
 and Gemini both OPPOSED it on its rows (below vwap, rvol 0.68). One run is not
 evidence; it is the herd effect the amendment exists to remove.
 
-**One asymmetry remains.** Claude votes in the same session that sealed its
-desk picks, so it can recognise its own proposals. The others are stateless
-calls. The fix is the `--api` route with a clean context, which needs an
-Anthropic key the account does not have.
+**The last asymmetry (Claude voting in the session that sealed its picks)
+was removed on day-126:** Claude's desk and ballot go through OpenRouter,
+stateless, with the session only as the fallback.
 
 Part 5's debate is a separate registered test and keeps its frozen prompts.
 

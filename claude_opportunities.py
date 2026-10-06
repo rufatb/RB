@@ -45,6 +45,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -175,9 +176,9 @@ def read_brief(state_dir, now):
 
 # ── the answer ───────────────────────────────────────────────────────────────
 
-def _seal_snapshot(result, now, **extra):
+def _seal_snapshot(result, now, version=None, **extra):
     return O._seal({**result, **extra, 'schema_version': SCHEMA_VERSION,
-                    'prompt_version': PROMPT_VERSION, 'session': now.date().isoformat(),
+                    'prompt_version': version or PROMPT_VERSION, 'session': now.date().isoformat(),
                     'prepared_at': now.isoformat()})
 
 
@@ -210,7 +211,8 @@ def parse_answer(text):
     return body
 
 
-def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session'):
+def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session', extra=None,
+         version=None):
     """Validate Claude's answer against the brief and seal it. Publish-once."""
     now = _now(now)
     if now.time() >= CUTOFF:
@@ -235,8 +237,8 @@ def seal(state_dir, answer, *, now=None, model=SESSION_LABEL, route='session'):
               'longs': longs, 'shorts': shorts,
               'gaps': long_gaps + short_gaps + list(brief.get('gaps') or []),
               'asked_at': brief['prepared_at'], 'adopted': False,
-              'registration': REGISTRATION, 'confidence_label': CONFIDENCE_LABEL}
-    snapshot = _seal_snapshot(result, now, route=route, independence=independence(root, now))
+              'registration': REGISTRATION, 'confidence_label': CONFIDENCE_LABEL, **(extra or {})}
+    snapshot = _seal_snapshot(result, now, version, route=route, independence=independence(root, now))
     _write(root/SNAPSHOT_NAME, snapshot)
     return snapshot
 
@@ -297,6 +299,50 @@ def ask_api(state_dir, *, now=None, client=None, model=API_MODEL):
                 model=getattr(response, 'model', model), route='api')
 
 
+OPENROUTER_MODEL = 'anthropic/claude-opus-5.5'
+OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+OPENROUTER_LABEL = 'Claude Opus 5.5 (stateless, via OpenRouter)'
+
+
+def ask_openrouter(state_dir, *, now=None, post=None, fmp_get=None, model=OPENROUTER_MODEL):
+    """DAY-126: Claude answers the brief STATELESS — the same brief, the same
+    research round as DeepSeek and Gemini, no memory of the session. The
+    session's own answer is the fallback when this raises."""
+    import research as RS
+    import jev_opportunities as J
+    injected_clock = now
+    now = _now(now)
+    root = Path(state_dir)
+    brief = read_brief(root, now)
+    if post is None:
+        J.load_private_key(root)         # populates OPENROUTER_API_KEY from the private file
+        key = os.environ.get('OPENROUTER_API_KEY', '').strip()
+        if not key:
+            raise ValueError('NO_OPENROUTER_CREDENTIAL')
+        post = RS.http_post(OPENROUTER_URL, {'Authorization': 'Bearer ' + key}, 150)
+    user = json.dumps(brief['payload'], sort_keys=True, allow_nan=False)
+    box = RS.Toolbox(now.date(), brief['universe'], now, get=fmp_get, model='Claude')
+    gaps, meta = [], None
+    try:
+        answer = RS.openai_loop(post, model, SYSTEM_PROMPT, user, box, extra={'max_tokens': 4000})
+        meta = RS.summary(box)
+    except Exception as exc:
+        code = str(exc)[:40] if str(exc).isupper() else type(exc).__name__
+        gaps.append('Research round failed (%s); answered single-shot.' % code)
+        meta = {**RS.summary(box), 'failed': code}
+        r = post({'model': model, 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT},
+                                               {'role': 'user', 'content': user}],
+                  'response_format': {'type': 'json_object'}, 'max_tokens': 4000})
+        answer = parse_answer(r['choices'][0]['message']['content'])
+    result = {'research': meta}
+    RS.keep_log(root, 'claude', result, now)
+    extra = {'research_summary': result.get('research_summary')} if result.get('research_summary') else {}
+    snap = seal(root, answer, now=None if injected_clock is None else now, model=OPENROUTER_LABEL,
+                route='openrouter', extra=extra,
+                version=None if meta.get('failed') else RS.PROMPT_VERSION)
+    return snap        # a failed research round is named in research_summary
+
+
 def sealed_today(state_dir, now=None):
     now = _now(now)
     try:
@@ -314,13 +360,13 @@ def wait_for_brief(state_dir, seconds, *, now_fn=None, sleep=time.sleep):
         now = _now(now_fn())
         if now.time() >= CUTOFF:
             return 3
+        if sealed_today(state_dir, now):
+            return 4        # already sealed (OpenRouter route, or UNAVAILABLE): nothing to answer
         try:
             read_brief(state_dir, now)
             return 0
         except (OSError, ValueError):
             pass
-        if sealed_today(state_dir, now):
-            return 4        # UNAVAILABLE was sealed instead: nothing to answer
         if time.monotonic() >= deadline:
             return 2
         sleep(5)
@@ -332,7 +378,7 @@ def load_prepared(state_dir, now):
     """Revalidate the sealed snapshot. Pure: no model call, no state written."""
     return O.load_snapshot(state_dir, now, name=SNAPSHOT_NAME, schema=SCHEMA_VERSION,
                            unavailable=unavailable, cutoff=CUTOFF,
-                           extra=('route', 'independence'))
+                           extra=('route', 'independence', 'prompt_version', 'research_summary'))
 
 
 def main(argv=None):
@@ -343,9 +389,13 @@ def main(argv=None):
     g.add_argument('--seal', metavar='ANSWER_JSON', help="seal Claude's answer")
     g.add_argument('--check', metavar='ANSWER_JSON', help='report problems without sealing')
     g.add_argument('--api', action='store_true', help='answer through the Messages API')
+    g.add_argument('--openrouter', action='store_true',
+                   help='answer stateless through OpenRouter (day-126), with the research round')
     g.add_argument('--wait-brief', type=int, metavar='SECONDS',
                    help='wait for the brief: 0 ready, 2 still waiting, 3 past cutoff, 4 nothing to answer')
     g.add_argument('--sealed', action='store_true', help='exit 0 when today is sealed')
+    g.add_argument('--wait-sealed', type=int, metavar='SECONDS',
+                   help='day-126: wait for the stateless route to seal: 0 SEALED, 2 NOT_SEALED (answer it yourself), 3 PAST_CUTOFF')
     g.add_argument('--show', action='store_true', help='print the validated snapshot')
     a = p.parse_args(argv)
     root = Path(a.state_dir)
@@ -368,6 +418,8 @@ def main(argv=None):
             snap = seal(root, parse_answer(path.read_text()))
         elif a.api:
             snap = ask_api(root)
+        elif a.openrouter:
+            snap = ask_openrouter(root)
         elif a.wait_brief is not None:
             code = wait_for_brief(root, a.wait_brief)
             print(json.dumps({'status': {0: 'READY', 2: 'STILL_WAITING', 3: 'PAST_CUTOFF',
@@ -376,6 +428,21 @@ def main(argv=None):
             return code
         elif a.sealed:
             return 0 if sealed_today(root) else 1
+        elif a.wait_sealed is not None:
+            end = time.monotonic() + a.wait_sealed
+            while True:
+                now = _now()
+                if sealed_today(root, now):
+                    code = 0
+                elif now.time() >= CUTOFF:
+                    code = 3
+                elif time.monotonic() >= end:
+                    code = 2
+                else:
+                    time.sleep(5)
+                    continue
+                print(json.dumps({'status': {0: 'SEALED', 2: 'NOT_SEALED', 3: 'PAST_CUTOFF'}[code]}))
+                return code
         else:
             print(json.dumps(load_prepared(root, dt.datetime.now(ET)), indent=1))
             return 0

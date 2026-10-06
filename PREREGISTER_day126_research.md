@@ -105,3 +105,36 @@ Reported beside it, not used to decide:
 * the research calls made.
 
 Summary: `data/replay_day126_research.json`.
+
+## Result and amendment 1 (2026-10-06 ≈ 00:55 UTC, before the first live morning)
+
+**The paired replay PASSES the registered bar.** On 59 sessions, both arms
+asked as of 09:00:
+* single-shot: 73 picks, 52.1% right, +0.069%/pick;
+* research: 122 picks, 49.2% right, −0.001%/pick (5.98 calls per session,
+  no failed round);
+* difference: −0.070% against a bar of −0.30%, with a 95% interval of
+  [−0.60, +0.47].
+
+That is "no worse", underpowered as registered; no gain is claimed. The
+research arm picks about 70% more often.
+
+**DeepSeek's research path then FAILED the planted-edge control** (house
+rule 4), on the `day125-v4` prompt and the day-110 planted universe:
+* with tools: 1 clean run of 8. Six abstained, and once the planted short
+  was put LONG. It used 2–4 calls per run, and abstained whether the tools
+  returned no history or a history consistent with the plant.
+* single-shot, the same morning: 3 clean runs of 4, one abstention.
+
+Gemini (2 of 2 clean) and Claude via OpenRouter (2 of 3 clean, one
+abstention; single-shot 2 of 2) pass with the tools offered. Neither made a
+call on the control.
+
+So, from 2026-10-06:
+* DeepSeek's desk ships SINGLE-SHOT (`deepseek_opportunities.RESEARCH_LIVE
+  = False`);
+* Gemini and Claude research as registered;
+* the scout and the stateless Claude ballot ship as registered.
+
+DeepSeek's research path is kept for the replay and a later re-test. That
+re-test must pass the control before it goes live.

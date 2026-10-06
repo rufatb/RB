@@ -106,7 +106,8 @@ class GeminiClient:
         return reply, safe_detail(str(data.get('modelVersion') or self.model), 60)
 
 
-def rank(candidates, *, macro=None, model=None, client=None, now=None, key=None):
+def rank(candidates, *, macro=None, model=None, client=None, now=None, key=None,
+         research=False, fmp_get=None):
     """Ask once, validate hard, at most two per side — DeepSeek's checks exactly."""
     now = now or dt.datetime.now(ET)
     request = O.build_request(candidates, macro, now)
@@ -119,25 +120,50 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None, key=None)
         if not key:
             return unavailable('No Gemini credential is staged for this session.')
         client = GeminiClient(key, model=model)
-    try:
-        body, served = client.ask(SYSTEM_PROMPT, json.dumps(payload, sort_keys=True,
-                                                            allow_nan=False))
-    except Exception as exc:
-        reason = str(exc) if isinstance(exc, ValueError) and str(exc).isupper() else ''
-        return unavailable('The ranking request failed: ' + (safe_detail(reason, 60)
-                                                             or type(exc).__name__))
+    # DAY-126 RESEARCH ROUND (see deepseek_opportunities.rank): any failure
+    # falls through to the single-shot call, and the gaps say so.
+    body, served, research_meta, research_gaps = None, None, None, []
+    if research and isinstance(client, GeminiClient) and client.session is None:
+        import research as RS
+        box = None
+        try:
+            box = RS.Toolbox(now.date(), allowed, now, get=fmp_get, model='Gemini')
+            post = RS.http_post(ENDPOINT.format(model=client.model), {'x-goog-api-key': client.key},
+                                client.timeout)
+            body = RS.gemini_loop(post, SYSTEM_PROMPT, json.dumps(payload, sort_keys=True, allow_nan=False),
+                                  box, thinking=THINKING)
+            served, research_meta = client.model, RS.summary(box)
+        except Exception as exc:
+            body = None
+            code = str(exc)[:40] if str(exc).isupper() else type(exc).__name__
+            research_gaps.append('Research round failed (%s); answered single-shot.' % code)
+            if box is not None:
+                research_meta = {**RS.summary(box), 'failed': code}
+    if body is None:
+        try:
+            body, served = client.ask(SYSTEM_PROMPT, json.dumps(payload, sort_keys=True,
+                                                                allow_nan=False))
+        except Exception as exc:
+            reason = str(exc) if isinstance(exc, ValueError) and str(exc).isupper() else ''
+            return unavailable('The ranking request failed: ' + (safe_detail(reason, 60)
+                                                                 or type(exc).__name__))
     longs, long_gaps = O._clean(body.get('longs'), allowed, 'long')
     shorts, short_gaps = O._clean(body.get('shorts'), allowed, 'short')
     long_gaps += O.check_levels(longs, 'LONG', payload['candidates'])
     short_gaps += O.check_levels(shorts, 'SHORT', payload['candidates'])
     long_gaps += O.check_basis(longs, payload['candidates'])
     short_gaps += O.check_basis(shorts, payload['candidates'])
-    return {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY', 'mode': MODE,
-            'model': served, 'considered': request['considered'], 'universe': sorted(allowed),
-            'evidence': request['evidence'], 'longs': longs, 'shorts': shorts,
-            'gaps': long_gaps + short_gaps + request['evidence_gaps'],
-            'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
-            'confidence_label': CONFIDENCE_LABEL}
+    out = {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY', 'mode': MODE,
+           'model': served, 'considered': request['considered'], 'universe': sorted(allowed),
+           'evidence': request['evidence'], 'longs': longs, 'shorts': shorts,
+           'gaps': long_gaps + short_gaps + request['evidence_gaps'] + research_gaps,
+           'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
+           'confidence_label': CONFIDENCE_LABEL}
+    if research_meta is not None:
+        out['research'] = research_meta
+        if not research_meta.get('failed'):
+            out['prompt_version'] = research_meta['prompt_version']
+    return out
 
 
 def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
@@ -174,14 +200,16 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
     else:
         import fmp_context
         result = rank(candidates, macro=fmp_context.with_events(payload), client=client, model=model,
-                      now=now, key=key)
+                      now=now, key=key, research=client is None)
         for gap in (payload.get('gaps') or [])[:3]:
             result.setdefault('gaps', []).append('Input gap: ' + safe_detail(str(gap), 120))
     context = ({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False,
                 'prediction_evidence': False} if diagnostic else {})
     result = {**result, 'gaps': list(result.get('gaps') or []) + credential_gaps}
+    import research as RS
+    version = RS.keep_log(root, 'gemini', result, now) or PROMPT_VERSION
     snapshot = O._seal({**result, 'schema_version': SCHEMA_VERSION,
-                        'prompt_version': PROMPT_VERSION,
+                        'prompt_version': version,
                         'session': now.date().isoformat(), 'prepared_at': now.isoformat(),
                         **context})
     write_atomic(root/SNAPSHOT_NAME, snapshot)
@@ -192,7 +220,7 @@ def load_prepared(state_dir, now, *, diagnostic=False):
     """Revalidate the sealed snapshot. Pure: no model call, no state written."""
     out = O.load_snapshot(state_dir, now, diagnostic=diagnostic, name=SNAPSHOT_NAME,
                           schema=SCHEMA_VERSION, unavailable=unavailable,
-                          extra=('prompt_version', 'mode'))
+                          extra=('prompt_version', 'mode', 'research_summary'))
     if out.get('status') != 'UNAVAILABLE':
         out['registration'], out['confidence_label'] = REGISTRATION, CONFIDENCE_LABEL
     return out

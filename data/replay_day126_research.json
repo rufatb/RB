@@ -1,0 +1,31 @@
+{
+ "registration": "PREREGISTER_day126_research.md",
+ "sessions": 59,
+ "single": {
+  "picks": 73,
+  "sessions_with_picks": 36,
+  "mean_pct": 0.0686,
+  "se": 0.2129,
+  "hit": 0.521
+ },
+ "research": {
+  "picks": 122,
+  "sessions_with_picks": 56,
+  "mean_pct": -0.0011,
+  "se": 0.1704,
+  "hit": 0.492
+ },
+ "difference_pct": -0.0697,
+ "difference_95ci": [
+  -0.604,
+  0.465
+ ],
+ "bar": -0.3,
+ "verdict": "PASS (no worse)",
+ "research_calls_mean": 5.98,
+ "research_failed_sessions": 0,
+ "unavailable": {
+  "single": 0,
+  "research": 0
+ }
+}

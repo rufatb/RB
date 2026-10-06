@@ -499,8 +499,11 @@ def build_request(candidates, macro=None, now=None):
             'evidence_gaps': evidence_gaps}
 
 
+RESEARCH_LIVE = False      # day-126 amendment 1: the research path failed its control
+
+
 def rank(candidates, *, macro=None, model=None, client=None, now=None,
-         timeout=REQUEST_TIMEOUT):
+         timeout=REQUEST_TIMEOUT, research=False, fmp_get=None):
     """Ask once, validate hard, return at most two per side. Pure of state.
 
     `candidates` are rows from `factor_inputs.build_from_state`, so they may
@@ -514,7 +517,33 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     allowed, payload = request['allowed'], request['payload']
     model = model or os.environ.get('DEEPSEEK_MODEL') or DEFAULT_MODEL
 
-    if client is None:
+    # DAY-126 RESEARCH ROUND: the model looks things up (read-only FMP, cut at
+    # the session) before it answers. Any failure falls through to the
+    # single-shot call below, exactly as on 2026-10-05, and the gaps say so.
+    body, served, research_meta, research_gaps = None, None, None, []
+    if research and client is None:
+        import research as RS
+        box = None
+        try:
+            key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
+            if not key:
+                raise ValueError('NO_DEEPSEEK_KEY')
+            box = RS.Toolbox(now.date(), allowed, now, get=fmp_get, model='DeepSeek',
+                             replay=(research == 'replay'))
+            post = RS.http_post('https://api.deepseek.com/chat/completions',
+                                {'Authorization': 'Bearer ' + key}, timeout)
+            body = RS.openai_loop(post, model, SYSTEM_PROMPT,
+                                  json.dumps(payload, sort_keys=True, allow_nan=False), box,
+                                  extra={'thinking': THINKING, 'max_tokens': 8000})
+            served, research_meta = model, RS.summary(box)
+        except Exception as exc:
+            body = None
+            code = str(exc)[:40] if str(exc).isupper() else type(exc).__name__
+            research_gaps.append('Research round failed (%s); answered single-shot.' % code)
+            if box is not None:
+                research_meta = {**RS.summary(box), 'failed': code}
+
+    if body is None and client is None:
         key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
         if not key:
             return unavailable('DEEPSEEK_API_KEY is not set.')
@@ -525,7 +554,8 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
         client = OpenAI(api_key=key, base_url='https://api.deepseek.com',
                         max_retries=0, timeout=timeout)
 
-    try:
+    if body is None:
+      try:
         response = client.chat.completions.create(
             model=model,
             messages=[{'role': 'system', 'content': SYSTEM_PROMPT},
@@ -542,7 +572,8 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
         body = json.loads(choice.message.content)
         if not isinstance(body, dict):
             raise ValueError('reply is not an object')
-    except Exception as exc:
+        served = getattr(response, 'model', model)
+      except Exception as exc:
         # Never echo a provider payload or a credential into the report.
         return unavailable('The ranking request failed: ' + type(exc).__name__)
 
@@ -552,15 +583,20 @@ def rank(candidates, *, macro=None, model=None, client=None, now=None,
     short_gaps += check_levels(shorts, 'SHORT', payload['candidates'])
     long_gaps += check_basis(longs, payload['candidates'])
     short_gaps += check_basis(shorts, payload['candidates'])
-    return {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
-            'mode': MODE,
-            'model': safe_detail(str(getattr(response, 'model', model)), 60),
-            'considered': request['considered'], 'universe': sorted(allowed),
-            'evidence': request['evidence'],
-            'longs': longs, 'shorts': shorts,
-            'gaps': long_gaps + short_gaps + request['evidence_gaps'],
-            'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
-            'confidence_label': CONFIDENCE_LABEL}
+    out = {'status': 'READY' if (longs or shorts) else 'NO_OPPORTUNITY',
+           'mode': MODE,
+           'model': safe_detail(str(served or model), 60),
+           'considered': request['considered'], 'universe': sorted(allowed),
+           'evidence': request['evidence'],
+           'longs': longs, 'shorts': shorts,
+           'gaps': long_gaps + short_gaps + request['evidence_gaps'] + research_gaps,
+           'asked_at': now.isoformat(), 'adopted': False, 'registration': REGISTRATION,
+           'confidence_label': CONFIDENCE_LABEL}
+    if research_meta is not None:
+        out['research'] = research_meta
+        if not research_meta.get('failed'):
+            out['prompt_version'] = research_meta['prompt_version']
+    return out
 
 
 # ── staging ───────────────────────────────────────────────────────────────────
@@ -648,8 +684,14 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
         payload = {}
     else:
         import fmp_context
+        # DAY-126 AMENDMENT 1: DeepSeek stays SINGLE-SHOT in production. Its
+        # research path passed the paired replay (no worse) but FAILED the
+        # planted-edge control: 1 clean of 8 runs, once the planted short
+        # put LONG, against 3 of 4 single-shot. House rule 4: a path that
+        # cannot find a planted edge does not ship. `research=` stays for the
+        # replay and a later re-test.
         result = rank(candidates, macro=fmp_context.with_events(payload),
-                      client=client, model=model, now=now)
+                      client=client, model=model, now=now, research=RESEARCH_LIVE and client is None)
         for gap in (payload.get('gaps') or [])[:3]:
             result.setdefault('gaps', []).append('Input gap: '+safe_detail(str(gap), 120))
 
@@ -658,8 +700,10 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
     # A missing credential must be named, not left to surface as a generic
     # request failure two layers down (house rule 1).
     result = {**result, 'gaps': list(result.get('gaps') or []) + credential_gaps}
+    import research as RS
+    version = RS.keep_log(root, 'deepseek', result, now) or PROMPT_VERSION
     snapshot = _seal({**result, 'schema_version': SCHEMA_VERSION,
-                      'prompt_version': PROMPT_VERSION,
+                      'prompt_version': version,
                       'session': now.date().isoformat(), 'prepared_at': now.isoformat(),
                       **context})
     write_atomic(root/SNAPSHOT_NAME, snapshot)
@@ -675,7 +719,8 @@ def load_prepared(state_dir, now, *, diagnostic=False):
     change what the report says after the report was frozen, so this path reads
     bytes and checks them and does nothing else.
     """
-    return load_snapshot(state_dir, now, diagnostic=diagnostic)
+    return load_snapshot(state_dir, now, diagnostic=diagnostic,
+                         extra=('prompt_version', 'research_summary'))
 
 
 def load_snapshot(state_dir, now, *, diagnostic=False, name=SNAPSHOT_NAME,

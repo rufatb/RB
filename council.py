@@ -350,8 +350,59 @@ def brief_text(brief):
     return '\n'.join(lines) + '\n'
 
 
+EVIDENCE_LEGEND = (
+    '`research` lists what the desks looked up on that name this morning (read-only FMP data '
+    'published before today\'s session). `web_news` is UNVERIFIED web-search text from the last '
+    '72 hours with its sources; it can miss or misdate news. Weigh both; neither is a fact '
+    'about today\'s move.')
+OPENROUTER_CLAUDE = 'anthropic/claude-opus-5.5'
+
+
+def enrich(rows, root, now, *, scout_fn=None):
+    """Day-126 amendment 2: each row carries what the desks researched and what
+    the web scout found. Never raises; returns gaps."""
+    import research as RS
+    gaps = []
+    tickers = [r.get('ticker') for r in rows]
+    try:
+        facts = RS.facts_by_ticker(RS.load_logs(root, now), set(tickers))
+    except Exception as exc:
+        facts, gaps = {}, gaps + ['research facts unavailable (%s)' % type(exc).__name__]
+    web = {}
+    if scout_fn is not None:
+        try:
+            web, more = scout_fn(tickers, now)
+            gaps += more
+        except Exception as exc:
+            gaps.append('web scout failed (%s)' % type(exc).__name__)
+    import scout as SC
+    for r in rows:
+        t = r.get('ticker')
+        if facts.get(t):
+            r['research'] = facts[t]
+        if scout_fn is not None:
+            r['web_news'] = SC.row_text(web.get(t))
+    return gaps, web
+
+
+def ask_claude_openrouter(system, user, *, post=None):
+    """Claude's council ballot, STATELESS (day-126): the same prompt and round
+    note the others get, from a model with no memory of its own desk."""
+    import research as RS
+    if post is None:
+        key = os.environ.get('OPENROUTER_API_KEY', '').strip()
+        if not key:
+            raise RuntimeError('NO_OPENROUTER_CREDENTIAL')
+        post = RS.http_post('https://openrouter.ai/api/v1/chat/completions',
+                            {'Authorization': 'Bearer ' + key}, 120)
+    r = post({'model': OPENROUTER_CLAUDE, 'max_tokens': 4000,
+              'response_format': {'type': 'json_object'},
+              'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}]})
+    return RS._json_from(r['choices'][0]['message']['content'])
+
+
 def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, sleep=time.sleep,
-          clock=None):
+          clock=None, claude_post=None, scout_fn=None):
     """Run both rounds and seal council.json. Never raises past its own failures."""
     import claude_opportunities as C
     import deepseek_opportunities as O
@@ -388,25 +439,39 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     rows = evidence_rows(root, now, {p['ticker'] for p in table})
     pub = public(table)
     errors = {}
+    live = not clients            # tests inject members; the live morning does not
+    if scout_fn is None and live:
+        import scout as SC
+        scout_fn = SC.scout
+    enrich_gaps, web = enrich(rows, root, now, scout_fn=scout_fn)
+    if enrich_gaps:
+        errors['evidence'] = '; '.join(enrich_gaps)[:160]
+    base['web_news'] = {t: v for t, v in web.items()}
 
     def run(member, fn):
         try:
             return member, fn()
         except Exception as exc:          # counted in `errors`, never swallowed
-            errors[member] = (str(exc) if str(exc).isupper() else type(exc).__name__)[:80]
+            errors[member] = (str(exc) if (str(exc).isupper() or isinstance(exc, ValueError))
+                              else type(exc).__name__)[:80]
             return member, None
 
     def chat(member, note, discussion=None):
-        payload = {'positions': pub, 'rows': rows}
+        payload = {'positions': pub, 'rows': rows, 'evidence_legend': EVIDENCE_LEGEND}
         if discussion is not None:
             payload['discussion'] = discussion
         user = json.dumps(payload, ensure_ascii=False, sort_keys=True)
         system = prompt(member, note)
-        if member == 'DeepSeek':
-            reply = ask_deepseek(system, user, client=clients.get('deepseek'))
-        else:
-            reply = ask_gemini(system, user, client=clients.get('gemini'))
-        return parse_ballot(reply, ids)
+        for attempt in (1, 2):        # ONE retry of an invalid ballot (a vote missing)
+            if member == 'DeepSeek':
+                reply = ask_deepseek(system, user, client=clients.get('deepseek'))
+            else:
+                reply = ask_gemini(system, user, client=clients.get('gemini'))
+            try:
+                return parse_ballot(reply, ids)
+            except ValueError:
+                if attempt == 2:
+                    raise
 
     # Round 1 — blind, in parallel.
     with cf.ThreadPoolExecutor(2) as pool:
@@ -414,12 +479,28 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     round1 = {m.split(' ', 1)[1]: b for m, b in r1.items() if b}
     discussion1 = discussion_of(round1, seat)
 
-    # Claude and Jev, after reading Round 1.
+    # Claude and Jev, after reading Round 1. Claude answers STATELESS through
+    # OpenRouter (day-126); the session's ballot is the fallback.
+    def claude_or():
+        user = json.dumps({'positions': pub, 'rows': rows, 'evidence_legend': EVIDENCE_LEGEND,
+                           'discussion': discussion1}, ensure_ascii=False, sort_keys=True)
+        ballot = parse_ballot(ask_claude_openrouter(prompt('Claude', ROUND_2), user, post=claude_post), ids)
+        return ballot
+    with cf.ThreadPoolExecutor(2) as pool:
+        jev_f = pool.submit(run, 'Jev', lambda: ask_jev(table, rows, discussion1, poster=jev_poster))
+        cl_f = (pool.submit(run, 'Claude (OpenRouter)', claude_or)
+                if (live or claude_post is not None) else None)
+        _, jev = jev_f.result()
+        claude_api = cl_f.result()[1] if cl_f else None
     brief = {'session': base['session'], 'positions': pub, 'discussion': discussion1, 'rows': rows,
-             'ids': ids, 'written_at': _now(clock()).isoformat()}
+             'ids': ids, 'written_at': _now(clock()).isoformat(), 'evidence_legend': EVIDENCE_LEGEND}
     _write(root/BRIEF_JSON, brief)
     (root/BRIEF_TXT).write_text(brief_text(brief))
-    _, jev = run('Jev', lambda: ask_jev(table, rows, discussion1, poster=jev_poster))
+    if claude_api:
+        _write(root/CLAUDE_BALLOT, {'session': base['session'], 'sealed_at': _now(clock()).isoformat(),
+                                    'route': 'openrouter',
+                                    'reply': {'ballots': [{'id': i, **v} for i, v in claude_api['votes'].items()],
+                                              'top_two': claude_api['top_two']}})
     claude = None
     deadline_at = dt.datetime.combine(now.date(), CLAUDE_DEADLINE, tzinfo=ET)
     give_up = min(deadline_at, now + dt.timedelta(seconds=MAX_CLAUDE_WAIT))
@@ -514,6 +595,11 @@ def wait_ballot(root, seconds, *, now_fn=None, sleep=time.sleep):
         now = _now(now_fn())
         if now.time() >= CLAUDE_DEADLINE:
             return 3
+        try:
+            if json.loads((Path(root)/CLAUDE_BALLOT).read_text()).get('session') == now.date().isoformat():
+                return 3              # Claude's ballot is already cast (OpenRouter route)
+        except (OSError, ValueError):
+            pass
         try:
             _brief(root, now)
             return 0
