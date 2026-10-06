@@ -77,6 +77,9 @@ Repeat while it prints STILL_WAITING. CLOSED: Claude's ballot was already cast s
   python council.py --state-dir .rb-state --check-ballot .rb-state/claude_ballot_answer.json
   python council.py --state-dir .rb-state --seal-ballot .rb-state/claude_ballot_answer.json
 Seal before 09:27 ET; the first sealed ballot stands.
+Then THE COUNCIL FLASH (owner, 2026-10-06): the council's decision by email the moment it is sealed, ahead of the report.
+  python council_flash.py --state-dir .rb-state --wait 100
+Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject / body / htmlBody the exact contents of the subject_path, text_path and html_path it printed, no attachments; then `python council_flash.py --state-dir .rb-state --record --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on. The flash never replaces the report and never delays it.
 Then WAIT BY COMMAND:
   python morning_wait.py --log .rb-state/morning_full.log --timeout 540
 RUNNING: run it again immediately. DONE <code>: go to STEP 5 with that code. NOT_STARTED: start STEP 3 now. STALLED: go to STEP 5.
@@ -123,6 +126,7 @@ Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on netwo
 
 STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
+  - FLASH, one line: "council flash at HH:MM ET, Gmail id <id>", or why none went out.
   - the job's exit code, and what broke if anything, in plain words (including whether the FMP context was staged, and whether Claude's desk and ballot came through OpenRouter or from you).
   - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
   - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.

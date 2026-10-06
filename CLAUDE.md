@@ -64,6 +64,33 @@ and consensus are untested context. The deeper FMP bars (back to 2024-01)
 would let the day-117 replay run on ~600 sessions instead of 59 — registered
 work for another day.
 
+## Day126b — the council flash: the Top 2 by email the moment it is decided (owner, 2026-10-06)
+
+On 10-06 the council sealed SHORT CVE.TO (4 of 4) at 08:58 ET, but the email
+went out at 09:50. The owner traded it early from a chat message and asked for
+a preliminary email as soon as the consensus exists.
+
+**What it does.** `council_flash.py` reads the sealed `council.json` through
+the same `council.top_two` and `top_picks.table` the report uses. It writes
+`flash/{subject,report.txt,report.html}`, and the morning session sends it in
+STEP 4, after the ballot and before the wait. A no-consensus day flashes "no
+consensus — nothing to act on". A council that did not sit flashes nothing.
+Nothing is sent after 09:44, and only one flash goes out a day
+(`flash/sent.json`).
+
+**What it does not do.**
+* It changes WHEN the decision arrives, never WHAT it is.
+* Nothing new is recorded or scored.
+* It is sent BEFORE the 09:46 entry check, so it says so and prints each
+  position's "wrong if" for the reader to check against the open.
+* The subject is "RB Council Flash — DATE — …" and NEVER contains "RB Daily
+  Report — DATE". Every sender (STEP 7, watchdog, bridge) skips the report
+  when it finds that phrase.
+
+Day-121b replayed entering the same picks at the open: 52%, +0.02%, t = 0.44,
+no better than 09:45. The flash is the owner's convenience, not a lever; do
+not describe earlier delivery as an edge.
+
 ## Day126 — the desks look things up; Claude answers stateless; a web scout (owner, 2026-10-05)
 
 The owner asked whether the models use FMP "dynamically" or from a fixed
