@@ -74,7 +74,7 @@ def test_an_already_attempted_delivery_is_never_routed_into_the_send():
     assert targets == {summary}, targets
 
 
-@pytest.mark.parametrize('secret', ['sk-f8691', 'sk-or-v1-', 'AQ.Ab8RN6'])
+@pytest.mark.parametrize('secret', ['sk-f8691', 'sk-or-v1-', 'AQ.Ab8RN6', 'gYXp3h5ju'])
 def test_no_live_credential_is_committed_in_the_prompt(secret):
     """GitHub push protection caught this once already. It is a public repo and
     "private credentials and diagnostics stay outside git" is a standing rule."""
@@ -152,7 +152,7 @@ def test_the_send_is_decided_by_one_command_and_every_mode_is_handled():
 
 def test_the_fallback_prompts_carry_no_live_credential():
     body = open(FALLBACKS, encoding='utf-8').read()
-    assert 'sk-f8691' not in body and 'sk-or-v1-' not in body and 'AQ.Ab8RN6' not in body
+    assert 'sk-f8691' not in body and 'sk-or-v1-' not in body and 'AQ.Ab8RN6' not in body and 'gYXp3h5ju' not in body
     assert '<DEEPSEEK_API_KEY>' in body and '<OPENROUTER_API_KEY>' in body
 
 

@@ -174,7 +174,8 @@ def evidence_rows(state_dir, now, tickers):
         from factor_inputs import build_from_state
         cfg = yaml.safe_load((Path(__file__).with_name('config.yaml')).read_text())
         payload = build_from_state(Path(state_dir), cfg, now)
-        req = O.build_request(payload['candidates'], payload.get('macro'), now)
+        import fmp_context
+        req = O.build_request(payload['candidates'], fmp_context.with_events(payload), now)
         rows = req['payload']['candidates'] if req else []
     return [r for r in rows if r.get('ticker') in tickers]
 

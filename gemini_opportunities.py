@@ -172,7 +172,8 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, ImportError) as exc:
         result = unavailable('The candidate pool has not been staged (%s).' % type(exc).__name__)
     else:
-        result = rank(candidates, macro=payload.get('macro'), client=client, model=model,
+        import fmp_context
+        result = rank(candidates, macro=fmp_context.with_events(payload), client=client, model=model,
                       now=now, key=key)
         for gap in (payload.get('gaps') or [])[:3]:
             result.setdefault('gaps', []).append('Input gap: ' + safe_detail(str(gap), 120))

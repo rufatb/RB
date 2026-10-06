@@ -63,7 +63,7 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     if not root.exists():
         diagnostic_context.create_context(root)
         (root/'secrets').mkdir(mode=0o700)
-        for name in ('deepseek_api_key', 'openrouter_api_key', 'gemini_api_key'):
+        for name in ('deepseek_api_key', 'openrouter_api_key', 'gemini_api_key', 'fmp_api_key'):
             src = Path(secrets_from)/name
             if src.exists():
                 shutil.copy(src, root/'secrets'/name)
@@ -85,6 +85,8 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     step('pool', lambda: prepare_factor_pool.prepare_diagnostic(root, cfg))
     step('news', lambda: (prepare_deepseek.load_private_key(root),
                           prepare_deepseek.prepare_diagnostic(root, cfg, refresh=True)))
+    import fmp_context
+    step('fmp', lambda: fmp_context.stage(root, now=_now(now)))
     step('claude_brief', lambda: write_brief(root, cfg, _now(now)))
     step('deepseek', lambda: O.stage(root, diagnostic=True))
     step('jev', lambda: J.stage(root, diagnostic=True))
@@ -99,7 +101,8 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
 def write_brief(root, cfg, now):
     from factor_inputs import build_from_state
     staged = build_from_state(root, cfg, now, diagnostic=True)
-    request = O.build_request(staged['candidates'], staged.get('macro'), now)
+    import fmp_context
+    request = O.build_request(staged['candidates'], fmp_context.with_events(staged), now)
     if request is None:
         raise ValueError('NO_COMPLETE_CANDIDATES')
     answer = root/C.ANSWER_NAME

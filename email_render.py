@@ -222,6 +222,7 @@ def text(d):
     if intra.get('top_two'):                # absent from publications before 2026-09-29
         import top_picks
         lines += ['', *top_picks.table(intra['top_two'], concise=True)]
+        lines += fmp_lines(intra)
     lines += ['', '## Part 1 — Intraday picks · enter 09:46, exit 15:59 ET']
     if intra.get('desks'):
         lines += desk_sections(intra)
@@ -285,6 +286,21 @@ def _badge(value):
     return (f'<span style="display:inline-block;padding:3px 9px;border-radius:3px;'
             f'background:{wash};color:{colour};font:600 11px/1.4 Arial,sans-serif;'
             f'letter-spacing:.07em;text-transform:uppercase">{full.escape(value)}</span>')
+
+
+def fmp_lines(intra):
+    """Day-125: today's scheduled releases, and any analyst change on a Top 2
+    name, from the FMP context every model saw. Absent before 2026-10-06."""
+    f = intra.get('fmp') or {}
+    out = []
+    if f.get('events_today'):
+        out.append('Scheduled today (ET): ' + ' · '.join(f['events_today'][:6]) + '.')
+    changes = f.get('analyst_changes') or {}
+    for p in (intra.get('top_two') or {}).get('picks') or []:
+        if changes.get(p.get('ticker')):
+            out.append('Analyst change on %s: %s (the open has priced such changes, day-125 test).'
+                       % (p['ticker'], changes[p['ticker']][0]))
+    return out
 
 
 def _hero(d):

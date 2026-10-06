@@ -50,7 +50,8 @@ STEP 2 — credentials (a container restart wipes .rb-state, so write them every
   printf '%s' '<DEEPSEEK_API_KEY>' > .rb-state/secrets/deepseek_api_key
   printf '%s' '<OPENROUTER_API_KEY>' > .rb-state/secrets/openrouter_api_key
   printf '%s' '<GEMINI_API_KEY>' > .rb-state/secrets/gemini_api_key
-  chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key .rb-state/secrets/gemini_api_key
+  printf '%s' '<FMP_API_KEY>' > .rb-state/secrets/fmp_api_key
+  chmod 600 .rb-state/secrets/deepseek_api_key .rb-state/secrets/openrouter_api_key .rb-state/secrets/gemini_api_key .rb-state/secrets/fmp_api_key
   printf 'deepseek-v4-pro\n' > .rb-state/deepseek_model.txt
 The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`. Jev is `typesafe/jev-1.13` on OpenRouter at POST /api/alpha/decisions. Do not "correct" either model name.
 

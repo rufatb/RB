@@ -621,6 +621,17 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                                               gemini_evidence))
     except Exception as exc:
         error('debate', RuntimeError(type(exc).__name__))
+    fmp_section = None
+    try:                     # day-125: what FMP put in front of the models this morning
+        import fmp_context
+        ctx = fmp_context.load(state_dir, now)
+        if ctx is not None:
+            fmp_section = {'events_today': ctx['events_today'], 'gaps': ctx['gaps'][:3],
+                           'names_with_fields': len(ctx['names']),
+                           'analyst_changes': {t: r['analyst_30d'] for t, r in ctx['names'].items()
+                                               if r.get('analyst_30d')}}
+    except Exception as exc:
+        error('fmp_context', RuntimeError(type(exc).__name__))
     top_two = top_two_counted = council_snapshot = None
     try:
         import top_picks
@@ -666,6 +677,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
                           'top_two_counted':top_two_counted,'council':council_snapshot,
+                          'fmp':fmp_section,
                           'gap_signal':gap_section,'pead':pead_section,'debate':debate_section,
                           'news_desk':news_section,
                           'record':record,'publish':pub,

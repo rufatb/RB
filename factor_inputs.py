@@ -669,4 +669,12 @@ def build_from_state(state_dir, cfg, now, *, diagnostic=False):
     if diagnostic:
         output['kind'] = 'CURRENT_TIME_DIAGNOSTIC'
         output['morning_snapshot'] = False
+    # Day-125: FMP's per-name fields ride on each candidate ('fmp') and today's
+    # releases at 'fmp_events'. Candidate keys and macro are whitelisted by the
+    # factor layer, so neither reaches a strict validator. Never costs the pool.
+    try:
+        import fmp_context
+        fmp_context.attach(output, root, now)
+    except Exception as exc:
+        output['gaps'] = list(output.get('gaps') or []) + ['FMP context not attached (%s)' % type(exc).__name__]
     return output

@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 11, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 12, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -257,3 +257,11 @@ def test_the_council_sits_after_every_desk_and_ends_before_part_6():
     at = body.index('council.py --stage')
     assert body.index('gemini_opportunities.py') < at < body.index('news_desk.py --stage')
     assert "today 09:34:00" in body and 'council_left < 900 ? council_left : 900' in body
+
+
+def test_fmp_context_is_staged_before_claudes_brief():
+    """Day-125: every model reads the same rows, so FMP's fields must exist
+    before the first brief is written."""
+    body = code()
+    assert body.index('fmp_context.py --stage') < body.index('claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief')
+    assert body.index('prepare_factor_pool.py') < body.index('fmp_context.py --stage')

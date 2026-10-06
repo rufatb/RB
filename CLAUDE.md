@@ -1,5 +1,69 @@
 # Working notes for this repo
 
+## Day125 — FMP Premium in every model's brief; analyst changes are priced by the open
+
+The owner bought FMP Premium ($69/month, Canadian coverage) on 2026-10-06 and
+asked for every useful FMP field in front of the models.
+
+**Registered first** (`PREREGISTER_day125_fmp.md`, d994266), then tested by
+`replay_fmp_analyst.py`:
+* Population: 208 TSX analyst upgrades and downgrades on the morning pool,
+  2024-01 → 2026-10, measured on FMP's own 5-minute bars.
+* 09:45 → close against XIU: **+0.10%, t = 0.9, placebo p = 0.76 — FAIL**.
+* Powered: a planted +0.5% shows at t = 4.6.
+* The OPEN moved +1.60% the rating's way (t = 11.6, hit 87%), so FMP's dates
+  are the reaction day and the open prices the change. This is day-118/122's
+  finding again.
+* Summary: `data/replay_day125_analyst.json`. Do not re-word the prompt
+  against it.
+
+**What every model now sees** (`fmp_context.py`, staged in `morning_full.sh`
+just before Claude's brief, ~28 s for 77 names, throttled to 9 calls/s):
+* Per name, on the candidate as `fmp`, rendered by the shared `_row`:
+  * `analyst_30d`: rating changes in the last 30 days;
+  * `analyst_consensus`;
+  * `last_report`, `eps_surprise_pct`, `next_report`.
+* `macro.events_today`: Canada/US releases from 08:00 to 16:00 ET, High or
+  Medium impact. FMP stamps them in UTC; they are converted to ET.
+
+**How they reach the models:**
+* `factor_inputs.build_from_state` attaches the per-name fields
+  (`fmp_context.attach`).
+* The six places a desk is asked pass `fmp_context.with_events(payload)`
+  instead of the bare macro; `tests/test_fmp_context.py` pins every site.
+* The factor layer never sees either: candidates are whitelisted by
+  `CANDIDATE_KEYS`, and its adapter RAISES on unknown macro keys (day-113), so
+  the events are never written into `payload['macro']`.
+
+**Prompts and Jev:**
+* `PROMPT_VERSION` is `day125-v4`, Jev's `day125-v2`; both describe the fields
+  and the test result.
+* Positive controls were re-run: DeepSeek, Gemini and Jev each found both
+  planted names, and no noise name.
+* **Jev hit its input limit** with the new fields even with no headlines.
+  `STATE_LEVELS` gained two steps: "lean" FMP (analyst changes and EPS
+  surprise only), then none. The trim is disclosed. Live on 10-05 it ran at
+  "lean".
+
+**The email** prints "Scheduled today (ET): …", plus any analyst change on a
+Top 2 name labelled as priced by the open (`email_render.fmp_lines`).
+
+**What FMP is NOT used for:**
+* Its quotes carry no bid/ask, so they cannot size a leg.
+* Price targets are empty for TSX names.
+* The free tier refused .TO symbols; Premium is required.
+
+**Credentials:** the key lives at `$RB_STATE_DIR/secrets/fmp_api_key` or
+`FMP_API_KEY`. The three morning Routines write it; the repo prompts carry
+`<FMP_API_KEY>`. `fmp_client` reports failures as codes and never echoes the
+URL (the key travels in it). The late-picks fallback copies the key and stages
+FMP too.
+
+**Not claimed:** none of this is shown to raise accuracy. Earnings surprise
+and consensus are untested context. The deeper FMP bars (back to 2024-01)
+would let the day-117 replay run on ~600 sessions instead of 59 — registered
+work for another day.
+
 ## Day124 — the council: the four models deliberate on the Top 2 (owner, 2026-10-04)
 
 The owner asked for more than a count of "two out of four": a room where the

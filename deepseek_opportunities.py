@@ -50,7 +50,7 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day110_deepseek_opportunities.md'
 SCHEMA_VERSION = 'day110-opportunities-v1'
-PROMPT_VERSION = 'day118-v1'  # day118: ISSUER_RELEASE class (wire releases); v3 basis + priced-in kept
+PROMPT_VERSION = 'day125-v4'  # day125: FMP analyst/earnings fields + today's releases; day118 wire, v3 basis kept
 # v2 (day113): ATR-scaled context, earnings date, invalid_at
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
@@ -126,6 +126,15 @@ Percent fields are already percentages: gap 0.42 means 0.42%, not 42%.
   days_to_earnings  calendar days to the next scheduled report; negative = days
             since the last one. A name reporting within a day or two is dominated
             by the report, which nothing here can tell you the content of.
+  analyst_30d  broker rating CHANGES in the last 30 days, "date firm action
+            from→to" (FMP). A registered test on 208 TSX changes, 2024–2026,
+            found the OPEN prices them: +1.60% the rating's way at the open,
+            +0.10% from 09:45 to the close (t = 0.9). Context, not a reason to
+            expect a move after 09:46; a change dated today is in the open.
+  analyst_consensus  today's buy / hold / sell rating counts. A slow opinion.
+  last_report, eps_surprise_pct, next_report   the last reported quarter's
+            date and EPS against its consensus estimate (percent), and the next
+            scheduled report date (FMP). Untested here; context.
 
 Each name carries `market` and `currency`. CA names are Toronto-listed and quoted
 in CAD; US names are US-listed biotech quoted in USD. They are DIFFERENT markets:
@@ -151,7 +160,10 @@ on news grounds, and rely on the technicals or abstain.
 
 `macro` carries WTI crude, CAD/USD, the TSX composite and VIX. An absolute level
 shows no direction. Only a supplied change_pct, with its reference, is an
-observed change — and it is not a trend.
+observed change — and it is not a trend. `macro.events_today` lists Canada and
+US economic releases scheduled today between 08:00 and 16:00 ET ("HH:MM ET
+country event (impact) est / prev"). A release at or after 09:46 lands INSIDE
+the holding window, and its result is not known to anyone yet.
 
 Rules you must follow:
 - Choose at most 2 LONG and at most 2 SHORT. FEWER IS CORRECT WHEN THE EVIDENCE
@@ -251,6 +263,16 @@ def _row(candidate):
         row['currency'] = safe_detail(str(candidate.get('currency') or ''), 8)
     if candidate.get('sector'):
         row['sector'] = safe_detail(str(candidate['sector']), 40)
+    # Day-125: FMP's analyst and earnings fields, revalidated by fmp_context.load.
+    fmp = candidate.get('fmp')
+    if isinstance(fmp, dict):
+        if isinstance(fmp.get('analyst_30d'), list) and fmp['analyst_30d']:
+            row['analyst_30d'] = [safe_detail(str(x), 120) for x in fmp['analyst_30d'][:3]]
+        for k in ('analyst_consensus', 'last_report', 'next_report'):
+            if isinstance(fmp.get(k), str):
+                row[k] = safe_detail(fmp[k], 40)
+        if isinstance(fmp.get('eps_surprise_pct'), (int, float)) and not isinstance(fmp['eps_surprise_pct'], bool):
+            row['eps_surprise_pct'] = round(float(fmp['eps_surprise_pct']), 1)
     headlines = [_headline(h) for h in (candidate.get('headlines') or [])[:MAX_HEADLINES_PER_NAME]
                  if isinstance(h, dict)]
     if headlines:
@@ -279,6 +301,9 @@ def _macro(payload):
                 entry[field] = (round(float(item[field]), 4)
                                 if field == 'change_pct' else safe_detail(str(item[field]), 60))
         out[name] = entry
+    events = (payload.get('macro') or {}).get('events_today')
+    if isinstance(events, list) and events:
+        out['events_today'] = [safe_detail(str(e), 140) for e in events[:12]]
     return out
 
 
@@ -622,7 +647,8 @@ def stage(state_dir, *, now=None, client=None, model=None, diagnostic=False):
         result = unavailable('The candidate pool has not been staged (%s).' % type(exc).__name__)
         payload = {}
     else:
-        result = rank(candidates, macro=payload.get('macro'),
+        import fmp_context
+        result = rank(candidates, macro=fmp_context.with_events(payload),
                       client=client, model=model, now=now)
         for gap in (payload.get('gaps') or [])[:3]:
             result.setdefault('gaps', []).append('Input gap: '+safe_detail(str(gap), 120))

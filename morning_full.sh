@@ -234,6 +234,23 @@ else
         stage_faults+=("DeepSeek snapshot skipped: staging budget exhausted")
     fi
 
+    # FMP CONTEXT (day-125, PREREGISTER_day125_fmp.md). Analyst rating changes,
+    # consensus, last/next earnings for every name in the brief, and today's
+    # Canada/US releases — staged BEFORE the brief so all four models get the
+    # same rows. ~28s measured over 77 names; a failure costs only these fields.
+    if budget="$(slice 60 420)"; then
+        if timeout "$budget" python fmp_context.py --stage --state-dir "$RB_STATE_DIR" \
+                >>"$RB_STATE_DIR/fmp_context.log" 2>&1; then
+            log "  FMP context: staged"
+        else
+            log "  FMP context: NOT staged — the brief carries no FMP fields (fmp_context.log)"
+            stage_faults+=("FMP context not staged")
+        fi
+    else
+        log "  FMP context: SKIPPED — too little left before the brief; no FMP fields today"
+        stage_faults+=("FMP context skipped: staging budget exhausted")
+    fi
+
     # CLAUDE'S DESK. Write the brief — the exact question and evidence DeepSeek
     # is about to get — then WAIT for Claude's sealed answer before asking
     # anyone else. The scheduled Routine is itself a Claude session: it reads

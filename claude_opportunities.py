@@ -134,7 +134,8 @@ def stage_brief(state_dir, *, now=None):
         from factor_inputs import build_from_state
         cfg = yaml.safe_load(Path(__file__).with_name('config.yaml').read_text())
         staged = build_from_state(root, cfg, now)
-        request = O.build_request(staged['candidates'], staged.get('macro'), now)
+        import fmp_context
+        request = O.build_request(staged['candidates'], fmp_context.with_events(staged), now)
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, ImportError) as exc:
         _write(root/SNAPSHOT_NAME, _seal_snapshot(
             unavailable('The candidate pool has not been staged (%s).' % type(exc).__name__), now))
