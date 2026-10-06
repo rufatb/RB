@@ -85,3 +85,23 @@ scout and the stateless Claude change.
 
 The desks keep their scoreboard rows and split by `prompt_version`. The
 council's Top 2 stays `day124-council`. The counted shadow continues.
+
+## Clarification, before the replay runs (2026-10-05 ≈ 20:50 ET)
+
+"Not below by more than 0.30%" is the POINT ESTIMATE:
+* the research arm's mean signed return per pick minus the single-shot arm's;
+* each arm scored 09:40-bar close → 15:55-bar close on FMP 5-minute bars, the
+  scoreboard's yardstick, the same for both arms;
+* the difference must be ≥ −0.30%.
+
+Both arms use today's prompt (`day125-v4`) on the 59 cached day-117 pools,
+asked as of 09:00 on each session. The research arm's tools are the replay
+set (analyst_history, earnings_history, daily_prices, reaction_history,
+sector_performance), all cut before the session.
+
+Reported beside it, not used to decide:
+* hit rates;
+* the difference's session-clustered 95% interval;
+* the research calls made.
+
+Summary: `data/replay_day126_research.json`.
