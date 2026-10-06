@@ -431,7 +431,7 @@ def main(argv=None):
         elif a.wait_sealed is not None:
             end = time.monotonic() + a.wait_sealed
             while True:
-                now = _now()
+                now = _now(None)
                 if sealed_today(root, now):
                     code = 0
                 elif now.time() >= CUTOFF:

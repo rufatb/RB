@@ -161,3 +161,11 @@ def test_deepseek_ships_single_shot_after_its_failed_control():
     """Day-126 amendment 1: the research path failed the planted control."""
     import deepseek_opportunities as O
     assert O.RESEARCH_LIVE is False
+
+
+def test_wait_sealed_runs_from_the_cli(tmp_path, capsys):
+    """2026-10-06: `--wait-sealed` called `_now()` with no argument and died
+    with TypeError on the first live morning."""
+    import claude_opportunities as C
+    assert C.main(['--state-dir', str(tmp_path), '--wait-sealed', '0']) in (2, 3)
+    assert json.loads(capsys.readouterr().out)['status'] in ('NOT_SEALED', 'PAST_CUTOFF')
