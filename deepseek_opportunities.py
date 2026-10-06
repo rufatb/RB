@@ -50,7 +50,7 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day110_deepseek_opportunities.md'
 SCHEMA_VERSION = 'day110-opportunities-v1'
-PROMPT_VERSION = 'day125-v4'  # day125: FMP analyst/earnings fields + today's releases; day118 wire, v3 basis kept
+PROMPT_VERSION = 'day127-dated'  # day127: data_dates/age_hours/window in the PAYLOAD; system prompt text = day125-v4; day125: FMP analyst/earnings fields + today's releases; day118 wire, v3 basis kept
 # v2 (day113): ATR-scaled context, earnings date, invalid_at
 SNAPSHOT_NAME = 'deepseek_opportunities.json'
 MAX_PER_SIDE = 2
@@ -463,6 +463,49 @@ def truncation_gap(candidates):
             'in roster order, which is not a ranking.' % (eligible, MAX_NAMES))
 
 
+def prior_session(day):
+    """The last trading day before `day` (the session every row describes)."""
+    import dashboard
+    d = day - dt.timedelta(days=1)
+    for _ in range(10):
+        try:
+            if dashboard.is_trading_day(d):
+                return d
+        except Exception:          # no calendar: weekdays only, and say nothing more
+            if d.weekday() < 5:
+                return d
+        d -= dt.timedelta(days=1)
+    return d
+
+
+def data_dates(now, prior):
+    """Plain dates, no instruction (day-127: emphatic wording failed the control)."""
+    return {'today': now.date().isoformat(), 'rows_describe': prior.isoformat(),
+            'written_at': now.isoformat(timespec='minutes')}
+
+
+def _age_hours(stamp, now):
+    try:
+        t = dt.datetime.fromisoformat(str(stamp))
+    except (TypeError, ValueError):
+        return None
+    if t.tzinfo is None:
+        return None
+    return round((now - t).total_seconds() / 3600, 1)
+
+
+def _window(stamp, now):
+    try:
+        t = dt.datetime.fromisoformat(str(stamp)).astimezone(ET)
+    except (TypeError, ValueError):
+        return 'UNKNOWN TIME'
+    today = now.astimezone(ET).date()
+    if t.date() == today:
+        return ('PRE-MARKET today (%s ET)' % t.strftime('%H:%M') if t.time() < dt.time(9, 30)
+                else 'TODAY %s ET' % t.strftime('%H:%M'))
+    return 'PRIOR SESSION %s' % t.date().isoformat()
+
+
 def build_request(candidates, macro=None, now=None):
     """The exact question and evidence, built ONCE for every model that answers it.
 
@@ -475,8 +518,17 @@ def build_request(candidates, macro=None, now=None):
         return None
     rows = [_row(c) for c in usable]
     macro_block = _macro({'macro': macro or {}})
+    prior = prior_session(now.date())
+    # DAY-127: every input carries its date. On 2026-10-06 four models argued
+    # the prior session's move and a pre-market oil print as "today's".
+    for r in rows:
+        for h in r.get('headlines') or []:
+            h['age_hours'] = _age_hours(h.get('published_at'), now)
+    for k, v in macro_block.items():
+        if isinstance(v, dict):
+            v['window'] = _window(v.get('as_of'), now)
     payload = {'session': now.date().isoformat(), 'entry': '09:46 ET', 'exit': '15:59 ET',
-               'candidates': rows}
+               'data_dates': data_dates(now, prior), 'candidates': rows}
     if macro_block:
         payload['macro'] = macro_block
     # Say what the model was actually shown. "It saw the news" and "it saw the

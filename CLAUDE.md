@@ -64,6 +64,62 @@ and consensus are untested context. The deeper FMP bars (back to 2024-01)
 would let the day-117 replay run on ~600 sessions instead of 59 — registered
 work for another day.
 
+## Day127 — every input carries its date; the flash is re-checked at 09:31 (owner, 2026-10-06)
+
+**Why.** On 10-06 the council shorted CVE.TO 4 of 4 on three stale facts:
+* the deal announced the day before;
+* that day's −4% move;
+* a WTI print of −2.31% taken pre-market at 08:44.
+
+Its arguments called them "today's". CVE then moved tick for tick with XEG
+(+1.15% vs +1.13%, 09:45 → 15:00) as oil rallied. The owner asked that
+nothing act on yesterday's reasoning, and that a pick be confirmed alive on
+the trade day. Registered in `PREREGISTER_day127_dated.md`; read amendment 1.
+
+**Dated inputs (`day127-dated`).** `build_request` (DeepSeek, Gemini, Claude's
+brief, the council's rows) and Jev's state carry:
+* `data_dates` {`today`, `rows_describe`, `written_at`};
+* `age_hours` on every headline;
+* a `window` on every macro field ("PRE-MARKET today (08:44 ET)", "PRIOR
+  SESSION <date>").
+
+The council payload carries `data_dates` beside `evidence_legend`, and its
+prompt is unchanged. **The prompt TEXT is day-125's, byte for byte.**
+
+The registered paragraph ("never call it today's; abstain on a thesis made
+only of the prior session") silenced every desk on the planted control:
+* DeepSeek 0/4, Claude 0/3, Jev 0/2.
+
+Every pre-open input IS the prior session, so in effect it said "abstain". The
+emphatic labels failed too. Plain labels with the old text pass:
+* DeepSeek 5/10 clean, no side error (old payload 5/10 with one swap);
+* Claude 5/5, Jev 3/3, Gemini 2/2.
+
+Do not add an "abstain on stale reasons" instruction without a passing
+control; `test_dated_inputs` pins its absence.
+
+**Exposure line.** The council table (flash and report) prints what each
+position moves with (`exposure.position_exposure`):
+* sector map → sector ETF, e.g. Energy → XEG.TO, "in effect a bet on crude
+  oil"; gold miners → XGD.TO;
+* unknown → XIU.TO.
+
+Display only.
+
+**The open check (`council_flash.py --open-check 540`, STEP 4 after the
+flash).** At 09:31 it takes FMP live quotes for each council pick, its sector
+ETF and XIU, and applies day-120's E1 unchanged:
+* VOID when already past the position's "wrong if", else STILL VALID;
+* beside it: the open vs the prior close and now vs the prior close, signed
+  to the pick, and the ETF's move;
+* a quote not stamped today after 09:30 is NOT CHECKED.
+
+It is one email ("RB Open Check — DATE — SHORT CVE.TO STILL VALID"), sent
+once (`flash/open_sent.json`), never after 09:44. Nothing is recorded.
+
+On 10-06 it would have said STILL VALID (CVE opened 0.85% the short's way).
+It catches a pick already broken at the open; it does not make a pick right.
+
 ## Day126b — the council flash: the Top 2 by email the moment it is decided (owner, 2026-10-06)
 
 On 10-06 the council sealed SHORT CVE.TO (4 of 4) at 08:58 ET, but the email

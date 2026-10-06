@@ -68,3 +68,44 @@ def line(group, model):
     driver = (f", and every one of them cites {group['driver']}" if group.get('driver') else '')
     return (f"{model}'s {group['side']} picks {names} are all {group['sector']}{driver}. "
             "Treat them as ONE position, not independent ones — they can lose together.")
+
+
+# Day-127: what a single position is a bet on. On 2026-10-06 the council's
+# SHORT CVE.TO moved tick for tick with XEG.TO (+1.15% vs +1.13%) as oil rallied:
+# it was an Energy/oil position, and nothing in the email said so. Display only.
+SECTOR_ETF = {
+    'Energy': ('XEG.TO', 'crude oil'),
+    'Financial Services': ('XFN.TO', None),
+    'Basic Materials': ('XMA.TO', None),
+    'Technology': ('XIT.TO', None),
+    'Utilities': ('XUT.TO', 'interest rates'),
+    'Real Estate': ('XRE.TO', 'interest rates'),
+    'Consumer Defensive': ('XST.TO', None),
+    'Industrials': ('ZIN.TO', None),
+    'Consumer Cyclical': ('XCD.TO', None),
+}
+INDUSTRY_ETF = {'Gold': ('XGD.TO', 'gold')}
+MARKET_ETF = 'XIU.TO'
+
+
+def position_exposure(ticker, sectors=None):
+    """{'sector', 'industry', 'etf', 'driver'} for one name; the market ETF when unknown."""
+    sectors = load_sectors() if sectors is None else sectors
+    info = sectors.get(ticker) or {}
+    sector, industry = info.get('sector'), info.get('industry')
+    etf, driver = INDUSTRY_ETF.get(industry) or SECTOR_ETF.get(sector) or (MARKET_ETF, None)
+    return {'sector': sector, 'industry': industry, 'etf': etf, 'driver': driver}
+
+
+def exposure_line(picks, sectors=None):
+    """One line naming what each chosen position moves with, or None."""
+    parts = []
+    for p in picks or []:
+        x = position_exposure(p.get('ticker'), sectors)
+        if not x['sector']:
+            continue
+        label = 'gold miner' if x['etf'] == 'XGD.TO' else x['sector']
+        parts.append('%s %s: %s, moves with %s%s' % (
+            p['side'], p['ticker'], label, x['etf'],
+            ' — in effect a bet on %s' % x['driver'] if x['driver'] else ''))
+    return ('Exposure: ' + '; '.join(parts) + '.') if parts else None

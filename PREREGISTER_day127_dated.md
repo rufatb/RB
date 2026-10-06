@@ -79,3 +79,38 @@ report still applies E1 to its own 09:46 quote. Nothing is recorded or scored.
 There is no rule against "acquirer the day after a deal", "fading a day-1
 move" or "shorting into an oil reversal". Those would be fitted to one day.
 They may be registered and tested on FMP history separately.
+
+## Result and amendment 1 (2026-10-06 ≈ 16:00 ET, before the first live morning)
+
+**The registered prompt paragraph FAILED the planted-edge control.** It told
+the models to read `data_dates`, never call a supplied move today's, and
+abstain on a thesis made only of the prior session. Every input the desks see
+before the open IS the prior session, so in effect it said "abstain".
+
+Controls on the same day (clean = both planted names, nothing else):
+
+| Version | DeepSeek | Claude (OpenRouter) | Jev | Gemini |
+|---|---|---|---|---|
+| day125 prompts (yesterday's) | 5/10 (once sides swapped, once noise names) | 3/3 | 3/3 | — |
+| + the registered paragraph | 0/4 | 0/3 | 0/2 | 3/3 |
+| emphatic labels, abstain clause removed | 1/4 | 0/3 | 0/3 | 2/2 |
+| plain labels + one neutral sentence | 3/4 | 0/3 | 3/3 | 2/2 |
+| **plain labels in the payload, prompt text unchanged** | **5/10, no side error** | **5/5** | **3/3** | **2/2** |
+
+What ships, as version `day127-dated` for both prompt families:
+* the payload carries plain `data_dates` (`today`, `rows_describe`,
+  `written_at`);
+* every headline carries `age_hours`;
+* every macro field carries `window` ("PRE-MARKET today (08:44 ET)",
+  "PRIOR SESSION 2026-10-05").
+
+The system prompt and Jev's instruction TEXT are byte-identical to day-125's.
+A test pins that `data_dates` is not mentioned in `SYSTEM_PROMPT`.
+
+With the plain labels, Claude's control reasons began "Prior session closed
+42.8 above orb_high 41.9…": it named the session correctly without being told
+to.
+
+No instruction to abstain on prior-session reasoning ships. One was tried,
+and the control shows it would have silenced the desks. Section 2 (exposure
+line, open check) is unaffected and ships as registered.

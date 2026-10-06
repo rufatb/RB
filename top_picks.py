@@ -283,6 +283,13 @@ def _council_table(section, concise):
         out.append(f"| {i} | {p['side']} {p['ticker']} | {_verdict(p, sat)} | "
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
     out += council.council_lines(section, concise=concise)
+    try:                                         # day-127: what each position is a bet on
+        import exposure
+        line = exposure.exposure_line(picks)
+    except Exception:                            # display only; never costs the section
+        line = None
+    if line:
+        out.append(line)
     if section.get('reason'):
         out.append(section['reason'])
     if near:

@@ -344,6 +344,8 @@ def brief_text(brief):
              'Vote on EVERY position id below. Use only this file.',
              'Members are named only by seat. Refer to them by seat, never by name, and give a '
              'position you proposed at your desk no more weight than any other.', '',
+             *(['DATA DATES ' + json.dumps(brief['data_dates'], ensure_ascii=False, indent=1), '']
+               if brief.get('data_dates') else []),
              'POSITIONS ' + json.dumps(brief['positions'], ensure_ascii=False, indent=1), '',
              'DISCUSSION ' + json.dumps(brief['discussion'], ensure_ascii=False, indent=1), '']
     lines += ['ROW ' + json.dumps(r, ensure_ascii=False, sort_keys=True) for r in brief['rows']]
@@ -447,6 +449,9 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     if enrich_gaps:
         errors['evidence'] = '; '.join(enrich_gaps)[:160]
     base['web_news'] = {t: v for t, v in web.items()}
+    # Day-127 (amendment 3): the members read the same dates the desks did. The
+    # frozen prompt is unchanged; the dates travel in the payload.
+    dates = O.data_dates(now, O.prior_session(now.date()))
 
     def run(member, fn):
         try:
@@ -457,7 +462,8 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
             return member, None
 
     def chat(member, note, discussion=None):
-        payload = {'positions': pub, 'rows': rows, 'evidence_legend': EVIDENCE_LEGEND}
+        payload = {'positions': pub, 'rows': rows, 'evidence_legend': EVIDENCE_LEGEND,
+                   'data_dates': dates}
         if discussion is not None:
             payload['discussion'] = discussion
         user = json.dumps(payload, ensure_ascii=False, sort_keys=True)
@@ -483,7 +489,8 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     # OpenRouter (day-126); the session's ballot is the fallback.
     def claude_or():
         user = json.dumps({'positions': pub, 'rows': rows, 'evidence_legend': EVIDENCE_LEGEND,
-                           'discussion': discussion1}, ensure_ascii=False, sort_keys=True)
+                           'data_dates': dates, 'discussion': discussion1},
+                          ensure_ascii=False, sort_keys=True)
         ballot = parse_ballot(ask_claude_openrouter(prompt('Claude', ROUND_2), user, post=claude_post), ids)
         return ballot
     with cf.ThreadPoolExecutor(2) as pool:
@@ -493,7 +500,8 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
         _, jev = jev_f.result()
         claude_api = cl_f.result()[1] if cl_f else None
     brief = {'session': base['session'], 'positions': pub, 'discussion': discussion1, 'rows': rows,
-             'ids': ids, 'written_at': _now(clock()).isoformat(), 'evidence_legend': EVIDENCE_LEGEND}
+             'ids': ids, 'written_at': _now(clock()).isoformat(), 'evidence_legend': EVIDENCE_LEGEND,
+             'data_dates': dates}
     _write(root/BRIEF_JSON, brief)
     (root/BRIEF_TXT).write_text(brief_text(brief))
     if claude_api:

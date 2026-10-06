@@ -73,3 +73,59 @@ def test_morning_prompt_sends_the_flash_before_the_wait():
     from pathlib import Path
     body = (Path(__file__).resolve().parent.parent/'ROUTINE_PROMPT.md').read_text()
     assert body.index('council_flash.py') < body.index('python morning_wait.py')
+
+
+# ── day-127: exposure line and the open check ───────────────────────────────
+
+OPEN = dt.datetime(2026, 10, 6, 9, 31, tzinfo=ET)
+
+
+def quote_at(price, when=OPEN, prev=44.86, open_=44.48):
+    def q(symbol):
+        return {'price': price if symbol == 'CVE.TO' else 28.5, 'open': open_, 'previousClose': prev,
+                'timestamp': when.timestamp()}
+    return q
+
+
+def test_flash_names_the_exposure_and_the_prior_session(tmp_path):
+    write(tmp_path, council())
+    F.wait(tmp_path, 0, now_fn=lambda: AT)
+    text = (tmp_path/'flash'/'report.txt').read_text()
+    assert 'Exposure: SHORT CVE.TO: Energy, moves with XEG.TO — in effect a bet on crude oil' in text
+    assert 'describes 2026-10-05, the prior session' in text
+
+
+def test_open_check_waits_for_0931_then_applies_e1(tmp_path):
+    write(tmp_path, council())
+    assert F.wait_open(tmp_path, 0, now_fn=lambda: AT, quote=quote_at(44.5))[0] == 2
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(44.5))
+    assert code == 0 and info['subject'].endswith('SHORT CVE.TO STILL VALID')
+    text = (tmp_path/'flash'/'open_report.txt').read_text()
+    assert '| SHORT CVE.TO | STILL VALID | above 45.81 | 44.5 at 09:31 | +0.85% |' in text
+
+
+def test_open_check_voids_a_position_past_its_wrong_if(tmp_path):
+    write(tmp_path, council())
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(45.90))
+    assert code == 0 and info['subject'].endswith('SHORT CVE.TO VOID')
+
+
+def test_a_stale_quote_is_not_checked(tmp_path):
+    write(tmp_path, council())
+    yesterday = OPEN - dt.timedelta(days=1)
+    F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(45.90, when=yesterday))
+    assert 'NOT CHECKED' in (tmp_path/'flash'/'open_subject.txt').read_text()
+
+
+def test_open_check_sends_once_and_skips_a_day_without_picks(tmp_path):
+    write(tmp_path, council('NO_CONSENSUS', ()))
+    assert F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(44.5))[1]['status'] == 'NOTHING'
+    write(tmp_path, council())
+    F.record(tmp_path, 'x', now=OPEN, name=F.OPEN_SENT)
+    assert F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(44.5))[0] == 4
+
+
+def test_morning_prompt_runs_the_open_check_before_the_wait():
+    from pathlib import Path
+    body = (Path(__file__).resolve().parent.parent/'ROUTINE_PROMPT.md').read_text()
+    assert body.index('--open-check') < body.index('python morning_wait.py')
