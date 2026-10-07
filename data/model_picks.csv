@@ -129,18 +129,18 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-06,top2,pick,SHORT,CVE.TO,0.65,,45.81,day124-council+day120-entry,published_report,44.375,44.45,-0.169,0,0,2026-10-06T17:16:11.935195-04:00,,,,,4 of 4 endorse
 2026-10-06,top2count,pick,LONG,SHOP.TO,0.63,,,day121-agreement+day120-entry,published_report,235.84,233.65,-0.9286,0,,2026-10-06T17:16:11.935195-04:00,,,,,2 of 4
 2026-10-06,top2count,pick,SHORT,CVE.TO,0.65,,45.81,day121-agreement+day120-entry,published_report,44.375,44.45,-0.169,0,0,2026-10-06T17:16:11.935195-04:00,,,,,2 of 4
-2026-10-07,debate,final,SHORT,BCE.TO,0.91,,,day119-debate-v1+day120-entry,published_report,,,,,,,,,,,
-2026-10-07,deepseek,selected,LONG,SHOP.TO,0.35,,,day127-dated,published_report,,,,,,,technical,,,,
-2026-10-07,deepseek,selected,SHORT,BCE.TO,0.55,,,day127-dated,published_report,,,,,,,technical,,,,
-2026-10-07,engine,board,LONG,MFC.TO,0.617,,,,published_report,,,,,,,,,,,
-2026-10-07,engine,board,LONG,RY.TO,0.615,,,,published_report,,,,,,,,,,,
-2026-10-07,engine,board,SHORT,BCE.TO,0.597,,,,published_report,,,,,,,,,,,
-2026-10-07,engine,board,SHORT,CNR.TO,0.65,,,,published_report,,,,,,,,,,,
-2026-10-07,gemini,selected,LONG,CCO.TO,0.64,,127.24,day126-research-v1,published_report,,,,,,,technical,,,,
-2026-10-07,gemini,selected,SHORT,EMA.TO,0.66,,68.18,day126-research-v1,published_report,,,,,,,news,,,,
-2026-10-07,jev,forced,LONG,CCO.TO,0.39,0.4,,,published_report,,,,,,,,,,,
-2026-10-07,jev,forced,SHORT,CS.TO,0.18,0.47,,,published_report,,,,,,,,,,,
-2026-10-07,top2,pick,LONG,CCO.TO,0.66,,127.24,day124-council+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
-2026-10-07,top2,pick,SHORT,EMA.TO,0.21,,68.18,day124-council+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
-2026-10-07,top2count,pick,LONG,CCO.TO,0.64,,127.24,day121-agreement+day120-entry,published_report,,,,,,,,,,,2 of 4
-2026-10-07,top2count,pick,LONG,SHOP.TO,0.35,,,day121-agreement+day120-entry,published_report,,,,,,,,,,,2 of 4
+2026-10-07,debate,final,SHORT,BCE.TO,0.91,,,day119-debate-v1+day120-entry,published_report,28.1,28.18,-0.2847,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,deepseek,selected,LONG,SHOP.TO,0.35,,,day127-dated,published_report,230.79,236.67,2.5478,1,,2026-10-07T16:21:27.575822-04:00,technical,,,,
+2026-10-07,deepseek,selected,SHORT,BCE.TO,0.55,,,day127-dated,published_report,28.1,28.18,-0.2847,0,,2026-10-07T16:21:27.575822-04:00,technical,,,,
+2026-10-07,engine,board,LONG,MFC.TO,0.617,,,,published_report,60.165,59.47,-1.1552,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,engine,board,LONG,RY.TO,0.615,,,,published_report,274.47,272.65,-0.6631,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,engine,board,SHORT,BCE.TO,0.597,,,,published_report,28.1,28.18,-0.2847,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,engine,board,SHORT,CNR.TO,0.65,,,,published_report,168.54,165.04,2.0767,1,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,gemini,selected,LONG,CCO.TO,0.64,,127.24,day126-research-v1,published_report,128.75,127.04,-1.3282,0,1,2026-10-07T16:21:27.575822-04:00,technical,,,,
+2026-10-07,gemini,selected,SHORT,EMA.TO,0.66,,68.18,day126-research-v1,published_report,65.74,65.32,0.6389,1,0,2026-10-07T16:21:27.575822-04:00,news,,,,
+2026-10-07,jev,forced,LONG,CCO.TO,0.39,0.4,,,published_report,128.75,127.04,-1.3282,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,jev,forced,SHORT,CS.TO,0.18,0.47,,,published_report,13.84,13.91,-0.5058,0,,2026-10-07T16:21:27.575822-04:00,,,,,
+2026-10-07,top2,pick,LONG,CCO.TO,0.66,,127.24,day124-council+day120-entry,published_report,128.75,127.04,-1.3282,0,1,2026-10-07T16:21:27.575822-04:00,,,,,4 of 4 endorse
+2026-10-07,top2,pick,SHORT,EMA.TO,0.21,,68.18,day124-council+day120-entry,published_report,65.74,65.32,0.6389,1,0,2026-10-07T16:21:27.575822-04:00,,,,,4 of 4 endorse
+2026-10-07,top2count,pick,LONG,CCO.TO,0.64,,127.24,day121-agreement+day120-entry,published_report,128.75,127.04,-1.3282,0,1,2026-10-07T16:21:27.575822-04:00,,,,,2 of 4
+2026-10-07,top2count,pick,LONG,SHOP.TO,0.35,,,day121-agreement+day120-entry,published_report,230.79,236.67,2.5478,1,,2026-10-07T16:21:27.575822-04:00,,,,,2 of 4
