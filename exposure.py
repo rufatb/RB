@@ -84,7 +84,10 @@ SECTOR_ETF = {
     'Industrials': ('ZIN.TO', None),
     'Consumer Cyclical': ('XCD.TO', None),
 }
-INDUSTRY_ETF = {'Gold': ('XGD.TO', 'gold')}
+INDUSTRY_ETF = {'Gold': ('XGD.TO', 'gold'), 'Uranium': ('XEG.TO', 'uranium')}
+# 2026-10-07: CCO.TO (Cameco, Uranium) was labelled "a bet on crude oil" in the
+# flash; only oil-and-gas industries carry the oil driver.
+OIL_INDUSTRIES = ('Oil & Gas',)
 MARKET_ETF = 'XIU.TO'
 
 
@@ -94,6 +97,8 @@ def position_exposure(ticker, sectors=None):
     info = sectors.get(ticker) or {}
     sector, industry = info.get('sector'), info.get('industry')
     etf, driver = INDUSTRY_ETF.get(industry) or SECTOR_ETF.get(sector) or (MARKET_ETF, None)
+    if driver == 'crude oil' and not str(industry or '').startswith(OIL_INDUSTRIES):
+        driver = None
     return {'sector': sector, 'industry': industry, 'etf': etf, 'driver': driver}
 
 
@@ -104,7 +109,8 @@ def exposure_line(picks, sectors=None):
         x = position_exposure(p.get('ticker'), sectors)
         if not x['sector']:
             continue
-        label = 'gold miner' if x['etf'] == 'XGD.TO' else x['sector']
+        label = ('gold miner' if x['industry'] == 'Gold' else 'uranium miner'
+                 if x['industry'] == 'Uranium' else x['sector'])
         parts.append('%s %s: %s, moves with %s%s' % (
             p['side'], p['ticker'], label, x['etf'],
             ' — in effect a bet on %s' % x['driver'] if x['driver'] else ''))

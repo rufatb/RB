@@ -129,3 +129,11 @@ def test_morning_prompt_runs_the_open_check_before_the_wait():
     from pathlib import Path
     body = (Path(__file__).resolve().parent.parent/'ROUTINE_PROMPT.md').read_text()
     assert body.index('--open-check') < body.index('python morning_wait.py')
+
+
+def test_a_uranium_miner_is_not_an_oil_bet():
+    """2026-10-07: the flash called CCO.TO (Cameco) 'a bet on crude oil'."""
+    import exposure
+    line = exposure.exposure_line([{'side': 'LONG', 'ticker': 'CCO.TO'}, {'side': 'SHORT', 'ticker': 'CVE.TO'}])
+    assert 'LONG CCO.TO: uranium miner, moves with XEG.TO — in effect a bet on uranium' in line
+    assert 'SHORT CVE.TO: Energy, moves with XEG.TO — in effect a bet on crude oil' in line
