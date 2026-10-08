@@ -187,11 +187,24 @@ else
     # Its own budget is already clamped to the time remaining before 09:30.
     if budget="$(slice 900 $((360 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
-        case $? in
+        pool_exit=$?
+        # Exit 2 is any status but READY. PARTIAL means the pool WAS written and
+        # is used — 2026-10-08 staged 91 names and still logged "not staged"
+        # because one of 390 failed. Read today's status before calling it a fault.
+        pool_status="$(python -c 'import json,sys; s=json.load(open(sys.argv[1])); print(s.get("status") if str(s.get("completed_at",""))[:10]==sys.argv[2] else "STALE")' \
+            "$RB_STATE_DIR/factor_pool_status.json" "$(TZ=America/New_York date +%F)" 2>/dev/null || echo UNKNOWN)"
+        case $pool_exit in
             0) log "  factor pool: staged" ;;
+            2) if [ "$pool_status" = "PARTIAL" ]; then
+                   log "  factor pool: staged PARTIAL — some names failed (factor_pool_status.json); the pool is used"
+               else
+                   log "  factor pool: FAILED ($pool_status) — the opportunity ranking falls back"
+                   log "    to the configured universe, or reads UNAVAILABLE"
+                   stage_faults+=("factor research pool not staged ($pool_status)")
+               fi ;;
             3) log "  factor pool: REFUSED (past the pre-open cutoff) — correct, not a crash"
                stage_faults+=("factor pool refused: past the cutoff") ;;
-            *) log "  factor pool: FAILED or PARTIAL — the opportunity ranking falls back"
+            *) log "  factor pool: FAILED (exit $pool_exit) — the opportunity ranking falls back"
                log "    to the configured universe, or reads UNAVAILABLE"
                stage_faults+=("factor research pool not staged") ;;
         esac

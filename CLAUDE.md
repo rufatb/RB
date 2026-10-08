@@ -44,6 +44,29 @@ rows and CSV only.
 * The council ballot and the debate still send Jev rows
   (`_compact(r, 1, 90)`); their universes are small.
 
+**The same day, Claude and DeepSeek picked nothing. That was their answer,
+not a fault.**
+* Both returned valid, empty lists, and nothing was dropped. `_clean` flags a
+  missing or malformed list as "invalid … list", and nothing was flagged.
+* DeepSeek declines now and then: 2 of the 9 mornings since 09-25.
+* Stateless Claude (OpenRouter) declined on every live morning since 10-06.
+  Its planted-edge control passes (5/5 on day-127), so it can pick when the
+  rows show something. It just never judges them strong enough. Its council
+  ballot still counts; on 10-08 it endorsed SHORT TD.TO.
+
+**Claude and Gemini rarely use the research tools.** `research_<desk>.json`
+`tools` lists the calls a model MADE, not the tools it was offered.
+* On 10-08 both made 0 calls; Claude made none in day-126's dry runs and
+  controls either. Earlier mornings' logs are overwritten daily.
+* `SYSTEM_PROMPT` says "do not access tools", and `RESEARCH_NOTE` then offers
+  them. That contradiction is real, but it is not the cause. Re-asked 10-08's
+  brief with the sentence lifted, Claude still made 0 calls and abstained.
+* Do not tune the prompt to force research or picks.
+
+`morning_full.sh` no longer logs a PARTIAL factor pool as "not staged". Exit 2
+is any status but READY, and 10-08 staged 91 names with one failure in 390.
+Only a non-PARTIAL status of today is a fault now.
+
 ## Day125 — FMP Premium in every model's brief; analyst changes are priced by the open
 
 The owner bought FMP Premium ($69/month, Canadian coverage) on 2026-10-06 and

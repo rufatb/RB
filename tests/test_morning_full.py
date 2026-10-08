@@ -265,3 +265,16 @@ def test_fmp_context_is_staged_before_claudes_brief():
     body = code()
     assert body.index('fmp_context.py --stage') < body.index('claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief')
     assert body.index('prepare_factor_pool.py') < body.index('fmp_context.py --stage')
+
+
+def test_a_partial_factor_pool_is_not_logged_as_not_staged():
+    """2026-10-08: the pool staged 91 names, one of 390 failed, and the log
+    listed "factor research pool not staged" among the faults. Exit 2 means
+    any status but READY; only a non-PARTIAL status of TODAY is a fault."""
+    body = code()
+    seg = body[body.index('prepare_factor_pool.py'):body.index('factor pool: SKIPPED')]
+    assert 'factor_pool_status.json' in seg and 'completed_at' in seg
+    start = seg.index('= "PARTIAL" ]')
+    partial = seg[start:seg.index('else', start)]
+    assert 'staged PARTIAL' in partial and 'stage_faults' not in partial
+    assert seg.count('stage_faults+=') == 3, 'a failed, refused or crashed pool is still a fault'
