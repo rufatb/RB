@@ -144,3 +144,9 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-07,top2,pick,SHORT,EMA.TO,0.21,,68.18,day124-council+day120-entry,published_report,65.74,65.32,0.6389,1,0,2026-10-07T16:21:27.575822-04:00,,,,,4 of 4 endorse
 2026-10-07,top2count,pick,LONG,CCO.TO,0.64,,127.24,day121-agreement+day120-entry,published_report,128.75,127.04,-1.3282,0,1,2026-10-07T16:21:27.575822-04:00,,,,,2 of 4
 2026-10-07,top2count,pick,LONG,SHOP.TO,0.35,,,day121-agreement+day120-entry,published_report,230.79,236.67,2.5478,1,,2026-10-07T16:21:27.575822-04:00,,,,,2 of 4
+2026-10-08,engine,board,LONG,AC.TO,0.558,,,,published_report,,,,,,,,,,,
+2026-10-08,engine,board,SHORT,CNR.TO,0.6,,,,published_report,,,,,,,,,,,
+2026-10-08,engine,board,SHORT,CP.TO,0.576,,,,published_report,,,,,,,,,,,
+2026-10-08,gemini,selected,LONG,SU.TO,0.63,,,day126-research-v1,published_report,,,,,,,macro,,,,
+2026-10-08,gemini,selected,SHORT,TD.TO,0.65,,166.96,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-10-08,top2,pick,SHORT,TD.TO,0.58,,166.96,day124-council+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
