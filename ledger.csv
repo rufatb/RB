@@ -450,3 +450,15 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-10-07,CP.TO,SHORT,0.613,mid,121.3900,board,,,,16.5,-1.821,1
 2026-10-07,BCE.TO,SHORT,0.597,dense,28.1000,pair,primary,0.2266,402,,0.320,0
 2026-10-07,T.TO,SHORT,0.589,mid,11.2800,board,,,,17.7,0.532,0
+2026-10-08,AC.TO,LONG,0.558,sparse,24.4400,pair,primary,0.4996,1023,20.5,,
+2026-10-08,SLF.TO,SHORT,0.636,mid,108.3200,board,,,,5.5,,
+2026-10-08,T.TO,SHORT,0.636,mid,11.3100,board,,,,26.5,,
+2026-10-08,ABX.TO,SHORT,0.624,dense,56.0150,board,,,,5.4,,
+2026-10-08,MFC.TO,SHORT,0.614,mid,59.3700,board,,,,0.0,,
+2026-10-08,CNR.TO,SHORT,0.600,dense,165.5700,pair,extra,0.2651,80,7.8,,
+2026-10-08,BCE.TO,SHORT,0.591,mid,28.3600,board,,,,3.5,,
+2026-10-08,BNS.TO,SHORT,0.587,mid,124.0000,board,,,,1.6,,
+2026-10-08,CP.TO,SHORT,0.576,dense,119.6400,pair,primary,0.2324,97,5.0,,
+2026-10-08,CVE.TO,SHORT,0.568,sparse,44.8600,board,,,,4.5,,
+2026-10-08,AEM.TO,SHORT,0.565,mid,258.7900,board,,,,,,
+2026-10-08,TD.TO,SHORT,0.550,mid,161.4900,board,,,,4.3,,
