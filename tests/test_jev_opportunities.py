@@ -615,3 +615,97 @@ def test_a_forced_pick_outside_the_universe_is_refused_by_the_reader(tmp_path):
     out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
     assert out['forced_long'] is None
     assert any('outside the supplied universe' in g for g in out['gaps'])
+
+
+# ── day-128: Jev's input limit and the CSV steps ─────────────────────────────
+
+def _limit_error():
+    import io
+    import urllib.error
+    return urllib.error.HTTPError(J.ENDPOINT, 400, 'Bad Request', {},
+                                  io.BytesIO(b'{"error":{"error_type":"max_tokens_exceeded"}}'))
+
+
+def limited(fits, seen=None, long_probs=None):
+    """A Jev that refuses any body `fits` rejects with its input-limit error,
+    as the decisions endpoint did on 2026-10-08."""
+    def post(body, key, timeout):
+        if seen is not None:
+            seen.append(body)
+        if not fits(body):
+            raise _limit_error()
+        return {'model': 'typesafe/jev-1.13-20260917',
+                'answers': {'long': answer(long_probs or {J.ABSTAIN: 1.0}),
+                            'short': answer({J.ABSTAIN: 1.0})}}
+    return post
+
+
+def _rows_from_csv(text):
+    import csv
+    import io
+    return [{k: (v if k == 'ticker' else json.loads(v)) for k, v in row.items() if v != ''}
+            for row in csv.DictReader(io.StringIO(text))]
+
+
+def test_a_pool_too_large_for_rows_goes_as_csv_with_every_field():
+    """2026-10-08: 91 names failed at every step down to 76k characters with no
+    headline and no FMP field. The same rows as CSV fit with everything."""
+    seen = []
+    a = tech('AC.TO'); a['headlines'] = [headline()]
+    out = J.rank([a, tech('TD.TO')], now=PREOPEN, poster=limited(
+        lambda b: isinstance(b['state']['candidates'], str), seen,
+        long_probs={'AC.TO': 0.7, J.ABSTAIN: 0.3}))
+    assert len(seen) == 2 and isinstance(seen[0]['state']['candidates'], list)
+    sent = _rows_from_csv(seen[1]['state']['candidates'])
+    assert sent == seen[0]['state']['candidates'], 'the CSV step dropped or changed a value'
+    assert sent[0]['headlines'][0]['class'] == 'UNCLASSIFIED', 'headlines must survive the CSV step'
+    assert [r['ticker'] for r in out['longs']] == ['AC.TO']
+    assert any('CSV' in g for g in out['gaps'])
+    assert not any('trimmed' in g for g in out['gaps']), 'nothing was trimmed at full information'
+
+
+def test_the_csv_names_each_field_once():
+    import deepseek_opportunities as D
+    text = J._csv([J._compact(D._row(tech(t)), 2, 110) for t in ('AC.TO', 'TD.TO', 'RY.TO')])
+    header, *lines = text.strip().split('\n')
+    assert header.split(',')[0] == 'ticker'
+    assert len(lines) == 3 and text.count('rsi') == 1
+
+
+def test_a_trimmed_csv_step_discloses_the_trim_and_the_form():
+    a = tech('AC.TO'); a['headlines'] = [headline()]
+    out = J.rank([a], now=PREOPEN, poster=limited(
+        lambda b: isinstance(b['state']['candidates'], str) and 'headlines' not in b['state']['candidates']))
+    gaps = ' '.join(out['gaps'])
+    assert out['status'] != 'UNAVAILABLE'
+    assert 'technicals only, no headlines' in gaps and 'CSV' in gaps
+
+
+def test_only_the_input_limit_moves_down_the_ladder():
+    """Any other failure says the same thing at every step: ask once."""
+    calls = []
+    def refuse(body, key, timeout):
+        calls.append(body)
+        raise RuntimeError('provider down')
+    out = J.rank([tech('AC.TO')], now=PREOPEN, poster=refuse)
+    assert out['status'] == 'UNAVAILABLE' and len(calls) == 1
+
+
+def test_a_pool_that_fits_no_step_says_so():
+    calls = []
+    out = J.rank([tech('AC.TO')], now=PREOPEN, poster=limited(lambda b: False, calls))
+    assert out['status'] == 'UNAVAILABLE' and 'max_tokens_exceeded' in out['reason']
+    assert len(calls) == len(J.STATE_LEVELS)
+
+
+def test_a_pool_that_fits_as_rows_is_asked_exactly_as_before():
+    seen = []
+    J.rank([tech('AC.TO')], now=PREOPEN, poster=poster(seen=seen))
+    assert len(seen) == 1 and isinstance(seen[0]['state']['candidates'], list)
+    assert J.STATE_LEVELS[0] == (2, 110, 'full', 'rows')
+
+
+def test_the_ladder_never_sends_the_json_table_that_failed_its_control():
+    """A JSON columns+rows table fit on 2026-10-08 but its planted names cleared
+    Jev's own NONE 1 time in 10. Only rows and CSV are allowed."""
+    assert {level[3] for level in J.STATE_LEVELS} == {'rows', 'csv'}

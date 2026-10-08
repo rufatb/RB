@@ -1,5 +1,49 @@
 # Working notes for this repo
 
+## Day128 — Jev's rows go as CSV past its input limit (2026-10-08)
+
+On 10-08 Jev's desk read UNAVAILABLE: HTTP 400 `max_tokens_exceeded` at
+every `STATE_LEVELS` step. The pool held 91 names, and even with no headline
+and no FMP field the request was 76k characters. Jev's council ballot was
+unaffected: it is a smaller question.
+
+**The limit follows the number of fields, not the characters.** Measured live
+on that morning's pool:
+* rows: refused at every step, down to 76k characters;
+* rows split per side, or with short key names: still refused at 54k;
+* the same rows as ONE CSV text (a header naming each field once, one line
+  per name): accepted at 73k WITH two headlines per name and every FMP field.
+
+**What ships (`STATE_LEVELS`, Jev prompt version `day128-csv`):**
+* the first step is unchanged (rows, full information), so a pool that fits
+  as rows is asked exactly as before;
+* from the second step the rows go as CSV (`_csv`): text as it is, any other
+  value as compact JSON, nothing dropped; the headline and FMP trims follow;
+* the gaps say "Jev input sent as CSV…", plus any trim.
+
+The instruction text is day-127's, byte for byte.
+
+**Planted-edge controls** (clean = both planted names, no noise name):
+
+| Form | Clean | Fits 91 names |
+|---|---|---|
+| rows, as before | 3/3 | no |
+| **CSV** | **10/10** | **yes, full information** |
+| one "field=value" line per name | 5/5 | only without headlines |
+| short key names + a legend | 4/4 | no |
+| rows split per side | 3/4 | no |
+| JSON table (columns + lists) | 0/5 | yes |
+
+The JSON table fit and FAILED: the planted names stayed Jev's forced picks
+5/5, but cleared its own NONE 1 time in 10. A form that fits is not a form
+that works; never ship one without its control. A test pins the ladder to
+rows and CSV only.
+
+* Re-run with `python jev_opportunities.py --control-csv` (the CSV steps) and
+  `--control` (the full ladder).
+* The council ballot and the debate still send Jev rows
+  (`_compact(r, 1, 90)`); their universes are small.
+
 ## Day125 — FMP Premium in every model's brief; analyst changes are priced by the open
 
 The owner bought FMP Premium ($69/month, Canadian coverage) on 2026-10-06 and

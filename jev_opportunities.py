@@ -37,8 +37,10 @@ the baseline board nor the ledger. It cannot place an order.
 from __future__ import annotations
 
 import argparse
+import csv
 import datetime as dt
 import hashlib
+import io
 import json
 import os
 import re
@@ -54,7 +56,7 @@ ET = ZoneInfo('America/New_York')
 
 REGISTRATION = 'PREREGISTER_day111_jev_opportunities.md'
 SCHEMA_VERSION = 'day111-jev-v1'
-PROMPT_VERSION = 'day127-dated'  # day127: dated inputs; day125: FMP analyst/earnings fields + today's releases; day118 ISSUER_RELEASE
+PROMPT_VERSION = 'day128-csv'  # day128: rows as CSV past the limit, instruction text = day127's; day127: dated inputs; day125: FMP fields; day118 ISSUER_RELEASE
 SNAPSHOT_NAME = 'jev_opportunities.json'
 ENDPOINT = 'https://openrouter.ai/api/alpha/decisions'
 # `typesafe/jev-latest` is NOT a valid model id — the API rejects it outright.
@@ -157,11 +159,23 @@ def http_reason(exc):
     return 'HTTP %d%s' % (status, ' (%s)' % kind if kind else '')
 
 
-# (headlines per name, title characters, FMP fields). Every number is kept at
-# every level. Day-125: FMP's text fields pushed 77 names past Jev's input limit
-# even with no headlines, so two more steps trim them — "lean" keeps the
-# analyst changes and the EPS surprise, None drops them — before nothing else.
-STATE_LEVELS = ((2, 110, 'full'), (1, 90, 'full'), (0, 0, 'full'), (0, 0, 'lean'), (0, 0, None))
+# (headlines per name, title characters, FMP fields, form). Every number is
+# kept at every level. Day-125: FMP's text fields pushed 77 names past Jev's
+# input limit even with no headlines, so two more steps trim them — "lean"
+# keeps the analyst changes and the EPS surprise, None drops them.
+# Day-128: on 2026-10-08, 91 names failed at EVERY step, down to 76k
+# characters with no headline and no FMP field. The limit follows the number
+# of fields in the state, not its characters: split requests and short key
+# names still failed at 54k, while the same rows as ONE CSV text fit WITH
+# both headlines and every FMP field (73k). So from the second step the rows
+# travel as CSV (`_csv`): a header naming every field once, one line per
+# name, nothing dropped. Its planted-edge control passed 5/5 clean, as rows
+# did. A JSON table (columns + lists) also fit but FAILED the control: the
+# planted names stayed Jev's forced picks 5/5, yet cleared its own NONE 1 of
+# 10 times. The first step is unchanged, so a pool that fits as rows is asked
+# exactly as before.
+STATE_LEVELS = ((2, 110, 'full', 'rows'), (2, 110, 'full', 'csv'), (1, 90, 'full', 'csv'),
+                (0, 0, 'full', 'csv'), (0, 0, 'lean', 'csv'), (0, 0, None, 'csv'))
 FMP_FULL = ('analyst_30d', 'analyst_consensus', 'last_report', 'eps_surprise_pct', 'next_report')
 FMP_LEAN = ('analyst_30d', 'eps_surprise_pct')
 
@@ -183,6 +197,36 @@ def _compact(row, headlines, title_chars, fmp='full'):
                                 if h.get('age_hours') is not None else {})}
                             for h in row['headlines'][:headlines]]
     return out
+
+
+def _csv(rows):
+    """The same rows as CSV text: a header naming every field once, in the
+    order first seen, then one line per name. A text value goes as it is, any
+    other value as compact JSON (a number, a list of headlines), and a field a
+    name lacks is left empty. Every value survives; only the repeated key
+    names go."""
+    columns = []
+    for row in rows:
+        for key in row:
+            if key not in columns:
+                columns.append(key)
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator='\n')
+    writer.writerow(columns)
+    for row in rows:
+        writer.writerow(['' if row.get(key) is None
+                         else row[key] if isinstance(row[key], str)
+                         else json.dumps(row[key], separators=(',', ':'), ensure_ascii=False,
+                                         allow_nan=False)
+                         for key in columns])
+    return out.getvalue()
+
+
+def _candidates(rows, level):
+    """The candidates at one ladder step: trimmed by `_compact`, then sent as
+    rows or as CSV text."""
+    compact = [_compact(r, *level[:3]) for r in rows]
+    return _csv(compact) if level[3] == 'csv' else compact
 
 
 def error_type(exc):
@@ -342,8 +386,10 @@ def _forced(answer, allowed):
 
 
 def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
-         timeout=REQUEST_TIMEOUT):
-    """One request, two typed questions, at most two names per side. Pure of state."""
+         timeout=REQUEST_TIMEOUT, levels=STATE_LEVELS):
+    """One request, two typed questions, at most two names per side. Pure of state.
+    `levels` exists for the control: `--control-csv` asks through the CSV
+    steps only, the path a large pool takes."""
     import deepseek_opportunities as D          # one definition of "usable" and of a row
     now = now or dt.datetime.now(ET)
     usable = D.usable_candidates(candidates)
@@ -378,7 +424,7 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
     def body_for(level):
         return {'model': model,
                 'state': {'session': now.date().isoformat(), 'entry': '09:46 ET',
-                          'exit': '15:59 ET', 'data_dates': dates, 'candidates': [_compact(r, *level) for r in rows],
+                          'exit': '15:59 ET', 'data_dates': dates, 'candidates': _candidates(rows, level),
                           **({'macro': macro_block} if macro_block else {})},
                 'questions': {
                     **{side: {'type': 'choice', 'criteria': criteria,
@@ -394,11 +440,11 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
     # with its evidence metadata — came to ~76k characters over 81 names and the
     # decisions endpoint answered HTTP 400 `max_tokens_exceeded`; the section
     # read "The Jev request failed: HTTPError" every morning. Each step down
-    # keeps every NUMBER and trims only headline text; the level used is
-    # recorded, so a ranking made without headlines never reads as one made
-    # with them.
+    # keeps every NUMBER and trims only text (or, from the second step, the
+    # repeated key names); the level used is recorded, so a ranking made
+    # without headlines never reads as one made with them.
     reply, failure, used = None, None, None
-    for level in STATE_LEVELS:
+    for level in levels:
         reply, failure = _ask(body_for(level), key, poster, timeout)
         if failure is None:
             used = level
@@ -426,13 +472,16 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
                 pick['probability'] > (ranked[0].get('abstain_probability') or 0.0))
     with_news = sum(1 for row in rows if row.get('headlines')) if used[0] else 0
     evidence_gaps = []
-    if used != STATE_LEVELS[0]:
+    if used[:3] != STATE_LEVELS[0][:3]:
         evidence_gaps.append('Jev input trimmed to fit its limit: '
                              + ('%d headline title(s) per name' % used[0] if used[0]
                                 else 'technicals only, no headlines')
                              + ('' if used[2] == 'full' else
                                 '; FMP fields cut to analyst changes and EPS surprise' if used[2] == 'lean'
                                 else '; no FMP fields') + '.')
+    if used[3] == 'csv':
+        evidence_gaps.append('Jev input sent as CSV (each field named once) to fit its '
+                             'limit; every field and number kept.')
     if not with_news:
         evidence_gaps.append('No name carried a headline; this ranking is technicals only.')
     if not macro_block:
@@ -733,12 +782,15 @@ def compare_models(jev, deepseek):
                                     if t not in {r['ticker'] for r in rows})}
 
 
-def run_control(*, poster=None, key=None, model=None, now=None):
+def run_control(*, poster=None, key=None, model=None, now=None, levels=STATE_LEVELS):
     """House rule 4: a harness that cannot detect a planted edge cannot report a
     null. Reuses the DeepSeek control universe — the planting is in the NUMBERS
-    only, never in a label that announces itself as a test."""
+    only, never in a label that announces itself as a test. The control's
+    twelve names fit as rows; `levels=STATE_LEVELS[1:]` sends them as the
+    CSV a large pool gets."""
     import deepseek_opportunities as D
-    result = rank(D.control_universe(), poster=poster, key=key, model=model, now=now)
+    result = rank(D.control_universe(), poster=poster, key=key, model=model, now=now,
+                  levels=levels)
     return {**result,
             'long_detected': any(r['ticker'] == D.CONTROL_LONG for r in result.get('longs') or []),
             'short_detected': any(r['ticker'] == D.CONTROL_SHORT for r in result.get('shorts') or [])}
@@ -749,10 +801,12 @@ def main(argv=None):
     parser.add_argument('--state-dir', default=os.environ.get('RB_STATE_DIR', '.rb-state'))
     parser.add_argument('--diagnostic', action='store_true')
     parser.add_argument('--control', action='store_true')
+    parser.add_argument('--control-csv', action='store_true',
+                        help='the control, asked through the CSV steps only')
     args = parser.parse_args(argv)
-    if args.control:
+    if args.control or args.control_csv:
         load_private_key(args.state_dir)
-        result = run_control()
+        result = run_control(levels=STATE_LEVELS[1:] if args.control_csv else STATE_LEVELS)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0 if (result['long_detected'] and result['short_detected']) else 2
     try:

@@ -130,7 +130,7 @@ def test_the_factor_layer_never_sees_the_fmp_key():
 
 def test_the_prompts_describe_the_fields_and_the_registered_result():
     import jev_opportunities as J
-    assert O.PROMPT_VERSION == 'day127-dated' and J.PROMPT_VERSION == 'day127-dated'
+    assert O.PROMPT_VERSION == 'day127-dated' and J.PROMPT_VERSION == 'day128-csv'
     for text in (O.SYSTEM_PROMPT, J.INSTRUCTIONS):
         assert 'analyst_30d' in text and 'events_today' in text and '+0.10%' in text
     summary = json.loads((Path(__file__).resolve().parent.parent / 'data' /
