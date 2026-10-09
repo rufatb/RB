@@ -56,9 +56,15 @@ def _now(now=None):
 
 
 def subject(session, section):
+    import council as K
     picks = (section or {}).get('picks') or []
+    ru = (section or {}).get('runner_up')        # day-129: labelled, never a pick
+    tail = (' · runner-up, %s: %s %s' % (K.runner_up_label(ru), ru['side'], ru['ticker'])
+            if ru and len(picks) < 2 else '')
     if picks:
-        what = ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p['agreement']) for p in picks)
+        what = ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p['agreement']) for p in picks) + tail
+    elif tail:
+        what = 'no consensus' + tail
     elif (section or {}).get('no_positions'):
         what = 'no model proposed a position'
     else:
@@ -223,7 +229,9 @@ def check_open(council, now, *, quote=None):
     import exposure
     quote = quote or fmp_quote
     rows = []
-    for p in K.top_two(council).get('picks') or []:
+    sec = K.top_two(council)
+    items = (sec.get('picks') or []) + ([sec['runner_up']] if sec.get('runner_up') else [])
+    for p in items:                       # day-129: the runner-up is checked too, labelled
         sign = 1 if p['side'] == 'LONG' else -1
         x = exposure.position_exposure(p['ticker'])
         try:
@@ -259,11 +267,13 @@ def _fmt(v):
 
 
 def compose_open(council, rows, now):
+    import council as K
     import email_render
     session = council.get('session')
     if not rows:
         return None
-    verdicts = ' · '.join('%s %s %s' % (r['side'], r['ticker'], r['verdict']) for r in rows)
+    verdicts = ' · '.join('%s%s %s %s' % ('runner-up ' if r.get('runner_up') else '', r['side'],
+                                         r['ticker'], r['verdict']) for r in rows)
     subj = 'RB Open Check — %s — %s' % (session, verdicts)
     lines = ['# RB Open Check — %s' % session,
              'Checked at %s ET against the live quote (FMP last trade). The full report follows at ~09:46.'
@@ -274,8 +284,10 @@ def compose_open(council, rows, now):
         wrong = ('%s %g' % ('below' if r['side'] == 'LONG' else 'above', r['invalid_at'])
                  if isinstance(r.get('invalid_at'), (int, float)) else '—')
         price = ('%g at %s' % (r['price'], r['at'])) if r.get('price') is not None else r.get('why', '—')
-        lines.append('| %s %s | %s | %s | %s | %s | %s | %s %s |' % (
-            r['side'], r['ticker'], r['verdict'], wrong, price, _fmt(r.get('open_for_pick')),
+        lines.append('| %s %s%s | %s | %s | %s | %s | %s | %s %s |' % (
+            r['side'], r['ticker'],
+            ' (runner-up, %s)' % K.runner_up_label(r) if r.get('runner_up') else '',
+            r['verdict'], wrong, price, _fmt(r.get('open_for_pick')),
             _fmt(r.get('now_for_pick')), r.get('etf') or '—', _fmt(r.get('etf_move'))))
     lines += ['',
               'VOID means the price is already past the position\'s own "wrong if": the reason it was '
@@ -301,7 +313,8 @@ def prepare_open(state_dir, now=None, *, quote=None):
     council = K.load(root, now)
     if council.get('status') not in SAT:
         return 'NOTHING', {'reason': 'no council today, so nothing to check'}
-    if not K.top_two(council).get('picks'):
+    sec = K.top_two(council)
+    if not sec.get('picks') and not sec.get('runner_up'):
         return 'NOTHING', {'reason': 'the council chose no position, so nothing to check'}
     if now.time() < OPEN_AT:
         return 'WAITING', {}

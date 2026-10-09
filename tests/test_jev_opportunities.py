@@ -336,6 +336,20 @@ def test_the_control_reports_detection_per_side():
         long_probs={D.CONTROL_LONG: 0.8, J.ABSTAIN: 0.2},
         short_probs={J.ABSTAIN: 1.0}))
     assert out['long_detected'] is True and out['short_detected'] is False
+    assert out['nominations_detected'] is False          # this poster answers no forced question
+
+
+def test_the_control_says_whether_the_planted_names_head_jevs_nominations():
+    import deepseek_opportunities as D
+    out = J.run_control(now=PREOPEN, key='sk-or-test', poster=full_poster(
+        {J.ABSTAIN: 1.0}, {J.ABSTAIN: 1.0},
+        forced_long={D.CONTROL_LONG: 0.9, 'NOIS1.TO': 0.1},
+        forced_short={D.CONTROL_SHORT: 0.6, D.CONTROL_LONG: 0.4}))
+    assert out['nominations_detected'] is True
+    out = J.run_control(now=PREOPEN, key='sk-or-test', poster=full_poster(
+        {J.ABSTAIN: 1.0}, {J.ABSTAIN: 1.0},
+        forced_long={D.CONTROL_LONG: 0.9}, forced_short={D.CONTROL_LONG: 0.6, D.CONTROL_SHORT: 0.4}))
+    assert out['nominations_detected'] is False
 
 
 # ── the ranking is shown daily; the gate is untouched ────────────────────────
@@ -615,6 +629,64 @@ def test_a_forced_pick_outside_the_universe_is_refused_by_the_reader(tmp_path):
     out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
     assert out['forced_long'] is None
     assert any('outside the supplied universe' in g for g in out['gaps'])
+
+
+# ── day-129: the forced question's top two are Jev's council nominations ─────
+
+def test_the_forced_top_two_survive_the_staged_round_trip_best_first(tmp_path, monkeypatch):
+    """The reader rebuilds its dict, so a key it does not NAME is dropped
+    (day-112d). Jev's nominations are the forced question's top two per side."""
+    import council
+    monkeypatch.setenv('OPENROUTER_API_KEY', 'sk-or-test')
+    root = stage_dir(tmp_path, [tech('AC.TO'), tech('TD.TO'), tech('SU.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(
+        long_probs={'AC.TO': 0.2, 'TD.TO': 0.1, J.ABSTAIN: 0.7},
+        short_probs={'AC.TO': 0.1, 'TD.TO': 0.2, J.ABSTAIN: 0.7},
+        forced_long={'AC.TO': 0.5, 'TD.TO': 0.3, 'SU.TO': 0.2},
+        forced_short={'TD.TO': 0.6, 'AC.TO': 0.1, 'SU.TO': 0.3}))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert [r['ticker'] for r in out['forced_long_top']] == ['AC.TO', 'TD.TO']
+    assert [r['ticker'] for r in out['forced_short_top']] == ['TD.TO', 'SU.TO']
+    assert out['forced_long_top'][0]['ticker'] == out['forced_long']['ticker']   # the pick heads it
+    assert out['longs'] == [] and out['shorts'] == []                             # never a selection
+    off = {'status': 'UNAVAILABLE'}
+    table = council.positions(off, off, off, out)
+    assert sorted((p['side'], p['ticker']) for p in table) == [
+        ('LONG', 'AC.TO'), ('LONG', 'TD.TO'), ('SHORT', 'SU.TO'), ('SHORT', 'TD.TO')]
+    assert {x['how'] for p in table for x in p['proposers']} == {'forced'}
+
+
+def test_a_snapshot_without_the_top_two_falls_back_to_the_one_forced_pick(tmp_path, monkeypatch):
+    import council
+    monkeypatch.setenv('OPENROUTER_API_KEY', 'sk-or-test')
+    root = stage_dir(tmp_path, [tech('AC.TO'), tech('TD.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(
+        long_probs={J.ABSTAIN: 1.0}, short_probs={J.ABSTAIN: 1.0},
+        forced_long={'AC.TO': 0.6, 'TD.TO': 0.4}, forced_short={'TD.TO': 0.7, 'AC.TO': 0.3}))
+    obj = json.loads((root/J.SNAPSHOT_NAME).read_text())
+    obj.pop('forced_long_top'), obj.pop('forced_short_top')
+    obj['forced_long'] = {**obj['forced_long']}
+    (root/J.SNAPSHOT_NAME).write_text(json.dumps(J._seal(obj)))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert 'forced_long_top' not in out                       # not asked is not invented
+    off = {'status': 'UNAVAILABLE'}
+    assert [(p['side'], p['ticker']) for p in council.positions(off, off, off, out)] == [
+        ('LONG', 'AC.TO'), ('SHORT', 'TD.TO')]
+
+
+def test_a_staged_top_two_outside_the_universe_is_refused_and_resorted(tmp_path, monkeypatch):
+    monkeypatch.setenv('OPENROUTER_API_KEY', 'sk-or-test')
+    root = stage_dir(tmp_path, [tech('AC.TO'), tech('TD.TO')])
+    J.stage(root, now=PREOPEN, poster=full_poster(long_probs={J.ABSTAIN: 1.0},
+                                                  short_probs={J.ABSTAIN: 1.0}))
+    obj = json.loads((root/J.SNAPSHOT_NAME).read_text())
+    obj['forced_long_top'] = [{'ticker': 'TD.TO', 'probability': 0.2},
+                              {'ticker': 'NVDA', 'probability': 0.9},
+                              {'ticker': 'AC.TO', 'probability': 0.7}]
+    (root/J.SNAPSHOT_NAME).write_text(json.dumps(J._seal(obj)))
+    out = J.load_prepared(root, PREOPEN + dt.timedelta(hours=1))
+    assert [r['ticker'] for r in out['forced_long_top']] == ['AC.TO', 'TD.TO']
+    assert any('forced top entry' in g for g in out['gaps'])
 
 
 # ── day-128: Jev's input limit and the CSV steps ─────────────────────────────

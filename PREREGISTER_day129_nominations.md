@@ -122,3 +122,17 @@ outcome. It is not used to tune anything.
 **Not claimed.** This gives the council real choices and should fill both
 slots more often. It is NOT shown to make any pick more accurate. Every source
 on the record is still a coin flip, and the email keeps saying so.
+
+## Amendment 1 (2026-10-09, before the first live run)
+
+Two cases the text above left open, settled in code before any live morning:
+* A position whose ticker the council SPLIT on (both sides agreed) is never
+  the runner-up; day-124 takes neither side.
+* "The best remaining position" includes an AGREED position ranked below the
+  two the council chose, when one of those two is void at 09:46. It is
+  labelled "agreed, ranked below the picks", never "no consensus". It is still
+  not a pick; day-124's "never padded" stands.
+
+When nothing qualifies, the note names any position that won the votes but
+could not stand (the other side of a pick, or void at 09:46). Otherwise it is
+the registered sentence.

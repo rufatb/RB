@@ -267,10 +267,18 @@ def _council_table(section, concise):
                                ('; absent: ' + ', '.join(absent)) if absent else ''))
     picks = section.get('picks') or []
     near = council.near_line(section)
+    # Day-129: the runner-up (never a pick) and the previous session's repeats.
+    runner = council.runner_up_line(section)
+    repeats = [line for line in (council.repeat_line(x) for x in
+                                 picks + ([section['runner_up']] if section.get('runner_up') else []))
+               if line]
     if not picks:
-        head = ('No consensus today — nothing to act on.' if concise
-                else section.get('reason') or 'No pick today.')
-        return out + ['', head] + ([near] if near else []) + _notes(section)
+        head = (section.get('reason') or 'No pick today.' if not concise else
+                'No council pick survived the 09:46 entry check.' if section.get('void_at_entry') else
+                'No consensus today — no council pick.' if section.get('runner_up') else
+                'No consensus today — nothing to act on.')
+        return (out + ['', head] + ([runner] if runner else []) + repeats
+                + ([near] if near else []) + _notes(section))
     out += ['', '| # | Pick | Council vote | Endorsed by | Wrong if | Wire release | Why (lead proposer) |',
             '|---|---|---|---|---|---|---|']
     for i, p in enumerate(picks, 1):
@@ -283,6 +291,9 @@ def _council_table(section, concise):
         out.append(f"| {i} | {p['side']} {p['ticker']} | {_verdict(p, sat)} | "
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
     out += council.council_lines(section, concise=concise)
+    proposed = council.proposed_line(picks)      # day-129: selected, nominated or forced
+    if proposed:
+        out.append(proposed)
     try:                                         # day-127: what each position is a bet on
         import exposure
         line = exposure.exposure_line(picks)
@@ -292,6 +303,9 @@ def _council_table(section, concise):
         out.append(line)
     if section.get('reason'):
         out.append(section['reason'])
+    if runner and len(picks) < 2:
+        out.append(runner)
+    out += repeats
     if near:
         out.append(near)
     return out + _notes(section)
@@ -306,4 +320,6 @@ def _notes(section):
     if section.get('void_at_entry'):
         out.append('Passed over at 09:46, already past their own "wrong if": '
                    + ', '.join(section['void_at_entry']) + '.')
+    if section.get('repeat_note'):
+        out.append(section['repeat_note'])
     return out

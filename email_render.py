@@ -335,13 +335,20 @@ def _hero(d):
         head, sub = 'No picks today', 'Each desk below says why.'
     top = [f"{p['side']} {p['ticker']} ({p['agreement']})"
            for p in (intra.get('top_two') or {}).get('picks') or []]
+    ru = (intra.get('top_two') or {}).get('runner_up')    # day-129: never a pick, labelled
+    ru_text = (f"runner-up, {ru.get('label') or 'no consensus'}: {ru['side']} {ru['ticker']} "
+               f"({ru['agreement']})" if ru else '')
+    if top and len(top) < 2 and ru:
+        top.append(ru_text)
     no_agreement = (intra.get('top_two') or {}).get('status') == 'NO_AGREEMENT'
     singles = [f"{x['side']} {x['ticker']} ({x['by'].split(' ')[0]})"
                for x in (intra.get('top_two') or {}).get('single') or []]
     near = [f"{x['side']} {x['ticker']} ({x['by']})"
             for x in (intra.get('top_two') or {}).get('near') or []]
     top_text = (f'Top 2 today: {" · ".join(top)}' if top else
-                ('Top 2 today: no council consensus — closest: ' + ' · '.join(near)
+                (f"Top 2 today: no council pick — {ru_text}, not a pick"
+                 if no_agreement and ru else
+                 'Top 2 today: no council consensus — closest: ' + ' · '.join(near)
                  if no_agreement and near else
                  'Top 2 today: no council consensus — nothing to act on'
                  if no_agreement and (intra.get('top_two') or {}).get('council') else

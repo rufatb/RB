@@ -126,6 +126,12 @@ def rows_from_report(report, source='published_report'):
     for pick in (intra.get('top_two') or {}).get('picks') or []:
         add('top2', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
             prompt_version=(intra.get('top_two') or {}).get('rule_version'))
+    # Day-129: the runner-up, shown labelled "no consensus" and never a council
+    # pick — a SHADOW so its record can be judged on its own; never on the scoreboard.
+    ru = (intra.get('top_two') or {}).get('runner_up')
+    if isinstance(ru, dict):
+        add('top2runner', 'pick', ru.get('side'), ru, agreement=ru.get('agreement'),
+            prompt_version=(intra.get('top_two') or {}).get('rule_version'))
     # Day-124: the counted rule beside the council, a SHADOW recorded for the
     # registered 40-session comparison and never printed in the email.
     for pick in (intra.get('top_two_counted') or {}).get('picks') or []:

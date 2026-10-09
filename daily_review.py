@@ -69,6 +69,10 @@ def picks_of(report):
 
     for p in (i.get('top_two') or {}).get('picks') or []:
         add('Top 2', '+'.join(p.get('models') or []), p['side'], p, extra={'agreement': p.get('agreement')})
+    ru = (i.get('top_two') or {}).get('runner_up')      # day-129: printed, never a pick
+    if isinstance(ru, dict):
+        add('Runner-up (not a pick)', '+'.join(ru.get('models') or []), ru['side'], ru,
+            extra={'agreement': ru.get('agreement')})
     for d in i.get('desks') or []:
         for leg in d.get('legs') or []:
             add('Desk', d.get('id'), leg['side'], leg,

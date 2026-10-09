@@ -22,3 +22,12 @@ def _empty_state_dir(tmp_path_factory, monkeypatch):
     failed only on days a morning had staged research into the container.
     Tests that need state set RB_STATE_DIR or pass state_dir themselves."""
     monkeypatch.setenv('RB_STATE_DIR', str(tmp_path_factory.mktemp('state')))
+
+
+@pytest.fixture(autouse=True)
+def _no_previous_top2(tmp_path_factory, monkeypatch):
+    """Day-129: the Top 2 flags a name that was the previous session's Top 2,
+    read from the real record. A test must not see it — tomorrow's record would
+    change today's fixture. Tests that need a previous session pass `previous`."""
+    import council
+    monkeypatch.setattr(council, 'PREVIOUS_LEDGER', tmp_path_factory.mktemp('picks')/'none.csv')

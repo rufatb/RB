@@ -1,5 +1,115 @@
 # Working notes for this repo
 
+## Day129 — every model nominates for the council; a labelled runner-up; repeats flagged (owner, 2026-10-09)
+
+On 10-09 the council's table held four positions: Gemini's two selections
+and Jev's two forced picks. Claude and DeepSeek selected nothing, as their
+prompt allows ("fewer is correct when the evidence is thin"). The council
+turned down three, and one remained. TD.TO was the Top 2 on both days (SHORT
+on 10-08, LONG on 10-09).
+
+The owner expected every model to bring its best ideas and the council to
+argue over them. They chose three things: all four nominate; a labelled
+runner-up when a slot is empty; repeats flagged. Registered in
+`PREREGISTER_day129_nominations.md` (ebbd80b) before anything ran.
+
+**Nominations (`nominations.py`, table version `day129-nominations`).**
+* **Who and when.** Inside `council.py --stage`, before the table is built.
+  DeepSeek, Gemini and Claude (OpenRouter) are each asked ONCE, in parallel.
+  Each names exactly two longs and two shorts, best first, from the desks' own
+  brief (`claude_brief.json`).
+* **Prompt.** The desk prompt's field documentation, byte for byte
+  (everything before "Rules you must follow:"), then `NOMINATION_RULES`: no
+  abstaining, because the committee decides. A desk prompt without that marker
+  refuses (`NOMINATION_PROMPT_SPLIT_MISSING`) rather than sending the desks'
+  rules.
+* **Validation.** The desks' `_clean`, `check_levels` and `check_basis`. A
+  name one model puts on both sides is dropped from both.
+* **Jev.** Its nominations are the top two of its existing forced
+  distribution, per side (`forced_long_top` / `forced_short_top`).
+  `load_prepared` names and revalidates them; a snapshot without them falls
+  back to the one forced pick.
+* **The table.**
+  * Selections first, then nominations, then Jev.
+  * A proposer keeps its first label: `selected`, `nominated` or `forced`.
+  * A selection leads before a nomination, and Jev is last.
+  * At most 16 positions (`MAX_POSITIONS`), selections kept first. The web
+    scout's cap is 16 too.
+* **A failure** costs that model's nominations only, and is named in the
+  council's `errors` ("nominations gemini": …).
+* **Unchanged.**
+  * The desks, their prompts and the desk scoreboard.
+  * The council prompt (`day124-council-v2`), its rounds and the frozen rule.
+  * The 09:46 entry check, and at most two picks, never padded.
+* **The record splits here:** `RULE_VERSION` is
+  `day124-council+day129-nominations`.
+* **The email says where a pick came from:** "Proposed: SIDE TICKER by Gemini
+  (selected), Claude (nominated), Jev (forced)" (`council.proposed_line`).
+  Older sections carry no `proposed` and print nothing.
+
+**Controls (registered bar: 4 clean runs of 5).** The planted universe went
+through each nomination path:
+* DeepSeek 5/5, Gemini 5/5, Claude 5/5, at 5–12 s a call;
+* Jev: both planted names headed its forced top two, 3/3.
+
+All four ship with nominations. Re-run with `python nominations.py --control
+all`, and Jev's with `python jev_opportunities.py --control`
+(`nominations_detected`).
+
+The same day, Jev's DESK gate (not its nominations) found the planted short
+only 1 time in 7. In the three runs whose numbers were kept, CTLDN.TO came
+back at 0.46–0.53 against its own NONE at 0.44–0.51. The planted long cleared
+every time. Its request is unchanged, and
+day-111 measured the short at the same margin (0.54 vs 0.39). The gate has no
+dial; nothing was changed.
+
+**Dry run on 10-09's state** (a copy; diagnostic, never used to tune):
+* the table held 10 positions, against 4 live that morning;
+* 58.7 s against 31 s live: nominations 13.5 s, scout 10.9 s, each ballot
+  6–16 s;
+* five positions reached consensus. The picks were SHORT ACO-X.TO and LONG
+  TD.TO, 4 of 4 each, and the repeat flag fired on TD.TO.
+
+With ten options Jev's NONE was 0.01, so it endorsed three positions (0.79,
+0.13, 0.04). Its conviction is its probability, so it sets the "weakest
+endorser" tie-break whenever it endorses. That is day-124's rule, unchanged.
+
+**The runner-up (`council.top_two`).** With fewer than two picks after the
+entry check, it is the best remaining position in tally order that meets all
+of these:
+* E ≥ 1 and E > O;
+* not chosen by the council, not split, not the other side of a pick;
+* not void at 09:46.
+
+How it is shown and kept:
+* **Label.** "no consensus", or "agreed, ranked below the picks" for an agreed
+  position beneath a void pick. An agreed position is never called "no
+  consensus".
+* **Where.** The flash subject and body, the open check, the email hero, the
+  report and the page. Never a row of the picks table, and the email subject
+  never counts it.
+* **Record.** `top2runner/pick`, a shadow. It is not on the scoreboard
+  (`primary_board.LEADERBOARD` is a whitelist). The evening review scores it in
+  its own section and keeps it out of the lessons.
+* **None qualifies.** The section says "No runner-up: …", naming any position
+  that won the votes but could not stand.
+
+**Repeats (`council.previous_top2`, `repeat_line`).** A pick or runner-up
+whose ticker was the previous recorded session's Top 2 prints "… was also the
+previous session's Top 2 (DATE): SIDE TICKER, right/wrong, ±x% from 09:45 to
+the close", or "not scored yet".
+* It is read from `data/model_picks.csv` when the section is computed, and
+  frozen with it.
+* Display only: no name is excluded for repeating.
+* `tests/conftest.py` points `council.PREVIOUS_LEDGER` at an empty file.
+
+The section's reason no longer says "no consensus" when the council's
+positions were void at 09:46.
+
+**Not claimed:** the council now has real choices and should fill both slots
+more often. Nothing shows any pick is more accurate; every source is still a
+coin flip.
+
 ## Day128 — Jev's rows go as CSV past its input limit (2026-10-08)
 
 On 10-08 Jev's desk read UNAVAILABLE: HTTP 400 `max_tokens_exceeded` at

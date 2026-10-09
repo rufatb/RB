@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo('America/New_York')
 MODEL = 'perplexity/sonar-pro'
 URL = 'https://openrouter.ai/api/v1/chat/completions'
-MAX_POSITIONS = 8
+MAX_POSITIONS = 16      # day-129: the council table holds up to 16 positions
 MAX_FACTS = 3
 
 PROMPT = ('List at most {n} news items about {who} published between {start} and {end} '
@@ -76,7 +76,7 @@ def scout(tickers, now, *, post=None, get=None):
             return t, ask_one(post, t, names.get(t, ''), now), None
         except Exception as exc:
             return t, None, (str(exc)[:30] if str(exc).isupper() else type(exc).__name__)
-    with cf.ThreadPoolExecutor(min(8, max(1, len(tickers)))) as pool:
+    with cf.ThreadPoolExecutor(min(MAX_POSITIONS, max(1, len(tickers)))) as pool:
         for t, res, err in pool.map(one, tickers):
             if res:
                 out[t] = res

@@ -37,7 +37,10 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo('America/New_York')
 PROMPT_VERSION = 'day124-council-v2'
-RULE_VERSION = 'day124-council'
+# Day-129 (amendment 3): the table also holds every model's nominations; the
+# rule is unchanged, and the version splits the council's record at the change.
+RULE_VERSION = 'day124-council+day129-nominations'
+MAX_POSITIONS = 16
 SNAPSHOT = 'council.json'
 BRIEF_TXT = 'council_brief.txt'
 BRIEF_JSON = 'council_brief.json'
@@ -110,8 +113,10 @@ def _usable(snap):
     return isinstance(snap, dict) and snap.get('status') in ('READY', 'NO_OPPORTUNITY')
 
 
-def positions(claude, deepseek, gemini, jev, session=None):
-    """Every (ticker, side) a desk SELECTED, plus Jev's forced pick per side."""
+def positions(claude, deepseek, gemini, jev, session=None, nominations=None):
+    """Every (ticker, side) a desk SELECTED, plus Jev's forced picks per side,
+    plus (day-129) each model's nominations. A model already on a position
+    keeps its first label: selected, then forced, then nominated."""
     table = {}
     order = lead_order(session)
     seat = seats(session) if session else {m: m for m in LEAD_ORDER}
@@ -138,11 +143,31 @@ def positions(claude, deepseek, gemini, jev, session=None):
                 add(model, 'selected', side, pick)
         if model == 'jev':
             for side in ('LONG', 'SHORT'):
-                add('jev', 'forced', side, snap.get('forced_' + side.lower()))
-    out = sorted(table.values(), key=lambda p: (p['ticker'], p['side']))
+                # Day-129: the forced question's top two per side are Jev's
+                # nominations; a snapshot from before carries only the one.
+                top = snap.get('forced_%s_top' % side.lower())
+                for pick in (top if isinstance(top, list) and top
+                             else [snap.get('forced_' + side.lower())]):
+                    add('jev', 'forced', side, pick)
+    for model in ('claude', 'deepseek', 'gemini'):
+        got = (nominations or {}).get(model) or {}
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for pick in got.get(key) or []:
+                add(model, 'nominated', side, pick)
+    out = list(table.values())
+    if len(out) > MAX_POSITIONS:
+        # Registered cap: what a desk SELECTED first, then the most-proposed.
+        out.sort(key=lambda p: (not any(x['how'] == 'selected' for x in p['proposers']),
+                                -len(p['proposers']), p['ticker'], p['side']))
+        out = out[:MAX_POSITIONS]
+    out.sort(key=lambda p: (p['ticker'], p['side']))
     for i, p in enumerate(out, 1):
         p['id'] = 'P%d' % i
-        p['proposers'].sort(key=lambda x: order.index(x['model']))
+        # The lead rotates daily (day-124 amendment), within tiers: a desk that
+        # SELECTED the position leads before one that only nominated it, and Jev
+        # (probabilities, no reasons) is last. With selections only, unchanged.
+        p['proposers'].sort(key=lambda x: (x['model'] == 'jev', x['how'] != 'selected',
+                                           order.index(x['model'])))
         lead = p['proposers'][0]
         for x in p['proposers']:
             x['seat'] = seat[x['model']]
@@ -404,12 +429,15 @@ def ask_claude_openrouter(system, user, *, post=None):
 
 
 def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, sleep=time.sleep,
-          clock=None, claude_post=None, scout_fn=None):
-    """Run both rounds and seal council.json. Never raises past its own failures."""
+          clock=None, claude_post=None, scout_fn=None, nominate=None):
+    """Run both rounds and seal council.json. Never raises past its own failures.
+    `nominate` maps model -> fn(system, user) for the day-129 nomination round;
+    the live morning uses the real routes, and tests opt in."""
     import claude_opportunities as C
     import deepseek_opportunities as O
     import gemini_opportunities as G
     import jev_opportunities as J
+    import nominations as N
     clock = clock or (lambda: dt.datetime.now(ET))
     now = _now(now or clock())
     root = Path(state_dir)
@@ -428,20 +456,37 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
             snaps[k] = {'status': 'UNAVAILABLE', 'reason': type(exc).__name__}
     session = now.date().isoformat()
     seat = seats(session)
-    table = positions(snaps['claude'], snaps['deepseek'], snaps['gemini'], snaps['jev'], session)
-    base = {'prompt_version': PROMPT_VERSION, 'session': session,
+    errors = {}
+    live = not clients            # tests inject members; the live morning does not
+    # Day-129 (amendment 3): every model nominates its best two per side before
+    # the table is built, from the desks' own brief. A failure costs that
+    # model's nominations only, named in `errors`.
+    noms = {}
+    if nominate is None and live:
+        nominate = N.live_askers(claude_post=claude_post)
+    if nominate:
+        try:
+            brief_ = C.read_brief(root, now)
+            noms, nom_errors = N.collect(brief_['payload'], set(brief_['universe']), ask=nominate)
+            errors.update(nom_errors)
+        except Exception as exc:
+            errors['nominations'] = (str(exc) if str(exc).isupper() else type(exc).__name__)[:80]
+    table = positions(snaps['claude'], snaps['deepseek'], snaps['gemini'], snaps['jev'], session,
+                      nominations=noms)
+    base = {'prompt_version': PROMPT_VERSION, 'table_version': N.VERSION, 'session': session,
             'asked_at': now.isoformat(), 'positions': table, 'seats': seat,
-            'lead_order': list(lead_order(session))}
+            'lead_order': list(lead_order(session)),
+            'nominations': {m: {'longs': [p['ticker'] for p in v['longs']],
+                                'shorts': [p['ticker'] for p in v['shorts']], 'gaps': v['gaps'][:6]}
+                            for m, v in noms.items()}}
     if not table:
-        out = {**base, 'status': 'NO_POSITIONS', 'picks': [],
+        out = {**base, 'status': 'NO_POSITIONS', 'picks': [], 'errors': errors,
                'reason': 'no model proposed a position today'}
         _write(root/SNAPSHOT, out)
         return out
     ids = [p['id'] for p in table]
     rows = evidence_rows(root, now, {p['ticker'] for p in table})
     pub = public(table)
-    errors = {}
-    live = not clients            # tests inject members; the live morning does not
     if scout_fn is None and live:
         import scout as SC
         scout_fn = SC.scout
@@ -636,56 +681,193 @@ def load(state_dir, now):
     return obj
 
 
-def top_two(council, counted=None, *, prices=None):
+PREVIOUS_LEDGER = None          # tests point this at an empty file; None = the real record
+
+
+def _num(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def previous_top2(session, rows=None):
+    """{ticker: {'session', 'side', 'r_pct', 'hit'}} for the last recorded
+    session before `session` that had Top 2 picks (day-129 repeat flag). Read
+    when the section is computed and frozen with it; renderers never read the
+    ledger. A missing or unreadable ledger flags nothing."""
+    if rows is None:
+        import model_picks as M
+        try:
+            rows = M.read(PREVIOUS_LEDGER or M.LEDGER)
+        except (OSError, ValueError):
+            return {}
+    prev = [r for r in rows if r.get('model') == 'top2' and r.get('kind') == 'pick'
+            and str(r.get('session') or '') < str(session)]
+    if not prev:
+        return {}
+    last = max(str(r['session']) for r in prev)
+    return {r['ticker']: {'session': last, 'side': r.get('side'), 'r_pct': _num(r.get('r_pct')),
+                          'hit': r.get('hit') or None}
+            for r in prev if str(r['session']) == last}
+
+
+def _shape(p, r, members, check):
+    """A tally row in the Top 2 section's shape: a pick or the runner-up."""
+    n = len(members)
+    return {
+        'ticker': p['ticker'], 'side': p['side'], 'lead': p['lead'], 'reason': p.get('reason'),
+        'invalid_at': p.get('invalid_at'), 'entry_check': check,
+        'models': [m.lower() for m in r['endorse']],
+        'backing': ['%s %s' % (m, '%.2f' % r['votes'][m]['conviction']
+                                if r['votes'][m].get('conviction') is not None else '')
+                    for m in r['endorse']],
+        'agreement': '%d of %d endorse' % (len(r['endorse']), n),
+        'verdict': ('%d of %d endorse' % (len(r['endorse']), n)
+                    + (', %d object' % len(r['oppose']) if r['oppose'] else '')
+                    + ('; named best by %d' % len(r['seats']) if r['seats'] else '')),
+        'votes': r['votes'], 'votes_against': r['oppose'], 'split': False,
+        'confidence': r['weakest'], 'council': True,
+        'proposed': [{'model': NAMES.get(x['model'], x['model']), 'how': x['how']}
+                     for x in p.get('proposers') or []]}
+
+
+def top_two(council, counted=None, *, prices=None, previous=None):
     """The council's decision in the Top 2 section's shape. The 09:46 entry check
-    (day-120 E1) drops a position already past its lead proposer's "wrong if"."""
+    (day-120 E1) drops a position already past its lead proposer's "wrong if".
+
+    Day-129 (amendment 3): with fewer than two picks, the best remaining
+    position (tally order, E >= 1 and E > O, not one the council chose, not
+    split, not on a picked ticker, not past its own "wrong if") is the
+    RUNNER-UP — shown, labelled, never a council pick. Its `label` is "no
+    consensus", or, for an agreed position ranked below two the council chose
+    (one of them void at 09:46), "agreed, ranked below the picks". A pick or
+    runner-up that was the previous session's Top 2 carries `repeat`.
+    `previous` is {ticker: ...} from `previous_top2`."""
     import entry_checks
     by_id = {p['id']: p for p in council.get('positions') or []}
-    rows = {r['id']: r for r in (council.get('tally') or {}).get('rows') or []}
+    tally_rows = (council.get('tally') or {}).get('rows') or []
+    rows = {r['id']: r for r in tally_rows}
     members = (council.get('tally') or {}).get('members') or []
     picks, void = [], []
+
+    def entry(p):
+        if prices is None:
+            return None
+        return entry_checks.check(p['side'], p.get('invalid_at'), prices.get(p['ticker']))
     for pid in council.get('picks') or []:
         p, r = by_id.get(pid), rows.get(pid)
         if not p or not r:
             continue
-        check = None
-        if prices is not None:
-            check = entry_checks.check(p['side'], p.get('invalid_at'), prices.get(p['ticker']))
-            if check == 'VOID':
-                void.append('%s %s' % (p['side'], p['ticker']))
+        check = entry(p)
+        if check == 'VOID':
+            void.append('%s %s' % (p['side'], p['ticker']))
+            continue
+        picks.append(_shape(p, r, members, check))
+    runner_up, skipped = None, []
+    if len(picks) < PICKS:
+        taken = {x['ticker'] for x in picks}
+        chosen = set(council.get('picks') or [])
+        for r in tally_rows:
+            p = by_id.get(r['id'])
+            if (not p or r['id'] in chosen
+                    or not r['endorse'] or len(r['endorse']) <= len(r['oppose'])):
                 continue
-        n = len(members)
-        picks.append({
-            'ticker': p['ticker'], 'side': p['side'], 'lead': p['lead'], 'reason': p.get('reason'),
-            'invalid_at': p.get('invalid_at'), 'entry_check': check,
-            'models': [m.lower() for m in r['endorse']],
-            'backing': ['%s %s' % (m, '%.2f' % r['votes'][m]['conviction']
-                                    if r['votes'][m].get('conviction') is not None else '')
-                        for m in r['endorse']],
-            'agreement': '%d of %d endorse' % (len(r['endorse']), n),
-            'verdict': ('%d of %d endorse' % (len(r['endorse']), n)
-                        + (', %d object' % len(r['oppose']) if r['oppose'] else '')
-                        + ('; named best by %d' % len(r['seats']) if r['seats'] else '')),
-            'votes': r['votes'], 'votes_against': r['oppose'], 'split': False,
-            'confidence': r['weakest'], 'council': True})
+            # More endorsements than objections, but it cannot stand: say why.
+            why = ('the models split on it' if r.get('split') else
+                   'the other side of a pick' if r['ticker'] in taken else
+                   'past its own "wrong if" at 09:46' if entry(p) == 'VOID' else None)
+            if why:
+                skipped.append('%s %s (%s)' % (r['side'], r['ticker'], why))
+                continue
+            check = entry(p)
+            runner_up = {**_shape(p, r, members, check), 'runner_up': True,
+                         'label': ('agreed, ranked below the picks' if r.get('consensus')
+                                   else 'no consensus')}
+            break
     near = [{'side': r['side'], 'ticker': r['ticker'],
              'by': '%d of %d endorse' % (len(r['endorse']), len(members))}
-            for r in (council.get('tally') or {}).get('rows') or []
-            if not r.get('consensus') and r['endorse']][:4]
+            for r in tally_rows
+            if not r.get('consensus') and r['endorse']
+            and not (runner_up and (r['ticker'], r['side']) == (runner_up['ticker'], runner_up['side']))][:4]
     status = ('READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT')
     reason = (None if len(picks) == PICKS else
-              'Only one position won the council; the second slot is left empty.' if picks else
+              'Only one position won the council; the second slot is left empty.'
+              if picks and not void else
+              'One position the council chose was already past its own "wrong if" at 09:46; '
+              'the second slot is left empty.' if picks else
+              'The council\'s positions were already past their own "wrong if" at 09:46, so there '
+              'is nothing here to act on.' if void else
               'No consensus today: no position won most of the council after two rounds, so there '
               'is nothing here to act on.')
+    repeat_note = None
+    if previous is None:
+        try:
+            previous = previous_top2(council.get('session') or '')
+        except Exception as exc:          # display only: it never costs the section, and says so
+            previous = {}
+            repeat_note = 'The repeat check could not read the record (%s).' % type(exc).__name__
+    for x in picks + ([runner_up] if runner_up else []):
+        if x['ticker'] in (previous or {}):
+            x['repeat'] = previous[x['ticker']]
     out = {'picks': picks, 'status': status, 'council': True,
            'answered': members, 'absent': (council.get('tally') or {}).get('absent') or [],
            'rule_version': RULE_VERSION + ('+' + entry_checks.RULE_VERSION if prices is not None else ''),
-           'reason': reason, 'near': near}
+           'reason': reason, 'near': near,
+           'runner_up': runner_up,
+           'runner_up_note': (None if len(picks) == PICKS or runner_up else
+                              'No runner-up: the other positions with more endorsements than '
+                              'objections cannot stand — ' + ', '.join(skipped) + '.' if skipped else
+                              'No runner-up: every other position drew at least as many objections '
+                              'as endorsements.')}
     if void:
         out['void_at_entry'] = void
+    if repeat_note:
+        out['repeat_note'] = repeat_note
     if counted and counted.get('split'):
         out['split'] = counted['split']
     return out
+
+
+def repeat_line(x):
+    """"Also the previous session's Top 2 …" for a flagged pick or runner-up."""
+    rep = x.get('repeat')
+    if not rep:
+        return None
+    if rep.get('r_pct') is None:
+        result = 'not scored yet'
+    else:
+        result = '%s, %+.2f%% from 09:45 to the close' % (
+            'right' if rep['r_pct'] > 0 else 'wrong', rep['r_pct'])
+    return ("%s %s was also the previous session's Top 2 (%s): %s %s, %s."
+            % (x['side'], x['ticker'], rep.get('session'), rep.get('side'), x['ticker'], result))
+
+
+def proposed_line(picks):
+    """Who put each pick on the table, and how (day-129): a desk's own
+    selection, a nomination, or Jev's forced pick. Older sections carry no
+    `proposed` and print nothing."""
+    parts = ['%s %s by %s' % (p['side'], p['ticker'],
+                              ', '.join('%s (%s)' % (x['model'], x['how']) for x in p['proposed']))
+             for p in picks if p.get('proposed')]
+    return ('Proposed: ' + '; '.join(parts) + '.') if parts else None
+
+
+def runner_up_label(ru):
+    return (ru or {}).get('label') or 'no consensus'
+
+
+def runner_up_line(section):
+    """The runner-up in one line, labelled so it can never pass for a pick."""
+    ru = section.get('runner_up')
+    if not ru:
+        return section.get('runner_up_note')
+    wrong = ('; wrong if %s %g' % ('below' if ru['side'] == 'LONG' else 'above', ru['invalid_at'])
+             if isinstance(ru.get('invalid_at'), (int, float)) else '')
+    why = _clip(str(ru.get('reason') or ''), 160)
+    return ('Runner-up — %s, not a council pick: %s %s (%s)%s.%s'
+            % (runner_up_label(ru), ru['side'], ru['ticker'], ru['verdict'], wrong,
+               (' %s: %s' % (ru['lead'], why)) if why else ''))
 
 
 def decide(counted, council, *, prices=None):

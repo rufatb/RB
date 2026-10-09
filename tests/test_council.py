@@ -334,13 +334,178 @@ def test_the_council_decides_and_the_counted_rule_is_the_fallback():
         '\n'.join(top_picks.table(fall, concise=True))
 
 
+def snap_of(finals):
+    """council_snap's three positions, sealed from `finals` by the real tally."""
+    s = council_snap()
+    s['tally'] = K.tally(s['positions'], finals)
+    s['picks'] = [r['id'] for r in s['tally']['rows'] if r['consensus']][:2]
+    s['status'] = 'READY' if s['picks'] else 'NO_CONSENSUS'
+    return s
+
+
+# Every position drew at least as many objections as endorsements: no runner-up.
+TURNED_DOWN = {'Claude': ballot(P1='ENDORSE 0.7', P2='ENDORSE 0.6', P3='ENDORSE 0.6'),
+               'DeepSeek': ballot(P1='OPPOSE 0.8', P2='OPPOSE 0.7', P3='OPPOSE 0.6'),
+               'Gemini': ballot(P1='OPPOSE 0.6', P2='ABSTAIN', P3='OPPOSE 0.6')}
+# LONG AC.TO agreed 3 of 3; SHORT SU.TO one endorsement, no objection; LONG CNQ.TO turned down.
+ONE_AND_A_RUNNER_UP = {'Claude': ballot(P1='ENDORSE 0.7', P2='ENDORSE 0.6', P3='ENDORSE 0.6'),
+                       'DeepSeek': ballot(P1='ENDORSE 0.8', P2='ABSTAIN', P3='OPPOSE 0.6'),
+                       'Gemini': ballot(P1='ENDORSE 0.6', P2='ABSTAIN', P3='OPPOSE 0.6')}
+
+
 def test_the_hero_names_the_closest_positions_on_a_no_consensus_day():
     import email_render as E
-    snap = council_snap()
-    snap['picks'] = []
-    sec = K.decide(counted(), snap)
+    sec = K.decide(counted(), snap_of(TURNED_DOWN))
+    assert sec['picks'] == [] and sec['runner_up'] is None
     html = E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
-    assert 'no council consensus — closest: LONG CNQ.TO (1 of 3 endorse)' in html
+    assert 'no council consensus — closest: SHORT SU.TO (1 of 3 endorse) · LONG AC.TO' in html
+
+
+# ── day-129: the runner-up and the repeat flag ──────────────────────────────
+
+def test_with_one_pick_the_runner_up_is_shown_labelled_and_is_never_a_pick():
+    import email_render as E
+    import top_picks
+    sec = K.decide(counted(), snap_of(ONE_AND_A_RUNNER_UP))
+    assert [p['ticker'] for p in sec['picks']] == ['AC.TO'] and sec['status'] == 'PARTIAL'
+    ru = sec['runner_up']
+    assert (ru['side'], ru['ticker'], ru['label'], ru['runner_up']) == ('SHORT', 'SU.TO', 'no consensus', True)
+    assert [x['ticker'] for x in sec['near']] == ['CNQ.TO']        # not listed twice
+    line = K.runner_up_line(sec)
+    assert line == ('Runner-up — no consensus, not a council pick: SHORT SU.TO (1 of 3 endorse); '
+                    'wrong if above 50. DeepSeek: s')
+    text = '\n'.join(top_picks.table(sec, concise=True))
+    assert line in text and '| 2 |' not in text                     # never a row of the table
+    assert 'Top 2 today: LONG AC.TO (3 of 3 endorse) · runner-up, no consensus: SHORT SU.TO ' \
+           '(1 of 3 endorse)' in E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
+
+
+def test_a_runner_up_needs_more_endorsements_than_objections_and_must_still_stand():
+    sec = K.top_two(snap_of(TURNED_DOWN))
+    assert sec['runner_up'] is None
+    assert sec['runner_up_note'] == ('No runner-up: every other position drew at least as many '
+                                     'objections as endorsements.')
+    # SU.TO qualifies on the votes, but at 09:46 it is already above its own 50.0
+    sec = K.top_two(snap_of(ONE_AND_A_RUNNER_UP), prices={'AC.TO': 31.0, 'SU.TO': 51.0})
+    assert [p['ticker'] for p in sec['picks']] == ['AC.TO'] and sec['runner_up'] is None
+    assert sec['runner_up_note'] == ('No runner-up: the other positions with more endorsements than '
+                                     'objections cannot stand — SHORT SU.TO (past its own "wrong if" '
+                                     'at 09:46).')
+    # the other side of a picked ticker is never the runner-up
+    snap = snap_of(ONE_AND_A_RUNNER_UP)
+    snap['positions'][1]['ticker'] = snap['tally']['rows'][1]['ticker'] = 'AC.TO'
+    assert K.top_two(snap)['runner_up'] is None
+
+
+def test_an_agreed_position_below_a_void_pick_is_the_runner_up_and_says_it_agreed():
+    import email_render as E
+    import top_picks
+    finals = {m: ballot(P1='ENDORSE 0.7', P2='ENDORSE 0.6', P3='ENDORSE 0.6', top=['P1', 'P2'])
+              for m in ('Claude', 'DeepSeek', 'Gemini')}
+    snap = snap_of(finals)                 # all three agreed; the council chose AC.TO and SU.TO
+    assert [r['ticker'] for r in snap['tally']['rows'] if r['consensus']] == ['AC.TO', 'SU.TO', 'CNQ.TO']
+    sec = K.top_two(snap, prices={'AC.TO': 29.0, 'SU.TO': 49.0, 'CNQ.TO': 20.0})
+    assert [p['ticker'] for p in sec['picks']] == ['SU.TO'] and sec['void_at_entry'] == ['LONG AC.TO']
+    assert sec['runner_up']['ticker'] == 'CNQ.TO'
+    assert sec['runner_up']['label'] == 'agreed, ranked below the picks'
+    assert sec['reason'].startswith('One position the council chose was already past its own "wrong if"')
+    assert 'Runner-up — agreed, ranked below the picks, not a council pick: LONG CNQ.TO' in \
+        '\n'.join(top_picks.table(sec, concise=True))
+    # both chosen positions void: the hero never says "no consensus" over an agreed runner-up
+    sec = K.top_two(snap, prices={'AC.TO': 29.0, 'SU.TO': 51.0, 'CNQ.TO': 20.0})
+    assert sec['picks'] == [] and sec['reason'].startswith("The council's positions were already past")
+    html = E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
+    assert 'Top 2 today: no council pick — runner-up, agreed, ranked below the picks: LONG CNQ.TO' in html
+    assert 'No council pick survived the 09:46 entry check.' in '\n'.join(top_picks.table(sec, concise=True))
+
+
+def test_a_repeat_of_the_previous_sessions_top_two_is_flagged_with_its_result():
+    import top_picks
+    rows = [{'session': '2026-10-01', 'model': 'top2', 'kind': 'pick', 'side': 'LONG', 'ticker': 'SU.TO',
+             'r_pct': '0.5'},
+            {'session': '2026-10-02', 'model': 'top2', 'kind': 'pick', 'side': 'SHORT', 'ticker': 'AC.TO',
+             'r_pct': '-0.4149'},
+            {'session': '2026-10-02', 'model': 'top2runner', 'kind': 'pick', 'side': 'LONG',
+             'ticker': 'SU.TO', 'r_pct': ''},
+            {'session': '2026-10-05', 'model': 'top2', 'kind': 'pick', 'side': 'LONG', 'ticker': 'SU.TO',
+             'r_pct': ''}]
+    prev = K.previous_top2('2026-10-05', rows)      # the last session BEFORE today, Top 2 rows only
+    assert prev == {'AC.TO': {'session': '2026-10-02', 'side': 'SHORT', 'r_pct': -0.4149, 'hit': None}}
+    sec = K.top_two(council_snap(), previous=prev)
+    assert sec['picks'][0]['repeat']['session'] == '2026-10-02' and 'repeat' not in sec['picks'][1]
+    line = K.repeat_line(sec['picks'][0])
+    assert line == ("LONG AC.TO was also the previous session's Top 2 (2026-10-02): SHORT AC.TO, wrong, "
+                    "-0.41% from 09:45 to the close.")
+    assert line in '\n'.join(top_picks.table(sec, concise=True))
+    unscored = {'side': 'LONG', 'ticker': 'TD.TO', 'repeat': {'session': '2026-10-08', 'side': 'SHORT',
+                                                               'r_pct': None}}
+    assert K.repeat_line(unscored).endswith(': SHORT TD.TO, not scored yet.')
+    assert K.repeat_line({'side': 'LONG', 'ticker': 'TD.TO'}) is None
+
+
+def test_the_repeat_lookup_reads_the_record_and_a_missing_one_flags_nothing(tmp_path, monkeypatch):
+    import model_picks as M
+    path = tmp_path/'picks.csv'
+    M.write([{'session': '2026-10-08', 'model': 'top2', 'kind': 'pick', 'side': 'SHORT',
+              'ticker': 'TD.TO', 'r_pct': -0.4149, 'hit': False}], path)
+    monkeypatch.setattr(K, 'PREVIOUS_LEDGER', path)
+    assert K.previous_top2('2026-10-09')['TD.TO']['r_pct'] == -0.4149
+    assert K.previous_top2('2026-10-08') == {}                   # never today's own rows
+    monkeypatch.setattr(K, 'PREVIOUS_LEDGER', tmp_path/'missing.csv')
+    assert K.previous_top2('2026-10-09') == {}
+
+
+def test_each_pick_says_who_proposed_it_and_how():
+    import top_picks
+    snap = snap_of(ONE_AND_A_RUNNER_UP)
+    snap['positions'][0]['proposers'] = [{'model': 'gemini', 'how': 'selected'},
+                                         {'model': 'claude', 'how': 'nominated'},
+                                         {'model': 'jev', 'how': 'forced'}]
+    sec = K.top_two(snap)
+    line = 'Proposed: LONG AC.TO by Gemini (selected), Claude (nominated), Jev (forced).'
+    assert K.proposed_line(sec['picks']) == line
+    assert line in '\n'.join(top_picks.table(sec, concise=True))
+    assert K.proposed_line([{'side': 'LONG', 'ticker': 'AC.TO'}]) is None     # an older section
+
+
+def test_an_unreadable_record_costs_the_repeat_flag_only_and_says_so(monkeypatch):
+    import top_picks
+
+    def broken(session, rows=None):
+        raise RuntimeError('disk')
+    monkeypatch.setattr(K, 'previous_top2', broken)
+    sec = K.top_two(council_snap())
+    assert len(sec['picks']) == 2 and not any('repeat' in p for p in sec['picks'])
+    assert 'The repeat check could not read the record (RuntimeError).' in \
+        '\n'.join(top_picks.table(sec, concise=True))
+
+
+def test_the_runner_up_is_recorded_as_its_own_shadow_never_as_top2_or_on_the_board():
+    import model_picks
+    import primary_board
+    sec = K.decide(counted(), snap_of(ONE_AND_A_RUNNER_UP))
+    rows = model_picks.rows_from_report({'session': '2026-10-05', 'intraday': {'top_two': sec}})
+    got = sorted((r['model'], r['side'], r['ticker'], r['agreement']) for r in rows)
+    assert got == [('top2', 'LONG', 'AC.TO', '3 of 3 endorse'),
+                   ('top2runner', 'SHORT', 'SU.TO', '1 of 3 endorse')]
+    assert 'top2runner_pick' not in dict(primary_board.LEADERBOARD)
+
+
+def test_the_page_prints_the_runner_up_and_the_repeat_as_the_email_does():
+    import report_page
+    prev = {'AC.TO': {'session': '2026-10-02', 'side': 'SHORT', 'r_pct': -0.4149, 'hit': None}}
+    sec = K.top_two(snap_of(ONE_AND_A_RUNNER_UP), previous=prev)
+    html = report_page._top_two_section({'top_two': sec})
+    assert 'Runner-up — no consensus, not a council pick: SHORT SU.TO' in html
+    assert 'LONG AC.TO was also the previous session' in html
+    assert html.count('<tr class="reason">') == 1                  # one pick row, never two
+
+
+def test_the_evening_review_scores_the_runner_up_apart_from_the_top_two():
+    import daily_review
+    sec = K.decide(counted(), snap_of(ONE_AND_A_RUNNER_UP))
+    got = [(x['section'], x['ticker']) for x in daily_review.picks_of({'intraday': {'top_two': sec}})]
+    assert ('Top 2', 'AC.TO') in got and ('Runner-up (not a pick)', 'SU.TO') in got
 
 
 def test_the_counted_rule_is_recorded_as_a_shadow_and_the_council_as_top2():
@@ -349,7 +514,8 @@ def test_the_counted_rule_is_recorded_as_a_shadow_and_the_council_as_top2():
     rows = model_picks.rows_from_report({'session': '2026-10-05', 'intraday': {
         'top_two': sec, 'top_two_counted': counted()}})
     got = sorted((r['model'], r['ticker'], r['prompt_version']) for r in rows)
-    assert got == [('top2', 'AC.TO', 'day124-council'), ('top2', 'SU.TO', 'day124-council'),
+    assert got == [('top2', 'AC.TO', 'day124-council+day129-nominations'),
+                   ('top2', 'SU.TO', 'day124-council+day129-nominations'),
                    ('top2count', 'AC.TO', 'day121-agreement')]
 
 

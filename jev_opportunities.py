@@ -385,6 +385,23 @@ def _forced(answer, allowed):
             'confidence': confidence, 'forced': True}, gaps
 
 
+def _forced_top(answer, allowed, k=2):
+    """The forced question's top `k` names, best first: Jev's nominations for the
+    council (day-129). Ordered exactly as `_forced` picks its one name (highest
+    probability, ties to the larger ticker), so the first is always the forced
+    pick. An invalid entry is skipped, never repaired."""
+    if not isinstance(answer, dict) or answer.get('type') != 'choice':
+        return []
+    probabilities = answer.get('probabilities')
+    if not isinstance(probabilities, dict):
+        return []
+    ranked = sorted(((float(p), t) for t, p in probabilities.items()
+                     if t != ABSTAIN and isinstance(t, str) and TICKER.fullmatch(t) and t in allowed
+                     and not isinstance(p, bool) and isinstance(p, (int, float))
+                     and 0.0 <= float(p) <= 1.0), reverse=True)
+    return [{'ticker': t, 'probability': round(p, 4), 'forced': True} for p, t in ranked[:k]]
+
+
 def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
          timeout=REQUEST_TIMEOUT, levels=STATE_LEVELS):
     """One request, two typed questions, at most two names per side. Pure of state.
@@ -462,6 +479,8 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
     shorts, short_ranked, short_gaps = _side(reply['answers'].get('short'), allowed)
     forced_long, forced_long_gaps = _forced(reply['answers'].get('forced_long'), allowed)
     forced_short, forced_short_gaps = _forced(reply['answers'].get('forced_short'), allowed)
+    forced_long_top = _forced_top(reply['answers'].get('forced_long'), allowed)
+    forced_short_top = _forced_top(reply['answers'].get('forced_short'), allowed)
     # The abstain probability from the GATED question, carried onto the forced
     # pick so the two can be compared at a glance: a forced pick below it is
     # Jev saying it would rather have done nothing.
@@ -500,6 +519,9 @@ def rank(candidates, *, macro=None, model=None, key=None, poster=None, now=None,
             # A pick EVERY day, from a question with no way to decline. Never
             # merged into longs/shorts — a different question, reported as one.
             'forced_long': forced_long, 'forced_short': forced_short,
+            # Day-129: the forced question's top two per side, Jev's nominations
+            # for the council table. Never a selection, never sized.
+            'forced_long_top': forced_long_top, 'forced_short_top': forced_short_top,
             'forced_label': FORCED_LABEL,
             'gaps': (long_gaps + short_gaps + forced_long_gaps
                      + forced_short_gaps + evidence_gaps),
@@ -668,6 +690,25 @@ def _forced_staged(pick, allowed, side):
     return out, []
 
 
+def _forced_top_staged(rows, allowed):
+    """Revalidate a staged forced top list (day-129). A bad row is dropped, and
+    the list is re-sorted rather than trusted to be in order."""
+    if not isinstance(rows, list):
+        return [], ['invalid forced top list'] if rows is not None else []
+    out, gaps, seen = [], [], set()
+    for row in rows:
+        ticker = row.get('ticker') if isinstance(row, dict) else None
+        probability = _prob(row.get('probability')) if isinstance(row, dict) else None
+        if (not isinstance(ticker, str) or not TICKER.fullmatch(ticker) or ticker not in allowed
+                or ticker in seen or probability is None):
+            gaps.append('a forced top entry was outside the universe or malformed')
+            continue
+        seen.add(ticker)
+        out.append({'ticker': ticker, 'probability': probability, 'forced': True})
+    out.sort(key=lambda r: (r['probability'], r['ticker']), reverse=True)
+    return out[:2], gaps
+
+
 def load_prepared(state_dir, now, *, diagnostic=False):
     """Revalidate the sealed snapshot. Pure: no provider call, no state written."""
     try:
@@ -719,6 +760,11 @@ def load_prepared(state_dir, now, *, diagnostic=False):
         asked_forced = any(('forced_' + s) in obj for s in ('long', 'short'))
         forced_long, fl_gaps = _forced_staged(obj.get('forced_long'), allowed, 'long')
         forced_short, fs_gaps = _forced_staged(obj.get('forced_short'), allowed, 'short')
+        # Day-129: the nominations travel too — the day-112d lesson is that a
+        # reader which rebuilds the dict drops whatever it does not name.
+        asked_top = 'forced_long_top' in obj or 'forced_short_top' in obj
+        long_top, lt_gaps = _forced_top_staged(obj.get('forced_long_top'), allowed)
+        short_top, st_gaps = _forced_top_staged(obj.get('forced_short_top'), allowed)
         status = obj.get('status')
         if status not in ('READY', 'NO_OPPORTUNITY', 'UNAVAILABLE'):
             raise ValueError('unknown status')
@@ -738,8 +784,11 @@ def load_prepared(state_dir, now, *, diagnostic=False):
                 # that was never put. Only a snapshot that WAS asked gets keys.
                 **({'forced_long': forced_long, 'forced_short': forced_short,
                     'forced_label': FORCED_LABEL} if asked_forced else {}),
+                **({'forced_long_top': long_top, 'forced_short_top': short_top}
+                   if asked_top else {}),
                 'gaps': [safe_detail(str(g)) for g in (obj.get('gaps') or [])]
-                        + long_gaps + short_gaps + lr_gaps + sr_gaps + fl_gaps + fs_gaps,
+                        + long_gaps + short_gaps + lr_gaps + sr_gaps + fl_gaps + fs_gaps
+                        + lt_gaps + st_gaps,
                 'prepared_at': prepared.isoformat(), 'adopted': False,
                 'registration': REGISTRATION, 'confidence_label': CONFIDENCE_LABEL}
     except (OSError, UnicodeError, ValueError, TypeError, KeyError, AttributeError) as exc:
@@ -791,9 +840,12 @@ def run_control(*, poster=None, key=None, model=None, now=None, levels=STATE_LEV
     import deepseek_opportunities as D
     result = rank(D.control_universe(), poster=poster, key=key, model=model, now=now,
                   levels=levels)
+    heads = [(result.get(k) or [{}])[0].get('ticker') for k in ('forced_long_top', 'forced_short_top')]
     return {**result,
             'long_detected': any(r['ticker'] == D.CONTROL_LONG for r in result.get('longs') or []),
-            'short_detected': any(r['ticker'] == D.CONTROL_SHORT for r in result.get('shorts') or [])}
+            'short_detected': any(r['ticker'] == D.CONTROL_SHORT for r in result.get('shorts') or []),
+            # Day-129: the planted names must HEAD Jev's council nominations.
+            'nominations_detected': heads == [D.CONTROL_LONG, D.CONTROL_SHORT]}
 
 
 def main(argv=None):
