@@ -89,3 +89,32 @@ grows every day. Nothing it computes changes a pick, a size or the scored
 record.
 
 **Not claimed.** Nothing here is shown to make any pick more accurate.
+
+## Amendment 1 (2026-10-11, before H5 and H6 ran)
+
+H1 failed (gross +0.03% per week; see `data/replay_day130_reversal.json`).
+H2 failed both bars. Of the exits, only the noon exit passed in every
+population. Two further tests are registered here, before they run.
+
+**H5 — intraday momentum into the close.** In the literature, the first
+half hour predicts the last half hour on the index (Gao, Han, Li and Zhou,
+2018).
+* **Population:** the 125 names, 60 sessions of 5-minute bars.
+* **Signal:** the 09:30 → 10:00 return.
+* **Trade:** the last half hour, 15:25 → 15:55, on the signal's side, for
+  every name whose signal is beyond ±0.25%.
+* **Bar:**
+  * session-clustered t ≥ 3;
+  * same sign in each of the three months;
+  * net of 0.10% per side;
+  * placebo by shuffling the signal across names within a session,
+    p < 0.01.
+* XIU alone is reported as a description; 60 sessions cannot test it.
+
+**H6 — intraday vs overnight drift in the pool.** Two years of daily bars,
+125 names: the mean open → close return (intraday) and the mean close → next
+open return (overnight), per session averaged across names.
+* **Bar:** intraday mean below zero at session-clustered t ≤ −3, and below
+  zero in each of the last four quarters.
+* **If it passes:** a short side gets a structural tailwind intraday. That is
+  printed beside the scoreboard as context; no pick rule changes.
