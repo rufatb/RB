@@ -118,3 +118,29 @@ open return (overnight), per session averaged across names.
   zero in each of the last four quarters.
 * **If it passes:** a short side gets a structural tailwind intraday. That is
   printed beside the scoreboard as context; no pick rule changes.
+
+## Amendment 2 (2026-10-11, before H7 and H8 ran)
+
+H5 failed (gross +0.0002% over 6,511 name-days). H6 failed: intraday drift was
+POSITIVE (+0.08% per session, t 2.4). See `data/replay_day130_intraday.json`.
+
+**H7 — learning which picks to trust (meta-labelling).** On the 379 replay
+picks, a logistic model predicts whether a pick is right.
+* **Features:** model, side, own confidence, whether the open gapped the
+  pick's way, the market's gap the pick's way, `move_atr` signed, `atr_pct`.
+* **Validation:** leave-one-session-out, so no session trains its own
+  prediction.
+* **Bar:**
+  * out-of-sample AUC ≥ 0.58;
+  * the picks it keeps (predicted p > 0.5) beat the ones it drops at
+    session-clustered t ≥ 3;
+  * a shuffled-label placebo, p < 0.01.
+* **If it passes:** a shadow filter is recorded for 40 sessions before
+  anything uses it.
+
+**H8 — volatility sizing.** Per session, the portfolio of that day's replay
+picks, weighted equally versus weighted by 1 / ATR.
+* **Bar:** the session P&L's sd falls by at least 15%, and the mean is not
+  worse by more than 0.05% per session.
+* **If it passes:** the email prints a volatility-scaled share count beside
+  the desks' equal split, as display only.
