@@ -43,14 +43,31 @@ day-117 found). Do not rebuild the failed ideas without new data.
 * **Thin ETFs.** A thin ETF may not trade in the 09:40 bar; the hedge takes its
   last trade at or before it.
 
-**The noon check (`noon_check.py`, tested, NOT switched on).**
+**The noon check (`noon_check.py`), switched on by the owner on 10-11.**
 * **What it reports.** At 12:00–13:30 ET it emails each council pick (and the
   labelled runner-up) from the frozen report: the move since the 09:45 entry,
   whether its "wrong if" was crossed, and the sector ETF's move.
 * **Limits.** One email a day (`noon/sent.json`); a name whose bars fail reads
   NOT CHECKED.
-* **Switching it on** needs a new 12:00 Routine in the owner's session. That is
-  the owner's decision; no existing Routine was changed.
+* **The Routine** is `trig_01Xcy8mXhQqQzbBV5P5MeFZq` (11:58 ET, weekdays, the
+  owner's session). Its prompt is `ROUTINE_NOON.md`; keep the two in sync.
+
+**The HTML check (`send_check.py`), after every email.** On 10-07 the report
+went out as text alone and the owner got raw "|" tables.
+* **Why it happened.** The session pastes the HTML into the Gmail call by hand,
+  and that morning it left it out.
+* **The HTML is smaller.** It is 49 KB on 98 lines, so it can be read in pages
+  and pasted whole. The send path strips `<style>`, classes and backgrounds,
+  so every style is inline; a test pins that.
+* **After each send.**
+  * The session reads the message back (`get_message` MINIMAL).
+  * The snippet must start with the HTML's first words ("Morning research
+    note…"). A text-only send starts "# RB …". Size alone could not tell a
+    4 KB noon email from its text-only twin.
+  * The size must reach 80% of the two files.
+  * HTML_MISSING → ONE resend, in the same thread, with the HTML.
+* **Where.** It is in the morning, watchdog, bridge and noon prompts, and the
+  09:47 warm-up loads `get_message`.
 
 The research scripts are `replay_reversal.py`, `replay_intraday.py` and
 `replay_metalabel.py`; their summaries are `data/replay_day130_*.json`. The

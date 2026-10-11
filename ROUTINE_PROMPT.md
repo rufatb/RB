@@ -39,9 +39,9 @@ The owner is a portfolio manager. This is read-only research: nothing here submi
 
 THE HTML CHECK — after EVERY email you send (day-130). On 2026-10-07 the report went out without its htmlBody and the owner got raw "|" tables instead of the report.
   - htmlBody is REQUIRED in every send: the html file's WHOLE contents. Read it IN FULL (about 100 lines; page with offset/limit if needed). Never shorten it, never leave it out.
-  - Right after the send: Gmail `get_message` with messageFormat METADATA_ONLY on the id it returned, then
-      python send_check.py --html <the html file> --text <the text file> --size-estimate <its sizeEstimate>
-  - OK: carry on. HTML_MISSING: send ONE more message with replyThreadId = that send's threadId, the same subject + " — HTML version", body "The formatted copy: the first one arrived without its HTML.", htmlBody the whole html file. Check it with `python send_check.py --html <the html file> --size-estimate <its sizeEstimate> --html-only`, and give both ids in STEP 10.
+  - Right after the send: Gmail `get_message` with messageFormat MINIMAL on the id it returned (it gives the snippet and sizeEstimate), then
+      python send_check.py --html <the html file> --text <the text file> --size-estimate <its sizeEstimate> --snippet '<the first 40 characters of its snippet>'
+  - OK: carry on. HTML_MISSING: send ONE more message with replyThreadId = that send's threadId, the same subject + " — HTML version", body "The formatted copy: the first one arrived without its HTML.", htmlBody the whole html file. Check it with `python send_check.py --html <the html file> --size-estimate <its sizeEstimate> --snippet '<the first 40 characters of its snippet>' --html-only`, and give both ids in STEP 10.
   - The ⛔ NOT PUBLISHED notice has no html file and is exempt.
 
 STEP 1 — sync and tools
