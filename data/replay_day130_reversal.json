@@ -1,0 +1,62 @@
+{
+ "test": "day130-H1-reversal",
+ "hold_sessions": 5,
+ "names_loaded": 117,
+ "periods": 99,
+ "first": "2024-10-18",
+ "last": "2026-10-01",
+ "gross_mean_pct": 0.03,
+ "net_mean_pct": -0.37,
+ "net_t": -2.08,
+ "hit": 0.354,
+ "long_losers_mean_pct": 0.454,
+ "short_winners_mean_pct": 0.424,
+ "quarters": {
+  "2024Q4": [
+   -0.519,
+   11
+  ],
+  "2025Q1": [
+   -0.499,
+   12
+  ],
+  "2025Q2": [
+   -0.656,
+   13
+  ],
+  "2025Q3": [
+   -0.89,
+   12
+  ],
+  "2025Q4": [
+   -0.161,
+   13
+  ],
+  "2026Q1": [
+   -0.504,
+   12
+  ],
+  "2026Q2": [
+   0.078,
+   13
+  ],
+  "2026Q3": [
+   0.145,
+   12
+  ],
+  "2026Q4": [
+   -0.378,
+   1
+  ]
+ },
+ "last_four_same_sign": false,
+ "placebo_p": 0.3966033966033966,
+ "control": {
+  "planted_edge_pct": 0.5,
+  "t_of_planted_edge": 2.81,
+  "detected": false,
+  "mde_80pct_at_t3": 0.682
+ },
+ "survivorship": "the pool is today's names; delisted names are absent",
+ "passes": false
+}

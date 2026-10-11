@@ -334,8 +334,25 @@ def main(argv=None):
         print(f"the report is for {report.get('session')}, not {a.session}", file=sys.stderr)
         return 2
     out = review(a.session, report)
-    print(out['markdown'])
+    md = out['markdown'] + lab_section()
+    (REVIEWS / f'{a.session}.md').write_text(md)
+    print(md)
     return 0
+
+
+def lab_section(update=None, table=None):
+    """Day-130: the execution lab, filled from the scored record and appended to
+    the review. It never costs the review, and a failure says so."""
+    import execution_lab
+    try:
+        got = (update or execution_lab.update)()
+        lines = (table or execution_lab.table)()
+    except Exception as exc:
+        return f"\nExecution lab unavailable ({type(exc).__name__}).\n"
+    if got.get('fetch_failures'):
+        lines.append('Lab bar fetches failed for: ' + ', '.join(
+            f'{t} ({e})' for t, e in sorted(got['fetch_failures'].items())) + '.')
+    return '\n' + '\n'.join(lines) + '\n'
 
 
 if __name__ == '__main__':

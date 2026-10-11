@@ -301,6 +301,9 @@ def _council_table(section, concise):
         line = None
     if line:
         out.append(line)
+    if section.get('council'):                   # day-130 H3: shown, never applied
+        import execution_lab
+        out.append(execution_lab.NOON_NOTE)
     if section.get('reason'):
         out.append(section['reason'])
     if runner and len(picks) < 2:

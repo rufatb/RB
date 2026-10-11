@@ -1,0 +1,82 @@
+{
+ "test": "day130-H5-H6",
+ "H5_intraday_momentum": {
+  "name_days": 6511,
+  "trades": 5026,
+  "sessions": 60,
+  "gross_mean_pct": 0.0002,
+  "gross_t": 0.02,
+  "net_mean_pct": -0.1998,
+  "net_t": -17.02,
+  "all_name_days_signed_last_half_hour_pct": -0.0005,
+  "all_name_days_t": -0.05,
+  "months": {
+   "2026-07": [
+    -0.1891,
+    1014
+   ],
+   "2026-08": [
+    -0.205,
+    1669
+   ],
+   "2026-09": [
+    -0.205,
+    1725
+   ],
+   "2026-10": [
+    -0.1889,
+    618
+   ]
+  },
+  "placebo_p": 0.5649,
+  "passes": false
+ },
+ "H6_intraday_vs_overnight": {
+  "sessions": 502,
+  "first": "2024-10-10",
+  "last": "2026-10-09",
+  "intraday_mean_pct": 0.0764,
+  "intraday_t": 2.42,
+  "overnight_mean_pct": 0.0112,
+  "overnight_t": 0.46,
+  "quarters_intraday": {
+   "2024Q4": [
+    0.0722,
+    56
+   ],
+   "2025Q1": [
+    0.0846,
+    62
+   ],
+   "2025Q2": [
+    0.2227,
+    63
+   ],
+   "2025Q3": [
+    0.101,
+    63
+   ],
+   "2025Q4": [
+    0.024,
+    63
+   ],
+   "2026Q1": [
+    0.1009,
+    62
+   ],
+   "2026Q2": [
+    0.0436,
+    63
+   ],
+   "2026Q3": [
+    -0.0423,
+    63
+   ],
+   "2026Q4": [
+    0.1192,
+    7
+   ]
+  },
+  "passes": false
+ }
+}

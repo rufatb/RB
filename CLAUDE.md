@@ -1,5 +1,61 @@
 # Working notes for this repo
 
+## Day130 — learning from the record: an execution lab, a noon exit, eight tests (owner, 2026-10-11)
+
+The owner asked for the week's picks to be backtested and learnt from, and for
+new ways to improve the picks and the council without breaking anything.
+Registered first in `PREREGISTER_day130_learning.md`; read
+`AUDIT_day130_learning.md`.
+
+**Last week:** Top 2 went 3/7 at −0.17% per pick. The losers were sector bets:
+SHORT CVE.TO (oil) twice and LONG CCO.TO (uranium).
+
+**Eight registered tests; one passed.**
+* **H3, the noon exit, passed.** On 379 replay picks, closing at 12:00 ET was
+  no worse than holding to 15:55 (+0.08%) and swung 15% less. It is shown
+  (`execution_lab.NOON_NOTE`, one line under the council's picks) and never
+  applied to the record.
+* **Failed:**
+  * H1, a weekly-reversal sleeve: gross +0.03% per week, net −0.37%;
+  * H2, the sector-ETF hedge: the swing falls, but the mean is worse on the
+    replay;
+  * H5, intraday momentum: +0.0002% over 6,511 name-days;
+  * H6, intraday drift: it is up, not down;
+  * H7, a learnt pick filter: AUC 0.44;
+  * H8, 1/ATR sizing: −11.7% swing against a 15% bar;
+  * the ATR stops and holding overnight: worse.
+* **H4, live intraday news,** cannot be tested: 37 releases on pool names in
+  three months.
+
+Public pre-open information does not predict 09:45 → close in this pool (as
+day-117 found). Do not rebuild the failed ideas without new data.
+
+**The execution lab (`execution_lab.py`).**
+* **What it does.** Each evening, `daily_review.py` (already in the 16:20 job,
+  so no Routine change) measures every scored pick under ten rules: the open
+  entry, the noon exit, the "wrong if" and ATR stops, the sector-ETF hedge
+  (β over 40 prior sessions), and holds of 1, 3 and 5 sessions.
+* **Where it writes.** `data/reviews/execution_lab.csv`, which the evening
+  push already carries. The comparison is appended to the review.
+* **What it never does.** It fills blanks only, never rewrites a cell, and
+  never touches a pick, a size or `data/model_picks.csv`.
+* **The table** counts a name once per (session, side), with the Top 2 apart.
+* **Thin ETFs.** A thin ETF may not trade in the 09:40 bar; the hedge takes its
+  last trade at or before it.
+
+**The noon check (`noon_check.py`, tested, NOT switched on).**
+* **What it reports.** At 12:00–13:30 ET it emails each council pick (and the
+  labelled runner-up) from the frozen report: the move since the 09:45 entry,
+  whether its "wrong if" was crossed, and the sector ETF's move.
+* **Limits.** One email a day (`noon/sent.json`); a name whose bars fail reads
+  NOT CHECKED.
+* **Switching it on** needs a new 12:00 Routine in the owner's session. That is
+  the owner's decision; no existing Routine was changed.
+
+The research scripts are `replay_reversal.py`, `replay_intraday.py` and
+`replay_metalabel.py`; their summaries are `data/replay_day130_*.json`. The
+next registered test proposed is report-day drift on FMP's deep bars.
+
 ## Day129 — every model nominates for the council; a labelled runner-up; repeats flagged (owner, 2026-10-09)
 
 On 10-09 the council's table held four positions: Gemini's two selections

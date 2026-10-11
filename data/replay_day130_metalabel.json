@@ -1,0 +1,35 @@
+{
+ "test": "day130-H7-H8",
+ "H7_meta_labelling": {
+  "picks": 379,
+  "sessions": 59,
+  "auc_oos": 0.442,
+  "kept": 203,
+  "kept_mean_pct": -0.155,
+  "dropped_mean_pct": 0.09,
+  "kept_minus_dropped_pct": -0.186,
+  "clustered_t": -1.0,
+  "sessions_compared": 55,
+  "placebo_p": 0.851,
+  "weights_full_sample": {
+   "intercept": 0.038,
+   "jev_forced": 0.028,
+   "long": -0.077,
+   "confidence": -0.018,
+   "gap_with_pick": 0.086,
+   "market_gap_with_pick": 0.161,
+   "move_atr_signed": 0.035,
+   "atr_pct": 0.111
+  },
+  "passes": false
+ },
+ "H8_volatility_sizing": {
+  "sessions": 59,
+  "equal_mean_pct": -0.024,
+  "equal_sd": 0.87,
+  "inverse_atr_mean_pct": -0.031,
+  "inverse_atr_sd": 0.768,
+  "sd_cut_pct": 11.7,
+  "passes": false
+ }
+}

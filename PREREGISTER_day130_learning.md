@@ -144,3 +144,10 @@ picks, weighted equally versus weighted by 1 / ATR.
   worse by more than 0.05% per session.
 * **If it passes:** the email prints a volatility-scaled share count beside
   the desks' equal split, as display only.
+
+## Results (2026-10-11)
+
+See `AUDIT_day130_learning.md`. Only H3's noon exit passed, and it is shown
+under the council's picks, never applied. H1, H2, H5, H6, H7 and H8 failed,
+and H4 could not be run. H2 was re-run after a data fix: a thin ETF with no
+trade in the 09:40 bar now takes its last trade before it. It still fails.
