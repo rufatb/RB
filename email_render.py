@@ -372,20 +372,19 @@ def _cells(line):
 def _table(rows, first):
     """`first` is the header row. The Status column becomes a badge; everything
     else is escaped text."""
-    out = [f'<table role="table" width="100%" cellpadding="0" cellspacing="0" '
+    out = [f'<table role="table" width="100%" cellpadding="9" cellspacing="0" '
            f'style="width:100%;border-collapse:collapse;font:13px/1.45 Arial,sans-serif;'
-           f'margin:14px 0">'
+           f'color:{INK};margin:14px 0">'
            '<tr>' + ''.join(
-               f'<th align="left" style="padding:8px 10px;border-bottom:2px solid {RULE};'
-               f'color:{MUTED};font:600 11px/1.4 Arial,sans-serif;letter-spacing:.07em;'
-               f'text-transform:uppercase">{full.escape(c)}</th>' for c in first) + '</tr>']
+               f'<th align="left" style="border-bottom:2px solid {RULE};color:{MUTED};'
+               f'font:600 11px/1.4 Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase">'
+               f'{full.escape(c)}</th>' for c in first) + '</tr>']
     for row in rows:
         cells = []
         for n, cell in enumerate(row):
             body = (_badge(cell) if n == 0 and cell.strip().upper() in BADGES
                     else full.escape(cell))
-            cells.append(f'<td style="padding:9px 10px;border-bottom:1px solid {RULE};'
-                         f'color:{INK};vertical-align:top">{body}</td>')
+            cells.append(f'<td valign="top" style="border-bottom:1px solid {RULE}">{body}</td>')
         out.append('<tr>' + ''.join(cells) + '</tr>')
     return ''.join(out) + '</table>'
 
@@ -458,6 +457,12 @@ def html(d):
     return html_from_text(text(d), _hero(d))
 
 
+# Day-130: every table cell carried the same ~90-character inline style, most
+# of a 62 KB email that the morning session pastes into the Gmail call by hand
+# (on 2026-10-07 it sent the text alone). The send path strips <style> blocks,
+# class attributes and backgrounds, so the padding moves to the table's own
+# cellpadding, the alignment to valign and the colour to the table: attributes
+# and inline styles survive it.
 def html_from_text(body, hero=''):
     """The newsletter view of any report text in this dialect (# title, a
     stamp line, ## / ### sections, | tables). One styling, every email."""
@@ -481,4 +486,7 @@ def html_from_text(body, hero=''):
         f'{full.escape(stamp)}</div></td></tr>'
         + (hero or '') +
         f'<tr><td style="padding:0 26px 26px">{_body_blocks(body)}</td></tr>'
-        '</table></td></tr></table></body></html>')
+        '</table></td></tr></table></body></html>'
+    # Day-130: one line per row and paragraph, so the sender can read the file in
+    # pages and paste it whole; whitespace between tags changes nothing on screen.
+    ).replace('</tr>', '</tr>\n').replace('</p>', '</p>\n')

@@ -37,12 +37,19 @@ You fire at 08:50 ET. The report publishes at 09:46 ET and `morning_full.sh` hol
 CONTEXT
 The owner is a portfolio manager. This is read-only research: nothing here submits, modifies or cancels a brokerage order, and hypothetical allocation is a research calculation. You are in the rufatb/RB checkout at /home/user/RB; obey CLAUDE.md — especially the house rules, "Read-only, always", and never presenting picks as predictions.
 
+THE HTML CHECK — after EVERY email you send (day-130). On 2026-10-07 the report went out without its htmlBody and the owner got raw "|" tables instead of the report.
+  - htmlBody is REQUIRED in every send: the html file's WHOLE contents. Read it IN FULL (about 100 lines; page with offset/limit if needed). Never shorten it, never leave it out.
+  - Right after the send: Gmail `get_message` with messageFormat METADATA_ONLY on the id it returned, then
+      python send_check.py --html <the html file> --text <the text file> --size-estimate <its sizeEstimate>
+  - OK: carry on. HTML_MISSING: send ONE more message with replyThreadId = that send's threadId, the same subject + " — HTML version", body "The formatted copy: the first one arrived without its HTML.", htmlBody the whole html file. Check it with `python send_check.py --html <the html file> --size-estimate <its sizeEstimate> --html-only`, and give both ids in STEP 10.
+  - The ⛔ NOT PUBLISHED notice has no html file and is exempt.
+
 STEP 1 — sync and tools
   cd /home/user/RB && git fetch origin && git checkout main && git pull --ff-only
   pip install -q -r requirements.txt
 If the pull refuses because of local changes, `git stash push -m morning-$(date +%F)`, pull again, and say so in the summary.
 If dashboard.is_trading_day says today is not a trading day, stop and report "not a trading day — nothing to run". That is a success. Send no email.
-Load the Gmail tools NOW: if `mcp__Gmail__send_message` is not callable, run ToolSearch `select:mcp__Gmail__send_message,mcp__Gmail__search_threads`. Loading a deferred tool pauses the turn until "Tool loaded." arrives — at 08:50 that costs nothing; at 09:50 it cost the 09-28 email fourteen minutes. Load nothing else later in the morning.
+Load the Gmail tools NOW: if `mcp__Gmail__send_message` or `mcp__Gmail__get_message` is not callable, run ToolSearch `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`. Loading a deferred tool pauses the turn until "Tool loaded." arrives — at 08:50 that costs nothing; at 09:50 it cost the 09-28 email fourteen minutes. Load nothing else later in the morning.
 
 STEP 2 — credentials (a container restart wipes .rb-state, so write them every morning)
   export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-v4-pro
@@ -79,10 +86,10 @@ Repeat while it prints STILL_WAITING. CLOSED: Claude's ballot was already cast s
 Seal before 09:27 ET; the first sealed ballot stands.
 Then THE COUNCIL FLASH (owner, 2026-10-06): the council's decision by email the moment it is sealed, ahead of the report.
   python council_flash.py --state-dir .rb-state --wait 100
-Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject / body / htmlBody the exact contents of the subject_path, text_path and html_path it printed, no attachments; then `python council_flash.py --state-dir .rb-state --record --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on. The flash never replaces the report and never delays it.
+Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject / body / htmlBody the exact contents of the subject_path, text_path and html_path it printed, no attachments; then THE HTML CHECK, then `python council_flash.py --state-dir .rb-state --record --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on. The flash never replaces the report and never delays it.
 Then THE OPEN CHECK (day-127): at 09:31 the flashed positions are re-checked on the live quote.
   python council_flash.py --state-dir .rb-state --open-check 540
-Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"] with its subject_path / text_path / html_path verbatim, no attachments; then `python council_flash.py --state-dir .rb-state --record-open --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on.
+Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"] with its subject_path / text_path / html_path verbatim, no attachments; then THE HTML CHECK, then `python council_flash.py --state-dir .rb-state --record-open --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on.
 Then WAIT BY COMMAND:
   python morning_wait.py --log .rb-state/morning_full.log --timeout 540
 RUNNING: run it again immediately. DONE <code>: go to STEP 5 with that code. NOT_STARTED: start STEP 3 now. STALLED: go to STEP 5.
@@ -106,8 +113,9 @@ The email is `.rb-state/late-<date>/late/{subject.txt,report.txt,report.html}` �
 STEP 7 — EMAIL IT. This is the delivery the owner reads.
 Gmail `search_threads` with `subject:"RB Daily Report — <today>"`. If an email for today already exists, send nothing and say so. Otherwise `send_message` ONCE:
   to: ["rufat.baghirov97@gmail.com"]
-  subject / body / htmlBody: the exact contents of the subject, text and html files STEP 5 or STEP 6 named. Never reword the subject — it carries the board state.
+  subject / body / htmlBody: the exact contents of the subject, text and html files STEP 5 or STEP 6 named. htmlBody is REQUIRED and whole. Never reword the subject — it carries the board state.
   no attachments.
+Then THE HTML CHECK on that send.
 For a REPORT email, then record it: `python gmail_delivery.py --record --message-id <id>` (or `--failed` if the send failed).
 THE 09:58 RULE: if it is 09:58 ET or later and nothing has been sent, send NOW whatever is ready; if nothing is, send ONE email with subject "RB Daily Report — <today> — ⛔ NOT PUBLISHED" stating what you observed (the job's exit code or last log line, and what delivery_plan said), then carry on and send the picks as a second email when they are ready. The owner must never have an empty inbox at 10:00.
 
@@ -128,7 +136,7 @@ STEP 9 — push the record (this session can push; nothing else will)
 Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on network errors only.
 
 STEP 10 — finish with a SHORT summary, in this order:
-  - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>" or the exact failure.
+  - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>, HTML check OK" (or "HTML resent, id <id>") or the exact failure.
   - FLASH, one line: "council flash at HH:MM ET, Gmail id <id>; open check at HH:MM ET: <verdicts>, Gmail id <id>", or why either did not go out.
   - the job's exit code, and what broke if anything, in plain words (including whether the FMP context was staged, and whether Claude's desk and ballot came through OpenRouter or from you).
   - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
