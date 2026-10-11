@@ -1,0 +1,157 @@
+{
+ "bar": "memory arm >= 4 clean of 5 (both planted positions reach consensus, no noise position)",
+ "baseline_without_memory": {
+  "clean": 1,
+  "of": 5,
+  "runs": [
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": false,
+    "consensus": [
+     "LONG CTLUP.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": false,
+    "consensus": [],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": false,
+    "consensus": [
+     "LONG CTLUP.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": false,
+    "consensus": [
+     "LONG CTLUP.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   }
+  ]
+ },
+ "diagnostic_reruns": {
+  "with_memory": "1 clean of 1",
+  "without_memory": "1 clean of 2"
+ },
+ "memory_arm": {
+  "clean": 5,
+  "of": 5,
+  "runs": [
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   },
+   {
+    "clean": true,
+    "consensus": [
+     "LONG CTLUP.TO",
+     "SHORT CTLDN.TO"
+    ],
+    "errors": {},
+    "members": [
+     "Claude",
+     "DeepSeek",
+     "Gemini",
+     "Jev"
+    ]
+   }
+  ]
+ },
+ "registered": "PREREGISTER_day130_memory.md",
+ "run_on": "2026-10-11",
+ "verdict": "PASS: the memory arm is staged as a shadow from 2026-10-13",
+ "why_the_baseline_misses_the_short": "Jev's council ballot is ONE choice over the positions: the planted long takes ~0.95 of its probability and the planted short ~0.01, so Jev never endorses the short. With four present the short then needs all three others (E > V/2), and DeepSeek or Claude abstained on it in the final round in 5 of 7 runs, citing rsi 27 'oversold' and 'yesterday's data'. With memory the exposure box showed both positions moving with XIU.TO and the members endorsed the short as the long's hedge."
+}

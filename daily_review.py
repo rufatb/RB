@@ -334,7 +334,7 @@ def main(argv=None):
         print(f"the report is for {report.get('session')}, not {a.session}", file=sys.stderr)
         return 2
     out = review(a.session, report)
-    md = out['markdown'] + lab_section()
+    md = out['markdown'] + lab_section() + memory_section(a.session, report)
     (REVIEWS / f'{a.session}.md').write_text(md)
     print(md)
     return 0
@@ -353,6 +353,17 @@ def lab_section(update=None, table=None):
         lines.append('Lab bar fetches failed for: ' + ', '.join(
             f'{t} ({e})' for t, e in sorted(got['fetch_failures'].items())) + '.')
     return '\n' + '\n'.join(lines) + '\n'
+
+
+def memory_section(session, report, lines=None):
+    """Day-130 step 3: the council with memory beside the live one. A shadow;
+    it never costs the review, and a failure says so."""
+    import council_memory
+    try:
+        got = (lines or council_memory.review_lines)(session, report)
+    except Exception as exc:
+        return f"\nThe memory council's readout is unavailable ({type(exc).__name__}).\n"
+    return '\n' + '\n'.join(got) + '\n'
 
 
 if __name__ == '__main__':

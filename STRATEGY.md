@@ -5379,3 +5379,37 @@ and was forced to a side:
 
 Part 6 (`news_desk.py`) runs forward as the owner's parallel test, decided at
 40 sessions. `AUDIT_day122_releases.md`.
+
+## Day-130: the week's picks replayed under other executions; REJECTION #46 — report-day drift
+
+Eight tests were registered first (`PREREGISTER_day130_learning.md`; read
+`AUDIT_day130_learning.md`). Only H3 passed: on 379 replay picks, the noon
+exit was no worse than the close (+0.08%) and swung 15% less. It is shown,
+never applied.
+
+These failed, and are not to be rebuilt without new data:
+* a weekly-reversal sleeve;
+* the sector-ETF hedge;
+* intraday momentum;
+* a learnt pick filter;
+* 1/ATR sizing;
+* ATR stops;
+* holding overnight.
+
+**#46, report-day drift** (`PREREGISTER_day130_drift.md`, `replay_drift.py`).
+On an earnings reaction day, does the first half hour against XIU.TO predict
+10:00 → close?
+* **Population.** 117 pool names, 1,286 FMP reports 2024-01 → 2026-10.
+  * The reaction day is chosen causally: the first of D0/D1 to open with a
+    gap ≥ 2× its median.
+  * That left 973 events, of which 927 had bars.
+* **Result:** +0.04% per event, t = 0.50, 50.1% right.
+  * Quarters −0.06 / +0.18 / −0.21 / +0.23.
+  * Placebo p = 0.53; net of 0.10% it is −0.06%.
+* **Power.** A planted +0.5% shows at t = 6.67, and the minimum detectable
+  effect is 0.21%. **A POWERED negative.**
+* **Descriptive, no bar.** Nothing in |x30| ≥ 1% (−0.00%), nothing in agreeing
+  with the gap (+0.08%, t = 0.76), nothing to noon (+0.05%).
+
+Like every pre-open input before it, a report's first half hour is priced by
+10:00 in this pool. `data/replay_day130_drift.json`.

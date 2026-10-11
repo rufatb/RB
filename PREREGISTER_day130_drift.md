@@ -75,3 +75,19 @@ A fail is added to the rejections, and the family is not re-opened without
 new data.
 
 Output: `data/replay_day130_drift.json`; script `replay_drift.py`.
+
+## Result (added 2026-10-11, after the run; nothing above was changed)
+
+**FAIL, and powered.** `data/replay_day130_drift.json`.
+
+| | Value |
+|---|---|
+| Reports, events, scored | 1,286 reports; 313 with no qualifying gap; 973 events; 46 without bars; **927 scored** |
+| Mean y (10:00 → close, vs XIU) | **+0.037%**, se 0.075, **t = 0.50**, right 50.1% |
+| Date-quartiles | -0.06% / +0.18% / -0.21% / +0.23% |
+| Placebo (2,000 draws) | mean +0.039%, **p = 0.53** |
+| Planted +0.5% | **t = 6.67**; MDE80 0.21% |
+| Net of 0.10% | -0.063% |
+
+Every check but the control fails. Recorded as rejection #46 in
+`STRATEGY.md`. The family is closed without new data.

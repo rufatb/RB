@@ -105,3 +105,31 @@ day-130 results say public pre-open information carries no measurable edge in
 this pool. Memory may still steer the council away from repeating
 sector-driven losses. That is the registered question, and the record will
 answer it.
+
+## Results of the control (added 2026-10-11, after it ran; nothing above was changed)
+
+`python council_memory.py --control` on the live members, all four present on every run.
+Saved in `data/control_day130_memory.json`.
+
+| Arm | Clean | What failed |
+|---|---|---|
+| **With memory** (a 0/5 sector-driven losing record) | **5 of 5** | — |
+| Without memory (the live council's payload) | 1 of 5 | the planted short missed consensus four times |
+
+**The bar is met: the shadow is staged from 2026-10-13.**
+
+**The baseline is a finding about the LIVE council, not about memory.**
+* **Why the short needs everyone else.** Jev's ballot is one choice over the
+  positions. The planted long takes ~0.95 of its probability and the short
+  ~0.01, so Jev never endorses the second position. With four present, the
+  short then needs all three others (E > V/2).
+* **Why it missed.** DeepSeek or Claude abstained on it in the final round,
+  citing "rsi 27, oversold" and "yesterday's data". Two diagnostic re-runs
+  without memory went 1 of 2.
+* **Why memory changed it.** The exposure box showed both planted names
+  moving with XIU.TO. The members then endorsed the short as the long's hedge
+  ("pairs with P1 to hedge XIU.TO exposure"). It was the exposure lines, not
+  the losing record, that changed the vote.
+* **What is not changed.** The live council's rule and prompt are frozen
+  (day-124). Changing how a second position can win is a new registered
+  decision for the owner, not a fix made here.

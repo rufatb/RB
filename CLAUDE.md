@@ -69,9 +69,48 @@ went out as text alone and the owner got raw "|" tables.
 * **Where.** It is in the morning, watchdog, bridge and noon prompts, and the
   09:47 warm-up loads `get_message`.
 
+**The council with memory (`council_memory.py`, a shadow, from 10-13).**
+Registered in `PREREGISTER_day130_memory.md` (ebf2fed) before it ran.
+* **What it is.** A second council on the live council's exact table: the
+  same rows, seats, members, rounds, frozen prompt and frozen rule. Claude
+  sits through OpenRouter only.
+* **The one difference.** The payload, and Jev's state, carry `memory`:
+  * the council's Top 2 on the last 5 recorded sessions, with the sector
+    ETF's part of each move (from the lab);
+  * a summary line;
+  * what each of today's positions moves with.
+* **Where it runs.** Staged right after the live council, ending by 09:30
+  (~34 s on 10-09's state). It writes only `council_memory.json`.
+* **What is recorded.** The brief freezes `intraday.top_two_memory`, with the
+  same 09:46 check, recorded as `top2memory/pick` (`day130-memory`).
+* **Where it is not.** Never in the email or on the scoreboard, and the lab
+  skips it. The evening review prints today's two councils and the paired
+  record.
+* **Decision points.** Harm check at 20 sessions (t ≤ −2 stops it); decision
+  at 40 (t ≥ 3 plus a placebo, then the owner).
+* **Planted control.** With memory 5 of 5 clean. The live council's own
+  payload went 1 of 5 (`data/control_day130_memory.json`). Jev's one-choice
+  ballot never endorses a second position, so the planted short needs all
+  three others, and one "oversold"/"yesterday's data" abstention sinks it.
+  Memory's exposure lines made the members take the short as the long's
+  hedge.
+* **What is not changed.** The live rule is frozen; changing it is the
+  owner's call.
+
 The research scripts are `replay_reversal.py`, `replay_intraday.py` and
-`replay_metalabel.py`; their summaries are `data/replay_day130_*.json`. The
-next registered test proposed is report-day drift on FMP's deep bars.
+`replay_metalabel.py`; their summaries are `data/replay_day130_*.json`.
+
+**Report-day drift: FAIL, powered (rejection #46, `PREREGISTER_day130_drift.md`).**
+Does an earnings reaction day's first half hour (against XIU.TO) predict
+10:00 → close?
+* **Population.** 927 events on 117 names, 2024-01 → 2026-10, from FMP
+  reports and 5-minute bars. The reaction day is chosen causally from D0/D1's
+  opening gap.
+* **Result.** +0.04%, t = 0.50; the quarters disagree in sign; placebo
+  p = 0.53.
+* **Power.** A planted +0.5% shows at t = 6.67 (MDE 0.21%).
+* **So:** even a report is priced by 10:00 here. Do not rebuild it without new
+  data. `replay_drift.py`, `data/replay_day130_drift.json`.
 
 ## Day129 — every model nominates for the council; a labelled runner-up; repeats flagged (owner, 2026-10-09)
 

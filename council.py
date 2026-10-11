@@ -263,8 +263,9 @@ def ask_gemini(system, user, *, client=None):
     return client.ask(system, user)[0]
 
 
-def ask_jev(table, rows, discussion, *, poster=None):
-    """Jev's ballot: one choice over the position ids plus NONE."""
+def ask_jev(table, rows, discussion, *, poster=None, extra=None):
+    """Jev's ballot: one choice over the position ids plus NONE. `extra` joins
+    the state (day-130's memory shadow); the live council passes none."""
     import jev_opportunities as J
     key = os.environ.get('OPENROUTER_API_KEY', '').strip()
     if poster is None and not key:
@@ -274,9 +275,12 @@ def ask_jev(table, rows, discussion, *, poster=None):
                 ', '.join(sorted(str(x.get('seat', '?')) for x in p['proposers'])))
             for p in table}
     opts[J.ABSTAIN] = 'no proposed position is better than doing nothing today'
+    state = {'positions': public(table), 'discussion': discussion,
+             'rows': [J._compact(r, 1, 90) for r in rows]}
+    if extra:
+        state.update(extra)
     body = {'model': os.environ.get('JEV_MODEL') or J.DEFAULT_MODEL,
-            'state': {'positions': public(table), 'discussion': discussion,
-                      'rows': [J._compact(r, 1, 90) for r in rows]},
+            'state': state,
             'questions': {'best': {'type': 'choice', 'criteria': opts,
                                    'instructions': JEV_INSTRUCTIONS.format(none=J.ABSTAIN)}}}
     reply, failure = J._ask(body, key, poster, J.REQUEST_TIMEOUT)

@@ -87,8 +87,8 @@ raises accuracy, and none is claimed.
    page), quoting H3. Display only.
 3. **The noon check** (`noon_check.py`, tested). At 12:00 ET it sends one
    email with each council pick's move since 09:45, whether its "wrong if" was
-   crossed, and its sector ETF's move. **It is not switched on:** that needs a
-   new 12:00 Routine, which is the owner's decision.
+   crossed, and its sector ETF's move. The owner switched it on on 10-11
+   (Routine `trig_01Xcy8mXhQqQzbBV5P5MeFZq`, 11:58 ET).
 
 ## 5. The plan, step by step
 
@@ -119,6 +119,16 @@ are until a step clears its bar and the owner says yes.
    * every lab rule at its bar.
 
    Anything that passes can be promoted, by the owner.
+
+**Status on 2026-10-11** ("go on for all"):
+* steps 1 and 2 are live;
+* step 3 is registered (`PREREGISTER_day130_memory.md`), passed its planted
+  control 5 of 5, and runs as a shadow from 10-13. The box carries each
+  position's sector ETF and driver but not β: β needs bars the morning does
+  not fetch;
+* step 4 is registered and run: report-day drift FAILS, powered (t = 0.50 on
+  927 events, planted +0.5% at t = 6.67; rejection #46,
+  `PREREGISTER_day130_drift.md`).
 
 **Not to rebuild** (failed here): a weekly-reversal sleeve, intraday
 momentum, a pick filter learnt from the record, ATR stops, holding overnight,

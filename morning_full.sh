@@ -424,6 +424,22 @@ else
     stage_faults+=("council skipped: too late")
 fi
 
+# ── 1b''. THE COUNCIL WITH MEMORY (day-130, PREREGISTER_day130_memory.md) ──
+# A SHADOW: a second council on the live council's table, with its own last
+# five sessions in front of it. It decides nothing, writes only
+# council_memory.json, and must end by 09:30. Its failure changes nothing else.
+memory_left=$(( $(TZ=America/New_York date -d 'today 09:30:00' +%s) - $(date +%s) ))
+if [ "$memory_left" -gt 60 ]; then
+    if timeout "$(( memory_left < 300 ? memory_left : 300 ))" python council_memory.py --stage \
+            --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/council_memory.log" 2>&1; then
+        log "  memory council (shadow): sat (council_memory.log)"
+    else
+        log "  memory council (shadow): did not sit — nothing else changes (council_memory.log)"
+    fi
+else
+    log "  memory council (shadow): SKIPPED — too close to the open"
+fi
+
 # ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
 # A model reads every liquid TSX name's overnight release. The window runs to
 # 09:30, so this waits for it to close, then has until 09:43 — it can never

@@ -182,7 +182,7 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 12, 'a step can still be starved in silence'
+    assert body.count('SKIPPED —') == 13, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -278,3 +278,15 @@ def test_a_partial_factor_pool_is_not_logged_as_not_staged():
     partial = seg[start:seg.index('else', start)]
     assert 'staged PARTIAL' in partial and 'stage_faults' not in partial
     assert seg.count('stage_faults+=') == 3, 'a failed, refused or crashed pool is still a fault'
+
+
+def test_the_memory_council_follows_the_live_one_and_ends_by_0930():
+    """Day-130 step 3: a shadow on the live council's table. It runs after the
+    council has sealed, before Part 6, inside its own 09:30 budget, and its
+    failure is not a staging fault."""
+    body = code()
+    at = body.index('council_memory.py --stage')
+    assert body.index('council.py --stage') < at < body.index('news_desk.py --stage')
+    assert "today 09:30:00" in body and 'memory_left < 300 ? memory_left : 300' in body
+    block = body[at:body.index('news_desk.py --stage')]
+    assert 'stage_faults' not in block

@@ -633,6 +633,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     except Exception as exc:
         error('fmp_context', RuntimeError(type(exc).__name__))
     top_two = top_two_counted = council_snapshot = None
+    top_two_memory = memory_snapshot = None
     try:
         import top_picks
         import entry_checks
@@ -649,6 +650,14 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
             top_two = council.decide(top_two_counted, council_snapshot, prices=prices)
         except Exception as exc:
             error('council', RuntimeError(type(exc).__name__))
+        # Day-130 step 3: the council with memory, a SHADOW on the same table.
+        # Frozen and recorded; never printed in the email, never the Top 2.
+        try:
+            import council_memory
+            memory_snapshot = council_memory.load(state_dir, now)
+            top_two_memory = council_memory.section(memory_snapshot, prices=prices)
+        except Exception as exc:
+            error('council_memory', RuntimeError(type(exc).__name__))
         try:
             import newswire
             extra = [p['ticker'] for p in top_two['picks'] if p['ticker'] not in wire_releases]
@@ -677,6 +686,7 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
               'intraday':{'res':res,'legs':legs,'desks':desks,'scoreboard':scoreboard,
                           'wire_releases':wire_releases,'top_two':top_two,
                           'top_two_counted':top_two_counted,'council':council_snapshot,
+                          'top_two_memory':top_two_memory,'council_memory':memory_snapshot,
                           'fmp':fmp_section,
                           'gap_signal':gap_section,'pead':pead_section,'debate':debate_section,
                           'news_desk':news_section,
