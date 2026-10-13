@@ -1,5 +1,53 @@
 # Working notes for this repo
 
+## Day131 — a desk that picks nothing shows its model's nominations (owner, 2026-10-13)
+
+The owner saw Claude's and DeepSeek's desks print "No pick today" again and
+asked whether it hurts the picks and the council. Registered as amendment 2
+in `PREREGISTER_day129_nominations.md` (eb20757) before any code.
+
+**Measured first.**
+* **How often they pick.** Claude's desk (stateless since 10-06) has selected
+  nothing on all 5 live mornings; DeepSeek nothing on 10-09 or 10-13. Both
+  return valid, empty lists and give no reason. Claude made 0 research calls.
+* **The council is not starved.** 10-13, the first live morning with
+  nominations: 11 positions, and both picks (LONG ATZ.TO, SHORT CCA.TO) were
+  Claude's nominations. Both models voted on every position.
+* **Their own confidence.** Claude rated its forced nominations 0.35–0.42 —
+  below a coin flip — and DeepSeek 0.50–0.55. The council (DeepSeek
+  included) opposed all four of DeepSeek's.
+* **Nothing measurable is lost.** Their selections so far are coin flips
+  (5/9, 10/26), and day-117 found the inputs carry no edge.
+* Do NOT re-word the desk prompts to force picks (day-127/128). The
+  nominations are the forced answer, and the owner chose them on day-129.
+
+**What ships.**
+* **On a no-pick day the desk shows its nominations.** A desk with no SELECTED
+  leg prints its model's nominations under "No pick today" in the email and on
+  the page:
+  * side, ticker, its own confidence and "wrong if";
+  * what the council did with each (`council.nominee_rows`).
+
+  They are labelled forced, not a selection, not sized.
+* **`council.json` keeps `nomination_picks`.** Each nomination keeps its
+  confidence, reason, "wrong if" and basis. The `nominations` ticker lists are
+  unchanged.
+* **Every nomination is recorded as `<model>/nominated`.** That is all three
+  models, every day, from 10-14.
+  * It is scored by the same scorer.
+  * It is shown as "<Model> (nominated, forced)" once scored rows exist
+    (`primary_board.NOMINATED_BOARD`).
+  * The review scores it as "Nominated (forced)", kept out of the lessons;
+    the lab's pool leaves it out.
+  * It is never sized, never pooled, and never in the counted Top 2.
+* **The council's own splits only.** The council section printed the counted
+  rule's split list ("The models took opposite sides of: ATZ.TO — left out")
+  on the morning the council PICKED LONG ATZ.TO. It now names only the
+  council's own splits (both sides agreed, neither taken).
+
+No decision is attached; the 40-session review reads the nominations beside
+the selections. Nothing here is claimed to make a pick more accurate.
+
 ## Day130 — learning from the record: an execution lab, a noon exit, eight tests (owner, 2026-10-11)
 
 The owner asked for the week's picks to be backtested and learnt from, and for

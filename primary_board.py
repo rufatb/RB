@@ -159,6 +159,13 @@ LATE_BOARD = (('claude_late', 'Claude (late, after the open)'),
               ('gemini_late', 'Gemini (late, after the open)'))
 
 
+# Amendment 2 to day-129 (owner, 2026-10-13): each model's nominations to the
+# council — a FORCED answer, scored apart and shown only once scored rows exist.
+NOMINATED_BOARD = (('claude_nominated', 'Claude (nominated, forced)'),
+                   ('deepseek_nominated', 'DeepSeek (nominated, forced)'),
+                   ('gemini_nominated', 'Gemini (nominated, forced)'))
+
+
 # The desks' own picks split by the owner's open check, and each desk's top pick
 # (model_picks.verification_card, day-115). Same scorer, same picks, cut three ways.
 VERIFY_BOARD = (('check_met', 'Desk picks that passed the open check'),
@@ -174,7 +181,8 @@ WIRE_BOARD = (('wire_release', 'Desk picks on an overnight wire release'),)
 def leaderboard(card, verify=None, wire=None):
     """Every source on ONE yardstick: 09:45 bar close to session close, no cost."""
     rows = []
-    late = [(k, n) for k, n in LATE_BOARD if ((card or {}).get(k) or {}).get('picks')]
+    late = [(k, n) for k, n in LATE_BOARD + NOMINATED_BOARD
+            if ((card or {}).get(k) or {}).get('picks')]
     card = {**(card or {}), **(verify or {}), **(wire or {})}
     board = (LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
              + (WIRE_BOARD if wire is not None else ()))

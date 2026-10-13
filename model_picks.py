@@ -63,6 +63,9 @@ ENTRY_BAR, EXIT_BAR = dt.time(9, 40), dt.time(15, 55)
 
 # ── recording ───────────────────────────────────────────────────────────────
 
+NOMINATORS = ('claude', 'deepseek', 'gemini')
+
+
 def rows_from_report(report, source='published_report'):
     """Every model pick in a frozen report, one row each. Pure."""
     session = report['session']
@@ -137,6 +140,15 @@ def rows_from_report(report, source='published_report'):
     for pick in (intra.get('top_two_counted') or {}).get('picks') or []:
         add('top2count', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
             prompt_version=(intra.get('top_two_counted') or {}).get('rule_version'))
+    # Amendment 2 to day-129 (owner, 2026-10-13): every model's nominations to
+    # the council, a FORCED answer (two per side, no abstaining). Recorded apart
+    # from its selections, never sized, never in the Top 2 count.
+    council_ = intra.get('council') or {}
+    for model in NOMINATORS:
+        got = (council_.get('nomination_picks') or {}).get(model) or {}
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for pick in got.get(key) or []:
+                add(model, 'nominated', side, pick, prompt_version=council_.get('table_version'))
     # Day-130 step 3: the council with memory, a SHADOW on the live council's
     # table (PREREGISTER_day130_memory.md); never printed, never on the scoreboard.
     for pick in (intra.get('top_two_memory') or {}).get('picks') or []:

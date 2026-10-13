@@ -432,6 +432,42 @@ def ask_claude_openrouter(system, user, *, post=None):
     return RS._json_from(r['choices'][0]['message']['content'])
 
 
+NOMINEE_FIELDS = ('ticker', 'confidence', 'reason', 'invalid_at', 'basis')
+
+
+def _nominee(p):
+    return {k: p[k] for k in NOMINEE_FIELDS if p.get(k) is not None}
+
+
+def nominee_rows(council, model):
+    """Amendment 2 to day-129 (owner, 2026-10-13): one model's nominations,
+    each with what the council did with it. [] when the council did not sit or
+    the model nominated nothing. Pure; renderers read it from the frozen report."""
+    council = council or {}
+    picks = (council.get('nomination_picks') or {}).get(model) or {}
+    by_pos = {(p['ticker'], p['side']): p for p in council.get('positions') or []}
+    tally = council.get('tally') or {}
+    rows = {r['id']: r for r in tally.get('rows') or []}
+    present = len(tally.get('members') or [])
+    chosen = set(council.get('picks') or [])
+    out = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for p in picks.get(key) or []:
+            pos = by_pos.get((p.get('ticker'), side))
+            r = rows.get(pos['id']) if pos else None
+            if pos is None:
+                fate = 'not on the table (16-position cap)'
+            elif pos['id'] in chosen:
+                fate = "the council's pick"
+            elif r is None:
+                fate = 'not voted on'
+            else:
+                fate = '%d of %d endorse' % (len(r['endorse']), present) + (
+                    ', %d object' % len(r['oppose']) if r['oppose'] else '')
+            out.append({**p, 'side': side, 'council': fate})
+    return out
+
+
 def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, sleep=time.sleep,
           clock=None, claude_post=None, scout_fn=None, nominate=None):
     """Run both rounds and seal council.json. Never raises past its own failures.
@@ -482,7 +518,12 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
             'lead_order': list(lead_order(session)),
             'nominations': {m: {'longs': [p['ticker'] for p in v['longs']],
                                 'shorts': [p['ticker'] for p in v['shorts']], 'gaps': v['gaps'][:6]}
-                            for m, v in noms.items()}}
+                            for m, v in noms.items()},
+            # Amendment 2 to day-129 (owner, 2026-10-13): the whole nomination,
+            # so a desk that selects nothing can show its model's forced best
+            # ideas and they can be scored apart. The lists above are unchanged.
+            'nomination_picks': {m: {k: [_nominee(p) for p in v[k]] for k in ('longs', 'shorts')}
+                                 for m, v in noms.items()}}
     if not table:
         out = {**base, 'status': 'NO_POSITIONS', 'picks': [], 'errors': errors,
                'reason': 'no model proposed a position today'}
@@ -828,8 +869,12 @@ def top_two(council, counted=None, *, prices=None, previous=None):
         out['void_at_entry'] = void
     if repeat_note:
         out['repeat_note'] = repeat_note
-    if counted and counted.get('split'):
-        out['split'] = counted['split']
+    # Amendment 2 to day-129: the council's OWN splits (both sides agreed, so
+    # neither is taken). The counted rule's list named ATZ.TO "left out" on
+    # 10-13 while the council picked LONG ATZ.TO.
+    split = sorted({r['ticker'] for r in tally_rows if r.get('split')})
+    if split:
+        out['split'] = split
     return out
 
 

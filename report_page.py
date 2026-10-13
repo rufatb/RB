@@ -351,6 +351,38 @@ def _evidence_cell(snap):
             f'<small>macro: {escape(detail)}</small></dd></div>')
 
 
+NOMINEE_MODEL = {'claude': 'claude', 'opportunities': 'deepseek', 'gemini': 'gemini'}
+
+
+def _nominee_block(intra, key):
+    """Amendment 2 to day-129 (owner, 2026-10-13): on a day the desk selects
+    nothing, its model's nominations to the council — a different, FORCED
+    question, labelled as such, never sized, scored apart."""
+    import council
+    rows = council.nominee_rows(intra.get('council'), NOMINEE_MODEL.get(key))
+    if not rows:
+        return ''
+    body = ''
+    for r in rows:
+        wrong = (f"{'below' if r['side'] == 'LONG' else 'above'} {fmt(r.get('invalid_at'))}"
+                 if isinstance(r.get('invalid_at'), (int, float)) else '&mdash;')
+        body += ('<tr>'
+                 f'<td>{escape(r["side"])}</td><td class="tick">{escape(str(r["ticker"]))}</td>'
+                 f'<td class="num">{fmt(r.get("confidence"))}</td><td>{wrong}</td>'
+                 f'<td>{escape(str(r["council"]))}</td>'
+                 f'<td class="reasontext">{escape(str(r.get("reason") or ""))}</td></tr>')
+    return ('<h3 style="font-size:1rem;margin:1.5rem 0 .25rem">Its nominations to the council '
+            '— forced, not selected</h3>'
+            '<div class="scroll"><table><caption>A different question from the desk\u2019s: for the '
+            'council every model must name two longs and two shorts, best first, and may not '
+            'abstain. These are its names. They are not a selection, never sized, and scored apart '
+            'as \u201cnominated, forced\u201d. The confidence is the model\u2019s own and shows how '
+            'little it may think of them.</caption>'
+            '<thead><tr><th>Side</th><th>Name</th><th class="num">Own confidence</th>'
+            '<th>Wrong if</th><th>Council</th><th>Why — the model\'s words, not verified fact</th>'
+            f'</tr></thead><tbody>{body}</tbody></table></div>')
+
+
 def _opportunities_section(intra, key='opportunities', name='DeepSeek', desk=None, number=None):
     """DeepSeek's own top two per side, beside the engine's board.
 
@@ -373,9 +405,10 @@ def _opportunities_section(intra, key='opportunities', name='DeepSeek', desk=Non
             + (f'<p class="note">Independence: {escape(str(snap["independence"]))}.</p>'
                if snap.get('independence') else ''))
     status = snap.get('status')
+    nominees = _nominee_block(intra, key) if not (desk or {}).get('legs') else ''
     if status not in ('READY', 'NO_OPPORTUNITY'):
         reason = escape(str(snap.get('reason') or 'Not staged this session.'))
-        return head + f'<ul class="gaps"><li class="g-quiet">{reason}</li></ul></section>'
+        return head + f'<ul class="gaps"><li class="g-quiet">{reason}</li></ul>' + nominees + '</section>'
 
     # A ranking asked after the bell is a different instrument from one asked
     # before it: the prior-session indicators are the same, but the answer was
@@ -404,7 +437,7 @@ def _opportunities_section(intra, key='opportunities', name='DeepSeek', desk=Non
                 'planted short through this exact path, so an empty result is a reading of the '
                 'evidence. Nothing is shown here rather than the two least-bad names, because a '
                 'top two taken from names the model declined is a pick manufactured out of ties.</p>'
-                + _exposure(snap, name) + f'<p class="note">{note}</p></section>')
+                + nominees + _exposure(snap, name) + f'<p class="note">{note}</p></section>')
 
     engine_only = comparison.get('engine_only') or []
     tail = ''

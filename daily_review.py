@@ -73,6 +73,12 @@ def picks_of(report):
     if isinstance(ru, dict):
         add('Runner-up (not a pick)', '+'.join(ru.get('models') or []), ru['side'], ru,
             extra={'agreement': ru.get('agreement')})
+    # Amendment 2 to day-129: the models' forced nominations, scored in their own
+    # section and kept out of the lessons (which read named sections only).
+    for model, got in ((i.get('council') or {}).get('nomination_picks') or {}).items():
+        for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+            for pick in got.get(key) or []:
+                add('Nominated (forced)', model, side, pick)
     for d in i.get('desks') or []:
         for leg in d.get('legs') or []:
             add('Desk', d.get('id'), leg['side'], leg,

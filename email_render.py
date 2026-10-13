@@ -70,6 +70,25 @@ def _jev_table(snap, wire=None):
             '|---|---:|---:|---|---|', *rows]
 
 
+def nominee_table(council_snap, model):
+    """Amendment 2 to day-129 (owner, 2026-10-13): on a day a desk selects
+    nothing, its model's nominations to the council. They answer a FORCED
+    question (two per side, no abstaining), so they are labelled, never sized,
+    and scored apart from the desk's selections."""
+    import council
+    rows = council.nominee_rows(council_snap, model)
+    if not rows:
+        return []
+    out = ['Its nominations to the council (forced to name two per side — not a selection, '
+           'not sized):', '| Nominated | Own conf. | Wrong if | Council | Why |', '|---|---:|---|---|---|']
+    for r in rows:
+        wrong = (f"{'below' if r['side'] == 'LONG' else 'above'} {fmt(r.get('invalid_at'))}"
+                 if isinstance(r.get('invalid_at'), (int, float)) else '—')
+        out.append(f"| {r['side']} {r['ticker']} | {fmt(r.get('confidence'))} | {wrong} | "
+                   f"{_cell(r['council'], 60)} | {_cell(r.get('reason'), 160)} |")
+    return out
+
+
 def desk_sections(intra):
     """Part 1's three desks — Claude, DeepSeek, Jev — each in its own section,
     each ONE table. Every desk prints every day, answered or not."""
@@ -101,6 +120,8 @@ def desk_sections(intra):
         if snap.get('independence'):
             out.append('Sealed ' + full.safe_detail(snap['independence'], 120)
                        .replace('sealed at ', '') + '.')
+        if not desk.get('legs'):
+            out += nominee_table(intra.get('council'), desk.get('id'))
     return out + _scoreboard(intra.get('scoreboard'))
 
 

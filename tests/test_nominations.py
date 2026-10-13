@@ -165,6 +165,10 @@ def test_stage_asks_for_nominations_before_the_table_and_names_a_failure(tmp_pat
     assert {x['how'] for p in out['positions'] for x in p['proposers']} == {'nominated'}
     assert out['table_version'] == N.VERSION
     assert out['nominations'] == {'deepseek': {'longs': ['AC.TO'], 'shorts': ['SU.TO'], 'gaps': []}}
+    # amendment 2: the whole nomination is kept, so it can be shown and scored
+    assert out['nomination_picks'] == {'deepseek': {
+        'longs': [{'ticker': 'AC.TO', 'confidence': 0.56, 'reason': 'rows say so', 'basis': 'technical'}],
+        'shorts': [{'ticker': 'SU.TO', 'confidence': 0.53, 'reason': 'rows say so', 'basis': 'technical'}]}}
     assert out['errors']['nominations gemini'] == 'HTTP_429'
     assert out['status'] == 'READY' and out['picks'] == ['P1']           # the rule is unchanged
 
@@ -179,3 +183,122 @@ def test_a_missing_brief_costs_the_nominations_only(tmp_path, monkeypatch):
     out = K.stage(tmp_path, now=NOW, clients={'deepseek': None, 'gemini': None}, wait=False,
                   nominate={'deepseek': lambda s, u: {}}, clock=lambda: NOW)
     assert out['status'] == 'NO_POSITIONS' and out['errors'] == {'nominations': 'CLAUDE_BRIEF_NOT_STAGED'}
+
+
+# ── amendment 2 (owner, 2026-10-13): shown on a no-pick day, scored apart ────
+
+def sat_council():
+    """10-13's shape: the council picked LONG ATZ.TO and SHORT CCA.TO, both
+    Claude nominations; DeepSeek nominated the other side of ATZ.TO."""
+    def pos(i, side, t, *who):
+        return {'id': 'P%d' % i, 'side': side, 'ticker': t, 'lead': 'Claude', 'reason': 'r',
+                'invalid_at': None, 'proposers': [{'model': m, 'how': h, 'confidence': 0.5, 'reason': 'r'}
+                                                  for m, h in who]}
+    positions = [pos(1, 'LONG', 'ATZ.TO', ('claude', 'nominated'), ('jev', 'forced')),
+                 pos(2, 'SHORT', 'ATZ.TO', ('deepseek', 'nominated')),
+                 pos(3, 'SHORT', 'CCA.TO', ('claude', 'nominated'), ('gemini', 'nominated'))]
+    votes = lambda e, o: {m: {'stance': 'ENDORSE' if m in e else 'OPPOSE' if m in o else 'ABSTAIN',
+                              'conviction': 0.6 if m in e + o else None, 'argument': 'a'}
+                          for m in ('Claude', 'DeepSeek', 'Gemini', 'Jev')}
+    rows = [{'id': 'P1', 'ticker': 'ATZ.TO', 'side': 'LONG', 'endorse': ['Claude', 'DeepSeek', 'Gemini'],
+             'oppose': [], 'seats': [], 'weakest': 0.6, 'consensus': True,
+             'votes': votes(['Claude', 'DeepSeek', 'Gemini'], [])},
+            {'id': 'P2', 'ticker': 'ATZ.TO', 'side': 'SHORT', 'endorse': [],
+             'oppose': ['Claude', 'DeepSeek', 'Gemini'], 'seats': [], 'weakest': 0.0, 'consensus': False,
+             'votes': votes([], ['Claude', 'DeepSeek', 'Gemini'])},
+            {'id': 'P3', 'ticker': 'CCA.TO', 'side': 'SHORT', 'endorse': ['Claude', 'DeepSeek', 'Gemini', 'Jev'],
+             'oppose': [], 'seats': [], 'weakest': 0.6, 'consensus': True,
+             'votes': votes(['Claude', 'DeepSeek', 'Gemini', 'Jev'], [])}]
+    return {'session': '2026-10-13', 'status': 'READY', 'picks': ['P1', 'P3'], 'positions': positions,
+            'table_version': N.VERSION,
+            'tally': {'members': ['Claude', 'DeepSeek', 'Gemini', 'Jev'], 'absent': [], 'rows': rows},
+            'nomination_picks': {
+                'claude': {'longs': [nom('ATZ.TO', 0.42, inv=141.86), nom('SHOP.TO', 0.38)],
+                           'shorts': [nom('CCA.TO', 0.40), nom('ZZZ.TO', 0.35)]},
+                'deepseek': {'longs': [], 'shorts': [nom('ATZ.TO', 0.50)]}}}
+
+
+def test_each_nomination_carries_what_the_council_did_with_it():
+    got = {(r['side'], r['ticker']): r['council'] for r in K.nominee_rows(sat_council(), 'claude')}
+    assert got == {('LONG', 'ATZ.TO'): "the council's pick", ('LONG', 'SHOP.TO'): 'not on the table (16-position cap)',
+                   ('SHORT', 'CCA.TO'): "the council's pick", ('SHORT', 'ZZZ.TO'): 'not on the table (16-position cap)'}
+    assert [r['council'] for r in K.nominee_rows(sat_council(), 'deepseek')] == ['0 of 4 endorse, 3 object']
+    assert K.nominee_rows(sat_council(), 'gemini') == [] and K.nominee_rows(None, 'claude') == []
+    assert K.nominee_rows({'status': 'UNAVAILABLE'}, 'claude') == []      # an old or missing council
+
+
+def test_the_council_section_names_only_its_own_splits():
+    """10-13: the counted rule listed ATZ.TO as split while the council PICKED it."""
+    counted = {'picks': [], 'split': ['ATZ.TO'], 'status': 'NO_AGREEMENT'}
+    sec = K.top_two(sat_council(), counted, previous={})
+    assert [p['ticker'] for p in sec['picks']] == ['ATZ.TO', 'CCA.TO'] and 'split' not in sec
+    both = sat_council()
+    both['tally']['rows'][1].update(consensus=False, split=True)          # both sides agreed
+    both['tally']['rows'][0].update(consensus=False, split=True)
+    both['picks'] = ['P3']
+    assert K.top_two(both, counted, previous={})['split'] == ['ATZ.TO']
+
+
+def desk_report(council_snap, legs=()):
+    def desk(i, name, key):
+        return {'id': i, 'source': name, 'evidence_key': key, 'legs': list(legs) if i == 'gemini' else []}
+    return {'desks': [desk('claude', 'Claude', 'claude'), desk('deepseek', 'DeepSeek', 'opportunities'),
+                      desk('gemini', 'Gemini', 'gemini')],
+            'claude': {'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []},
+            'opportunities': {'status': 'UNAVAILABLE', 'reason': 'HTTP 503'},
+            'gemini': {'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []},
+            'council': council_snap}
+
+
+def test_a_desk_that_selects_nothing_shows_its_nominations_in_the_email():
+    import email_render as E
+    text = '\n'.join(E.desk_sections(desk_report(sat_council())))
+    claude = text.split('### 2')[0]
+    assert 'No pick today' in claude and 'not a selection, not sized' in claude
+    assert "| LONG ATZ.TO | 0.42 | below 141.86 | the council's pick |" in claude
+    deepseek = text.split('### 2')[1].split('### 3')[0]
+    assert 'Unavailable today' in deepseek and '| SHORT ATZ.TO | 0.50 | — | 0 of 4 endorse, 3 object |' in deepseek
+    assert 'nominations' not in text.split('### 3')[1]                    # Gemini nominated nothing
+    leg = {'status': 'SHADOW', 'side': 'LONG', 'ticker': 'AC.TO', 'baseline_shares': 10,
+           'entry_reference': 10.0, 'confidence': 0.6, 'reason': 'r'}
+    picked = desk_report(sat_council(), legs=[leg])
+    picked['council']['nomination_picks']['gemini'] = {'longs': [nom('AC.TO')], 'shorts': []}
+    assert 'nominations' not in '\n'.join(E.desk_sections(picked)).split('### 3')[1]   # it selected
+
+
+def test_the_page_shows_them_too_labelled_forced():
+    import report_page as R
+    html = R._desk_sections(desk_report(sat_council()))
+    assert html.count('Its nominations to the council') == 2
+    assert 'not a selection, never sized' in html and 'ATZ.TO' in html
+
+
+def test_every_nomination_is_recorded_apart_and_scored_on_its_own_row():
+    import model_picks as M
+    import primary_board as P
+    rows = M.rows_from_report({'session': '2026-10-13', 'intraday': {'council': sat_council()}})
+    got = sorted((r['model'], r['kind'], r['side'], r['ticker']) for r in rows)
+    assert got == sorted([('claude', 'nominated', 'LONG', 'ATZ.TO'), ('claude', 'nominated', 'LONG', 'SHOP.TO'),
+                          ('claude', 'nominated', 'SHORT', 'CCA.TO'), ('claude', 'nominated', 'SHORT', 'ZZZ.TO'),
+                          ('deepseek', 'nominated', 'SHORT', 'ATZ.TO')])
+    assert {r['prompt_version'] for r in rows} == {N.VERSION}
+    assert next(r for r in rows if r['ticker'] == 'ATZ.TO' and r['side'] == 'LONG')['invalid_at'] == 141.86
+    board = [r['source'] for r in P.leaderboard({})]
+    assert not any('nominated' in s for s in board)                       # shown only once scored
+    card = {'claude_nominated': {'picks': 4, 'hits': 2, 'rate': 0.5, 'mean_r_pct': 0.1, 'sessions': 1,
+                                 'ci95': (0.15, 0.85)}}
+    assert 'Claude (nominated, forced)' in [r['source'] for r in P.leaderboard(card)]
+
+
+def test_the_review_scores_them_apart_and_the_lab_leaves_them_out():
+    import daily_review as D
+    import execution_lab as X
+    picks = D.picks_of({'intraday': {'council': sat_council()}})
+    assert {p['section'] for p in picks} == {'Nominated (forced)'} and len(picks) == 5
+    row = {k: '' for k in X.FIELDS}
+    rows = [{**row, 'session': '2026-10-13', 'model': 'claude', 'kind': 'nominated', 'side': 'LONG',
+             'ticker': 'ATZ.TO', 'r': '1.0'},
+            {**row, 'session': '2026-10-13', 'model': 'gemini', 'kind': 'selected', 'side': 'LONG',
+             'ticker': 'AC.TO', 'r': '-0.5'}]
+    text = '\n'.join(X.table(rows))
+    assert '1 picks over 1 sessions' in text
