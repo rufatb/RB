@@ -477,7 +477,7 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-10-09,ABX.TO,SHORT,0.557,sparse,58.1900,board,,,,,0.584,0
 2026-10-09,AEM.TO,SHORT,0.551,sparse,267.9000,board,,,,17.5,0.720,0
 2026-10-09,SU.TO,SHORT,0.550,sparse,102.2900,board,,,,9.8,0.733,0
-2026-10-13,SHOP.TO,SHORT,0.597,sparse,253.7700,board,,,,13.4,,
-2026-10-13,T.TO,SHORT,0.564,sparse,11.3300,board,,,,8.8,,
-2026-10-13,BCE.TO,SHORT,0.559,sparse,27.5400,pair,extra,0.2579,468,3.6,,
-2026-10-13,SU.TO,SHORT,0.550,sparse,106.0700,pair,primary,0.2421,114,6.6,,
+2026-10-13,SHOP.TO,SHORT,0.597,sparse,253.7700,board,,,,13.4,-1.076,1
+2026-10-13,T.TO,SHORT,0.564,sparse,11.3300,board,,,,8.8,0.177,0
+2026-10-13,BCE.TO,SHORT,0.559,sparse,27.5400,pair,extra,0.2579,468,3.6,0.472,0
+2026-10-13,SU.TO,SHORT,0.550,sparse,106.0700,pair,primary,0.2421,114,6.6,0.707,0
