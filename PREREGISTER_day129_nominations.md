@@ -136,3 +136,49 @@ Two cases the text above left open, settled in code before any live morning:
 When nothing qualifies, the note names any position that won the votes but
 could not stand (the other side of a pick, or void at 09:46). Otherwise it is
 the registered sentence.
+
+## Amendment 2 (owner, 2026-10-13, before any code for it ran)
+
+The owner saw Claude's and DeepSeek's desks print "No pick today" again, and
+asked whether that hurts the picks and the council. Measured first:
+* **How often they pick.** Claude's desk (stateless since 10-06) has selected
+  nothing on its 5 live mornings; DeepSeek selected nothing on 10-09 or
+  10-13. Both returned valid, empty lists, as their prompt allows, with no
+  reason given.
+* **The council is not starved.** 10-13 was the first live morning with
+  nominations:
+  * the table held 11 positions;
+  * both picks were Claude's nominations: LONG ATZ.TO, and SHORT CCA.TO, which
+    Gemini also nominated;
+  * both models voted on every position.
+* **Nothing measurable is lost.** Their selections so far are coin flips
+  (Claude 5/9, DeepSeek 10/26), and day-117 found the inputs carry no edge.
+
+**What changes** (display and a separate record; no prompt, rule or size
+changes):
+1. **On a no-pick day, the desk shows its model's nominations.** Under its "No
+   pick today" line the desk prints each nomination: side, ticker, the model's
+   own confidence, "wrong if", and what the council did with it. It is
+   labelled forced (the model had to name two per side), not a selection, not
+   sized.
+2. **`council.json` keeps the full nominations** in `nomination_picks`:
+   confidence, reason, "wrong if" and basis. The existing ticker lists in
+   `nominations` are unchanged.
+3. **Every nomination is recorded as `<model>/nominated`:** all three models,
+   every day.
+   * It is scored by the same scorer.
+   * It is shown on the scoreboard as "<Model> (nominated, forced)" once
+     scored rows exist.
+   * It is never sized and never pooled with selections.
+   * It is never in the counted Top 2, and it is kept out of the lessons and
+     the execution lab's pool.
+4. **No decision is attached.** At the 40-session review the nominations are
+   read beside the selections and random picks from the same pools.
+
+**A display fix, the same day.** The council section printed the counted
+rule's split list ("The models took opposite sides of: ATZ.TO — left out") on
+a morning the council PICKED LONG ATZ.TO. From now on the council section
+lists only the council's own splits, as day-124 defines them: both sides
+reached consensus, so neither is taken.
+
+The desk prompts are not changed to force picks (day-127/128).
