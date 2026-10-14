@@ -43,6 +43,23 @@ phases.
 * **The news desk stays "Part 6",** so past emails and notes keep their
   names.
 
+**Phase 3: a model asked after the open is no better (rejection #48).**
+Registered first (`PREREGISTER_day132c_after_open.md`, d9d4c05); read
+`AUDIT_day132c_after_open.md`; script `replay_after_open.py`.
+* **Setup.** 59 replay sessions, DeepSeek v4-pro, the nomination question.
+  Arm A is asked before the open. Arm B is asked at 10:00 with each name's
+  `open30`: gap, move, move against XIU, relative volume, VWAP distance and
+  range position.
+* **Control.** It passed with the plant only in `open30` (4/5, then 5/5).
+* **Result.** Arm B, 10:00 → close: +0.05% against XIU, t = 0.44; placebo
+  p = 0.26. A planted 0.5% shows at t = 4.17: a powered FAIL.
+* **Descriptive.** Arm A −0.04%; B − A +0.07% (t = 0.45). Arm B followed the
+  first thirty minutes 88% of the time, no better than the mechanical rule
+  (+0.15%, t = 1.31).
+* **So:** the outside read's "react to the open" fails its powered test, and
+  no 10:00 desk is proposed. The live "DeepSeek late" 5/8 was two days.
+* **Unchanged:** the biotech table, at the owner's request.
+
 ## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
 
 The owner pasted an outside read of the board. Registered first

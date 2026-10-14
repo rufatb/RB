@@ -1,0 +1,3646 @@
+{
+ "answers": {
+  "A": 59,
+  "B": 59,
+  "errors": []
+ },
+ "descriptive": {
+  "arm_a_before_open": {
+   "hit": 0.494,
+   "mean_pct": -0.039,
+   "n": 231,
+   "placebo_p_one_sided": 0.6845,
+   "se": 0.131,
+   "sessions": 58,
+   "t": -0.3
+  },
+  "arm_b_follows_x30_share": 0.881,
+  "arm_b_long": {
+   "hit": 0.492,
+   "mean_pct": 0.326,
+   "n": 118,
+   "se": 0.15,
+   "sessions": 59,
+   "t": 2.17
+  },
+  "arm_b_short": {
+   "hit": 0.419,
+   "mean_pct": -0.222,
+   "n": 117,
+   "se": 0.158,
+   "sessions": 59,
+   "t": -1.4
+  },
+  "b_minus_a_by_session": {
+   "hit": 0.534,
+   "mean_pct": 0.072,
+   "n": 58,
+   "se": 0.16,
+   "sessions": 58,
+   "t": 0.45
+  },
+  "rule_follow_x30": {
+   "hit": 0.504,
+   "mean_pct": 0.153,
+   "n": 236,
+   "se": 0.117,
+   "sessions": 59,
+   "t": 1.31
+  }
+ },
+ "fetch_failures": {},
+ "model_control": {
+  "clean": 5,
+  "passes": true,
+  "runs": [
+   {
+    "clean": true,
+    "longs": [
+     "CTLUP.TO",
+     "NOIS5.TO"
+    ],
+    "shorts": [
+     "CTLDN.TO",
+     "NOIS0.TO"
+    ]
+   },
+   {
+    "clean": true,
+    "longs": [
+     "CTLUP.TO",
+     "NOIS5.TO"
+    ],
+    "shorts": [
+     "CTLDN.TO",
+     "NOIS1.TO"
+    ]
+   },
+   {
+    "clean": true,
+    "longs": [
+     "CTLUP.TO",
+     "NOIS9.TO"
+    ],
+    "shorts": [
+     "CTLDN.TO",
+     "NOIS0.TO"
+    ]
+   },
+   {
+    "clean": true,
+    "longs": [
+     "CTLUP.TO",
+     "NOIS5.TO"
+    ],
+    "shorts": [
+     "CTLDN.TO",
+     "NOIS0.TO"
+    ]
+   },
+   {
+    "clean": true,
+    "longs": [
+     "CTLUP.TO",
+     "NOIS5.TO"
+    ],
+    "shorts": [
+     "CTLDN.TO",
+     "NOIS0.TO"
+    ]
+   }
+  ]
+ },
+ "names_per_session_median": 79,
+ "picks": {
+  "A": [
+   {
+    "confidence": 0.62,
+    "session": "2026-07-06",
+    "side": "LONG",
+    "ticker": "MG.TO",
+    "y": 1.8375864987968504
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-06",
+    "side": "LONG",
+    "ticker": "CNR.TO",
+    "y": -0.3443084324285417
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-06",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.876109778733658
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-06",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO",
+    "y": 2.36033035116755
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-07-07",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 0.7657062296237416
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-07",
+    "side": "LONG",
+    "ticker": "RY.TO",
+    "y": 0.5122947741576733
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-07-07",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.5806938159879427
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-07",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 2.2021646411890416
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-08",
+    "side": "LONG",
+    "ticker": "BCE.TO",
+    "y": -0.376040179305126
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-07-08",
+    "side": "LONG",
+    "ticker": "T.TO",
+    "y": -0.3556275131466835
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-08",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -1.2171133265009515
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-07-08",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": -0.28199957242937
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-09",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": -0.3664242457620426
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-09",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "y": -1.1675343131119509
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-09",
+    "side": "SHORT",
+    "ticker": "TD.TO",
+    "y": -0.39409367754290603
+   },
+   {
+    "confidence": 0.54,
+    "session": "2026-07-09",
+    "side": "SHORT",
+    "ticker": "WPM.TO",
+    "y": -0.8223611025041988
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-10",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": -1.1525857749332125
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-10",
+    "side": "LONG",
+    "ticker": "CNR.TO",
+    "y": 0.03213930431942291
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-10",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.9573203376754047
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-10",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.08501092827547518
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-13",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": 0.6421176787386185
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-13",
+    "side": "LONG",
+    "ticker": "ATZ.TO",
+    "y": -5.3860677039474165
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-07-13",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.3063185773741983
+   },
+   {
+    "confidence": 0.51,
+    "session": "2026-07-13",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.4594840998761063
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-14",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "y": 0.7958483922517634
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "LONG",
+    "ticker": "CP.TO",
+    "y": -0.2250296147132791
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-14",
+    "side": "SHORT",
+    "ticker": "ABX.TO",
+    "y": 2.543275814058965
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": 2.4978111838252715
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-07-15",
+    "side": "LONG",
+    "ticker": "T.TO",
+    "y": 0.7645117508913168
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-07-15",
+    "side": "LONG",
+    "ticker": "GIB-A.TO",
+    "y": -0.6094202769668766
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-07-15",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -0.4599729545076148
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-07-15",
+    "side": "SHORT",
+    "ticker": "FM.TO",
+    "y": 2.576992816350654
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-16",
+    "side": "LONG",
+    "ticker": "RY.TO",
+    "y": -0.585952718134497
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-16",
+    "side": "LONG",
+    "ticker": "MFC.TO",
+    "y": 0.6443583044271062
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-16",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -1.0605817214636604
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-07-16",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": 1.402295329382719
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-07-17",
+    "side": "LONG",
+    "ticker": "TFII.TO",
+    "y": -1.6425876862704136
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-07-17",
+    "side": "LONG",
+    "ticker": "CNR.TO",
+    "y": -0.17746887305956083
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-17",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": -1.3455298695779883
+   },
+   {
+    "confidence": 0.61,
+    "session": "2026-07-17",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "y": -1.9633855482321216
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-20",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": 1.6162538344698052
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-20",
+    "side": "LONG",
+    "ticker": "CNR.TO",
+    "y": -0.031156308155821932
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-20",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": -0.6410932585366624
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-20",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "y": -0.7665377203819657
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-21",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": 0.457837870485589
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-21",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "y": -0.09367054975004674
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-21",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": -1.3610544444700778
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-21",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "y": -2.24614813908528
+   },
+   {
+    "confidence": 0.42,
+    "session": "2026-07-22",
+    "side": "LONG",
+    "ticker": "T.TO",
+    "y": -0.4310882493271828
+   },
+   {
+    "confidence": 0.38,
+    "session": "2026-07-22",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "y": 0.30906339951287665
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-07-22",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "y": 2.126992367859859
+   },
+   {
+    "confidence": 0.36,
+    "session": "2026-07-22",
+    "side": "SHORT",
+    "ticker": "SU.TO",
+    "y": -0.27541927578015324
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "LONG",
+    "ticker": "BEP-UN.TO",
+    "y": 4.4572669677761745
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": 0.9771202567693926
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.16600085203267723
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO",
+    "y": 0.8977510830576962
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-07-24",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": -1.1288818850360371
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-24",
+    "side": "LONG",
+    "ticker": "ALA.TO",
+    "y": -0.4770634863628165
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-24",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -1.452801947601401
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-07-24",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "y": -0.5156900037986745
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-07-27",
+    "side": "LONG",
+    "ticker": "POW.TO",
+    "y": -0.8939313377232083
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-27",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": -1.624350646423789
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-27",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -4.365118476957841
+   },
+   {
+    "confidence": 0.51,
+    "session": "2026-07-27",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.6759295411140842
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-28",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 2.4438535375460146
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-28",
+    "side": "LONG",
+    "ticker": "CM.TO",
+    "y": 1.3608922004337165
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-28",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 1.5667860897283004
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-28",
+    "side": "SHORT",
+    "ticker": "TRP.TO",
+    "y": 1.884649062082866
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-07-29",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 0.9897592188910398
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-07-29",
+    "side": "LONG",
+    "ticker": "TFII.TO",
+    "y": -2.7571824744614615
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-29",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": -2.2774536272936796
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-29",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "y": 1.1690404843236801
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-30",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 1.83807706600978
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-30",
+    "side": "LONG",
+    "ticker": "IFC.TO",
+    "y": -1.7594475635125284
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-30",
+    "side": "SHORT",
+    "ticker": "WCN.TO",
+    "y": 1.990334369724156
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-30",
+    "side": "SHORT",
+    "ticker": "NTR.TO",
+    "y": -0.5948602315452023
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-07-31",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": -1.9336349924585217
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-31",
+    "side": "LONG",
+    "ticker": "CU.TO",
+    "y": -0.5017432555783241
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-31",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "y": -3.4846788602228784
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-31",
+    "side": "SHORT",
+    "ticker": "BBD-B.TO",
+    "y": -3.2261614785817017
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-04",
+    "side": "LONG",
+    "ticker": "T.TO",
+    "y": 2.107396822237062
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-08-04",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "y": -0.9144463056651841
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-04",
+    "side": "SHORT",
+    "ticker": "POW.TO",
+    "y": -0.23710210485390348
+   },
+   {
+    "confidence": 0.25,
+    "session": "2026-08-04",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -2.317493328927367
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-05",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 1.2317544069497366
+   },
+   {
+    "confidence": 0.53,
+    "session": "2026-08-05",
+    "side": "LONG",
+    "ticker": "BAM.TO",
+    "y": 0.7349593573996449
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-05",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 1.2769660077893819
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-05",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "y": 0.19677645917222097
+   },
+   {
+    "confidence": 0.42,
+    "session": "2026-08-06",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 0.5922381881662497
+   },
+   {
+    "confidence": 0.38,
+    "session": "2026-08-06",
+    "side": "LONG",
+    "ticker": "MG.TO",
+    "y": -3.1156031856881317
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-08-06",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 0.7959621870168299
+   },
+   {
+    "confidence": 0.37,
+    "session": "2026-08-06",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "y": 0.49645973602543414
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-07",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": -0.16687515719523427
+   },
+   {
+    "confidence": 0.32,
+    "session": "2026-08-07",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": 2.4958493709427154
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-08-07",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": -1.5044378698224836
+   },
+   {
+    "confidence": 0.28,
+    "session": "2026-08-07",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "y": -1.5973506991694197
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-10",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": 0.40585965830817194
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-10",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": -0.21736372075833454
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-10",
+    "side": "SHORT",
+    "ticker": "CG.TO",
+    "y": -2.0494190033452764
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-10",
+    "side": "SHORT",
+    "ticker": "EQX.TO",
+    "y": -1.809441993285854
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-11",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": -0.2923446744624525
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-11",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": 1.056643785364686
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-11",
+    "side": "SHORT",
+    "ticker": "H.TO",
+    "y": -1.963324196199412
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-08-11",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": 3.1201899986649906
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-08-12",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 2.21264668152914
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-12",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "y": -0.3406431266144594
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-08-12",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.9679323104038184
+   },
+   {
+    "confidence": 0.53,
+    "session": "2026-08-12",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 0.4374686840442621
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-13",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 0.12886668531613132
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-13",
+    "side": "LONG",
+    "ticker": "BTO.TO",
+    "y": -2.1425874486599827
+   },
+   {
+    "confidence": 0.61,
+    "session": "2026-08-13",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": -0.6980365286499479
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-08-13",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": -0.09918512623905418
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-14",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": -3.7791993938580792
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-08-14",
+    "side": "LONG",
+    "ticker": "BIR.TO",
+    "y": -0.2031705539358608
+   },
+   {
+    "confidence": 0.53,
+    "session": "2026-08-14",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": -0.6286172798920298
+   },
+   {
+    "confidence": 0.51,
+    "session": "2026-08-14",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": -0.2511130842322906
+   },
+   {
+    "confidence": 0.42,
+    "session": "2026-08-17",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": -0.8931143762604399
+   },
+   {
+    "confidence": 0.38,
+    "session": "2026-08-17",
+    "side": "LONG",
+    "ticker": "GIB-A.TO",
+    "y": 0.0
+   },
+   {
+    "confidence": 0.48,
+    "session": "2026-08-17",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": 1.9447551845796274
+   },
+   {
+    "confidence": 0.43,
+    "session": "2026-08-17",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 0.3832505322924007
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-18",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": 0.8279365915424441
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-18",
+    "side": "LONG",
+    "ticker": "MG.TO",
+    "y": 0.10951727567697356
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-18",
+    "side": "SHORT",
+    "ticker": "CAE.TO",
+    "y": 0.7521223631556606
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-18",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": -2.053194951649695
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-19",
+    "side": "LONG",
+    "ticker": "GIB-A.TO",
+    "y": 1.7065616113493554
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-19",
+    "side": "LONG",
+    "ticker": "RBA.TO",
+    "y": -0.5555600811345762
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-19",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 1.1767549388713716
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-19",
+    "side": "SHORT",
+    "ticker": "CAE.TO",
+    "y": -0.9503569299986969
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-20",
+    "side": "LONG",
+    "ticker": "MFC.TO",
+    "y": -1.0623498394796926
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-08-20",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "y": -0.11404241957880812
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-08-20",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "y": -1.3999486283692741
+   },
+   {
+    "confidence": 0.25,
+    "session": "2026-08-20",
+    "side": "SHORT",
+    "ticker": "GIB-A.TO",
+    "y": 0.6769072913366037
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-08-21",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "y": 2.5408434459032625
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-21",
+    "side": "LONG",
+    "ticker": "QSR.TO",
+    "y": 2.108786769893456
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-21",
+    "side": "SHORT",
+    "ticker": "TD.TO",
+    "y": 1.0414954824940037
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-21",
+    "side": "SHORT",
+    "ticker": "BMO.TO",
+    "y": 0.6211513754362352
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-24",
+    "side": "LONG",
+    "ticker": "K.TO",
+    "y": -0.22997586131225933
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-24",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "y": 0.18144976860163808
+   },
+   {
+    "confidence": 0.66,
+    "session": "2026-08-24",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": 0.6644854998816729
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-24",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "y": -0.2870108049922049
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-25",
+    "side": "LONG",
+    "ticker": "BTO.TO",
+    "y": 2.906812974291073
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-25",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "y": 2.3027985386727012
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-25",
+    "side": "SHORT",
+    "ticker": "TIH.TO",
+    "y": 1.154679130988523
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-25",
+    "side": "SHORT",
+    "ticker": "MG.TO",
+    "y": 3.829117410946181
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-26",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": -3.4295165079405776
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-08-26",
+    "side": "LONG",
+    "ticker": "RY.TO",
+    "y": 0.4338539246018458
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-08-26",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "y": -0.9218553766577764
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-26",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": -0.3254632082766218
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-27",
+    "side": "LONG",
+    "ticker": "BNS.TO",
+    "y": -0.29943221307838774
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-08-27",
+    "side": "LONG",
+    "ticker": "STN.TO",
+    "y": -1.1335047945468024
+   },
+   {
+    "confidence": 0.75,
+    "session": "2026-08-27",
+    "side": "SHORT",
+    "ticker": "NA.TO",
+    "y": 0.6337285449959706
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-27",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "y": 0.020926335271709284
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-08-28",
+    "side": "LONG",
+    "ticker": "ELD.TO",
+    "y": -4.084337328687648
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-08-28",
+    "side": "LONG",
+    "ticker": "SSRM.TO",
+    "y": -3.1983345077740255
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-08-28",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "y": 0.2560749171035881
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-08-28",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "y": -1.0166909327641194
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-31",
+    "side": "LONG",
+    "ticker": "ATD.TO",
+    "y": 0.8822010003398995
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-08-31",
+    "side": "LONG",
+    "ticker": "KEY.TO",
+    "y": 0.5994846574556845
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-31",
+    "side": "SHORT",
+    "ticker": "TECK-B.TO",
+    "y": 0.8354825126311805
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-31",
+    "side": "SHORT",
+    "ticker": "RY.TO",
+    "y": 0.4204834972881377
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-01",
+    "side": "LONG",
+    "ticker": "ATD.TO",
+    "y": 0.3315691103001117
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-01",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "y": 2.933030996829855
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-01",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": 1.716046440505914
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-01",
+    "side": "SHORT",
+    "ticker": "FSV.TO",
+    "y": -0.7869364435881487
+   },
+   {
+    "confidence": 0.61,
+    "session": "2026-09-02",
+    "side": "LONG",
+    "ticker": "T.TO",
+    "y": -1.945449755258799
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-02",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 0.1924228330964617
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-02",
+    "side": "SHORT",
+    "ticker": "CNQ.TO",
+    "y": -0.43921196759699743
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-02",
+    "side": "SHORT",
+    "ticker": "SU.TO",
+    "y": 0.7233869240850122
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-03",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "y": 0.4495086762105194
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-03",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "y": -0.9473355428378016
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-03",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "y": 0.028526131269646093
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-03",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.5553633648925693
+   },
+   {
+    "confidence": 0.31,
+    "session": "2026-09-04",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "y": -0.18443026929090278
+   },
+   {
+    "confidence": 0.29,
+    "session": "2026-09-04",
+    "side": "LONG",
+    "ticker": "MFC.TO",
+    "y": -0.01735696910710738
+   },
+   {
+    "confidence": 0.26,
+    "session": "2026-09-04",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "y": -0.9754736130667907
+   },
+   {
+    "confidence": 0.24,
+    "session": "2026-09-04",
+    "side": "SHORT",
+    "ticker": "CPX.TO",
+    "y": -0.8162096709936617
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-08",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "y": -0.15241051239153203
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-08",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "y": -0.5829061402977564
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-09-08",
+    "side": "SHORT",
+    "ticker": "TRI.TO",
+    "y": 1.5086355455725564
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-09-08",
+    "side": "SHORT",
+    "ticker": "BAM.TO",
+    "y": 2.542964499710332
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-09",
+    "side": "LONG",
+    "ticker": "IVN.TO",
+    "y": -1.4649474325222789
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-09",
+    "side": "LONG",
+    "ticker": "TVE.TO",
+    "y": -0.8081213892342953
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-09",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "y": -0.9104603476615125
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-09-09",
+    "side": "SHORT",
+    "ticker": "BN.TO",
+    "y": 0.7210573340559967
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-10",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "y": -2.397085017975098
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-10",
+    "side": "LONG",
+    "ticker": "IVN.TO",
+    "y": 1.4497688206475012
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-10",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": 0.14165761712690017
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-10",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.460924608235147
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-11",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "y": -0.8259532877529563
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-11",
+    "side": "SHORT",
+    "ticker": "SSRM.TO",
+    "y": 2.483202897426229
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-11",
+    "side": "SHORT",
+    "ticker": "WCP.TO",
+    "y": 0.1528013582343224
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-14",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": 0.13066072385794492
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-14",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "y": 0.2077207919465307
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO",
+    "y": -0.20878819937997228
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-09-14",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.11077257194842538
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-09-15",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": -2.101708834145044
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-15",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "y": -0.6924196550706418
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-09-15",
+    "side": "SHORT",
+    "ticker": "TOU.TO",
+    "y": -1.3105017159587673
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-15",
+    "side": "SHORT",
+    "ticker": "AQN.TO",
+    "y": 0.4417604244106088
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-16",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "y": -2.474192533018127
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-16",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "y": -0.4520971086600878
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-16",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "y": -5.206104384504329
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-16",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.1845881293851992
+   },
+   {
+    "confidence": 0.42,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "EMA.TO",
+    "y": -0.1810252792464606
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "y": 0.07045269975012314
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "y": 0.18987094121274417
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "QSR.TO",
+    "y": 1.3443683752651148
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-09-18",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "y": 0.0657742456805055
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-09-18",
+    "side": "LONG",
+    "ticker": "ATD.TO",
+    "y": -0.4918083955143593
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-18",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": 0.7647006128696066
+   },
+   {
+    "confidence": 0.45,
+    "session": "2026-09-18",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "y": -0.06254018020102059
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "y": -1.772932812334238
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": -2.6419051098779733
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "y": -0.3402004668358716
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "STN.TO",
+    "y": -1.2022542830056882
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": -3.5081137901291193
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "TIH.TO",
+    "y": 3.1985027418254264
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "H.TO",
+    "y": -0.618919908016835
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": -1.3569847515986222
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-24",
+    "side": "LONG",
+    "ticker": "FTT.TO",
+    "y": 2.4945831309281963
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-24",
+    "side": "LONG",
+    "ticker": "TOU.TO",
+    "y": -0.10629076805548365
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-24",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "y": -0.0038457786482148926
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-24",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 1.3979196160200602
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "y": 0.0691885540481385
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "y": 3.5493217187160475
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "y": 0.6504475547951527
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "K.TO",
+    "y": -0.7700597948194998
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-28",
+    "side": "LONG",
+    "ticker": "FTT.TO",
+    "y": -0.38448343083803405
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-28",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "y": 0.28726969994491425
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-28",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "y": 2.0228037488796313
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-09-28",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "y": 0.507437465338878
+   }
+  ],
+  "B": [
+   {
+    "confidence": 0.7,
+    "session": "2026-07-06",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": -1.58,
+    "y": 2.1808731213868504
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-06",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "x30": 1.8,
+    "y": -2.301694113069608
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-06",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "x30": -0.77,
+    "y": 1.368476953547304
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-06",
+    "side": "SHORT",
+    "ticker": "AQN.TO",
+    "x30": 0.3,
+    "y": -1.2087242668812004
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-07",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "x30": 1.58,
+    "y": 0.599936930065792
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-07",
+    "side": "LONG",
+    "ticker": "BCE.TO",
+    "x30": 2.03,
+    "y": -0.6463082587364166
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-07",
+    "side": "SHORT",
+    "ticker": "FTT.TO",
+    "x30": -3.14,
+    "y": -4.235417599209734
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-07-07",
+    "side": "SHORT",
+    "ticker": "HBM.TO",
+    "x30": -2.53,
+    "y": 3.620654845877158
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-08",
+    "side": "LONG",
+    "ticker": "CPX.TO",
+    "x30": 1.39,
+    "y": 1.571710756639022
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-08",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "x30": 1.74,
+    "y": 0.12473676422237734
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-07-08",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -2.22,
+    "y": -1.591334959431956
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-08",
+    "side": "SHORT",
+    "ticker": "RY.TO",
+    "x30": 0.25,
+    "y": 1.0582668210491697
+   },
+   {
+    "confidence": 0.75,
+    "session": "2026-07-09",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 2.89,
+    "y": 1.6480891537581588
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-09",
+    "side": "LONG",
+    "ticker": "CP.TO",
+    "x30": 1.11,
+    "y": -0.3578604778253225
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-09",
+    "side": "SHORT",
+    "ticker": "TD.TO",
+    "x30": -1.56,
+    "y": -0.7934253217637632
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-09",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": -1.16,
+    "y": -0.2967171050547446
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-10",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 0.48,
+    "y": -3.809991550485836
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-10",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "x30": 0.75,
+    "y": -0.2034581404580349
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-10",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "x30": -0.09,
+    "y": -2.6352163725669397
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-07-10",
+    "side": "SHORT",
+    "ticker": "AGI.TO",
+    "x30": -0.57,
+    "y": 0.12309498036793265
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-13",
+    "side": "LONG",
+    "ticker": "WN.TO",
+    "x30": 1.58,
+    "y": -0.2873461320306525
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-07-13",
+    "side": "LONG",
+    "ticker": "L.TO",
+    "x30": 1.29,
+    "y": -0.06814926038521962
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-13",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -1.48,
+    "y": -1.97738473623994
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-07-13",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -1.58,
+    "y": 1.206173249566711
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "LONG",
+    "ticker": "FM.TO",
+    "x30": 3.37,
+    "y": 0.6297911164794057
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 2.86,
+    "y": 0.311874089298092
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -2.22,
+    "y": 1.3931435511203683
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-14",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "x30": -1.78,
+    "y": -0.14708590223055928
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-15",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": -4.6,
+    "y": 1.982109982389213
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-15",
+    "side": "LONG",
+    "ticker": "WSP.TO",
+    "x30": 2.21,
+    "y": -1.931667925953906
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-15",
+    "side": "SHORT",
+    "ticker": "RY.TO",
+    "x30": 0.45,
+    "y": -0.7804279445928319
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-15",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -0.08,
+    "y": -0.6423272684541237
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-16",
+    "side": "LONG",
+    "ticker": "TRP.TO",
+    "x30": 0.41,
+    "y": 0.5958454398094393
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-16",
+    "side": "LONG",
+    "ticker": "PPL.TO",
+    "x30": 0.99,
+    "y": -0.13779053797202678
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-16",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -1.21,
+    "y": -1.6992943094135793
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-16",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "x30": -1.32,
+    "y": 0.9795807072876084
+   },
+   {
+    "confidence": 0.78,
+    "session": "2026-07-17",
+    "side": "LONG",
+    "ticker": "RY.TO",
+    "x30": 0.63,
+    "y": -0.330022111481465
+   },
+   {
+    "confidence": 0.74,
+    "session": "2026-07-17",
+    "side": "LONG",
+    "ticker": "TD.TO",
+    "x30": 0.68,
+    "y": -0.30507108731940846
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-07-17",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -0.9,
+    "y": 1.268036729339761
+   },
+   {
+    "confidence": 0.66,
+    "session": "2026-07-17",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -1.24,
+    "y": -0.9089849667870853
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-07-20",
+    "side": "LONG",
+    "ticker": "ATZ.TO",
+    "x30": 2.09,
+    "y": -0.39412246859289457
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-20",
+    "side": "LONG",
+    "ticker": "POW.TO",
+    "x30": 1.22,
+    "y": -0.6569818050502829
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-20",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "x30": -0.58,
+    "y": -1.159604778309009
+   },
+   {
+    "confidence": 0.56,
+    "session": "2026-07-20",
+    "side": "SHORT",
+    "ticker": "EQX.TO",
+    "x30": 0.29,
+    "y": -1.2830568413072285
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-21",
+    "side": "LONG",
+    "ticker": "LUN.TO",
+    "x30": 1.51,
+    "y": 1.465135809129614
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-21",
+    "side": "LONG",
+    "ticker": "MG.TO",
+    "x30": 1.09,
+    "y": 0.8783101991941766
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-21",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": -0.94,
+    "y": -0.21478218117194636
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-07-21",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": -0.67,
+    "y": -0.9060391598452844
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-22",
+    "side": "LONG",
+    "ticker": "GIL.TO",
+    "x30": 0.87,
+    "y": -1.0269141092139833
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-22",
+    "side": "LONG",
+    "ticker": "BTO.TO",
+    "x30": 1.71,
+    "y": -0.00013423899910547377
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-22",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -2.43,
+    "y": 1.6921717097251099
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-22",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO",
+    "x30": -1.1,
+    "y": 2.2153316801852507
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-23",
+    "side": "LONG",
+    "ticker": "CNR.TO",
+    "x30": 1.69,
+    "y": 0.2616088947024364
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "LONG",
+    "ticker": "BBD-B.TO",
+    "x30": 1.9,
+    "y": 1.9961709555718077
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-23",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -2.26,
+    "y": 1.859568381118215
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-23",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "x30": -2.0,
+    "y": 3.007299270072994
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-07-24",
+    "side": "LONG",
+    "ticker": "POW.TO",
+    "x30": 1.78,
+    "y": -0.5766418032006393
+   },
+   {
+    "confidence": 0.56,
+    "session": "2026-07-24",
+    "side": "LONG",
+    "ticker": "ALA.TO",
+    "x30": 0.44,
+    "y": -0.35630979414176256
+   },
+   {
+    "confidence": 0.59,
+    "session": "2026-07-24",
+    "side": "SHORT",
+    "ticker": "FSV.TO",
+    "x30": 1.74,
+    "y": -3.292675351751928
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-24",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "x30": -1.1,
+    "y": -1.0241871121333679
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-07-27",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 3.81,
+    "y": 3.3680562033702843
+   },
+   {
+    "confidence": 0.66,
+    "session": "2026-07-27",
+    "side": "LONG",
+    "ticker": "OTEX.TO",
+    "x30": 2.62,
+    "y": 1.2570427872154122
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-27",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "x30": -0.78,
+    "y": -1.2961825749457034
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-07-27",
+    "side": "SHORT",
+    "ticker": "FTT.TO",
+    "x30": -4.35,
+    "y": 3.956023225972294
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-28",
+    "side": "LONG",
+    "ticker": "GIB-A.TO",
+    "x30": 2.81,
+    "y": -0.9793907941109792
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-28",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "x30": 2.76,
+    "y": -0.09122616687475826
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-28",
+    "side": "SHORT",
+    "ticker": "FM.TO",
+    "x30": -3.09,
+    "y": -1.4904942298923363
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-28",
+    "side": "SHORT",
+    "ticker": "TECK-B.TO",
+    "x30": -1.84,
+    "y": -1.237254827412615
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-07-29",
+    "side": "LONG",
+    "ticker": "GIB-A.TO",
+    "x30": 5.13,
+    "y": 1.13751170999139
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-07-29",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "x30": 2.26,
+    "y": 1.134601979921035
+   },
+   {
+    "confidence": 0.75,
+    "session": "2026-07-29",
+    "side": "SHORT",
+    "ticker": "TFII.TO",
+    "x30": -1.45,
+    "y": 2.010705082173192
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-29",
+    "side": "SHORT",
+    "ticker": "TIH.TO",
+    "x30": -3.11,
+    "y": -2.7909858102618257
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-07-30",
+    "side": "LONG",
+    "ticker": "RY.TO",
+    "x30": 0.57,
+    "y": -0.14467203660948336
+   },
+   {
+    "confidence": 0.59,
+    "session": "2026-07-30",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 0.32,
+    "y": 1.9814825718512008
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-07-30",
+    "side": "SHORT",
+    "ticker": "BMO.TO",
+    "x30": 0.99,
+    "y": -0.37244864454737403
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-07-30",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": -0.9,
+    "y": 1.7266558447709968
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-07-31",
+    "side": "LONG",
+    "ticker": "GIL.TO",
+    "x30": 2.28,
+    "y": 2.6321956732310414
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-07-31",
+    "side": "LONG",
+    "ticker": "X.TO",
+    "x30": 2.16,
+    "y": -1.402619790121029
+   },
+   {
+    "confidence": 0.75,
+    "session": "2026-07-31",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": -5.31,
+    "y": -1.6259379641954674
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-07-31",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -1.45,
+    "y": 1.365418800865692
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-04",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "x30": 3.81,
+    "y": 5.490994070979638
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-04",
+    "side": "LONG",
+    "ticker": "IGM.TO",
+    "x30": 3.46,
+    "y": -0.5252839053657254
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-04",
+    "side": "SHORT",
+    "ticker": "KEY.TO",
+    "x30": -1.77,
+    "y": -0.010821251541726085
+   },
+   {
+    "confidence": 0.56,
+    "session": "2026-08-04",
+    "side": "SHORT",
+    "ticker": "QBR-B.TO",
+    "x30": -1.8,
+    "y": 0.6738805974546569
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-05",
+    "side": "LONG",
+    "ticker": "GIL.TO",
+    "x30": 1.63,
+    "y": 1.1963650694087447
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-05",
+    "side": "LONG",
+    "ticker": "LUN.TO",
+    "x30": 0.45,
+    "y": 0.9412711331513224
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-05",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "x30": -12.08,
+    "y": 0.3309665766848435
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-05",
+    "side": "SHORT",
+    "ticker": "DIR-UN.TO",
+    "x30": -2.17,
+    "y": -3.7944765598448393
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-06",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "x30": -3.77,
+    "y": 1.1669060364712491
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-08-06",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "x30": 1.61,
+    "y": 0.8742452336804041
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-06",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -1.09,
+    "y": -0.7219399277326177
+   },
+   {
+    "confidence": 0.66,
+    "session": "2026-08-06",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": -0.66,
+    "y": 0.7206642103874228
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-07",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 1.33,
+    "y": 1.0934281075200447
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-08-07",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "x30": 1.77,
+    "y": -1.229287600464235
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-07",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": -0.76,
+    "y": 0.054467670509472654
+   },
+   {
+    "confidence": 0.53,
+    "session": "2026-08-07",
+    "side": "SHORT",
+    "ticker": "OTEX.TO",
+    "x30": -4.79,
+    "y": -2.4611816361574057
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-10",
+    "side": "LONG",
+    "ticker": "SAP.TO",
+    "x30": 3.05,
+    "y": 0.12992626007763963
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-10",
+    "side": "LONG",
+    "ticker": "CU.TO",
+    "x30": 7.45,
+    "y": -0.006001684336753854
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-10",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": -1.24,
+    "y": 0.16538318431058574
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-10",
+    "side": "SHORT",
+    "ticker": "OTEX.TO",
+    "x30": 1.64,
+    "y": 2.2401775097538934
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-11",
+    "side": "LONG",
+    "ticker": "BAM.TO",
+    "x30": 2.23,
+    "y": 2.249980858526579
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-11",
+    "side": "LONG",
+    "ticker": "BEP-UN.TO",
+    "x30": 1.62,
+    "y": 2.321753430055551
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-11",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": 0.34,
+    "y": -0.21682493776322698
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-11",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "x30": 0.05,
+    "y": -0.6370004812104146
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-12",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "x30": 9.63,
+    "y": -1.4060742740955146
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-12",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "x30": 0.03,
+    "y": -0.38703497586656255
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-12",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -0.45,
+    "y": 0.6461472402997437
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-12",
+    "side": "SHORT",
+    "ticker": "OTEX.TO",
+    "x30": -2.3,
+    "y": -3.198362091406115
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-13",
+    "side": "LONG",
+    "ticker": "POW.TO",
+    "x30": 0.83,
+    "y": -0.6233315198107992
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-13",
+    "side": "LONG",
+    "ticker": "CPX.TO",
+    "x30": -0.02,
+    "y": 1.7333447128373036
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-13",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "x30": -3.22,
+    "y": -1.7889086304235358
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-13",
+    "side": "SHORT",
+    "ticker": "CAE.TO",
+    "x30": -7.01,
+    "y": -0.22816722484464425
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-14",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "x30": 1.27,
+    "y": -0.6785440267864207
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 0.78,
+    "y": -0.6765679721770779
+   },
+   {
+    "confidence": 0.66,
+    "session": "2026-08-14",
+    "side": "SHORT",
+    "ticker": "BYD.TO",
+    "x30": -1.14,
+    "y": -2.9727236940227164
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-14",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -1.13,
+    "y": 1.316012762428509
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-17",
+    "side": "LONG",
+    "ticker": "ELD.TO",
+    "x30": 1.6,
+    "y": -0.9470996363261208
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-17",
+    "side": "LONG",
+    "ticker": "IMG.TO",
+    "x30": 1.76,
+    "y": 1.0192829802385672
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-17",
+    "side": "SHORT",
+    "ticker": "SAP.TO",
+    "x30": -3.86,
+    "y": -0.14550271644400148
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-17",
+    "side": "SHORT",
+    "ticker": "CAE.TO",
+    "x30": -2.27,
+    "y": -0.5117649001668889
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-18",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "x30": 0.57,
+    "y": -0.042411009917664444
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-08-18",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 0.04,
+    "y": 0.4921611475032561
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-18",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": 0.35,
+    "y": -0.903263177088165
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-18",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "x30": 2.83,
+    "y": -1.9571761376655616
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-08-19",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "x30": 2.64,
+    "y": 3.7481265651561846
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-19",
+    "side": "LONG",
+    "ticker": "WPM.TO",
+    "x30": 3.21,
+    "y": 3.720848957000722
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-19",
+    "side": "SHORT",
+    "ticker": "FTT.TO",
+    "x30": -3.02,
+    "y": -2.8448992847733945
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-19",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "x30": 1.14,
+    "y": 0.5862319966957075
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-20",
+    "side": "LONG",
+    "ticker": "K.TO",
+    "x30": 2.66,
+    "y": 4.156798082516722
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-20",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "x30": 1.74,
+    "y": 1.8674710794441385
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-20",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "x30": -3.0,
+    "y": 0.8210489983193847
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-20",
+    "side": "SHORT",
+    "ticker": "CM.TO",
+    "x30": -1.29,
+    "y": 0.7398586715663291
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-21",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "x30": 4.13,
+    "y": 0.924306710919276
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-21",
+    "side": "LONG",
+    "ticker": "TECK-B.TO",
+    "x30": 1.54,
+    "y": 0.20480132985349897
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-21",
+    "side": "SHORT",
+    "ticker": "SSRM.TO",
+    "x30": -2.67,
+    "y": -1.5730973515269975
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-21",
+    "side": "SHORT",
+    "ticker": "PAAS.TO",
+    "x30": -1.76,
+    "y": -1.68057042593186
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-24",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 1.57,
+    "y": -0.42179068903041017
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-24",
+    "side": "LONG",
+    "ticker": "AEM.TO",
+    "x30": 0.25,
+    "y": -0.2908797874805358
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-08-24",
+    "side": "SHORT",
+    "ticker": "ERO.TO",
+    "x30": -0.42,
+    "y": 2.146284687756239
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-24",
+    "side": "SHORT",
+    "ticker": "MG.TO",
+    "x30": -2.28,
+    "y": 3.4541166023703718
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-25",
+    "side": "LONG",
+    "ticker": "BNS.TO",
+    "x30": 2.05,
+    "y": 2.288173596451104
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-25",
+    "side": "LONG",
+    "ticker": "ELD.TO",
+    "x30": 2.48,
+    "y": 2.8831276721688504
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-25",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "x30": 1.28,
+    "y": -1.2837685099887919
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-25",
+    "side": "SHORT",
+    "ticker": "NTR.TO",
+    "x30": -1.35,
+    "y": -0.5964428862546445
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-26",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": -0.44,
+    "y": -0.6356274293414677
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-26",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "x30": 2.03,
+    "y": 1.6930053069058704
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-26",
+    "side": "SHORT",
+    "ticker": "BMO.TO",
+    "x30": 0.36,
+    "y": -0.32242429579609766
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-26",
+    "side": "SHORT",
+    "ticker": "NA.TO",
+    "x30": -3.11,
+    "y": -0.5956991321957594
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-08-27",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "x30": 0.67,
+    "y": 0.6232722581903438
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-27",
+    "side": "LONG",
+    "ticker": "CP.TO",
+    "x30": 0.76,
+    "y": -1.3274972278872865
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-27",
+    "side": "SHORT",
+    "ticker": "CVE.TO",
+    "x30": -0.01,
+    "y": -0.5536565330405585
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-28",
+    "side": "LONG",
+    "ticker": "ATD.TO",
+    "x30": 1.07,
+    "y": -0.5173527848047699
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-08-28",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 1.01,
+    "y": -0.9943236044820836
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-28",
+    "side": "SHORT",
+    "ticker": "TRI.TO",
+    "x30": 0.26,
+    "y": -1.0743207620755535
+   },
+   {
+    "confidence": 0.5,
+    "session": "2026-08-28",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "x30": -2.37,
+    "y": 2.318708203204889
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-08-31",
+    "side": "LONG",
+    "ticker": "NTR.TO",
+    "x30": 1.62,
+    "y": -0.2865755995855035
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-08-31",
+    "side": "LONG",
+    "ticker": "BCE.TO",
+    "x30": 1.65,
+    "y": -0.23712547773881987
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-08-31",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -3.08,
+    "y": -1.5435284368734759
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-08-31",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "x30": -1.31,
+    "y": -0.886788029479979
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-01",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "x30": 0.21,
+    "y": 0.8431011033717795
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-01",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "x30": 0.11,
+    "y": 2.309714337498381
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-09-01",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -1.46,
+    "y": 0.7536488042328537
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-01",
+    "side": "SHORT",
+    "ticker": "CP.TO",
+    "x30": -1.31,
+    "y": 1.6141320817932847
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-02",
+    "side": "LONG",
+    "ticker": "BTO.TO",
+    "x30": 1.01,
+    "y": -0.1873711823121571
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-02",
+    "side": "LONG",
+    "ticker": "OGC.TO",
+    "x30": 2.13,
+    "y": -1.4152690212119623
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-02",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "x30": -1.72,
+    "y": 0.5388437310941296
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-02",
+    "side": "SHORT",
+    "ticker": "IMO.TO",
+    "x30": -1.79,
+    "y": 0.279597081514682
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-03",
+    "side": "LONG",
+    "ticker": "GWO.TO",
+    "x30": 1.3,
+    "y": -1.4805571316847455
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-03",
+    "side": "LONG",
+    "ticker": "MFC.TO",
+    "x30": 1.47,
+    "y": 0.00407621087818999
+   },
+   {
+    "confidence": 0.64,
+    "session": "2026-09-03",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "x30": -1.78,
+    "y": -1.9105539758916157
+   },
+   {
+    "confidence": 0.61,
+    "session": "2026-09-03",
+    "side": "SHORT",
+    "ticker": "ERO.TO",
+    "x30": -4.19,
+    "y": -1.9892619668573586
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-04",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "x30": 1.45,
+    "y": -0.23786421363996002
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-04",
+    "side": "LONG",
+    "ticker": "GIL.TO",
+    "x30": 2.38,
+    "y": -1.4110592420949142
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-04",
+    "side": "SHORT",
+    "ticker": "OTEX.TO",
+    "x30": -1.92,
+    "y": -0.3886442489189901
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-04",
+    "side": "SHORT",
+    "ticker": "KEY.TO",
+    "x30": -2.91,
+    "y": -2.1206292863911513
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-08",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 1.6,
+    "y": -0.5188549659308039
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-08",
+    "side": "LONG",
+    "ticker": "IVN.TO",
+    "x30": 5.97,
+    "y": 3.8154398439891324
+   },
+   {
+    "confidence": 0.67,
+    "session": "2026-09-08",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -3.3,
+    "y": 0.9167621883727439
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-08",
+    "side": "SHORT",
+    "ticker": "GIB-A.TO",
+    "x30": -2.31,
+    "y": -0.2902931483107385
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-09",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 1.23,
+    "y": -0.2614676613715061
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-09",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "x30": 0.64,
+    "y": -0.627193552755656
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-09",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -3.44,
+    "y": 3.0741127776469312
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-09",
+    "side": "SHORT",
+    "ticker": "TRI.TO",
+    "x30": -1.33,
+    "y": -0.416460196136359
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-09-10",
+    "side": "LONG",
+    "ticker": "IVN.TO",
+    "x30": -0.87,
+    "y": 0.14954317145596807
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-10",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 2.58,
+    "y": -0.07389444880109286
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-09-10",
+    "side": "SHORT",
+    "ticker": "AEM.TO",
+    "x30": 1.37,
+    "y": 0.7005963586206199
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-10",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": 0.39,
+    "y": 0.1603851419966329
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-11",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 1.02,
+    "y": -0.17155497147770538
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-11",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "x30": 0.17,
+    "y": 0.33229284116030877
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-11",
+    "side": "SHORT",
+    "ticker": "ENB.TO",
+    "x30": -0.2,
+    "y": 0.8155994916600684
+   },
+   {
+    "confidence": 0.52,
+    "session": "2026-09-11",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "x30": -0.46,
+    "y": -1.0969686507176557
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-14",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "x30": 0.41,
+    "y": -0.3339626390929218
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 0.12,
+    "y": -1.6207080032138554
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-14",
+    "side": "SHORT",
+    "ticker": "AQN.TO",
+    "x30": -1.18,
+    "y": -1.605952506291275
+   },
+   {
+    "confidence": 0.55,
+    "session": "2026-09-14",
+    "side": "SHORT",
+    "ticker": "ATD.TO",
+    "x30": 0.89,
+    "y": 0.09670790686246988
+   },
+   {
+    "confidence": 0.72,
+    "session": "2026-09-15",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "x30": 2.67,
+    "y": 1.6696015726410218
+   },
+   {
+    "confidence": 0.68,
+    "session": "2026-09-15",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 2.28,
+    "y": 0.5978616812255089
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-15",
+    "side": "SHORT",
+    "ticker": "QSR.TO",
+    "x30": -1.52,
+    "y": 1.6594074817353088
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-15",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "x30": -1.34,
+    "y": -0.32275980742966226
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-16",
+    "side": "LONG",
+    "ticker": "WCP.TO",
+    "x30": 0.3,
+    "y": -2.4646433924963573
+   },
+   {
+    "confidence": 0.25,
+    "session": "2026-09-16",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "x30": -1.17,
+    "y": -2.4300124540351575
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-16",
+    "side": "SHORT",
+    "ticker": "QSR.TO",
+    "x30": -1.77,
+    "y": -0.4244761034795652
+   },
+   {
+    "confidence": 0.25,
+    "session": "2026-09-16",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "x30": -1.39,
+    "y": -3.279490394017237
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "x30": 2.3,
+    "y": 0.2934353535782419
+   },
+   {
+    "confidence": 0.56,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "CVE.TO",
+    "x30": 1.69,
+    "y": 0.7120272842382702
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "x30": -3.86,
+    "y": -1.7839479971511807
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "x30": -1.58,
+    "y": -0.8185416877869223
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-18",
+    "side": "LONG",
+    "ticker": "BTE.TO",
+    "x30": 1.15,
+    "y": -1.1948618617248608
+   },
+   {
+    "confidence": 0.56,
+    "session": "2026-09-18",
+    "side": "LONG",
+    "ticker": "ENB.TO",
+    "x30": 0.11,
+    "y": 0.006421096508413271
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-18",
+    "side": "SHORT",
+    "ticker": "TRI.TO",
+    "x30": -3.24,
+    "y": 2.2878626666487545
+   },
+   {
+    "confidence": 0.54,
+    "session": "2026-09-18",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "x30": -2.18,
+    "y": 0.8060250378168932
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "FTT.TO",
+    "x30": 2.12,
+    "y": 0.9994178163680312
+   },
+   {
+    "confidence": 0.57,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "x30": 0.48,
+    "y": -2.3645304001094214
+   },
+   {
+    "confidence": 0.63,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "CG.TO",
+    "x30": -1.14,
+    "y": -0.009389737610621118
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "x30": -0.36,
+    "y": -7.024649694471141
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 2.11,
+    "y": -0.44756664320427797
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "FTT.TO",
+    "x30": 2.02,
+    "y": 2.0360930055129733
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "x30": -0.35,
+    "y": 0.932708308115926
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "x30": -0.19,
+    "y": 1.308713862670996
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "POW.TO",
+    "x30": 0.85,
+    "y": -0.10039789802394061
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "ALA.TO",
+    "x30": 2.47,
+    "y": 1.2348899484579179
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "BTO.TO",
+    "x30": -0.49,
+    "y": -0.8639607300083507
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "CG.TO",
+    "x30": -1.52,
+    "y": -1.4578568674176506
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-24",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "x30": 1.05,
+    "y": 2.520215633423162
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-24",
+    "side": "LONG",
+    "ticker": "DOL.TO",
+    "x30": 1.67,
+    "y": -0.6600656637021141
+   },
+   {
+    "confidence": 0.75,
+    "session": "2026-09-24",
+    "side": "SHORT",
+    "ticker": "K.TO",
+    "x30": -5.15,
+    "y": 1.9221329703718482
+   },
+   {
+    "confidence": 0.7,
+    "session": "2026-09-24",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "x30": -2.58,
+    "y": 1.7182458766744957
+   },
+   {
+    "confidence": 0.65,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "x30": -5.24,
+    "y": 0.21442823024679925
+   },
+   {
+    "confidence": 0.6,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "ATZ.TO",
+    "x30": 0.81,
+    "y": 1.0637364779261471
+   },
+   {
+    "confidence": 0.62,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "DOL.TO",
+    "x30": 1.53,
+    "y": -0.4040000682520972
+   },
+   {
+    "confidence": 0.58,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "x30": 0.69,
+    "y": 0.3643745973797241
+   },
+   {
+    "confidence": 0.4,
+    "session": "2026-09-28",
+    "side": "LONG",
+    "ticker": "ERO.TO",
+    "x30": 4.21,
+    "y": -0.1496910023285447
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-09-28",
+    "side": "LONG",
+    "ticker": "BTO.TO",
+    "x30": 3.54,
+    "y": -1.5546362912054468
+   },
+   {
+    "confidence": 0.35,
+    "session": "2026-09-28",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "x30": -1.79,
+    "y": 1.9459778229521718
+   },
+   {
+    "confidence": 0.3,
+    "session": "2026-09-28",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO",
+    "x30": -1.69,
+    "y": -0.5569885569503552
+   }
+  ]
+ },
+ "registered": "PREREGISTER_day132c_after_open.md",
+ "run_on": "2026-10-14",
+ "sessions": 59,
+ "t2_after_open": {
+  "arm_b": {
+   "hit": 0.455,
+   "mean_pct": 0.053,
+   "n": 235,
+   "se": 0.12,
+   "sessions": 59,
+   "t": 0.44
+  },
+  "checks": {
+   "control_detects_planted_0_5": true,
+   "mean_positive_t_ge_3": false,
+   "placebo_p_below_0_05": false
+  },
+  "control": {
+   "mde80_pct": 0.336,
+   "planted_pct": 0.5,
+   "t_planted": 4.17
+  },
+  "placebo": {
+   "draws": 2000,
+   "mean_of_draws_pct": 0.0036,
+   "p_one_sided": 0.259
+  },
+  "verdict": "FAIL"
+ }
+}

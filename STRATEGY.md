@@ -5483,3 +5483,18 @@ The owner pasted a read of the 10-14 board. Registered first:
   * Its module and recorded rows are kept.
   * This is the owner's decision, not a verdict:
     `PREREGISTER_day119_debate.md`, amendment.
+* **Phase 3, REJECTION #48: a model asked after the open, with each name's
+  first thirty minutes** (`PREREGISTER_day132c_after_open.md`,
+  `replay_after_open.py`).
+  * **Setup.** 59 replay sessions, DeepSeek v4-pro, the production nomination
+    question. The model control passed: the plant sat only in the new fields.
+  * **Result.** 235 picks from 10:00 to the close against XIU: +0.05%,
+    t = 0.44; placebo p = 0.26. A planted 0.5% shows at t = 4.17. **A POWERED
+    FAIL.**
+  * **Descriptive.** The same question before the open: −0.04%. Paired
+    difference +0.07%, t = 0.45. The model followed the first thirty minutes
+    on 88% of its picks, no better than the mechanical rule (+0.15%,
+    t = 1.31).
+  * **Settles C3.** The outside read's "react to the open" has its powered
+    test, and it fails.
+  * Do not build a 10:00 desk without new data. `AUDIT_day132c_after_open.md`.

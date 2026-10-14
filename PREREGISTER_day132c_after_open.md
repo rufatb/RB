@@ -123,3 +123,19 @@ fields and T2 is not run.
 
 Script `replay_after_open.py`; summary `data/replay_day132c_after_open.json`.
 About 123 DeepSeek calls.
+
+## Results (2026-10-14, after the run; nothing above was changed)
+
+* **Model control:** passed, 4/5 clean in the check and 5/5 in the run.
+* **T2: FAIL, powered.**
+  * Arm B: 235 picks over 59 sessions, +0.053% against XIU, t = 0.44,
+    45.5% right.
+  * Placebo p = 0.26.
+  * A planted 0.5% shows at t = 4.17 (MDE80 0.34%).
+* **Descriptive.**
+  * Arm A: −0.04% (t = −0.30).
+  * B − A: +0.07% (t = 0.45).
+  * The follow-x30 rule: +0.15% (t = 1.31).
+  * Arm B followed x30 on 88% of its picks.
+
+Read `AUDIT_day132c_after_open.md`. Nothing changes.
