@@ -1,5 +1,32 @@
 # Working notes for this repo
 
+## Day132 — the picks chase yesterday's movers; it is not look-ahead, and it neither helps nor hurts (owner, 2026-10-14)
+
+The owner saw the 10-14 Top 2 and asked whether it is "look-backward bias":
+SHORT SSRM.TO after −1.62 ATR on 10-13, and LONG CNQ.TO after +1.95 ATR to
+its 52-week high. Registered first in `PREREGISTER_day132_chasing.md`
+(d63a3f5); read `AUDIT_day132_chasing.md`.
+
+* **No look-ahead.** The inputs describe the prior session (`data_dates`).
+  The council sat 08:57–08:59, and the record scores from the 09:45 bar.
+* **A measured selection habit.** A pick CHASES when it continues a ≥ 1 ATR
+  prior move (day-120b's definition).
+  * 45% of the models' picks chase, against a 5.7% base: 7.9× chance.
+  * The council's Top 2 is 9.5×; every pick on 10-13 and 10-14 chased.
+  * The engine is 1.7×.
+* **Rejection #47, a POWERED NULL** (`replay_chasing.py`, FMP 15-minute
+  bars).
+  * 10,332 moves of ≥ 1 ATR in the pool, 2024-01 → 2026-10.
+  * 09:45 → close continuation against XIU: −0.013%, t = −0.44; placebo
+    p = 0.47.
+  * A planted 0.10% shows at t = 3.39.
+  * Nothing overnight, at ≥ 2 ATR, on report days, on the name's own moves,
+    or after a further gap at the open.
+* **So:** a chasing pick is a coin flip like any other, and "it already
+  moved" is a reason in neither direction.
+  * As registered, nothing changes: no flag, no filter, no prompt edit.
+  * Do not build momentum or fade rules on yesterday's move without new data.
+
 ## Day131 — a desk that picks nothing shows its model's nominations (owner, 2026-10-13)
 
 The owner saw Claude's and DeepSeek's desks print "No pick today" again and

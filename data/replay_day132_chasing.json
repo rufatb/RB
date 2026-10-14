@@ -1,0 +1,2135 @@
+{
+ "block_means_pct": [
+  0.1397,
+  -0.1695,
+  -0.0833,
+  0.0608
+ ],
+ "capped_calls": 0,
+ "checks": {
+  "continuation": {
+   "all_four_blocks_positive": false,
+   "mean_positive_t_ge_3": false,
+   "net_of_0_10_positive": false,
+   "placebo_p_below_0_05": false
+  },
+  "control_detects_planted_0_10": true,
+  "reversal": {
+   "all_four_blocks_negative": false,
+   "mean_negative_t_le_minus_3": false,
+   "placebo_p_below_0_05": false
+  }
+ },
+ "control": {
+  "mde80_pct": 0.083,
+  "planted_pct": 0.1,
+  "t_planted": 3.39
+ },
+ "counts": {
+  "down_moves": 4854,
+  "event_sessions": 687,
+  "events": 10332,
+  "name_days": 79453,
+  "sessions": 695,
+  "up_moves": 5478
+ },
+ "descriptive": {
+  "dose": {
+   "abs_m_1_to_2": {
+    "hit": 0.496,
+    "mean_pct": -0.0083,
+    "n": 9329,
+    "se": 0.03,
+    "t": -0.28
+   },
+   "abs_m_below_1": {
+    "hit": 0.493,
+    "mean_pct": 0.0002,
+    "n": 69121,
+    "se": 0.009,
+    "t": 0.02
+   },
+   "abs_m_ge_2": {
+    "hit": 0.485,
+    "mean_pct": -0.0569,
+    "n": 1003,
+    "se": 0.0669,
+    "t": -0.85
+   }
+  },
+  "earnings": {
+   "no_report": {
+    "hit": 0.492,
+    "mean_pct": -0.0147,
+    "n": 9452,
+    "se": 0.0298,
+    "t": -0.49
+   },
+   "prior_session_was_a_report": {
+    "hit": 0.531,
+    "mean_pct": 0.0047,
+    "n": 880,
+    "se": 0.0812,
+    "t": 0.06
+   }
+  },
+  "gap": {
+   "opened_against_it": {
+    "hit": 0.497,
+    "mean_pct": 0.0105,
+    "n": 5253,
+    "se": 0.0355,
+    "t": 0.3
+   },
+   "opened_further_the_same_way": {
+    "hit": 0.493,
+    "mean_pct": -0.0376,
+    "n": 5064,
+    "se": 0.0434,
+    "t": -0.87
+   }
+  },
+  "idiosyncratic_abs_m_x_ge_1": {
+   "hit": 0.484,
+   "mean_pct": -0.0246,
+   "n": 9431,
+   "se": 0.0319,
+   "t": -0.77
+  },
+  "side": {
+   "down_move_short_chase": {
+    "hit": 0.485,
+    "mean_pct": -0.047,
+    "n": 4854,
+    "se": 0.0424,
+    "t": -1.11
+   },
+   "up_move_long_chase": {
+    "hit": 0.504,
+    "mean_pct": 0.017,
+    "n": 5478,
+    "se": 0.0345,
+    "t": 0.49
+   }
+  },
+  "windows_signed_by_prior_move": {
+   "0945_to_close": {
+    "hit": 0.495,
+    "mean_pct": -0.0131,
+    "n": 10332,
+    "se": 0.0295,
+    "t": -0.44
+   },
+   "0945_to_noon": {
+    "hit": 0.49,
+    "mean_pct": 0.001,
+    "n": 10332,
+    "se": 0.0244,
+    "t": 0.04
+   },
+   "gap_close_to_open": {
+    "hit": 0.49,
+    "mean_pct": -0.0478,
+    "n": 10332,
+    "se": 0.0469,
+    "t": -1.02
+   },
+   "hold_0945_to_close_d4": {
+    "hit": 0.493,
+    "mean_pct": -0.0059,
+    "n": 10266,
+    "se": 0.0926,
+    "t": -0.06
+   },
+   "open_to_0945": {
+    "hit": 0.501,
+    "mean_pct": -0.0047,
+    "n": 10332,
+    "se": 0.0271,
+    "t": -0.17
+   }
+  }
+ },
+ "failed_calls": 0,
+ "fetch_failures": {},
+ "live": {
+  "m1_selection": {
+   "all_model_picks": {
+    "base_share": 0.057,
+    "chasing": 58,
+    "picks": 129,
+    "ratio": 7.89,
+    "ratio_ci95": [
+     5.56,
+     10.75
+    ],
+    "sessions": 15,
+    "share": 0.45
+   },
+   "desk_selections": {
+    "base_share": 0.059,
+    "chasing": 21,
+    "picks": 58,
+    "ratio": 6.11,
+    "ratio_ci95": [
+     4.01,
+     9.21
+    ],
+    "sessions": 14,
+    "share": 0.362
+   },
+   "engine_board": {
+    "base_share": 0.056,
+    "chasing": 5,
+    "picks": 54,
+    "ratio": 1.65,
+    "ratio_ci95": [
+     0.0,
+     3.5
+    ],
+    "sessions": 16,
+    "share": 0.093
+   },
+   "jev_forced": {
+    "base_share": 0.048,
+    "chasing": 10,
+    "picks": 22,
+    "ratio": 9.44,
+    "ratio_ci95": [
+     4.59,
+     16.28
+    ],
+    "sessions": 11,
+    "share": 0.455
+   },
+   "nominations": {
+    "base_share": 0.124,
+    "chasing": 8,
+    "picks": 12,
+    "ratio": 5.38,
+    "ratio_ci95": [
+     5.38,
+     5.38
+    ],
+    "sessions": 1,
+    "share": 0.667
+   },
+   "top2_council": {
+    "base_share": 0.056,
+    "chasing": 9,
+    "picks": 17,
+    "ratio": 9.46,
+    "ratio_ci95": [
+     5.05,
+     13.12
+    ],
+    "sessions": 10,
+    "share": 0.529
+   }
+  },
+  "m2_outcomes": {
+   "all_model_picks": {
+    "chasing": {
+     "hit": 0.349,
+     "mean_pct": -0.335,
+     "n": 43
+    },
+    "diff_pct": -0.022,
+    "mde80_pct": 1.154,
+    "rest": {
+     "hit": 0.383,
+     "mean_pct": -0.138,
+     "n": 60
+    },
+    "se": 0.412,
+    "sessions_with_both": 9,
+    "t": -0.05
+   },
+   "top2_council": {
+    "chasing": {
+     "hit": 0.429,
+     "mean_pct": 0.026,
+     "n": 7
+    },
+    "diff_pct": 1.41,
+    "mde80_pct": 4.664,
+    "rest": {
+     "hit": 0.375,
+     "mean_pct": -0.334,
+     "n": 8
+    },
+    "se": 1.666,
+    "sessions_with_both": 2,
+    "t": 0.85
+   }
+  },
+  "picks": [
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.7362171331636942,
+    "model": "deepseek",
+    "r_pct": 0.1774,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "CAE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.1426392067124247,
+    "model": "deepseek",
+    "r_pct": 0.1016,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "EMA.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.4050039093041451,
+    "model": "deepseek",
+    "r_pct": -1.9568,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "AGI.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.10212765957446898,
+    "model": "deepseek",
+    "r_pct": -1.5964,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "CG.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.07376740684983092,
+    "model": "engine",
+    "r_pct": 0.9574,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "ABX.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.24263431542460911,
+    "model": "engine",
+    "r_pct": -0.4292,
+    "session": "2026-09-17",
+    "side": "LONG",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.2562538133007905,
+    "model": "engine",
+    "r_pct": -0.353,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.37090558766859183,
+    "model": "engine",
+    "r_pct": -1.0888,
+    "session": "2026-09-17",
+    "side": "SHORT",
+    "ticker": "NTR.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.46511627906976943,
+    "model": "engine",
+    "r_pct": 0.2273,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.3151432469304279,
+    "model": "engine",
+    "r_pct": 0.2081,
+    "session": "2026-09-21",
+    "side": "LONG",
+    "ticker": "MFC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.704268292682924,
+    "model": "engine",
+    "r_pct": -0.178,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "CM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.11658570437196834,
+    "model": "engine",
+    "r_pct": -0.6748,
+    "session": "2026-09-21",
+    "side": "SHORT",
+    "ticker": "RY.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.0494195688225492,
+    "model": "deepseek",
+    "r_pct": -0.8867,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "DOL.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.3346534653465376,
+    "model": "deepseek",
+    "r_pct": 0.6229,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "STN.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.8301453710788125,
+    "model": "deepseek",
+    "r_pct": -0.6739,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -1.047482014388493,
+    "model": "deepseek",
+    "r_pct": -1.0951,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.03118040089086799,
+    "model": "engine",
+    "r_pct": -1.0369,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "board",
+    "m": 1.1788104089219318,
+    "model": "engine",
+    "r_pct": -1.3152,
+    "session": "2026-09-22",
+    "side": "LONG",
+    "ticker": "BMO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.16730552423901138,
+    "model": "engine",
+    "r_pct": -2.0375,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "AEM.TO"
+   },
+   {
+    "chase": true,
+    "kind": "board",
+    "m": -1.068372298191446,
+    "model": "engine",
+    "r_pct": -1.8506,
+    "session": "2026-09-22",
+    "side": "SHORT",
+    "ticker": "NTR.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.45065842952365875,
+    "model": "claude",
+    "r_pct": 0.2078,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "DOL.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.9337175792507225,
+    "model": "claude",
+    "r_pct": 1.1271,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "TECK-B.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.2973947895791511,
+    "model": "claude",
+    "r_pct": 0.783,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 1.2745519713261642,
+    "model": "claude",
+    "r_pct": 0.5251,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.2973947895791511,
+    "model": "engine",
+    "r_pct": -0.783,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.15415821501014018,
+    "model": "engine",
+    "r_pct": 0.5456,
+    "session": "2026-09-23",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.8535997244230096,
+    "model": "engine",
+    "r_pct": -0.0643,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "CP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.19987021414665665,
+    "model": "engine",
+    "r_pct": 0.1923,
+    "session": "2026-09-23",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.17631525492585556,
+    "model": "claude",
+    "r_pct": 0.7978,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "LUG.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.7516339869281043,
+    "model": "deepseek",
+    "r_pct": 3.5294,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.9321771446268187,
+    "model": "deepseek",
+    "r_pct": 0.8875,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "ATZ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -2.9465564738292,
+    "model": "deepseek",
+    "r_pct": 0.4978,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "GIL.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -2.577870563674318,
+    "model": "deepseek",
+    "r_pct": -0.9399,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "K.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.37643207855973576,
+    "model": "engine",
+    "r_pct": -0.1271,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "NTR.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.4738311235170968,
+    "model": "engine",
+    "r_pct": 0.6465,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "CP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.4471057884231574,
+    "model": "engine",
+    "r_pct": 1.1517,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.36400882445635163,
+    "model": "jev",
+    "r_pct": 0.8961,
+    "session": "2026-09-25",
+    "side": "LONG",
+    "ticker": "DOL.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": -2.9465564738292,
+    "model": "jev",
+    "r_pct": 0.4978,
+    "session": "2026-09-25",
+    "side": "SHORT",
+    "ticker": "GIL.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.7284079084287207,
+    "model": "claude",
+    "r_pct": -1.3793,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -1.2259013980868299,
+    "model": "claude",
+    "r_pct": -0.373,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "final",
+    "m": 0.2642548171451066,
+    "model": "debate",
+    "r_pct": 0.1831,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "HBM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.2642548171451066,
+    "model": "deepseek",
+    "r_pct": 0.1831,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "HBM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.1333560129273692,
+    "model": "deepseek",
+    "r_pct": -0.4534,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "RY.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.7284079084287207,
+    "model": "deepseek",
+    "r_pct": 1.3793,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.29961478099586236,
+    "model": "deepseek",
+    "r_pct": -1.7315,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.3484704541136238,
+    "model": "engine",
+    "r_pct": 0.6603,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "BMO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.22006472491908677,
+    "model": "engine",
+    "r_pct": 0.049,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "SLF.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.29589905362776125,
+    "model": "jev",
+    "r_pct": 0.2443,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "DOL.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": -1.2472682410997549,
+    "model": "jev",
+    "r_pct": -0.2823,
+    "session": "2026-09-29",
+    "side": "SHORT",
+    "ticker": "WPM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": 0.2642548171451066,
+    "model": "top2",
+    "r_pct": 0.1831,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "HBM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.1333560129273692,
+    "model": "top2",
+    "r_pct": -0.4534,
+    "session": "2026-09-29",
+    "side": "LONG",
+    "ticker": "RY.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.29485776805250924,
+    "model": "claude",
+    "r_pct": -0.7537,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "final",
+    "m": 0.6109243069565868,
+    "model": "debate",
+    "r_pct": -0.471,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "final",
+    "m": -0.8260869565217401,
+    "model": "debate",
+    "r_pct": -0.6077,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.6109243069565868,
+    "model": "deepseek",
+    "r_pct": -0.471,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.29485776805250924,
+    "model": "deepseek",
+    "r_pct": -0.7537,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.8260869565217401,
+    "model": "deepseek",
+    "r_pct": -0.6077,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -1.662194159431727,
+    "model": "deepseek",
+    "r_pct": -1.009,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "WSP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.26956165505940144,
+    "model": "engine",
+    "r_pct": -0.9465,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.6109243069565868,
+    "model": "engine",
+    "r_pct": -0.471,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.3446440452428525,
+    "model": "engine",
+    "r_pct": 0.3015,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.26492851135408085,
+    "model": "engine",
+    "r_pct": 0.7716,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "TRP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.6109243069565868,
+    "model": "jev",
+    "r_pct": -0.471,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": -1.662194159431727,
+    "model": "jev",
+    "r_pct": -1.009,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "WSP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.6109243069565868,
+    "model": "jev",
+    "r_pct": -0.471,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.29485776805250924,
+    "model": "top2",
+    "r_pct": -0.7537,
+    "session": "2026-09-30",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -1.662194159431727,
+    "model": "top2",
+    "r_pct": -1.009,
+    "session": "2026-09-30",
+    "side": "SHORT",
+    "ticker": "WSP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 1.4901960784313708,
+    "model": "deepseek",
+    "r_pct": 0.5124,
+    "session": "2026-10-01",
+    "side": "SHORT",
+    "ticker": "T.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.5051546391752553,
+    "model": "engine",
+    "r_pct": -1.0816,
+    "session": "2026-10-01",
+    "side": "LONG",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.7375556846794497,
+    "model": "engine",
+    "r_pct": 0.7024,
+    "session": "2026-10-01",
+    "side": "LONG",
+    "ticker": "BMO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.012136974425667245,
+    "model": "engine",
+    "r_pct": -1.2498,
+    "session": "2026-10-01",
+    "side": "SHORT",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.19337016574585641,
+    "model": "engine",
+    "r_pct": -1.511,
+    "session": "2026-10-01",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.09232613908872851,
+    "model": "jev",
+    "r_pct": -1.9045,
+    "session": "2026-10-01",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": -0.16033315981259938,
+    "model": "jev",
+    "r_pct": 1.2368,
+    "session": "2026-10-01",
+    "side": "SHORT",
+    "ticker": "ELD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": 0.09232613908872851,
+    "model": "top2",
+    "r_pct": -1.9045,
+    "session": "2026-10-01",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.16033315981259938,
+    "model": "top2",
+    "r_pct": 1.2368,
+    "session": "2026-10-01",
+    "side": "SHORT",
+    "ticker": "ELD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.09018294254058237,
+    "model": "engine",
+    "r_pct": 0.4637,
+    "session": "2026-10-02",
+    "side": "LONG",
+    "ticker": "CM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.3298245614035077,
+    "model": "engine",
+    "r_pct": 0.6834,
+    "session": "2026-10-02",
+    "side": "LONG",
+    "ticker": "SLF.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.861966236345578,
+    "model": "engine",
+    "r_pct": 0.9849,
+    "session": "2026-10-02",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.4195583596214625,
+    "model": "engine",
+    "r_pct": 0.6894,
+    "session": "2026-10-02",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": 1.6577355229040631,
+    "model": "jev",
+    "r_pct": -0.3285,
+    "session": "2026-10-02",
+    "side": "LONG",
+    "ticker": "GIB-A.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": -2.5601539942252196,
+    "model": "jev",
+    "r_pct": -0.4414,
+    "session": "2026-10-02",
+    "side": "SHORT",
+    "ticker": "SAP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.9100364014560584,
+    "model": "claude",
+    "r_pct": -2.1848,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "final",
+    "m": 1.305822498586771,
+    "model": "debate",
+    "r_pct": 1.5761,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "ERO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "final",
+    "m": -0.8479381443298946,
+    "model": "debate",
+    "r_pct": -0.7001,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.40875912408759335,
+    "model": "deepseek",
+    "r_pct": -1.4767,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.8479381443298946,
+    "model": "deepseek",
+    "r_pct": -0.7001,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.6341463414634095,
+    "model": "engine",
+    "r_pct": 1.975,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.7866449511400715,
+    "model": "engine",
+    "r_pct": 0.2604,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "MFC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.9707031250000003,
+    "model": "engine",
+    "r_pct": 0.0089,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "SLF.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.305822498586771,
+    "model": "gemini",
+    "r_pct": 1.5761,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "ERO.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.6011067558219976,
+    "model": "gemini",
+    "r_pct": 0.8912,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "TECK-B.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.8479381443298946,
+    "model": "gemini",
+    "r_pct": -0.7001,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.44929881337648225,
+    "model": "gemini",
+    "r_pct": -0.4328,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "GIL.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": 1.305822498586771,
+    "model": "jev",
+    "r_pct": 1.5761,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "ERO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.21475195822454285,
+    "model": "jev",
+    "r_pct": -0.7681,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "QSR.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.6011067558219976,
+    "model": "top2",
+    "r_pct": 0.8912,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "TECK-B.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": 0.9100364014560584,
+    "model": "top2",
+    "r_pct": -2.1848,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.305822498586771,
+    "model": "top2count",
+    "r_pct": 1.5761,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "ERO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.44929881337648225,
+    "model": "top2count",
+    "r_pct": -0.4328,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "GIL.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.10475352112675279,
+    "model": "deepseek",
+    "r_pct": -0.7808,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.47527070529704857,
+    "model": "engine",
+    "r_pct": 0.3831,
+    "session": "2026-10-06",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.03017241379310816,
+    "model": "engine",
+    "r_pct": 0.0356,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.12540716612377797,
+    "model": "engine",
+    "r_pct": -1.1468,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "ENB.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.2384305835010034,
+    "model": "gemini",
+    "r_pct": -0.9286,
+    "session": "2026-10-06",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.9525208027410678,
+    "model": "gemini",
+    "r_pct": -0.169,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": 1.2384305835010034,
+    "model": "jev",
+    "r_pct": -0.9286,
+    "session": "2026-10-06",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": -0.9525208027410678,
+    "model": "jev",
+    "r_pct": -0.169,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.2384305835010034,
+    "model": "jev",
+    "r_pct": -0.9286,
+    "session": "2026-10-06",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.9525208027410678,
+    "model": "top2",
+    "r_pct": -0.169,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.2384305835010034,
+    "model": "top2count",
+    "r_pct": -0.9286,
+    "session": "2026-10-06",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.9525208027410678,
+    "model": "top2count",
+    "r_pct": -0.169,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "final",
+    "m": -0.18791946308724436,
+    "model": "debate",
+    "r_pct": -0.2847,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.5458625525946706,
+    "model": "deepseek",
+    "r_pct": 2.5478,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.18791946308724436,
+    "model": "deepseek",
+    "r_pct": -0.2847,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.29190992493744833,
+    "model": "engine",
+    "r_pct": -1.1552,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "MFC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.41374214998153536,
+    "model": "engine",
+    "r_pct": -0.6631,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "RY.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.18791946308724436,
+    "model": "engine",
+    "r_pct": -0.2847,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.6991715976331312,
+    "model": "engine",
+    "r_pct": 2.0767,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "CNR.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.6426549229317402,
+    "model": "gemini",
+    "r_pct": -1.3282,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "CCO.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -1.980099502487562,
+    "model": "gemini",
+    "r_pct": 0.6389,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "EMA.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": 1.6426549229317402,
+    "model": "jev",
+    "r_pct": -1.3282,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "CCO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": -0.5486725663716825,
+    "model": "jev",
+    "r_pct": -0.5058,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "CS.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.6426549229317402,
+    "model": "top2",
+    "r_pct": -1.3282,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "CCO.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -1.980099502487562,
+    "model": "top2",
+    "r_pct": 0.6389,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "EMA.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.6426549229317402,
+    "model": "top2count",
+    "r_pct": -1.3282,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "CCO.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": 0.5458625525946706,
+    "model": "top2count",
+    "r_pct": 2.5478,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.6955414012738861,
+    "model": "engine",
+    "r_pct": -1.5957,
+    "session": "2026-10-08",
+    "side": "LONG",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": true,
+    "kind": "board",
+    "m": -1.1027509992946136,
+    "model": "engine",
+    "r_pct": -0.3352,
+    "session": "2026-10-08",
+    "side": "SHORT",
+    "ticker": "CNR.TO"
+   },
+   {
+    "chase": true,
+    "kind": "board",
+    "m": -1.0725423728813512,
+    "model": "engine",
+    "r_pct": -0.3009,
+    "session": "2026-10-08",
+    "side": "SHORT",
+    "ticker": "CP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.09090909090909435,
+    "model": "gemini",
+    "r_pct": 1.032,
+    "session": "2026-10-08",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -2.0472727272727225,
+    "model": "gemini",
+    "r_pct": -0.4149,
+    "session": "2026-10-08",
+    "side": "SHORT",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -2.0472727272727225,
+    "model": "top2",
+    "r_pct": -0.4149,
+    "session": "2026-10-08",
+    "side": "SHORT",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": -0.8317698561600991,
+    "model": "engine",
+    "r_pct": -2.9437,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.32984293193717223,
+    "model": "engine",
+    "r_pct": -0.9874,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "T.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.3977823977823943,
+    "model": "engine",
+    "r_pct": -0.1912,
+    "session": "2026-10-09",
+    "side": "SHORT",
+    "ticker": "CP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.5480200273099671,
+    "model": "engine",
+    "r_pct": -0.6784,
+    "session": "2026-10-09",
+    "side": "SHORT",
+    "ticker": "SLF.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.07261410788382351,
+    "model": "gemini",
+    "r_pct": 1.3709,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 1.4368108566581834,
+    "model": "gemini",
+    "r_pct": -0.7234,
+    "session": "2026-10-09",
+    "side": "SHORT",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": -0.22739577693557178,
+    "model": "jev",
+    "r_pct": 2.3389,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": -0.8495770503861679,
+    "model": "jev",
+    "r_pct": -1.1442,
+    "session": "2026-10-09",
+    "side": "SHORT",
+    "ticker": "NA.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.07261410788382351,
+    "model": "top2",
+    "r_pct": 1.3709,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": -0.07261410788382351,
+    "model": "top2count",
+    "r_pct": 1.3709,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": true,
+    "kind": "final",
+    "m": 1.3714285714285723,
+    "model": "debate",
+    "r_pct": -4.3217,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": true,
+    "kind": "final",
+    "m": -2.351029252437703,
+    "model": "debate",
+    "r_pct": -0.581,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "board",
+    "m": -2.351029252437703,
+    "model": "engine",
+    "r_pct": -0.581,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.8580387685290791,
+    "model": "engine",
+    "r_pct": -0.8014,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.3714285714285723,
+    "model": "gemini",
+    "r_pct": -4.3217,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -2.351029252437703,
+    "model": "gemini",
+    "r_pct": -0.581,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": 4.3421346225362605,
+    "model": "jev",
+    "r_pct": 2.4658,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "ATZ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "forced",
+    "m": -1.3705705705705722,
+    "model": "jev",
+    "r_pct": -0.968,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 4.3421346225362605,
+    "model": "top2",
+    "r_pct": 2.4658,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "ATZ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -2.7955032119914325,
+    "model": "top2",
+    "r_pct": -1.0612,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "CCA.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.3714285714285723,
+    "model": "top2memory",
+    "r_pct": -4.3217,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -2.351029252437703,
+    "model": "top2memory",
+    "r_pct": -0.581,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "BCE.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": 1.9466776045939278,
+    "model": "claude",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": 1.4518518518518473,
+    "model": "claude",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": -1.2685185185185164,
+    "model": "claude",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "BEP-UN.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": -1.6223369916074897,
+    "model": "claude",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "nominated",
+    "m": 0.08647313156269115,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "nominated",
+    "m": -0.43651152281970496,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "HBM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "nominated",
+    "m": 1.696661828737302,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "OTEX.TO"
+   },
+   {
+    "chase": false,
+    "kind": "nominated",
+    "m": 1.0112866817155761,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "T.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.4518518518518473,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": 1.3019928461931585,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.08647313156269115,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "AC.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.1970569417786306,
+    "model": "deepseek",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "EMA.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 0.6637490882567454,
+    "model": "engine",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "CP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "board",
+    "m": 1.0481838398813998,
+    "model": "engine",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "MFC.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": 1.9466776045939278,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": 1.4518518518518473,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "SU.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": -1.2685185185185164,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "BEP-UN.TO"
+   },
+   {
+    "chase": true,
+    "kind": "nominated",
+    "m": -1.6223369916074897,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": 0.7523852116875355,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": false,
+    "kind": "selected",
+    "m": -0.6894540741940721,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "CCO.TO"
+   },
+   {
+    "chase": true,
+    "kind": "selected",
+    "m": -1.6223369916074897,
+    "model": "gemini",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 0.915945886005767,
+    "model": "jev",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "RBA.TO"
+   },
+   {
+    "chase": false,
+    "kind": "forced",
+    "m": 1.696661828737302,
+    "model": "jev",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "OTEX.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.9466776045939278,
+    "model": "top2",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -1.6223369916074897,
+    "model": "top2",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "chase": false,
+    "kind": "pick",
+    "m": 0.7523852116875355,
+    "model": "top2count",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "SHOP.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": 1.9466776045939278,
+    "model": "top2memory",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "chase": true,
+    "kind": "pick",
+    "m": -1.6223369916074897,
+    "model": "top2memory",
+    "r_pct": null,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   }
+  ],
+  "picks_without_a_prior_move": 0
+ },
+ "names": 117,
+ "net_of_cost_pct": -0.1131,
+ "placebo": {
+  "draws": 2000,
+  "mean_of_draws_pct": 0.0033,
+  "p_two_sided": 0.4695,
+  "sd_of_draws_pct": 0.0172
+ },
+ "primary": {
+  "hit": 0.495,
+  "mean_pct": -0.0131,
+  "n": 10332,
+  "se": 0.0295,
+  "t": -0.44
+ },
+ "registered": "PREREGISTER_day132_chasing.md",
+ "run_on": "2026-10-14",
+ "skipped": {
+  "no_daily_bar": 4,
+  "no_market": 6,
+  "short_history": 0
+ },
+ "today": {
+  "CNQ.TO": {
+   "move_atr_prior_session": 1.95
+  },
+  "SSRM.TO": {
+   "move_atr_prior_session": -1.62
+  }
+ },
+ "verdict": "NULL",
+ "window": [
+  "2024-01-02",
+  "2026-10-13"
+ ]
+}

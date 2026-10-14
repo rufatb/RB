@@ -110,3 +110,22 @@ underpowered; reported as such.
 
 The bar does not move after the run. The script is `replay_chasing.py`; the
 summary goes to `data/replay_day132_chasing.json`.
+
+## Results (2026-10-14, after the run; nothing above was changed)
+
+* **H1: NULL, powered.** There were 10,332 moves of ≥ 1 ATR on 687 sessions
+  (79,453 name-days, 117 names).
+  * The move continued after 09:45 by −0.013% against XIU, t = −0.44, right
+    49.5% of the time.
+  * Blocks +0.14 / −0.17 / −0.08 / +0.06; placebo p = 0.47; net of 0.10% it
+    is −0.11%.
+  * A planted 0.10% shows at t = 3.39 (MDE80 0.083%).
+* **M1:** 58 of 129 model picks chased (45%), against a 5.7% base: 7.9×
+  (95% 5.6–10.8). The council's Top 2 chased 9 of 17 (9.5×); the engine
+  1.7×.
+* **M2:** chasing 35% right (−0.34%), the rest 38% (−0.14%); the
+  difference is t = −0.05 with an MDE of 1.15%. Uninformative.
+* **Descriptive:** no window, dose, side, report-day, own-move or gap split
+  reaches |t| = 1.2.
+
+As registered for a NULL, nothing changes. Read `AUDIT_day132_chasing.md`.

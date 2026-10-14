@@ -5413,3 +5413,32 @@ On an earnings reaction day, does the first half hour against XIU.TO predict
 
 Like every pre-open input before it, a report's first half hour is priced by
 10:00 in this pool. `data/replay_day130_drift.json`.
+
+## Day-132: the picks chase yesterday's movers, and it neither helps nor hurts; REJECTION #47
+
+The owner saw the 10-14 Top 2 (SHORT SSRM.TO after −1.62 ATR, LONG CNQ.TO
+after +1.95 ATR) and asked whether it is "look-backward bias". Registered
+first: `PREREGISTER_day132_chasing.md`. Read `AUDIT_day132_chasing.md`.
+
+* **Not look-ahead.** Every input describes the prior session (`data_dates`).
+  The council sat 08:57–08:59, and the record scores from the 09:45 bar.
+* **A real selection habit.** 45% of the models' picks continue a ≥ 1 ATR
+  prior move, against a 5.7% base rate: 7.9× chance. The council's Top 2 is
+  9.5×; the engine is 1.7×.
+
+**#47, a prior-day ≥ 1 ATR move as a next-session signal, in EITHER direction**
+(`replay_chasing.py`, FMP 15-minute bars).
+* **Population.** 117 pool names, 79,453 name-days, 2024-01 → 2026-10;
+  10,332 moves on 687 sessions.
+* **Result.** 09:45 → close continuation against XIU: −0.013%, t = −0.44,
+  49.5% right.
+  * Blocks +0.14 / −0.17 / −0.08 / +0.06; placebo p = 0.47.
+* **Power.** A planted 0.10% shows at t = 3.39 (MDE 0.083%). **A POWERED
+  NULL:** neither momentum nor a fade.
+* **Descriptive, no bar.** The overnight gap (−0.05%), ≥ 2 ATR moves
+  (−0.06%), report-day moves, the name's own moves and further gaps at the
+  open: nothing reaches |t| = 1.2.
+
+A chasing pick is a coin flip like any other here. Do not build momentum or
+fade rules on yesterday's move, and do not flag chasing picks (day-120b) —
+the data say there is nothing to flag. `data/replay_day132_chasing.json`.
