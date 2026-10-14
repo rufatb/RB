@@ -5498,3 +5498,8 @@ The owner pasted a read of the 10-14 board. Registered first:
   * **Settles C3.** The outside read's "react to the open" has its powered
     test, and it fails.
   * Do not build a 10:00 desk without new data. `AUDIT_day132c_after_open.md`.
+* **After the phases: the evening review's sector row is never a lesson.** It
+  is measured over the trade itself (09:45 → close), so its t = 4.0 over 10
+  days describes the result rather than anything known at entry. It is labelled
+  "same window as the result, never a lesson"; only questions answered by
+  09:45 can reach the LESSON bar.

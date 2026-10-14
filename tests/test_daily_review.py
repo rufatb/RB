@@ -112,6 +112,22 @@ def test_a_lesson_needs_the_bar_across_many_days():
     assert dr.lessons(rows[:2 * (dr.MIN_DAYS - 1)])[1]['verdict'] == 'not established'
 
 
+def test_the_sector_question_is_never_a_lesson():
+    """Day-132c: the sector's 09:45 → close move is part of the result, not
+    something known at entry. It read t = 4.0 over 10 days on 2026-10-14 and
+    would have been reported as a LESSON at 20."""
+    rows = []
+    for d in range(25):
+        s = f'2026-10-{d + 1:02d}'
+        rows += [dict(session=s, section='Desk', ticker='A', side='LONG', gap=0, first15=0,
+                      sector_r=1.0, r_pct=1.0 + 0.1 * (d % 3)),
+                 dict(session=s, section='Desk', ticker='B', side='LONG', gap=0, first15=0,
+                      sector_r=-1.0, r_pct=-1.0)]
+    q = {x['question']: x for x in dr.lessons(rows)}[dr.SECTOR_QUESTION]
+    assert q['days'] == 25 and q['t'] > dr.LESSON_T and q['verdict'] == dr.SAME_WINDOW
+    assert 'never a lesson' in dr.markdown('2026-10-25', [], None, dr.lessons(rows), None)
+
+
 def test_vs_sector_separates_the_name_from_its_sector(tmp_path):
     """2026-09-30: TD long lost 0.75% while its banks lost ~0.7% — a sector
     move, not a stock-picking miss. The review must show both numbers."""

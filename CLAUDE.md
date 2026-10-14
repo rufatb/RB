@@ -60,6 +60,16 @@ Registered first (`PREREGISTER_day132c_after_open.md`, d9d4c05); read
   no 10:00 desk is proposed. The live "DeepSeek late" 5/8 was two days.
 * **Unchanged:** the biotech table, at the owner's request.
 
+**After the phases: the review's sector row is never a lesson.** "Its sector
+moved its way" is measured over 09:45 → close, the trade itself, so it is part
+of the result.
+* It read t = 4.0 over 10 days on 10-14, and at 20 days the evening job would
+  have reported it as a LESSON.
+* It now prints "same window as the result, never a lesson"
+  (`daily_review.SAME_WINDOW`).
+* Only questions answered by the 09:45 entry can become one. The counts are
+  unchanged, and nothing else moves.
+
 ## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
 
 The owner pasted an outside read of the board. Registered first
@@ -2191,8 +2201,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **40 rejections, 3
-adoptions**. Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **48 rejections, 3
+adoptions** (as of day-132c). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The three adopted changes were all VARIANCE results. None improved accuracy.

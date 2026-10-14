@@ -23,7 +23,8 @@ tempts you to answer from one example: do picks do better when the open agrees
 with them, when the first 15 minutes agree, when their "wrong if" is not already
 crossed — and does the debate's KEEP beat its REJECT? A pattern is called a
 lesson only when it holds across days at a clustered |t| ≥ 3.0 (the house bar);
-until then it is printed as what it is, a count.
+until then it is printed as what it is, a count. Its sector's move is printed
+too, but it is measured over the trade itself, so it is never a lesson.
 
     python daily_review.py --session 2026-09-29 [--report .rb-state/latest/report.json]
 """
@@ -41,6 +42,8 @@ ROOT = Path(__file__).resolve().parent
 REVIEWS = ROOT / 'data' / 'reviews'
 LESSON_T = 3.0
 MIN_DAYS = 20
+SECTOR_QUESTION = 'its sector moved its way over the same 09:45 → close (known only afterwards)'
+SAME_WINDOW = 'same window as the result, never a lesson'
 SECTOR_PEERS = 6
 SECTORS = ROOT / 'data' / 'tsx_sectors.json'
 
@@ -187,18 +190,21 @@ def lessons(all_rows):
     for r in all_rows:
         if r['section'] == 'Desk':
             sides.setdefault((r['session'], r['ticker']), set()).add(r['side'])
+    # The last element says whether the question is answered by 09:45, when the
+    # pick is entered. Its sector's move is measured over the trade itself
+    # (09:45 → close), so it is part of the result: it describes, and is never a
+    # lesson however large its t (t = 4.0 over 10 days on 2026-10-14, day-132c).
     splits = [
         ("the desks did NOT put the name on both sides (day-120 E2)",
-         lambda r: len(sides.get((r['session'], r['ticker']), ())) < 2),
-        ("today's open agreed with the pick", lambda r: r['gap'] > 0),
-        ('the first 15 minutes agreed with the pick', lambda r: r['first15'] > 0),
+         lambda r: len(sides.get((r['session'], r['ticker']), ())) < 2, True),
+        ("today's open agreed with the pick", lambda r: r['gap'] > 0, True),
+        ('the first 15 minutes agreed with the pick', lambda r: r['first15'] > 0, True),
         ("its 'wrong if' was NOT already crossed at entry (day-120 E1)",
-         lambda r: None if r.get('crossed') is None else not r['crossed']),
-        ("its sector agreed with the pick",
-         lambda r: None if r.get('sector_r') is None else r['sector_r'] > 0),
+         lambda r: None if r.get('crossed') is None else not r['crossed'], True),
+        (SECTOR_QUESTION, lambda r: None if r.get('sector_r') is None else r['sector_r'] > 0, False),
     ]
     out = []
-    for name, test in splits:
+    for name, test, at_entry in splits:
         yes = [r for r in picks if test(r) is True]
         no = [r for r in picks if test(r) is False]
         diff = [dict(session=s, r_pct=(st.mean([r['r_pct'] for r in yes if r['session'] == s])
@@ -207,7 +213,8 @@ def lessons(all_rows):
         t, days = _clustered(diff)
         out.append({'question': name, 'yes': _rate(yes), 'no': _rate(no), 'days': days,
                     't': None if t is None else round(t, 2),
-                    'verdict': ('LESSON' if t is not None and abs(t) >= LESSON_T and days >= MIN_DAYS
+                    'verdict': (SAME_WINDOW if not at_entry
+                                else 'LESSON' if t is not None and abs(t) >= LESSON_T and days >= MIN_DAYS
                                 else 'not established')})
     keep = [r for r in all_rows if r['section'] == 'Debate ruling' and r['model'] == 'KEEP']
     reject = [r for r in all_rows if r['section'] == 'Debate ruling' and r['model'] == 'REJECT']
@@ -252,7 +259,8 @@ def markdown(session, rows, market, learn, replay_note):
         out.append(f"| {r['section']} | {r['model']} | {r['side']} {r['ticker']} | {r['r_pct']:+.2f}% | "
                    f"{r['mfe']:+.2f}% / {r['mae']:+.2f}% | {why(r)} |")
     out += ['', '## Learning — across every reviewed day, not just today',
-            f'A pattern becomes a LESSON only at a clustered |t| ≥ {LESSON_T} over at least {MIN_DAYS} days.',
+            f'A pattern becomes a LESSON only at a clustered |t| ≥ {LESSON_T} over at least {MIN_DAYS} days, '
+            'and only from what is known at the 09:45 entry; a question measured over the trade itself never is.',
             '| Question | When yes | When no | Days | t | Verdict |', '|---|---|---|---:|---:|---|']
     for q in learn:
         fmt = lambda s: (f"{s['right']}/{s['n']} right, {s['mean_pct']:+.2f}%" if s.get('n') else '—')
