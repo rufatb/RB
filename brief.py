@@ -573,7 +573,12 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         except Exception as exc:
             wire = None
             error('wire_card', RuntimeError(type(exc).__name__))
-        scoreboard = primary_board.leaderboard(model_picks.scorecard(rows), wire=wire)
+        try:
+            pooled = model_picks.pooled_card(rows)
+        except Exception as exc:
+            pooled = None
+            error('pooled_card', RuntimeError(type(exc).__name__))
+        scoreboard = primary_board.leaderboard(model_picks.scorecard(rows), wire=wire, pooled=pooled)
     except Exception as exc:
         error('desks', RuntimeError(type(exc).__name__))
     # Day-118: the issuer's own overnight wire release beside each pick, read

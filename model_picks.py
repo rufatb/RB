@@ -381,6 +381,28 @@ def wire_card(rows=None, root=None):
     return scorecard(hit)
 
 
+# Day-132b (owner, 2026-10-14): one row that counts each pre-open bet once. A
+# Top 2 pick is also a desk pick and often a nomination, so the board's rows
+# overlap; this keeps the first scored row per (session, ticker, side). Late
+# picks (asked after the open), the engine (not a language model) and the
+# shadows that re-choose the same picks are left out.
+POOLED_KINDS = ('selected', 'forced', 'nominated', 'pick', 'final')
+POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner')
+
+
+def pooled_card(rows=None):
+    """{'all_model_picks': ...} on the same scorer as every other row."""
+    rows = read() if rows is None else rows
+    seen = {}
+    for r in rows:
+        if (not r.get('scored_at') or r.get('kind') not in POOLED_KINDS
+                or r.get('model') in POOLED_EXCLUDED):
+            continue
+        seen.setdefault((r['session'], r['ticker'], r['side']),
+                        {**r, 'model': 'all', 'kind': 'model_picks'})
+    return scorecard(list(seen.values()))
+
+
 def basis_card(rows=None, kinds=('selected',), models=('claude', 'deepseek')):
     """Hit rate by declared basis over the registered population
     (PREREGISTER_day114_basis.md). Descriptive until the registered bar is met."""

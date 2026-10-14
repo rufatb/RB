@@ -1,5 +1,31 @@
 # Working notes for this repo
 
+## Day132c — the owner's improvements after day-132b, in phases (owner, 2026-10-14)
+
+The owner said: do all of them, leave the biotech table as it is, and work in
+phases.
+
+**Phase 1: the scoreboard shows what trading the picks costs.**
+* **The cost.** `primary_board.COST_PER_PICK_PCT = 0.13` is MEASURED (day-132b).
+  * It is the median 09:46 entry spread on 54 sized legs, 9.2 bps, plus 0.02%
+    commission a side.
+  * The range runs from 0.07% (a limit at the mid, exiting in the closing
+    auction) to 0.19% (crossing both ways).
+  * A same-day short pays no borrow.
+* **The net column.** Every row carries `net_mean_pct` (gross − 0.13), frozen
+  with the publication. The email, the full report and the page print a "Net
+  of costs" column. A publication from before it renders exactly as it did.
+* **The pooled row.** "All model picks together (each name, side and day
+  once)" (`model_picks.pooled_card`, `POOLED_BOARD`):
+  * kinds: selected, forced, nominated, pick and final;
+  * left out: late picks, the engine and the shadows (top2count, top2memory,
+    top2runner);
+  * the first scored row per (session, ticker, side).
+
+  On 10-14 it read 32/75 (43%), −0.16% gross, −0.29% net.
+* **Only the display changes.** The gross yardstick, the records and the
+  scorer are unchanged.
+
 ## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
 
 The owner pasted an outside read of the board. Registered first

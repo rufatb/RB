@@ -262,18 +262,27 @@ def scoreboard_lines(board):
     """Every source on one yardstick, with its interval, every day."""
     if not board:
         return []
+    import primary_board
+    netted = any('net_mean_pct' in r for r in board)
     out = ['### Scoreboard — every source on one yardstick',
-           '09:45 bar close to session close, no costs. Recorded in data/model_picks.csv.', '',
-           '| Source | Right | Mean per pick | Sessions | 95% interval |', '|---|---:|---:|---:|---|']
+           '09:45 bar close to session close' + (', gross and net of costs.' if netted else ', no costs.')
+           + ' Recorded in data/model_picks.csv.', '',
+           '| Source | Right | Mean per pick | Net of costs | Sessions | 95% interval |' if netted else
+           '| Source | Right | Mean per pick | Sessions | 95% interval |',
+           '|---|---:|---:|---:|---:|---|' if netted else '|---|---:|---:|---:|---|']
     for r in board:
         if not r['picks']:
-            out.append(f"| {r['source']} | — | — | 0 | not yet scored |")
+            out.append(f"| {r['source']} | — | — |{' — |' if netted else ''} 0 | not yet scored |")
             continue
         lo, hi = r['ci95']
+        net = '—' if r.get('net_mean_pct') is None else f"{r['net_mean_pct']:+.2f}%"
         out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
-                   f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
+                   f"{r['mean_r_pct']:+.2f}% |{' ' + net + ' |' if netted else ''} "
+                   f"{r['sessions']} | {lo:.0%}–{hi:.0%} |")
     out.append('A handful of sessions resolves nothing: an interval that contains 50% is a coin '
                'flip, whichever source it belongs to. Do not promote or demote a source on it.')
+    if netted:
+        out.append(primary_board.COST_NOTE_FULL)
     import model_picks
     base = model_picks.replay_line()
     if base:

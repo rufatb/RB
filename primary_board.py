@@ -178,19 +178,44 @@ VERIFY_BOARD = (('check_met', 'Desk picks that passed the open check'),
 WIRE_BOARD = (('wire_release', 'Desk picks on an overnight wire release'),)
 
 
-def leaderboard(card, verify=None, wire=None):
-    """Every source on ONE yardstick: 09:45 bar close to session close, no cost."""
+# Day-132b (owner, 2026-10-14): every model pick before the open, each name,
+# side and day ONCE (model_picks.pooled_card). The rows above overlap — a Top 2
+# pick is also a desk pick — so this is the one row that counts each bet once.
+POOLED_BOARD = (('all_model_picks', 'All model picks together (each name, side and day once)'),)
+
+
+# Day-132b (owner, 2026-10-14): costs, MEASURED, never assumed. The median entry
+# spread at 09:46 on 54 sized legs over 11 publications was 9.2 bps
+# (AUDIT_day132b_feedback.md). A round trip crosses it once (half in, half out);
+# with 0.02% commission a side that is about 0.13%. A limit at the mid with an
+# exit in the closing auction costs about 0.07%; crossing a wide spread both
+# ways about 0.19%. A short opened and closed the same day pays no borrow.
+COST_PER_PICK_PCT = 0.13
+COST_RANGE_PCT = (0.07, 0.19)
+COST_NOTE = ('Net subtracts a measured 0.13% round trip (the median 09:46 spread of 9.2 bps, '
+             'plus commission).')
+COST_NOTE_FULL = (COST_NOTE[:-1] + '; a limit at the mid with an exit in the closing auction costs '
+                  'about 0.07%, crossing the spread both ways about 0.19%. A same-day short pays no '
+                  'borrow. With no measured edge, the net is what trading these picks has cost.')
+
+
+def leaderboard(card, verify=None, wire=None, pooled=None):
+    """Every source on ONE yardstick: 09:45 bar close to session close, gross,
+    with the same mean net of the measured round-trip cost beside it."""
     rows = []
     late = [(k, n) for k, n in LATE_BOARD + NOMINATED_BOARD
             if ((card or {}).get(k) or {}).get('picks')]
-    card = {**(card or {}), **(verify or {}), **(wire or {})}
+    card = {**(card or {}), **(verify or {}), **(wire or {}), **(pooled or {})}
     board = (LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
-             + (WIRE_BOARD if wire is not None else ()))
+             + (WIRE_BOARD if wire is not None else ())
+             + (POOLED_BOARD if pooled is not None else ()))
     for key, name in board:
         c = (card or {}).get(key)
+        mean = (c or {}).get('mean_r_pct')
         rows.append({'source': name, 'picks': (c or {}).get('picks', 0),
                      'hits': (c or {}).get('hits', 0), 'rate': (c or {}).get('rate'),
-                     'mean_r_pct': (c or {}).get('mean_r_pct'),
+                     'mean_r_pct': mean,
+                     'net_mean_pct': None if mean is None else mean - COST_PER_PICK_PCT,
                      'sessions': (c or {}).get('sessions', 0),
                      'ci95': (c or {}).get('ci95')})
     return rows

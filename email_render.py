@@ -125,21 +125,34 @@ def desk_sections(intra):
     return out + _scoreboard(intra.get('scoreboard'))
 
 
+def _net(r):
+    """The frozen net-of-cost mean (day-132b); a publication from before it has none."""
+    v = r.get('net_mean_pct')
+    return '—' if v is None else f'{v:+.2f}%'
+
+
 def _scoreboard(board):
     if not board:
         return []
-    out = ['', '### Scoreboard', '| Source | Right | Mean per pick | Sessions | 95% range |',
-           '|---|---:|---:|---:|---|']
+    import primary_board
+    netted = any('net_mean_pct' in r for r in board)
+    out = ['', '### Scoreboard',
+           '| Source | Right | Mean per pick | Net of costs | Sessions | 95% range |' if netted else
+           '| Source | Right | Mean per pick | Sessions | 95% range |',
+           '|---|---:|---:|---:|---:|---|' if netted else '|---|---:|---:|---:|---|']
     for r in board:
         if not r['picks']:
-            out.append(f"| {r['source']} | — | — | 0 | not yet scored |")
+            out.append(f"| {r['source']} | — | — |{' — |' if netted else ''} 0 | not yet scored |")
             continue
         lo, hi = r['ci95']
         out.append(f"| {r['source']} | {r['hits']}/{r['picks']} ({r['rate']:.0%}) | "
-                   f"{r['mean_r_pct']:+.2f}% | {r['sessions']} | {lo:.0%}–{hi:.0%} |")
+                   f"{r['mean_r_pct']:+.2f}% |{' ' + _net(r) + ' |' if netted else ''} "
+                   f"{r['sessions']} | {lo:.0%}–{hi:.0%} |")
     # The replay base-rate paragraph left the email on 2026-10-03 (owner: no
     # needless warnings or accuracy text); the full report keeps it.
-    out.append('09:45 price to the close, no costs. A range that contains 50% is a coin flip.')
+    out.append(('09:45 price to the close. ' + primary_board.COST_NOTE + ' ' if netted
+                else '09:45 price to the close, no costs. ')
+               + 'A range that contains 50% is a coin flip.')
     return out
 
 
