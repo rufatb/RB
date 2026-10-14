@@ -38,6 +38,37 @@ def test_the_email_is_built_from_the_sealed_snapshots(tmp_path, monkeypatch):
     assert not [r for r in model_picks.read(ledger) if r['model'] == 'top2']
 
 
+SCORED = [dict(session='2026-09-%02d' % d, model='claude', kind='selected', side='LONG', ticker='QSR.TO',
+               scored_at='x', hit='1' if d % 2 else '0', r_pct='0.4' if d % 2 else '-0.3')
+          for d in range(21, 27)]
+
+
+def test_the_fallback_email_carries_the_scoreboard_net_of_costs(tmp_path, monkeypatch):
+    """Day-132c: picks are never shown without their record (day-122c), and the
+    net column belongs on every morning, the fallback ones too."""
+    monkeypatch.setattr(PO, 'load', lambda root, now: SNAPS)
+    monkeypatch.setattr('late_picks.biotech_part', lambda root, now: [])
+    monkeypatch.setattr(model_picks, 'read', lambda *a, **k: SCORED)
+    text = open(PO.compose(tmp_path, now=NOW)['text_path']).read()
+    assert '### Scoreboard' in text and 'Net of costs' in text
+    assert '| Claude | 3/6 (50%) | +0.05% | -0.08% |' in text
+    assert 'All model picks together' in text
+    assert text.index('### 4 · Jev') < text.index('### Scoreboard')
+
+
+def test_a_scoreboard_failure_is_named_and_the_email_still_goes(tmp_path, monkeypatch):
+    monkeypatch.setattr(PO, 'load', lambda root, now: SNAPS)
+    monkeypatch.setattr('late_picks.biotech_part', lambda root, now: [])
+
+    def broken(*a, **k):
+        raise OSError('ledger unreadable')
+    monkeypatch.setattr(model_picks, 'read', broken)
+    out = PO.compose(tmp_path, now=NOW)
+    text = open(out['text_path']).read()
+    assert 'Scoreboard' in text and 'Unavailable today (OSError).' in text
+    assert '| LONG QSR.TO |' in text and out['has_picks']
+
+
 def test_the_picks_are_recorded_as_the_report_would_have(tmp_path):
     ledger = tmp_path/'picks.csv'
     PO.record(SNAPS, '2026-09-28', ledger)

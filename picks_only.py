@@ -93,6 +93,7 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
             + ['', '### 4 · Jev']
             + (E.jev_forced_table(jev) if jev.get('status') in ('READY', 'NO_OPPORTUNITY')
                else ['Unavailable — %s' % safe_detail(jev.get('reason') or 'not staged', 160)])
+            + E.live_scoreboard()
             + late_picks.biotech_part(root, now)
             + ['', '---', 'Confidences are each model\'s own, never averaged. Page: ' + ARTIFACT_URL])
     text = '\n'.join(body) + '\n'

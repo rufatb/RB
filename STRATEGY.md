@@ -5503,3 +5503,5 @@ The owner pasted a read of the 10-14 board. Registered first:
   days describes the result rather than anything known at entry. It is labelled
   "same window as the result, never a lesson"; only questions answered by
   09:45 can reach the LESSON bar.
+* **The fallback emails (picks-only and late) now carry the scoreboard,** net
+  of costs, so no email shows picks without their record. Display only.

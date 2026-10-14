@@ -56,6 +56,7 @@ def test_compose_is_labelled_late_and_never_sized(root, monkeypatch):
     assert 'would rather have done nothing' in text and '| Forced pick |' in text   # caveat line left the email 2026-10-03
     assert '<table' in open(out['html_path']).read()
     assert 'shares' not in text.lower() and '$' not in text
+    assert '### Scoreboard' in text                                   # day-132c: never picks without the record
 
 
 def test_late_rows_are_their_own_kind_and_enter_at_the_bar_they_were_sent(root, monkeypatch):

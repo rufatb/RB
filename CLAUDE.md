@@ -70,6 +70,14 @@ of the result.
 * Only questions answered by the 09:45 entry can become one. The counts are
   unchanged, and nothing else moves.
 
+**The fallback emails carry the scoreboard too.** The picks-only and late
+emails printed picks with no record, against day-122c's rule, so the net column
+would have been missing on any morning the fallback ran.
+* Both now end Part 1 with `email_render.live_scoreboard()`: the same cards,
+  wire and pooled rows and table, read from `data/model_picks.csv` (0.4 s, no
+  network).
+* A failure prints "Unavailable today (<error>)" and never stops the email.
+
 ## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
 
 The owner pasted an outside read of the board. Registered first

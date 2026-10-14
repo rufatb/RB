@@ -204,6 +204,7 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
             + ['', '### 4 · Jev']
             + (E.jev_forced_table(jev) if jev.get('status') in ('READY', 'NO_OPPORTUNITY')
                else ['Unavailable — %s' % safe_detail(jev.get('reason') or 'no answer', 160)])
+            + E.live_scoreboard()
             + biotech_part(root, now)
             + ['', '---', 'Research only, not orders. Page: ' + ARTIFACT_URL])
     text = '\n'.join(body) + '\n'

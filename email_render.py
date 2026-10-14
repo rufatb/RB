@@ -125,6 +125,23 @@ def desk_sections(intra):
     return out + _scoreboard(intra.get('scoreboard'))
 
 
+def live_scoreboard(rows=None):
+    """The scoreboard from the live record, for the fallback emails (picks-only
+    and late), which have no frozen report: picks are never shown without their
+    record (day-122c), and the net-of-cost column belongs on every morning
+    (day-132c). The same cards and table as the report. A failure costs this
+    table and names itself, never the email."""
+    import model_picks
+    import primary_board
+    try:
+        rows = model_picks.read() if rows is None else rows
+        board = primary_board.leaderboard(model_picks.scorecard(rows), wire=model_picks.wire_card(rows),
+                                          pooled=model_picks.pooled_card(rows))
+    except Exception as exc:    # named in the email, never swallowed (house rule 1)
+        return ['', '### Scoreboard', f'Unavailable today ({type(exc).__name__}).']
+    return _scoreboard(board)
+
+
 def _net(r):
     """The frozen net-of-cost mean (day-132b); a publication from before it has none."""
     v = r.get('net_mean_pct')
