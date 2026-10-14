@@ -26,6 +26,23 @@ phases.
 * **Only the display changes.** The gross yardstick, the records and the
   scorer are unchanged.
 
+**Phase 2: Part 5, the debate, is retired** (amendment to
+`PREREGISTER_day119_debate.md`).
+* **Why.** It failed its own 59-session replay (21/43), was the weakest live
+  row (2/8, −0.65%), and was mistaken for the four-model council.
+* **What stops.**
+  * `morning_full.sh` no longer stages it; it logs "debate: retired".
+  * `brief.py` freezes `debate: None`.
+  * `primary_board.LEADERBOARD` drops `debate_final`.
+  * `ROUTINE_PROMPT.md` no longer asks for Part 5. The live morning Routine's
+    text still names it in STEPs 3 and 10; that is wording only (the session
+    reports it absent), left until the next authorized Routine edit rather
+    than re-pasting the whole prompt with its live keys.
+* **What is kept.** `debate.py`, its tests and every recorded `debate/final`
+  row. An older publication still renders its Part 5.
+* **The news desk stays "Part 6",** so past emails and notes keep their
+  names.
+
 ## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
 
 The owner pasted an outside read of the board. Registered first

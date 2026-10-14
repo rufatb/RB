@@ -145,10 +145,11 @@ LEADERBOARD = (('top2_pick', 'Top 2 (where the models agree)'),
                ('gemini_selected', 'Gemini'),
                ('engine_board', 'Baseline engine (k-NN)'),
                ('jev_selected', 'Jev (selected)'),
-               ('jev_forced', 'Jev (forced)'),
-               ('debate_final', 'Debate (final)'))
+               ('jev_forced', 'Jev (forced)'))
 # Part 3's rows (consensus_rule_met / _not_met) left the board on 2026-09-28
 # with the section itself: rejection #44. Their recorded rows stay in the CSV.
+# Part 5's row (debate_final) left with the debate on 2026-10-14 (owner,
+# day-132c); its recorded rows stay in the CSV and in the pooled row's history.
 
 
 # Late picks (late_picks.py: asked AFTER the open because the report did not

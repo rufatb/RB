@@ -391,12 +391,10 @@ else
     log "  gap signal: NOT staged — Part 3 reads unavailable"
     stage_faults+=("gap signal not staged")
 fi
-if timeout 90 python debate.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
-    log "  debate: staged"
-else
-    log "  debate: NOT staged — Part 5 reads unavailable"
-    stage_faults+=("debate not staged")
-fi
+# PART 5, THE DEBATE, IS RETIRED (owner, 2026-10-14, day-132c): it failed its
+# own replay (21/43) and was the weakest live row. debate.py and its recorded
+# rows are kept; nothing stages it.
+log "  debate: retired (owner, 2026-10-14) — Part 5 is not staged"
 if timeout 120 python pead.py --stage --state-dir "$RB_STATE_DIR" >/dev/null; then
     log "  post-earnings drift: staged"
 else

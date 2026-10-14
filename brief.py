@@ -613,19 +613,12 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         news_section = news_desk.section(state_dir, now)
     except Exception as exc:
         error('news_desk', RuntimeError(type(exc).__name__))
+    # PART 5, THE DEBATE, IS RETIRED (owner, 2026-10-14, day-132c). It failed its
+    # own 59-session replay (21/43, 49%) and was the board's weakest live row
+    # (2/8). Nothing stages it and nothing publishes it; debate.py and every
+    # recorded debate/final row are kept (Day-90), and an older publication
+    # that carries the section still renders it.
     debate_section = None
-    try:
-        import debate
-        debate_section = debate.load(state_dir, now)
-        debate_section['record'] = debate.replay_line()
-        # Day-120 entry checks, at 09:46 when the quotes exist.
-        if quotes:
-            import entry_checks
-            debate.entry_filter(debate_section, entry_checks.marks(quotes),
-                                debate.levels(claude_evidence, opportunity_evidence,
-                                              gemini_evidence))
-    except Exception as exc:
-        error('debate', RuntimeError(type(exc).__name__))
     fmp_section = None
     try:                     # day-125: what FMP put in front of the models this morning
         import fmp_context

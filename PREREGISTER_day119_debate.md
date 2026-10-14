@@ -48,3 +48,19 @@ beside it, because the owner is testing sections in parallel. It is recorded
 (`model_picks` model `debate`, kind `final`) and judged forward at 40 live
 sessions on the same bar. Nothing is sized from it. The prompts are not
 re-tuned against this replay.
+
+## Amendment — retired by the owner (2026-10-14, day-132c)
+
+The owner retired Part 5 after the day-132b review of an outside read of the
+scoreboard.
+
+* **Why.** It failed this registration's own replay (21/43, 49%; KEEP 24/49
+  against REJECT 77/147). Live it was the weakest row: 2/8, −0.65%. And it was
+  routinely mistaken for the four-model council, which is a different
+  mechanism.
+* **What stops.** Nothing stages it (`morning_full.sh`), nothing publishes it
+  (`brief.py` freezes `debate: None`), and the scoreboard drops its row.
+* **What is kept.** `debate.py`, its tests and every recorded `debate/final`
+  row. An older publication that carries the section still renders it.
+* **No verdict.** The forward test this registration set up was not resolved
+  at its 40-session decision point; it was stopped by the owner, not failed.

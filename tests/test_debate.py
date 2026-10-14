@@ -81,12 +81,27 @@ def test_the_section_prints_its_replay_record_and_is_recorded():
     assert [(r['model'], r['kind'], r['ticker']) for r in rows] == [('debate', 'final', 'AC.TO')]
 
 
-def test_every_view_prints_part_5():
+def test_part_5_is_retired_and_an_older_publication_still_prints_it():
+    """Owner, 2026-10-14 (day-132c): the debate is retired. A new publication
+    carries no Part 5 and no scoreboard row; one published before still renders
+    its section, because a frozen publication never changes."""
     import brief
     import email_render
+    import primary_board
     import report_page
     from test_daily_pipeline import NOW as N0, services
     d = brief.build(now=N0, services=services())
+    assert d['intraday'].get('debate') is None
+    assert 'Part 5 — The debate' not in email_render.text(d)
+    assert 'Part 5 — The debate' not in brief.render_text(d)
+    assert 'Part 5 — The debate' not in report_page.render(d)
+    assert 'Debate (final)' not in [r['source'] for r in primary_board.leaderboard({})]
+    d['intraday']['debate'] = {'status': 'READY', 'final': [], 'reason': 'nothing survived'}
     assert '## Part 5 — The debate' in email_render.text(d)
-    assert '## Part 5 — The debate' in brief.render_text(d)
     assert 'Part 5 — The debate' in report_page.render(d)
+
+
+def test_the_morning_no_longer_stages_the_debate():
+    from pathlib import Path
+    text = Path(__file__).resolve().parents[1].joinpath('morning_full.sh').read_text()
+    assert 'debate.py --stage' not in text and 'debate: retired' in text

@@ -5469,3 +5469,17 @@ The owner pasted a read of the 10-14 board. Registered first:
 * **Biotech: plausible, untested.** It can only be judged forward, because a
   replay is contaminated by what the models remember. One of 31 events has
   resolved.
+
+## Day-132c: the owner's improvements, in phases
+
+* **Phase 1: the scoreboard is net of the measured cost.** The round trip is
+  0.13% (the median 09:46 spread of 9.2 bps, plus commission; range
+  0.07–0.19%).
+  * One pooled row counts each pre-open bet once: on 10-14 it read 32/75,
+    −0.16% gross, −0.29% net.
+  * Display only; the scorer is unchanged.
+* **Phase 2: Part 5, the debate, is retired.** It failed its own replay
+  (21/43) and was the weakest live row (2/8).
+  * Its module and recorded rows are kept.
+  * This is the owner's decision, not a verdict:
+    `PREREGISTER_day119_debate.md`, amendment.
