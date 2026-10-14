@@ -1,5 +1,31 @@
 # Working notes for this repo
 
+## Day132b — an outside read of the scoreboard, tested (owner, 2026-10-14)
+
+The owner pasted an outside read of the board. Registered first
+(`PREREGISTER_day132b_feedback.md`, 82ac6f2); read
+`AUDIT_day132b_feedback.md`; script `feedback_review.py`.
+
+* **Right: costs.** Gross is zero, so net is a slow bleed.
+  * Pooled unique picks −0.15%, t = −0.88.
+  * Median 09:46 entry spread 9.2 bps; a round trip costs 0.07–0.19%.
+  * A same-day short pays no borrow.
+* **Right: sample size.** The MDE is 0.33% per pick at 60 sessions; a 0.1%
+  edge needs about 760 sessions.
+* **Not supported: "the debate destroys signal".** The 25% row is Part 5's
+  debate, not the council. On its sessions the council's Top 2 (+0.02%) is at
+  or above every desk.
+* **Not supported: "take the highest-conviction pick".** On 479 replay picks
+  the top-confidence pick did 0.20% worse than the rest. T1 was
+  UNDERPOWERED, with the estimate on the wrong side; rank correlation −0.02.
+* **Not supported: "react to the open".** "DeepSeek late" is 8 picks on 2
+  sessions; the wire row is −0.14%; every registered test of the open is
+  null.
+* **Biotech** can only be judged forward (a replay is contaminated): 1 of 31
+  events has resolved.
+
+Nothing changed; the owner decides what is proposed.
+
 ## Day132 — the picks chase yesterday's movers; it is not look-ahead, and it neither helps nor hurts (owner, 2026-10-14)
 
 The owner saw the 10-14 Top 2 and asked whether it is "look-backward bias":

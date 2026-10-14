@@ -83,3 +83,23 @@ Nothing in the morning changes from this without the owner's decision. Any
 change to a prompt, rule, section or the email needs its own registration and
 control (day-127/128). The script is `feedback_review.py`; the summary goes to
 `data/review_day132b_feedback.json`.
+
+## Results (2026-10-14, after the run; nothing above was changed)
+
+* **T1: UNDERPOWERED,** by the registered rule.
+  * Over 154 units (479 picks), the top-confidence pick minus the rest is
+    −0.20%, t = −1.14; placebo p = 0.91.
+  * The planted 0.5% shows at t = 2.91.
+  * Rank correlation −0.02 (95% −0.11 to +0.08).
+  * The estimate is on the wrong side of the claim.
+* **M1.** The books are near balanced, and the market's part of every row is
+  about zero. Pooled unique model picks: −0.15%, t = −0.88.
+* **M2.** Median 09:46 entry spread 9.2 bps; round trip 0.07–0.19%.
+* **M3.** Over 10-05 → 10-13, the council's Top 2 went 4/9 at +0.02%. That
+  is at or above every desk on the same sessions. The 25% row is Part 5's
+  debate.
+* **M4.** DeepSeek late: 8 picks on 2 sessions. The wire row: 2/5, −0.14%.
+* **M5.** MDE80 0.41% at 40 sessions, 0.33% at 60.
+* **M6.** 31 events, 1 resolved.
+
+Read `AUDIT_day132b_feedback.md`. Nothing changes without the owner.

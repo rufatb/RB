@@ -5442,3 +5442,30 @@ first: `PREREGISTER_day132_chasing.md`. Read `AUDIT_day132_chasing.md`.
 A chasing pick is a coin flip like any other here. Do not build momentum or
 fade rules on yesterday's move, and do not flag chasing picks (day-120b) —
 the data say there is nothing to flag. `data/replay_day132_chasing.json`.
+
+
+## Day-132b: an outside read of the scoreboard, tested
+
+The owner pasted a read of the 10-14 board. Registered first:
+`PREREGISTER_day132b_feedback.md`. Read `AUDIT_day132b_feedback.md`.
+
+* **Costs: right.** Gross is zero (pooled unique picks −0.15%, t = −0.88),
+  so net is minus the costs.
+  * The median 09:46 entry spread is 9.2 bps; a round trip costs 0.07–0.19%.
+  * A same-day short pays no borrow.
+* **"The debate destroys signal": not supported.**
+  * The 25% row is Part 5's two-model debate, which failed its own replay.
+  * On the council's six sessions, its Top 2 (+0.02%) is at or above every
+    desk.
+* **"Take the highest-conviction pick": not supported.** On 479 replay picks,
+  the top-confidence pick did 0.20% WORSE than the rest (t = −1.14; rank
+  correlation −0.02). The registered verdict is UNDERPOWERED (the planted
+  0.5% showed at t = 2.91), with the estimate on the wrong side.
+* **"Reacting to the open beats predicting": not supported.** "DeepSeek late"
+  is 8 picks on 2 sessions; the wire row is −0.14%. Every registered test of
+  the open is null (#42, H5, #46, 121b).
+* **Sample size: right, and stronger.** Sixty sessions resolve only
+  ≥ 0.33% per pick, and a 0.1% edge needs about 760 sessions.
+* **Biotech: plausible, untested.** It can only be judged forward, because a
+  replay is contaminated by what the models remember. One of 31 events has
+  resolved.
