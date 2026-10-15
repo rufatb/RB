@@ -221,3 +221,14 @@ def test_a_mostly_daily_series_riddled_with_holes_is_rejected():
     assert gaps.median() == 1.0, 'the median must stay daily or this proves nothing'
     with pytest.raises(D.GranularityError):
         D.from_series(dates, closes, volumes, now=NOW)
+
+
+def test_the_last_session_is_bookkeeping_that_dates_the_row():
+    """Day-133: the caller stamps a daily row with this session's close."""
+    import daily_technicals as D
+    dates, closes, volumes = series(120)
+    out = D.from_series(dates, closes, volumes, now=NOW)
+    assert out['daily_last_session'] == max(dates) == '2026-09-17'
+    assert 'daily_last_session' not in D.model_fields(out)
+    close = D.session_close(out['daily_last_session'])
+    assert close.date().isoformat() == out['daily_last_session'] and close.hour == 16

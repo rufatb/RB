@@ -251,7 +251,9 @@ else
     # consensus, last/next earnings for every name in the brief, and today's
     # Canada/US releases — staged BEFORE the brief so all four models get the
     # same rows. ~28s measured over 77 names; a failure costs only these fields.
-    if budget="$(slice 60 420)"; then
+    # Day-133: the brief holds ~116 names now (it was 75-91), ~42s; the ceiling
+    # is 90s so a slow FMP morning does not strip the fields from every row.
+    if budget="$(slice 90 420)"; then
         if timeout "$budget" python fmp_context.py --stage --state-dir "$RB_STATE_DIR" \
                 >>"$RB_STATE_DIR/fmp_context.log" 2>&1; then
             log "  FMP context: staged"

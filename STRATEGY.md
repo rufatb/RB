@@ -5505,3 +5505,19 @@ The owner pasted a read of the 10-14 board. Registered first:
   09:45 can reach the LESSON bar.
 * **The fallback emails (picks-only and late) now carry the scoreboard,** net
   of costs, so no email shows picks without their record. Display only.
+
+## Day-133: the models saw 75–91 of 116 TSX names; a time stamp dropped the rest
+
+Not a test; a repair to the population, at the owner's request ("increase the
+population, a little at least").
+* **Cause.** Day-111b's daily-bar pass stamped its rows with the job's clock;
+  `factor_inputs` requires the prior session's close and refused every one
+  (and they lacked `technical_provenance`). 25–41 names were lost every
+  morning since day-111b; day-111b's "usable 116" was counted before the check.
+* **Fix.** Daily-only rows are stamped with their last bar's exchange close and
+  carry a hash of their bars. A stale last bar still fails closed.
+* **Measured on 10-14's pool:** 83 → 116 names the models see; Jev fits at its
+  first step; the FMP step gets 90 s.
+* **Left as is:** the 264 US biotech rows (the owner's call) and the 117-name
+  roster (day-101's 150-name expansion is never staged).
+* No accuracy claim: more names are more choices, not more signal (day-117).

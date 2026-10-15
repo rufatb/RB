@@ -1,5 +1,67 @@
 # Working notes for this repo
 
+## Day133 — the models saw 75–91 of 116 TSX names; a time stamp dropped the rest (owner, 2026-10-14)
+
+The owner asked how many stocks the models and the council pick from, and to
+widen it, even a little.
+
+**The funnel on 10-14:**
+* 117 TSX names on the roster (`factor_pool_policy.TICKERS`);
+* 116 with every field a desk needs (RSI, MACD, relative volume, last), on
+  every morning since 09-29;
+* 83 reached the models (`claude_brief.json` `considered`): 75–91 a day;
+* 15 positions on the council's table (capped at 16), from the desks' picks
+  and nominations.
+
+**Why only 83: day-111b's daily-bar pass stamped its rows with the job's
+clock.**
+* A name the five-minute panel missed got its indicators from daily bars,
+  dated `now` (08:52), with a "previous_completed_session" label.
+* `factor_inputs` requires exactly the prior session's close for that label,
+  so it refused every such row (`STALE_OR_WRONG_PREVIOUS_SESSION_TECHNICALS`)
+  and emptied its technicals. The rows also lacked `technical_provenance`,
+  which the same check requires; the stamp error hid that.
+* 25–41 names a day were lost, mostly the same ones: CSU, FFH, SLF, TC, ONEX,
+  the class shares (BBD-B, CTC-A, EMP-A) and the trusts (BIP-UN, CAR-UN …).
+* Day-111b's "usable 38 → 116" was counted in the pool file, the one place
+  BEFORE the check. Same shape as day-112d: computed, written, dropped by the
+  reader.
+
+**The fix: the population changes, nothing else does.**
+* `daily_technicals.from_series` returns `daily_last_session` (bookkeeping,
+  stripped by `model_fields`); `from_yahoo` returns `input_sha256`, the hash
+  of the exact daily bars.
+* The daily pass stamps a daily-only row with that session's exchange close
+  (`daily_technicals.session_close`) and writes its provenance
+  (`COMPUTATION = 'daily_technicals.from_series.day111b'`).
+* A last bar that is not the prior session still fails closed as stale. A row
+  without its session or digest is named in `daily_errors` and never stamped
+  with the clock.
+* Tests cross the real seam: pool file → `build_from_state` →
+  `usable_candidates` (`tests/test_pool_widening.py`).
+
+**Dry run on 10-14's pool** (scratch copy, the 34 names' daily bars refetched
+as of 08:52):
+* the models would have seen 116 names, not 83; ARX.TO still fails (a new
+  listing, too little history);
+* the brief payload grows from 81k to 100k characters;
+* Jev answered on all 116 names in 1.3 s at its first input step (rows), with
+  no trim;
+* FMP context covers every name the models see (~30 s for 83, so ~42 s for
+  116), so `morning_full.sh` gives it `slice 90 420` instead of 60.
+
+**Not changed, and why.**
+* **The 264 US biotech rows** in the same pool file fail the same check (the
+  snapshot's build time, no provenance), so no desk has ever been asked about
+  one. Making them pass would add ~260 US names to the TSX desks. The owner
+  said "leave the biotech as is"; it is their call.
+* **The roster.** 117 names; day-101's registered expansion
+  (`tsx_universe.py`, target 150, C$10M median daily value) is never staged
+  (no `tsx_universe.json`), so every morning logs LEGACY_RESEARCH_FALLBACK.
+  Widening the roster is the next lever.
+* **No accuracy claim.** More names are more choices, not more signal
+  (day-117); the 40-session review reads the record as it is.
+
 ## Day132c — the owner's improvements after day-132b, in phases (owner, 2026-10-14)
 
 The owner said: do all of them, leave the biotech table as it is, and work in

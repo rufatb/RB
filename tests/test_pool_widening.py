@@ -26,7 +26,7 @@ from test_factor_pool_day101 import CFG, NOW, acquire, fetch, history, metadata,
 from test_daily_technicals import series
 
 
-def daily_fetcher(fail=()):
+def daily_fetcher(fail=(), last_session='2026-09-14'):
     """Stands in for the real daily-bar request; records what it was asked."""
     calls = []
 
@@ -35,8 +35,9 @@ def daily_fetcher(fail=()):
         if ticker in fail:
             raise ValueError('DAILY_HISTORY_TOO_SHORT')
         return ({'rsi': 55.0, 'macd': 0.2, 'macd_signal': 0.1, 'macd_hist': 0.1,
-                 'rvol': 1.3, 'last': 42.0, 'daily_sessions': 251},
-                {'currency': 'CAD', 'exchange': 'TOR'})
+                 'rvol': 1.3, 'last': 42.0, 'daily_sessions': 251,
+                 'daily_last_session': last_session},
+                {'currency': 'CAD', 'exchange': 'TOR', 'input_sha256': '0' * 64})
     fetch_daily.calls = calls
     return fetch_daily
 
@@ -326,3 +327,50 @@ def test_a_malformed_factor_reply_is_retried_once_and_only_that():
         return {'errorcode': 'INVALID_SCHEMA', 'status': 'UNAVAILABLE'}
     out = PD._with_schema_retry(slow, 40, 30, clock=lambda: t['now'])
     assert len(calls) == 1 and out['errorcode'] == 'INVALID_SCHEMA'   # no room for a full second request
+
+
+# ── day-133: a daily-only name must reach the models, not just the file ──────
+
+def models_see(tmp_path):
+    """The names the desks are asked about, through the real reader chain:
+    the staged pool -> factor_inputs.build_from_state -> usable_candidates."""
+    import deepseek_opportunities as O
+    import factor_inputs
+    staged = factor_inputs.build_from_state(tmp_path, CFG, NOW)
+    return {c['ticker'] for c in O.usable_candidates(staged['candidates'])}, staged
+
+
+def test_a_daily_only_name_is_stamped_at_the_prior_close_and_reaches_the_models(tmp_path, monkeypatch, history):
+    """2026-10-14: 33 of 116 TSX names carried every field the desks need and
+    none reached them. The daily pass stamped them with its own clock, and
+    factor_inputs requires the prior session's close exactly. Day-111b counted
+    them as 'usable' in the pool file, the one place before the check."""
+    import factor_inputs
+    run(tmp_path, monkeypatch, history, daily_fetcher=daily_fetcher())
+    pool = json.loads((tmp_path/'deepseek_candidates.json').read_text())
+    row = next(c for c in pool['candidates'] if c['ticker'] == 'NA.TO')
+    assert dt.datetime.fromisoformat(row['technicals_as_of']) == factor_inputs._previous_close(NOW)
+    seen, staged = models_see(tmp_path)
+    assert 'NA.TO' in seen, staged['candidate_gaps'].get('NA.TO')
+    assert 'STALE_OR_WRONG_PREVIOUS_SESSION_TECHNICALS' not in staged['candidate_gaps'].get('NA.TO', [])
+
+
+def test_a_daily_only_name_whose_last_bar_is_not_the_prior_session_still_fails_closed(tmp_path, monkeypatch, history):
+    run(tmp_path, monkeypatch, history, daily_fetcher=daily_fetcher(last_session='2026-09-11'))
+    seen, staged = models_see(tmp_path)
+    assert 'NA.TO' not in seen
+    assert 'STALE_OR_WRONG_PREVIOUS_SESSION_TECHNICALS' in staged['candidate_gaps']['NA.TO']
+
+
+def test_a_daily_row_without_its_session_is_named_never_stamped_with_the_clock(tmp_path, monkeypatch, history):
+    fetch_daily = daily_fetcher()
+
+    def undated(ticker):
+        technicals, meta = fetch_daily(ticker)
+        technicals.pop('daily_last_session')
+        return technicals, meta
+    result = run(tmp_path, monkeypatch, history, daily_fetcher=undated)
+    assert result['daily_errors']['NA.TO'] == 'DAILY_LAST_SESSION_UNKNOWN'
+    pool = json.loads((tmp_path/'deepseek_candidates.json').read_text())
+    row = next((c for c in pool['candidates'] if c['ticker'] == 'NA.TO'), {})
+    assert not (row.get('technicals') or {}).get('rsi')

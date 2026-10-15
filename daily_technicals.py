@@ -38,6 +38,7 @@ REJECTED rather than silently used.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import math
 from zoneinfo import ZoneInfo
 
@@ -94,12 +95,26 @@ def _finite(value):
 # them. Staged inside `technicals` they made factor_inputs flag every name
 # UNKNOWN_TECHNICAL_FIELD — on 2026-09-23 the factor layer assessed 0 of 428,
 # because day-113 routed EVERY name through this pass to get its ATR.
-BOOKKEEPING = ('daily_sessions', 'daily_close_prev')
+BOOKKEEPING = ('daily_sessions', 'daily_close_prev', 'daily_last_session')
+# The provenance line a daily-only row carries (factor_inputs requires one).
+COMPUTATION = 'daily_technicals.from_series.day111b'
 
 
 def model_fields(technicals):
     """The technicals minus bookkeeping: what may be staged for a model."""
     return {k: v for k, v in technicals.items() if k not in BOOKKEEPING}
+
+
+def session_close(day):
+    """The exchange close of the session `day` (an ISO date): the instant a row
+    computed from completed daily bars ending that day describes. factor_inputs
+    requires exactly this for a previous_completed_session row, so a row whose
+    last bar is not the prior session still fails closed there as stale."""
+    from intraday_history import session_schedule
+    schedule = session_schedule(day, day)
+    if schedule.empty:
+        raise ValueError('DAILY_LAST_BAR_NOT_A_SESSION')
+    return schedule.iloc[-1]['market_close'].to_pydatetime().astimezone(ET)
 
 
 def from_series(dates, closes, volumes, *, now, opens=None, highs=None, lows=None):
@@ -139,7 +154,11 @@ def from_series(dates, closes, volumes, *, now, opens=None, highs=None, lows=Non
            'macd_hist': momentum['hist'], 'rvol': rvol, 'last': last,
            'volume': _finite(volumes.iloc[-1]),
            'daily_sessions': int(len(frame)),
-           'daily_close_prev': previous}
+           'daily_close_prev': previous,
+           # The session the last bar describes: the caller stamps the row
+           # with THAT session's close, never with its own clock (day-133).
+           'daily_last_session': frame['date'].dt.tz_localize(None).dt.normalize()
+                                 .iloc[-1].date().isoformat()}
     if 'open' in frame.columns and _finite(frame['open'].iloc[-1]):
         session_open = float(frame['open'].iloc[-1])
         out['open'] = session_open
@@ -229,7 +248,9 @@ def from_yahoo(ticker, adapter, now, *, interval='1d', window='1y'):
                              opens=has('Open'), highs=has('High'), lows=has('Low'))
     return technicals, {'currency': meta.get('currency'),
                         'exchange': meta.get('exchangeName'),
-                        'rebuilt_sessions': [d.isoformat() for d in rebuilt]}
+                        'rebuilt_sessions': [d.isoformat() for d in rebuilt],
+                        # The exact bars these numbers came from (day-133).
+                        'input_sha256': hashlib.sha256(frame.to_csv().encode()).hexdigest()}
 
 
 def from_biotech_snapshot(snapshot, now, *, max_age_hours=30, limit=None):
@@ -273,6 +294,11 @@ def from_biotech_snapshot(snapshot, now, *, max_age_hours=30, limit=None):
             gaps[ticker] = ('BIOTECH_' + (str(exc) if isinstance(exc, ValueError)
                                           and str(exc).isupper() else type(exc).__name__))
             continue
+        # Day-133: these rows are stamped with the snapshot's build time and
+        # carry no technical_provenance, so factor_inputs refuses every one of
+        # them; the desks have never been asked about a US biotech name. Left
+        # so by the owner's 2026-10-14 "leave the biotech as is": making them
+        # pass would add ~260 US names to the TSX desks, which is their call.
         out.append({'ticker': ticker, 'technicals': model_fields(technicals),
                     'technicals_as_of': observed.isoformat(),
                     'technicals_scope': scope(technicals['daily_sessions']),

@@ -470,7 +470,34 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
             merged.setdefault('technical_source', 'python')
             merged.setdefault('source_url',
                 'https://query1.finance.yahoo.com/v8/finance/chart/'+quote(ticker, safe=''))
-            merged['technicals_as_of'] = merged.get('technicals_as_of') or now.isoformat()
+            if not merged.get('technicals_as_of'):
+                # Day-133: the close of the session the daily bars END on, not
+                # this job's clock. Stamped with `now`, every name the
+                # five-minute panel missed failed factor_inputs' exact
+                # prior-close check (STALE_OR_WRONG_PREVIOUS_SESSION_TECHNICALS)
+                # and was dropped before any model saw it: 25 to 41 of 116 TSX
+                # names every morning from day-111b to 2026-10-14. A last bar
+                # that is not the prior session still fails closed there.
+                # The same check also requires `technical_provenance`, which
+                # only the five-minute path wrote; the stamp failed first and
+                # hid that. It is the hash of the exact daily bars used.
+                try:
+                    last_session = technicals.get('daily_last_session')
+                    if not isinstance(last_session, str) or not last_session:
+                        raise ValueError('DAILY_LAST_SESSION_UNKNOWN')
+                    digest = meta.get('input_sha256')
+                    if not isinstance(digest, str) or not re.fullmatch('[a-f0-9]{64}', digest):
+                        raise ValueError('DAILY_INPUT_DIGEST_MISSING')
+                    merged['technicals_as_of'] = _dt.session_close(last_session).isoformat()
+                    merged['technical_provenance'] = {
+                        'input_sha256': digest, 'computation': _dt.COMPUTATION,
+                        'computed_at': (dt.datetime.now(ET) if live_clock else now).isoformat(),
+                        'source_url': merged['source_url']}
+                except Exception as exc:    # named per name; one bad calendar
+                    # lookup must not end the pass for every other name.
+                    status['daily_errors'][ticker] = (str(exc) if re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc))
+                                                      else type(exc).__name__)
+                    continue
             import daily_technicals as _dt
             merged['technicals_scope'] = _dt.scope(technicals['daily_sessions'],
                                                  meta.get('rebuilt_sessions') or ())
