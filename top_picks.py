@@ -210,6 +210,36 @@ def single_line(section):
             + ' · '.join(f"{x['side']} {x['ticker']} ({x['by']})" for x in s) + '.')
 
 
+DIRECTION_MARK = '⚠ '
+
+
+def direction_line(section):
+    """Day-135 (owner, 2026-10-15): two picks on one side share one exposure, the
+    market's direction. That morning the Top 2 was SHORT CLS.TO (Technology) and
+    SHORT CCO.TO (uranium); the exposure line named two sectors, and both lost
+    together when the market turned up after the open. Display only: it moves
+    no pick. None unless the section has two picks, both on one side (a
+    runner-up or a single-model pointer is never a pick)."""
+    picks = (section or {}).get('picks') or []
+    sides = {p.get('side') for p in picks}
+    if len(picks) < 2 or len(sides) != 1 or not sides <= {'LONG', 'SHORT'}:
+        return None
+    side = sides.pop()
+    try:                                  # display only: a sector map fault never costs the line
+        import exposure
+        etfs = [exposure.position_exposure(p['ticker'])['etf'] for p in picks]
+        known = [e for e in etfs if e and e != exposure.MARKET_ETF]
+    except Exception:
+        known = []
+    tail = ('' if len(known) < 2 else       # a name with no sector says nothing about sectors
+            ' They are also in one sector (they move with %s): one bet written twice.' % known[0]
+            if len(set(known)) == 1 else
+            ' Being in different sectors does not make them separate bets.')
+    return ('%sBoth picks are %s, so they share one exposure: the market\'s direction. '
+            'If the market turns %s, both tend to lose at once.%s'
+            % (DIRECTION_MARK, side, 'up' if side == 'SHORT' else 'down', tail))
+
+
 def table(section, concise=False):
     """The section as text lines, one table. Used by every email and view.
     `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
@@ -245,6 +275,9 @@ def table(section, concise=False):
                                       else '—')).replace('|', '/')[:200]
         out.append(f"| {i} | {p['side']} {p['ticker']} | {_verdict(p, answered)} | "
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
+    direction = direction_line(section)          # day-135: right under the picks
+    if direction:
+        out.append(direction)
     if section.get('reason'):
         out.append(section['reason'])
     if single and section.get('single'):
@@ -290,6 +323,9 @@ def _council_table(section, concise):
                                       else '—')).replace('|', '/')[:200]
         out.append(f"| {i} | {p['side']} {p['ticker']} | {_verdict(p, sat)} | "
                    f"{', '.join(p['backing'])} | {wrong} | {release} | {p['lead']}: {why} |")
+    direction = direction_line(section)          # day-135: right under the picks
+    if direction:
+        out.append(direction)
     out += council.council_lines(section, concise=concise)
     proposed = council.proposed_line(picks)      # day-129: selected, nominated or forced
     if proposed:

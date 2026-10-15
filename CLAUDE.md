@@ -1,5 +1,44 @@
 # Working notes for this repo
 
+## Day135 — after 10-15's two losing shorts: the emails stop looking safer than they are (owner, 2026-10-15)
+
+**What happened.** The council's Top 2 was SHORT CLS.TO and SHORT CCO.TO, 4 of 4 each.
+* Both lost when the market turned up after the open. From the 09:45 entry to 11:10 they were −1.1% and −3.3% for the short. Over the same span XIU rose 0.9% and URNM 3.0%.
+* Every other short the system named lost too (HUT, the SHOP gap short, Jev's EFR).
+* The owner: "You failed me entirely today."
+
+**What changed.** Three display failures were mine, and the owner said yes to all three fixes. None changes a pick, a size, a record or a registered rule. None makes a pick more likely to be right.
+
+**1. A stop out of reach is no stop.** The 09:31 open check said STILL VALID twice, and it could say nothing else.
+* The "wrong if" levels came from the prior session's chart. They sat 12.0% and 7.9% above the 09:31 price: 1.8 and 2.0 normal days (ATR) away.
+* `council_flash.reach` gives the distance in % and in ATR. `atr_map` reads the ATR from today's brief; with no brief, the distance prints with no reach call.
+* More than `REACH_ATR` (1 normal day) is OUT OF REACH, not a usable stop, and the subject reads "… STILL VALID, stop out of reach".
+* The open's own move prints in normal days, with "Already moved at the open, before any entry: …". A move already made is a reason in neither direction (day-132).
+* E1's verdict is unchanged.
+
+**2. Two picks on one side are one bet.** The exposure line named two sectors and hid the shared exposure.
+* `top_picks.direction_line`: when both Top 2 picks share a side, "⚠ Both picks are SHORT, so they share one exposure: the market's direction …". When they also share a sector fund it adds "one bet written twice".
+* **Where it shows:**
+  * right under the picks in every Top 2 table (flash, report, picks-only, late);
+  * in the heroes of the flash, open check, report email and noon email;
+  * above the page's table.
+* A runner-up or single-model pointer is never a pick and never triggers it.
+* Every '⚠ ' line in an email now renders as a bordered caution (`email_render.caution_html`), the existing shared-exposure lines included.
+
+**3. Uranium is not oil.** `exposure.INDUSTRY_ETF['Uranium']` was XEG.TO.
+* **The evidence.** Over the prior year the ten uranium names correlated −0.08 to +0.04 with XEG.TO, against 0.56–0.90 with URNM (URA 0.53–0.88). There is no date shift: XEG.TO and USO correlate 0.66 on the same day.
+* **The fund.** It is URNM now. HURA.TO had traded 5,272 shares by 11:42 on 10-15, too thin to quote at 09:31. URNM is in USD, so a day's CAD/USD move sits inside its figure.
+* **Who reads it:** the exposure line, the open and noon checks, the execution lab's hedge and the memory council's exposure lines.
+* **The lab** fills blanks only, so earlier uranium rows keep their XEG.TO hedge. Each row names its fund (`etf`).
+
+**Loose maps, left alone.** The same audit ran over all 150 names. These are unchanged; that is the owner's call.
+* The telecoms (BCE, T, RCI-B, CCA, QBR-B) fall to XIU.TO and track it at −0.12 to 0.16.
+* TRI, WCN and GFL track ZIN.TO at −0.02 to 0.14.
+* MX tracks XMA.TO at 0.01.
+* Canadian energy tracked XIU.TO at about 0 that year: an index fund is not a stand-in for a sector.
+
+**Not claimed:** that any of this makes a pick right. Before 10-15 the Top 2 was 7/17 (41%), and every source's range contains 50%.
+
 ## Day134b — other OpenRouter models on the replay: no better (rejection #49, owner, 2026-10-14)
 
 The owner's research named "Sonnet 3.5" and "DeepSeek R1". Registered first

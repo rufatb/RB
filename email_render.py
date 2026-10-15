@@ -328,6 +328,27 @@ def text(d):
 
 INK, MUTED, RULE = '#17212b', '#5c6b7a', '#dde4ea'
 CARD, WASH, ACCENT = '#ffffff', '#f4f7f9', '#1f5c66'
+CAUTION = '#8a5f19'
+WARN_MARK = '⚠ '        # top_picks.DIRECTION_MARK and the shared-exposure lines
+
+
+def caution_html(text, size='14px'):
+    """A '⚠ ' line as a bordered caution, never a quiet paragraph (day-135).
+    Inline styles only: the send path strips <style>, classes and backgrounds."""
+    return (f'<p style="font:600 {size}/1.55 Arial,sans-serif;color:{CAUTION};margin:12px 0;'
+            f'padding:2px 0 2px 12px;border-left:3px solid {CAUTION}">{full.escape(text)}</p>')
+
+
+def direction_html(section):
+    """The day-135 one-direction warning for a hero, or '' (display only; a
+    fault here never costs the hero)."""
+    try:
+        import top_picks
+        line = top_picks.direction_line(section)
+    except Exception:
+        line = None
+    return (f'<div style="font:600 14px/1.5 Arial,sans-serif;color:{CAUTION};margin-top:9px">'
+            f'{full.escape(line)}</div>' if line else '')
 BADGES = {'ABSTAIN': ('#6b7280', '#eef0f2'), 'RECORDED': ('#6b7280', '#eef0f2'),
           'SHADOW': ('#1f5c66', '#e4f0f1'), 'ELIGIBLE': ('#1f5c66', '#e4f0f1')}
 
@@ -409,6 +430,7 @@ def _hero(d):
                  if no_agreement else ''))
     top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
                 f'{full.escape(top_text)}</div>' if top_text else '')
+    top_line += direction_html(intra.get('top_two'))
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
             f'{top_line}'
             f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'
@@ -474,6 +496,8 @@ def _body_blocks(body):
         elif line.startswith('### '):
             out.append(f'<div style="font:600 15px/1.4 Georgia,serif;color:{INK};'
                        f'margin:20px 0 2px">{full.escape(line[4:])}</div>')
+        elif line.startswith(WARN_MARK) and not small:
+            out.append(caution_html(line))
         elif line.startswith('- ') or line.startswith('  '):
             out.append(f'<div style="font:13px/1.55 Arial,sans-serif;color:{INK};'
                        f'margin:3px 0 3px 14px;padding-left:10px;'

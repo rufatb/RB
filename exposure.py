@@ -84,9 +84,16 @@ SECTOR_ETF = {
     'Industrials': ('ZIN.TO', None),
     'Consumer Cyclical': ('XCD.TO', None),
 }
-INDUSTRY_ETF = {'Gold': ('XGD.TO', 'gold'), 'Uranium': ('XEG.TO', 'uranium')}
+INDUSTRY_ETF = {'Gold': ('XGD.TO', 'gold'), 'Uranium': ('URNM', 'uranium')}
 # 2026-10-07: CCO.TO (Cameco, Uranium) was labelled "a bet on crude oil" in the
 # flash; only oil-and-gas industries carry the oil driver.
+# Day-135 (2026-10-15): the label was fixed, the fund was not. CCO.TO still
+# "moved with XEG.TO", and over the prior year the ten uranium names' daily moves
+# correlated -0.08 to +0.04 with XEG.TO against 0.56-0.90 with URNM (Sprott
+# Uranium Miners; URA 0.53-0.88). On 10-15 URNM rose 3.0% from 09:45 to 11:10
+# while XEG.TO fell 0.3%. HURA.TO, the TSX uranium fund, had traded 5,272 shares by
+# 11:42 that day: too thin to quote at 09:31. URNM is priced in US dollars, so
+# a day's CAD/USD move sits inside its figure.
 OIL_INDUSTRIES = ('Oil & Gas',)
 MARKET_ETF = 'XIU.TO'
 

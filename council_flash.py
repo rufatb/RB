@@ -107,8 +107,9 @@ def compose(council, now):
         'Research only, not an order. No share counts here; the full report sizes the desks.',
     ])
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
-            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div></td></tr>'
-            % email_render.full.escape(subject(session, section).split(' — ', 2)[-1]))
+            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
+            % (email_render.full.escape(subject(session, section).split(' — ', 2)[-1]),
+               email_render.direction_html(section)))          # day-135: one side, one bet
     return subject(session, section), body, email_render.html_from_text(body, hero=hero)
 
 
@@ -222,12 +223,52 @@ def _pct(a, b):
     return 100.0 * (a / b - 1.0) if isinstance(a, (int, float)) and isinstance(b, (int, float)) and b else None
 
 
-def check_open(council, now, *, quote=None):
+# ── day-135 (owner, 2026-10-15): a stop that cannot be reached is no stop ────
+# That morning the open check said STILL VALID for SHORT CLS.TO and SHORT CCO.TO,
+# and both lost. It could not have said anything else: their "wrong if" levels,
+# set from the prior session's chart, sat 12.0% and 7.9% above the 09:31 price,
+# 1.8 and 2.0 normal days (ATR) away. The verdict (day-120 E1) is unchanged; the
+# check now says how far the level is and whether an ordinary day could reach
+# it, and how much of the move the open had already made before any entry.
+# Display only: nothing is recorded, voided or sized differently.
+REACH_ATR = 1.0
+
+
+def reach(side, level, price, atr_pct):
+    """How far `price` must move to reach the position's own "wrong if":
+    {'pct', 'days' (in ATR, None when the ATR is unknown), 'out_of_reach' (more
+    than REACH_ATR normal days; None when unknown)}. None without a level or a
+    price, or when the level is already crossed (that is E1's VOID)."""
+    if not all(isinstance(v, (int, float)) and v > 0 for v in (level, price)):
+        return None
+    pct = 100.0 * ((level / price - 1.0) if side == 'SHORT' else (1.0 - level / price))
+    if pct <= 0:
+        return None
+    days = pct / atr_pct if isinstance(atr_pct, (int, float)) and atr_pct > 0 else None
+    return {'pct': pct, 'days': days, 'out_of_reach': None if days is None else days > REACH_ATR}
+
+
+def atr_map(root, now, tickers):
+    """{ticker: ATR as % of the prior close} from today's brief, the rows every
+    model saw. Display only: a missing or stale brief gives {}, and then each
+    distance prints in % with no reach call."""
+    import claude_opportunities as C
+    try:
+        rows = C.read_brief(root, now)['payload']['candidates']
+    except Exception:
+        return {}
+    return {r['ticker']: float(r['atr_pct']) for r in rows
+            if r.get('ticker') in tickers and isinstance(r.get('atr_pct'), (int, float))
+            and r['atr_pct'] > 0}
+
+
+def check_open(council, now, *, quote=None, atr=None):
     """One row per council pick: the E1 verdict on today's live quote, and the facts."""
     import council as K
     import entry_checks
     import exposure
     quote = quote or fmp_quote
+    atr = atr or {}
     rows = []
     sec = K.top_two(council)
     items = (sec.get('picks') or []) + ([sec['runner_up']] if sec.get('runner_up') else [])
@@ -251,13 +292,16 @@ def check_open(council, now, *, quote=None):
                          'etf': x['etf'], 'etf_move': etf_move})
             continue
         verdict = entry_checks.check(p['side'], p.get('invalid_at'), q['price'])
+        gap = _pct(q.get('open'), q.get('previousClose'))
+        a = atr.get(p['ticker'])
         rows.append({**p, 'verdict': {'VOID': 'VOID', 'OK': 'STILL VALID'}.get(verdict, verdict),
                      'price': q['price'], 'at': at.strftime('%H:%M'),
                      'open': q.get('open'), 'prev_close': q.get('previousClose'),
-                     'open_for_pick': (sign * _pct(q.get('open'), q.get('previousClose'))
-                                       if _pct(q.get('open'), q.get('previousClose')) is not None else None),
+                     'open_for_pick': sign * gap if gap is not None else None,
+                     'open_days': sign * gap / a if gap is not None and a else None,
                      'now_for_pick': (sign * _pct(q['price'], q.get('previousClose'))
                                       if _pct(q['price'], q.get('previousClose')) is not None else None),
+                     'atr_pct': a, 'reach': reach(p['side'], p.get('invalid_at'), q['price'], a),
                      'etf': x['etf'], 'etf_move': etf_move})
     return rows
 
@@ -266,38 +310,82 @@ def _fmt(v):
     return '—' if v is None else '%+.2f%%' % v
 
 
+def _days(v):
+    return '%.1f normal day%s' % (abs(v), '' if round(abs(v), 1) == 1.0 else 's')
+
+
+def _distance(r):
+    """The "Wrong if, from here" cell (day-135)."""
+    if not isinstance(r.get('invalid_at'), (int, float)):
+        return 'no "wrong if" given: no stop at all'
+    x = r.get('reach')
+    if x is None:
+        return '—'
+    if x['days'] is None:
+        return '%.1f%% away (normal range unknown)' % x['pct']
+    return ('%.1f%% away = %s%s' % (x['pct'], _days(x['days']),
+                                   ': OUT OF REACH, not a usable stop' if x['out_of_reach'] else ''))
+
+
+def _opened(r):
+    v = _fmt(r.get('open_for_pick'))
+    return v if r.get('open_days') is None else '%s (%s)' % (v, _days(r['open_days']))
+
+
+def _verdict_text(r):
+    out = '%s%s %s %s' % ('runner-up ' if r.get('runner_up') else '', r['side'], r['ticker'], r['verdict'])
+    if r['verdict'] == 'STILL VALID' and (r.get('reach') or {}).get('out_of_reach'):
+        out += ', stop out of reach'
+    return out
+
+
 def compose_open(council, rows, now):
     import council as K
     import email_render
+    import top_picks
     session = council.get('session')
     if not rows:
         return None
-    verdicts = ' · '.join('%s%s %s %s' % ('runner-up ' if r.get('runner_up') else '', r['side'],
-                                         r['ticker'], r['verdict']) for r in rows)
+    verdicts = ' · '.join(_verdict_text(r) for r in rows)
     subj = 'RB Open Check — %s — %s' % (session, verdicts)
     lines = ['# RB Open Check — %s' % session,
              'Checked at %s ET against the live quote (FMP last trade). The full report follows at ~09:46.'
              % _now(now).strftime('%H:%M'), '',
-             '| Pick | Verdict | Wrong if | Price now | Open vs prior close, for the pick | Now vs prior close, for the pick | Sector ETF since prior close |',
-             '|---|---|---|---|---|---|---|']
+             '| Pick | Verdict | Wrong if | Wrong if, from here | Price now | Open vs prior close, for the pick | Now vs prior close, for the pick | Sector ETF since prior close |',
+             '|---|---|---|---|---|---|---|---|']
     for r in rows:
         wrong = ('%s %g' % ('below' if r['side'] == 'LONG' else 'above', r['invalid_at'])
                  if isinstance(r.get('invalid_at'), (int, float)) else '—')
         price = ('%g at %s' % (r['price'], r['at'])) if r.get('price') is not None else r.get('why', '—')
-        lines.append('| %s %s%s | %s | %s | %s | %s | %s | %s %s |' % (
+        lines.append('| %s %s%s | %s | %s | %s | %s | %s | %s | %s %s |' % (
             r['side'], r['ticker'],
             ' (runner-up, %s)' % K.runner_up_label(r) if r.get('runner_up') else '',
-            r['verdict'], wrong, price, _fmt(r.get('open_for_pick')),
-            _fmt(r.get('now_for_pick')), r.get('etf') or '—', _fmt(r.get('etf_move'))))
+            r['verdict'], wrong, _distance(r) if r.get('price') is not None else '—', price,
+            _opened(r), _fmt(r.get('now_for_pick')), r.get('etf') or '—', _fmt(r.get('etf_move'))))
+    picks = {'picks': [r for r in rows if not r.get('runner_up')]}
+    direction = top_picks.direction_line(picks)
+    if direction:
+        lines.append(direction)
+    moved = ['%s %s %s %s' % (r['side'], r['ticker'],
+                              'opened %.1f%% its way' % r['open_for_pick'] if r['open_for_pick'] >= 0
+                              else 'opened %.1f%% against it' % -r['open_for_pick'],
+                              '(%s)' % _days(r['open_days']) if r.get('open_days') is not None else '')
+             for r in rows if r.get('open_for_pick') is not None]
+    if moved:
+        lines.append('Already moved at the open, before any entry: %s. An entry now does not get that '
+                     'part of the move. On this record a move already made is a reason in neither '
+                     'direction (day-132).' % '; '.join(m.strip() for m in moved))
     lines += ['',
               'VOID means the price is already past the position\'s own "wrong if": the reason it was '
               'chosen is proven wrong today. STILL VALID means only that it is not; it is not a '
-              'forecast. A positive "for the pick" figure is a move the pick\'s way.',
+              'forecast. A "wrong if" more than one normal day\'s move (ATR) from the price is OUT OF '
+              'REACH: an ordinary day would not touch it, so it does not limit a loss. A positive '
+              '"for the pick" figure is a move the pick\'s way.',
               'Research only, not an order.']
     body = '\n'.join(lines)
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
-            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div></td></tr>'
-            % email_render.full.escape(verdicts))
+            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
+            % (email_render.full.escape(verdicts), email_render.direction_html(picks)))
     return subj, body, email_render.html_from_text(body, hero=hero)
 
 
@@ -318,14 +406,17 @@ def prepare_open(state_dir, now=None, *, quote=None):
         return 'NOTHING', {'reason': 'the council chose no position, so nothing to check'}
     if now.time() < OPEN_AT:
         return 'WAITING', {}
-    rows = check_open(council, now, quote=quote or (lambda sym: fmp_quote(sym, root)))
+    items = (sec.get('picks') or []) + ([sec['runner_up']] if sec.get('runner_up') else [])
+    rows = check_open(council, now, quote=quote or (lambda sym: fmp_quote(sym, root)),
+                      atr=atr_map(root, now, {p['ticker'] for p in items}))
     subj, text, html = compose_open(council, rows, now)
     out = root/OUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     for name, content in (('open_subject.txt', subj), ('open_report.txt', text), ('open_report.html', html)):
         (out/name).write_text(content, encoding='utf-8')
     write_atomic(out/'open_plan.json', {'session': now.date().isoformat(), 'subject': subj,
-                                        'rows': [{k: r.get(k) for k in ('ticker', 'side', 'verdict', 'price', 'at')}
+                                        'rows': [{k: r.get(k) for k in ('ticker', 'side', 'verdict', 'price',
+                                                                        'at', 'atr_pct', 'reach', 'open_days')}
                                                  for r in rows], 'prepared_at': now.isoformat()})
     return 'READY', {'subject_path': str(out/'open_subject.txt'), 'text_path': str(out/'open_report.txt'),
                      'html_path': str(out/'open_report.html'), 'subject': subj}

@@ -146,13 +146,17 @@ def compose(session, rows, source, now):
         lines.append('| %s | %s (%g at %s) | %s | %s | %s %s |' % (
             name, _fmt(r['since_entry']), r['last'], r['at'], wrong, crossed,
             r.get('etf') or '—', _fmt(r.get('etf_move'))))
+    picks = {'picks': [r for r in rows if not r.get('runner_up')]}
+    import top_picks
+    direction = top_picks.direction_line(picks)          # day-135: one side, one bet
+    lines += [direction] if direction else []
     lines += ['', execution_lab.NOON_NOTE,
               'A crossed "wrong if" means the reason the pick was chosen is proven wrong today.',
               'Research only, not an order. The record keeps scoring 09:45 → 15:55; nothing here changes it.']
     body = '\n'.join(lines)
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
-            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div></td></tr>'
-            % email_render.full.escape(subj.split(' — ', 2)[-1]))
+            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
+            % (email_render.full.escape(subj.split(' — ', 2)[-1]), email_render.direction_html(picks)))
     return subj, body, email_render.html_from_text(body, hero=hero)
 
 

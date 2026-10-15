@@ -125,7 +125,9 @@ def test_open_check_waits_for_0931_then_applies_e1(tmp_path):
     code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(44.5))
     assert code == 0 and info['subject'].endswith('SHORT CVE.TO STILL VALID')
     text = (tmp_path/'flash'/'open_report.txt').read_text()
-    assert '| SHORT CVE.TO | STILL VALID | above 45.81 | 44.5 at 09:31 | +0.85% |' in text
+    # No brief staged here, so no ATR: the distance prints, with no reach call.
+    assert ('| SHORT CVE.TO | STILL VALID | above 45.81 | 2.9% away (normal range unknown) '
+            '| 44.5 at 09:31 | +0.85% |') in text
 
 
 def test_open_check_voids_a_position_past_its_wrong_if(tmp_path):
@@ -164,8 +166,129 @@ def test_morning_prompt_runs_the_open_check_before_the_wait():
 
 
 def test_a_uranium_miner_is_not_an_oil_bet():
-    """2026-10-07: the flash called CCO.TO (Cameco) 'a bet on crude oil'."""
+    """2026-10-07: the flash called CCO.TO (Cameco) 'a bet on crude oil'. Day-135
+    (2026-10-15): it still 'moved with XEG.TO', a fund its daily moves do not
+    follow (correlation -0.08 over a year, 0.88 with URNM)."""
     import exposure
     line = exposure.exposure_line([{'side': 'LONG', 'ticker': 'CCO.TO'}, {'side': 'SHORT', 'ticker': 'CVE.TO'}])
-    assert 'LONG CCO.TO: uranium miner, moves with XEG.TO — in effect a bet on uranium' in line
+    assert 'LONG CCO.TO: uranium miner, moves with URNM — in effect a bet on uranium' in line
     assert 'SHORT CVE.TO: Energy, moves with XEG.TO — in effect a bet on crude oil' in line
+    assert exposure.position_exposure('NXE.TO')['etf'] == 'URNM'
+
+
+# ── day-135 (owner, 2026-10-15): a stop out of reach, the move already made ──
+
+OCT15 = dt.datetime(2026, 10, 15, 9, 31, tzinfo=ET)
+
+
+def oct15_council():
+    """10-15's Top 2 as the council sealed it: two shorts, two sectors."""
+    votes = {m: {'stance': 'ENDORSE', 'conviction': 0.7, 'argument': 'rows say so'}
+             for m in ('Claude', 'DeepSeek', 'Gemini', 'Jev')}
+    row = lambda pid, t: {'id': pid, 'side': 'SHORT', 'ticker': t, 'consensus': True,
+                          'endorse': list(votes), 'oppose': [], 'seats': list(votes),
+                          'votes': votes, 'weakest': 0.7}
+    return {'session': '2026-10-15', 'status': 'READY', 'picks': ['P4', 'P3'],
+            'finished_at': '2026-10-15T09:01:37-04:00',
+            'positions': [{'id': 'P4', 'ticker': 'CLS.TO', 'side': 'SHORT', 'lead': 'Gemini',
+                           'reason': 'selloff', 'invalid_at': 486.55},
+                          {'id': 'P3', 'ticker': 'CCO.TO', 'side': 'SHORT', 'lead': 'Gemini',
+                           'reason': 'breakdown', 'invalid_at': 121.29}],
+            'tally': {'members': list(votes), 'absent': [],
+                      'rows': [row('P4', 'CLS.TO'), row('P3', 'CCO.TO')]}}
+
+
+def oct15_quote(symbol):
+    q = {'CLS.TO': (434.25, 438.0, 460.44), 'CCO.TO': (112.46, 113.45, 115.97)}.get(symbol, (30.0, 30.0, 30.0))
+    return {'price': q[0], 'open': q[1], 'previousClose': q[2], 'timestamp': OCT15.timestamp()}
+
+
+def test_reach_measures_the_distance_to_the_wrong_if_in_normal_days():
+    x = F.reach('SHORT', 486.55, 434.25, 6.7308)          # CLS.TO at 09:31 on 10-15
+    assert round(x['pct'], 2) == 12.04 and round(x['days'], 2) == 1.79 and x['out_of_reach']
+    near = F.reach('LONG', 99.0, 100.0, 2.0)               # 1% below a 2%-ATR name: reachable
+    assert round(near['pct'], 6) == 1.0 and round(near['days'], 6) == 0.5 and near['out_of_reach'] is False
+    assert F.reach('SHORT', 100.0, 101.0, 2.0) is None      # already crossed: that is E1's VOID
+    assert F.reach('SHORT', None, 101.0, 2.0) is None
+    unknown = F.reach('SHORT', 110.0, 100.0, None)
+    assert unknown['days'] is None and unknown['out_of_reach'] is None
+
+
+def test_10_15_would_have_said_the_stops_were_out_of_reach(tmp_path):
+    """10-15 printed STILL VALID twice and both shorts lost; the levels were 1.8
+    and 2.0 normal days away, so the check could never have said anything else."""
+    rows = F.check_open(oct15_council(), OCT15, quote=oct15_quote,
+                        atr={'CLS.TO': 6.7308, 'CCO.TO': 3.8944})
+    subj, text, html = F.compose_open(oct15_council(), rows, OCT15)
+    assert subj.endswith('SHORT CLS.TO STILL VALID, stop out of reach · '
+                         'SHORT CCO.TO STILL VALID, stop out of reach')
+    assert '12.0% away = 1.8 normal days: OUT OF REACH, not a usable stop' in text
+    assert '7.9% away = 2.0 normal days: OUT OF REACH, not a usable stop' in text
+    assert '+4.87% (0.7 normal days)' in text                # the open had already moved it
+    assert 'Already moved at the open, before any entry: SHORT CLS.TO opened 4.9% its way' in text
+    assert '⚠ Both picks are SHORT' in text and '⚠ Both picks are SHORT' in html
+    assert 'border-left:3px solid #8a5f19' in html           # a caution, never a quiet line
+
+
+def test_a_reachable_stop_and_mixed_sides_say_nothing_extra():
+    c = oct15_council()
+    c['positions'][1].update(side='LONG', invalid_at=110.0)
+    c['tally']['rows'][1]['side'] = 'LONG'
+    rows = F.check_open(c, OCT15, quote=oct15_quote, atr={'CLS.TO': 6.7308, 'CCO.TO': 3.8944})
+    subj, text, _ = F.compose_open(c, rows, OCT15)
+    assert subj.endswith('LONG CCO.TO STILL VALID')          # 2.2% away, 0.6 normal days
+    assert '2.2% away = 0.6 normal days |' in text
+    assert 'Both picks are' not in text
+
+
+def test_the_open_check_reads_the_atr_from_todays_brief_only(tmp_path):
+    assert F.atr_map(tmp_path, OCT15, {'CLS.TO'}) == {}       # no brief: no reach call, no failure
+
+
+def test_the_flash_and_report_warn_when_both_picks_point_one_way(tmp_path):
+    import council as K
+    import top_picks
+    sec = K.top_two(oct15_council(), previous={})
+    line = top_picks.direction_line(sec)
+    assert line.startswith('⚠ Both picks are SHORT, so they share one exposure')
+    assert 'If the market turns up, both tend to lose at once.' in line
+    assert 'Being in different sectors does not make them separate bets.' in line
+    table = top_picks.table(sec, concise=True)
+    assert table.index(line) == max(i for i, x in enumerate(table) if x.startswith('|')) + 1
+    write(tmp_path, oct15_council())
+    F.wait(tmp_path, 0, now_fn=lambda: dt.datetime(2026, 10, 15, 9, 2, tzinfo=ET))
+    html = (tmp_path/'flash'/'report.html').read_text()
+    hero = html.split('</tr>')[1]                           # the hero row, above the tables
+    assert 'Both picks are SHORT' in hero
+
+
+def test_every_view_of_the_top_2_carries_the_one_direction_warning():
+    """Report email hero, page (above its table, once), noon email (hero and text)."""
+    import council as K
+    import email_render as E
+    import noon_check as N
+    import report_page as P
+    sec = K.top_two(oct15_council(), previous={})
+    assert 'Both picks are SHORT' in E._hero({'intraday': {'top_two': sec}})
+    page = P._top_two_section({'top_two': sec})
+    assert page.count('Both picks are SHORT') == 1 and page.index('g-caution') < page.index('<table>')
+    rows = [{**p, 'status': 'CHECKED', 'entry': 1.0, 'last': 1.0, 'at': '12:00', 'since_entry': -1.0,
+             'crossed': False, 'etf': 'XIT.TO', 'etf_move': 0.5} for p in sec['picks']]
+    _, text, html = N.compose('2026-10-15', rows, 'the 09:46 report', dt.datetime(2026, 10, 15, 12, tzinfo=ET))
+    assert 'Both picks are SHORT' in text and 'Both picks are SHORT' in html.split('</tr>')[1]
+    # A runner-up is never a pick: one pick plus a same-side runner-up says nothing.
+    one = {**sec, 'picks': sec['picks'][:1], 'runner_up': {**sec['picks'][1], 'runner_up': True}}
+    assert top_direction(one) is None and 'Both picks' not in E._hero({'intraday': {'top_two': one}})
+
+
+def top_direction(section):
+    import top_picks
+    return top_picks.direction_line(section)
+
+
+def test_the_warning_mark_is_the_one_the_email_styles():
+    import email_render as E
+    import top_picks
+    assert top_picks.DIRECTION_MARK == E.WARN_MARK
+    html = E.html_from_text('# T\nstamp\n## S\n⚠ Both picks are SHORT, so they share one exposure.\nplain line')
+    assert 'border-left:3px solid #8a5f19' in html and '<p style="font:14px/1.6' in html
