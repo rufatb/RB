@@ -104,3 +104,60 @@ numerical alpha claim. Forward predictive efficacy is unestablished at release.
 Schema, source parsing, failure isolation, unchanged-baseline parity and
 preparation-to-rendering tests are engineering validation. They cannot certify
 feed availability or improved accuracy. No rule is selected by today's returns.
+
+## Day-134 amendment: the 150 names, sourced so the rule can actually run (owner, 2026-10-14)
+
+The owner said "go ahead with the 150". Registered before any expanded pool
+was built or any outcome read. The screen, the rank, the 150 target, the
+C$10M floor, the bounds and the evaluation protocol above are unchanged; only
+sources, evidence and wiring change.
+
+**Why the automatic route never produced a universe.** Measured once tonight in
+an isolated diagnostic (22:40 ET, engineering only):
+* every TMX source answered: 2,294 issuers (metadata 2026-09-30), both status
+  feeds current, 27 of 27 directory queries;
+* 450 of the 500 discovery issuers failed the explicit-type test, because the
+  directory names an instrument by its issuer ("Royal Bank of Canada") and
+  never says "common": RY, TD, ENB, CNQ, SU, BMO and the rest;
+* 33 failed the join: the directory files a class-share issuer under its first
+  class (BBD.A, TECK.A, RCI.A, GIB.A, CCL.A, QBR.A), not its root, and an
+  accent (AtkinsRéalis) broke the name match;
+* 2 REITs survived. No morning ever staged it, and every morning logged the
+  legacy fallback.
+
+**Changes.**
+1. **Common shares by convergent evidence.** An instrument is COMMON_STOCK
+   (rule `TMX_OPERATING_ISSUER+FMP_EQUITY`) when ALL hold:
+   * the TMX issuer is eligible as before (not ETP, CDR, closed-end fund,
+     SPAC or a structured product);
+   * the instrument is a current exact TMX directory instrument of that
+     issuer, at its root symbol or its root plus one class letter (BBD.B), and
+     never .PR/.PF/.DB/.WT/.RT/.U, nor .UN outside the REIT rule;
+   * FMP's TSX company screener (a paid provider receipt, one call) lists that
+     exact ticker as not an ETF, not a fund, and actively trading.
+
+   An instrument named explicitly as common keeps the old rule; REIT units keep
+   the old rule. Income-trust and partnership units (BIP.UN, BEP.UN) stay
+   excluded: they are neither common shares nor REIT units. Duplicate classes
+   are still cut to one per issuer by liquidity.
+2. **The join.** The directory row is found at the root, or at the root plus a
+   class letter; names match after accents and punctuation are folded.
+3. **Industry.** TMX's when present; else FMP's screener industry and sector
+   for that ticker, dated by the receipt. Never inferred from a name.
+4. **Liquidity receipts from FMP daily bars** (historical-price-eod), with a
+   credential-free URL in the receipt. Same rule: exactly the immediately
+   preceding 20 completed sessions, positive OHLC and volume, median
+   close × volume ≥ C$10M. The Yahoo receipt path stays valid.
+5. **Staging.** `morning_full.sh` runs `prepare_tsx_universe.py` before the
+   factor pool, once per session, within the 180 s budget. A failure, or a
+   list no larger than the legacy roster, keeps the legacy roster, labelled.
+6. **Who reads it.** The desks read every name in the pool that carries their
+   fields (`usable_candidates`, unchanged). The factor layer keeps its 30–50
+   shortlist, counted over the TSX research rows only: the US biotech rows
+   added to the same file on day-111b are not part of the 150.
+7. **Sector map.** New names get their sector and industry from the same FMP
+   receipt, so sector context, exposure lines and review peers cover them.
+
+**Not claimed.** No accuracy gain: the population changes. Day-117 found no
+input field carries signal in this pool; more names are more choices, not
+more signal. A dry run tonight is engineering validation only.
