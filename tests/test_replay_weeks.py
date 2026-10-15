@@ -99,3 +99,23 @@ def test_a_days_rating_changes_net_out():
 def test_a_weekly_series_is_not_daily():
     weekly = {(dt.date(2015, 1, 5) + dt.timedelta(weeks=i)).isoformat(): 1.0 for i in range(100)}
     assert not W.granular(weekly) and W.granular(dict.fromkeys(sessions(100), 1.0))
+
+
+def test_a_cut_off_transfer_is_retried_then_counted_never_fatal():
+    import http.client
+    import threading
+
+    class Flaky:
+        def __init__(self, fail):
+            self.fail, self.lock, self.failures = fail, threading.Lock(), {}
+
+        def __call__(self, path, **params):
+            if self.fail:
+                self.fail -= 1
+                raise http.client.IncompleteRead(b'x' * 10, 5)
+            return [{'date': '2020-01-02', 'adjClose': 1.0}]
+    assert W.robust(Flaky(2))('x') == [{'date': '2020-01-02', 'adjClose': 1.0}]
+    dead = W.robust(Flaky(99))
+    assert dead('x') is None and dead.failures == {'IncompleteRead': 1}
+    # A series with a failed chunk is never used half-fetched.
+    assert W.daily(dead, 'A.TO', 'p', 'adjClose') is None

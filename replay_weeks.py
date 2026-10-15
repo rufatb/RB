@@ -60,11 +60,37 @@ def names(path=UNIVERSE):
     return [r['ticker'] for r in rows], {r['ticker']: r for r in rows}
 
 
+def robust(fetch, tries=3):
+    """A transfer the proxy cuts off (IncompleteRead, a reset) is retried, then
+    COUNTED in the fetcher's failures and returned as None (rule 1). The shared
+    `Fetch` only catches FMP's own errors; on 10-15 one cut-off 800 KB response
+    stopped the whole run."""
+    import http.client
+
+    def call(path, **params):
+        last = None
+        for _ in range(tries):
+            try:
+                return fetch(path, **params)
+            except (http.client.HTTPException, OSError) as exc:
+                last = exc
+        with fetch.lock:
+            name = type(last).__name__
+            fetch.failures[name] = fetch.failures.get(name, 0) + 1
+        return None
+    call.lock, call.failures = fetch.lock, fetch.failures
+    return call
+
+
 def daily(fetch, sym, path, field):
-    """{date: value > 0} over both chunks (one FMP call returns at most 5,000 days)."""
+    """{date: value > 0} over both chunks (one FMP call returns at most 5,000
+    days), or None when a chunk failed: a half-fetched series is never used."""
     out = {}
     for a, b in CHUNKS:
-        for r in fetch(path, symbol=sym, **{'from': a, 'to': b}) or []:
+        rows = fetch(path, symbol=sym, **{'from': a, 'to': b})
+        if rows is None:
+            return None
+        for r in rows:
             v = r.get(field)
             if isinstance(v, (int, float)) and v > 0 and isinstance(r.get('date'), str):
                 out[r['date'][:10]] = float(v)
@@ -95,10 +121,15 @@ def collect(tickers, fetch, workers=6):
     data, rejected = {}, {}
     with cf.ThreadPoolExecutor(workers) as pool:
         for t, rec in pool.map(one, [MARKET] + list(tickers)):
+            if rec['adj'] is None or rec['raw'] is None:
+                rejected[t] = 'FETCH_FAILED'
+                continue
             if not granular(rec['adj']):
                 rejected[t] = 'ADJUSTED_SERIES_NOT_DAILY_OR_EMPTY'
                 continue
             data[t] = rec
+    if MARKET not in data:
+        raise SystemExit('the market series (%s) could not be fetched: %s' % (MARKET, rejected.get(MARKET)))
     return data, rejected
 
 
@@ -486,7 +517,7 @@ def main(argv=None):
     p.add_argument('--out', default=str(OUT))
     a = p.parse_args(argv)
     from replay_drift import Fetch
-    fetch = Fetch(CACHE)
+    fetch = robust(Fetch(CACHE))
     tickers, meta = names()
     data, rejected = collect(tickers, fetch)
     out = run(data, tickers, meta, rejected)
