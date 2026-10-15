@@ -119,3 +119,19 @@ def test_a_cut_off_transfer_is_retried_then_counted_never_fatal():
     assert dead('x') is None and dead.failures == {'IncompleteRead': 1}
     # A series with a failed chunk is never used half-fetched.
     assert W.daily(dead, 'A.TO', 'p', 'adjClose') is None
+
+
+def test_a_volume_spike_after_the_entry_marks_an_early_date():
+    data, tickers, meta = synthetic(names=2)
+    t = tickers[0]
+    cal = sorted(data[W.MARKET]['adj'])
+    data[t]['vol'] = dict.fromkeys(cal, 100.0)
+    report = data[t]['earnings'][3]['date']
+    i = cal.index(report)
+    panel = W.Panel(data, tickers)
+    e = {'ticker': t, 'p0': i - 1, 'entry': i + 1}
+    data[t]['vol'][cal[i + 1]] = 900.0                       # the reaction on D1: the date is right
+    assert W.volume_peak(W.Panel(data, tickers), e) == 'on'
+    data[t]['vol'][cal[i + 2]] = 5000.0                      # the real reaction a day later
+    assert W.volume_peak(W.Panel(data, tickers), e) == 'after'
+    assert W.volume_peak(panel, {**e, 'ticker': tickers[1]}) is None   # no volume: no call

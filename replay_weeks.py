@@ -113,7 +113,8 @@ def collect(tickers, fetch, workers=6):
 
     def one(t):
         rec = {'adj': daily(fetch, t, 'historical-price-eod/dividend-adjusted', 'adjClose'),
-               'raw': daily(fetch, t, 'historical-price-eod/full', 'close')}
+               'raw': daily(fetch, t, 'historical-price-eod/full', 'close'),
+               'vol': daily(fetch, t, 'historical-price-eod/dividend-adjusted', 'volume')}
         if t != MARKET:
             rec['earnings'] = fetch('earnings', symbol=t, limit=400) or []
             rec['grades'] = fetch('grades', symbol=t) or []
@@ -150,6 +151,12 @@ class Panel:
                 i = self.idx.get(d)
                 if i is not None:
                     self.px[k, i] = v
+        self.vol = np.full(self.px.shape, np.nan)
+        for t, k in self.row.items():
+            for d, v in (data[t].get('vol') or {}).items():
+                i = self.idx.get(d)
+                if i is not None:
+                    self.vol[k, i] = v
         self.mkt = np.array([data[MARKET]['adj'][d] for d in self.cal])
         self.ar = {h: self._abnormal(h) for h in HORIZONS}
 
@@ -420,10 +427,12 @@ def splits(panel, events, h, meta, earn):
         return 'low' if v < cut1 else 'mid' if v < cut2 else 'high'
 
     def sector(t):
+        # The list carries TMX's sector labels ('Oil & Gas', 'Mining', ...), with
+        # FMP's ('Energy', 'Basic Materials', ...) where TMX had none.
         s, ind = meta[t].get('sector'), str(meta[t].get('industry') or '')
-        if s == 'Energy':
+        if s in ('Energy', 'Oil & Gas'):
             return 'energy'
-        if s == 'Basic Materials' or 'Gold' in ind or 'Mining' in ind:
+        if s in ('Basic Materials', 'Mining') or 'Gold' in ind or 'Mining' in ind:
             return 'materials and mining'
         return {'Financial Services': 'financials', 'Technology': 'technology'}.get(s, 'the rest')
 
@@ -464,6 +473,45 @@ def splits(panel, events, h, meta, earn):
     return out
 
 
+def volume_peak(panel, e):
+    """'on' when the report's volume spike falls on its own session or D1 (the
+    date is right and the entry follows the reaction), 'after' when it falls in
+    the three sessions after the entry (FMP's date is early: the entry came
+    BEFORE the market reacted). None without volume."""
+    k = panel.row[e['ticker']]
+    lo, hi = e['p0'] + 1, min(e['entry'] + 3, panel.vol.shape[1] - 1)
+    v = panel.vol[k, lo:hi + 1]
+    if not np.any(v > 0):
+        return None
+    return 'after' if lo + int(np.nanargmax(v)) > e['entry'] else 'on'
+
+
+def date_check(panel, events, earn):
+    """A validity check of the registered premise ("everything is known at the
+    entry close"), added after the first run showed the W1 gain sits in the
+    two sessions after entry. Not a hypothesis and never a trading rule: the
+    volume after the entry is not known at the entry."""
+    ret1 = np.full(panel.px.shape, np.nan)
+    ret1[:, 1:] = 100 * ((panel.px[:, 1:] / panel.px[:, :-1] - 1) - (panel.mkt[1:] / panel.mkt[:-1] - 1))
+    periods = (('before 2012', lambda e: panel.cal[e['entry']] < SPLIT_YEAR),
+               ('2012 on', lambda e: panel.cal[e['entry']] >= SPLIT_YEAR))
+    out = {'reports_volume_peak_after_entry': {}, 'w1_daily_path': {}, 'w1_h10_by_date': {}}
+    for per, f in periods:
+        w = [x for x in (volume_peak(panel, e) for e in earn if f(e)) if x]
+        out['reports_volume_peak_after_entry'][per] = {'n': len(w), 'share': float(np.mean([x == 'after' for x in w])) if w else None}
+        path = {}
+        for d in range(-1, 11):
+            vals = [e['side'] * ret1[panel.row[e['ticker']], e['entry'] + d] for e in events['W1']
+                    if f(e) and e['entry'] + d < ret1.shape[1]]
+            vals = [v for v in vals if not np.isnan(v)]
+            path[str(d)] = float(np.mean(vals)) if vals else None
+        out['w1_daily_path'][per] = path
+    for label, want in (('date confirmed by volume', 'on'), ('volume peak after the entry', 'after')):
+        rows = outcomes(panel, [e for e in events['W1'] if volume_peak(panel, e) == want], PRIMARY)
+        out['w1_h10_by_date'][label] = {per: split_stat([r for r in rows if f(r)], PRIMARY) for per, f in periods}
+    return out
+
+
 def run(data, tickers, meta, rejected):
     panel = Panel(data, tickers)
     dropped = {}
@@ -486,6 +534,7 @@ def run(data, tickers, meta, rejected):
             res[str(h)] = summarize(panel, events[k], h, fam[FAMILY[k]])
         res['splits_h10'] = splits(panel, events[k], PRIMARY, meta, earn)
         out['signals'][k] = res
+    out['date_check'] = date_check(panel, events, earn)
     return out
 
 

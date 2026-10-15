@@ -161,3 +161,26 @@ chance of a false pass small; nothing is added after the results are seen.
 
 Script: `replay_weeks.py`. Summary: `data/replay_day135_weeks.json`. Audit:
 `AUDIT_day135_weeks.md`.
+
+---
+
+## Results (added after the run; the text above is unchanged)
+
+Read `AUDIT_day135_weeks.md`. At H = 10:
+* **W1:** +0.329%, t = 3.54, placebo p = 0.000, blocks +0.68 +0.42 +0.17
+  +0.03. Registered verdict DRIFT.
+* **W2:** +0.058%, t = 0.42. NULL.
+* **W3:** +0.389%, t = 2.51. NULL.
+* **W4:** −0.011%, t = −0.05, control t = 2.30. UNDERPOWERED.
+
+W1's pass fails the registration's own premise ("everything is known at the
+entry close"):
+* FMP's report date is early for 36% of reports since 2012 (47.5% before),
+  by where each report's volume spike falls.
+* On reports whose date the volume confirms, W1 since 2012 is +0.019%
+  (t = 0.13).
+* Before 2012 it was +0.580% (t = 3.29), the drift the literature says has
+  since been arbitraged away.
+
+Recorded as rejection #50. No forward desk is proposed; that is the owner's
+call.

@@ -5549,3 +5549,36 @@ The owner's research named Sonnet 3.5 and DeepSeek R1.
 * **So:** the coin flip is the inputs, not the model (day-117). Do not add a
   model to the desks or the council on a vendor's reputation; replay it with
   `replay_or_models.py` first.
+
+## Day-135b: REJECTION #50 — multi-week holds after earnings and rating changes
+
+Registered in `PREREGISTER_day135_weeks.md` (3e0e8bc) before any return was
+computed; read `AUDIT_day135_weeks.md`.
+
+**The owner's idea.** Hold for a couple of weeks after a company event
+instead of 09:45 → close. Four signals on the 150 TSX names, 2001–2026, all
+market-adjusted:
+* W1, the EPS surprise against consensus (6,549 trades);
+* W2, the reaction (7,546);
+* W3, both agreeing (3,031);
+* W4, an analyst rating change (1,862).
+
+| H = 10 | mean | t | verdict |
+|---|---:|---:|---|
+| W1 | +0.329% | +3.54 | DRIFT as registered, then shown to be an artifact |
+| W2 | +0.058% | +0.42 | NULL |
+| W3 | +0.389% | +2.51 | NULL |
+| W4 | −0.011% | −0.05 | UNDERPOWERED (MDE 0.83%) |
+
+**Why W1's pass is not an edge.**
+* Its gain sits in the two sessions after entry.
+* FMP's report date is early for 36% of reports since 2012, judged by where
+  the volume spike falls, so the replay often entered before the market
+  reacted.
+* On correctly dated reports since 2012: +0.019% (t = 0.13).
+* Before 2012: +0.58% (t = 3.29), the Canadian drift the literature reports,
+  since arbitraged away.
+
+**Do not rebuild post-earnings drift on FMP's historical dates.** They
+manufacture look-ahead. A real test needs the issuer's own timestamps.
+

@@ -1,5 +1,50 @@
 # Working notes for this repo
 
+## Day135b — holding for weeks after earnings or rating changes: no edge since 2012 (rejection #50, owner, 2026-10-15)
+
+The owner asked whether a hold of a couple of weeks after company events
+(earnings surprises, reports, rating changes) could carry the edge the
+09:45 → close window does not. Registered first
+(`PREREGISTER_day135_weeks.md`, 3e0e8bc); read `AUDIT_day135_weeks.md`;
+script `replay_weeks.py` (raw FMP data cached in `.rb-state/weeks_cache`,
+summary `data/replay_day135_weeks.json`).
+
+**The test.**
+* The 150 TSX names, 2001–2026, market-adjusted.
+* Entry at the first close after the event is public; H = 10 primary, 5 and
+  20 secondary.
+* Four signals: W1 the EPS surprise against consensus, W2 the reaction, W3
+  both agreeing, W4 an analyst rating change.
+
+**Registered results at H = 10:**
+* W1: +0.33%, t = 3.54, placebo p = 0.000. DRIFT as registered.
+* W2: +0.06%, t = 0.42. NULL.
+* W3: +0.39%, t = 2.51. NULL.
+* W4: −0.01%, t = −0.05. UNDERPOWERED (smallest detectable effect 0.83%;
+  ratings exist for 87 names from 2012).
+
+**W1's pass is a data artifact.**
+* Its gain sits in the two sessions after entry.
+* FMP's report date is EARLY for 36% of reports since 2012 (47.5% before),
+  judged by where each report's volume spike falls (`volume_peak`). So the
+  replay often entered with the surprise in hand before the market reacted.
+* On reports whose date the volume confirms, W1 since 2012 is +0.019%
+  (t = 0.13).
+* Before 2012 it was +0.58% (t = 3.29): Canada's old drift (Chudek et al.,
+  1994–2009), since arbitraged away (Martineau 2022), with survivorship
+  leaning the same way.
+
+**So:**
+* **Holding for weeks does not rescue the edge.** A TSX-150 surprise is priced
+  within about two sessions, and since 2012 nothing follows.
+* **Never backtest an earnings strategy on FMP's historical report dates.**
+  A third are early, and they manufacture look-ahead. A real test needs the
+  issuer's own timestamps (the newswire archive, from 2026-07 only).
+* **No forward desk was built.** The registered one was tied to a DRIFT that
+  turned out to be an artifact; building it is the owner's call.
+* **The macro split shows nothing:** XIU above or below its 50-session average
+  gives +0.31% against +0.38%.
+
 ## Day135 — after 10-15's two losing shorts: the emails stop looking safer than they are (owner, 2026-10-15)
 
 **What happened.** The council's Top 2 was SHORT CLS.TO and SHORT CCO.TO, 4 of 4 each.
@@ -2390,8 +2435,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **49 rejections, 3
-adoptions** (as of day-134b). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **50 rejections, 3
+adoptions** (as of day-135b). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The three adopted changes were all VARIANCE results. None improved accuracy.
