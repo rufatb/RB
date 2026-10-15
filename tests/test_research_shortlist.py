@@ -275,3 +275,16 @@ def test_expanded_diagnostic_unavailable_never_falls_back_or_calls_model(tmp_pat
     assert result['canonical_state_unchanged'] and diagnostic.fingerprints(source) == before
     assert result['sent_email'] is result['published_report'] is False
     assert store.delivery('2026-09-11')['state'] == 'unknown'
+
+
+def test_us_biotech_rows_do_not_count_toward_the_150():
+    """Day-134: day-111b folds ~260 US biotech rows into the same pool file.
+    Counted, they made a valid TSX pool read as oversized and emptied the
+    factor layer's shortlist; only the explicit US tag excludes a row."""
+    p = expanded_pool()
+    tsx = len(p['candidates'])
+    p['candidates'] += [{'ticker': 'BIO%d' % i, 'market': 'US'} for i in range(200)]
+    clean = F.validate_payload(p, NOW)
+    assert clean['research_shortlist'] is not None
+    assert clean['coverage']['requested'] == tsx
+    assert 'RESEARCH_SHORTLIST_INVALID_OR_CHANGED' not in clean['gaps']

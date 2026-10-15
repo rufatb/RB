@@ -182,7 +182,8 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    assert body.count('SKIPPED —') == 13, 'a step can still be starved in silence'
+    # 14 since day-134: the 150-name TSX list has its own named skip branch.
+    assert body.count('SKIPPED —') == 14, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -290,3 +291,11 @@ def test_the_memory_council_follows_the_live_one_and_ends_by_0930():
     assert "today 09:30:00" in body and 'memory_left < 300 ? memory_left : 300' in body
     block = body[at:body.index('news_desk.py --stage')]
     assert 'stage_faults' not in block
+
+
+def test_the_150_name_list_is_built_before_the_pool_reads_it():
+    """Day-134: prepare_factor_pool reads tsx_universe.json; built after it,
+    the pool would fall back to the legacy roster every morning."""
+    body = code()
+    assert body.index('prepare_tsx_universe.py --state-dir') < body.index('prepare_factor_pool.py --state-dir')
+    assert 'slice 180' in body

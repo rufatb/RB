@@ -8,7 +8,9 @@ import hashlib
 import io
 import json
 import re
+import threading
 import time
+import unicodedata
 import urllib.request
 import urllib.error
 import xml.etree.ElementTree as XML
@@ -92,9 +94,12 @@ def parse_tmx_xlsx(data):
             'discovery_order': 'YTD CAD value descending; not ADV20 or current liquidity'}
 
 
+NOT_COMMON = re.compile(r'\b(preferred|pr|warrants?|rights?|debentures?|etf|cdr|depositary)\b')
+
+
 def explicit_security_type(name):
     text = name.lower()
-    if re.search(r'\b(preferred|pr|warrants?|rights?|debentures?|etf|cdr|depositary)\b', text):
+    if NOT_COMMON.search(text):
         return None
     # 'REIT' may describe an ETF or a REIT issuer's debenture. Unit type needs
     # the issuer classification and exact .UN instrument together below.
@@ -103,8 +108,37 @@ def explicit_security_type(name):
     return None
 
 
+CORPORATE_FORMS = {'inc', 'incorporated', 'ltd', 'limited', 'corp', 'corporation', 'co', 'company', 'plc'}
+
+
 def _name_key(name):
-    return re.sub(r'[^a-z0-9]', '', str(name).casefold())
+    # Day-134: accents fold, and a trailing corporate form drops. TMX's monthly
+    # file says "iA Financial Corporation" where its directory says "iA
+    # Financial Corporation Inc."; one feed writes "AtkinsRéalis", the other
+    # "AtkinsRealis". Each is one issuer, and the symbol must still match.
+    text = unicodedata.normalize('NFKD', str(name))
+    text = ''.join(c for c in text if not unicodedata.combining(c)).casefold()
+    words = re.findall(r'[a-z0-9]+', text)
+    full = ''.join(words)
+    while words and words[-1] in CORPORATE_FORMS:
+        words.pop()
+    return ''.join(words) or full
+
+
+def fmp_equities(receipt):
+    """Ticker -> FMP screener row, equity rows only: TSX, not an ETF, not a
+    fund, actively trading (day-134 amendment). A row failing any flag is not
+    evidence of anything and is left out."""
+    out = {}
+    for row in (receipt or {}).get('response') or []:
+        if not isinstance(row, dict):
+            continue
+        ticker = row.get('symbol')
+        if (isinstance(ticker, str) and U.TICKER.fullmatch(ticker)
+                and row.get('exchangeShortName') == 'TSX' and row.get('isEtf') is False
+                and row.get('isFund') is False and row.get('isActivelyTrading') is True):
+            out[ticker] = row
+    return out
 
 
 def reit_issuer(issuer):
@@ -123,14 +157,22 @@ def eligible_issuer(issuer):
     return not issuer.get('structured_product_type') or reit_issuer(issuer)
 
 
-def resolve_tmx_instruments(issuers, instrument_rows, blocked_symbols=(), *, active_verified=False):
+def resolve_tmx_instruments(issuers, instrument_rows, blocked_symbols=(), *, active_verified=False,
+                            fmp=None):
     """Join retained facts without requests. Only exact root or documented .UN.
 
     The pure receipt replay defaults to inactive/unverified. The production
     caller separately verifies the two current status feeds before setting
     active_verified=True; matching symbols alone cannot establish tradability.
+
+    Day-134: `fmp` (ticker -> FMP screener equity row) is the second source the
+    amendment registers. With it, the issuer's exact current instrument at its
+    root or root plus one class letter is COMMON_STOCK; without it nothing
+    changes. An instrument's name alone, or a provider flag alone, still
+    establishes nothing.
     """
     out, errors = [], []
+    fmp = fmp or {}
     for issuer in issuers:
         root = issuer['root_symbol']
         if not eligible_issuer(issuer):
@@ -139,6 +181,11 @@ def resolve_tmx_instruments(issuers, instrument_rows, blocked_symbols=(), *, act
         ref = instrument_rows.get(root, {})
         if not ref and reit_issuer(issuer):
             ref = instrument_rows.get(root+'.UN', {})
+        if not ref:
+            # Day-134: the directory files a class-share issuer under its first
+            # class (BBD.A, TECK.A, RCI.A), never under the bare root.
+            ref = next((instrument_rows[root+'.'+c] for c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                        if root+'.'+c in instrument_rows), {})
         directory = ref.get('row', {})
         instruments = directory.get('instruments', [])
         if (not instruments or ref.get('conflict')
@@ -154,25 +201,40 @@ def resolve_tmx_instruments(issuers, instrument_rows, blocked_symbols=(), *, act
             if any(p in ('PR', 'PF', 'DB', 'WT', 'RT', 'U') for p in parts[1:]):
                 errors.append({'ticker': symbol, 'reason': 'INELIGIBLE_SECURITY_SYMBOL'})
                 continue
+            ticker = symbol.replace('.', '-')+'.TO'
+            evidence = fmp.get(ticker)
             # Exact .UN plus the classified REIT issuer establishes trust units,
             # even when its display name abbreviates 'RioCan Rl Est Tr Un'.
             if reit_issuer(issuer) and symbol == root+'.UN':
                 kind, rule = 'REIT', 'TMX_REIT_ISSUER_EXACT_UN_UNIT'
             else:
                 kind, rule = explicit_security_type(name), 'EXPLICIT_COMMON_INSTRUMENT_DESCRIPTION'
-            if not kind or not issuer['industry']:
+                # Day-134: the operating issuer's own root or class instrument,
+                # current in TMX's directory, that FMP lists as an equity.
+                # Never a .UN (income-trust and partnership units are neither
+                # common shares nor REIT units) and never a name that says
+                # preferred, warrant, right, debenture, ETF or depositary.
+                if (not kind and evidence and re.fullmatch(re.escape(root)+r'(\.[A-Z])?', symbol)
+                        and not NOT_COMMON.search(name.lower())):
+                    kind, rule = 'COMMON_STOCK', 'TMX_OPERATING_ISSUER+FMP_EQUITY'
+            industry = issuer['industry'] or (evidence or {}).get('industry') or ''
+            sector = issuer['sector'] or (evidence or {}).get('sector') or ''
+            if not kind or not industry or not sector:
                 errors.append({'ticker': symbol, 'reason': 'EXPLICIT_SECURITY_TYPE_OR_INDUSTRY_MISSING'})
                 continue
-            ticker = symbol.replace('.', '-')+'.TO'
             if not U.TICKER.fullmatch(ticker):
                 errors.append({'ticker': symbol, 'reason': 'INELIGIBLE_SECURITY_SYMBOL'})
                 continue
             receipt = ref['receipt']
+            by_fmp = rule == 'TMX_OPERATING_ISSUER+FMP_EQUITY'
             out.append({**issuer, 'ticker': ticker, 'instrument_name': name,
+                'sector': sector, 'industry': industry,
                 'security_type': kind, 'security_type_rule': rule,
                 'exchange': 'TSX', 'currency': 'CAD', 'active': active_verified,
                 'retrieved_at': receipt['retrieved_at'], 'listing_verified_at': ref['clock'].isoformat(),
-                'evidence': {'listing': receipt['source_url'], 'security_type': receipt['source_url'], 'industry': TMX_BULK}})
+                'evidence': {'listing': receipt['source_url'],
+                             'security_type': U.FMP_SCREENER if by_fmp else receipt['source_url'],
+                             'industry': TMX_BULK if issuer['industry'] else U.FMP_SCREENER}})
     return out, errors
 
 
@@ -204,7 +266,57 @@ def fetch_daily(ticker, now):
             'source_url': url}
 
 
-def _automatic_master(root, history, now, deadline, acquire_fn, receipt_files, errors):
+# Day-134: FMP Premium allows 750 calls a minute; eight workers pace to ten a
+# second together so a burst never draws a 429.
+FMP_MIN_INTERVAL = 0.1
+_FMP_LOCK = threading.Lock()
+_FMP_LAST = [0.0]
+
+
+def _fmp_pace():
+    with _FMP_LOCK:
+        wait = _FMP_LAST[0] + FMP_MIN_INTERVAL - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _FMP_LAST[0] = time.monotonic()
+
+
+def fetch_screener_fmp():
+    """One call: every TSX security FMP lists as not an ETF, not a fund and
+    actively trading, with its sector and industry."""
+    import fmp_client
+    params = {'exchange': 'TSX', 'isEtf': 'false', 'isFund': 'false',
+              'isActivelyTrading': 'true', 'limit': 5000}
+    _fmp_pace()
+    rows = fmp_client.get('company-screener', **params)
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('FMP_SCREENER_RESPONSE_INVALID')
+    return {'provider': 'FMP', 'source_url': U.FMP_SCREENER, 'params': params,
+            'retrieved_at': dt.datetime.now(U.ET).isoformat(), 'response': rows}
+
+
+def fetch_daily_fmp(ticker, now):
+    """FMP daily bars covering the prior 20 sessions, as a liquidity receipt."""
+    import fmp_client
+    day = U.aware(now).date()
+    params = {'symbol': ticker, 'from': str(day - dt.timedelta(days=45)), 'to': str(day)}
+    _fmp_pace()
+    rows = fmp_client.get('historical-price-eod/full', **params)
+    if not isinstance(rows, list):
+        raise ValueError('DAILY_CHART_RESPONSE_INVALID')
+    return {'provider': 'FMP', 'source_url': U.FMP_EOD, 'params': params,
+            'retrieved_at': dt.datetime.now(U.ET).isoformat(), 'response': rows}
+
+
+def _fmp_available():
+    try:
+        import fmp_client
+        return bool(fmp_client.load_key())
+    except Exception:       # no key, or a bad one: the Yahoo receipts still work
+        return False
+
+
+def _automatic_master(root, history, now, deadline, acquire_fn, receipt_files, errors, *, screener=None):
     remaining = deadline-time.monotonic()
     result = acquire_fn({'bulk': (lambda: _fetch(TMX_BULK), min(30, remaining))})['bulk']
     if result['status'] != 'OK':
@@ -281,14 +393,26 @@ def _automatic_master(root, history, now, deadline, acquire_fn, receipt_files, e
         if refusal or failed == len(batch):
             errors.append({'source': 'TMX_DIRECTORY', 'reason': 'WHOLE_WAVE_OUTAGE_REQUESTS_STOPPED'})
             break
+    # Day-134: the provider receipt the convergent-evidence rule reads.
+    fmp, fmp_count = {}, 0
+    remaining = deadline-time.monotonic()
+    if screener is not None and remaining > 0:
+        item = acquire_fn({'fmp': (screener, min(30, remaining))})['fmp']
+        if item['status'] == 'OK':
+            _save_receipt(root, history/'fmp_screener.receipt.json', item['value'], receipt_files)
+            fmp = fmp_equities(item['value'])
+            fmp_count = len(item['value'].get('response') or [])
+        else:
+            errors.append({'source': 'FMP_SCREENER', 'reason': item.get('error', 'UNAVAILABLE')})
     out, join_errors = resolve_tmx_instruments(issuers, instrument_rows,
-        blocked_symbols, active_verified=True)
+        blocked_symbols, active_verified=True, fmp=fmp)
     errors.extend(join_errors)
     return out, {'directory': 'CURRENT_INSTRUMENTS_WITH_DATED_ISSUER_METADATA',
                 'issuer_count': parsed['issuer_count'], 'discovery_issuers': len(issuers),
                 'directory_queries_completed': len(succeeded), 'directory_queries_requested': len(query_keys),
                 'active_status_feeds_verified': status_ok,
                 'metadata_as_of': parsed['metadata_as_of'], 'discovery_order': parsed['discovery_order'],
+                'fmp_screener_rows': fmp_count, 'fmp_equity_rows': len(fmp),
                 'complete_market_rank': False,
                 'limit': 'Monthly issuer metadata and explicit instrument names do not certify every TSX common share.'}
 
@@ -298,7 +422,8 @@ def _save_receipt(root, path, receipt, hashes):
     hashes[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def prepare(state_dir, *, now=None, master_path=None, fetcher=None, acquire_fn=None, diagnostic=False):
+def prepare(state_dir, *, now=None, master_path=None, fetcher=None, acquire_fn=None, diagnostic=False,
+            screener=None):
     """Run once before open; diagnostics require an explicitly isolated context."""
     root = Path(state_dir)
     live_clock = now is None
@@ -312,7 +437,12 @@ def prepare(state_dir, *, now=None, master_path=None, fetcher=None, acquire_fn=N
         (now.replace(hour=9, minute=30, second=0, microsecond=0)-now).total_seconds())
     started_monotonic = time.monotonic()
     deadline = started_monotonic+budget
-    acquire_fn, fetcher = acquire_fn or acquire, fetcher or fetch_daily
+    # Day-134: FMP receipts when the key is staged; an injected fetcher (the
+    # tests) also means no live screener, so a mocked run stays hermetic.
+    live = fetcher is None and acquire_fn is None and _fmp_available()
+    acquire_fn = acquire_fn or acquire
+    fetcher = fetcher or (fetch_daily_fmp if live else fetch_daily)
+    screener = screener or (fetch_screener_fmp if live else None)
     history = root/'tsx_universe_history'/str(now.date())
     history.mkdir(parents=True, exist_ok=True)
     context = {'kind': SNAPSHOT_KIND, 'morning_snapshot': False, 'prediction_evidence': False} if diagnostic else {}
@@ -370,7 +500,7 @@ def prepare(state_dir, *, now=None, master_path=None, fetcher=None, acquire_fn=N
                     'limit': 'Ranks within the explicitly reviewed source sample; reviewer assertions and URLs are not independent source authentication.'}
             else:
                 rows, obj['source_coverage'] = _automatic_master(root, history, now, deadline,
-                    acquire_fn, obj['receipt_files'], obj['exclusions'])
+                    acquire_fn, obj['receipt_files'], obj['exclusions'], screener=screener)
             pending, seen = [], set()
             ticker_counts = Counter(row.get('ticker') for row in rows if isinstance(row, dict))
             for row in rows:

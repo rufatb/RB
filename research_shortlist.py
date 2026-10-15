@@ -65,10 +65,21 @@ def normalize_universe(raw, session):
     return result
 
 
+def tsx_rows(rows):
+    """The research rows the 150 counts: TSX listings only. Day-111b folds US
+    biotech rows into the same pool file; they were never part of the 150 and
+    must not make a valid shortlist read as an oversized pool (day-134)."""
+    if not isinstance(rows, list):
+        return rows
+    # Only the explicit tag excludes: a malformed TSX row still counts in the
+    # raw denominator, as registered.
+    return [row for row in rows if not (isinstance(row, dict) and row.get('market') == 'US')]
+
+
 def select(clean, universe, session):
     """Round-robin sectors, then descending median liquidity and ticker ties."""
     meta = normalize_universe(universe, session)
-    rows = clean.get('candidates', [])
+    rows = tsx_rows(clean.get('candidates', []))
     if not isinstance(rows, list) or len(rows) > MAX_POOL:
         raise ValueError('INVALID_RESEARCH_TECHNICAL_POOL')
     counts = Counter(row.get('ticker') for row in rows if isinstance(row, dict))

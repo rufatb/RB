@@ -375,9 +375,13 @@ def validate_payload(payload, now):
             # Fresh source rows define the denominator. Only an already saved
             # shortlist receipt can preserve an earlier raw count after invalid
             # rows were sanitized; a supplied target is not observed coverage.
-            source_requested = (payload.get('coverage', {}).get('requested', len(candidates))
-                if isinstance(payload.get('research_shortlist'), dict) else len(candidates))
-            if type(source_requested) is not int or not len(candidates) <= source_requested <= 150:
+            # Day-134: the 150 counts TSX research rows; the US biotech rows in
+            # the same file (day-111b) are not part of it.
+            from research_shortlist import tsx_rows
+            research_rows = tsx_rows(candidates)
+            source_requested = (payload.get('coverage', {}).get('requested', len(research_rows))
+                if isinstance(payload.get('research_shortlist'), dict) else len(research_rows))
+            if type(source_requested) is not int or not len(research_rows) <= source_requested <= 150:
                 raise ValueError('INVALID_RESEARCH_SOURCE_COUNT')
             output['coverage']['requested'] = source_requested
             output['research_universe'] = normalize_universe(payload['research_universe'], session)

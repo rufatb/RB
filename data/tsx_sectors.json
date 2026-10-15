@@ -468,7 +468,1539 @@
   "X.TO": {
    "sector": "Financial Services",
    "industry": "Financial Data & Stock Exchanges"
+  },
+  "AAUC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "AAV.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "ABRA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "ABXX.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "ACB.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "ACQ.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Auto - Dealerships"
+  },
+  "ACT.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Pollution & Treatment Controls"
+  },
+  "ACX.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Drilling"
+  },
+  "ADEN.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Distribution"
+  },
+  "ADN.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "AFN.TO": {
+   "sector": "Industrials",
+   "industry": "Agricultural - Machinery"
+  },
+  "AG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "AGF-B.TO": {
+   "sector": "Financial Services",
+   "industry": "Asset Management"
+  },
+  "AGMR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "AGTF.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Agricultural Farm Products"
+  },
+  "AIDX.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "AIF.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "AIM.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Conglomerates"
+  },
+  "AKT.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Drilling"
+  },
+  "ALC.TO": {
+   "sector": "Industrials",
+   "industry": "Marine Shipping"
+  },
+  "ALK.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "ALS.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "ANRG.TO": {
+   "sector": "Industrials",
+   "industry": "Waste Management"
+  },
+  "AP-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Office"
+  },
+  "APM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "APR-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Specialty"
+  },
+  "APTX.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "ARA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "ARE.TO": {
+   "sector": "Industrials",
+   "industry": "Engineering & Construction"
+  },
+  "ARG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "ARIS.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "ARN.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "ASM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "ASTL.TO": {
+   "sector": "Basic Materials",
+   "industry": "Steel"
+  },
+  "ATH.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "ATRL.TO": {
+   "sector": "Industrials",
+   "industry": "Engineering & Construction"
+  },
+  "ATS.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Machinery"
+  },
+  "ATX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "AVL.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "AW.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Restaurants"
+  },
+  "AYA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "BAMI.TO": {
+   "sector": "Technology",
+   "industry": "Media & Entertainment"
+  },
+  "BB.TO": {
+   "sector": "Technology",
+   "industry": "Software - Infrastructure"
+  },
+  "BBD-A.TO": {
+   "sector": "Industrials",
+   "industry": "Aerospace & Defense"
+  },
+  "BBUC.TO": {
+   "sector": "Industrials",
+   "industry": "Conglomerates"
+  },
+  "BDGI.TO": {
+   "sector": "Industrials",
+   "industry": "Engineering & Construction"
+  },
+  "BDI.TO": {
+   "sector": "Industrials",
+   "industry": "Rental & Leasing Services"
+  },
+  "BDT.TO": {
+   "sector": "Industrials",
+   "industry": "Engineering & Construction"
+  },
+  "BEI-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Residential"
+  },
+  "BEPC.TO": {
+   "sector": "Utilities",
+   "industry": "Renewable Utilities"
+  },
+  "BHC.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "BIPC.TO": {
+   "sector": "Utilities",
+   "industry": "Regulated Gas"
+  },
+  "BLDP.TO": {
+   "sector": "Industrials",
+   "industry": "Electrical Equipment & Parts"
+  },
+  "BNE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "BNKR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "BNT.TO": {
+   "sector": "Financial Services",
+   "industry": "Insurance - Diversified"
+  },
+  "BOS.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals - Specialty"
+  },
+  "BRE.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "BSX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "CADY.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "CAS.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "CCL-A.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "CCL-B.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "CDE.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "CDR.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "CEU.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "CF.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Capital Markets"
+  },
+  "CFP.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "CFW.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "CGG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "CGO.TO": {
+   "sector": "Communication Services",
+   "industry": "Telecommunications Services"
+  },
+  "CGX.TO": {
+   "sector": "Communication Services",
+   "industry": "Entertainment"
+  },
+  "CGY.TO": {
+   "sector": "Industrials",
+   "industry": "Specialty Business Services"
+  },
+  "CHP-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Retail"
+  },
+  "CHR.TO": {
+   "sector": "Industrials",
+   "industry": "Airlines, Airports & Air Services"
+  },
+  "CIA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Steel"
+  },
+  "CJ.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "CJT.TO": {
+   "sector": "Industrials",
+   "industry": "Airlines, Airports & Air Services"
+  },
+  "CKI.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Travel Lodging"
+  },
+  "CLCH.TO": {
+   "sector": "Energy",
+   "industry": "Coal"
+  },
+  "CLS.TO": {
+   "sector": "Technology",
+   "industry": "Hardware, Equipment & Parts"
+  },
+  "CMG.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "CNL.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "CPH.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "CPKR.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Agricultural Farm Products"
+  },
+  "CRDL.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "CRON.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "CRR-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Diversified"
+  },
+  "CRRX.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "CRT-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Retail"
+  },
+  "CSW-A.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Beverages - Wineries & Distilleries"
+  },
+  "CSW-B.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Beverages - Wineries & Distilleries"
+  },
+  "CTC.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Specialty Retail"
+  },
+  "CTGO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "CURA.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "CVO.TO": {
+   "sector": "Technology",
+   "industry": "Software - Infrastructure"
+  },
+  "CVVY.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "D-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Office"
+  },
+  "DBM.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Distribution"
+  },
+  "DBO.TO": {
+   "sector": "Technology",
+   "industry": "Consumer Electronics"
+  },
+  "DC-A.TO": {
+   "sector": "Financial Services",
+   "industry": "Asset Management"
+  },
+  "DCBO.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "DCM.TO": {
+   "sector": "Industrials",
+   "industry": "Specialty Business Services"
+  },
+  "DIV.TO": {
+   "sector": "Industrials",
+   "industry": "Specialty Business Services"
+  },
+  "DLCG.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Mortgages"
+  },
+  "DML.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "DND.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "DNG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "DOO.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Auto - Recreational Vehicles"
+  },
+  "DPM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "DR.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "DRM.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Development"
+  },
+  "DRX.TO": {
+   "sector": "Industrials",
+   "industry": "Manufacturing - Metal Fabrication"
+  },
+  "DSG.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "DSV.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "DTOL.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "DXT.TO": {
+   "sector": "Industrials",
+   "industry": "Specialty Business Services"
+  },
+  "E.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "EDR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "EDV.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "EFN.TO": {
+   "sector": "Industrials",
+   "industry": "Rental & Leasing Services"
+  },
+  "EFR.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "EFX.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "EIF.TO": {
+   "sector": "Industrials",
+   "industry": "Airlines, Airports & Air Services"
+  },
+  "ELE.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "ELO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "ELVA.TO": {
+   "sector": "Industrials",
+   "industry": "Electrical Equipment & Parts"
+  },
+  "ENGH.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "EPRX.TO": {
+   "sector": "Healthcare",
+   "industry": "Biotechnology"
+  },
+  "EQB.TO": {
+   "sector": "Financial Services",
+   "industry": "Banks - Regional"
+  },
+  "ERD.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "ESI.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Drilling"
+  },
+  "ET.TO": {
+   "sector": "Technology",
+   "industry": "Communication Equipment"
+  },
+  "ETG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "EXE.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "FAR.TO": {
+   "sector": "Industrials",
+   "industry": "Engineering & Construction"
+  },
+  "FC.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Mortgages"
+  },
+  "FDY.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "FEC.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "FF.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "FFM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "FLT.TO": {
+   "sector": "Industrials",
+   "industry": "Aerospace & Defense"
+  },
+  "FRU.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "FSZ.TO": {
+   "sector": "Financial Services",
+   "industry": "Asset Management"
+  },
+  "FTG.TO": {
+   "sector": "Industrials",
+   "industry": "Aerospace & Defense"
+  },
+  "FURY.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "FVI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "FVL.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "GASX.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "GAU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "GCU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "GENM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "GFL.TO": {
+   "sector": "Industrials",
+   "industry": "Waste Management"
+  },
+  "GFR.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "GGD.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "GLO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "GMIN.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "GOLD.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "GOOS.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Apparel - Manufacturers"
+  },
+  "GRA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals - Specialty"
+  },
+  "GRGD.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Apparel - Retail"
+  },
+  "GRID.TO": {
+   "sector": "Industrials",
+   "industry": "Electrical Equipment & Parts"
+  },
+  "GSY.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Credit Services"
+  },
+  "GTE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "GUD.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "HAI.TO": {
+   "sector": "Technology",
+   "industry": "Software - Infrastructure"
+  },
+  "HIVE.TO": {
+   "sector": "Technology",
+   "industry": "Information Technology Services"
+  },
+  "HLF.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Packaged Foods"
+  },
+  "HMM-A.TO": {
+   "sector": "Industrials",
+   "industry": "Electrical Equipment & Parts"
+  },
+  "HMMC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "HPS-A.TO": {
+   "sector": "Industrials",
+   "industry": "Electrical Equipment & Parts"
+  },
+  "HR-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Diversified"
+  },
+  "HSLV.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "HUT.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Capital Markets"
+  },
+  "HWX.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "IAG.TO": {
+   "sector": "Financial Services",
+   "industry": "Insurance - Diversified"
+  },
+  "IAU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "IE.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "IFA.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Apparel - Manufacturers"
+  },
+  "IFP.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "III.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "IMP.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "IPCO.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "IPO.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "ISO.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "ITH.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "JAG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "JOY.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "JWEL.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Packaged Foods"
+  },
+  "KBL.TO": {
+   "sector": "Industrials",
+   "industry": "Specialty Business Services"
+  },
+  "KEEL.TO": {
+   "sector": "Technology",
+   "industry": "Information Technology Services"
+  },
+  "KEI.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "KEL.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "KITS.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Specialty Retail"
+  },
+  "KMP-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Residential"
+  },
+  "KNT.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "KPT.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Household & Personal Products"
+  },
+  "KXS.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "LAC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "LAM.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "LAR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "LAS-A.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Beverages - Non-Alcoholic"
+  },
+  "LB.TO": {
+   "sector": "Financial Services",
+   "industry": "Banks - Regional"
+  },
+  "LCFS.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals - Specialty"
+  },
+  "LGD.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "LGO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "LIF.TO": {
+   "sector": "Basic Materials",
+   "industry": "Steel"
+  },
+  "LMCU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "LNF.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Specialty Retail"
+  },
+  "LSPD.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "LUNR.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Conglomerates"
+  },
+  "MAI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "MAL.TO": {
+   "sector": "Industrials",
+   "industry": "Aerospace & Defense"
+  },
+  "MARI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "MATR.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "MAU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "MCB.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "MDA.TO": {
+   "sector": "Industrials",
+   "industry": "Aerospace & Defense"
+  },
+  "MDI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "MDP.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Pharmaceuticals"
+  },
+  "MEQ.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "MER.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "MFI.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Packaged Foods"
+  },
+  "MGA.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "MHC-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Residential"
+  },
+  "MKP.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Mortgages"
+  },
+  "MNO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "MOLY.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "MRC.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Diversified"
+  },
+  "MRD.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Development"
+  },
+  "MSA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "MSCL.TO": {
+   "sector": "Healthcare",
+   "industry": "Biotechnology"
+  },
+  "MTL.TO": {
+   "sector": "Industrials",
+   "industry": "Trucking"
+  },
+  "MTY.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Restaurants"
+  },
+  "MUX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "MX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals"
+  },
+  "NDM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "NEO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals - Specialty"
+  },
+  "NFGC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "NFI.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Auto - Manufacturers"
+  },
+  "NG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "NGEX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "NICU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "NOA.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "NOU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "NPK.TO": {
+   "sector": "Basic Materials",
+   "industry": "Agricultural Inputs"
+  },
+  "NUAG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "NWC.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Grocery Stores"
+  },
+  "NXE.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "NXR-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Industrial"
+  },
+  "OBE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "OCG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "OGI.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "OLY.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Diversified"
+  },
+  "OM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "OR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "ORE.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "ORV.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "OVV.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "PBH.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Packaged Foods"
+  },
+  "PBL.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Gambling, Resorts & Casinos"
+  },
+  "PD.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Drilling"
+  },
+  "PDI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "PDN.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "PET.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Specialty Retail"
+  },
+  "PHX.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Drilling"
+  },
+  "PIF.TO": {
+   "sector": "Utilities",
+   "industry": "Renewable Utilities"
+  },
+  "PLZ-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Retail"
+  },
+  "PMET.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "PMZ-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Retail"
+  },
+  "PNE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "POU.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "PPTA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "PRL.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Credit Services"
+  },
+  "PRN.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Devices"
+  },
+  "PRQ.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "PRU.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "PSD.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "PSI.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "PSK.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "PTM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "PXT.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "PZA.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Restaurants"
+  },
+  "QBR-A.TO": {
+   "sector": "Communication Services",
+   "industry": "Telecommunications Services"
+  },
+  "QTRH.TO": {
+   "sector": "Technology",
+   "industry": "Communication Equipment"
+  },
+  "RAY.TO": {
+   "sector": "Communication Services",
+   "industry": "Broadcasting"
+  },
+  "RBY.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "RCH.TO": {
+   "sector": "Industrials",
+   "industry": "Manufacturing - Tools & Accessories"
+  },
+  "RCI-A.TO": {
+   "sector": "Communication Services",
+   "industry": "Telecommunications Services"
+  },
+  "REAL.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "RFA.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "RGSI.TO": {
+   "sector": "Utilities",
+   "industry": "Regulated Gas"
+  },
+  "RIO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "RM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "RSI.TO": {
+   "sector": "Consumer Defensive",
+   "industry": "Food Confectioners"
+  },
+  "RUS.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Distribution"
+  },
+  "S.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "SAM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "SBI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "SCR.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "SDE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "SEA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "SFC.TO": {
+   "sector": "Financial Services",
+   "industry": "Insurance - Diversified"
+  },
+  "SGD.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "SGR-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Retail"
+  },
+  "SGY.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "SHLE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "SIA.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "SII.TO": {
+   "sector": "Financial Services",
+   "industry": "Asset Management"
+  },
+  "SIS.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Machinery"
+  },
+  "SJ.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "SKE.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "SLS.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "SLVR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "SOBO.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Midstream"
+  },
+  "SOIL.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "SPB.TO": {
+   "sector": "Utilities",
+   "industry": "Regulated Gas"
+  },
+  "STC.TO": {
+   "sector": "Technology",
+   "industry": "Software - Infrastructure"
+  },
+  "STCK.TO": {
+   "sector": "Financial Services",
+   "industry": "Asset Management"
+  },
+  "STGO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "STLR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "SVI.TO": {
+   "sector": "Real Estate",
+   "industry": "Real Estate - Services"
+  },
+  "SVM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Silver"
+  },
+  "SXGC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "SYZ.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "TA.TO": {
+   "sector": "Utilities",
+   "industry": "Independent Power Producers"
+  },
+  "TAL.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "TALA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "TCL-A.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "TCL-B.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "TCS.TO": {
+   "sector": "Technology",
+   "industry": "Software - Application"
+  },
+  "TCW.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "TECK-A.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "TF.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Credit Services"
+  },
+  "TFPM.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "TI.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "TKO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Copper"
+  },
+  "TLG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "TLO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "TLRY.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "TMQ.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "TNT-UN.TO": {
+   "sector": "Real Estate",
+   "industry": "REIT - Office"
+  },
+  "TNZ.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "TOT.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "TOY.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Leisure"
+  },
+  "TPZ.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Midstream"
+  },
+  "TRX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "TRZ.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Travel Services"
+  },
+  "TSAT.TO": {
+   "sector": "Communication Services",
+   "industry": "Telecommunications Services"
+  },
+  "TSK.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "TSND.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "TVK.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Equipment & Services"
+  },
+  "TWM.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Midstream"
+  },
+  "TXG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "URE.TO": {
+   "sector": "Energy",
+   "industry": "Uranium"
+  },
+  "USA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "VBNK.TO": {
+   "sector": "Financial Services",
+   "industry": "Banks - Regional"
+  },
+  "VET.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "VGC.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "VGZ.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "VHI.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Healthcare Information Services"
+  },
+  "VLE.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
+  },
+  "VMET.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "VNP.TO": {
+   "sector": "Basic Materials",
+   "industry": "Chemicals - Specialty"
+  },
+  "VOXR.TO": {
+   "sector": "Basic Materials",
+   "industry": "Other Precious Metals"
+  },
+  "VZLA.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "WDO.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "WEED.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "WEF.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "WELL.TO": {
+   "sector": "Healthcare",
+   "industry": "Medical - Care Facilities"
+  },
+  "WFG.TO": {
+   "sector": "Basic Materials",
+   "industry": "Paper, Lumber & Forest Products"
+  },
+  "WGX.TO": {
+   "sector": "Basic Materials",
+   "industry": "Gold"
+  },
+  "WILD.TO": {
+   "sector": "Communication Services",
+   "industry": "Entertainment"
+  },
+  "WJX.TO": {
+   "sector": "Industrials",
+   "industry": "Industrial - Distribution"
+  },
+  "WPK.TO": {
+   "sector": "Consumer Cyclical",
+   "industry": "Packaging & Containers"
+  },
+  "WRN.TO": {
+   "sector": "Basic Materials",
+   "industry": "Industrial Materials"
+  },
+  "WTE.TO": {
+   "sector": "Industrials",
+   "industry": "Marine Shipping"
+  },
+  "XAU.TO": {
+   "sector": "Financial Services",
+   "industry": "Financial - Capital Markets"
+  },
+  "XLY.TO": {
+   "sector": "Healthcare",
+   "industry": "Drug Manufacturers - Specialty & Generic"
+  },
+  "XNDU.TO": {
+   "sector": "Technology",
+   "industry": "Software - Infrastructure"
+  },
+  "YGR.TO": {
+   "sector": "Energy",
+   "industry": "Oil & Gas Exploration & Production"
   }
  },
- "captured": "2026-09-22"
+ "captured": "2026-09-22",
+ "additions": [
+  {
+   "source": "FMP company screener (day-134), the same receipt the 150-name list used",
+   "captured": "2026-10-14",
+   "count": 381,
+   "note": "The file's 'captured' date (the Yahoo map) still sets its expiry."
+  }
+ ]
 }

@@ -1,5 +1,66 @@
 # Working notes for this repo
 
+## Day134 — the desks pick from the 150 most-traded TSX equities (owner, 2026-10-14)
+
+The owner said "go ahead with the 150". Registered first as the day-134
+amendment to `PREREGISTER_day101_tsx_expansion.md` (d06694e). The day-101 rule
+is unchanged:
+* common shares and REIT units;
+* median close × volume over the prior 20 sessions of at least C$10M;
+* the top 150, one class per issuer.
+
+**Why day-101 never ran.** Its builder (`prepare_tsx_universe.py`) wanted
+TMX's directory to say "common", and it never does. In tonight's diagnostic
+450 of the 500 discovery issuers failed that test (RY, TD, ENB …), 33 failed
+the join, and 2 REITs survived. Nothing staged it, so every morning used the
+117-name legacy roster.
+
+**What changed (sources and wiring, not the rule).**
+* **Common shares by convergent evidence:**
+  * TMX's issuer file (an operating company, not a fund, ETF, CDR or SPAC);
+  * its current exact directory instrument, at the root or the root plus one
+    class letter;
+  * FMP's TSX screener listing that ticker as not an ETF, not a fund, and
+    actively trading.
+
+  The rule is `TMX_OPERATING_ISSUER+FMP_EQUITY` (`fmp_equities`,
+  `resolve_tmx_instruments(fmp=)`). Partnership and income-trust units (BIP.UN,
+  BEP.UN) stay out; REITs keep their rule.
+* **The join:** the directory files class-share issuers under their first class
+  (BBD.A, TECK.A, ACO.X). Names fold accents and trailing corporate forms
+  (`_name_key`).
+* **Industry and sector** come from FMP's screener when TMX has none.
+* **Liquidity receipts** come from FMP daily bars (`fetch_daily_fmp`;
+  `tsx_universe._fmp_liquidity`). The receipt URL has no query, because the key
+  travels there; the parameters are kept beside it. Calls are paced to 10 a
+  second.
+* **Staging:** `morning_full.sh` runs the builder before the pool
+  (`slice 180`). A failure, or a list no larger than the roster, keeps the
+  legacy roster, labelled.
+* **The factor layer's shortlist** counts TSX rows only
+  (`research_shortlist.tsx_rows`). The 260 US biotech rows had made a valid pool
+  read as oversized, which would have emptied it.
+* **The sector map** gained 381 FMP entries, covering all 150 names. Its
+  `captured` date still sets expiry.
+
+**Dry run tonight** (isolated diagnostic, engineering only):
+* the list: READY, 150 names in 51 s; 494 instruments passed identity and 166
+  passed the floor;
+* against the roster: 102 kept and 48 new (CLS, ATRL, DSG, GFL, CCL-B, DOO,
+  WFG, KXS, NXE, OVV …). The 15 that leave:
+  * under C$10M a day, or ranked below 150 (BIR, DIR-UN, FCR-UN, GRT-UN, MRE,
+    SRU-UN, TSU, ELF, BYD, CCA, DFY);
+  * partnership units (BIP-UN, BEP-UN);
+  * not discovered (ARX, TC);
+* the pool: 134 s of its 240 s expanded budget; all 150 got daily indicators
+  and 115 got full five-minute data;
+* the models: all 150 reached the desks. The factor shortlist held 50. Jev
+  answered on 150 names in 1.3 s, without headlines; a morning's headlines may
+  send it down to its CSV step.
+
+**Not claimed:** no accuracy gain. More names are more choices, not more
+signal (day-117). The 120-session evaluation in the registration is unchanged.
+
 ## Day133 — the models saw 75–91 of 116 TSX names; a time stamp dropped the rest (owner, 2026-10-14)
 
 The owner asked how many stocks the models and the council pick from, and to

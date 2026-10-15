@@ -224,7 +224,11 @@ def load_prepared(state, cfg, now, factors=None, *, verify_history=False, diagno
     for key, output in (('sector', 'sectors'), ('industry', 'industries')):
         counts = {}
         for ticker in sorted(pool_names):
-            name = safe_detail(metadata.get(ticker, {}).get(key) or 'Unverified classification', 100)
+            # Day-134: the US biotech rows day-111b folds into the pool file are
+            # not unverified TSX names; say what they are (not part of the 150).
+            fallback = ('US biotech (not part of the 150)' if not ticker.endswith('.TO')
+                        else 'Unverified classification')
+            name = safe_detail(metadata.get(ticker, {}).get(key) or fallback, 100)
             item = counts.setdefault(name, {'name': name, 'pool': 0, 'technical_complete': 0, 'shortlisted': 0 if shortlist else None, 'assessed': 0})
             item['pool'] += 1
             item['technical_complete'] += ticker in complete

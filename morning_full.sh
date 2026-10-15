@@ -176,6 +176,27 @@ else
         stage_faults+=("biotech universe skipped: staging budget exhausted")
     fi
 
+    # THE 150-NAME TSX LIST (day-101 rule, day-134 amendment; owner: "go ahead
+    # with the 150"). TMX's issuer file and directory say who is a current TSX
+    # operating company; FMP's screener says which listings are equities, and
+    # FMP's daily bars give the 20-session median C$ value (>= C$10M, top 150).
+    # It writes `tsx_universe.json`, which the pool below reads; without it, or
+    # with a list no larger than the legacy roster, the pool keeps the legacy
+    # roster and says so. Once per session, 180 s registered (~51 s measured).
+    if budget="$(slice 180 $((600 + CLAUDE_WINDOW)))"; then
+        timeout "$budget" python prepare_tsx_universe.py --state-dir "$RB_STATE_DIR" \
+            >>"$RB_STATE_DIR/tsx_universe.log" 2>&1
+        case $? in
+            0) log "  TSX list: 150 names (tsx_universe.json)" ;;
+            2) log "  TSX list: not complete — the pool uses what it holds if broader than the legacy roster (tsx_universe.log)" ;;
+            *) log "  TSX list: FAILED — the pool keeps the legacy roster (tsx_universe.log)"
+               stage_faults+=("TSX list failed") ;;
+        esac
+    else
+        log "  TSX list: SKIPPED — an upstream step overran; the pool keeps the legacy roster"
+        stage_faults+=("TSX list skipped: staging budget exhausted")
+    fi
+
     # THE RESEARCH POOL. This writes `deepseek_candidates.json`, the 130-name
     # pool with prepared technicals, and NOTHING ELSE WRITES IT. It was never
     # in this script, so no scheduled run has ever staged it: on 2026-09-18 the

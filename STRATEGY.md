@@ -5521,3 +5521,18 @@ population, a little at least").
 * **Left as is:** the 264 US biotech rows (the owner's call) and the 117-name
   roster (day-101's 150-name expansion is never staged).
 * No accuracy claim: more names are more choices, not more signal (day-117).
+
+## Day-134: the desks pick from the 150 most-traded TSX equities (owner's request)
+
+Not a test; the population changes. Registered as the day-134 amendment to
+day-101, before any expanded pool was built. The day-101 rule (common shares
+and REITs, prior-20-session median C$ value ≥ C$10M, top 150, one class per
+issuer) is unchanged.
+* **Why day-101 never ran.** Its typing needed TMX to say "common", which TMX
+  never does: 2 names survived.
+* **The amendment.** Typing by convergent TMX + FMP evidence; a join that finds
+  class-share issuers; FMP industry and FMP daily-bar liquidity receipts;
+  morning staging before the pool. The factor shortlist counts TSX rows only.
+* **Dry run.** 150 names in 51 s; 102 of the legacy 117 kept and 48 new; pool
+  134 s; all 150 reach the desks.
+* No accuracy claim.

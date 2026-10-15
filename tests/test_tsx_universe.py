@@ -323,3 +323,105 @@ def test_reit_etf_display_name_is_not_a_reit_unit(symbol, name):
 def test_status_feed_exclusion_still_applies_to_joined_reit_units():
     issuer, ref = real_reit_reference()
     assert not P.resolve_tmx_instruments([issuer], {'REI.UN': ref}, {'REI.UN'}, active_verified=True)[0]
+
+
+# ── day-134 amendment: common shares by convergent TMX + FMP evidence ────────
+
+def operating_reference(root='BBD', key='BBD.A', issuer_name='Bombardier Inc.',
+                        directory_name='Bombardier Inc.', instruments=(
+                            ('BBD.A', 'Bombardier Cl A MV'), ('BBD.B', 'Bombardier Cl B SV'),
+                            ('BBD.PR.B', 'Bombardier Ser 2 Pr'))):
+    """The observed 2026-10-14 directory shape: a class-share issuer is filed
+    under its FIRST class, never its bare root, and names its instruments
+    without ever saying "common"."""
+    issuer = {'issuer_id': 'BBD0001', 'root_symbol': root, 'issuer_name': issuer_name,
+              'sector': 'Industrial Products & Services', 'industry': '', 'structured_product_type': '',
+              'metadata_as_of': '2026-09-30', 'source_url': P.TMX_BULK}
+    ref = {'row': {'symbol': key, 'name': directory_name,
+                   'instruments': [{'symbol': s, 'name': n} for s, n in instruments]},
+           'clock': NOW, 'receipt': {'source_url': P.TMX_DIRECTORY+'B', 'retrieved_at': NOW.isoformat()}}
+    return issuer, ref
+
+
+def fmp_row(ticker, **flags):
+    return {'symbol': ticker, 'exchangeShortName': 'TSX', 'isEtf': False, 'isFund': False,
+            'isActivelyTrading': True, 'sector': 'Industrials', 'industry': 'Aerospace & Defense', **flags}
+
+
+def test_fmp_equity_evidence_types_the_class_instruments_and_fills_the_industry():
+    issuer, ref = operating_reference()
+    fmp = P.fmp_equities({'response': [fmp_row('BBD-A.TO'), fmp_row('BBD-B.TO'), fmp_row('BBD-PR-B.TO')]})
+    rows, errors = P.resolve_tmx_instruments([issuer], {'BBD.A': ref}, active_verified=True, fmp=fmp)
+    assert sorted(r['ticker'] for r in rows) == ['BBD-A.TO', 'BBD-B.TO']
+    assert {r['security_type_rule'] for r in rows} == {'TMX_OPERATING_ISSUER+FMP_EQUITY'}
+    assert {r['industry'] for r in rows} == {'Aerospace & Defense'}         # TMX had none
+    assert all(r['evidence']['security_type'] == U.FMP_SCREENER for r in rows)
+    assert [e['ticker'] for e in errors] == ['BBD.PR.B']                     # a preferred never
+
+
+def test_without_fmp_evidence_nothing_changes():
+    issuer, ref = operating_reference()
+    rows, errors = P.resolve_tmx_instruments([issuer], {'BBD.A': ref}, active_verified=True)
+    assert not rows and errors
+
+
+@pytest.mark.parametrize('flag,value', [('isEtf', True), ('isFund', True), ('isActivelyTrading', False),
+                                        ('exchangeShortName', 'NEO')])
+def test_an_fmp_row_failing_any_flag_is_not_evidence(flag, value):
+    issuer, ref = operating_reference()
+    fmp = P.fmp_equities({'response': [fmp_row('BBD-B.TO', **{flag: value})]})
+    rows, _ = P.resolve_tmx_instruments([issuer], {'BBD.A': ref}, active_verified=True, fmp=fmp)
+    assert 'BBD-B.TO' not in [r['ticker'] for r in rows]
+
+
+def test_partnership_units_stay_out_even_with_fmp_evidence():
+    issuer, ref = operating_reference('BIP', 'BIP.PR.E', 'Brookfield Infrastructure Partners L.P.',
+        'Brookfield Infrastructure Partners L.P.', (('BIP.PR.E', 'Brookfield InfrasPr9'),
+                                                    ('BIP.UN', 'Brookfield Infras Un')))
+    issuer['industry'] = 'Utilities'
+    fmp = P.fmp_equities({'response': [fmp_row('BIP-UN.TO'), fmp_row('BIP-PR-E.TO')]})
+    rows, _ = P.resolve_tmx_instruments([issuer], {'BIP.PR.E': ref}, active_verified=True, fmp=fmp)
+    assert rows == []
+
+
+def test_names_fold_accents_and_trailing_corporate_forms_but_not_identity():
+    assert P._name_key('AtkinsRéalis Group Inc.') == P._name_key('AtkinsRealis Group')
+    assert P._name_key('iA Financial Corporation') == P._name_key('iA Financial Corporation Inc.')
+    assert P._name_key('Inc.') == 'inc'                       # nothing left: keep the full name
+    assert P._name_key('Bombardier Inc.') != P._name_key('Bombardier Recreational Products Inc.')
+
+
+def fmp_receipt(ticker='AAA.TO', value=12_000_000, now=NOW, drop=None):
+    dates = [d for d in U.previous_sessions(now) if d != drop]
+    rows = [{'symbol': ticker, 'date': str(d), 'open': 10, 'high': 11, 'low': 9, 'close': 10,
+             'volume': value/10} for d in reversed(dates)]
+    return {'provider': 'FMP', 'source_url': U.FMP_EOD,
+            'params': {'symbol': ticker, 'from': '2026-07-01', 'to': str(now.date())},
+            'retrieved_at': now.isoformat(), 'response': rows}
+
+
+def test_fmp_daily_receipt_measures_the_same_median():
+    out = U.liquidity(fmp_receipt(), 'AAA.TO', NOW)
+    assert out['median_dollar_volume_20'] == 12_000_000 and out['liquidity_sessions'] == 20
+    assert out['liquidity_source_url'] == U.FMP_EOD
+
+
+@pytest.mark.parametrize('mutate,reason', [
+    (lambda r: r['params'].update(symbol='BBB.TO'), 'DAILY_RECEIPT_ENDPOINT_MISMATCH'),
+    (lambda r: r['params'].update(apikey='x'), 'DAILY_RECEIPT_ENDPOINT_MISMATCH'),
+    (lambda r: r.update(source_url=U.FMP_EOD+'?apikey=x'), 'DAILY_RECEIPT_ENDPOINT_MISMATCH'),
+    (lambda r: r['response'][0].update(symbol='BBB.TO'), 'DAILY_REFERENCE_IDENTITY_OR_INTERVAL_MISMATCH'),
+    (lambda r: r['response'][0].update(volume=0), 'NONPOSITIVE_COMPLETED_SESSION_VOLUME'),
+])
+def test_fmp_daily_receipt_refusals(mutate, reason):
+    r = fmp_receipt()
+    mutate(r)
+    with pytest.raises(ValueError, match=reason):
+        U.liquidity(r, 'AAA.TO', NOW)
+
+
+def test_fmp_daily_receipt_needs_the_exact_prior_20_sessions_and_the_floor():
+    with pytest.raises(ValueError, match='IMMEDIATE_PRIOR_20_SESSION_GRID_INCOMPLETE'):
+        U.liquidity(fmp_receipt(drop=U.previous_sessions(NOW)[5]), 'AAA.TO', NOW)
+    with pytest.raises(ValueError, match='BELOW_MEDIAN_CAD10M_LIQUIDITY_FLOOR'):
+        U.liquidity(fmp_receipt(value=9_000_000), 'AAA.TO', NOW)

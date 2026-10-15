@@ -21,6 +21,10 @@ DISCOVERY_LIMIT = 500
 MIN_MEDIAN_DOLLAR_VOLUME = 10_000_000
 METADATA_MAX_DAYS = 62
 REGISTRATION = 'PREREGISTER_day101_tsx_expansion.md'
+# Day-134 amendment: FMP (paid provider) receipts. URLs carry no query: the
+# key travels in the query string, so the parameters are kept beside them.
+FMP_SCREENER = 'https://financialmodelingprep.com/stable/company-screener'
+FMP_EOD = 'https://financialmodelingprep.com/stable/historical-price-eod/full'
 MODE = 'EXPANDED_TSX_RESEARCH'
 TICKER = re.compile(r'^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)?\.TO$')
 
@@ -89,6 +93,8 @@ def validate_master_row(row, now):
 
 def liquidity(receipt, ticker, now):
     """Median raw daily Close*Volume on the exact prior 20-session grid."""
+    if isinstance(receipt, dict) and receipt.get('provider') == 'FMP':
+        return _fmp_liquidity(receipt, ticker, now)
     now = aware(now)
     if not isinstance(receipt, dict) or not isinstance(receipt.get('response'), dict):
         raise ValueError('DAILY_RECEIPT_OBJECT_REQUIRED')
@@ -130,6 +136,10 @@ def liquidity(receipt, ticker, now):
         raise ValueError('IMMEDIATE_PRIOR_20_SESSION_GRID_INCOMPLETE')
     if any(i.time() != dt.time(9, 30) for i in selected.index):
         raise ValueError('DAILY_TIMESTAMP_NOT_TSX_OPEN')
+    return _median_value(selected, dates, receipt['source_url'])
+
+
+def _median_value(selected, dates, source_url):
     reason = ohlcv_error(selected)
     if reason:
         raise ValueError(reason)
@@ -141,7 +151,43 @@ def liquidity(receipt, ticker, now):
     return {'median_dollar_volume_20': value, 'liquidity_first_session': str(dates[0]),
             'liquidity_last_session': str(dates[-1]), 'liquidity_sessions': 20,
             'liquidity_method': 'median(unadjusted daily Close * Volume); proxy, not measured turnover',
-            'liquidity_source_url': receipt['source_url']}
+            'liquidity_source_url': source_url}
+
+
+def _fmp_liquidity(receipt, ticker, now):
+    """Day-134: the same median on FMP's daily bars. The receipt keeps the
+    endpoint without its query (the key travels there) and the parameters
+    beside it; every row must name the ticker, and the dates must be exactly
+    the immediately preceding 20 completed sessions."""
+    now = aware(now)
+    params = receipt.get('params')
+    if (receipt.get('source_url') != FMP_EOD or not isinstance(params, dict)
+            or params.get('symbol') != ticker or 'apikey' in params):
+        raise ValueError('DAILY_RECEIPT_ENDPOINT_MISMATCH')
+    retrieved = aware(receipt.get('retrieved_at'))
+    if retrieved > now or retrieved.date() != now.date():
+        raise ValueError('DAILY_RECEIPT_CLOCK_MISMATCH')
+    rows = receipt.get('response')
+    if not isinstance(rows, list) or not rows or any(not isinstance(r, dict) for r in rows):
+        raise ValueError('DAILY_REFERENCE_ARRAY_SCHEMA_INVALID')
+    if any(r.get('symbol') != ticker for r in rows):
+        raise ValueError('DAILY_REFERENCE_IDENTITY_OR_INTERVAL_MISMATCH')
+    try:
+        index = pd.to_datetime([r['date'] for r in rows], format='%Y-%m-%d')
+    except (KeyError, TypeError, ValueError):
+        raise ValueError('DAILY_REFERENCE_ARRAY_SCHEMA_INVALID') from None
+    if index.has_duplicates:
+        raise ValueError('DUPLICATE_OR_UNSORTED_DAILY_TIMESTAMPS')
+    frame = pd.DataFrame({'Open': [r.get('open') for r in rows], 'High': [r.get('high') for r in rows],
+                          'Low': [r.get('low') for r in rows], 'Close': [r.get('close') for r in rows],
+                          'Volume': [r.get('volume') for r in rows]}, index=index).sort_index()
+    # An evening run sees today's bar; it is never a completed prior session.
+    frame = frame[[i.date() < now.date() for i in frame.index]]
+    dates = previous_sessions(now)
+    selected = frame[[i.date() >= dates[0] for i in frame.index]]
+    if list(selected.index.date) != dates:
+        raise ValueError('IMMEDIATE_PRIOR_20_SESSION_GRID_INCOMPLETE')
+    return _median_value(selected, dates, FMP_EOD)
 
 
 def rank(rows):
