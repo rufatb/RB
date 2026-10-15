@@ -76,3 +76,20 @@ sessions not reached are named.
   on the evidence available.
 
 Script `replay_or_models.py`; summary `data/replay_day134_models.json`.
+
+## Results (2026-10-14, after the run; nothing above was changed)
+
+* **Contamination:** neither model gave any closing price (all null): not
+  contaminated.
+* **Control:** R1-0528 5 of 5 clean, PASS. Sonnet 5.5 1 of 5: it abstained on
+  the planted universe four times, FAIL.
+* **R1-0528 on the bar: FAIL.**
+  * 207 picks on 59 sessions: 48.8% right, −0.021% per pick, t = −0.14;
+    placebo p = 0.61; both halves negative.
+  * MDE80 0.27% per pick.
+  * Paired against the day-117 DeepSeek answers: +0.07% (t = 0.66).
+* **Sonnet 5.5: no picks.** It abstained on all 59 sessions, so it cannot be
+  scored, which matches its failed control.
+* **Spent:** $4.26 of the $5 cap, 130 calls.
+
+Read `AUDIT_day134_models.md`. Nothing changes.

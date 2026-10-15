@@ -1,0 +1,281 @@
+{
+ "registration": "PREREGISTER_day134_models.md",
+ "models": {
+  "r1": "deepseek/deepseek-r1-0528",
+  "sonnet55": "anthropic/claude-sonnet-5.5"
+ },
+ "budget_usd": 5.0,
+ "probe": {
+  "r1": {
+   "answered": 0,
+   "median_error": null,
+   "naive_median_error": null,
+   "contaminated": false,
+   "answer": {
+    "SHOP.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "RY.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CNQ.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CLS.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "AEM.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    }
+   }
+  },
+  "sonnet55": {
+   "answered": 0,
+   "median_error": null,
+   "naive_median_error": null,
+   "contaminated": false,
+   "answer": {
+    "SHOP.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "RY.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CNQ.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CLS.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "AEM.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    }
+   }
+  }
+ },
+ "control": {
+  "r1": {
+   "runs": [
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    }
+   ],
+   "clean": 5,
+   "passes": true
+  },
+  "sonnet55": {
+   "runs": [
+    {
+     "status": "NO_OPPORTUNITY",
+     "long_detected": false,
+     "short_detected": false,
+     "noise_picked": [],
+     "reason": null,
+     "clean": false
+    },
+    {
+     "status": "NO_OPPORTUNITY",
+     "long_detected": false,
+     "short_detected": false,
+     "noise_picked": [],
+     "reason": null,
+     "clean": false
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "NO_OPPORTUNITY",
+     "long_detected": false,
+     "short_detected": false,
+     "noise_picked": [],
+     "reason": null,
+     "clean": false
+    },
+    {
+     "status": "NO_OPPORTUNITY",
+     "long_detected": false,
+     "short_detected": false,
+     "noise_picked": [],
+     "reason": null,
+     "clean": false
+    }
+   ],
+   "clean": 1,
+   "passes": false
+  }
+ },
+ "spent_usd": 4.2593,
+ "calls": 130,
+ "replay": {
+  "r1": {
+   "READY": 59,
+   "NO_OPPORTUNITY": 0,
+   "UNAVAILABLE": 0,
+   "NOT_ASKED": 0
+  },
+  "sonnet55": {
+   "READY": 0,
+   "NO_OPPORTUNITY": 59,
+   "UNAVAILABLE": 0,
+   "NOT_ASKED": 0
+  }
+ },
+ "analysis": {
+  "sessions": 59,
+  "groups": {
+   "deepseek_day117": {
+    "picks": 221,
+    "hits": 109,
+    "hit_rate": 0.49321266968325794,
+    "mean_r_pct": -0.07842760180995471,
+    "clustered": {
+     "sessions": 57,
+     "mean": -0.07575921052631579,
+     "sd": 0.8429245662302028,
+     "t": -0.6785535970063308
+    },
+    "placebo_p_hit": 0.546,
+    "placebo_p_mean": 0.8015,
+    "placebo_hit_rate_mean": 0.4948484162895924,
+    "halves": [
+     -0.0192517857142857,
+     -0.13031810344827588
+    ],
+    "passes_registered_bar": false,
+    "long": {
+     "picks": 111,
+     "hits": 53,
+     "mean_r_pct": -0.09261081081081084
+    },
+    "short": {
+     "picks": 110,
+     "hits": 56,
+     "mean_r_pct": -0.06411545454545456
+    },
+    "market_adjusted_mean_pct": -0.07139502262443442
+   },
+   "r1_selected": {
+    "picks": 207,
+    "hits": 101,
+    "hit_rate": 0.48792270531400966,
+    "mean_r_pct": -0.02059710144927539,
+    "clustered": {
+     "sessions": 59,
+     "mean": -0.013055225988700552,
+     "sd": 0.7378969652459624,
+     "t": -0.1358985038746501
+    },
+    "placebo_p_hit": 0.613,
+    "placebo_p_mean": 0.57,
+    "placebo_hit_rate_mean": 0.49457729468598977,
+    "halves": [
+     -0.01624856321839078,
+     -0.009968333333333341
+    ],
+    "passes_registered_bar": false,
+    "long": {
+     "picks": 107,
+     "hits": 52,
+     "mean_r_pct": -0.019992523364485995
+    },
+    "short": {
+     "picks": 100,
+     "hits": 49,
+     "mean_r_pct": -0.02124399999999997
+    },
+    "market_adjusted_mean_pct": -0.029393236714975852
+   }
+  },
+  "abstained_sessions": {
+   "sonnet55_selected": 59,
+   "deepseek_day117": 2
+  },
+  "answer_status": {
+   "r1": {
+    "READY": 59,
+    "NO_OPPORTUNITY": 0,
+    "UNAVAILABLE": 0
+   },
+   "sonnet55": {
+    "READY": 0,
+    "NO_OPPORTUNITY": 59,
+    "UNAVAILABLE": 0
+   }
+  },
+  "paired_vs_deepseek_day117": {
+   "r1": {
+    "sessions": 57,
+    "mean": 0.06775073099415205,
+    "t": 0.6644718356260888
+   },
+   "sonnet55": {
+    "sessions": 0,
+    "mean": null,
+    "t": null
+   }
+  }
+ }
+}

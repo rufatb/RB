@@ -1,5 +1,24 @@
 # Working notes for this repo
 
+## Day134b — other OpenRouter models on the replay: no better (rejection #49, owner, 2026-10-14)
+
+The owner's research named "Sonnet 3.5" and "DeepSeek R1". Registered first
+(`PREREGISTER_day134_models.md`, ca9648f); read `AUDIT_day134_models.md`;
+script `replay_or_models.py`.
+* **What was asked.** Claude 3.5 Sonnet is retired on OpenRouter, so its 2026
+  line, Sonnet 5.5, was asked, along with DeepSeek R1-0528. Each got the
+  production desk question through `O.rank` with an OpenRouter client
+  (`ORClient`), on the 59 day-117 sessions, judged on the day-117 bar.
+* **Neither is contaminated:** both gave no 2026 closing prices.
+* **R1-0528.** The control passed 5/5. Then FAIL: 207 picks, 48.8%, −0.02%,
+  t = −0.14, placebo p = 0.61, MDE80 0.27%. Paired against DeepSeek, +0.07%
+  (t = 0.66).
+* **Sonnet 5.5.** The control failed (1/5), and it abstained on all 59
+  sessions.
+* **Nothing changes.** A model passing this bar would start as a forward shadow
+  desk. Spent $4.26; about $10 of OpenRouter credit remains, so tell the owner
+  before more studies.
+
 ## Day134 — the desks pick from the 150 most-traded TSX equities (owner, 2026-10-14)
 
 The owner said "go ahead with the 150". Registered first as the day-134
@@ -2332,8 +2351,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **48 rejections, 3
-adoptions** (as of day-132c). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **49 rejections, 3
+adoptions** (as of day-134b). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The three adopted changes were all VARIANCE results. None improved accuracy.

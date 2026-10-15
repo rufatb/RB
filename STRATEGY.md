@@ -5536,3 +5536,16 @@ issuer) is unchanged.
 * **Dry run.** 150 names in 51 s; 102 of the legacy 117 kept and 48 new; pool
   134 s; all 150 reach the desks.
 * No accuracy claim.
+
+## Day-134b: REJECTION #49 — another LLM on the same inputs picks no better
+
+The owner's research named Sonnet 3.5 and DeepSeek R1.
+`PREREGISTER_day134_models.md`; `AUDIT_day134_models.md`.
+* **DeepSeek R1-0528** passes the planted control 5/5, then fails the day-117
+  bar: 207 picks, 48.8%, −0.02% per pick, t = −0.14, placebo p = 0.61, MDE80
+  0.27%. Paired against DeepSeek, +0.07% (t = 0.66).
+* **Claude Sonnet 5.5** (3.5 is retired) abstained on all 59 sessions and
+  failed its control (1/5).
+* **So:** the coin flip is the inputs, not the model (day-117). Do not add a
+  model to the desks or the council on a vendor's reputation; replay it with
+  `replay_or_models.py` first.
