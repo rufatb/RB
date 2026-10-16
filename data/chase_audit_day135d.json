@@ -1,0 +1,1500 @@
+{
+ "base": {
+  "2026-10-05": {
+   "movers": 14,
+   "names": 150,
+   "share_moving": 0.093
+  },
+  "2026-10-06": {
+   "movers": 7,
+   "names": 150,
+   "share_moving": 0.047
+  },
+  "2026-10-07": {
+   "movers": 12,
+   "names": 150,
+   "share_moving": 0.08
+  },
+  "2026-10-08": {
+   "movers": 28,
+   "names": 150,
+   "share_moving": 0.187
+  },
+  "2026-10-09": {
+   "movers": 15,
+   "names": 150,
+   "share_moving": 0.1
+  },
+  "2026-10-13": {
+   "movers": 22,
+   "names": 150,
+   "share_moving": 0.147
+  },
+  "2026-10-14": {
+   "movers": 37,
+   "names": 150,
+   "share_moving": 0.247
+  },
+  "2026-10-15": {
+   "movers": 52,
+   "names": 150,
+   "share_moving": 0.347
+  },
+  "2026-10-16": {
+   "movers": 51,
+   "names": 150,
+   "share_moving": 0.34
+  }
+ },
+ "council_table_today": {
+  "consensus": "2 of 3 follow",
+  "picks": "2 of 2 follow",
+  "positions": [
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P1",
+    "kind": "calm",
+    "move_atr": 0.54,
+    "oppose": 0,
+    "pick": false,
+    "side": "LONG",
+    "ticker": "ATZ.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P2",
+    "kind": "calm",
+    "move_atr": -0.46,
+    "oppose": 3,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "CLS.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P3",
+    "kind": "follows",
+    "move_atr": 1.3,
+    "oppose": 0,
+    "pick": false,
+    "side": "LONG",
+    "ticker": "CSU.TO"
+   },
+   {
+    "consensus": true,
+    "endorse": 3,
+    "id": "P4",
+    "kind": "calm",
+    "move_atr": -0.75,
+    "oppose": 0,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P5",
+    "kind": "calm",
+    "move_atr": -0.1,
+    "oppose": 3,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "HBM.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P6",
+    "kind": "calm",
+    "move_atr": 0.13,
+    "oppose": 3,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "HUT.TO"
+   },
+   {
+    "consensus": true,
+    "endorse": 4,
+    "id": "P7",
+    "kind": "follows",
+    "move_atr": 2.53,
+    "oppose": 0,
+    "pick": true,
+    "side": "LONG",
+    "ticker": "L.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 2,
+    "id": "P8",
+    "kind": "calm",
+    "move_atr": -0.21,
+    "oppose": 1,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "SU.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P9",
+    "kind": "calm",
+    "move_atr": 0.66,
+    "oppose": 0,
+    "pick": false,
+    "side": "LONG",
+    "ticker": "TRI.TO"
+   },
+   {
+    "consensus": false,
+    "endorse": 0,
+    "id": "P10",
+    "kind": "follows",
+    "move_atr": -1.41,
+    "oppose": 0,
+    "pick": false,
+    "side": "SHORT",
+    "ticker": "TRP.TO"
+   },
+   {
+    "consensus": true,
+    "endorse": 4,
+    "id": "P11",
+    "kind": "follows",
+    "move_atr": 2.45,
+    "oppose": 0,
+    "pick": true,
+    "side": "LONG",
+    "ticker": "WCN.TO"
+   }
+  ],
+  "session": "2026-10-16",
+  "table": "4 of 11 follow"
+ },
+ "fetch_failures": {},
+ "sessions": [
+  "2026-10-05",
+  "2026-10-06",
+  "2026-10-07",
+  "2026-10-08",
+  "2026-10-09",
+  "2026-10-13",
+  "2026-10-14",
+  "2026-10-15",
+  "2026-10-16"
+ ],
+ "stages": {
+  "Jev forced": {
+   "base_follow_share": 0.087,
+   "calm": 8,
+   "fades": 1,
+   "follow_share": 0.438,
+   "follows": 7,
+   "known": 16,
+   "picks": 16,
+   "rows": [
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 1.31,
+     "r_pct": 1.5761,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "ERO.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": 0.21,
+     "r_pct": -0.7681,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "QSR.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 1.24,
+     "r_pct": -0.9286,
+     "session": "2026-10-06",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": -0.95,
+     "r_pct": -0.169,
+     "session": "2026-10-06",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 1.64,
+     "r_pct": -1.3282,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": -0.55,
+     "r_pct": -0.5058,
+     "session": "2026-10-07",
+     "side": "SHORT",
+     "ticker": "CS.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": -0.23,
+     "r_pct": 2.3389,
+     "session": "2026-10-09",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": -0.85,
+     "r_pct": -1.1442,
+     "session": "2026-10-09",
+     "side": "SHORT",
+     "ticker": "NA.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 4.34,
+     "r_pct": 2.4658,
+     "session": "2026-10-13",
+     "side": "LONG",
+     "ticker": "ATZ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": -1.37,
+     "r_pct": -0.968,
+     "session": "2026-10-13",
+     "side": "SHORT",
+     "ticker": "RCI-B.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": 0.92,
+     "r_pct": -0.4303,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "RBA.TO"
+    },
+    {
+     "kind": "fades",
+     "model": "jev",
+     "move_atr": 1.7,
+     "r_pct": 1.0576,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "OTEX.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": 0.44,
+     "r_pct": 2.8444,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "CSU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": -1.69,
+     "r_pct": -7.3386,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "EFR.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "jev",
+     "move_atr": -0.46,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "mean_pct": 0.309,
+     "n": 7,
+     "right": 2
+    },
+    "fades": {
+     "mean_pct": 1.058,
+     "n": 1,
+     "right": 1
+    },
+    "follows": {
+     "mean_pct": -1.087,
+     "n": 6,
+     "right": 2
+    }
+   },
+   "times_chance": 5.0
+  },
+  "desk selections": {
+   "base_follow_share": 0.085,
+   "calm": 16,
+   "fades": 1,
+   "follow_share": 0.5,
+   "follows": 17,
+   "known": 34,
+   "picks": 34,
+   "rows": [
+    {
+     "kind": "calm",
+     "model": "claude",
+     "move_atr": 0.91,
+     "r_pct": -2.1848,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.41,
+     "r_pct": -1.4767,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.85,
+     "r_pct": -0.7001,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "AC.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.31,
+     "r_pct": 1.5761,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "ERO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.6,
+     "r_pct": 0.8912,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "TECK-B.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.85,
+     "r_pct": -0.7001,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "AC.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.45,
+     "r_pct": -0.4328,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "GIL.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.1,
+     "r_pct": -0.7808,
+     "session": "2026-10-06",
+     "side": "SHORT",
+     "ticker": "CNQ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.24,
+     "r_pct": -0.9286,
+     "session": "2026-10-06",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.95,
+     "r_pct": -0.169,
+     "session": "2026-10-06",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "jev",
+     "move_atr": 1.24,
+     "r_pct": -0.9286,
+     "session": "2026-10-06",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.55,
+     "r_pct": 2.5478,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.19,
+     "r_pct": -0.2847,
+     "session": "2026-10-07",
+     "side": "SHORT",
+     "ticker": "BCE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.64,
+     "r_pct": -1.3282,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.98,
+     "r_pct": 0.6389,
+     "session": "2026-10-07",
+     "side": "SHORT",
+     "ticker": "EMA.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": 0.09,
+     "r_pct": 1.032,
+     "session": "2026-10-08",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -2.05,
+     "r_pct": -0.4149,
+     "session": "2026-10-08",
+     "side": "SHORT",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.07,
+     "r_pct": 1.3709,
+     "session": "2026-10-09",
+     "side": "LONG",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "fades",
+     "model": "gemini",
+     "move_atr": 1.44,
+     "r_pct": -0.7234,
+     "session": "2026-10-09",
+     "side": "SHORT",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.37,
+     "r_pct": -4.3217,
+     "session": "2026-10-13",
+     "side": "LONG",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -2.35,
+     "r_pct": -0.581,
+     "session": "2026-10-13",
+     "side": "SHORT",
+     "ticker": "BCE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": 1.45,
+     "r_pct": 0.2692,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": 1.3,
+     "r_pct": 0.5524,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.09,
+     "r_pct": 1.588,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "AC.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.2,
+     "r_pct": -2.4028,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "EMA.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": 0.75,
+     "r_pct": -3.5336,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.69,
+     "r_pct": 3.8152,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.62,
+     "r_pct": 1.1977,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.46,
+     "r_pct": -4.1722,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": 1.3,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "CSU.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.13,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.41,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "TRP.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "mean_pct": -0.154,
+     "n": 15,
+     "right": 5
+    },
+    "fades": {
+     "mean_pct": -0.723,
+     "n": 1,
+     "right": 0
+    },
+    "follows": {
+     "mean_pct": -0.797,
+     "n": 14,
+     "right": 6
+    }
+   },
+   "times_chance": 5.9
+  },
+  "nominations (forced, from 10-14)": {
+   "base_follow_share": 0.156,
+   "calm": 12,
+   "fades": 2,
+   "follow_share": 0.611,
+   "follows": 22,
+   "known": 36,
+   "picks": 36,
+   "rows": [
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 1.95,
+     "r_pct": -0.4316,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "CNQ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 1.45,
+     "r_pct": 0.2692,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": -1.27,
+     "r_pct": 0.9486,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "BEP-UN.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": -1.62,
+     "r_pct": 1.1977,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.09,
+     "r_pct": -1.588,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "AC.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.44,
+     "r_pct": -3.1145,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "HBM.TO"
+    },
+    {
+     "kind": "fades",
+     "model": "deepseek",
+     "move_atr": 1.7,
+     "r_pct": 1.0576,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "OTEX.TO"
+    },
+    {
+     "kind": "fades",
+     "model": "deepseek",
+     "move_atr": 1.01,
+     "r_pct": -0.9632,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "T.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.95,
+     "r_pct": -0.4316,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "CNQ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.45,
+     "r_pct": 0.2692,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.27,
+     "r_pct": 0.9486,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "BEP-UN.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.62,
+     "r_pct": 1.1977,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 1.82,
+     "r_pct": -1.0304,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "ATD.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 1.09,
+     "r_pct": 3.3421,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "claude",
+     "move_atr": 0.42,
+     "r_pct": 0.6938,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.13,
+     "r_pct": 2.1749,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "ATZ.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.42,
+     "r_pct": -0.6938,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": -1.3,
+     "r_pct": -11.1626,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 1.48,
+     "r_pct": 0.6687,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "DOL.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": 0.42,
+     "r_pct": -0.6938,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.3,
+     "r_pct": -11.1626,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 2.53,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "L.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "claude",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "claude",
+     "move_atr": -0.75,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "claude",
+     "move_atr": -0.21,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "SU.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.54,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "ATZ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "deepseek",
+     "move_atr": 2.53,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "L.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": -0.46,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "deepseek",
+     "move_atr": 0.13,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 2.53,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "L.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "gemini",
+     "move_atr": -0.1,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "HBM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "gemini",
+     "move_atr": -1.41,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "TRP.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "mean_pct": -0.537,
+     "n": 6,
+     "right": 2
+    },
+    "fades": {
+     "mean_pct": 0.047,
+     "n": 2,
+     "right": 1
+    },
+    "follows": {
+     "mean_pct": -1.639,
+     "n": 16,
+     "right": 8
+    }
+   },
+   "times_chance": 3.9
+  },
+  "the council Top 2": {
+   "base_follow_share": 0.095,
+   "calm": 3,
+   "fades": 0,
+   "follow_share": 0.8,
+   "follows": 12,
+   "known": 15,
+   "picks": 15,
+   "rows": [
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 1.6,
+     "r_pct": 0.8912,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "TECK-B.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2",
+     "move_atr": 0.91,
+     "r_pct": -2.1848,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2",
+     "move_atr": -0.95,
+     "r_pct": -0.169,
+     "session": "2026-10-06",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 1.64,
+     "r_pct": -1.3282,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -1.98,
+     "r_pct": 0.6389,
+     "session": "2026-10-07",
+     "side": "SHORT",
+     "ticker": "EMA.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -2.05,
+     "r_pct": -0.4149,
+     "session": "2026-10-08",
+     "side": "SHORT",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2",
+     "move_atr": -0.07,
+     "r_pct": 1.3709,
+     "session": "2026-10-09",
+     "side": "LONG",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 4.34,
+     "r_pct": 2.4658,
+     "session": "2026-10-13",
+     "side": "LONG",
+     "ticker": "ATZ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -2.8,
+     "r_pct": -1.0612,
+     "session": "2026-10-13",
+     "side": "SHORT",
+     "ticker": "CCA.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 1.95,
+     "r_pct": -0.4316,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "CNQ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -1.62,
+     "r_pct": 1.1977,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -1.46,
+     "r_pct": -4.1722,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 2.53,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "L.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "mean_pct": -0.328,
+     "n": 3,
+     "right": 1
+    },
+    "fades": {
+     "n": 0
+    },
+    "follows": {
+     "mean_pct": -0.583,
+     "n": 10,
+     "right": 4
+    }
+   },
+   "times_chance": 8.5
+  },
+  "the counted rule (shadow)": {
+   "base_follow_share": 0.082,
+   "calm": 6,
+   "fades": 0,
+   "follow_share": 0.455,
+   "follows": 5,
+   "known": 11,
+   "picks": 11,
+   "rows": [
+    {
+     "kind": "follows",
+     "model": "top2count",
+     "move_atr": 1.31,
+     "r_pct": 1.5761,
+     "session": "2026-10-05",
+     "side": "LONG",
+     "ticker": "ERO.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": -0.45,
+     "r_pct": -0.4328,
+     "session": "2026-10-05",
+     "side": "SHORT",
+     "ticker": "GIL.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2count",
+     "move_atr": 1.24,
+     "r_pct": -0.9286,
+     "session": "2026-10-06",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": -0.95,
+     "r_pct": -0.169,
+     "session": "2026-10-06",
+     "side": "SHORT",
+     "ticker": "CVE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2count",
+     "move_atr": 1.64,
+     "r_pct": -1.3282,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "CCO.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": 0.55,
+     "r_pct": 2.5478,
+     "session": "2026-10-07",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": -0.07,
+     "r_pct": 1.3709,
+     "session": "2026-10-09",
+     "side": "LONG",
+     "ticker": "TD.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": 0.75,
+     "r_pct": -3.5336,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "SHOP.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2count",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2count",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    },
+    {
+     "kind": "calm",
+     "model": "top2count",
+     "move_atr": 0.13,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "mean_pct": -0.043,
+     "n": 5,
+     "right": 2
+    },
+    "fades": {
+     "n": 0
+    },
+    "follows": {
+     "mean_pct": -1.073,
+     "n": 4,
+     "right": 1
+    }
+   },
+   "times_chance": 5.5
+  },
+  "the memory council (shadow)": {
+   "base_follow_share": 0.135,
+   "calm": 0,
+   "fades": 0,
+   "follow_share": 1.0,
+   "follows": 8,
+   "known": 8,
+   "picks": 8,
+   "rows": [
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": 1.37,
+     "r_pct": -4.3217,
+     "session": "2026-10-13",
+     "side": "LONG",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": -2.35,
+     "r_pct": -0.581,
+     "session": "2026-10-13",
+     "side": "SHORT",
+     "ticker": "BCE.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": 1.95,
+     "r_pct": -0.4316,
+     "session": "2026-10-14",
+     "side": "LONG",
+     "ticker": "CNQ.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": -1.62,
+     "r_pct": 1.1977,
+     "session": "2026-10-14",
+     "side": "SHORT",
+     "ticker": "SSRM.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": 1.82,
+     "r_pct": -1.0304,
+     "session": "2026-10-15",
+     "side": "LONG",
+     "ticker": "ATD.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": -1.51,
+     "r_pct": -3.613,
+     "session": "2026-10-15",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": 2.53,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "L.TO"
+    },
+    {
+     "kind": "follows",
+     "model": "top2memory",
+     "move_atr": 2.45,
+     "r_pct": null,
+     "session": "2026-10-16",
+     "side": "LONG",
+     "ticker": "WCN.TO"
+    }
+   ],
+   "scored": {
+    "calm": {
+     "n": 0
+    },
+    "fades": {
+     "n": 0
+    },
+    "follows": {
+     "mean_pct": -1.463,
+     "n": 6,
+     "right": 1
+    }
+   },
+   "times_chance": 7.4
+  }
+ },
+ "top2_sessions": {
+  "2026-10-05": {
+   "picks": [
+    "LONG TECK-B.TO (1.6, follows)",
+    "SHORT CVE.TO (0.91, calm)"
+   ],
+   "same_side": false
+  },
+  "2026-10-06": {
+   "picks": [
+    "SHORT CVE.TO (-0.95, calm)"
+   ],
+   "same_side": false
+  },
+  "2026-10-07": {
+   "picks": [
+    "LONG CCO.TO (1.64, follows)",
+    "SHORT EMA.TO (-1.98, follows)"
+   ],
+   "same_side": false
+  },
+  "2026-10-08": {
+   "picks": [
+    "SHORT TD.TO (-2.05, follows)"
+   ],
+   "same_side": false
+  },
+  "2026-10-09": {
+   "picks": [
+    "LONG TD.TO (-0.07, calm)"
+   ],
+   "same_side": false
+  },
+  "2026-10-13": {
+   "picks": [
+    "LONG ATZ.TO (4.34, follows)",
+    "SHORT CCA.TO (-2.8, follows)"
+   ],
+   "same_side": false
+  },
+  "2026-10-14": {
+   "picks": [
+    "LONG CNQ.TO (1.95, follows)",
+    "SHORT SSRM.TO (-1.62, follows)"
+   ],
+   "same_side": false
+  },
+  "2026-10-15": {
+   "picks": [
+    "SHORT CCO.TO (-1.46, follows)",
+    "SHORT CLS.TO (-1.51, follows)"
+   ],
+   "same_side": true
+  },
+  "2026-10-16": {
+   "picks": [
+    "LONG L.TO (2.53, follows)",
+    "LONG WCN.TO (2.45, follows)"
+   ],
+   "same_side": true
+  }
+ }
+}

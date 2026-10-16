@@ -3,8 +3,9 @@
 R2 passed its registered test: after a move of >= 1 ATR a name swings about a
 quarter wider the next session and leans neither way. Two things ship:
   * a caution line, always on, naming a pick on such a name (display only);
-  * the owner's switch, `council.SKIP_MOVERS`, OFF until they say yes: on, the
-    Top 2 passes over those positions, shows them, and records them as a shadow.
+  * the switch, `council.SKIP_MOVERS`, ON from 2026-10-16 (owner): the Top 2
+    passes over those positions, shows them, and records them as a shadow.
+    Off (skip_movers=False) reproduces the frozen day-124 rule.
 """
 import datetime as dt
 import json
@@ -42,12 +43,19 @@ def octfifteen():
     return with_moves(snap, CLS_TO=-1.5062, CCO_TO=-1.4567, HUT_TO=-1.2956)
 
 
-# ── the switch is off by default and changes nothing ────────────────────────
+# ── the switch: on from 10-16; off is the frozen rule, unchanged ────────────
 
-def test_the_switch_is_off_by_default_and_the_picks_do_not_move():
-    assert K.SKIP_MOVERS is False and K.MOVER_ATR == 1.0
-    plain = K.top_two(snap_of(ALL_AGREE), previous={})
-    moved = K.top_two(with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=-1.2), previous={})
+def test_the_switch_is_on_from_ten_sixteen_and_the_default_follows_it():
+    assert K.SKIP_MOVERS is True and K.MOVER_ATR == 1.0
+    snap = with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=-1.2)
+    assert K.top_two(snap, previous={}) == K.top_two(snap, previous={}, skip_movers=True)
+    assert [p['ticker'] for p in K.top_two(snap, previous={})['picks']] == ['CNQ.TO']
+
+
+def test_off_the_picks_do_not_move():
+    plain = K.top_two(snap_of(ALL_AGREE), previous={}, skip_movers=False)
+    moved = K.top_two(with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=-1.2), previous={},
+                      skip_movers=False)
     assert [(p['side'], p['ticker']) for p in moved['picks']] == \
         [(p['side'], p['ticker']) for p in plain['picks']] == [('LONG', 'AC.TO'), ('SHORT', 'SU.TO')]
     assert moved['rule_version'] == plain['rule_version'] == K.RULE_VERSION
@@ -56,10 +64,13 @@ def test_the_switch_is_off_by_default_and_the_picks_do_not_move():
 
 
 def test_a_council_without_moves_is_read_as_before_even_with_the_switch_on():
-    """Every council sealed before day-135c has no `moves`: nothing is passed over."""
+    """Every council sealed before day-135c has no `moves`: nothing is passed
+    over, and its record keeps the rule it was decided under."""
     sec = K.top_two(snap_of(ALL_AGREE), previous={}, skip_movers=True)
     assert [p['ticker'] for p in sec['picks']] == ['AC.TO', 'SU.TO'] and 'passed_movers' not in sec
-    assert sec['rule_version'] == K.RULE_VERSION + '+' + K.MOVER_RULE
+    assert sec['rule_version'] == K.RULE_VERSION
+    assert K.top_two(with_moves(snap_of(ALL_AGREE)), previous={}, skip_movers=True)['rule_version'] == \
+        K.RULE_VERSION + '+' + K.MOVER_RULE                  # moves recorded, even none big
 
 
 # ── switched on ─────────────────────────────────────────────────────────────
@@ -93,7 +104,7 @@ def test_ten_fifteen_every_agreed_position_was_a_mover_so_nothing_to_act_on():
     import email_render as E
     import top_picks
     snap = octfifteen()
-    off = K.top_two(snap, previous={})
+    off = K.top_two(snap, previous={}, skip_movers=False)
     assert [p['ticker'] for p in off['picks']] == ['CLS.TO', 'CCO.TO']    # what the morning printed
     sec = K.top_two(snap, previous={}, skip_movers=True)
     assert sec['picks'] == [] and sec['status'] == 'NO_AGREEMENT' and sec['runner_up'] is None
@@ -116,9 +127,18 @@ def test_ten_fifteen_every_agreed_position_was_a_mover_so_nothing_to_act_on():
         'RB Council Flash — 2026-10-15 — agreed only on big movers, passed over — nothing to act on')
 
 
+def test_on_a_day_the_council_chose_nothing_the_switch_chooses_nothing():
+    snap = with_moves(snap_of(ALL_AGREE), AC_TO=1.5)
+    snap['picks'], snap['status'] = [], 'NO_CONSENSUS'
+    on = K.top_two(snap, previous={}, skip_movers=True)
+    off = K.top_two(snap, previous={}, skip_movers=False)
+    assert on['picks'] == off['picks'] == [] and on['status'] == off['status'] == 'NO_AGREEMENT'
+    assert 'passed_movers' not in on
+
+
 def test_on_a_big_mover_is_never_the_runner_up_and_the_note_says_why():
     snap = with_moves(snap_of(ONE_AND_A_RUNNER_UP), SU_TO=-1.8)
-    assert K.top_two(snap, previous={})['runner_up']['ticker'] == 'SU.TO'          # off
+    assert K.top_two(snap, previous={}, skip_movers=False)['runner_up']['ticker'] == 'SU.TO'   # off
     sec = K.top_two(snap, previous={}, skip_movers=True)
     assert [p['ticker'] for p in sec['picks']] == ['AC.TO'] and sec['runner_up'] is None
     assert sec['runner_up_note'] == ("No runner-up: the other positions with more endorsements than "
@@ -133,6 +153,7 @@ def test_one_normal_day_either_way_is_a_mover_and_an_unknown_move_is_not():
         snap['moves'] = {'AC.TO': {'move_atr': m}}
         sec = K.top_two(snap, previous={}, skip_movers=True)
         assert ('AC.TO' in [x['ticker'] for x in sec.get('passed_movers') or []]) is mover, m
+        assert sec['rule_version'] == K.RULE_VERSION + '+' + K.MOVER_RULE
         assert K.is_mover({'move_atr': m}) is mover
 
 
@@ -152,7 +173,7 @@ MOVER_TAIL = ('After a move that size a name swings about a quarter wider the ne
 
 def test_the_caution_names_each_pick_on_a_big_mover_and_which_way_it_leans():
     import top_picks
-    sec = K.top_two(octfifteen(), previous={})
+    sec = K.top_two(octfifteen(), previous={}, skip_movers=False)
     line = top_picks.mover_line(sec)
     assert line == ("⚠ The last session's big movers: SHORT CLS.TO follows a fall of 1.5 normal days · "
                     "SHORT CCO.TO follows a fall of 1.5 normal days. " + MOVER_TAIL)
@@ -168,17 +189,19 @@ def test_the_caution_names_each_pick_on_a_big_mover_and_which_way_it_leans():
 def test_no_caution_without_a_mover_pick_and_a_runner_up_never_triggers_it():
     import top_picks
     assert top_picks.mover_line(K.top_two(snap_of(ALL_AGREE), previous={})) is None   # no moves known
-    sec = K.top_two(with_moves(snap_of(ONE_AND_A_RUNNER_UP), AC_TO=0.3, SU_TO=-1.8), previous={})
+    sec = K.top_two(with_moves(snap_of(ONE_AND_A_RUNNER_UP), AC_TO=0.3, SU_TO=-1.8), previous={},
+                    skip_movers=False)
     assert sec['runner_up']['ticker'] == 'SU.TO' and sec['runner_up']['move_atr'] == -1.8
     assert top_picks.mover_line(sec) is None
     assert top_picks.mover_line(None) is None and top_picks.mover_line({'picks': []}) is None
 
 
-def test_the_caution_is_in_the_email_hero_and_body_the_flash_and_the_page():
+def test_the_caution_is_in_the_email_hero_and_body_the_flash_and_the_page(monkeypatch):
     import council_flash
     import email_render as E
     import report_page
     import top_picks
+    monkeypatch.setattr(K, 'SKIP_MOVERS', False)           # the caution shows when a mover is picked
     sec = K.top_two(octfifteen(), previous={})
     line = top_picks.mover_line(sec)
     esc = E.full.escape(line)
@@ -248,7 +271,9 @@ def test_stage_keeps_each_names_move_beside_the_decision(staged, monkeypatch):
 def test_the_memory_council_follows_the_same_switch(monkeypatch):
     import council_memory
     snap = {**with_moves(snap_of(ALL_AGREE), AC_TO=1.5), 'variant': 'memory'}
+    monkeypatch.setattr(K, 'SKIP_MOVERS', False)
     assert [p['ticker'] for p in council_memory.section(snap)['picks']] == ['AC.TO', 'SU.TO']
+    assert council_memory.section(snap)['rule_version'] == council_memory.RULE_VERSION
     monkeypatch.setattr(K, 'SKIP_MOVERS', True)
     sec = council_memory.section(snap)
     assert [p['ticker'] for p in sec['picks']] == ['SU.TO', 'CNQ.TO'] and sec['shadow']

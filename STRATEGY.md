@@ -5607,3 +5607,26 @@ R2 ships as the owner's switch (`council.SKIP_MOVERS`), off until they say yes.
 If it is switched on, it is the fourth adoption, and like the other three a
 variance result. Nothing here makes a pick more likely to be right.
 
+## Day-135d: REJECTION #52 — big movers do not turn back after a broad day; R2 switched on (adoption #4)
+
+Registered in `PREREGISTER_day135d_breadth.md` (75e2ecc) before any return
+was computed; read `AUDIT_day135d_breadth.md`.
+
+* **Why it was asked.** Two Top 2s in a row followed the day before's big
+  move, on one side each: SHORT CLS/CCO, then LONG L/WCN. The owner's reading
+  is that big movers turn back the next day.
+* **The test.** After a broad day (the top decile of breadth, 266 sessions,
+  2017–2026), the movers' next session is +0.023% raw (t = 0.26) and +0.011%
+  against XIU (t = 0.16). Placebo p is 0.80. A planted −0.30% shows at
+  t = −3.41. **NULL, powered.**
+* **Where the habit enters (live, descriptive).** The council's Top 2 followed
+  the move on 12 of 15 picks, 8.5× chance, and never faded. Desk selections
+  follow at 5.9×. The council's agreement narrows the table (4 of 11 on 10-16)
+  to the picks (2 of 2).
+* **R2 is on from the 2026-10-19 morning** (`council.SKIP_MOVERS = True`).
+  * The owner asked twice for picks that do not carry the day before's move.
+  * It is the fourth adoption, and like the other three a variance result.
+  * On 10-16 it would have traded SHORT CVE.TO (−1.73%) instead of the two
+    longs (+0.75%, +0.42%). It does not make a pick right; it removes the
+    widest swings.
+

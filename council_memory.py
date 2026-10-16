@@ -274,7 +274,7 @@ def section(snap, *, prices=None):
         return None
     out = K.top_two(snap, None, prices=prices, previous={})
     import entry_checks
-    out['rule_version'] = (RULE_VERSION + ('+' + K.MOVER_RULE if K.SKIP_MOVERS else '')
+    out['rule_version'] = (RULE_VERSION + ('+' + K.MOVER_RULE if K.SKIP_MOVERS and 'moves' in snap else '')
                            + ('+' + entry_checks.RULE_VERSION if prices is not None else ''))
     out['shadow'] = True
     return out

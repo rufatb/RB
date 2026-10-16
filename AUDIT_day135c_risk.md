@@ -124,8 +124,9 @@ The ten-year measure is the test; thirteen picks are an anecdote.
 
    Only picks trigger it; a runner-up never does.
 2. **The switch, `council.SKIP_MOVERS`: OFF until the owner says yes.** On:
-   * **The picks.** The Top 2 is the council's agreed positions in tally order,
-     passing over any name that moved ≥ 1 ATR in the last session. The moves
+   * **The picks.** The Top 2 is the frozen rule's picks minus any name that
+     moved ≥ 1 ATR in the last session. An emptied slot is refilled from the
+     next agreed positions in tally order, passing over movers there too. The moves
      are `council.json`'s `moves`, copied from the brief's rows, so they are
      the same `move_atr` every member read. A name with no measured move is
      not passed over.
@@ -157,3 +158,10 @@ The ten-year measure is the test; thirteen picks are an anecdote.
 * **The other lever is the noon exit** (day-130 H3: no worse, 15% less swing),
   shown and never applied. On 10-15: CLS −0.79% at noon against −3.61% at the
   close; CCO −3.64% against −4.17%.
+
+---
+
+**Addendum, 2026-10-16:** the owner asked a second time for picks that do not
+carry the day before's move, and R2 was switched on for the 10-19 morning. See
+`AUDIT_day135d_breadth.md`.
+

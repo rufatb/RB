@@ -98,3 +98,18 @@ After a BROAD day, when an unusually large share of the 150 names moved
   edge.
 
 Script: `breadth_reversal.py`. Summary: `data/breadth_day135d.json`.
+
+---
+
+## Results (added after the run; the text above is unchanged)
+
+Read `AUDIT_day135d_breadth.md`. 2017–2026: 266 broad sessions, 12,020
+mover name-days.
+* **RAW:** +0.023% (t = 0.26), placebo p = 0.80. The blocks disagree in
+  sign. A planted −0.30% shows at t = −3.41. **NULL** (rejection #52).
+* **Against XIU:** +0.011% (t = 0.16), placebo p = 0.86. NULL.
+* **The market:** after a broad day, XIU signed by its direction is +0.017%
+  (t = 0.29).
+
+As registered, no rule follows. The same day the owner switched on day-135c's
+R2 (skip big movers), the tested answer.

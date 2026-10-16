@@ -1,5 +1,64 @@
 # Working notes for this repo
 
+## Day135d — two same-side chases in a row: big movers do not turn back either; the skip switch is ON (rejection #52, adoption #4, owner, 2026-10-16)
+
+The Top 2 followed the day before's big move twice running, on one side each
+time:
+* 10-15: SHORT CLS and CCO after falls of about 1.5 ATR;
+* 10-16: LONG L and WCN after rises of about 2.5 ATR.
+
+The owner lost their two weeks' gains on 10-15 and asked why, and what raises
+accuracy. Their reading is that big movers turn back. Registered first
+(`PREREGISTER_day135d_breadth.md`, 75e2ecc); read `AUDIT_day135d_breadth.md`.
+Scripts: `breadth_reversal.py` and `chase_audit.py`.
+
+**The registered test: NULL, powered (#52).**
+* **The population.** After a broad day (breadth in the top decile of the
+  prior 250 sessions: 266 sessions, 2017–2026), the movers' next session is:
+  * +0.023% raw, t = 0.26, placebo p = 0.80;
+  * +0.011% against XIU.
+* **Power.** A planted −0.30% shows at t = −3.41.
+* **Splits.** Up and down days both read null, and so does the market itself
+  (+0.017%, t = 0.29).
+* **So:** no fade rule, and (day-132) no chase rule.
+
+**Where the habit enters** (live, 10-05 → 10-16, descriptive).
+`chase_audit.py`:
+* **By stage,** against a random name and side:
+  * desk selections follow a ≥ 1 ATR move 50% of the time (5.9×);
+  * nominations 61% (3.9×);
+  * the council's Top 2 80%, 12 of 15 (8.5×), with no fades.
+* **The council narrows it.** On 10-16: table 4 of 11, consensus 2 of 3, picks
+  2 of 2.
+* **Same-side pairs** happened only on 10-15 and 10-16, right after the
+  broadest sessions (25–35% of the list moved big). The most striking movers
+  move together.
+* **10-16 itself:** the longs were under water at noon and finished +0.75% and
+  +0.42% from 09:45. 10-15's shorts fell (HUT −10%). It is a coin flip with a
+  wide swing.
+
+**What changed:** `council.SKIP_MOVERS = True` from the 10-19 morning.
+* **Why.** The owner asked twice for picks that do not carry the last day's
+  move into the next. Day-135c's R2 is the tested rule that does it.
+* **The record label.** rule_version gains `+day135c-movers` only for a council
+  that recorded `moves`; one sealed before 10-15 keeps its old label.
+* **What it would have done.** On 10-16, SHORT CVE.TO alone (−1.73% for the
+  short) instead of the two longs. It narrows the swing; it never makes a pick
+  right.
+* **Setting it to False** restores the frozen day-124 rule.
+* **Not covered:** the counted fallback (a morning the council does not sit)
+  does not apply R2. Its picks carry no moves, so neither the skip nor the
+  caution line reaches them.
+
+**Accuracy, said plainly to the owner:** 52 registered tests, none raising the
+hit rate. The Top 2 is 7/19 (37%), −0.63% a pick after costs. The levers left
+are loss size:
+* skip big movers;
+* don't stack same-side picks (they correlate 0.25 on 1% market days, about
+  29% more swing);
+* the noon exit;
+* size.
+
 ## Day135c — the last session's big movers: a caution always, a skip switch for the owner (rejection #51 for R1, owner, 2026-10-15)
 
 The owner asked what stops "today's type of insane wipeouts", and for a
@@ -34,11 +93,13 @@ script `risk_rules.py`, summary `data/risk_day135c.json`.
   * it sits under the picks in every Top 2 table, in the email and flash
     heroes (`email_render.mover_html`) and above the page's table;
   * only picks trigger it, never the runner-up.
-* **The switch, `council.SKIP_MOVERS = False`.** It stays off until the owner
-  says yes; flipping it is a one-line commit. On:
-  * `council.top_two` takes the agreed positions in tally order, passing over
-    big movers (`council.json` `moves`, copied from the brief's rows in
-    `stage`);
+* **The switch, `council.SKIP_MOVERS`.** It was built OFF; the owner's request
+  switched it ON on 10-16 (day-135d). On:
+  * `council.top_two` keeps the frozen rule's picks minus the big movers, and
+    refills an emptied slot from the next agreed positions in tally order,
+    passing over movers there too. The moves are `council.json`'s `moves`,
+    copied from the brief's rows in `stage`. A day with no picks stays a day
+    with no picks;
   * a big mover is never the runner-up;
   * the passed-over positions print as "Passed over as the last session's big
     movers …";
@@ -2491,11 +2552,11 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **51 rejections, 3
-adoptions** (as of day-135c; R2 waits on the owner's switch). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **52 rejections, 4
+adoptions** (as of day-135d; R2, skip big movers, is the fourth). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
-The three adopted changes were all VARIANCE results. None improved accuracy.
+The four adopted changes were all VARIANCE results. None improved accuracy.
 
 ## The constraint that governs the intraday engine
 

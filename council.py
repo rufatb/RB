@@ -54,9 +54,11 @@ PICKS = 2
 # session swings about a quarter wider (2016-2026, 49,295 name-days, sd 2.67%
 # against 2.15%) and leans neither way (t = -0.24). The owner's switch: when on,
 # the Top 2 passes over such positions. A size rule, never a claim that a pick
-# is righter; the record splits at MOVER_RULE.
+# is righter; the record splits at MOVER_RULE. ON from 2026-10-16, after two
+# Top 2s in a row followed the day before's big move (owner: "it's pretty risky
+# for me to long again the next day"); False restores the frozen day-124 rule.
 MOVER_ATR = 1.0
-SKIP_MOVERS = False
+SKIP_MOVERS = True
 MOVER_RULE = 'day135c-movers'
 MOVER_NOTE = ('After a move that size a name swings about a quarter wider the next session '
               '(2016–2026, 49,295 cases), and neither following the move nor betting on a bounce '
@@ -845,19 +847,22 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     moves = council.get('moves') or {}
     skip = SKIP_MOVERS if skip_movers is None else skip_movers
     picks, void, passed = [], [], []
-    if skip:
+    frozen = list(council.get('picks') or [])
+    chosen_ids = frozen
+    if skip and frozen:
+        # The frozen rule's picks minus the big movers, refilled from the next
+        # agreed positions in tally order (passing over movers there too). On a
+        # day the council chose nothing, the switch chooses nothing.
         chosen_ids = []
-        for r in tally_rows:
-            if not r.get('consensus') or r['id'] not in by_id:
-                continue
-            if _mover(moves, r['ticker']) is not None:
-                passed.append(r['id'])
-                continue
-            chosen_ids.append(r['id'])
-            if len(chosen_ids) == PICKS:
+        for pid in frozen:
+            p = by_id.get(pid)
+            (passed if p and _mover(moves, p['ticker']) is not None else chosen_ids).append(pid)
+        for r in tally_rows if passed else []:
+            if len(chosen_ids) >= PICKS:
                 break
-    else:
-        chosen_ids = list(council.get('picks') or [])
+            if not r.get('consensus') or r['id'] in frozen or r['id'] not in by_id:
+                continue
+            (passed if _mover(moves, r['ticker']) is not None else chosen_ids).append(r['id'])
 
     def entry(p):
         if prices is None:
@@ -931,7 +936,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
             x['move_atr'] = float(m)
     out = {'picks': picks, 'status': status, 'council': True,
            'answered': members, 'absent': (council.get('tally') or {}).get('absent') or [],
-           'rule_version': (RULE_VERSION + ('+' + MOVER_RULE if skip else '')
+           'rule_version': (RULE_VERSION + ('+' + MOVER_RULE if skip and 'moves' in council else '')
                             + ('+' + entry_checks.RULE_VERSION if prices is not None else '')),
            'reason': reason, 'near': near,
            'runner_up': runner_up,
