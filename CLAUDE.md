@@ -1,6 +1,6 @@
 # Working notes for this repo
 
-## Day135d — two same-side chases in a row: big movers do not turn back either; the skip switch is ON (rejection #52, adoption #4, owner, 2026-10-16)
+## Day135d — two same-side chases in a row: big movers do not turn back either; the skip switch is ON and remove-only (rejection #52, adoption #4, owner, 2026-10-16)
 
 The Top 2 followed the day before's big move twice running, on one side each
 time:
@@ -33,27 +33,72 @@ Scripts: `breadth_reversal.py` and `chase_audit.py`.
 * **Same-side pairs** happened only on 10-15 and 10-16, right after the
   broadest sessions (25–35% of the list moved big). The most striking movers
   move together.
-* **10-16 itself:** the longs were under water at noon and finished +0.75% and
-  +0.42% from 09:45. 10-15's shorts fell (HUT −10%). It is a coin flip with a
-  wide swing.
+* **10-16 itself:** the longs were under water at noon (L +0.07%, WCN −0.72%)
+  and finished +0.88% and +0.67% on the record. Shorting 10-15's names again
+  would have won (HUT −10%). It is a coin flip with a wide swing.
 
-**What changed:** `council.SKIP_MOVERS = True` from the 10-19 morning.
+**What changed:** `council.SKIP_MOVERS = True` from the 10-19 morning, and the
+rule is REMOVE-ONLY.
 * **Why.** The owner asked twice for picks that do not carry the last day's
   move into the next. Day-135c's R2 is the tested rule that does it.
+* **Remove-only** (owner, 10-16: "learn from today's and yesterday's
+  trades").
+  * The Top 2 is the council's picks minus the big movers. Nothing is added.
+  * As first built, the rule refilled an emptied slot from the next agreed
+    position. On 10-16 that made SHORT CVE.TO a pick, and it lost 1.39%.
+  * A rule meant to cut risk must not add a trade. The next agreed non-mover
+    is now only the labelled runner-up ("agreed, ranked below the picks"), as
+    below a pick void at 09:46.
 * **The record label.** rule_version gains `+day135c-movers` only for a council
   that recorded `moves`; one sealed before 10-15 keeps its old label.
-* **What it would have done.** On 10-16, SHORT CVE.TO alone (−1.73% for the
-  short) instead of the two longs. It narrows the swing; it never makes a pick
-  right.
+* **What it does on the two days** (dry runs on the sealed councils):
+  * 10-15: nothing to act on. CLS and CCO are passed over; HUT and EFR are
+    movers too, so neither can stand as runner-up;
+  * 10-16: no council pick. L and WCN are passed over; SHORT CVE.TO is the
+    runner-up, never a pick (it lost 1.39%).
+
+  It narrows the swing; it never makes a pick right.
+* **How it reads.**
+  * The flash: "big movers passed over — nothing to act on", or "— no council
+    pick · runner-up, …".
+  * The hero and the table: "The council's picks were the last session's big
+    movers, passed over — …". `council.passed_head` writes it, singular or
+    plural, and names a pick void at 09:46.
+  * The 09:31 open check and the noon check: "no council pick · runner-up …";
+    the open check adds a line saying the runner-up is not a pick.
+  * The report subject: "⛔ NO COUNCIL PICK — big movers passed over".
 * **Setting it to False** restores the frozen day-124 rule.
-* **Not covered:** the counted fallback (a morning the council does not sit)
-  does not apply R2. Its picks carry no moves, so neither the skip nor the
-  caution line reaches them.
+* **The counted fallback is covered now.** On a morning the council does not
+  sit, `council.decide` applies the same remove-only rule to the counted
+  picks (`counted_movers`).
+  * The moves are the council's recorded ones, else the brief's
+    (`brief_moves`).
+  * Every counted pick carries its move, so the caution line reaches it.
+  * Without moves it prints "The big-mover rule (day-135c) could not be
+    applied: …".
+  * The `top2count` shadow is unchanged.
+
+**The two days, by rule** (gross, 09:45 → close; two days are an anecdote):
+
+| Rule | Trades | Sum |
+|---|---:|---:|
+| the Top 2 as printed | 4 | −6.24% |
+| the same picks, out at noon (the lab) | 4 | −5.13% |
+| one pick per side (R1) | 2 | −2.73% |
+| skip big movers, refilled (as first built) | 1 | −1.39% |
+| **skip big movers, remove-only (now)** | **0** | **0** |
+
+* **Each day "teaches" the opposite.** On 10-15, fading the fall would have
+  won. On 10-16, following the rise won by the close. The ten-year tests say
+  neither has an edge (day-132, day-135c, day-135d).
+* **The one constant:** both days held two big movers on one side. That is
+  what the rule removes.
+* **The memory council,** shown the past outcomes, still chased on both days.
 
 **Accuracy, said plainly to the owner:** 52 registered tests, none raising the
 hit rate. The Top 2 is 7/19 (37%), −0.63% a pick after costs. The levers left
 are loss size:
-* skip big movers;
+* skip big movers (on, remove-only);
 * don't stack same-side picks (they correlate 0.25 on 1% market days, about
   29% more swing);
 * the noon exit;
@@ -95,11 +140,11 @@ script `risk_rules.py`, summary `data/risk_day135c.json`.
   * only picks trigger it, never the runner-up.
 * **The switch, `council.SKIP_MOVERS`.** It was built OFF; the owner's request
   switched it ON on 10-16 (day-135d). On:
-  * `council.top_two` keeps the frozen rule's picks minus the big movers, and
-    refills an emptied slot from the next agreed positions in tally order,
-    passing over movers there too. The moves are `council.json`'s `moves`,
-    copied from the brief's rows in `stage`. A day with no picks stays a day
-    with no picks;
+  * `council.top_two` keeps the frozen rule's picks minus the big movers and
+    adds nothing (remove-only since day-135d; as first built it refilled an
+    emptied slot from the next agreed positions). The moves are
+    `council.json`'s `moves`, copied from the brief's rows in `stage`. A day
+    with no picks stays a day with no picks;
   * a big mover is never the runner-up;
   * the passed-over positions print as "Passed over as the last session's big
     movers …";
@@ -110,8 +155,8 @@ script `risk_rules.py`, summary `data/risk_day135c.json`.
 * **A council sealed before day-135c** has no `moves`, so nothing is passed
   over.
 * **The dry run on 10-15's sealed council.** Off, the picks are unchanged and
-  both cautions print. On, nothing is left to act on: CLS, CCO and HUT are
-  passed over, and EFR cannot stand as runner-up.
+  both cautions print. On, nothing is left to act on: CLS and CCO are passed
+  over, and HUT and EFR, movers too, cannot stand as runner-up.
 
 **Not claimed:** no pick is righter. The switch removes the names that swing
 widest the next day; on a day like 10-15 (52 of 150 big movers) it can empty

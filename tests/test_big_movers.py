@@ -4,8 +4,10 @@ R2 passed its registered test: after a move of >= 1 ATR a name swings about a
 quarter wider the next session and leans neither way. Two things ship:
   * a caution line, always on, naming a pick on such a name (display only);
   * the switch, `council.SKIP_MOVERS`, ON from 2026-10-16 (owner): the Top 2
-    passes over those positions, shows them, and records them as a shadow.
-    Off (skip_movers=False) reproduces the frozen day-124 rule.
+    is the council's picks minus those positions, shown and recorded as a
+    shadow. Nothing is added in their place (day-135d, remove-only): the rule
+    only ever takes a trade away. Off (skip_movers=False) reproduces the
+    frozen day-124 rule.
 """
 import datetime as dt
 import json
@@ -49,7 +51,9 @@ def test_the_switch_is_on_from_ten_sixteen_and_the_default_follows_it():
     assert K.SKIP_MOVERS is True and K.MOVER_ATR == 1.0
     snap = with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=-1.2)
     assert K.top_two(snap, previous={}) == K.top_two(snap, previous={}, skip_movers=True)
-    assert [p['ticker'] for p in K.top_two(snap, previous={})['picks']] == ['CNQ.TO']
+    sec = K.top_two(snap, previous={})
+    assert sec['picks'] == [] and [x['ticker'] for x in sec['passed_movers']] == ['AC.TO', 'SU.TO']
+    assert sec['runner_up']['ticker'] == 'CNQ.TO'         # shown, labelled, never a pick
 
 
 def test_off_the_picks_do_not_move():
@@ -75,28 +79,73 @@ def test_a_council_without_moves_is_read_as_before_even_with_the_switch_on():
 
 # ── switched on ─────────────────────────────────────────────────────────────
 
-def test_on_a_big_mover_is_passed_over_and_the_next_agreed_position_takes_the_slot():
+def test_on_a_big_mover_is_passed_over_and_nothing_takes_its_slot():
+    """Remove-only (day-135d): on 10-16 the refill made SHORT CVE.TO a pick, and
+    it lost 1.39%. The next agreed position is now the labelled runner-up."""
+    import council_flash
+    import email_render as E
     import top_picks
     snap = with_moves(snap_of(ALL_AGREE), AC_TO=1.5, SU_TO=0.4, CNQ_TO=-0.2)
     assert snap['picks'] == ['P1', 'P2']                  # the frozen rule chose AC.TO and SU.TO
     sec = K.top_two(snap, previous={}, skip_movers=True)
-    assert [(p['side'], p['ticker']) for p in sec['picks']] == [('SHORT', 'SU.TO'), ('LONG', 'CNQ.TO')]
-    assert sec['status'] == 'READY' and sec['reason'] is None
+    assert [(p['side'], p['ticker']) for p in sec['picks']] == [('SHORT', 'SU.TO')]
+    assert sec['status'] == 'PARTIAL'
+    assert sec['reason'] == ("The council's other pick was one of the last session's big movers, "
+                             "passed over by the big-mover rule (day-135c); the second slot is left empty.")
+    ru = sec['runner_up']
+    assert (ru['side'], ru['ticker'], ru['label']) == ('LONG', 'CNQ.TO', 'agreed, ranked below the picks')
     assert [(x['side'], x['ticker'], x['move_atr']) for x in sec['passed_movers']] == [('LONG', 'AC.TO', 1.5)]
     assert sec['passed_movers'][0]['agreement'] == '3 of 3 endorse'
     assert sec['rule_version'] == K.RULE_VERSION + '+day135c-movers'
     text = '\n'.join(top_picks.table(sec, concise=True))
     assert ("Passed over as the last session's big movers (the big-mover rule, day-135c): "
             "LONG AC.TO (a rise of 1.5 normal days). Recorded as a shadow, never sized.") in text
+    assert 'Runner-up — agreed, ranked below the picks, not a council pick: LONG CNQ.TO' in text
     assert '⚠ ' + "The last session's big movers" not in text      # no pick is a mover now
+    assert council_flash.subject('2026-10-05', sec) == (
+        'RB Council Flash — 2026-10-05 — SHORT SU.TO (3 of 3 endorse) · runner-up, agreed, ranked '
+        'below the picks: LONG CNQ.TO')
+    html = E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
+    assert 'Top 2 today: SHORT SU.TO (3 of 3 endorse) · runner-up, agreed, ranked below the picks: LONG CNQ.TO' in html
+
+
+def test_ten_sixteen_both_picks_were_movers_so_nothing_is_picked_and_the_runner_up_is_labelled():
+    """10-16's shape: LONG AC.TO and LONG SU.TO rose 2.5 ATR (L and WCN), and the
+    council's third agreed position (SHORT CVE.TO) was no mover. The refill made
+    it a pick; remove-only leaves it the runner-up."""
+    import council_flash
+    import email_render as E
+    import top_picks
+    snap = with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=2.4, CNQ_TO=0.3)
+    sec = K.top_two(snap, previous={}, skip_movers=True)
+    assert sec['picks'] == [] and sec['status'] == 'NO_AGREEMENT'
+    assert [x['ticker'] for x in sec['passed_movers']] == ['AC.TO', 'SU.TO']
+    assert sec['runner_up']['ticker'] == 'CNQ.TO'
+    assert sec['reason'] == ("The council's picks were the last session's big movers, passed over by "
+                             "the big-mover rule (day-135c), so there is nothing here to act on.")
+    concise = top_picks.table(sec, concise=True)
+    assert "The council's picks were the last session's big movers, passed over — no council pick." in concise
+    assert council_flash.subject('2026-10-16', sec) == (
+        'RB Council Flash — 2026-10-16 — big movers passed over — no council pick · runner-up, '
+        'agreed, ranked below the picks: LONG CNQ.TO')
+    html = E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
+    assert ("Top 2 today: the council&#x27;s picks were the last session&#x27;s big movers, passed over — "
+            "no council pick · runner-up, agreed, ranked below the picks: LONG CNQ.TO (3 of 3 endorse), "
+            "not a pick") in html
 
 
 def test_the_entry_check_still_applies_after_the_movers_are_passed_over():
+    import top_picks
     snap = with_moves(snap_of(ALL_AGREE), AC_TO=1.5)
     sec = K.top_two(snap, previous={}, skip_movers=True, prices={'AC.TO': 31.0, 'SU.TO': 51.0, 'CNQ.TO': 20.0})
-    assert [p['ticker'] for p in sec['picks']] == ['CNQ.TO'] and sec['void_at_entry'] == ['SHORT SU.TO']
+    assert sec['picks'] == [] and sec['void_at_entry'] == ['SHORT SU.TO']
+    assert [x['ticker'] for x in sec['passed_movers']] == ['AC.TO']
     assert sec['rule_version'] == K.RULE_VERSION + '+day135c-movers+day120-entry'
-    assert sec['reason'].startswith('One position the council chose was already past')
+    assert sec['reason'] == ("One council pick was one of the last session's big movers, passed over by "
+                             "the big-mover rule (day-135c), and the other was already past its own "
+                             "\"wrong if\" at 09:46, so there is nothing here to act on.")
+    assert ("One council pick was one of the last session's big movers, passed over, and the other was "
+            "already past its own \"wrong if\" at 09:46 — no council pick.") in top_picks.table(sec, concise=True)
 
 
 def test_ten_fifteen_every_agreed_position_was_a_mover_so_nothing_to_act_on():
@@ -108,23 +157,29 @@ def test_ten_fifteen_every_agreed_position_was_a_mover_so_nothing_to_act_on():
     assert [p['ticker'] for p in off['picks']] == ['CLS.TO', 'CCO.TO']    # what the morning printed
     sec = K.top_two(snap, previous={}, skip_movers=True)
     assert sec['picks'] == [] and sec['status'] == 'NO_AGREEMENT' and sec['runner_up'] is None
-    assert [x['ticker'] for x in sec['passed_movers']] == ['CLS.TO', 'CCO.TO', 'HUT.TO']
-    # listed once, as passed over — never again as a runner-up that "cannot stand"
-    assert sec['runner_up_note'] == ('No runner-up: every other position drew at least as many '
-                                     'objections as endorsements.')
-    assert sec['reason'] == ("Every position the council agreed on was one of the last session's big "
-                             "movers, passed over by the big-mover rule (day-135c), so there is "
-                             "nothing here to act on.")
+    # the council's two picks are passed over; HUT.TO was never a pick, so it is
+    # not recorded as one, and as a mover it cannot be the runner-up
+    assert [x['ticker'] for x in sec['passed_movers']] == ['CLS.TO', 'CCO.TO']
+    assert sec['runner_up_note'] == ("No runner-up: the other positions with more endorsements than "
+                                     "objections cannot stand — SHORT HUT.TO (one of the last "
+                                     "session's big movers).")
+    assert sec['reason'] == ("The council's picks were the last session's big movers, passed over by "
+                             "the big-mover rule (day-135c), so there is nothing here to act on.")
     concise = top_picks.table(sec, concise=True)
-    assert ("The council agreed only on the last session's big movers — passed over, nothing to act "
-            "on.") in concise
+    assert "The council's picks were the last session's big movers, passed over — nothing to act on." in concise
     assert 'No consensus' not in '\n'.join(concise)                     # there WAS consensus
     assert sec['reason'] in top_picks.table(sec)                         # the full report
     html = E._hero({'intraday': {'top_two': sec, 'desks': [{}]}})
-    assert ("Top 2 today: the council agreed only on the last session&#x27;s big movers — passed "
-            "over, nothing to act on") in html
+    assert ("Top 2 today: the council&#x27;s picks were the last session&#x27;s big movers, passed "
+            "over — nothing to act on") in html
     assert council_flash.subject('2026-10-15', sec) == (
-        'RB Council Flash — 2026-10-15 — agreed only on big movers, passed over — nothing to act on')
+        'RB Council Flash — 2026-10-15 — big movers passed over — nothing to act on')
+    one = {**snap, 'picks': ['P1']}                       # a council that picked one mover
+    sec = K.top_two(one, previous={}, skip_movers=True)
+    assert sec['reason'] == ("The council's pick was one of the last session's big movers, passed over "
+                             "by the big-mover rule (day-135c), so there is nothing here to act on.")
+    assert council_flash.subject('2026-10-15', sec) == (
+        'RB Council Flash — 2026-10-15 — a big mover passed over — nothing to act on')
 
 
 def test_on_a_day_the_council_chose_nothing_the_switch_chooses_nothing():
@@ -160,7 +215,7 @@ def test_one_normal_day_either_way_is_a_mover_and_an_unknown_move_is_not():
 def test_the_flash_and_the_open_check_read_the_same_switch(monkeypatch):
     monkeypatch.setattr(K, 'SKIP_MOVERS', True)
     sec = K.top_two(octfifteen(), previous={})
-    assert sec['picks'] == [] and len(sec['passed_movers']) == 3
+    assert sec['picks'] == [] and len(sec['passed_movers']) == 2
     assert K.decide(counted(), octfifteen())['passed_movers'] == sec['passed_movers']
 
 
@@ -227,14 +282,14 @@ def test_passed_movers_are_recorded_as_a_shadow_never_top2_pooled_or_on_the_boar
     rows = model_picks.rows_from_report({'session': '2026-10-05', 'intraday': {'top_two': sec}})
     got = sorted((r['model'], r['side'], r['ticker'], r['prompt_version']) for r in rows)
     rule = K.RULE_VERSION + '+day135c-movers'
-    assert got == [('top2', 'LONG', 'CNQ.TO', rule), ('top2', 'SHORT', 'SU.TO', rule),
-                   ('top2mover', 'LONG', 'AC.TO', rule)]
+    assert got == [('top2', 'SHORT', 'SU.TO', rule), ('top2mover', 'LONG', 'AC.TO', rule),
+                   ('top2runner', 'LONG', 'CNQ.TO', rule)]
     assert 'top2mover' in model_picks.POOLED_EXCLUDED
     assert not any('top2mover' in key for key, _ in primary_board.LEADERBOARD)
     seen = []                                      # what the lab's "Model picks" pool is built from
     monkeypatch.setattr(execution_lab, '_unique', lambda rs: seen.extend(rs) or [])
     execution_lab.table([{**r, 'kind': 'pick', 'r': '0.5'} for r in rows])
-    assert sorted(r['ticker'] for r in seen) == ['CNQ.TO', 'SU.TO']
+    assert 'AC.TO' not in [r['ticker'] for r in seen] and 'SU.TO' in [r['ticker'] for r in seen]
 
 
 def test_the_review_scores_passed_movers_apart_and_keeps_them_out_of_the_lessons():
@@ -276,7 +331,7 @@ def test_the_memory_council_follows_the_same_switch(monkeypatch):
     assert council_memory.section(snap)['rule_version'] == council_memory.RULE_VERSION
     monkeypatch.setattr(K, 'SKIP_MOVERS', True)
     sec = council_memory.section(snap)
-    assert [p['ticker'] for p in sec['picks']] == ['SU.TO', 'CNQ.TO'] and sec['shadow']
+    assert [p['ticker'] for p in sec['picks']] == ['SU.TO'] and sec['shadow']
     assert sec['rule_version'] == council_memory.RULE_VERSION + '+day135c-movers'
 
 
@@ -294,3 +349,95 @@ def test_the_memory_council_carries_the_live_councils_moves(sat):
                                picks=TM.LEDGER, lab=TM.LAB, sectors={})
     assert out['moves'] == live['moves']
     assert json.loads((sat/council_memory.SNAPSHOT).read_text())['moves'] == live['moves']
+
+
+def test_the_open_check_says_there_is_no_council_pick_when_the_movers_were_passed_over():
+    """10-16 with the switch on: only the runner-up is left at 09:31, and the
+    open check must not read like a pick to trade."""
+    import council_flash as F
+    snap = with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=2.4, CNQ_TO=0.3)
+    snap['positions'][2]['invalid_at'] = 19.0             # LONG CNQ.TO: wrong if below 19
+    sec = K.top_two(snap, previous={}, skip_movers=True)
+    now = dt.datetime(2026, 10, 5, 9, 31, tzinfo=K.ET)
+    quote = lambda sym: {'price': 20.0, 'open': 20.0, 'previousClose': 20.0, 'timestamp': now.timestamp()}
+    rows = F.check_open(snap, now, quote=quote, atr={})
+    assert [(r['ticker'], bool(r.get('runner_up'))) for r in rows] == [('CNQ.TO', True)]
+    subj, text, _ = F.compose_open(snap, rows, now, section=sec)
+    assert subj == 'RB Open Check — 2026-10-05 — no council pick · runner-up LONG CNQ.TO STILL VALID'
+    assert ("No council pick today: the council's picks were the last session's big movers, passed "
+            "over. The runner-up is checked because it is shown; it is not a pick.") in text
+
+
+def test_the_report_subject_names_the_rule_not_an_empty_morning():
+    import prepare_delivery
+    sec = K.top_two(octfifteen(), previous={}, skip_movers=True)
+    report = {'session': '2026-10-15', 'report_status': 'ON_TIME',
+              'intraday': {'top_two': sec, 'desks': [{'legs': []}]}}
+    assert prepare_delivery.subject_state(report) == '⛔ NO COUNCIL PICK — big movers passed over — '
+    assert prepare_delivery.subject(report) == \
+        'RB Daily Report — 2026-10-15 — ⛔ NO COUNCIL PICK — big movers passed over'
+    report['intraday']['top_two'] = K.top_two(octfifteen(), previous={}, skip_movers=False)
+    assert prepare_delivery.subject_state(report).startswith('COUNCIL TOP 2 ONLY — 2 positions')
+
+
+# ── the counted fallback: a morning the council did not sit (day-135d) ──────
+
+NOT_SAT = {'status': 'UNAVAILABLE', 'reason': 'fewer than two members answered'}
+
+
+def two_counted():
+    c = counted()
+    c['picks'] = [dict(c['picks'][0]), {**c['picks'][0], 'ticker': 'SU.TO', 'side': 'SHORT'}]
+    c['status'], c['rule_version'] = 'READY', 'day121-agreement+day120-entry'
+    return c
+
+
+def test_the_counted_fallback_passes_over_big_movers_and_adds_nothing():
+    import top_picks
+    c = two_counted()
+    sec = K.decide(c, NOT_SAT, moves=({'AC.TO': {'move_atr': 2.4}, 'SU.TO': {'move_atr': -0.3}}, None))
+    assert [p['ticker'] for p in sec['picks']] == ['SU.TO'] and sec['status'] == 'PARTIAL'
+    assert [(x['ticker'], x['move_atr']) for x in sec['passed_movers']] == [('AC.TO', 2.4)]
+    assert sec['rule_version'] == 'day121-agreement+day135c-movers+day120-entry'
+    assert sec['reason'].startswith("The other agreed name was one of the last session's big movers")
+    assert [p['ticker'] for p in c['picks']] == ['AC.TO', 'SU.TO']      # the top2count shadow is untouched
+    assert all('move_atr' not in p for p in c['picks'])
+    text = '\n'.join(top_picks.table(sec, concise=True))
+    assert 'The council did not sit today (fewer than two members answered)' in text
+    assert "Passed over as the last session's big movers (the big-mover rule, day-135c): LONG AC.TO" in text
+    both = K.decide(c, NOT_SAT, moves=({'AC.TO': {'move_atr': 2.4}, 'SU.TO': {'move_atr': -1.1}}, None))
+    assert both['picks'] == [] and both['status'] == 'NO_AGREEMENT'
+    assert ("The agreed names were the last session's big movers, passed over — nothing to act on."
+            in top_picks.table(both, concise=True))
+
+
+def test_off_the_counted_fallback_keeps_its_picks_and_gains_the_caution():
+    import top_picks
+    sec = K.counted_movers(two_counted(), {'AC.TO': {'move_atr': 2.4}}, skip_movers=False)
+    assert [p['ticker'] for p in sec['picks']] == ['AC.TO', 'SU.TO'] and 'passed_movers' not in sec
+    assert sec['rule_version'] == 'day121-agreement+day120-entry'
+    assert top_picks.mover_line(sec).startswith("⚠ The last session's big movers: LONG AC.TO follows a rise")
+
+
+def test_without_moves_the_fallback_says_the_rule_was_not_applied(tmp_path):
+    import top_picks
+    moves = K.brief_moves(tmp_path, NOW)
+    assert moves == ({}, 'CLAUDE_BRIEF_NOT_STAGED')
+    sec = K.decide(two_counted(), NOT_SAT, moves=moves)
+    assert [p['ticker'] for p in sec['picks']] == ['AC.TO', 'SU.TO']
+    assert sec['mover_note'] == 'The big-mover rule (day-135c) could not be applied: CLAUDE_BRIEF_NOT_STAGED.'
+    assert sec['mover_note'] in top_picks.table(sec, concise=True)
+
+
+def test_the_fallback_prefers_the_moves_the_council_recorded():
+    sec = K.decide(two_counted(), {**NOT_SAT, 'moves': {'SU.TO': {'move_atr': -1.4}}},
+                   moves=({'AC.TO': {'move_atr': 3.0}}, None))
+    assert [p['ticker'] for p in sec['picks']] == ['AC.TO'] and sec['passed_movers'][0]['ticker'] == 'SU.TO'
+
+
+def test_brief_moves_reads_the_rows_every_desk_read(monkeypatch):
+    import claude_opportunities as C
+    monkeypatch.setattr(C, 'read_brief', lambda root, now: {'payload': {'candidates': [
+        {'ticker': 'AC.TO', 'move_atr': 1.2, 'atr_pct': 2.0}, {'ticker': 'SU.TO', 'move_atr': None}]}})
+    assert K.brief_moves('x', NOW) == ({'AC.TO': {'move_atr': 1.2, 'atr_pct': 2.0},
+                                         'SU.TO': {'move_atr': None, 'atr_pct': None}}, None)

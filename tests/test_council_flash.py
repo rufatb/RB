@@ -154,9 +154,10 @@ def test_open_check_sends_once_and_skips_a_day_without_picks(tmp_path):
 def test_the_open_check_covers_the_runner_up_labelled(tmp_path):
     write(tmp_path, council('NO_CONSENSUS', (), ONE_ENDORSES))
     code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quote_at(44.5))
-    assert code == 0 and info['subject'].endswith('— runner-up SHORT CVE.TO STILL VALID')
+    assert code == 0 and info['subject'].endswith('— no council pick · runner-up SHORT CVE.TO STILL VALID')
     text = (tmp_path/'flash'/'open_report.txt').read_text()
     assert '| SHORT CVE.TO (runner-up, no consensus) | STILL VALID | above 45.81 |' in text
+    assert 'No council pick today. The runner-up is checked because it is shown; it is not a pick.' in text
 
 
 def test_morning_prompt_runs_the_open_check_before_the_wait():

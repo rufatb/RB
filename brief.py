@@ -645,7 +645,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         try:
             import council
             council_snapshot = council.load(state_dir, now)
-            top_two = council.decide(top_two_counted, council_snapshot, prices=prices)
+            top_two = council.decide(top_two_counted, council_snapshot, prices=prices,
+                                     moves=council.brief_moves(state_dir, now))
         except Exception as exc:
             error('council', RuntimeError(type(exc).__name__))
         # Day-130 step 3: the council with memory, a SHADOW on the same table.

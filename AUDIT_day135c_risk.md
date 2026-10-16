@@ -165,3 +165,20 @@ The ten-year measure is the test; thirteen picks are an anecdote.
 carry the day before's move, and R2 was switched on for the 10-19 morning. See
 `AUDIT_day135d_breadth.md`.
 
+**Second addendum, the same evening: remove-only.** Item 3 under "What ships"
+no longer holds.
+* **Why.** On 10-16 the refill made SHORT CVE.TO a pick, and it lost 1.39%. A
+  rule meant to cut risk must not add a trade.
+* **Now.** The Top 2 is the frozen rule's picks minus the big movers, with
+  nothing added. An emptied slot stays empty; the next agreed non-mover is
+  only the labelled runner-up, as below a pick void at 09:46.
+* **10-15, re-run.** CLS and CCO are passed over; HUT and EFR, movers too,
+  cannot stand as runner-up. The wording is now "The council's picks were the
+  last session's big movers, passed over — nothing to act on". Only the two
+  picks are recorded as `top2mover`, not HUT.
+* **The noon figures.** The lab's registered noon exit (the 12:00 bar) reads
+  CLS −0.94% and CCO −3.55%. The −0.79% and −3.64% above were the noon
+  email's.
+* **The counted fallback** now applies the same rule
+  (`council.counted_movers`).
+

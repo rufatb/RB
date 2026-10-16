@@ -5626,7 +5626,17 @@ was computed; read `AUDIT_day135d_breadth.md`.
 * **R2 is on from the 2026-10-19 morning** (`council.SKIP_MOVERS = True`).
   * The owner asked twice for picks that do not carry the day before's move.
   * It is the fourth adoption, and like the other three a variance result.
-  * On 10-16 it would have traded SHORT CVE.TO (−1.73%) instead of the two
-    longs (+0.75%, +0.42%). It does not make a pick right; it removes the
-    widest swings.
+  * As first built it refilled an emptied slot: on 10-16 it would have
+    traded SHORT CVE.TO (−1.39% on the record's yardstick) instead of the two
+    longs (+0.88%, +0.67%). A rule meant to cut risk must not add a trade, so
+    the same evening it became REMOVE-ONLY. The Top 2 is now the council's
+    picks minus the big movers, with nothing added; the next agreed position
+    is only the labelled runner-up. On both 10-15 and 10-16 that leaves
+    nothing to act on.
+  * The counted fallback (a morning the council does not sit) applies the
+    same rule (`council.counted_movers`).
+  * Over the two days: the Top 2 as printed −6.24% (4 trades); out at noon
+    −5.13%; one pick per side −2.73%; refilled −1.39%; remove-only 0. Two days
+    are an anecdote.
+  * It does not make a pick right; it removes the widest swings.
 

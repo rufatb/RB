@@ -129,6 +129,8 @@ def compose(session, rows, source, now):
         else:
             bits.append('%s %s%s' % (label, _fmt(r['since_entry']),
                                      ' (wrong if crossed)' if r.get('crossed') else ''))
+    if all(r.get('runner_up') for r in rows):   # no council pick: never read as one
+        bits.insert(0, 'no council pick')
     subj = 'RB Noon Check — %s — %s' % (session, ' · '.join(bits))
     lines = ['# RB Noon Check — %s' % session,
              'Measured at %s ET from 5-minute bars, from the 09:45 entry the record scores. Picks '

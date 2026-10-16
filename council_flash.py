@@ -63,10 +63,11 @@ def subject(session, section):
             if ru and len(picks) < 2 else '')
     if picks:
         what = ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p['agreement']) for p in picks) + tail
+    elif (section or {}).get('passed_movers'):      # day-135c, when the owner's switch is on
+        what = ('%s passed over — %s' % ('big movers' if len(section['passed_movers']) > 1 else 'a big mover',
+                                          'no council pick' if tail else 'nothing to act on') + tail)
     elif tail:
         what = 'no consensus' + tail
-    elif (section or {}).get('passed_movers'):      # day-135c, when the owner's switch is on
-        what = 'agreed only on big movers, passed over — nothing to act on'
     elif (section or {}).get('no_positions'):
         what = 'no model proposed a position'
     else:
@@ -342,7 +343,7 @@ def _verdict_text(r):
     return out
 
 
-def compose_open(council, rows, now):
+def compose_open(council, rows, now, section=None):
     import council as K
     import email_render
     import top_picks
@@ -350,10 +351,20 @@ def compose_open(council, rows, now):
     if not rows:
         return None
     verdicts = ' · '.join(_verdict_text(r) for r in rows)
+    # Only the runner-up is left (no consensus, or day-135c's big-mover rule
+    # took the picks): the subject must not read like a pick to trade.
+    only_runner = all(r.get('runner_up') for r in rows)
+    if only_runner:
+        verdicts = 'no council pick · ' + verdicts
+    why = K.passed_head(section) if section else None
     subj = 'RB Open Check — %s — %s' % (session, verdicts)
     lines = ['# RB Open Check — %s' % session,
              'Checked at %s ET against the live quote (FMP last trade). The full report follows at ~09:46.'
-             % _now(now).strftime('%H:%M'), '',
+             % _now(now).strftime('%H:%M')]
+    if only_runner:
+        lines.append('No council pick today%s. The runner-up is checked because it is shown; it is not '
+                     'a pick.' % ((': ' + why) if why else ''))
+    lines += ['',
              '| Pick | Verdict | Wrong if | Wrong if, from here | Price now | Open vs prior close, for the pick | Now vs prior close, for the pick | Sector ETF since prior close |',
              '|---|---|---|---|---|---|---|---|']
     for r in rows:
@@ -412,7 +423,7 @@ def prepare_open(state_dir, now=None, *, quote=None):
     items = (sec.get('picks') or []) + ([sec['runner_up']] if sec.get('runner_up') else [])
     rows = check_open(council, now, quote=quote or (lambda sym: fmp_quote(sym, root)),
                       atr=atr_map(root, now, {p['ticker'] for p in items}))
-    subj, text, html = compose_open(council, rows, now)
+    subj, text, html = compose_open(council, rows, now, section=sec)
     out = root/OUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     for name, content in (('open_subject.txt', subj), ('open_report.txt', text), ('open_report.html', html)):

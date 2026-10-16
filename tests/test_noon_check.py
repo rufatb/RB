@@ -78,3 +78,14 @@ def test_nothing_without_a_pick_once_a_day_and_never_late(tmp_path):
     assert N.prepare(tmp_path, NOON.replace(hour=13, minute=31))[0] == 'TOO_LATE'
     N.record(tmp_path, 'abc', now=NOON)
     assert N.wait(tmp_path, 0, now_fn=lambda: NOON)[0] == 4
+
+
+def test_with_only_the_runner_up_the_subject_says_there_is_no_council_pick(tmp_path):
+    """Day-135d: a day the big-mover rule (or no consensus) left only the
+    runner-up must not read like a pick at noon either."""
+    runner = {'side': 'SHORT', 'ticker': 'CVE.TO', 'invalid_at': 46.41, 'runner_up': True}
+    report(tmp_path, [], runner)
+    fb = feed({'CVE.TO': bars([45.0, 45.0, 45.0, 45.5]), 'XEG.TO': bars([20.0])})
+    status, info = N.prepare(tmp_path, NOON, bars_for=fb)
+    assert status == 'READY'
+    assert info['subject'] == 'RB Noon Check — 2026-10-13 — no council pick · runner-up SHORT CVE.TO -1.11%'

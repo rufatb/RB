@@ -272,7 +272,11 @@ def table(section, concise=False):
     picks = section.get('picks') or []
     single = single_line(section)
     if not picks:
-        if concise and section.get('status') == 'NO_AGREEMENT':
+        import council
+        passed = council.passed_head(section)    # day-135d: the counted fallback's movers
+        if concise and passed:
+            head = passed[0].upper() + passed[1:] + ' — nothing to act on.'
+        elif concise and section.get('status') == 'NO_AGREEMENT':
             head = 'No agreement today — nothing to act on.'
         else:
             head = section.get('reason') or 'No pick today.'
@@ -323,12 +327,11 @@ def _council_table(section, concise):
                                  picks + ([section['runner_up']] if section.get('runner_up') else []))
                if line]
     if not picks:
+        passed = council.passed_head(section)    # day-135c: the big-mover rule took them
         head = (section.get('reason') or 'No pick today.' if not concise else
+                passed[0].upper() + passed[1:] + (' — no council pick.' if section.get('runner_up')
+                                                  else ' — nothing to act on.') if passed else
                 'No council pick survived the 09:46 entry check.' if section.get('void_at_entry') else
-                'The council agreed only on the last session\'s big movers — passed over, nothing '
-                'to act on.' if section.get('passed_movers') and not section.get('runner_up') else
-                'The council agreed only on the last session\'s big movers — passed over, no '
-                'council pick.' if section.get('passed_movers') else
                 'No consensus today — no council pick.' if section.get('runner_up') else
                 'No consensus today — nothing to act on.')
         return (out + ['', head] + ([runner] if runner else []) + repeats
@@ -389,6 +392,8 @@ def _notes(section):
                    + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], council.move_words(x['move_atr']))
                                 for x in section['passed_movers'])
                    + '. Recorded as a shadow, never sized.')
+    if section.get('mover_note'):                # day-135d: the rule could not be applied
+        out.append(section['mover_note'])
     if section.get('repeat_note'):
         out.append(section['repeat_note'])
     return out

@@ -73,9 +73,10 @@ day. That gives 266 broad sessions and 12,020 mover name-days.
   on. The two days the owner lived through are what a coin flip with a wide
   swing looks like.
 * **10-16 showed the other side.** From 09:45, 10-15's shorts fell: CLS
-  −0.83%, CCO −3.10%, HUT −10.21% at 15:50. The 10-16 longs, under water at
-  noon (L +0.03%, WCN −0.72%), finished +0.75% and +0.42% at the last bar
-  before the close, while XIU fell 0.58%.
+  −0.83%, CCO −3.10%, HUT −10.21% at 15:50. The 10-16 longs were under water
+  at noon (L +0.07%, WCN −0.72%, the lab's 12:00 exit). They finished +0.88%
+  and +0.67% on the record (09:45 → close); at 15:50 they were +0.75% and
+  +0.42%, with XIU −0.58%.
 
 ## What changes
 
@@ -87,10 +88,12 @@ day. That gives 266 broad sessions and 12,020 mover name-days.
     adoption, and like the other three, a variance result.
   * **The record** splits at `+day135c-movers`. A council saved before 10-15
     has no `moves`, keeps its old label and is read as it was.
-  * **What it would have done.** On 10-15 it would have left nothing to act
-    on. On 10-16 it would have picked SHORT CVE.TO alone, which lost 1.73% for
-    the short while the two longs gained. It removes the names that swing
-    widest; it does not pick winners.
+  * **What it would have done, as first built.** On 10-15 it would have left
+    nothing to act on. On 10-16 it would have picked SHORT CVE.TO alone,
+    which lost 1.39% for the short on the record's yardstick (the −1.73%
+    first written here was a 15:50 reading), while the two longs gained. That
+    refill is why the rule is remove-only now; see the addendum. It removes
+    the names that swing widest; it does not pick winners.
 * **No fade rule** (this test) and **no chase rule** (day-132).
 * **Unchanged:** the one-direction warning stays a warning. R1 failed its
   registered bar (1.13). On days the market moves ≥ 1%, two names correlate
@@ -112,3 +115,60 @@ day. That gives 266 broad sessions and 12,020 mover name-days.
   * do not stack two same-side picks;
   * the noon exit (no worse on the replay, with 15% less swing);
   * size.
+
+---
+
+## Addendum, the same evening: the rule is remove-only (owner, 2026-10-16)
+
+The owner: "learn from today's and yesterday's trades … don't fuck me".
+
+**What the two days say, by rule** (gross, 09:45 → close, the record's
+yardstick; the noon row is the execution lab's 12:00 exit):
+
+| Rule | 10-15 | 10-16 | Trades | Sum |
+|---|---|---|---:|---:|
+| the Top 2 as printed | CLS −3.61, CCO −4.17 | L +0.88, WCN +0.67 | 4 | −6.24% |
+| the same picks, out at noon | −0.94, −3.55 | +0.07, −0.72 | 4 | −5.13% |
+| one pick per side (R1) | CLS −3.61 | L +0.88 | 2 | −2.73% |
+| skip big movers, refilled (as first built) | nothing | SHORT CVE.TO −1.39 | 1 | −1.39% |
+| **skip big movers, remove-only (now)** | **nothing** | **nothing** | **0** | **0** |
+
+* **Each day "teaches" the opposite lesson.** On 10-15, fading the fall would
+  have won. On 10-16, following the rise won by the close. The registered
+  tests, ten years deep, say neither direction has an edge (day-132,
+  day-135c, this test). Two days cannot overturn that.
+* **The one constant:** both days held two big movers on one side, the
+  widest-swinging names the list had. That is what R2 removes.
+* **The refill added a trade, and the trade lost.** A rule meant to cut risk
+  must never add a trade. So the rule is now REMOVE-ONLY: the Top 2 is the
+  council's picks minus the big movers, with nothing added. An emptied slot
+  stays empty. The next agreed non-mover is shown only as the labelled
+  runner-up ("agreed, ranked below the picks"), as below a pick void at
+  09:46. On 10-16 that is SHORT CVE.TO, shown and not a pick.
+* **The memory council,** shown the last five Top 2 results, still chased
+  both days: LONG ATD.TO after a rise of 1.8 ATR and SHORT CLS.TO on 10-15,
+  LONG L.TO and WCN.TO on 10-16.
+
+**Dry runs on the two sealed councils** (code as committed):
+* 10-15: "The council's picks were the last session's big movers, passed
+  over — nothing to act on." CLS and CCO are recorded as `top2mover`; HUT and
+  EFR, movers too, cannot stand as runner-up.
+* 10-16: "… passed over — no council pick", runner-up SHORT CVE.TO (3 of 4
+  endorse). The flash subject reads "big movers passed over — no council
+  pick · runner-up, agreed, ranked below the picks: SHORT CVE.TO".
+
+**Also closed:**
+* **The open check** said only "runner-up SHORT CVE.TO STILL VALID" on such a
+  day. It now leads with "no council pick" and says the runner-up is not a
+  pick. The noon check's subject leads the same way.
+* **The report subject** would have read "⛔ NO MODEL PICKS". It now reads
+  "⛔ NO COUNCIL PICK — big movers passed over".
+* **The counted fallback** (a morning the council does not sit) now applies
+  the same rule (`council.counted_movers`). Its moves are the council's
+  recorded ones, else the brief's (`council.brief_moves`). Its picks carry
+  their moves, so the caution line reaches them. Without moves, it prints
+  that the rule could not be applied.
+
+**Not claimed:** none of this makes a pick right. It takes away the names
+that swing widest the next day, and on days like these two it leaves nothing
+to act on.

@@ -81,6 +81,10 @@ def subject_state(report):
         # selected anything; the subject must not say there is nothing.
         return 'COUNCIL TOP 2 ONLY — %d position%s, no sized desk leg — ' % (
             council_picks, '' if council_picks == 1 else 's')
+    if not legs and intraday.get('desks') and (intraday.get('top_two') or {}).get('passed_movers'):
+        # Day-135c, the switch on: the models did pick; the big-mover rule took
+        # the council's picks away. "No model picks" would misstate why.
+        return '⛔ NO COUNCIL PICK — big movers passed over — '
     if not legs and intraday.get('desks'):
         return '⛔ NO MODEL PICKS — nothing to act on — '
     if not legs:

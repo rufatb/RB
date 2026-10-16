@@ -810,6 +810,24 @@ def move_words(m):
     return 'a %s of %.1f normal days' % ('rise' if m > 0 else 'fall', abs(m))
 
 
+def passed_head(section):
+    """Day-135c, the switch on: the Top 2's one line when the big-mover rule left
+    no council pick standing ("the council's picks were the last session's big
+    movers, passed over"). None when a pick stands or nothing was passed over."""
+    section = section or {}
+    passed = section.get('passed_movers') or []
+    if not passed or section.get('picks'):
+        return None
+    if not section.get('council'):               # the counted fallback (day-135d)
+        return ("the agreed names were the last session's big movers, passed over" if len(passed) > 1
+                else "the agreed name was one of the last session's big movers, passed over")
+    if section.get('void_at_entry'):
+        return ("one council pick was one of the last session's big movers, passed over, and the "
+                'other was already past its own "wrong if" at 09:46')
+    return ("the council's picks were the last session's big movers, passed over" if len(passed) > 1
+            else "the council's pick was one of the last session's big movers, passed over")
+
+
 def mover_phrase(x):
     """How a position leans on its name's big move in the last session: it
     follows the move, or bets on a bounce (after a fall) or a reversal (after
@@ -835,10 +853,12 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     `previous` is {ticker: ...} from `previous_top2`.
 
     Day-135c R2 (the owner's switch, `SKIP_MOVERS`): when on, the picks are the
-    council's agreed positions in tally order PASSING OVER any whose name moved
-    >= 1 ATR the session before (`council['moves']`); a big mover is never the
-    runner-up either. The passed-over positions are kept in `passed_movers`,
-    shaped, so they are shown and recorded as a shadow. Off, nothing changes."""
+    council's own picks MINUS any whose name moved >= 1 ATR the session before
+    (`council['moves']`). Nothing is added in their place (day-135d): an
+    emptied slot stays empty, the next agreed non-mover can only be the
+    labelled runner-up, and a big mover is never the runner-up either. The
+    passed-over positions are kept in `passed_movers`, shaped, so they are
+    shown and recorded as a shadow. Off, nothing changes."""
     import entry_checks
     by_id = {p['id']: p for p in council.get('positions') or []}
     tally_rows = (council.get('tally') or {}).get('rows') or []
@@ -850,19 +870,14 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     frozen = list(council.get('picks') or [])
     chosen_ids = frozen
     if skip and frozen:
-        # The frozen rule's picks minus the big movers, refilled from the next
-        # agreed positions in tally order (passing over movers there too). On a
-        # day the council chose nothing, the switch chooses nothing.
+        # The frozen rule's picks minus the big movers, and nothing added: the
+        # rule only ever takes a trade away (owner, 10-16). An emptied slot
+        # stays empty; the next agreed position can only be the labelled
+        # runner-up, as below a pick voided at 09:46 (day-129).
         chosen_ids = []
         for pid in frozen:
             p = by_id.get(pid)
             (passed if p and _mover(moves, p['ticker']) is not None else chosen_ids).append(pid)
-        for r in tally_rows if passed else []:
-            if len(chosen_ids) >= PICKS:
-                break
-            if not r.get('consensus') or r['id'] in frozen or r['id'] not in by_id:
-                continue
-            (passed if _mover(moves, r['ticker']) is not None else chosen_ids).append(r['id'])
 
     def entry(p):
         if prices is None:
@@ -906,12 +921,17 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
             and not (runner_up and (r['ticker'], r['side']) == (runner_up['ticker'], runner_up['side']))][:4]
     status = ('READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT')
     reason = (None if len(picks) == PICKS else
-              'Every position the council agreed on was one of the last session\'s big movers, '
-              'passed over by the big-mover rule (day-135c), so there is nothing here to act on.'
-              if passed and not picks and not void else
-              'The other positions the council agreed on were the last session\'s big movers, '
-              'passed over by the big-mover rule (day-135c); the second slot is left empty.'
-              if passed and picks and not void else
+              'The council\'s other pick was one of the last session\'s big movers, passed over by '
+              'the big-mover rule (day-135c); the second slot is left empty.'
+              if passed and picks else
+              'One council pick was one of the last session\'s big movers, passed over by the '
+              'big-mover rule (day-135c), and the other was already past its own "wrong if" at '
+              '09:46, so there is nothing here to act on.'
+              if passed and void else
+              ('The council\'s picks were the last session\'s big movers' if len(passed) > 1 else
+               'The council\'s pick was one of the last session\'s big movers')
+              + ', passed over by the big-mover rule (day-135c), so there is nothing here to act on.'
+              if passed else
               'Only one position won the council; the second slot is left empty.'
               if picks and not void else
               'One position the council chose was already past its own "wrong if" at 09:46; '
@@ -1002,9 +1022,13 @@ def runner_up_line(section):
                (' %s: %s' % (ru['lead'], why)) if why else ''))
 
 
-def decide(counted, council, *, prices=None):
+def decide(counted, council, *, prices=None, moves=None):
     """The Top 2 section for the report: the council's decision when it sat
-    (two or more valid members), else the day-121 counted rule, labelled so."""
+    (two or more valid members), else the day-121 counted rule, labelled so.
+
+    Day-135d: the counted fallback gets the same big-mover rule
+    (`counted_movers`), with the moves the council recorded or, when it
+    recorded none, `moves` — `brief_moves`' (moves, why)."""
     if (isinstance(council, dict) and council.get('status') in ('READY', 'NO_CONSENSUS')
             and len((council.get('tally') or {}).get('members') or []) >= 2):
         return top_two(council, counted, prices=prices)
@@ -1013,8 +1037,67 @@ def decide(counted, council, *, prices=None):
     why = (council or {}).get('reason') or 'it was not staged'
     if (council or {}).get('status') == 'NO_POSITIONS':
         why = 'no model proposed a position'
-    return {**counted, 'council_note': 'The council did not sit today (%s); the counted rule '
-            '(two models on the same side) decided.' % str(why)[:120]}
+    out = {**counted, 'council_note': 'The council did not sit today (%s); the counted rule '
+           '(two models on the same side) decided.' % str(why)[:120]}
+    recorded = (council or {}).get('moves') if isinstance(council, dict) else None
+    known, missing = (recorded, None) if recorded else (moves or ({}, None))
+    return counted_movers(out, known, missing)
+
+
+def brief_moves(root, now):
+    """Day-135d: each name's last-session move from today's brief, the rows
+    every desk read, for a morning the council did not sit: ({ticker: move},
+    None), or ({}, why) when the brief cannot be read. Never raises; the
+    section says when the rule could not be applied."""
+    import claude_opportunities as C
+    try:
+        rows = C.read_brief(root, now)['payload'].get('candidates') or []
+    except Exception as exc:
+        return {}, (str(exc) if str(exc).isupper() else type(exc).__name__)[:60]
+    return ({r['ticker']: {'move_atr': r.get('move_atr'), 'atr_pct': r.get('atr_pct')}
+             for r in rows if isinstance(r, dict) and r.get('ticker')}, None)
+
+
+def counted_movers(section, moves, missing=None, *, skip_movers=None):
+    """Day-135d: the big-mover rule on the counted fallback, the Top 2 of a
+    morning the council did not sit. The same remove-only rule as `top_two`:
+    its picks minus the names that moved >= 1 ATR in the last session, nothing
+    added, the passed-over kept for the record. Each remaining pick carries
+    its move, so the caution line reaches it whether the switch is on or off.
+    With the switch on and no moves, the section says the rule was not applied."""
+    import entry_checks
+    skip = SKIP_MOVERS if skip_movers is None else skip_movers
+    if not isinstance(section, dict) or section.get('council'):
+        return section
+    out = dict(section)
+    if not moves:
+        if skip:
+            out['mover_note'] = ('The big-mover rule (day-135c) could not be applied: %s.'
+                                 % (missing or 'no moves were recorded this morning'))
+        return out
+    kept, passed = [], []
+    for p in section.get('picks') or []:
+        q = dict(p)
+        m = (moves.get(p.get('ticker')) or {}).get('move_atr')
+        if isinstance(m, (int, float)):
+            q['move_atr'] = float(m)
+        (passed if skip and is_mover(q) else kept).append(q)
+    out['picks'] = kept
+    if not skip:
+        return out
+    rv, entry = out.get('rule_version') or '', '+' + entry_checks.RULE_VERSION
+    out['rule_version'] = (rv[:-len(entry)] + '+' + MOVER_RULE + entry if rv.endswith(entry)
+                           else rv + '+' + MOVER_RULE)
+    if passed:
+        out['passed_movers'] = passed
+        out['status'] = 'PARTIAL' if kept else 'NO_AGREEMENT'
+        out['reason'] = (
+            'The other agreed name was one of the last session\'s big movers, passed over by the '
+            'big-mover rule (day-135c); the second slot is left empty.' if kept else
+            ('The agreed names were the last session\'s big movers' if len(passed) > 1 else
+             'The agreed name was one of the last session\'s big movers')
+            + ', passed over by the big-mover rule (day-135c), so there is nothing here to act on.')
+    return out
 
 
 def near_line(section):
