@@ -225,3 +225,31 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-15,top2count,pick,SHORT,CLS.TO,0.56,,486.55,day121-agreement+day120-entry,published_report,432.33,447.95,-3.613,0,0,2026-10-15T16:21:20.919522-04:00,,,,,2 of 4
 2026-10-15,top2memory,pick,LONG,ATD.TO,0.05,,80.1542,day130-memory+day120-entry,published_report,82.49,81.64,-1.0304,0,0,2026-10-15T16:21:20.919522-04:00,,,,,4 of 4 endorse
 2026-10-15,top2memory,pick,SHORT,CLS.TO,0.65,,486.55,day130-memory+day120-entry,published_report,432.33,447.95,-3.613,0,0,2026-10-15T16:21:20.919522-04:00,,,,,4 of 4 endorse
+2026-10-16,claude,nominated,LONG,L.TO,0.53,,68.1952,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,claude,nominated,LONG,WCN.TO,0.51,,231.592,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,claude,nominated,SHORT,CVE.TO,0.51,,46.41,day129-nominations,published_report,,,,,,,macro,,,,
+2026-10-16,claude,nominated,SHORT,SU.TO,0.53,,108.93,day129-nominations,published_report,,,,,,,macro,,,,
+2026-10-16,deepseek,nominated,LONG,ATZ.TO,0.62,,145.95,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,deepseek,nominated,LONG,L.TO,0.58,,65.55,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,deepseek,nominated,SHORT,CLS.TO,0.6,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,deepseek,nominated,SHORT,HUT.TO,0.66,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,deepseek,selected,LONG,CSU.TO,0.6,,3103.99,day127-dated,published_report,,,,,,,technical,,,,
+2026-10-16,deepseek,selected,SHORT,HUT.TO,0.6,,,day127-dated,published_report,,,,,,,technical,,,,
+2026-10-16,engine,board,LONG,ENB.TO,0.552,,,,published_report,,,,,,,,,,,
+2026-10-16,engine,board,LONG,RY.TO,0.551,,,,published_report,,,,,,,,,,,
+2026-10-16,engine,board,SHORT,BCE.TO,0.55,,,,published_report,,,,,,,,,,,
+2026-10-16,engine,board,SHORT,SHOP.TO,0.627,,,,published_report,,,,,,,,,,,
+2026-10-16,gemini,nominated,LONG,L.TO,0.58,,67.68,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,gemini,nominated,LONG,WCN.TO,0.62,,229.9,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,gemini,nominated,SHORT,HBM.TO,0.61,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,gemini,nominated,SHORT,TRP.TO,0.65,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-16,gemini,selected,LONG,WCN.TO,0.62,,225.92,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-10-16,gemini,selected,SHORT,TRP.TO,0.6,,87.46,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-10-16,jev,forced,LONG,WCN.TO,0.21,0.4,,,published_report,,,,,,,,,,,
+2026-10-16,jev,forced,SHORT,CLS.TO,0.19,0.54,,,published_report,,,,,,,,,,,
+2026-10-16,top2,pick,LONG,L.TO,0.75,,68.1952,day124-council+day129-nominations+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
+2026-10-16,top2,pick,LONG,WCN.TO,0.14,,225.92,day124-council+day129-nominations+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
+2026-10-16,top2count,pick,LONG,WCN.TO,0.62,,225.92,day121-agreement+day120-entry,published_report,,,,,,,,,,,2 of 4
+2026-10-16,top2count,pick,SHORT,HUT.TO,0.6,,,day121-agreement+day120-entry,published_report,,,,,,,,,,,2 of 4
+2026-10-16,top2memory,pick,LONG,L.TO,0.68,,68.1952,day130-memory+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
+2026-10-16,top2memory,pick,LONG,WCN.TO,0.22,,225.92,day130-memory+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
