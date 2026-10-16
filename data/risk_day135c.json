@@ -1,0 +1,252 @@
+{
+ "R1": {
+  "pairs": 20000,
+  "ratio_same_to_long_short": 1.1271177352053627,
+  "rho": 0.11909886771269387,
+  "rho_on_market_days_1pct": 0.25216608861902806,
+  "sd": {
+   "long and short, two picks": 2.939613490235729,
+   "one pick": 2.2066905053408923,
+   "same side, two picks": 3.3132904994936263
+  },
+  "verdict": "FAIL",
+  "worst_5pct": {
+   "long and short, two picks": -4.326741145134236,
+   "one pick": -3.1621548163609754,
+   "same side, two picks": -5.003245614154027
+  }
+ },
+ "R2": {
+  "groups": {
+   "movers (|move| >= 1 ATR)": {
+    "best_99pct_raw": 7.847986667383424,
+    "n": 49295,
+    "sd_raw": 2.668528009140343,
+    "sd_vs_xiu": 2.5640336725381094,
+    "share_moving_3pct": 0.15997565676032052,
+    "worst_1pct_raw": -7.291224604966134
+   },
+   "the rest": {
+    "best_99pct_raw": 6.38700566488581,
+    "n": 336787,
+    "sd_raw": 2.1534256655994537,
+    "sd_vs_xiu": 2.05408904804885,
+    "share_moving_3pct": 0.11062184704278966,
+    "worst_1pct_raw": -5.952942415933797
+   }
+  },
+  "ratio_sd_movers_to_rest": 1.2392013579895265,
+  "signed_mean_movers": {
+   "mean": -0.005248801443767801,
+   "n": 49295,
+   "reading": "continuation positive, open -> close against XIU",
+   "se": 0.02233392607461565,
+   "t": -0.23501472272416524
+  },
+  "verdict": "PASS"
+ },
+ "R2_described": {
+  "movers_share_of_a_session": {
+   "median": 0.10884353741496598,
+   "p90": 0.2348993288590604
+  },
+  "next_session_after": {
+   "fall of 1+ ATR": {
+    "mean_vs_xiu": 0.008925889938072763,
+    "n": 22800,
+    "sd_raw": 2.711585776305779,
+    "t": 0.2548309399340801,
+    "worst_5pct_raw": -3.880431038410453
+   },
+   "fall of 2+ ATR": {
+    "mean_vs_xiu": -0.14681825775328725,
+    "n": 2295,
+    "sd_raw": 3.3122402047175554,
+    "t": -1.0404673869764343,
+    "worst_5pct_raw": -4.822286244896983
+   },
+   "reading": "open -> close against XIU, up positive",
+   "rise of 1+ ATR": {
+    "mean_vs_xiu": -0.002084520724003578,
+    "n": 26495,
+    "sd_raw": 2.6308793573004814,
+    "t": -0.08379203096216764,
+    "worst_5pct_raw": -3.8631915793927907
+   },
+   "rise of 2+ ATR": {
+    "mean_vs_xiu": 0.027084958961531857,
+    "n": 2640,
+    "sd_raw": 3.5198242978996377,
+    "t": 0.34319537557290336,
+    "worst_5pct_raw": -4.987080689029905
+   },
+   "the rest": {
+    "mean_vs_xiu": 0.02167575979075102,
+    "n": 336787,
+    "sd_raw": 2.1534256655994537,
+    "t": 2.5335272915684413,
+    "worst_5pct_raw": -3.1318145632547956
+   }
+  },
+  "note": "descriptive, added after the registered verdicts; no verdict",
+  "ratio_2atr": 1.5903164905480685,
+  "ratio_by_year": {
+   "2016": 1.3207787014931718,
+   "2017": 1.1877706072921679,
+   "2018": 1.204366801820848,
+   "2019": 1.2659482991086182,
+   "2020": 1.3159441649637382,
+   "2021": 1.2875270596915898,
+   "2022": 1.1160750403358657,
+   "2023": 1.1486490931965045,
+   "2024": 1.1547191621737636,
+   "2025": 1.2461363146931799,
+   "2026": 1.123734769501225
+  },
+  "signed_mean_control": {
+   "mde80_at_t2_pct": 0.06342835005190844,
+   "planted_pct": 0.1,
+   "t_planted": 4.477493104701294
+  },
+  "within_name": {
+   "median_ratio": 1.2074488026843824,
+   "names": 149,
+   "p25": 1.1254662501915738,
+   "p75": 1.344645279769989,
+   "share_above_1": 0.959731543624161
+  }
+ },
+ "fetch_failures": {},
+ "live_top2": {
+  "movers": 8,
+  "picks": [
+   {
+    "move_atr": 1.6055491329479774,
+    "mover": true,
+    "r_pct": 0.8912,
+    "session": "2026-10-05",
+    "side": "LONG",
+    "ticker": "TECK-B.TO"
+   },
+   {
+    "move_atr": 0.9020618556701031,
+    "mover": false,
+    "r_pct": -2.1848,
+    "session": "2026-10-05",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "move_atr": -0.9525208027410678,
+    "mover": false,
+    "r_pct": -0.169,
+    "session": "2026-10-06",
+    "side": "SHORT",
+    "ticker": "CVE.TO"
+   },
+   {
+    "move_atr": 1.6426549229317402,
+    "mover": true,
+    "r_pct": -1.3282,
+    "session": "2026-10-07",
+    "side": "LONG",
+    "ticker": "CCO.TO"
+   },
+   {
+    "move_atr": -1.980099502487562,
+    "mover": true,
+    "r_pct": 0.6389,
+    "session": "2026-10-07",
+    "side": "SHORT",
+    "ticker": "EMA.TO"
+   },
+   {
+    "move_atr": -2.047619047619049,
+    "mover": true,
+    "r_pct": -0.4149,
+    "session": "2026-10-08",
+    "side": "SHORT",
+    "ticker": "TD.TO"
+   },
+   {
+    "move_atr": -0.0731452455590345,
+    "mover": false,
+    "r_pct": 1.3709,
+    "session": "2026-10-09",
+    "side": "LONG",
+    "ticker": "TD.TO"
+   },
+   {
+    "move_atr": 4.3421346225362605,
+    "mover": true,
+    "r_pct": 2.4658,
+    "session": "2026-10-13",
+    "side": "LONG",
+    "ticker": "ATZ.TO"
+   },
+   {
+    "move_atr": -2.7955032119914325,
+    "mover": true,
+    "r_pct": -1.0612,
+    "session": "2026-10-13",
+    "side": "SHORT",
+    "ticker": "CCA.TO"
+   },
+   {
+    "move_atr": 1.9466776045939278,
+    "mover": true,
+    "r_pct": -0.4316,
+    "session": "2026-10-14",
+    "side": "LONG",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "move_atr": -1.6223369916074897,
+    "mover": true,
+    "r_pct": 1.1977,
+    "session": "2026-10-14",
+    "side": "SHORT",
+    "ticker": "SSRM.TO"
+   },
+   {
+    "move_atr": null,
+    "mover": null,
+    "r_pct": -4.1722,
+    "session": "2026-10-15",
+    "side": "SHORT",
+    "ticker": "CCO.TO"
+   },
+   {
+    "move_atr": null,
+    "mover": null,
+    "r_pct": -3.613,
+    "session": "2026-10-15",
+    "side": "SHORT",
+    "ticker": "CLS.TO"
+   }
+  ],
+  "r2_would_drop": {
+   "mean": 0.2447125,
+   "n": 8,
+   "right": 4
+  },
+  "r2_would_keep": {
+   "mean": -0.3276333333333334,
+   "n": 3,
+   "right": 1
+  },
+  "same_side_sessions": [
+   "2026-10-15"
+  ],
+  "sessions": 8,
+  "unknown_move": 2
+ },
+ "name_days": 389034,
+ "names": 150,
+ "registered": "PREREGISTER_day135c_risk.md",
+ "sessions": 2706,
+ "window": [
+  "2016-01-04",
+  "2026-10-14"
+ ]
+}

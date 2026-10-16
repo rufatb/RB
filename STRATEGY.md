@@ -5582,3 +5582,28 @@ market-adjusted:
 **Do not rebuild post-earnings drift on FMP's historical dates.** They
 manufacture look-ahead. A real test needs the issuer's own timestamps.
 
+## Day-135c: REJECTION #51 — one position per side; R2 (skip the last session's big movers) PASSED, offered as a switch
+
+Registered in `PREREGISTER_day135c_risk.md` (00eeb8d) before either
+measurement; read `AUDIT_day135c_risk.md`. Two SIZE rules, blind to direction,
+after 10-15's two losing shorts. The data are 150 names' daily bars,
+2016–2026, with open → close as the trade proxy.
+
+| Rule | Measure | Result | Bar | Verdict |
+|---|---|---:|---:|---|
+| R1 one position per side | same-side sd / long-short sd | 1.13 | ≥ 1.15 | FAIL (#51) |
+| R2 skip big movers | movers' sd / the rest's | 1.24 | ≥ 1.15 | PASS |
+| R2 lean | signed mean, t | −0.24 | \|t\| < 2 | (no lean) |
+
+* **R2 is the same name after its own move.** The median within-name ratio is
+  1.21, it is above 1.12 in every year, and it reaches 1.59 at ≥ 2 ATR.
+* **There is no bounce either.** After a fall of ≥ 1 ATR the next session is
+  +0.009% (t = 0.25); after ≥ 2 ATR, −0.15%. "Unless it's a recovery" finds
+  nothing to bet on.
+* **The live Top 2.** 10 of its 13 picks since 10-05 sat on big movers, and all
+  10 followed the move.
+
+R2 ships as the owner's switch (`council.SKIP_MOVERS`), off until they say yes.
+If it is switched on, it is the fourth adoption, and like the other three a
+variance result. Nothing here makes a pick more likely to be right.
+

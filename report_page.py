@@ -610,11 +610,14 @@ def _top_two_section(intra):
                 'objected. Consensus is not confirmation: they read the same brief, and none has '
                 'beaten random picks on the replay.</p>')
     direction = top_picks.direction_line(sec)         # day-135: above the table, a caution
+    movers = top_picks.mover_line(sec)                # day-135c: the last session's big movers
+    cautions = [x for x in (direction, movers) if x]
     extra = ''.join(f'<p>{escape(x)}</p>' for x in top_picks.table(sec)[2:]
                     if not x.startswith('|') and x and not x.startswith('Consensus is not')
-                    and x != direction)
-    if direction:
-        head += f'<ul class="gaps"><li class="g-caution">{escape(direction)}</li></ul>'
+                    and x not in cautions)
+    if cautions:
+        head += ('<ul class="gaps">' + ''.join(f'<li class="g-caution">{escape(x)}</li>' for x in cautions)
+                 + '</ul>')
     picks = sec.get('picks') or []
     if not picks:
         return head + f'{extra}</section>'

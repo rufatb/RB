@@ -83,3 +83,23 @@ The record splits at the rule version the day a switch is turned on. Neither
 rule is claimed to make a pick right.
 
 Script: `risk_rules.py`. Summary: `data/risk_day135c.json`.
+
+---
+
+## Results (added after the run; the text above is unchanged)
+
+Read `AUDIT_day135c_risk.md`. 150 names, 2,706 sessions, 389,034 name-days;
+no fetch failed.
+* **R1: FAIL (rejection #51).**
+  * The same-side book swings 1.13× the long/short book (sd 3.31% against
+    2.94%), below the 1.15 bar.
+  * ρ is 0.12, and 0.25 when XIU moves 1% or more.
+* **R2: PASS.**
+  * After a move of ≥ 1 ATR the next session's sd is 2.67%, against 2.15%
+    (1.24×, n = 49,295).
+  * The signed mean is −0.005% (t = −0.24).
+  * A planted 0.10% would show at t = 4.48 (reported after the verdict).
+
+As registered, nothing switched on. R2 ships as the owner's switch
+(`council.SKIP_MOVERS`, off). A caution line naming a pick on a big mover is
+always printed; it is display only.

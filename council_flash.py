@@ -65,6 +65,8 @@ def subject(session, section):
         what = ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p['agreement']) for p in picks) + tail
     elif tail:
         what = 'no consensus' + tail
+    elif (section or {}).get('passed_movers'):      # day-135c, when the owner's switch is on
+        what = 'agreed only on big movers, passed over — nothing to act on'
     elif (section or {}).get('no_positions'):
         what = 'no model proposed a position'
     else:
@@ -109,7 +111,8 @@ def compose(council, now):
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
             '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
             % (email_render.full.escape(subject(session, section).split(' — ', 2)[-1]),
-               email_render.direction_html(section)))          # day-135: one side, one bet
+               email_render.direction_html(section)          # day-135: one side, one bet
+               + email_render.mover_html(section)))          # day-135c: the last session's big movers
     return subject(session, section), body, email_render.html_from_text(body, hero=hero)
 
 

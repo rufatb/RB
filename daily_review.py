@@ -76,6 +76,11 @@ def picks_of(report):
     if isinstance(ru, dict):
         add('Runner-up (not a pick)', '+'.join(ru.get('models') or []), ru['side'], ru,
             extra={'agreement': ru.get('agreement')})
+    # Day-135c: positions the big-mover switch passed over; scored in their own
+    # section, kept out of the lessons (which read named sections only).
+    for p in (i.get('top_two') or {}).get('passed_movers') or []:
+        add('Passed over (big mover)', '+'.join(p.get('models') or []), p['side'], p,
+            extra={'agreement': p.get('agreement')})
     # Amendment 2 to day-129: the models' forced nominations, scored in their own
     # section and kept out of the lessons (which read named sections only).
     for model, got in ((i.get('council') or {}).get('nomination_picks') or {}).items():

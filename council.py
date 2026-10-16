@@ -50,6 +50,17 @@ HARD_STOP = dt.time(9, 40)
 MAX_CLAUDE_WAIT = 480
 MAX_ARGUMENT = 200
 PICKS = 2
+# Day-135c R2 (PREREGISTER_day135c_risk.md): after a move of >= 1 ATR the next
+# session swings about a quarter wider (2016-2026, 49,295 name-days, sd 2.67%
+# against 2.15%) and leans neither way (t = -0.24). The owner's switch: when on,
+# the Top 2 passes over such positions. A size rule, never a claim that a pick
+# is righter; the record splits at MOVER_RULE.
+MOVER_ATR = 1.0
+SKIP_MOVERS = False
+MOVER_RULE = 'day135c-movers'
+MOVER_NOTE = ('After a move that size a name swings about a quarter wider the next session '
+              '(2016–2026, 49,295 cases), and neither following the move nor betting on a bounce '
+              'has had an edge.')
 MEMBERS = ('Claude', 'DeepSeek', 'Gemini', 'Jev')
 LEAD_ORDER = ('claude', 'deepseek', 'gemini', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
@@ -531,6 +542,10 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
         return out
     ids = [p['id'] for p in table]
     rows = evidence_rows(root, now, {p['ticker'] for p in table})
+    # Day-135c: each name's prior move, kept beside the decision (never sent to
+    # the members: the rows they read already carry it).
+    base['moves'] = {r['ticker']: {'move_atr': r.get('move_atr'), 'atr_pct': r.get('atr_pct')}
+                     for r in rows if r.get('ticker')}
     pub = public(table)
     if scout_fn is None and live:
         import scout as SC
@@ -777,7 +792,34 @@ def _shape(p, r, members, check):
                      for x in p.get('proposers') or []]}
 
 
-def top_two(council, counted=None, *, prices=None, previous=None):
+def _mover(moves, ticker):
+    """The prior session's move in ATRs when it is a day-135c big mover, else None."""
+    m = (moves.get(ticker) or {}).get('move_atr')
+    return float(m) if isinstance(m, (int, float)) and abs(m) >= MOVER_ATR else None
+
+
+def is_mover(x):
+    m = (x or {}).get('move_atr')
+    return isinstance(m, (int, float)) and abs(m) >= MOVER_ATR
+
+
+def move_words(m):
+    """'a fall of 1.5 normal days': the last session's move in ATRs."""
+    return 'a %s of %.1f normal days' % ('rise' if m > 0 else 'fall', abs(m))
+
+
+def mover_phrase(x):
+    """How a position leans on its name's big move in the last session: it
+    follows the move, or bets on a bounce (after a fall) or a reversal (after
+    a rise). Day-132 and day-135c: neither has had an edge."""
+    m = x['move_atr']
+    if (x['side'] == 'LONG') == (m > 0):
+        return '%s %s follows %s' % (x['side'], x['ticker'], move_words(m))
+    return '%s %s bets on a %s after %s' % (x['side'], x['ticker'],
+                                           'reversal' if m > 0 else 'bounce', move_words(m))
+
+
+def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None):
     """The council's decision in the Top 2 section's shape. The 09:46 entry check
     (day-120 E1) drops a position already past its lead proposer's "wrong if".
 
@@ -788,19 +830,40 @@ def top_two(council, counted=None, *, prices=None, previous=None):
     consensus", or, for an agreed position ranked below two the council chose
     (one of them void at 09:46), "agreed, ranked below the picks". A pick or
     runner-up that was the previous session's Top 2 carries `repeat`.
-    `previous` is {ticker: ...} from `previous_top2`."""
+    `previous` is {ticker: ...} from `previous_top2`.
+
+    Day-135c R2 (the owner's switch, `SKIP_MOVERS`): when on, the picks are the
+    council's agreed positions in tally order PASSING OVER any whose name moved
+    >= 1 ATR the session before (`council['moves']`); a big mover is never the
+    runner-up either. The passed-over positions are kept in `passed_movers`,
+    shaped, so they are shown and recorded as a shadow. Off, nothing changes."""
     import entry_checks
     by_id = {p['id']: p for p in council.get('positions') or []}
     tally_rows = (council.get('tally') or {}).get('rows') or []
     rows = {r['id']: r for r in tally_rows}
     members = (council.get('tally') or {}).get('members') or []
-    picks, void = [], []
+    moves = council.get('moves') or {}
+    skip = SKIP_MOVERS if skip_movers is None else skip_movers
+    picks, void, passed = [], [], []
+    if skip:
+        chosen_ids = []
+        for r in tally_rows:
+            if not r.get('consensus') or r['id'] not in by_id:
+                continue
+            if _mover(moves, r['ticker']) is not None:
+                passed.append(r['id'])
+                continue
+            chosen_ids.append(r['id'])
+            if len(chosen_ids) == PICKS:
+                break
+    else:
+        chosen_ids = list(council.get('picks') or [])
 
     def entry(p):
         if prices is None:
             return None
         return entry_checks.check(p['side'], p.get('invalid_at'), prices.get(p['ticker']))
-    for pid in council.get('picks') or []:
+    for pid in chosen_ids:
         p, r = by_id.get(pid), rows.get(pid)
         if not p or not r:
             continue
@@ -812,7 +875,7 @@ def top_two(council, counted=None, *, prices=None, previous=None):
     runner_up, skipped = None, []
     if len(picks) < PICKS:
         taken = {x['ticker'] for x in picks}
-        chosen = set(council.get('picks') or [])
+        chosen = set(chosen_ids) | set(passed)
         for r in tally_rows:
             p = by_id.get(r['id'])
             if (not p or r['id'] in chosen
@@ -821,6 +884,7 @@ def top_two(council, counted=None, *, prices=None, previous=None):
             # More endorsements than objections, but it cannot stand: say why.
             why = ('the models split on it' if r.get('split') else
                    'the other side of a pick' if r['ticker'] in taken else
+                   'one of the last session\'s big movers' if skip and _mover(moves, r['ticker']) is not None else
                    'past its own "wrong if" at 09:46' if entry(p) == 'VOID' else None)
             if why:
                 skipped.append('%s %s (%s)' % (r['side'], r['ticker'], why))
@@ -837,6 +901,12 @@ def top_two(council, counted=None, *, prices=None, previous=None):
             and not (runner_up and (r['ticker'], r['side']) == (runner_up['ticker'], runner_up['side']))][:4]
     status = ('READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT')
     reason = (None if len(picks) == PICKS else
+              'Every position the council agreed on was one of the last session\'s big movers, '
+              'passed over by the big-mover rule (day-135c), so there is nothing here to act on.'
+              if passed and not picks and not void else
+              'The other positions the council agreed on were the last session\'s big movers, '
+              'passed over by the big-mover rule (day-135c); the second slot is left empty.'
+              if passed and picks and not void else
               'Only one position won the council; the second slot is left empty.'
               if picks and not void else
               'One position the council chose was already past its own "wrong if" at 09:46; '
@@ -855,9 +925,14 @@ def top_two(council, counted=None, *, prices=None, previous=None):
     for x in picks + ([runner_up] if runner_up else []):
         if x['ticker'] in (previous or {}):
             x['repeat'] = previous[x['ticker']]
+    for x in picks + ([runner_up] if runner_up else []):
+        m = (moves.get(x['ticker']) or {}).get('move_atr')
+        if isinstance(m, (int, float)):
+            x['move_atr'] = float(m)
     out = {'picks': picks, 'status': status, 'council': True,
            'answered': members, 'absent': (council.get('tally') or {}).get('absent') or [],
-           'rule_version': RULE_VERSION + ('+' + entry_checks.RULE_VERSION if prices is not None else ''),
+           'rule_version': (RULE_VERSION + ('+' + MOVER_RULE if skip else '')
+                            + ('+' + entry_checks.RULE_VERSION if prices is not None else '')),
            'reason': reason, 'near': near,
            'runner_up': runner_up,
            'runner_up_note': (None if len(picks) == PICKS or runner_up else
@@ -867,6 +942,9 @@ def top_two(council, counted=None, *, prices=None, previous=None):
                               'as endorsements.')}
     if void:
         out['void_at_entry'] = void
+    if passed:
+        out['passed_movers'] = [{**_shape(by_id[i], rows[i], members, entry(by_id[i])),
+                                 'move_atr': _mover(moves, by_id[i]['ticker'])} for i in passed]
     if repeat_note:
         out['repeat_note'] = repeat_note
     # Amendment 2 to day-129: the council's OWN splits (both sides agreed, so

@@ -1,5 +1,61 @@
 # Working notes for this repo
 
+## Day135c — the last session's big movers: a caution always, a skip switch for the owner (rejection #51 for R1, owner, 2026-10-15)
+
+The owner asked what stops "today's type of insane wipeouts", and for a
+predictor that does not carry the last day's pattern into the next "unless
+it's a recovery". Day-132 had already measured direction (chasing and fading
+are both null), so two SIZE rules were registered first
+(`PREREGISTER_day135c_risk.md`, 00eeb8d). Read `AUDIT_day135c_risk.md`;
+script `risk_rules.py`, summary `data/risk_day135c.json`.
+
+**The registered results** (150 names, 2016–2026, daily open → close):
+* **R1, one position per side: FAIL (#51).** Two same-side picks swing 1.13×
+  a long/short pair, below the 1.15 bar. The day-135 direction warning stays,
+  as display only.
+* **R2, skip a name that moved ≥ 1 ATR in the last session: PASS.**
+  * The next session swings 1.24× wider (sd 2.67% against 2.15%,
+    n = 49,295).
+  * It leans neither way: −0.005%, t = −0.24; a planted 0.10% shows at
+    t = 4.48.
+
+**Descriptive, after the verdicts:**
+* It is the same name after its own move (median within-name ratio 1.21), and
+  it holds in every year.
+* A recovery is no better. After a fall of ≥ 1 ATR the next session is
+  +0.009% (t = 0.25); after ≥ 2 ATR, −0.15%.
+* The live Top 2: 10 of 13 picks since 10-05 sat on big movers, and all 10
+  FOLLOWED the move.
+
+**What ships:**
+* **The caution, always on and display only** (`top_picks.mover_line`):
+  * the line reads "⚠ The last session's big movers: SHORT CLS.TO follows a
+    fall of 1.5 normal days …", or "bets on a bounce" / "bets on a reversal";
+  * it sits under the picks in every Top 2 table, in the email and flash
+    heroes (`email_render.mover_html`) and above the page's table;
+  * only picks trigger it, never the runner-up.
+* **The switch, `council.SKIP_MOVERS = False`.** It stays off until the owner
+  says yes; flipping it is a one-line commit. On:
+  * `council.top_two` takes the agreed positions in tally order, passing over
+    big movers (`council.json` `moves`, copied from the brief's rows in
+    `stage`);
+  * a big mover is never the runner-up;
+  * the passed-over positions print as "Passed over as the last session's big
+    movers …";
+  * they are recorded as `top2mover/pick`: a shadow, out of the pooled row,
+    the lab and the scoreboard, and its own section in the review;
+  * rule_version gains `+day135c-movers`, and E1 still applies;
+  * `council_memory` carries the same moves and switch.
+* **A council sealed before day-135c** has no `moves`, so nothing is passed
+  over.
+* **The dry run on 10-15's sealed council.** Off, the picks are unchanged and
+  both cautions print. On, nothing is left to act on: CLS, CCO and HUT are
+  passed over, and EFR cannot stand as runner-up.
+
+**Not claimed:** no pick is righter. The switch removes the names that swing
+widest the next day; on a day like 10-15 (52 of 150 big movers) it can empty
+the Top 2.
+
 ## Day135b — holding for weeks after earnings or rating changes: no edge since 2012 (rejection #50, owner, 2026-10-15)
 
 The owner asked whether a hold of a couple of weeks after company events
@@ -2435,8 +2491,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **50 rejections, 3
-adoptions** (as of day-135b). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **51 rejections, 3
+adoptions** (as of day-135c; R2 waits on the owner's switch). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The three adopted changes were all VARIANCE results. None improved accuracy.

@@ -135,6 +135,12 @@ def rows_from_report(report, source='published_report'):
     if isinstance(ru, dict):
         add('top2runner', 'pick', ru.get('side'), ru, agreement=ru.get('agreement'),
             prompt_version=(intra.get('top_two') or {}).get('rule_version'))
+    # Day-135c: with the owner's big-mover switch on, the council's agreed
+    # positions it passed over — a SHADOW, so what the rule gave up is scored;
+    # never sized, never pooled, never on the scoreboard.
+    for pick in (intra.get('top_two') or {}).get('passed_movers') or []:
+        add('top2mover', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
+            prompt_version=(intra.get('top_two') or {}).get('rule_version'))
     # Day-124: the counted rule beside the council, a SHADOW recorded for the
     # registered 40-session comparison and never printed in the email.
     for pick in (intra.get('top_two_counted') or {}).get('picks') or []:
@@ -387,7 +393,7 @@ def wire_card(rows=None, root=None):
 # picks (asked after the open), the engine (not a language model) and the
 # shadows that re-choose the same picks are left out.
 POOLED_KINDS = ('selected', 'forced', 'nominated', 'pick', 'final')
-POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner')
+POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner', 'top2mover')
 
 
 def pooled_card(rows=None):

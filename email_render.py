@@ -349,6 +349,18 @@ def direction_html(section):
         line = None
     return (f'<div style="font:600 14px/1.5 Arial,sans-serif;color:{CAUTION};margin-top:9px">'
             f'{full.escape(line)}</div>' if line else '')
+
+
+def mover_html(section):
+    """The day-135c big-mover caution for a hero, or '' (display only; a fault
+    here never costs the hero)."""
+    try:
+        import top_picks
+        line = top_picks.mover_line(section)
+    except Exception:
+        line = None
+    return (f'<div style="font:600 14px/1.5 Arial,sans-serif;color:{CAUTION};margin-top:9px">'
+            f'{full.escape(line)}</div>' if line else '')
 BADGES = {'ABSTAIN': ('#6b7280', '#eef0f2'), 'RECORDED': ('#6b7280', '#eef0f2'),
           'SHADOW': ('#1f5c66', '#e4f0f1'), 'ELIGIBLE': ('#1f5c66', '#e4f0f1')}
 
@@ -417,9 +429,13 @@ def _hero(d):
                for x in (intra.get('top_two') or {}).get('single') or []]
     near = [f"{x['side']} {x['ticker']} ({x['by']})"
             for x in (intra.get('top_two') or {}).get('near') or []]
+    passed = (intra.get('top_two') or {}).get('passed_movers')     # day-135c, switch on
     top_text = (f'Top 2 today: {" · ".join(top)}' if top else
                 (f"Top 2 today: no council pick — {ru_text}, not a pick"
                  if no_agreement and ru else
+                 "Top 2 today: the council agreed only on the last session's big movers — passed "
+                 "over, nothing to act on"
+                 if no_agreement and passed else
                  'Top 2 today: no council consensus — closest: ' + ' · '.join(near)
                  if no_agreement and near else
                  'Top 2 today: no council consensus — nothing to act on'
@@ -431,6 +447,7 @@ def _hero(d):
     top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
                 f'{full.escape(top_text)}</div>' if top_text else '')
     top_line += direction_html(intra.get('top_two'))
+    top_line += mover_html(intra.get('top_two'))
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
             f'{top_line}'
             f'<div style="font:600 19px/1.35 Georgia,serif;color:{INK}">{full.escape(head)}</div>'

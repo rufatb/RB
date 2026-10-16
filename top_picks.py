@@ -240,6 +240,20 @@ def direction_line(section):
             % (DIRECTION_MARK, side, 'up' if side == 'SHORT' else 'down', tail))
 
 
+def mover_line(section):
+    """Day-135c (owner, 2026-10-15): a pick on a name that moved 1 normal day
+    (ATR) or more in the last session, and which way the pick leans on it. On
+    10-15 both picks followed falls of about 1.5 and lost 3.6% and 4.2%. Display
+    only: it moves no pick (the big-mover switch, `council.SKIP_MOVERS`, does
+    that). A runner-up or a single-model pointer never triggers it."""
+    import council
+    movers = [p for p in (section or {}).get('picks') or [] if council.is_mover(p)]
+    if not movers:
+        return None
+    return ('%sThe last session\'s big movers: %s. %s'
+            % (DIRECTION_MARK, ' · '.join(council.mover_phrase(p) for p in movers), council.MOVER_NOTE))
+
+
 def table(section, concise=False):
     """The section as text lines, one table. Used by every email and view.
     `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
@@ -278,6 +292,9 @@ def table(section, concise=False):
     direction = direction_line(section)          # day-135: right under the picks
     if direction:
         out.append(direction)
+    movers = mover_line(section)                 # day-135c: picks on the last session's big movers
+    if movers:
+        out.append(movers)
     if section.get('reason'):
         out.append(section['reason'])
     if single and section.get('single'):
@@ -308,6 +325,10 @@ def _council_table(section, concise):
     if not picks:
         head = (section.get('reason') or 'No pick today.' if not concise else
                 'No council pick survived the 09:46 entry check.' if section.get('void_at_entry') else
+                'The council agreed only on the last session\'s big movers — passed over, nothing '
+                'to act on.' if section.get('passed_movers') and not section.get('runner_up') else
+                'The council agreed only on the last session\'s big movers — passed over, no '
+                'council pick.' if section.get('passed_movers') else
                 'No consensus today — no council pick.' if section.get('runner_up') else
                 'No consensus today — nothing to act on.')
         return (out + ['', head] + ([runner] if runner else []) + repeats
@@ -326,6 +347,9 @@ def _council_table(section, concise):
     direction = direction_line(section)          # day-135: right under the picks
     if direction:
         out.append(direction)
+    movers = mover_line(section)                 # day-135c: picks on the last session's big movers
+    if movers:
+        out.append(movers)
     out += council.council_lines(section, concise=concise)
     proposed = council.proposed_line(picks)      # day-129: selected, nominated or forced
     if proposed:
@@ -359,6 +383,12 @@ def _notes(section):
     if section.get('void_at_entry'):
         out.append('Passed over at 09:46, already past their own "wrong if": '
                    + ', '.join(section['void_at_entry']) + '.')
+    if section.get('passed_movers'):             # day-135c, when the owner's switch is on
+        import council
+        out.append('Passed over as the last session\'s big movers (the big-mover rule, day-135c): '
+                   + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], council.move_words(x['move_atr']))
+                                for x in section['passed_movers'])
+                   + '. Recorded as a shadow, never sized.')
     if section.get('repeat_note'):
         out.append(section['repeat_note'])
     return out

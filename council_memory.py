@@ -251,6 +251,7 @@ def stage(state_dir, *, now=None, clock=None, clients=None, claude_post=None, je
                      live=not clients)
     snap = {**base, 'positions': table, 'seats': live.get('seats'), 'lead_order': live.get('lead_order'),
             'memory': mem, **out, 'live_picks': live.get('picks') or [],
+            'moves': live.get('moves') or {},     # day-135c: the same big-mover switch as the live council
             'finished_at': K._now(clock()).isoformat(),
             'reason': (None if out['picks'] else
                        'fewer than two members cast a valid ballot' if out['status'] == 'UNAVAILABLE'
@@ -273,7 +274,8 @@ def section(snap, *, prices=None):
         return None
     out = K.top_two(snap, None, prices=prices, previous={})
     import entry_checks
-    out['rule_version'] = RULE_VERSION + ('+' + entry_checks.RULE_VERSION if prices is not None else '')
+    out['rule_version'] = (RULE_VERSION + ('+' + K.MOVER_RULE if K.SKIP_MOVERS else '')
+                           + ('+' + entry_checks.RULE_VERSION if prices is not None else ''))
     out['shadow'] = True
     return out
 
