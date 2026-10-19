@@ -188,14 +188,14 @@ def run(*, now=None, fetch=R._get, client=None, dry_run=False, tickers=None):
                 cands.append(c)
     # newest release first: an older release's timing for the same asset and
     # kind is superseded, never a second event
-    latest, superseded = {}, 0
+    latest, kept, superseded = {}, [], 0
     for c in cands:
-        key = R.asset_key(c)
-        if key in latest:
+        if any(k in latest for k in R.asset_keys(c)):
             superseded += 1
         else:
-            latest[key] = c
-    cands = list(latest.values())
+            latest.update({k: c for k in R.asset_keys(c)})
+            kept.append(c)
+    cands = kept
     known = {e['event_id'] for e in R.load()['events']}
     fresh = [c for c in cands if c['event_id'] not in known]
     page_fetch = lambda url: pages[url] if url in pages else fetch(url)

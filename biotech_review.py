@@ -125,18 +125,38 @@ def asset_key(e):
     return (e.get('ticker'), re.sub(r'[^A-Z0-9]', '', asset.upper())[:8], e.get('kind'))
 
 
+def asset_keys(e):
+    """Every spelling one asset goes by: `asset_key`, plus a parenthetical that
+    is itself a name or code (no spaces). "acellular tissue engineered vessel
+    (ATEV)" is also ATEV — on 2026-10-19 the finder stored it beside the
+    reviewed "ATEV" event, because the gloss rule dropped the short name. A
+    gloss with a space ("TN-401 (gene therapy)") stays a gloss."""
+    keys = {asset_key(e)}
+    for gloss in re.findall(r'\((.*?)\)', str(e.get('asset') or '')):
+        code = re.sub(r'[^A-Z0-9]', '', gloss.upper())[:8]
+        if ' ' not in gloss.strip() and len(code) >= 2:
+            keys.add((e.get('ticker'), code, e.get('kind')))
+    return keys
+
+
+def _twin(seen, e):
+    """The stored event_id `e` shares any spelling with, else None."""
+    return next((seen[k] for k in sorted(asset_keys(e), key=str) if k in seen), None)
+
+
 def _dedupe(events):
-    """One event per asset_key. A reviewed (non-finder) event is kept over a
-    finder one, then the first stored. Returns (kept, dropped)."""
+    """One event per asset, however it is spelled (`asset_keys`). A reviewed
+    (non-finder) event is kept over a finder one, then the first stored.
+    Returns (kept, dropped)."""
     order = sorted(range(len(events)), key=lambda i: (bool(events[i].get('finder')), i))
     seen, keep, dropped = {}, set(), []
     for i in order:
-        k = asset_key(events[i])
-        if k in seen:
+        twin = _twin(seen, events[i])
+        if twin:
             dropped.append({'event_id': events[i].get('event_id'),
-                            'reason': 'same asset and kind as ' + str(seen[k])})
+                            'reason': 'same asset and kind as ' + str(twin)})
         else:
-            seen[k] = events[i].get('event_id')
+            seen.update({k: events[i].get('event_id') for k in asset_keys(events[i])})
             keep.add(i)
     return [e for i, e in enumerate(events) if i in keep], dropped
 
@@ -146,11 +166,11 @@ def add(candidates, *, now=None, fetch=_get):
     now = now or dt.datetime.now(ET)
     obj = load()
     by_id = {e['event_id']: e for e in obj['events']}
-    stored_keys = {asset_key(e): e['event_id'] for e in obj['events']}
+    stored_keys = {k: e['event_id'] for e in obj['events'] for k in asset_keys(e)}
     accepted, rejected = [], []
     for c in candidates:
         c = {**c, 'review_status': 'verified', 'verified_at': now.isoformat()}
-        twin = stored_keys.get(asset_key(c))
+        twin = _twin(stored_keys, c)
         if twin and twin != c.get('event_id'):
             rejected.append({'event_id': c.get('event_id'), 'ticker': c.get('ticker'),
                              'reason': 'same asset and kind already stored as ' + twin})
@@ -164,7 +184,7 @@ def add(candidates, *, now=None, fetch=_get):
                              'reason': str(exc)[:160] or type(exc).__name__})
             continue
         by_id[c['event_id']] = c
-        stored_keys[asset_key(c)] = c['event_id']
+        stored_keys.update({k: c['event_id'] for k in asset_keys(c)})
         accepted.append(c['event_id'])
     obj['events'] = sorted(by_id.values(), key=lambda e: (e['window_end'], e['ticker']))
     save(obj)

@@ -1287,6 +1287,10 @@ Two mechanical refusals came from reading its first output:
 The newest release supersedes older ones for the same asset. Since 2026-10-05
 there is ONE stored event per (ticker, asset, kind) (`biotech_review.asset_key`):
 * asset spellings are normalized ("TN-401 (gene therapy)" = "TN401");
+* a parenthetical with no spaces is also a name for the asset
+  (`biotech_review.asset_keys`, 2026-10-19): "acellular tissue engineered
+  vessel (ATEV)" = "ATEV". The finder had stored HUMA's ATEV conference
+  twice; `--reverify` dropped the finder's copy;
 * `add` refuses a twin;
 * `--reverify` drops one, keeping the reviewed event over a finder event.
 

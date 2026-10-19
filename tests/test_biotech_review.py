@@ -100,6 +100,21 @@ def test_one_event_per_asset_however_the_asset_is_spelled(store):
                  fetch=fetch_page())['accepted'] == ['ABC-OTHER']
 
 
+def test_a_short_name_in_parentheses_is_the_same_asset(store):
+    """2026-10-19: the finder stored "acellular tissue engineered vessel (ATEV)"
+    beside the reviewed "ATEV" event; the gloss rule dropped the short name."""
+    assert R.asset_keys(event(asset='ATEV')) & R.asset_keys(event(asset='acellular tissue engineered vessel (ATEV)'))
+    assert not R.asset_keys(event(asset='TN-401 (gene therapy)')) & R.asset_keys(event(asset='TN-201 (gene therapy)'))
+    R.add([event(event_id='ABC-ATEV-topline-2026-12-31', asset='ATEV')], now=NOW, fetch=fetch_page())
+    out = R.add([event(event_id='ABC-ACELLULA-topline-2026-12-31', finder='v1',
+                       asset='acellular tissue engineered vessel (ATEV)')], now=NOW, fetch=fetch_page())
+    assert out['accepted'] == [] and 'ABC-ATEV-topline-2026-12-31' in out['rejected'][0]['reason']
+    kept, dropped = R._dedupe([event(event_id='ABC-ATEV', asset='ATEV'),
+                               event(event_id='ABC-LONG', asset='acellular tissue engineered vessel (ATEV)',
+                                     finder='v1')])
+    assert [e['event_id'] for e in kept] == ['ABC-ATEV'] and dropped[0]['event_id'] == 'ABC-LONG'
+
+
 def test_reverify_drops_a_stored_twin_and_keeps_the_reviewed_one(store):
     seal = {'review_status': 'verified', 'verified_at': NOW.isoformat()}
     twin = event(event_id='ABC-ABC1-topline-2026-12-31', asset='ABC1', finder='v1', **seal)
