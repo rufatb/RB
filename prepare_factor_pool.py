@@ -512,26 +512,32 @@ def _prepare(state_dir, cfg, *, now=None, fetcher=None, acquire_fn=None,
         # neither scores nor prices them — every row is tagged so a biotech
         # name can never be read as a TSX board leg.
         status['biotech_added'] = 0
-        if biotech_snapshot is None and not injected:
+        import biotech
+        if biotech.RETIRED and biotech_snapshot is None:
+            # Part 2 retired (owner, 2026-10-19): the ~270 US rows never reached
+            # a desk anyway (day-133) and no longer ride in the pool.
+            status['biotech_retired'] = True
+        else:
+            if biotech_snapshot is None and not injected:
+                try:
+                    biotech_snapshot = json.loads((ROOT/'data'/'biotech_snapshot.json').read_text())
+                except (OSError, UnicodeError, ValueError):
+                    biotech_snapshot = None
             try:
-                biotech_snapshot = json.loads((ROOT/'data'/'biotech_snapshot.json').read_text())
-            except (OSError, UnicodeError, ValueError):
-                biotech_snapshot = None
-        try:
-            if biotech_snapshot is None:
-                raise ValueError('BIOTECH_SNAPSHOT_NOT_SUPPLIED')
-            import daily_technicals
-            extra, biotech_gaps = daily_technicals.from_biotech_snapshot(biotech_snapshot, now)
-            for item in extra:
-                if item['ticker'] in rows:
-                    continue
-                rows[item['ticker']] = item
-                tickers = tickers + (item['ticker'],)
-                status['biotech_added'] += 1
-            status['biotech_gaps'] = len(biotech_gaps)
-        except Exception as exc:
-            status['biotech_error'] = (str(exc) if isinstance(exc, ValueError)
-                and re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc)) else type(exc).__name__)
+                if biotech_snapshot is None:
+                    raise ValueError('BIOTECH_SNAPSHOT_NOT_SUPPLIED')
+                import daily_technicals
+                extra, biotech_gaps = daily_technicals.from_biotech_snapshot(biotech_snapshot, now)
+                for item in extra:
+                    if item['ticker'] in rows:
+                        continue
+                    rows[item['ticker']] = item
+                    tickers = tickers + (item['ticker'],)
+                    status['biotech_added'] += 1
+                status['biotech_gaps'] = len(biotech_gaps)
+            except Exception as exc:
+                status['biotech_error'] = (str(exc) if isinstance(exc, ValueError)
+                    and re.fullmatch(r'[A-Z0-9_]{1,60}', str(exc)) else type(exc).__name__)
         # ── EARNINGS PROXIMITY: the DATE only (day-113 review, item 3) ──────
         # A name reporting tonight is a different instrument for six hours.
         # The quote endpoint already carries the scheduled report timestamp;

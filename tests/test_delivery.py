@@ -36,7 +36,7 @@ def test_one_message_for_repeated_delivery(tmp_path,monkeypatch):
     msg=SMTP.sent[0]
     assert len(msg.get_payload())==2
     assert 'Part 1' in msg.get_body(preferencelist=('plain',)).get_content()
-    assert 'Part 2' in msg.get_body(preferencelist=('html',)).get_content()
+    assert 'Part 1' in msg.get_body(preferencelist=('html',)).get_content()
 
 
 def test_ambiguous_send_is_not_blindly_retried(tmp_path,monkeypatch):

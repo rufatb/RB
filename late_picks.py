@@ -92,8 +92,10 @@ def stage(state_dir, *, now=None, secrets_from=ROOT/'.rb-state'/'secrets', log=p
     step('jev', lambda: J.stage(root, diagnostic=True))
     import gemini_opportunities as G
     step('gemini', lambda: G.stage(root, diagnostic=True))
-    import biotech_leans
-    step('biotech_calls', lambda: biotech_leans.stage(root))
+    import biotech
+    if not biotech.RETIRED:                       # Part 2 retired, owner 2026-10-19
+        import biotech_leans
+        step('biotech_calls', lambda: biotech_leans.stage(root))
     (root/'late_steps.json').write_text(json.dumps(steps))
     return steps
 
@@ -142,9 +144,12 @@ def check(root, answer):
 
 def biotech_part(root, now):
     """Part 2 as the report prints it: every reviewed event, one row, with the
-    model's call when one was staged."""
+    model's call when one was staged. Nothing once Part 2 is retired (owner,
+    2026-10-19)."""
     import biotech
     import biotech_leans
+    if biotech.RETIRED:
+        return []
     try:
         events = json.loads((ROOT/'data'/'biotech_events.json').read_text())['events']
         calendar = biotech.research_calendar(events, now)['events']

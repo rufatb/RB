@@ -565,7 +565,10 @@ def _scoreboard(board):
 
 def _biotech_section(digest):
     """Part 2: each reviewed catalyst event with the model's own call."""
+    import biotech
     import biotech_leans
+    if biotech.retired(digest.get('biotech')):    # Part 2 retired, owner 2026-10-19
+        return ''
     leans = (digest.get('biotech') or {}).get('leans')
     events = (digest.get('research_calendar') or {}).get('events') or []
     if leans is None and not events:

@@ -161,3 +161,43 @@ def test_an_unparseable_file_is_surfaced_not_skipped(repo):
     text, code = P.report()
     assert code == 1
     assert "unparseable" in text
+
+
+def test_the_runs_own_record_files_are_listed_not_refused(repo):
+    """Day-136. By 09:45 the morning has written its record files (the news
+    desk's, PEAD's, the wire archive) and pushes them after publishing. They
+    are the run's output, not code in no record; any other path still fails."""
+    (repo / "data" / "newswire").mkdir(parents=True)
+    (repo / "data" / "newswire" / "2026-10-19.jsonl").write_text("{}\n")
+    (repo / "ledger.csv").write_text("date,leg\n2026-01-02,A\n2026-01-05,B\n")
+    text, code = P.report()
+    assert code == 0, text
+    assert "2 record file(s) the run wrote and has not pushed yet" in text
+    assert "data/newswire/2026-10-19.jsonl" in text
+
+    (repo / "data" / "settings.json").write_text("{}")
+    text, code = P.report()
+    assert code == 1
+    assert "1 uncommitted change(s)" in text and "data/settings.json" in text
+
+
+def test_a_reviewed_branch_is_pinned_to_the_head_it_was_read_at(repo, monkeypatch):
+    """A branch read and deliberately left unmerged stops failing every
+    morning, but only at that head: one new commit and it is audited again."""
+    branch_with(repo, "lab", {"notes.md": "a lab note\n"})
+    head = run(repo, "git", "rev-parse", "origin/lab").strip()
+    monkeypatch.setattr(P, "REVIEWED", {"lab": (head, "read, kept on the branch")})
+    text, code = P.report()
+    assert code == 0, text
+    assert "origin/lab — reviewed, not merged: read, kept on the branch" in text
+
+    run(repo, "git", "checkout", "-q", "lab")
+    (repo / "more.py").write_text("def new_work():\n    return 1\n")
+    run(repo, "git", "add", "-A")
+    run(repo, "git", "commit", "-q", "-m", "more")
+    run(repo, "git", "push", "-q", "origin", "lab")
+    run(repo, "git", "checkout", "-q", "main")
+    text, code = P.report()
+    assert code == 1
+    assert "origin/lab — HOLDS WORK MAIN DOES NOT HAVE" in text
+    assert "more.py" in text

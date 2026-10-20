@@ -36,7 +36,7 @@ def test_no_scan_is_not_presented_as_no_opportunities():
     assert 'No demonstrated predictive edge' not in text  # concise empirical evidence remains
 
 
-def test_monitor_keeps_exact_five_bullets_and_calendar_is_separate():
+def test_monitor_keeps_exact_five_bullets_and_calendar_is_separate(biotech_live):
     d=brief.compute(now=NOW,services=services())
     d['biotech']['monitor']=[dict(ticker='BIO',bullets=[f'fact {i}' for i in range(5)],
                                   source_url='https://issuer.example/release')]

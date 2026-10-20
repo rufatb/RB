@@ -17,6 +17,20 @@ from urllib.parse import urlparse
 import numpy as np
 from quotes import number, stamp, fresh
 
+# Part 2 is RETIRED (owner, 2026-10-19: "get rid of the biotech part
+# entirely"). Nothing stages, computes, renders or scores it from then on: the
+# report freezes biotech={'status': 'RETIRED'} and every renderer skips Part 2.
+# A publication from before the retirement still renders its Part 2 as it was.
+# This module, its tests and every record stay (day-90: keep retired research).
+RETIRED = True
+RETIRED_NOTE = 'retired by the owner on 2026-10-19'
+
+
+def retired(section):
+    """True for a report's biotech section frozen after the retirement."""
+    return isinstance(section, dict) and section.get('status') == 'RETIRED'
+
+
 KINDS = {"topline", "interim", "conference", "PDUFA", "AdCom", "CRL", "financing"}
 # US venues, including OTC microcaps; a major-exchange-only screen would change
 # the top-100 ADV intersection requested by the user.

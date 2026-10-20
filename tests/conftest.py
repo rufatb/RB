@@ -31,3 +31,11 @@ def _no_previous_top2(tmp_path_factory, monkeypatch):
     change today's fixture. Tests that need a previous session pass `previous`."""
     import council
     monkeypatch.setattr(council, 'PREVIOUS_LEDGER', tmp_path_factory.mktemp('picks')/'none.csv')
+
+
+@pytest.fixture()
+def biotech_live(monkeypatch):
+    """Day-136: Part 2 is retired (`biotech.RETIRED`). A test of the kept
+    biotech code asks for this and runs it as it ran before the retirement."""
+    import biotech
+    monkeypatch.setattr(biotech, 'RETIRED', False)

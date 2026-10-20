@@ -38,7 +38,7 @@ def digest():
 def test_the_email_is_sectioned_not_one_long_column(digest):
     body = email_render.html(digest)
     assert body.startswith('<!doctype html>')
-    for heading in ('Part 1', 'Part 2', 'Research only'):
+    for heading in ('Part 1', 'Part 3', 'Research only'):   # Part 2 retired (day-136)
         assert heading in body, heading
     # Section headings are styled as headings, not as another paragraph.
     assert body.count('text-transform:uppercase') >= 3

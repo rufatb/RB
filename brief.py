@@ -3,7 +3,8 @@
 
 Part 1 retains the full intraday board, baseline research record and hypothetical
 allocation. The 09:45 signal reference is distinct from the 09:46 execution
-quote. Part 2 is an independent factual biotech monitor. No renderer fetches,
+quote. Part 2, the biotech monitor, was retired on 2026-10-19 (`biotech.RETIRED`)
+and is frozen as RETIRED. No renderer fetches,
 re-picks, sizes, scores or persists anything. No component submits orders.
 
 Use --publish once at 09:46 ET; publication persists even on zero-pick days.
@@ -315,31 +316,37 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
                  'cost':{'bps':quotes.get(p['t'],{}).get('spread_bps')}}
                 for p in res.get('longs',[])+res.get('shorts',[])]
     # Neither biotech data nor results can enter r945 selection/allocation.
-    try:
-        inputs = services.get('biotech_inputs',biotech.load_inputs)
-        snap, events = inputs()
-        option_rows = {}
-        # Source a pre-open options snapshot where supplied; freshness is still
-        # checked by biotech.option_percentile against the report's clock.
-        option_rows.update(snap.get('options',{}))
-        bio = biotech.scan(snap,events,option_rows,now)
-        calendar = biotech.research_calendar(events,now)
-    except Exception as exc:
-        bio={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
-             'errors':[safe_detail(f'{type(exc).__name__}: {exc}')],'universe_n':0,'screened_events':0,'top_limit':2}
-        # A missing universe file does not invalidate independently reviewed dates.
+    if biotech.RETIRED:
+        # Part 2 retired (owner, 2026-10-19): nothing is read or computed.
+        bio = {'status':'RETIRED','reason':biotech.RETIRED_NOTE,'monitor':[],'crowded':[],
+               'unverified':[],'errors':[],'universe_n':0,'screened_events':0,'top_limit':0}
+        calendar = {'events':[],'gaps':[],'retired':True}
+    else:
         try:
-            path = os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json')
-            calendar = biotech.research_calendar(json.loads(Path(path).read_text())['events'],now)
-        except Exception as event_exc:
-            calendar = {'events':[], 'gaps':[type(event_exc).__name__]}
-    # Part 2's calls (owner, 2026-09-28): the model's own LONG/SHORT into each
-    # reviewed event, staged before 09:44 and read here as a pure file read.
-    try:
-        import biotech_leans
-        bio['leans'] = biotech_leans.load_prepared(state_dir, now)
-    except Exception as exc:
-        error('biotech_leans', RuntimeError(type(exc).__name__))
+            inputs = services.get('biotech_inputs',biotech.load_inputs)
+            snap, events = inputs()
+            option_rows = {}
+            # Source a pre-open options snapshot where supplied; freshness is still
+            # checked by biotech.option_percentile against the report's clock.
+            option_rows.update(snap.get('options',{}))
+            bio = biotech.scan(snap,events,option_rows,now)
+            calendar = biotech.research_calendar(events,now)
+        except Exception as exc:
+            bio={'status':'UNAVAILABLE','monitor':[],'crowded':[],'unverified':[],
+                 'errors':[safe_detail(f'{type(exc).__name__}: {exc}')],'universe_n':0,'screened_events':0,'top_limit':2}
+            # A missing universe file does not invalidate independently reviewed dates.
+            try:
+                path = os.getenv('RB_BIOTECH_EVENTS_JSON','data/biotech_events.json')
+                calendar = biotech.research_calendar(json.loads(Path(path).read_text())['events'],now)
+            except Exception as event_exc:
+                calendar = {'events':[], 'gaps':[type(event_exc).__name__]}
+        # Part 2's calls (owner, 2026-09-28): the model's own LONG/SHORT into each
+        # reviewed event, staged before 09:44 and read here as a pure file read.
+        try:
+            import biotech_leans
+            bio['leans'] = biotech_leans.load_prepared(state_dir, now)
+        except Exception as exc:
+            error('biotech_leans', RuntimeError(type(exc).__name__))
     # Deadline checked after acquisition, not just when the process started.
     if live_clock:
         now = dt.datetime.now(ZoneInfo('America/New_York'))

@@ -11,9 +11,10 @@ def assess(report):
                or l.get('quote', {}).get('status') != 'OK']
     if invalid:
         gaps.append('Selected legs without valid execution observations: ' + ', '.join(invalid) + '.')
-    if report['biotech']['status'] == 'UNAVAILABLE':
+    retired = (report.get('biotech') or {}).get('status') == 'RETIRED'   # owner, 2026-10-19
+    if not retired and report['biotech']['status'] == 'UNAVAILABLE':
         gaps.append('Strict biotech universe/ranking unavailable; calendar is not a Top-2 substitute.')
-    if not report.get('research_calendar',{}).get('events'):
+    if not retired and not report.get('research_calendar',{}).get('events'):
         gaps.append('No current source-reviewed catalyst calendar has been prepared.')
     if report['positions']['legs']:
         gaps.append('Recorded holdings require brokerage/user reconciliation.')

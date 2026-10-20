@@ -241,7 +241,7 @@ def test_the_same_advice_twice_in_one_day_is_one_recommendation(monkeypatch,
     assert n1 == 1 and n2 == 0 and len(rows) == 1
 
 
-def test_factual_monitor_does_not_write_directional_advice(tmp_path, monkeypatch):
+def test_factual_monitor_does_not_write_directional_advice(tmp_path, monkeypatch, biotech_live):
     import advice
     from test_daily_pipeline import NOW, services
     monkeypatch.setattr(advice,'PATH',str(tmp_path/'advice.csv'))

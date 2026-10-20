@@ -26,7 +26,7 @@ def test_build_returns_one_digest_from_any_working_directory(tmp_path,monkeypatc
     assert isinstance(d,brief.Digest) and old==d
     before=encode(d)
     assert 'Part 1' in brief.render_text(d)
-    assert 'Part 2' in brief.render_html(d)
+    assert 'Part 1' in brief.render_html(d)
     assert 'Part 1' in email_render.html(d)
     assert counts==['intraday'] and s['market'].calls==1
     assert encode(d)==before

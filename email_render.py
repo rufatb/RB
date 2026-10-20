@@ -218,6 +218,8 @@ def _biotech_lines(d):
     (biotech_leans, owner 2026-09-28), then any certified Monitor entry."""
     import biotech_leans
     bio = d.get('biotech') or {}
+    if biotech.retired(bio):                      # Part 2 retired, owner 2026-10-19
+        return []
     calendar = (d.get('research_calendar') or {}).get('events') or []
     out = ['', '## Part 2 — Biotech catalysts · 3–6 months']
     table = biotech_leans.table_lines(bio.get('leans'), calendar, concise=True)

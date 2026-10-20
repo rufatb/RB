@@ -288,3 +288,20 @@ def test_us_biotech_rows_do_not_count_toward_the_150():
     assert clean['research_shortlist'] is not None
     assert clean['coverage']['requested'] == tsx
     assert 'RESEARCH_SHORTLIST_INVALID_OR_CHANGED' not in clean['gaps']
+
+
+def test_the_loader_counts_the_150_as_the_writer_does(tmp_path):
+    """Day-136. Day-134 taught the WRITER to count the 150 over TSX rows and
+    never the reader: a pool with 150 TSX and 270 US rows was sealed with
+    source_requested 150 and refused at load ('snapshot coverage differs from
+    saved records'), so the factor section read UNAVAILABLE from 10-14 to 10-19.
+    Crosses the real seam: prepare -> sealed snapshot -> load_prepared."""
+    p = expanded_pool(150)
+    p['candidates'] += [dict(copy.deepcopy(p['candidates'][0]), ticker='BIO%d' % i, market='US')
+                        for i in range(5)]
+    prepared = S.prepare(tmp_path, CFG, now=NOW, inputs=p, evaluator=success)
+    assert prepared['source_requested'] == 150
+    loaded = load_prepared(tmp_path, NOW.replace(hour=9, minute=46))
+    assert loaded['status'] != 'UNAVAILABLE', loaded.get('reason')
+    assert loaded['requested'] == 150 and loaded['shortlist_count'] == 50
+    assert not any(t.startswith('BIO') for t in loaded['research_shortlist']['tickers'])

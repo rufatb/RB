@@ -16,18 +16,21 @@ def check(state,now=None):
     cfg=load_config(str(Path(__file__).resolve().parent/'config.yaml'))
     history=inspect_cache(cfg,state/'intraday_cache',now)
     checks['intraday_history']=history['status']+' — '+f"{history['verified']}/{history['expected']} history files verified"
-    try:
-        snap=json.loads((state/'biotech_snapshot.json').read_text())
-        eligible=biotech.select_universe(snap,now)
-        checks['biotech_universe']=f'READY — {len(eligible)} names in strict intersection'
-    except (OSError,ValueError,KeyError,TypeError) as exc:
-        checks['biotech_universe']='NOT READY — '+str(exc)[:300]
-    try:
-        events=json.loads((state/'biotech_events.json').read_text())['events']
-        cal=biotech.research_calendar(events,now)
-        checks['reviewed_calendar']=f"{len(cal['events'])} current verified events; {len(cal['gaps'])} quarantined"
-        if not cal['events']: checks['reviewed_calendar']='NOT READY — empty/currently unverified event feed'
-    except (OSError,ValueError,KeyError,TypeError): checks['reviewed_calendar']='NOT READY — reviewed event feed missing'
+    if biotech.RETIRED:        # Part 2 retired (owner, 2026-10-19): nothing to prepare
+        checks['biotech_universe']='RETIRED — '+biotech.RETIRED_NOTE
+    else:
+        try:
+            snap=json.loads((state/'biotech_snapshot.json').read_text())
+            eligible=biotech.select_universe(snap,now)
+            checks['biotech_universe']=f'READY — {len(eligible)} names in strict intersection'
+        except (OSError,ValueError,KeyError,TypeError) as exc:
+            checks['biotech_universe']='NOT READY — '+str(exc)[:300]
+        try:
+            events=json.loads((state/'biotech_events.json').read_text())['events']
+            cal=biotech.research_calendar(events,now)
+            checks['reviewed_calendar']=f"{len(cal['events'])} current verified events; {len(cal['gaps'])} quarantined"
+            if not cal['events']: checks['reviewed_calendar']='NOT READY — empty/currently unverified event feed'
+        except (OSError,ValueError,KeyError,TypeError): checks['reviewed_calendar']='NOT READY — reviewed event feed missing'
     import eodhd
     provider = eodhd.load_prepared(state,now)
     import deepseek_factors

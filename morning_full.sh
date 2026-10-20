@@ -144,37 +144,9 @@ else
         stage_faults+=("intraday cache skipped: staging budget exhausted")
     fi
 
-    # The evening job certifies the universe and commits it COMPRESSED
-    # (data/biotech_snapshot.json is gitignored, so an evening build never
-    # used to reach this container). Unpack it; the build below then skips.
-    if [ -f data/biotech_snapshot.json.gz ]; then
-        if gunzip -c data/biotech_snapshot.json.gz > data/biotech_snapshot.json.tmp 2>/dev/null; then
-            mv data/biotech_snapshot.json.tmp data/biotech_snapshot.json
-            log "  biotech universe: evening snapshot unpacked"
-        else
-            rm -f data/biotech_snapshot.json.tmp
-            log "  biotech universe: evening snapshot UNREADABLE — rebuilding below"
-        fi
-    fi
-
-    # Exits 2 on an incomplete universe, which is a real partial, not a crash.
-    if budget="$(slice 900 $((540 + CLAUDE_WINDOW)))"; then
-        # Built the EVENING BEFORE by the bridge session (1,005 names do not fit
-        # a 25-minute window). This only rebuilds when that did not happen.
-        timeout "$budget" python build_biotech.py --output data/biotech_snapshot.json \
-            --skip-if-certified-within 20
-        case $? in
-            0) log "  biotech universe: complete" ;;
-            2) log "  biotech universe: PARTIAL (provider limit) — monitor stays uncertified"
-               stage_faults+=("biotech universe partial") ;;
-            *) log "  biotech universe: FAILED — Part 2 will be unavailable"
-               stage_faults+=("biotech universe failed") ;;
-        esac
-    else
-        log "  biotech universe: SKIPPED — an upstream step overran. Part 2 will be"
-        log "    unavailable and the pool loses its US biotech names."
-        stage_faults+=("biotech universe skipped: staging budget exhausted")
-    fi
+    # Part 2, the biotech catalysts, is RETIRED (owner, 2026-10-19): no
+    # universe is unpacked or built and no US rows join the pool.
+    log "  biotech: retired (owner, 2026-10-19) — Part 2 is not staged"
 
     # THE 150-NAME TSX LIST (day-101 rule, day-134 amendment; owner: "go ahead
     # with the 150"). TMX's issuer file and directory say who is a current TSX
@@ -394,16 +366,7 @@ else
     fi
 fi
 
-# ── 1b. BIOTECH CALLS (owner, 2026-09-28) ─────────────────────────────────
-# A LONG/SHORT per reviewed catalyst event. Its horizon is the event window,
-# months away, so it is not bound to the 09:30 cutoff and runs outside the
-# staging budget. ~6s measured; a failure costs Part 2's call column only.
-if timeout 150 python biotech_leans.py --state-dir "$RB_STATE_DIR" >/dev/null; then
-    log "  biotech calls: staged and recorded"
-else
-    log "  biotech calls: NOT staged — Part 2 prints its events without a call"
-    stage_faults+=("biotech calls not staged")
-fi
+# ── 1b. BIOTECH CALLS: retired with Part 2 (owner, 2026-10-19) ─────────────
 
 # EXTRA SECTIONS (day-119): the gap signal's normal daily moves and today's
 # post-earnings signals. Prior closes only, so staging after 09:30 is fine; a

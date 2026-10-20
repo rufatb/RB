@@ -1,5 +1,91 @@
 # Working notes for this repo
 
+## Day136 — Part 2 (biotech) retired; the factor layer and the provenance check work again (owner, 2026-10-19)
+
+The owner: "Let's get rid of the biotech part entirely and focus on fixing the
+rest."
+
+**Biotech is retired, not deleted** (Day-90: keep retired research).
+* **The switch.** `biotech.RETIRED = True`.
+  * `brief` freezes Part 2 as `status: RETIRED`, with no calendar.
+  * The email, the full report, the page and the picks-only and late emails
+    print nothing for it.
+  * The subject reads "Intraday", not "Intraday + Biotech".
+  * A publication from before renders as it did (`biotech.retired`).
+* **Nothing biotech is staged.**
+  * `morning_full.sh` neither builds the universe nor stages the calls; it
+    logs "biotech: retired".
+  * The factor pool adds no US rows (`status['biotech_retired']`).
+  * `preflight` and `readiness` skip its checks.
+* **The evening Routine** (`trig_016cq9JeHMTFPEbcCGPC9QZQ`) was updated the
+  same night.
+  * Gone: the universe build, `--reverify`, the finder and
+    `biotech_leans --score`. It scores, reviews, collects the wire and pushes.
+  * Its stored prompt no longer carries the DeepSeek key; no remaining step
+    needs it.
+* **Kept:**
+  * every biotech module and its tests;
+  * `data/biotech_events.json`;
+  * `data/biotech_calls.csv`: 263 calls; 1 of 1 resolved events right
+    (+3.9%), and one event resolves nothing.
+* **Wording left alone.** The live morning, watchdog and bridge prompts still
+  name biotech in passing: STEP 3's description, STEP 9's `git add` and
+  STEP 10's Part 2 line.
+  * That is wording only; the session reports Part 2 retired.
+  * It waits for the next authorised Routine edit, as the debate's did.
+  * `ROUTINE_PROMPT.md` and `ROUTINE_FALLBACKS.md` are already updated.
+
+**The factor layer read UNAVAILABLE from 10-14 to 10-19; biotech's rows were
+the trigger.**
+* **The cause.** Day-134 taught the WRITER (`factor_inputs`) to count the 150
+  over TSX rows only. The READER (`deepseek_factors._load_snapshot`) still
+  counted every row in the pool: 420, with the 270 US biotech rows.
+  * It refused the sealed snapshot: "snapshot coverage differs from saved
+    records".
+  * Same shape as day-112d and day-133: computed, sealed, then dropped by the
+    reader. The day-134 test crossed the writer only.
+* **Fixed both ways.**
+  * The US rows are gone with biotech.
+  * The reader now counts with the writer's own `research_shortlist.tsx_rows`.
+  * `test_the_loader_counts_the_150_as_the_writer_does` crosses
+    prepare → seal → load. Before the fix it failed with the live message.
+* **The proof.** 10-19's real sealed snapshot, re-read with the fixed reader,
+  is PARTIAL with 31 of 50 shortlisted names assessed, not UNAVAILABLE.
+  * No accuracy is claimed: the factor layer is still the unadopted shadow it
+    was.
+
+**Every morning read "provenance NOT CLEAN" (exit 6). Neither cause was work
+left off main.**
+* **The run's own record files.** At 09:45 the run has written them (the news
+  desk's, PEAD's, the wire archive) and pushes them after publishing.
+  * `provenance.RUN_RECORDS` lists them, from the `git add` lists in
+    `morning.sh` and STEP 9. They print as "record file(s) the run wrote and
+    has not pushed yet".
+  * Any other uncommitted path still fails, by name.
+* **Six reviewed branches.** None is to be merged:
+  * day-100's Kimi review;
+  * three Codex branches whose extra tests main later removed on purpose;
+  * the day-95 dashboard branch;
+  * the Kimi EODHD lab notes.
+
+  `provenance.REVIEWED` pins each to the commit it was read at, with the
+  reason. A new commit on any of them is audited again. The check now runs in
+  1.9 s, not 6.8 s.
+
+**Looked at and left alone.**
+* **40 TSX names a morning fail the five-minute history check**
+  (`CACHE_PRIOR_SESSION:INCOMPLETE_OR_WRONG_INTERVAL`).
+  * They are thin names (FFH, CSU, KXS, CTC-A …). Yahoo leaves out a
+    five-minute bar with no trade, so the prior session falls 1–17 bars short
+    of its 78-bar grid.
+  * Refusing a holed grid is the registered rule (day-98).
+  * The names still reach every model through the daily-bar pass
+    (day-111b/133; 150 of 150 considered on 10-19). They lack only the
+    intraday fields (VWAP, the opening range).
+  * Filling a missing bar would be a new data rule; it is not made here.
+* **The engine's abstentions** (an uncorroborated book) and **the XIU
+  benchmark's UNAVAILABLE** are the guards working.
+
 ## Day135d — two same-side chases in a row: big movers do not turn back either; the skip switch is ON and remove-only (rejection #52, adoption #4, owner, 2026-10-16)
 
 The Top 2 followed the day before's big move twice running, on one side each

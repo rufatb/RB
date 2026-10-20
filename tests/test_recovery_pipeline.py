@@ -128,7 +128,7 @@ def test_runtime_merge_preserves_immutable_values():
         merge(original,[{**original[0],'p945':'11'}],('date','ticker'))
 
 
-def test_reviewed_calendar_survives_incomplete_universe():
+def test_reviewed_calendar_survives_incomplete_universe(biotech_live):
     s=services();s['biotech_inputs']=lambda:({'universe_complete':False,'errors':['outage']},[event()])
     d=brief.compute(now=NOW,services=s)
     assert d['biotech']['monitor']==[] and len(d['research_calendar']['events'])==1

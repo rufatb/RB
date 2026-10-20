@@ -1,5 +1,9 @@
 # Biotech data contract
 
+> **Retired by the owner on 2026-10-19** (CLAUDE.md, Day136). Part 2 is no
+> longer staged, published or scored (`biotech.RETIRED`); the evening job no
+> longer builds the universe. The contract below is the record of how it worked.
+
 The daily monitor is factual event research, not a long/short recommendation.
 It does not forecast approval, clinical success, a share-price target or an option
 return. “Monitor” means a source-verified catalyst passes the stated expectations

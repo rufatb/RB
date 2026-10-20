@@ -5640,3 +5640,20 @@ was computed; read `AUDIT_day135d_breadth.md`.
     are an anecdote.
   * It does not make a pick right; it removes the widest swings.
 
+
+## Day-136: Part 2 (biotech) retired; the factor layer's reader fixed
+
+* **Biotech is retired by the owner's decision, not a verdict** (2026-10-19:
+  "get rid of the biotech part entirely").
+  * Its live record is one resolved event (1/1, +3.9%), which settles
+    nothing either way.
+  * One switch, `biotech.RETIRED`; the modules, tests and records are kept
+    (Day-90). The evening job no longer builds the universe or finds
+    catalysts.
+* **The factor layer was UNAVAILABLE from 10-14 to 10-19, an engineering
+  fault.** Day-134 taught the writer to count the research 150 over TSX rows,
+  and the reader still counted the 270 US biotech rows. It is fixed at both
+  ends; 10-19's sealed snapshot now loads PARTIAL with 31 of 50 assessed.
+  * The layer is still an unadopted shadow. Nothing here is claimed to change
+    what any pick is worth.
+* **No rejection or adoption.** The counts stay at 52 and 4.

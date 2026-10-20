@@ -342,8 +342,13 @@ def _load_snapshot(state_dir, now, path=None, *, diagnostic=False):
         from grounded_records import validate_snapshot
         grounding = validate_snapshot(obj)
         input_count = len(inputs.get('candidates', []))
-        source_requested = obj.get('source_requested', input_count)
-        if type(source_requested) is not int or not input_count <= source_requested <= P.MAX_CANDIDATES:
+        # The research 150 counts TSX rows only (day-134, research_shortlist.
+        # tsx_rows). The writer was taught that and this reader was not, so a
+        # pool carrying US rows was refused here from 10-14 (day-136).
+        from research_shortlist import tsx_rows
+        counted = len(tsx_rows(inputs.get('candidates', []))) if research else input_count
+        source_requested = obj.get('source_requested', counted)
+        if type(source_requested) is not int or not counted <= source_requested <= P.MAX_CANDIDATES:
             raise SnapshotValidationError('snapshot coverage differs from saved records')
         if (obj.get('requested') != input_count
                 or obj.get('covered') != len(assessments)):

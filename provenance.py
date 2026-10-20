@@ -41,6 +41,48 @@ import sys
 RECORD_FILES = ("ledger.csv", "universe_prints.csv", "positions.csv",
                 "data/advice.csv")
 
+# What the morning and evening runs write and push themselves, as records
+# (the `git add` lists in morning.sh and ROUTINE_PROMPT.md STEP 9). By 09:45
+# the morning has written some of them and not yet pushed them; that is the
+# run's own output, not "code that is in no record". Every other uncommitted
+# path still fails the check. A path ending in "/" is a directory.
+RUN_RECORDS = RECORD_FILES + ("data/model_picks.csv", "data/gap_calls.csv",
+                              "data/pead_calls.csv", "data/news_calls.csv",
+                              "data/newswire/", "data/social/", "data/reviews/")
+
+# Branches read and deliberately left unmerged, each pinned to the head it was
+# read at. A pinned branch is not re-audited while its head is unchanged; any
+# new commit on it is audited as usual. Day-136: six such branches made every
+# morning since day-100 read NOT CLEAN, and a check that always fails is a
+# check nobody reads.
+REVIEWED = {
+    "kimi/day95-record-integrity": (
+        "4bb0f992dba259fed3200b25d6aaae5d68899a4a",
+        "day-100 review (AUDIT_day100_day95b_review.md): not mergeable; the "
+        "record-gap diagnosis is ported as ledger.record_gaps and the "
+        "four-minute publication window is refused"),
+    "kimi/day98-eodhd-lab": (
+        "1ff5d5cb4c7d329e5095666ab2057074e582ab53",
+        "day-136 review: two notes and no code (a 20-session lab screen, not "
+        "evidence; EODHD's free tier serves EOD only); kept on the branch"),
+    "codex/day100-acquisition-budgets": (
+        "d77e5dcb4dd31cdf51ae02ef693cf6304b0c3010",
+        "absorbed; its extra tests were removed on main by later decisions "
+        "(day-103, day-113b, day-113c)"),
+    "codex/day100-deepseek-end-to-end": (
+        "5d3150eeb60e947380b52a008d5592d89102d766",
+        "absorbed; its extra tests were removed on main by later decisions "
+        "(day-107, day-113b, day-113c)"),
+    "codex/day101-tsx-research-universe": (
+        "7d78e0da00e3a0a753e6db72170560bad99394ce",
+        "absorbed; its extra tests were removed on main by later decisions "
+        "(day-107, day-113b, day-113c); the 150-name list shipped on day-134"),
+    "claude/intraday-decision-dashboard-n8rfu6": (
+        "c8777c2ec203ddb341bd96180b35b2640b6e5f84",
+        "absorbed on day-95 (r945.clock_vs_data); its adapters.py became the "
+        "adapters package on main"),
+}
+
 
 def git(*args: str) -> str:
     """One transport, and failures are RAISED. A provenance check that
@@ -167,6 +209,28 @@ def stranded(a: dict) -> bool:
                 or a["missing_records"])
 
 
+def reviewed(branch: str, remote: str) -> str | None:
+    """The review note for a branch still at its pinned head, else None."""
+    name = branch[len(remote) + 1:] if branch.startswith(remote + "/") else branch
+    pin = REVIEWED.get(name)
+    if pin is None:
+        return None
+    head = git("rev-parse", branch).strip()
+    return pin[1] if head == pin[0] else None
+
+
+def run_record(path: str) -> bool:
+    return any(path == r or (r.endswith("/") and path.startswith(r))
+               for r in RUN_RECORDS)
+
+
+def dirty_paths() -> list:
+    """Uncommitted paths, untracked directories expanded to their files."""
+    out = git("status", "--porcelain", "--untracked-files=all")
+    return [line[3:].split(" -> ")[-1].strip('"') for line in out.splitlines()
+            if line.strip()]
+
+
 def check_head(trunk: str) -> list:
     """Is the tree I am about to RUN the same thing as the trunk I just
     verified? A perfect audit of main is worth nothing if the morning run
@@ -177,11 +241,11 @@ def check_head(trunk: str) -> list:
     if cur != trunk:
         problems.append(f"HEAD is on {cur!r}, not {trunk!r}")
 
-    dirty = git("status", "--porcelain").strip()
+    dirty = [p for p in dirty_paths() if not run_record(p)]
     if dirty:
-        n = len(dirty.splitlines())
-        problems.append(f"working tree has {n} uncommitted change(s) — the "
-                        "morning run would execute code that is in no record")
+        problems.append(f"working tree has {len(dirty)} uncommitted change(s) — the "
+                        "morning run would execute code that is in no record: "
+                        + ", ".join(dirty[:5]) + (" ..." if len(dirty) > 5 else ""))
 
     ok, _ = git_ok("rev-parse", "--verify", f"origin/{trunk}")
     if ok:
@@ -210,18 +274,29 @@ def report(trunk: str = "main", remote: str = "origin") -> tuple:
             lines.append(f"  ✗ {p}")
     else:
         lines.append(f"  ✓ on {trunk}, clean, in sync with {remote}/{trunk}")
+    records = [p for p in dirty_paths() if run_record(p)]
+    if records:
+        lines.append(f"  · {len(records)} record file(s) the run wrote and has not "
+                     "pushed yet: " + ", ".join(records[:5])
+                     + (" ..." if len(records) > 5 else ""))
     lines.append("")
 
     trunk_files = files_at(trunk)
     trunk_symbols = all_symbols(trunk, trunk_files)
     lines.append(f"BRANCHES (content, not commit counts)")
 
-    audits = [audit_branch(b, trunk, trunk_files, trunk_symbols)
-              for b in branches(remote, trunk)]
-    if not audits:
+    others = branches(remote, trunk)
+    if not others:
         lines.append("  (no other branches)")
 
-    for a in audits:
+    audits = []
+    for b in others:
+        note = reviewed(b, remote)
+        if note:
+            lines.append(f"  ✓ {b} — reviewed, not merged: {note}")
+            continue
+        a = audit_branch(b, trunk, trunk_files, trunk_symbols)
+        audits.append(a)
         if not stranded(a):
             note = ("fully merged" if a.get("fully_merged") else
                     "absorbed" if not a["commits_ahead"] else

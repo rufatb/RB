@@ -136,6 +136,6 @@ def test_side_concentration_is_computed_then_rendered_next_to_legs():
     before=copy.deepcopy(report)
     body=email_render.text(report)
     assert 'TRP.TO and ENB.TO are one' in body
-    assert body.index('TRP.TO and ENB.TO are one')<body.index('## Part 2')
+    assert body.index('TRP.TO and ENB.TO are one')<body.index('## Part 3')
     assert '100.0% of the LONG side' in brief.render_text(report)
     assert report==before

@@ -57,10 +57,18 @@ def test_it_is_executable_and_valid_shell():
 
 def test_it_stages_before_it_publishes():
     body = code()
-    for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_deepseek.py',
-                 'deepseek_opportunities.py'):
+    for tool in ('bar_cache.py', 'prepare_deepseek.py', 'deepseek_opportunities.py'):
         assert body.index(tool) < body.index('./morning.sh'), \
             f'{tool} must run before the publication hand-off'
+
+
+def test_the_biotech_part_is_never_staged():
+    """Part 2 was retired by the owner on 2026-10-19: no universe build, no
+    calls, and the log says so instead of staying silent."""
+    body = code()
+    for tool in ('build_biotech.py', 'biotech_leans.py', 'biotech_review.py', 'biotech_finder.py'):
+        assert tool not in body, tool
+    assert 'biotech: retired (owner, 2026-10-19)' in body
 
 
 def test_it_holds_for_the_publication_window():
@@ -171,7 +179,7 @@ def test_the_staged_cache_is_actually_pointed_at():
 
 def test_no_step_is_given_a_fixed_timeout_any_more():
     body = code()
-    for tool in ('bar_cache.py', 'build_biotech.py', 'prepare_factor_pool.py',
+    for tool in ('bar_cache.py', 'prepare_factor_pool.py',
                  'prepare_deepseek.py', 'deepseek_opportunities.py',
                  'jev_opportunities.py', 'gemini_opportunities.py'):
         line = next(l for l in body.splitlines() if tool in l and 'timeout' in l)
@@ -182,8 +190,9 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     """A step given no time must be SKIPPED and named, not started and killed
     halfway through writing its snapshot."""
     body = code()
-    # 14 since day-134: the 150-name TSX list has its own named skip branch.
-    assert body.count('SKIPPED —') == 14, 'a step can still be starved in silence'
+    # 14 since day-134 (the 150-name TSX list has its own named skip branch);
+    # 13 since 2026-10-19, when the biotech universe step was retired.
+    assert body.count('SKIPPED —') == 13, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():

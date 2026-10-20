@@ -110,7 +110,9 @@ def subject(report):
     pieces=[f"RB Daily Report — {report['session']}"]
     if not str(report['report_status']).startswith('ON_TIME'):pieces.append('INFORMATIONAL')
     if prefix and prefix!='INFORMATIONAL':pieces.append(prefix)
-    elif not prefix:pieces.append('Intraday + Biotech')
+    elif not prefix:   # Part 2 retired by the owner on 2026-10-19
+        import biotech
+        pieces.append('Intraday' if biotech.retired(report.get('biotech')) else 'Intraday + Biotech')
     return ' — '.join(pieces)
 
 

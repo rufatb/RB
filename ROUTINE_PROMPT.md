@@ -64,7 +64,7 @@ The DeepSeek account carries ONLY `deepseek-flash` and `deepseek-v4-pro`; the ow
 
 STEP 3 — start the morning job IN THE BACKGROUND
   ./morning_full.sh > .rb-state/morning_full.log 2>&1
-Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the biotech universe, the factor pool, the issuers' wire releases (newswire.py), the news, the FMP context (day-125: analyst rating changes, earnings, today's scheduled releases — in every model's rows), writes CLAUDE'S BRIEF and has it answered statelessly through OpenRouter (day-126: Claude and Gemini look things up with read-only FMP tools before they answer; DeepSeek answers single-shot), waits for a seal until 09:24, asks DeepSeek, Jev and Gemini, stages the biotech calls, the gap signal and the post-earnings drift signals (Part 5, the debate, was retired by the owner on 2026-10-14), convenes THE COUNCIL (day-124: the four models deliberate on the Top 2, with a web scout's dated, sourced news on each position; Claude's ballot is cast through OpenRouter, yours only as the fallback in STEP 4), reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
+Bash run_in_background with timeout 7200000, exactly ONE copy (check `pgrep -f morning_full.sh` first). The timeout is required: the default background limit is 30 minutes and killed the job at 09:21 on 2026-10-02, before it could publish. It stages the cache, the factor pool, the issuers' wire releases (newswire.py), the news, the FMP context (day-125: analyst rating changes, earnings, today's scheduled releases — in every model's rows), writes CLAUDE'S BRIEF and has it answered statelessly through OpenRouter (day-126: Claude and Gemini look things up with read-only FMP tools before they answer; DeepSeek answers single-shot), waits for a seal until 09:24, asks DeepSeek, Jev and Gemini, stages the gap signal and the post-earnings drift signals (Part 2, the biotech catalysts, was retired by the owner on 2026-10-19, and Part 5, the debate, on 2026-10-14), convenes THE COUNCIL (day-124: the four models deliberate on the Top 2, with a web scout's dated, sourced news on each position; Claude's ballot is cast through OpenRouter, yours only as the fallback in STEP 4), reads every overnight release after 09:30 (Part 6, the news desk), holds to 09:44 and hands to `morning.sh`.
 Exit codes are morning.sh's own: 0 published; 3 not a trading day; 4 the engine REFUSED on an integrity guard; 5 published but late; 6 published, provenance not clean; 1 failed. Never re-run it and never override a guard — STEP 5 decides what the owner receives whatever the code.
 `morning.sh` WILL log "DELIVERY: NOT EMAILED — no SMTP credential". That is expected: a container cannot reach smtp.gmail.com. You send the email in STEP 7 through the Gmail connector.
 
@@ -131,7 +131,7 @@ If `report_page.html` is missing: `python report_page.py --report .rb-state/late
 
 STEP 9 — push the record (this session can push; nothing else will)
   python model_picks.py --record-report .rb-state/latest/report.json     (REPORT mode only; it also records Part 3's gap signals)
-  git add ledger.csv universe_prints.csv data/model_picks.csv data/biotech_calls.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv data/news_calls.csv
+  git add ledger.csv universe_prints.csv data/model_picks.csv data/newswire/ data/gap_calls.csv data/pead_calls.csv data/news_calls.csv
   git commit -m "record: <today> morning (report run)" && git push origin main
 Only those files, never code. Retry the push up to 4 times (2/4/8/16 s) on network errors only.
 
@@ -141,8 +141,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - the job's exit code, and what broke if anything, in plain words (including whether the FMP context was staged, and whether Claude's desk and ballot came through OpenRouter or from you).
   - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
   - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
-  - PART 2 — each biotech call (ticker, event, side, own confidence).
-  - PARTS 3 and 4 — the gap signals and the post-earnings drift signals (new and still held), or why there were none. (Part 5, the debate, is retired.)
+  - PARTS 3 and 4 — the gap signals and the post-earnings drift signals (new and still held), or why there were none. (Part 2, biotech, and Part 5, the debate, are retired.)
   - PART 6 — the news desk: how many overnight releases it read and its MATERIAL calls (side, ticker, own confidence), or why it is unavailable.
   - the link: https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9
 Never call a pick a prediction, never average the models, never present agreement as confirmation.
@@ -151,4 +150,4 @@ DO NOT TOUCH THE SCHEDULE
 Never create, modify, enable, disable or delete any Routine, including this one. If the schedule looks wrong, say so in the summary. The only authorised schedule change is the twice-yearly DST task, which has its own instructions.
 
 IF SOMETHING FAILS
-Say so plainly. Never fabricate a board, never re-run a refused publication, never replace a same-day published board, never push code. A DeepSeek, Gemini, Jev, FMP, OpenRouter, scout, council or biotech failure costs its own section — never the email.
+Say so plainly. Never fabricate a board, never re-run a refused publication, never replace a same-day published board, never push code. A DeepSeek, Gemini, Jev, FMP, OpenRouter, scout or council failure costs its own section — never the email.

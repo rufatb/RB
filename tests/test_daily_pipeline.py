@@ -42,7 +42,7 @@ def services():
             'biotech_inputs':lambda:({'universe_complete':False,'errors':['fixture outage']},[])}
 
 
-def test_full_board_and_engines_are_isolated():
+def test_full_board_and_engines_are_isolated(biotech_live):
     a=services();first=brief.compute(now=NOW,services=a)
     a['biotech_inputs']=lambda:(_ for _ in ()).throw(ValueError('bad catalyst data'))
     second=brief.compute(now=NOW,services=a)
@@ -68,7 +68,8 @@ def test_renderers_cannot_fetch_or_mutate(monkeypatch):
     assert 'AAA.TO' in brief.render_text(d)
     assert 'AAA.TO' in brief.render_html(d)
     assert encode(d)==before
-    assert 'Part 1' in brief.render_text(d) and 'Part 2' in brief.render_text(d)
+    assert 'Part 1' in brief.render_text(d)
+    assert 'Part 2' not in brief.render_text(d)   # retired (day-136)
 
 
 def test_offline_does_not_publish_or_fetch(tmp_path):
