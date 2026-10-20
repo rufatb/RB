@@ -17,8 +17,11 @@ def bdays(a, b):
 
 def fake_fmp(names, edge, seed=1):
     """earnings, daily bars and 5-minute bars. On each report's D0 the name gaps
-    5%; its 10:00 → close move against XIU is sign(x30) × edge + noise."""
-    rng = random.Random(seed)
+    5%; its 10:00 → close move against XIU is sign(x30) × edge + noise.
+
+    `run` fetches on eight threads, so every series draws from its own seeded
+    stream: one shared stream made the noise depend on thread order, and under
+    a loaded suite a noise run now and then crossed the bar (day-136)."""
     days = bdays('2023-11-01', R.END)
     reports = {t: [d for i, d in enumerate(days) if d >= R.START and i % 63 == (7 * k) % 63]
                for k, t in enumerate(names)}
@@ -31,6 +34,7 @@ def fake_fmp(names, edge, seed=1):
             return [{'date': d, 'epsActual': 1.0} for d in reports[t]]
         if path == 'historical-price-eod/full':
             out, close = [], 50.0
+            rng = random.Random(f'{seed}:{t}:eod')
             for d in days:
                 gap = 0.05 if d in react[t] else rng.uniform(-0.004, 0.004)
                 op = close * (1 + gap)
@@ -41,6 +45,7 @@ def fake_fmp(names, edge, seed=1):
         for d in bdays(p['from'], p['to']):
             key = (t, d)
             if key not in moves:
+                rng = random.Random(f'{seed}:{t}:{d}')
                 x = rng.uniform(-0.02, 0.02)
                 event = t in react and d in react[t]
                 y = (edge if x > 0 else -edge) if event else 0.0
