@@ -14,6 +14,15 @@ could make the picks more accurate. Registered first
   * Paired against day-117's DeepSeek: +0.145% a session, t = 1.15.
 * **Cost:** $0.34. `replay_or_models.py` now takes `--summary`, `--budget`
   and `--registration`, so a new model never overwrites day-134b's results.
+* **The one lead left is before the open, not after it.** A model reading an
+  overnight release calls the gap it causes (day-122: +0.21% a call,
+  t = 2.7), and the TSX open prices it. Only a US-listed twin can be traded
+  before 09:30.
+  * FMP serves US extended-hours 5-minute bars (`historical-chart/5min` with
+    `extended=true`, 04:00–20:00 ET; checked on CLS, 10-21).
+  * The wire archive starts 2026-07, so a test now would hold about 75
+    interlisted pre-market releases: underpowered for 0.2%.
+  * It is the owner's call whether they can and would trade US pre-market.
 * **OpenRouter credit is the constraint to watch.** $5.41 of $20 was left
   after this test, and the mornings spend about $0.84 a day: Claude's desk,
   ballot and nominations, the web scout and the memory council. When it runs
