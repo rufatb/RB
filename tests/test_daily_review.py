@@ -137,3 +137,54 @@ def test_vs_sector_separates_the_name_from_its_sector(tmp_path):
     a = next(r for r in out['rows'] if r['ticker'] == 'AAA.TO' and r['section'] == 'Desk')
     assert a['vs_sector'] == round(a['r_pct'] + 1.0, 3)        # long, peers -1%
     assert 'beat by' in dr.why(a) and 'Mean vs sector' in out['markdown']
+
+
+# ── day-137 M1: the council against its own table ───────────────────────────
+
+def council_report(session, picks=('P1',)):
+    """A frozen council: P1 picked by all three members, P2 endorsed by two, P3 by one."""
+    rows = [{'id': 'P1', 'ticker': 'AAA.TO', 'side': 'LONG', 'endorse': ['A', 'B', 'C'], 'oppose': []},
+            {'id': 'P2', 'ticker': 'BBB.TO', 'side': 'SHORT', 'endorse': ['A', 'B'], 'oppose': ['C']},
+            {'id': 'P3', 'ticker': 'CCC.TO', 'side': 'LONG', 'endorse': ['A'], 'oppose': ['B']}]
+    return {'session': session, 'intraday': {'council': {
+        'picks': list(picks), 'tally': {'members': ['A', 'B', 'C'], 'rows': rows}}}}
+
+
+def ledger(session, results):
+    return [{'session': session, 'model': 'gemini', 'kind': 'nominated', 'ticker': t, 'side': s,
+             'r_pct': '' if r is None else str(r)} for (t, s), r in results.items()]
+
+
+def test_the_table_is_scored_from_the_record_and_split_by_the_council_choice():
+    got = dr.council_table(council_report(DAY), ledger(DAY, {
+        ('AAA.TO', 'LONG'): -1.0, ('BBB.TO', 'SHORT'): 0.5, ('CCC.TO', 'LONG'): None,
+        ('CCC.TO', 'SHORT'): 9.0}))                       # the other side is another position
+    assert got['members'] == 3
+    assert [(p['ticker'], p['picked'], p['unanimous'], p['r_pct']) for p in got['positions']] == [
+        ('AAA.TO', True, True, -1.0), ('BBB.TO', False, False, 0.5), ('CCC.TO', False, False, None)]
+    assert dr.council_table({'session': DAY, 'intraday': {}}, []) is None
+
+
+def test_the_running_record_compares_picks_with_the_whole_table(tmp_path):
+    for d, (pick, rest) in enumerate([(-1.0, 1.0), (0.2, 0.0), (-0.5, 0.5)]):
+        s = f'2026-10-{d + 1:02d}'
+        doc = {'session': s, 'rows': [],
+               'council_table': dr.council_table(council_report(s), ledger(s, {
+                   ('AAA.TO', 'LONG'): pick, ('BBB.TO', 'SHORT'): rest, ('CCC.TO', 'LONG'): rest}))}
+        (tmp_path / f'{s}.json').write_text(json.dumps(doc))
+    picked, unanimous = dr.table_record(tmp_path)
+    assert [round(d['r_pct'], 3) for d in picked] == [-1.333, 0.133, -0.667]   # pick minus table mean
+    assert [round(d['r_pct'], 3) for d in unanimous] == [-2.0, 0.2, -1.0]
+    text = dr.table_section('2026-10-04', council_report('2026-10-04'), root=tmp_path,
+                            ledger_rows=ledger('2026-10-04', {('AAA.TO', 'LONG'): -0.5}))
+    assert 'The council against its own table' in text
+    assert 'Record: 3 session(s)' in text and 'no verdict before 40 sessions' in text
+    assert 'Counted, not a rule.' in text
+
+
+def test_the_table_readout_never_costs_the_review(tmp_path):
+    def broken():
+        raise OSError('no ledger')
+    text = dr.table_section(DAY, council_report(DAY), root=tmp_path, ledger_rows=type(
+        'L', (), {'__iter__': lambda self: broken()})())
+    assert 'unavailable (OSError)' in text

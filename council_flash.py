@@ -55,6 +55,14 @@ def _now(now=None):
     return now.astimezone(ET)
 
 
+def passed_words(section):
+    """'a big mover', 'big movers', 'a high-volatility name' … for the subject."""
+    m, w = len(section.get('passed_movers') or []), len(section.get('passed_wild') or [])
+    parts = ([('big movers' if m > 1 else 'a big mover')] if m else []) + (
+        [('high-volatility names' if w > 1 else 'a high-volatility name')] if w else [])
+    return ' and '.join(parts)
+
+
 def subject(session, section):
     import council as K
     picks = (section or {}).get('picks') or []
@@ -63,8 +71,8 @@ def subject(session, section):
             if ru and len(picks) < 2 else '')
     if picks:
         what = ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p['agreement']) for p in picks) + tail
-    elif (section or {}).get('passed_movers'):      # day-135c, when the owner's switch is on
-        what = ('%s passed over — %s' % ('big movers' if len(section['passed_movers']) > 1 else 'a big mover',
+    elif (section or {}).get('passed_movers') or (section or {}).get('passed_wild'):   # day-135c, day-137
+        what = ('%s passed over — %s' % (passed_words(section),
                                           'no council pick' if tail else 'nothing to act on') + tail)
     elif tail:
         what = 'no consensus' + tail

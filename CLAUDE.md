@@ -1,5 +1,98 @@
 # Working notes for this repo
 
+## Day137 — why the council's picks lose; the high-volatility rule (rejections #53, #54; adoption #5; owner, 2026-10-21)
+
+The owner, after the 10-21 Top 2 (SHORT CLS.TO) lost 0.70%: "the council is
+not selecting the best picks — identify what it is and try implementing the
+enhancements to council picks." Registered first (`PREREGISTER_day137_council.md`,
+f7b7040); read `AUDIT_day137_council.md`.
+* **Scripts:** `council_audit.py` (live, descriptive) and `council_history.py`
+  (the registered test).
+* **Summaries:** `data/council_audit_day137.json` and
+  `data/council_history_day137.json`.
+
+**10-21's CLS short, concretely.**
+* The thesis was 10-20's weakness: CLS fell 3.4% in its first fifteen minutes
+  and finished 3.0% behind a sector that rose 2.6%. All four members endorsed
+  it.
+* CLS opened 4% above its prior close, fell to 425.28 by the 09:45 entry, then
+  drifted up with tech to 428.27.
+* The sector fund's part was −0.42% and the stock's own part −0.28%.
+* No proposer gave a "wrong if", so there was no stop. Its normal day is 7.3%,
+  against the morning's 90th percentile of 5.1%.
+
+**What the council selects** (the 12 frozen tables in `reports.sqlite3`, 108
+positions):
+* **Its choice adds nothing over its own table:** picks −0.30% (8 of 20
+  right), the table −0.31%.
+* **Agreement gathers on the most visible continuation story:**
+  * 85% of picks follow the last move, 85% follow the move against the
+    sector, and 70% are big movers;
+  * unanimous positions did worst (−1.09%, 6 of 17), but by session that is
+    t = −0.55: nothing.
+* **The sector decides most results:** the sector fund's part averaged −0.54%
+  per pick, the stock's own part −0.15%.
+
+**The registered test** (150 names; FMP 15-minute bars, 2024-01 → 2026-10-02,
+09:45 → 16:00; ten years of daily open → close beside it):
+* **H1 (#53), following the move against the sector:** −0.044% a name-day,
+  t = −2.75, 46.8% right, n = 38,438.
+  * It leans toward reversal and grows with the size of the move, but the
+    first block is positive and t is above −3. NULL as registered; no rule.
+  * Ten years: t = −1.61.
+* **H2 (#54), following the sector against XIU:** t = −0.44. Null.
+* **H3 (adoption #5), the morning's 15 widest-swinging names:** they swing
+  2.46× the rest (sd 3.79% against 1.54%), and a quarter of them move more
+  than 3% after 09:45.
+  * Leans: following −0.023% (t = −0.47), long +0.073% (t = 1.15). PASS as a
+    size rule.
+
+**What changed: `council.SKIP_WILD = True` from the 10-22 morning.** It is
+remove-only, as day-135d.
+* **The cut.** `council.stage` records `wild` = {pctile 90, atr_pct, names},
+  the 90th percentile of ATR % over every name the desks read (the brief's
+  rows). It is never sent to the members. If the cut cannot be made,
+  `errors['wild']` says so and nothing is passed over.
+* **The Top 2.** `top_two` keeps the council's picks minus those on a name at
+  or above the cut (`passed_wild`, with `atr_pct` and `wild_cut`).
+  * Nothing is added, and a wild name is never the runner-up.
+  * A position that is both a big mover and wild is passed over as a big
+    mover.
+  * rule_version gains `+day137-wild` only for a council that recorded the
+    cut.
+* **The counted fallback** (`decide` → `counted_wild`) uses the council's
+  recorded cut, else one computed from the brief's rows.
+* **How it reads:**
+  * "Passed over as one of the morning's widest-swinging names (the
+    high-volatility rule, day-137): SHORT CLS.TO (a normal day of 7.3%; the
+    morning's cut 5.1%)";
+  * the flash and report subjects: "a high-volatility name passed over";
+  * `passed_head` covers mover, wild and void combinations.
+* **The record.** `top2wild/pick` is a shadow: out of the pooled row, the
+  scoreboard and the lab. The review scores it as "Passed over (high
+  volatility)", and the memory council carries the same cut.
+* **On the live record it would have passed over:**
+  * SSRM.TO on 10-14 (+1.20%);
+  * CLS.TO on 10-15 (−3.61%; the mover rule was not on yet);
+  * CLS.TO on 10-21 (−0.70%).
+
+  An anecdote, not evidence.
+
+**Forward, M1 (`daily_review.table_section`).**
+* **Every evening the review prints:**
+  * the council's picks, before any rule, against every position on that
+    morning's table, scored from `data/model_picks.csv`;
+  * the running per-session difference, clustered;
+  * unanimous positions against the rest.
+* **Where it is kept.** Each day's review JSON keeps `council_table`.
+  `--backfill-council-tables .rb-state/reports.sqlite3` filled 10-05 → 10-21.
+* **At 40 sessions:**
+  * t ≤ −2 → tell the owner the council chooses worse than its own table;
+  * t ≥ 3 → its choice adds something.
+* **Today:** 12 sessions, picks minus table +0.01% (t = 0.05).
+
+**Not claimed:** that any pick is righter. The Top 2 is 9 right of 23 (39%).
+
 ## Day136 — Part 2 (biotech) retired; the factor layer and the provenance check work again (owner, 2026-10-19)
 
 The owner: "Let's get rid of the biotech part entirely and focus on fixing the
@@ -2687,11 +2780,12 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **52 rejections, 4
-adoptions** (as of day-135d; R2, skip big movers, is the fourth). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **54 rejections, 5
+adoptions** (as of day-137; skipping the morning's widest-swinging names is the
+fifth). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
-The four adopted changes were all VARIANCE results. None improved accuracy.
+The five adopted changes were all VARIANCE results. None improved accuracy.
 
 ## The constraint that governs the intraday engine
 

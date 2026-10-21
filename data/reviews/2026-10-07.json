@@ -493,5 +493,50 @@
  ],
  "unscored": [],
  "market_pct": -0.59,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P2",
+    "side": "LONG",
+    "ticker": "CCO.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": -1.3282
+   },
+   {
+    "id": "P4",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": 0.6389
+   },
+   {
+    "id": "P1",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.2847
+   },
+   {
+    "id": "P3",
+    "side": "SHORT",
+    "ticker": "CS.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.5058
+   },
+   {
+    "id": "P5",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 2.5478
+   }
+  ]
+ }
 }

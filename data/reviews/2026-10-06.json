@@ -302,5 +302,34 @@
  ],
  "unscored": [],
  "market_pct": 0.17,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "CVE.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": -0.169
+   },
+   {
+    "id": "P3",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.9286
+   },
+   {
+    "id": "P1",
+    "side": "SHORT",
+    "ticker": "CNQ.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.7808
+   }
+  ]
+ }
 }

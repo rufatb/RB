@@ -302,5 +302,26 @@
  ],
  "unscored": [],
  "market_pct": 0.096,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "TD.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": -0.4149
+   },
+   {
+    "id": "P1",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.032
+   }
+  ]
+ }
 }

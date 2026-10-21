@@ -576,5 +576,66 @@
  ],
  "unscored": [],
  "market_pct": 0.456,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "CVE.TO",
+    "picked": true,
+    "unanimous": false,
+    "r_pct": -2.1848
+   },
+   {
+    "id": "P7",
+    "side": "LONG",
+    "ticker": "TECK-B.TO",
+    "picked": true,
+    "unanimous": false,
+    "r_pct": 0.8912
+   },
+   {
+    "id": "P3",
+    "side": "LONG",
+    "ticker": "ERO.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.5761
+   },
+   {
+    "id": "P1",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.7001
+   },
+   {
+    "id": "P4",
+    "side": "SHORT",
+    "ticker": "GIL.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.4328
+   },
+   {
+    "id": "P6",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.4767
+   },
+   {
+    "id": "P5",
+    "side": "SHORT",
+    "ticker": "QSR.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.7681
+   }
+  ]
+ }
 }

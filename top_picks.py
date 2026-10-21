@@ -392,6 +392,13 @@ def _notes(section):
                    + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], council.move_words(x['move_atr']))
                                 for x in section['passed_movers'])
                    + '. Recorded as a shadow, never sized.')
+    if section.get('passed_wild'):               # day-137, the high-volatility rule
+        import council
+        out.append('Passed over as one of the morning\'s widest-swinging names (the high-volatility '
+                   'rule, day-137): '
+                   + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], council.wild_words(x))
+                                for x in section['passed_wild'])
+                   + '. Recorded as a shadow, never sized.')
     if section.get('mover_note'):                # day-135d: the rule could not be applied
         out.append(section['mover_note'])
     if section.get('repeat_note'):

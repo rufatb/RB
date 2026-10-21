@@ -491,5 +491,122 @@
  ],
  "unscored": [],
  "market_pct": 0.185,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P4",
+    "side": "LONG",
+    "ticker": "GFL.TO",
+    "picked": true,
+    "unanimous": false,
+    "r_pct": -0.8249
+   },
+   {
+    "id": "P2",
+    "side": "LONG",
+    "ticker": "ATZ.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.388
+   },
+   {
+    "id": "P3",
+    "side": "SHORT",
+    "ticker": "CNQ.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.4702
+   },
+   {
+    "id": "P10",
+    "side": "SHORT",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.0091
+   },
+   {
+    "id": "P8",
+    "side": "SHORT",
+    "ticker": "RBA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.3281
+   },
+   {
+    "id": "P9",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.714
+   },
+   {
+    "id": "P11",
+    "side": "LONG",
+    "ticker": "TD.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.4624
+   },
+   {
+    "id": "P7",
+    "side": "LONG",
+    "ticker": "RBA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.3281
+   },
+   {
+    "id": "P13",
+    "side": "SHORT",
+    "ticker": "TOU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.0605
+   },
+   {
+    "id": "P1",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.8165
+   },
+   {
+    "id": "P5",
+    "side": "LONG",
+    "ticker": "IMO.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.0947
+   },
+   {
+    "id": "P6",
+    "side": "SHORT",
+    "ticker": "MDA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.1031
+   },
+   {
+    "id": "P12",
+    "side": "SHORT",
+    "ticker": "TECK-B.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P14",
+    "side": "LONG",
+    "ticker": "X.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   }
+  ]
+ }
 }

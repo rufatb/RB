@@ -81,6 +81,9 @@ def picks_of(report):
     for p in (i.get('top_two') or {}).get('passed_movers') or []:
         add('Passed over (big mover)', '+'.join(p.get('models') or []), p['side'], p,
             extra={'agreement': p.get('agreement')})
+    for p in (i.get('top_two') or {}).get('passed_wild') or []:            # day-137
+        add('Passed over (high volatility)', '+'.join(p.get('models') or []), p['side'], p,
+            extra={'agreement': p.get('agreement')})
     # Amendment 2 to day-129: the models' forced nominations, scored in their own
     # section and kept out of the lessons (which read named sections only).
     for model, got in ((i.get('council') or {}).get('nomination_picks') or {}).items():
@@ -345,15 +348,23 @@ def review(session, report, *, bars_for=None, root=REVIEWS, market_ticker='XIU.T
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    p.add_argument('--session', required=True)
+    p.add_argument('--session')
     p.add_argument('--report', default=str(ROOT / '.rb-state' / 'latest' / 'report.json'))
+    p.add_argument('--backfill-council-tables', metavar='DB',
+                   help='add the day-137 council table to reviewed days from a reports.sqlite3')
     a = p.parse_args(argv)
+    if a.backfill_council_tables:
+        print(json.dumps(backfill_council_tables(a.backfill_council_tables)))
+        return 0
+    if not a.session:
+        p.error('--session is required')
     report = json.loads(Path(a.report).read_text())
     if report.get('session') != a.session:
         print(f"the report is for {report.get('session')}, not {a.session}", file=sys.stderr)
         return 2
     out = review(a.session, report)
-    md = out['markdown'] + lab_section() + memory_section(a.session, report)
+    md = (out['markdown'] + lab_section() + memory_section(a.session, report)
+          + table_section(a.session, report))
     (REVIEWS / f'{a.session}.md').write_text(md)
     print(md)
     return 0
@@ -383,6 +394,131 @@ def memory_section(session, report, lines=None):
     except Exception as exc:
         return f"\nThe memory council's readout is unavailable ({type(exc).__name__}).\n"
     return '\n' + '\n'.join(got) + '\n'
+
+
+# ── day-137 M1: is the council choosing better than its own table? ──────────
+# PREREGISTER_day137_council.md. Every position on the morning's frozen table
+# is already recorded (a desk's selection, a nomination or Jev's forced pick),
+# so the table is scored from data/model_picks.csv on the record's yardstick.
+# The council's picks here are its own, BEFORE any pass-over rule.
+
+TABLE_KINDS = ('selected', 'nominated', 'forced', 'pick')
+TABLE_DECISION = 40
+
+
+def council_table(report, ledger_rows):
+    """{'positions': [...], 'members': n} for the session's frozen council, or
+    None when none sat. A position the record never scored keeps r_pct None."""
+    c = (report.get('intraday') or {}).get('council')
+    if not isinstance(c, dict) or not (c.get('tally') or {}).get('rows'):
+        return None
+    session = report.get('session')
+    scored = {}
+    for r in ledger_rows:
+        if (r.get('session') == session and r.get('kind') in TABLE_KINDS
+                and (r.get('r_pct') or '').strip()):
+            scored.setdefault((r['ticker'], r['side']), float(r['r_pct']))
+    members = len(c['tally'].get('members') or [])
+    picks = set(c.get('picks') or [])
+    return {'members': members, 'positions': [
+        {'id': t['id'], 'side': t['side'], 'ticker': t['ticker'], 'picked': t['id'] in picks,
+         'unanimous': members >= 2 and len(t.get('endorse') or []) == members,
+         'r_pct': scored.get((t['ticker'], t['side']))}
+        for t in c['tally']['rows']]}
+
+
+def table_record(root=REVIEWS):
+    """Across every reviewed day: the council's picks against its whole table,
+    per session, and the unanimous positions against the rest."""
+    picked, unanimous = [], []
+    for f in sorted(Path(root).glob('*.json')):
+        doc = json.loads(f.read_text())
+        t = doc.get('council_table')
+        if not t:
+            continue
+        s = doc.get('session') or f.stem
+        pos = [p for p in t['positions'] if p.get('r_pct') is not None]
+        mine = [p['r_pct'] for p in pos if p['picked']]
+        if mine and len(pos) > len(mine):
+            picked.append({'session': s, 'r_pct': st.mean(mine) - st.mean(p['r_pct'] for p in pos),
+                           'picks': mine, 'table': [p['r_pct'] for p in pos]})
+        yes = [p['r_pct'] for p in pos if p['unanimous']]
+        no = [p['r_pct'] for p in pos if not p['unanimous']]
+        if yes and no:
+            unanimous.append({'session': s, 'r_pct': st.mean(yes) - st.mean(no), 'yes': yes, 'no': no})
+    return picked, unanimous
+
+
+def table_section(session, report, root=REVIEWS, ledger_rows=None):
+    """Day-137 M1, appended to the review: today's table and the running record.
+    It never costs the review, and a failure says so."""
+    import model_picks
+    try:
+        rows = model_picks.read() if ledger_rows is None else ledger_rows
+        today = council_table(report, rows)
+        path = Path(root) / f'{session}.json'
+        if today is not None and path.exists():
+            doc = json.loads(path.read_text())
+            doc['council_table'] = today
+            path.write_text(json.dumps(doc, indent=1, default=str))
+        picked, unanimous = table_record(root)
+    except Exception as exc:
+        return f"\nThe council-against-its-table readout is unavailable ({type(exc).__name__}).\n"
+    out = ['', '## The council against its own table (day-137, M1)',
+           'Every position on the morning\'s table, 09:45 → close, against the council\'s own picks '
+           'before any pass-over rule. A council choosing well beats its own table.']
+    if today:
+        pos = [p for p in today['positions'] if p['r_pct'] is not None]
+        mine = [p for p in pos if p['picked']]
+        if pos:
+            out.append('Today: the council picked %s; the table of %d averaged %+.2f%%.' % (
+                ', '.join('%s %s %+.2f%%' % (p['side'], p['ticker'], p['r_pct']) for p in mine) or 'nothing',
+                len(pos), st.mean(p['r_pct'] for p in pos)))
+    if picked:
+        t, n = _clustered(picked)
+        mine = [x for d in picked for x in d['picks']]
+        table = [x for d in picked for x in d['table']]
+        verdict = ('no verdict before %d sessions' % TABLE_DECISION if n < TABLE_DECISION else
+                   'the council chooses WORSE than its own table' if t is not None and t <= -2 else
+                   'the council\'s choice adds something' if t is not None and t >= 3 else
+                   'no evidence either way')
+        out.append('Record: %d session(s); its picks %+.2f%% (%d of %d right), the table %+.2f%% '
+                   '(%d of %d right); picks minus table %+.2f%% a session, t = %s — %s.' % (
+                       n, st.mean(mine), sum(x > 0 for x in mine), len(mine), st.mean(table),
+                       sum(x > 0 for x in table), len(table), st.mean(d['r_pct'] for d in picked),
+                       '—' if t is None else '%.2f' % t, verdict))
+    if unanimous:
+        t, n = _clustered(unanimous)
+        yes = [x for d in unanimous for x in d['yes']]
+        no = [x for d in unanimous for x in d['no']]
+        out.append('Positions every member endorsed: %+.2f%% (%d of %d right); the rest %+.2f%% '
+                   '(%d of %d right); %d session(s), t = %s. Counted, not a rule.' % (
+                       st.mean(yes), sum(x > 0 for x in yes), len(yes), st.mean(no),
+                       sum(x > 0 for x in no), len(no), n, '—' if t is None else '%.2f' % t))
+    return '\n'.join(out) + '\n'
+
+
+def backfill_council_tables(db, root=REVIEWS):
+    """Day-137: add the council table to the days reviewed before M1 existed,
+    from the frozen publications. Adds the block only where it is missing."""
+    import sqlite3
+    import model_picks
+    rows = model_picks.read()
+    con = sqlite3.connect(db)
+    added = []
+    for session, body in con.execute('select session, body from reports order by session'):
+        path = Path(root) / f'{session}.json'
+        if not path.exists():
+            continue
+        doc = json.loads(path.read_text())
+        if 'council_table' in doc:
+            continue
+        t = council_table(json.loads(body), rows)
+        if t is not None:
+            doc['council_table'] = t
+            path.write_text(json.dumps(doc, indent=1, default=str))
+            added.append(session)
+    return {'added': added}
 
 
 if __name__ == '__main__':

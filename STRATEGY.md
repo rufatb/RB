@@ -5657,3 +5657,35 @@ was computed; read `AUDIT_day135d_breadth.md`.
   * The layer is still an unadopted shadow. Nothing here is claimed to change
     what any pick is worth.
 * **No rejection or adoption.** The counts stay at 52 and 4.
+
+
+## Day-137: REJECTIONS #53 and #54 — the council's habits carry nothing; wild names skipped (adoption #5)
+
+Registered in `PREREGISTER_day137_council.md` (f7b7040) before any history
+was computed; read `AUDIT_day137_council.md`.
+
+* **Why it was asked.** The owner, after 10-21's SHORT CLS.TO lost 0.70%:
+  "the council is not selecting the best picks — identify what it is."
+* **What it is (the 12 frozen tables, descriptive).**
+  * The council's picks averaged −0.30% and its whole table −0.31%: its
+    choice adds nothing (t = 0.05).
+  * Agreement gathers on the most visible continuation story. The picks
+    followed the last move 85% of the time and the move against the sector
+    85%, and 70% followed a big mover.
+  * The sector's move decided most results.
+* **#53, H1: following a name's move against its sector.** The council's main
+  habit and 10-21's CLS thesis.
+  * −0.044% a name-day, t = −2.75, 46.8% right over 38,438 name-days.
+  * It leans toward reversal, but not past the bar (t ≤ −3, all four blocks
+    negative). The bar does not move.
+* **#54, H2: following a sector's move against XIU.** t = −0.44, null.
+* **Adoption #5, H3: skip the morning's 15 widest-swinging names.**
+  * They swing 2.46× the rest after 09:45 and lean neither way.
+  * `council.SKIP_WILD` is ON from 2026-10-22, remove-only like R2. It applies
+    to the counted fallback too, and its positions are recorded as
+    `top2wild`.
+  * On the live record it would have passed over SSRM (+1.20%), CLS on 10-15
+    (−3.61%) and CLS on 10-21 (−0.70%). Like the other four adoptions it is a
+    variance result: no pick is made righter.
+* **Forward, M1.** The evening review prints the council against its own
+  table every session. The verdict comes at 40 sessions.

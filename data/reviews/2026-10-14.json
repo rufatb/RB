@@ -785,5 +785,130 @@
  ],
  "unscored": [],
  "market_pct": -0.476,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P12",
+    "side": "SHORT",
+    "ticker": "SSRM.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": 1.1977
+   },
+   {
+    "id": "P5",
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "picked": true,
+    "unanimous": false,
+    "r_pct": -0.4316
+   },
+   {
+    "id": "P13",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.2692
+   },
+   {
+    "id": "P3",
+    "side": "SHORT",
+    "ticker": "BEP-UN.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.9486
+   },
+   {
+    "id": "P1",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.588
+   },
+   {
+    "id": "P7",
+    "side": "SHORT",
+    "ticker": "ERO.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P8",
+    "side": "LONG",
+    "ticker": "HBM.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -3.1145
+   },
+   {
+    "id": "P10",
+    "side": "LONG",
+    "ticker": "RBA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.4303
+   },
+   {
+    "id": "P11",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -3.5336
+   },
+   {
+    "id": "P14",
+    "side": "SHORT",
+    "ticker": "T.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.9632
+   },
+   {
+    "id": "P15",
+    "side": "LONG",
+    "ticker": "TD.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.5524
+   },
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.588
+   },
+   {
+    "id": "P4",
+    "side": "SHORT",
+    "ticker": "CCO.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 3.8152
+   },
+   {
+    "id": "P6",
+    "side": "SHORT",
+    "ticker": "EMA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -2.4028
+   },
+   {
+    "id": "P9",
+    "side": "SHORT",
+    "ticker": "OTEX.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.0576
+   }
+  ]
+ }
 }

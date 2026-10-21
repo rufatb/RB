@@ -63,6 +63,17 @@ MOVER_RULE = 'day135c-movers'
 MOVER_NOTE = ('After a move that size a name swings about a quarter wider the next session '
               '(2016–2026, 49,295 cases), and neither following the move nor betting on a bounce '
               'has had an edge.')
+# Day-137 H3 (PREREGISTER_day137_council.md): the morning's widest-swinging
+# names — ATR % at or above the 90th percentile of every name the desks read —
+# swing 2.46x the rest from 09:45 to the close (2024-2026, 98,597 name-days; sd
+# 3.79% against 1.54%) and lean neither way (following the last move t = -0.47,
+# long t = +1.15). A size rule, never a claim that a pick is righter. ON from
+# 2026-10-22 at the owner's request (10-21: "try implementing the enhancements
+# to council picks"); False restores the day-135d rule.
+WILD_PCTILE = 90
+WILD_MIN_NAMES = 20
+SKIP_WILD = True
+WILD_RULE = 'day137-wild'
 MEMBERS = ('Claude', 'DeepSeek', 'Gemini', 'Jev')
 LEAD_ORDER = ('claude', 'deepseek', 'gemini', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
@@ -548,6 +559,16 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     # the members: the rows they read already carry it).
     base['moves'] = {r['ticker']: {'move_atr': r.get('move_atr'), 'atr_pct': r.get('atr_pct')}
                      for r in rows if r.get('ticker')}
+    # Day-137: the morning's cut for the widest-swinging names, over every name
+    # the desks read, recorded so the decision can be re-read.
+    try:
+        cut = wild_cut(C.read_brief(root, now)['payload'].get('candidates'))
+        if cut:
+            base['wild'] = cut
+        else:
+            errors['wild'] = 'fewer than %d names with an ATR' % WILD_MIN_NAMES
+    except Exception as exc:
+        errors['wild'] = (str(exc) if str(exc).isupper() else type(exc).__name__)[:80]
     pub = public(table)
     if scout_fn is None and live:
         import scout as SC
@@ -794,6 +815,38 @@ def _shape(p, r, members, check):
                      for x in p.get('proposers') or []]}
 
 
+def _percentile(xs, q):
+    """numpy's default (linear) percentile, without numpy."""
+    xs = sorted(xs)
+    k = (len(xs) - 1) * q / 100
+    f = int(k)
+    c = min(f + 1, len(xs) - 1)
+    return xs[f] + (xs[c] - xs[f]) * (k - f)
+
+
+def wild_cut(rows):
+    """Day-137: {'pctile', 'atr_pct', 'names'} — the morning's cut for the widest-
+    swinging names, over every row with an ATR %; None with too few rows."""
+    atrs = [float(r['atr_pct']) for r in rows or []
+            if isinstance(r, dict) and isinstance(r.get('atr_pct'), (int, float))]
+    if len(atrs) < WILD_MIN_NAMES:
+        return None
+    return {'pctile': WILD_PCTILE, 'atr_pct': round(_percentile(atrs, WILD_PCTILE), 4),
+            'names': len(atrs)}
+
+
+def _wild(moves, cut, ticker):
+    """The name's ATR % when it is at or above the morning's day-137 cut, else None."""
+    a = (moves.get(ticker) or {}).get('atr_pct')
+    c = (cut or {}).get('atr_pct')
+    return float(a) if isinstance(a, (int, float)) and isinstance(c, (int, float)) and a >= c else None
+
+
+def wild_words(x):
+    """'a normal day of 7.3%; the morning's cut 5.1%'."""
+    return 'a normal day of %.1f%%; the morning\'s cut %.1f%%' % (x['atr_pct'], x['wild_cut'])
+
+
 def _mover(moves, ticker):
     """The prior session's move in ATRs when it is a day-135c big mover, else None."""
     m = (moves.get(ticker) or {}).get('move_atr')
@@ -816,8 +869,11 @@ def passed_head(section):
     movers, passed over"). None when a pick stands or nothing was passed over."""
     section = section or {}
     passed = section.get('passed_movers') or []
-    if not passed or section.get('picks'):
+    wild = section.get('passed_wild') or []      # day-137
+    if not (passed or wild) or section.get('picks'):
         return None
+    if wild:
+        return _wild_head(section, passed, wild)
     if not section.get('council'):               # the counted fallback (day-135d)
         return ("the agreed names were the last session's big movers, passed over" if len(passed) > 1
                 else "the agreed name was one of the last session's big movers, passed over")
@@ -826,6 +882,24 @@ def passed_head(section):
                 'other was already past its own "wrong if" at 09:46')
     return ("the council's picks were the last session's big movers, passed over" if len(passed) > 1
             else "the council's pick was one of the last session's big movers, passed over")
+
+
+def _wild_head(section, passed, wild):
+    """passed_head's line when the day-137 high-volatility rule took a pick."""
+    widest = "the morning's widest-swinging names"
+    if not section.get('council'):               # the counted fallback
+        if passed:
+            return 'the agreed names were passed over: a big mover and one of %s' % widest
+        return ('the agreed names were among %s, passed over' % widest if len(wild) > 1
+                else 'the agreed name was one of %s, passed over' % widest)
+    if passed:
+        return ("one council pick was one of the last session's big movers and the other one of "
+                '%s, both passed over' % widest)
+    if section.get('void_at_entry'):
+        return ('one council pick was one of %s, passed over, and the other was already past its '
+                'own "wrong if" at 09:46' % widest)
+    return ("the council's picks were among %s, passed over" % widest if len(wild) > 1
+            else "the council's pick was one of %s, passed over" % widest)
 
 
 def mover_phrase(x):
@@ -839,7 +913,7 @@ def mover_phrase(x):
                                            'reversal' if m > 0 else 'bounce', move_words(m))
 
 
-def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None):
+def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None, skip_wild=None):
     """The council's decision in the Top 2 section's shape. The 09:46 entry check
     (day-120 E1) drops a position already past its lead proposer's "wrong if".
 
@@ -858,7 +932,13 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     emptied slot stays empty, the next agreed non-mover can only be the
     labelled runner-up, and a big mover is never the runner-up either. The
     passed-over positions are kept in `passed_movers`, shaped, so they are
-    shown and recorded as a shadow. Off, nothing changes."""
+    shown and recorded as a shadow. Off, nothing changes.
+
+    Day-137 H3 (`SKIP_WILD`): the same remove-only rule for a pick on one of
+    the morning's widest-swinging names (ATR % at or above `council['wild']`,
+    the 90th percentile of the list), kept in `passed_wild`. A position that
+    is both a big mover and wild is passed over as a big mover. A council
+    sealed without the cut passes nothing over."""
     import entry_checks
     by_id = {p['id']: p for p in council.get('positions') or []}
     tally_rows = (council.get('tally') or {}).get('rows') or []
@@ -866,18 +946,24 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     members = (council.get('tally') or {}).get('members') or []
     moves = council.get('moves') or {}
     skip = SKIP_MOVERS if skip_movers is None else skip_movers
-    picks, void, passed = [], [], []
+    cut = (council.get('wild') or None) if (SKIP_WILD if skip_wild is None else skip_wild) else None
+    picks, void, passed, wild = [], [], [], []
     frozen = list(council.get('picks') or [])
     chosen_ids = frozen
-    if skip and frozen:
-        # The frozen rule's picks minus the big movers, and nothing added: the
-        # rule only ever takes a trade away (owner, 10-16). An emptied slot
-        # stays empty; the next agreed position can only be the labelled
-        # runner-up, as below a pick voided at 09:46 (day-129).
+    if (skip or cut) and frozen:
+        # The frozen rule's picks minus the big movers and the wild names, and
+        # nothing added: a rule only ever takes a trade away (owner, 10-16). An
+        # emptied slot stays empty; the next agreed position can only be the
+        # labelled runner-up, as below a pick voided at 09:46 (day-129).
         chosen_ids = []
         for pid in frozen:
             p = by_id.get(pid)
-            (passed if p and _mover(moves, p['ticker']) is not None else chosen_ids).append(pid)
+            if p and skip and _mover(moves, p['ticker']) is not None:
+                passed.append(pid)
+            elif p and _wild(moves, cut, p['ticker']) is not None:
+                wild.append(pid)
+            else:
+                chosen_ids.append(pid)
 
     def entry(p):
         if prices is None:
@@ -895,7 +981,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     runner_up, skipped = None, []
     if len(picks) < PICKS:
         taken = {x['ticker'] for x in picks}
-        chosen = set(chosen_ids) | set(passed)
+        chosen = set(chosen_ids) | set(passed) | set(wild)
         for r in tally_rows:
             p = by_id.get(r['id'])
             if (not p or r['id'] in chosen
@@ -905,6 +991,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
             why = ('the models split on it' if r.get('split') else
                    'the other side of a pick' if r['ticker'] in taken else
                    'one of the last session\'s big movers' if skip and _mover(moves, r['ticker']) is not None else
+                   'one of the morning\'s widest-swinging names' if _wild(moves, cut, r['ticker']) is not None else
                    'past its own "wrong if" at 09:46' if entry(p) == 'VOID' else None)
             if why:
                 skipped.append('%s %s (%s)' % (r['side'], r['ticker'], why))
@@ -921,6 +1008,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
             and not (runner_up and (r['ticker'], r['side']) == (runner_up['ticker'], runner_up['side']))][:4]
     status = ('READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT')
     reason = (None if len(picks) == PICKS else
+              _wild_reason(picks, passed, wild, void) if wild else
               'The council\'s other pick was one of the last session\'s big movers, passed over by '
               'the big-mover rule (day-135c); the second slot is left empty.'
               if passed and picks else
@@ -957,6 +1045,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     out = {'picks': picks, 'status': status, 'council': True,
            'answered': members, 'absent': (council.get('tally') or {}).get('absent') or [],
            'rule_version': (RULE_VERSION + ('+' + MOVER_RULE if skip and 'moves' in council else '')
+                            + ('+' + WILD_RULE if cut else '')
                             + ('+' + entry_checks.RULE_VERSION if prices is not None else '')),
            'reason': reason, 'near': near,
            'runner_up': runner_up,
@@ -970,6 +1059,10 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     if passed:
         out['passed_movers'] = [{**_shape(by_id[i], rows[i], members, entry(by_id[i])),
                                  'move_atr': _mover(moves, by_id[i]['ticker'])} for i in passed]
+    if wild:
+        out['passed_wild'] = [{**_shape(by_id[i], rows[i], members, entry(by_id[i])),
+                               'atr_pct': _wild(moves, cut, by_id[i]['ticker']),
+                               'wild_cut': cut['atr_pct']} for i in wild]
     if repeat_note:
         out['repeat_note'] = repeat_note
     # Amendment 2 to day-129: the council's OWN splits (both sides agreed, so
@@ -979,6 +1072,24 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     if split:
         out['split'] = split
     return out
+
+
+def _wild_reason(picks, passed, wild, void):
+    """The Top 2's reason when the day-137 rule took a council pick."""
+    rule = 'passed over by the high-volatility rule (day-137)'
+    if picks:
+        return ("The council's other pick was one of the morning's widest-swinging names, %s; "
+                'the second slot is left empty.' % rule)
+    if passed:
+        return ("One council pick was one of the last session's big movers, passed over by the "
+                "big-mover rule (day-135c), and the other one of the morning's widest-swinging "
+                'names, %s, so there is nothing here to act on.' % rule)
+    if void:
+        return ("One council pick was one of the morning's widest-swinging names, %s, and the other "
+                'was already past its own "wrong if" at 09:46, so there is nothing here to act on.' % rule)
+    return (("The council's picks were among the morning's widest-swinging names" if len(wild) > 1 else
+             "The council's pick was one of the morning's widest-swinging names")
+            + ', %s, so there is nothing here to act on.' % rule)
 
 
 def repeat_line(x):
@@ -1041,7 +1152,13 @@ def decide(counted, council, *, prices=None, moves=None):
            '(two models on the same side) decided.' % str(why)[:120]}
     recorded = (council or {}).get('moves') if isinstance(council, dict) else None
     known, missing = (recorded, None) if recorded else (moves or ({}, None))
-    return counted_movers(out, known, missing)
+    out = counted_movers(out, known, missing)
+    # Day-137: the council's recorded cut, else one from the brief's rows (the
+    # council's own moves cover its table only, too few for a percentile).
+    cut = (council or {}).get('wild') if isinstance(council, dict) else None
+    if not cut and not recorded:
+        cut = wild_cut(list((known or {}).values()))
+    return counted_wild(out, known, cut)
 
 
 def brief_moves(root, now):
@@ -1097,6 +1214,42 @@ def counted_movers(section, moves, missing=None, *, skip_movers=None):
             ('The agreed names were the last session\'s big movers' if len(passed) > 1 else
              'The agreed name was one of the last session\'s big movers')
             + ', passed over by the big-mover rule (day-135c), so there is nothing here to act on.')
+    return out
+
+
+def counted_wild(section, moves, cut, *, skip_wild=None):
+    """Day-137: the high-volatility rule on the counted fallback, as in
+    `top_two`: its picks minus the names at or above the morning's cut,
+    nothing added, the passed-over kept for the record."""
+    import entry_checks
+    if (not (SKIP_WILD if skip_wild is None else skip_wild) or not cut
+            or not isinstance(section, dict) or section.get('council')):
+        return section
+    out = dict(section)
+    kept, wild = [], []
+    for p in out.get('picks') or []:
+        a = _wild(moves or {}, cut, p.get('ticker'))
+        if a is None:
+            kept.append(p)
+        else:
+            wild.append({**p, 'atr_pct': a, 'wild_cut': cut['atr_pct']})
+    out['picks'] = kept
+    rv, entry = out.get('rule_version') or '', '+' + entry_checks.RULE_VERSION
+    out['rule_version'] = (rv[:-len(entry)] + '+' + WILD_RULE + entry if rv.endswith(entry)
+                           else rv + '+' + WILD_RULE)
+    if wild:
+        rule = 'passed over by the high-volatility rule (day-137)'
+        out['passed_wild'] = wild
+        out['status'] = 'PARTIAL' if kept else 'NO_AGREEMENT'
+        out['reason'] = (
+            "The other agreed name was one of the morning's widest-swinging names, %s; the second "
+            'slot is left empty.' % rule if kept else
+            "The agreed names were passed over: one of the last session's big movers by the "
+            "big-mover rule (day-135c), and one of the morning's widest-swinging names, %s, so there "
+            'is nothing here to act on.' % rule if out.get('passed_movers') else
+            ("The agreed names were among the morning's widest-swinging names" if len(wild) > 1 else
+             "The agreed name was one of the morning's widest-swinging names")
+            + ', %s, so there is nothing here to act on.' % rule)
     return out
 
 

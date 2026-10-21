@@ -513,5 +513,114 @@
  ],
  "unscored": [],
  "market_pct": 0.037,
- "fetch_failures": {}
+ "fetch_failures": {},
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P13",
+    "side": "LONG",
+    "ticker": "TRI.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": 1.0174
+   },
+   {
+    "id": "P4",
+    "side": "SHORT",
+    "ticker": "CLS.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": -0.7031
+   },
+   {
+    "id": "P12",
+    "side": "SHORT",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": true,
+    "r_pct": -0.9642
+   },
+   {
+    "id": "P3",
+    "side": "LONG",
+    "ticker": "ATD.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.6513
+   },
+   {
+    "id": "P5",
+    "side": "SHORT",
+    "ticker": "CNQ.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.5278
+   },
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.5654
+   },
+   {
+    "id": "P6",
+    "side": "LONG",
+    "ticker": "CSU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P8",
+    "side": "SHORT",
+    "ticker": "HPS-A.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P1",
+    "side": "LONG",
+    "ticker": "AC.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 1.5654
+   },
+   {
+    "id": "P9",
+    "side": "SHORT",
+    "ticker": "MDA.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.5721
+   },
+   {
+    "id": "P7",
+    "side": "LONG",
+    "ticker": "FSV.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -2.0085
+   },
+   {
+    "id": "P10",
+    "side": "LONG",
+    "ticker": "OTEX.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -1.2622
+   },
+   {
+    "id": "P11",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": 0.9642
+   }
+  ]
+ }
 }

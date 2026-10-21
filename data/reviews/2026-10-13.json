@@ -409,5 +409,98 @@
  "market_pct": 0.392,
  "fetch_failures": {
   "ARX.TO": "ChartAcquisitionError"
+ },
+ "council_table": {
+  "members": 4,
+  "positions": [
+   {
+    "id": "P5",
+    "side": "SHORT",
+    "ticker": "CCA.TO",
+    "picked": true,
+    "unanimous": true,
+    "r_pct": -1.0612
+   },
+   {
+    "id": "P1",
+    "side": "LONG",
+    "ticker": "ATZ.TO",
+    "picked": true,
+    "unanimous": false,
+    "r_pct": 2.4658
+   },
+   {
+    "id": "P4",
+    "side": "SHORT",
+    "ticker": "BCE.TO",
+    "picked": false,
+    "unanimous": true,
+    "r_pct": -0.581
+   },
+   {
+    "id": "P9",
+    "side": "LONG",
+    "ticker": "SSRM.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -4.3217
+   },
+   {
+    "id": "P6",
+    "side": "SHORT",
+    "ticker": "RCI-B.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": -0.968
+   },
+   {
+    "id": "P11",
+    "side": "SHORT",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P7",
+    "side": "LONG",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P10",
+    "side": "LONG",
+    "ticker": "SU.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P2",
+    "side": "SHORT",
+    "ticker": "ATZ.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P3",
+    "side": "LONG",
+    "ticker": "BCE.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   },
+   {
+    "id": "P8",
+    "side": "SHORT",
+    "ticker": "SHOP.TO",
+    "picked": false,
+    "unanimous": false,
+    "r_pct": null
+   }
+  ]
  }
 }
