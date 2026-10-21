@@ -35,7 +35,8 @@ REPLAY = ROOT/'.rb-state'/'replay'
 CACHE = REPLAY/'or_answers'
 SUMMARY = ROOT/'data'/'replay_day134_models.json'
 URL = 'https://openrouter.ai/api/v1/chat/completions'
-MODELS = {'r1': 'deepseek/deepseek-r1-0528', 'sonnet55': 'anthropic/claude-sonnet-5.5'}
+MODELS = {'r1': 'deepseek/deepseek-r1-0528', 'sonnet55': 'anthropic/claude-sonnet-5.5',
+          'v41flash': 'deepseek/deepseek-v4.1-flash-1017'}      # day-137b, PREREGISTER_day137b_deepseek41.md
 BUDGET_USD = 5.0
 PROBE_NAMES = ('SHOP.TO', 'RY.TO', 'CNQ.TO', 'CLS.TO', 'AEM.TO')
 PROBE_DATES = ('2026-07-15', '2026-08-14', '2026-09-15')
@@ -297,11 +298,15 @@ def main(argv=None):
     p.add_argument('--replay', action='store_true')
     p.add_argument('--analyse', action='store_true')
     p.add_argument('--model', choices=sorted(MODELS), action='append')
+    p.add_argument('--summary', default=str(SUMMARY), help='where this registration\'s results go')
+    p.add_argument('--budget', type=float, default=BUDGET_USD, help='the registered cap, USD')
+    p.add_argument('--registration', default='PREREGISTER_day134_models.md')
     a = p.parse_args(argv)
     slugs = a.model or sorted(MODELS)
-    summary = json.loads(SUMMARY.read_text()) if SUMMARY.exists() else {
-        'registration': 'PREREGISTER_day134_models.md', 'models': MODELS, 'budget_usd': BUDGET_USD}
-    ledger = Ledger(spent=float(summary.get('spent_usd') or 0.0))
+    out_path = Path(a.summary)
+    summary = json.loads(out_path.read_text()) if out_path.exists() else {
+        'registration': a.registration, 'models': {s: MODELS[s] for s in slugs}, 'budget_usd': a.budget}
+    ledger = Ledger(cap=a.budget, spent=float(summary.get('spent_usd') or 0.0))
     post = poster() if (a.probe or a.control or a.replay) else None
     days = sessions()
     try:
@@ -324,7 +329,7 @@ def main(argv=None):
     finally:
         summary['spent_usd'] = round(ledger.spent, 4)
         summary['calls'] = summary.get('calls', 0) + ledger.calls
-        SUMMARY.write_text(json.dumps(summary, indent=1, default=str))
+        out_path.write_text(json.dumps(summary, indent=1, default=str))
     if a.analyse:
         summary['analysis'] = analyse([s for s in slugs if isinstance((summary.get('replay') or {}).get(s), dict)], days)
         for group, g in summary['analysis']['groups'].items():
@@ -334,7 +339,7 @@ def main(argv=None):
                 'n/a' if c['t'] is None else '%+.2f' % c['t'], g['placebo_p_hit'],
                 ['%+.3f' % h if h is not None else None for h in g['halves']],
                 'PASS' if g['passes_registered_bar'] else 'FAIL'))
-        SUMMARY.write_text(json.dumps(summary, indent=1, default=str))
+        out_path.write_text(json.dumps(summary, indent=1, default=str))
     print(json.dumps({k: summary.get(k) for k in ('probe', 'control', 'replay', 'spent_usd', 'calls')},
                      indent=1, default=str)[:4000])
     return 0
