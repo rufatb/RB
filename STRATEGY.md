@@ -5689,3 +5689,19 @@ was computed; read `AUDIT_day137_council.md`.
     variance result: no pick is made righter.
 * **Forward, M1.** The evening review prints the council against its own
   table every session. The verdict comes at 40 sessions.
+
+
+## Day-137b: REJECTION #55 — the newest DeepSeek (v4.1-flash-1017) picks no better
+
+Registered in `PREREGISTER_day137b_deepseek41.md` (acbf659) before any call,
+under day-134b's protocol and day-117's bar, unchanged. The owner asked
+whether "the new DeepSeek model and FMP in a better way" could make the picks
+more accurate.
+
+* **Where it comes from.** The DeepSeek account still serves only `deepseek-flash` and
+  `deepseek-v4-pro`; v4.1-flash-1017 (2026-10-17) is on OpenRouter only.
+* **Not contaminated, control 4/5.** On the 59 replay sessions: 185 picks,
+  46.5% right, +0.017% a pick, t = +0.81, placebo p = 0.81. FAIL.
+* **Paired against the day-117 DeepSeek:** +0.145% a session, t = 1.15.
+* **Cost:** $0.34. Nothing changes; the inputs, not the model, are the
+  limit (day-117).

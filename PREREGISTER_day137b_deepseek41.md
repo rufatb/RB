@@ -55,3 +55,22 @@ sessions not reached are named.
 
 Script: `replay_or_models.py --model v41flash --summary
 data/replay_day137b_deepseek41.json --budget 1.5`.
+
+---
+
+## Results (2026-10-21, after the run; nothing above was changed)
+
+* **Contamination: not contaminated.** All 15 probe answers were null.
+* **Control: PASS,** 4 of 5 clean. One run missed the planted short.
+* **Replay: FAIL (rejection #55).**
+  * All 59 sessions were answered. Four first attempts were cut off in
+    transfer (IncompleteRead) and asked once more.
+  * 185 picks: 46.5% right, +0.017% a pick, session-clustered t = +0.81,
+    placebo p = 0.81. Both halves were positive (+0.111%, +0.066%).
+  * Longs: 44 of 99 right, −0.012%. Shorts: 42 of 86 right, +0.051%.
+  * Paired against the day-117 DeepSeek answers on the same sessions:
+    +0.145% a session, t = 1.15. Not a difference.
+* **Spent:** $0.34 of the $1.50 cap, 66 calls.
+
+Nothing changes. The newest DeepSeek reads the same rows no better than the
+models already asked.

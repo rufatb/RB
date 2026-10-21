@@ -1,5 +1,25 @@
 # Working notes for this repo
 
+## Day137b — the newest DeepSeek on the replay: no better (rejection #55, owner, 2026-10-21)
+
+The owner asked whether "the new DeepSeek model and FMP in a better way"
+could make the picks more accurate. Registered first
+(`PREREGISTER_day137b_deepseek41.md`, acbf659) under day-134b's protocol.
+* **What was asked.** The DeepSeek account still serves only `deepseek-flash` and
+  `deepseek-v4-pro` (v4-pro is the production desk), so the newest release,
+  `deepseek/deepseek-v4.1-flash-1017`, was asked through OpenRouter.
+* **Result: FAIL.** Not contaminated (all probe answers null); control 4 of 5.
+  * 59 sessions, 185 picks: 46.5% right, +0.017% a pick, t = +0.81,
+    placebo p = 0.81.
+  * Paired against day-117's DeepSeek: +0.145% a session, t = 1.15.
+* **Cost:** $0.34. `replay_or_models.py` now takes `--summary`, `--budget`
+  and `--registration`, so a new model never overwrites day-134b's results.
+* **OpenRouter credit is the constraint to watch.** $5.41 of $20 was left
+  after this test, and the mornings spend about $0.84 a day: Claude's desk,
+  ballot and nominations, the web scout and the memory council. When it runs
+  out, those calls fail and the council sits without Claude. Tell the owner
+  before it does.
+
 ## Day137 — why the council's picks lose; the high-volatility rule (rejections #53, #54; adoption #5; owner, 2026-10-21)
 
 The owner, after the 10-21 Top 2 (SHORT CLS.TO) lost 0.70%: "the council is
@@ -2780,9 +2800,9 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **54 rejections, 5
-adoptions** (as of day-137; skipping the morning's widest-swinging names is the
-fifth). Almost every "obvious improvement" in this space has already been
+It is the running record of every change tested — **55 rejections, 5
+adoptions** (as of day-137b; skipping the morning's widest-swinging names is the
+fifth adoption). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The five adopted changes were all VARIANCE results. None improved accuracy.

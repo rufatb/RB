@@ -1,0 +1,184 @@
+{
+ "registration": "PREREGISTER_day137b_deepseek41.md",
+ "models": {
+  "v41flash": "deepseek/deepseek-v4.1-flash-1017"
+ },
+ "budget_usd": 1.5,
+ "probe": {
+  "v41flash": {
+   "answered": 0,
+   "median_error": null,
+   "naive_median_error": null,
+   "contaminated": false,
+   "answer": {
+    "SHOP.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "RY.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CNQ.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "CLS.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    },
+    "AEM.TO": {
+     "2026-07-15": null,
+     "2026-08-14": null,
+     "2026-09-15": null
+    }
+   }
+  }
+ },
+ "control": {
+  "v41flash": {
+   "runs": [
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": false,
+     "noise_picked": [],
+     "reason": null,
+     "clean": false
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    },
+    {
+     "status": "READY",
+     "long_detected": true,
+     "short_detected": true,
+     "noise_picked": [],
+     "reason": null,
+     "clean": true
+    }
+   ],
+   "clean": 4,
+   "passes": true
+  }
+ },
+ "spent_usd": 0.3359,
+ "calls": 65,
+ "replay": {
+  "v41flash": {
+   "READY": 59,
+   "NO_OPPORTUNITY": 0,
+   "UNAVAILABLE": 0,
+   "NOT_ASKED": 0
+  }
+ },
+ "analysis": {
+  "sessions": 59,
+  "groups": {
+   "deepseek_day117": {
+    "picks": 221,
+    "hits": 109,
+    "hit_rate": 0.49321266968325794,
+    "mean_r_pct": -0.07842760180995471,
+    "clustered": {
+     "sessions": 57,
+     "mean": -0.07575921052631579,
+     "sd": 0.8429245662302028,
+     "t": -0.6785535970063308
+    },
+    "placebo_p_hit": 0.546,
+    "placebo_p_mean": 0.8015,
+    "placebo_hit_rate_mean": 0.4948484162895924,
+    "halves": [
+     -0.0192517857142857,
+     -0.13031810344827588
+    ],
+    "passes_registered_bar": false,
+    "long": {
+     "picks": 111,
+     "hits": 53,
+     "mean_r_pct": -0.09261081081081084
+    },
+    "short": {
+     "picks": 110,
+     "hits": 56,
+     "mean_r_pct": -0.06411545454545456
+    },
+    "market_adjusted_mean_pct": -0.07139502262443442
+   },
+   "v41flash_selected": {
+    "picks": 185,
+    "hits": 86,
+    "hit_rate": 0.4648648648648649,
+    "mean_r_pct": 0.01721405405405403,
+    "clustered": {
+     "sessions": 59,
+     "mean": 0.08800381355932202,
+     "sd": 0.8364385993482715,
+     "t": 0.8081527070177109
+    },
+    "placebo_p_hit": 0.81,
+    "placebo_p_mean": 0.3825,
+    "placebo_hit_rate_mean": 0.4941081081081085,
+    "halves": [
+     0.11078045977011493,
+     0.06598638888888889
+    ],
+    "passes_registered_bar": false,
+    "long": {
+     "picks": 99,
+     "hits": 44,
+     "mean_r_pct": -0.012079797979798046
+    },
+    "short": {
+     "picks": 86,
+     "hits": 42,
+     "mean_r_pct": 0.05093604651162791
+    },
+    "market_adjusted_mean_pct": 0.01994648648648647
+   }
+  },
+  "abstained_sessions": {
+   "deepseek_day117": 2
+  },
+  "answer_status": {
+   "v41flash": {
+    "READY": 59,
+    "NO_OPPORTUNITY": 0,
+    "UNAVAILABLE": 0
+   }
+  },
+  "paired_vs_deepseek_day117": {
+   "v41flash": {
+    "sessions": 57,
+    "mean": 0.1451767543859649,
+    "t": 1.1484406954798716
+   }
+  }
+ }
+}
