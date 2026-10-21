@@ -155,3 +155,40 @@ table?
 
 * `council_audit.py` (live, descriptive) → `data/council_audit_day137.json`
 * `council_history.py` (H1–H3) → `data/council_history_day137.json`
+
+---
+
+## Results (added after the run; the text above is unchanged)
+
+Read `AUDIT_day137_council.md`. The primary data were 150 names, 667
+sessions and 98,597 name-days. No call failed and none was capped. The
+secondary had 2,699 sessions and 390,343 name-days.
+
+* **H1, following the move against the sector: NULL (rejection #53).**
+  * −0.044% a name-day, t = −2.75, 46.8% right (n = 38,438).
+  * The blocks were +0.017 / −0.138 / −0.036 / −0.022.
+  * Placebo p = 0.000; a planted 0.10% shows at t = 6.21.
+  * The mean leans toward reversal, but t is above −3 and the first block is
+    positive, so it misses the registered bar. The bar does not move.
+  * Ten years of daily data say the same: −0.016%, t = −1.61.
+* **H2, following the sector against the market: NULL (rejection #54).**
+  * −0.007%, t = −0.44 (n = 3,519); a planted 0.10% shows at t = 6.13.
+  * Ten years: −0.0003%, t = −0.03.
+* **H3, wild names: PASS (adoption #5, a size rule).**
+  * Wild name-days swing 2.46× the rest: sd 3.79% against 1.54%.
+  * 26.5% of them move more than 3% after 09:45, against 5.5%.
+  * Leans: following the last move −0.023% (t = −0.47); long +0.073%
+    (t = 1.15).
+  * The morning's cut has a median of 4.59% ATR (p10 3.89%, p90 6.34%).
+  * Ten years, open → close: 2.16×. Following the last move on wild names
+    leans negative there (−0.071%, t = −2.53). That is reported beside the
+    verdict and does not decide it.
+
+**What ships:** `council.SKIP_WILD`, ON from the 2026-10-22 morning. Nothing
+for H1 or H2.
+
+**On the live Top 2** (descriptive), the rule would have passed over three
+picks:
+* SSRM.TO on 10-14 (+1.20%);
+* CLS.TO on 10-15 (−3.61%, already a big mover);
+* CLS.TO on 10-21 (−0.70%).

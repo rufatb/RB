@@ -1,0 +1,662 @@
+{
+ "registered": "PREREGISTER_day137_council.md",
+ "run_on": "2026-10-21",
+ "primary_window": [
+  "2024-01-02",
+  "2026-10-02"
+ ],
+ "secondary_window": [
+  "2016-01-04",
+  "2026-10-02"
+ ],
+ "names": 150,
+ "sessions": 667,
+ "name_days": 98597,
+ "daily_sessions": 2699,
+ "daily_name_days": 390343,
+ "skipped": {
+  "no_daily_bar": 4,
+  "short_history": 13,
+  "no_market": 3116
+ },
+ "fetch_failures": {
+  "intraday": {},
+  "daily": {}
+ },
+ "capped_calls": 0,
+ "failed_calls": 0,
+ "primary": {
+  "H1": {
+   "primary": {
+    "n": 38438,
+    "mean_pct": -0.0444,
+    "se": 0.0161,
+    "t": -2.75,
+    "hit": 0.468
+   },
+   "block_means_pct": [
+    0.0172,
+    -0.1376,
+    -0.0357,
+    -0.0216
+   ],
+   "placebo": {
+    "draws": 2000,
+    "p_two_sided": 0.0,
+    "sd_of_draws_pct": 0.0092
+   },
+   "control": {
+    "planted_pct": 0.1,
+    "t_planted": 6.21,
+    "mde80_pct": 0.045
+   },
+   "verdict": "NULL",
+   "descriptive": {
+    "raw_signed": {
+     "n": 38438,
+     "mean_pct": -0.0448,
+     "se": 0.0176,
+     "t": -2.54,
+     "hit": 0.483
+    },
+    "vs_xiu_signed": {
+     "n": 38438,
+     "mean_pct": -0.0404,
+     "se": 0.0165,
+     "t": -2.45,
+     "hit": 0.491
+    },
+    "by_size": {
+     "1-2%": {
+      "n": 21686,
+      "mean_pct": -0.0242,
+      "se": 0.0113,
+      "t": -2.14,
+      "hit": 0.464
+     },
+     "2-4%": {
+      "n": 12033,
+      "mean_pct": -0.0605,
+      "se": 0.0236,
+      "t": -2.56,
+      "hit": 0.47
+     },
+     ">=4%": {
+      "n": 4719,
+      "mean_pct": -0.0961,
+      "se": 0.0611,
+      "t": -1.57,
+      "hit": 0.477
+     }
+    },
+    "by_side": {
+     "LONG (beat its sector)": {
+      "n": 19368,
+      "mean_pct": -0.0297,
+      "se": 0.0192,
+      "t": -1.55,
+      "hit": 0.468
+     },
+     "SHORT (lagged its sector)": {
+      "n": 19070,
+      "mean_pct": -0.0593,
+      "se": 0.0216,
+      "t": -2.75,
+      "hit": 0.467
+     }
+    }
+   },
+   "events": 38438
+  },
+  "H2": {
+   "primary": {
+    "n": 3519,
+    "mean_pct": -0.0072,
+    "se": 0.0163,
+    "t": -0.44,
+    "hit": 0.49
+   },
+   "block_means_pct": [
+    0.0148,
+    -0.0834,
+    0.033,
+    0.0068
+   ],
+   "placebo": {
+    "draws": 2000,
+    "p_two_sided": 0.572,
+    "sd_of_draws_pct": 0.0136
+   },
+   "control": {
+    "planted_pct": 0.1,
+    "t_planted": 6.13,
+    "mde80_pct": 0.046
+   },
+   "verdict": "NULL",
+   "descriptive": {
+    "by_sector": {
+     "Basic Materials": {
+      "n": 493,
+      "mean_pct": -0.0239,
+      "se": 0.0526,
+      "t": -0.45,
+      "hit": 0.475
+     },
+     "Communication Services": {
+      "n": 401,
+      "mean_pct": 0.0102,
+      "se": 0.0435,
+      "t": 0.23,
+      "hit": 0.496
+     },
+     "Consumer Cyclical": {
+      "n": 300,
+      "mean_pct": -0.0408,
+      "se": 0.0374,
+      "t": -1.09,
+      "hit": 0.463
+     },
+     "Consumer Defensive": {
+      "n": 374,
+      "mean_pct": -0.0219,
+      "se": 0.0416,
+      "t": -0.53,
+      "hit": 0.487
+     },
+     "Energy": {
+      "n": 402,
+      "mean_pct": 0.0575,
+      "se": 0.0373,
+      "t": 1.54,
+      "hit": 0.542
+     },
+     "Financial Services": {
+      "n": 166,
+      "mean_pct": 0.0148,
+      "se": 0.0314,
+      "t": 0.47,
+      "hit": 0.482
+     },
+     "Industrials": {
+      "n": 250,
+      "mean_pct": -0.0159,
+      "se": 0.0291,
+      "t": -0.55,
+      "hit": 0.444
+     },
+     "Real Estate": {
+      "n": 355,
+      "mean_pct": 0.0055,
+      "se": 0.0367,
+      "t": 0.15,
+      "hit": 0.535
+     },
+     "Technology": {
+      "n": 431,
+      "mean_pct": -0.0159,
+      "se": 0.0464,
+      "t": -0.34,
+      "hit": 0.487
+     },
+     "Utilities": {
+      "n": 347,
+      "mean_pct": -0.0399,
+      "se": 0.0346,
+      "t": -1.15,
+      "hit": 0.464
+     }
+    }
+   },
+   "events": 3519
+  },
+  "H3": {
+   "wild_name_days": 9997,
+   "rest_name_days": 88600,
+   "sd_wild_pct": 3.794,
+   "sd_rest_pct": 1.541,
+   "ratio": 2.462,
+   "threshold_atr_pct": {
+    "median": 4.59,
+    "p10": 3.89,
+    "p90": 6.34
+   },
+   "lean_follow_vs_xiu": {
+    "n": 9817,
+    "mean_pct": -0.0234,
+    "se": 0.0502,
+    "t": -0.47,
+    "hit": 0.496
+   },
+   "lean_long_vs_xiu": {
+    "n": 9997,
+    "mean_pct": 0.0725,
+    "se": 0.0632,
+    "t": 1.15,
+    "hit": 0.501
+   },
+   "share_moving_3pct": {
+    "wild": 0.265,
+    "rest": 0.055
+   },
+   "verdict": "PASS"
+  }
+ },
+ "secondary_daily_open_to_close": {
+  "H1": {
+   "primary": {
+    "n": 150672,
+    "mean_pct": -0.0164,
+    "se": 0.0102,
+    "t": -1.61,
+    "hit": 0.477
+   },
+   "block_means_pct": [
+    -0.002,
+    -0.0122,
+    -0.013,
+    -0.0384
+   ],
+   "placebo": {
+    "draws": 2000,
+    "p_two_sided": 0.011,
+    "sd_of_draws_pct": 0.0064
+   },
+   "control": {
+    "planted_pct": 0.1,
+    "t_planted": 9.8,
+    "mde80_pct": 0.029
+   },
+   "verdict": "NULL",
+   "descriptive": {
+    "raw_signed": {
+     "n": 150672,
+     "mean_pct": -0.0203,
+     "se": 0.0106,
+     "t": -1.91,
+     "hit": 0.479
+    },
+    "vs_xiu_signed": {
+     "n": 150672,
+     "mean_pct": -0.0161,
+     "se": 0.0103,
+     "t": -1.56,
+     "hit": 0.495
+    },
+    "by_size": {
+     "1-2%": {
+      "n": 81840,
+      "mean_pct": -0.0182,
+      "se": 0.0076,
+      "t": -2.41,
+      "hit": 0.474
+     },
+     "2-4%": {
+      "n": 47991,
+      "mean_pct": -0.0089,
+      "se": 0.0141,
+      "t": -0.63,
+      "hit": 0.479
+     },
+     ">=4%": {
+      "n": 20841,
+      "mean_pct": -0.0267,
+      "se": 0.043,
+      "t": -0.62,
+      "hit": 0.482
+     }
+    },
+    "by_side": {
+     "LONG (beat its sector)": {
+      "n": 75963,
+      "mean_pct": 0.0012,
+      "se": 0.0124,
+      "t": 0.1,
+      "hit": 0.471
+     },
+     "SHORT (lagged its sector)": {
+      "n": 74709,
+      "mean_pct": -0.0343,
+      "se": 0.013,
+      "t": -2.64,
+      "hit": 0.482
+     }
+    }
+   },
+   "events": 150672
+  },
+  "H2": {
+   "primary": {
+    "n": 12854,
+    "mean_pct": -0.0003,
+    "se": 0.0103,
+    "t": -0.03,
+    "hit": 0.497
+   },
+   "block_means_pct": [
+    -0.0188,
+    -0.0117,
+    0.0328,
+    -0.0033
+   ],
+   "placebo": {
+    "draws": 2000,
+    "p_two_sided": 0.9655,
+    "sd_of_draws_pct": 0.0089
+   },
+   "control": {
+    "planted_pct": 0.1,
+    "t_planted": 9.71,
+    "mde80_pct": 0.029
+   },
+   "verdict": "NULL",
+   "descriptive": {
+    "by_sector": {
+     "Basic Materials": {
+      "n": 1926,
+      "mean_pct": -0.0622,
+      "se": 0.0339,
+      "t": -1.84,
+      "hit": 0.488
+     },
+     "Communication Services": {
+      "n": 1245,
+      "mean_pct": 0.0233,
+      "se": 0.0229,
+      "t": 1.02,
+      "hit": 0.5
+     },
+     "Consumer Cyclical": {
+      "n": 1155,
+      "mean_pct": 0.0275,
+      "se": 0.0251,
+      "t": 1.09,
+      "hit": 0.497
+     },
+     "Consumer Defensive": {
+      "n": 1353,
+      "mean_pct": -0.002,
+      "se": 0.0249,
+      "t": -0.08,
+      "hit": 0.5
+     },
+     "Energy": {
+      "n": 1575,
+      "mean_pct": -0.011,
+      "se": 0.0266,
+      "t": -0.41,
+      "hit": 0.493
+     },
+     "Financial Services": {
+      "n": 576,
+      "mean_pct": 0.0117,
+      "se": 0.0248,
+      "t": 0.47,
+      "hit": 0.488
+     },
+     "Industrials": {
+      "n": 826,
+      "mean_pct": -0.0093,
+      "se": 0.0213,
+      "t": -0.44,
+      "hit": 0.492
+     },
+     "Real Estate": {
+      "n": 1373,
+      "mean_pct": -0.0225,
+      "se": 0.0259,
+      "t": -0.87,
+      "hit": 0.494
+     },
+     "Technology": {
+      "n": 1525,
+      "mean_pct": 0.0506,
+      "se": 0.0279,
+      "t": 1.81,
+      "hit": 0.51
+     },
+     "Utilities": {
+      "n": 1300,
+      "mean_pct": 0.0233,
+      "se": 0.0234,
+      "t": 1.0,
+      "hit": 0.505
+     }
+    }
+   },
+   "events": 12854
+  },
+  "H3": {
+   "wild_name_days": 39925,
+   "rest_name_days": 350418,
+   "sd_wild_pct": 4.134,
+   "sd_rest_pct": 1.918,
+   "ratio": 2.156,
+   "threshold_atr_pct": {
+    "median": 4.85,
+    "p10": 3.99,
+    "p90": 6.52
+   },
+   "lean_follow_vs_xiu": {
+    "n": 37731,
+    "mean_pct": -0.0711,
+    "se": 0.0281,
+    "t": -2.53,
+    "hit": 0.489
+   },
+   "lean_long_vs_xiu": {
+    "n": 39925,
+    "mean_pct": -0.052,
+    "se": 0.0341,
+    "t": -1.52,
+    "hit": 0.469
+   },
+   "share_moving_3pct": {
+    "wild": 0.361,
+    "rest": 0.09
+   },
+   "verdict": "FAIL"
+  }
+ },
+ "live_top2": [
+  {
+   "session": "2026-10-05",
+   "side": "SHORT",
+   "ticker": "CVE.TO",
+   "r": -2.1848,
+   "follows_rel_1pct": false,
+   "atr_pct": 2.9699,
+   "wild_cut": 3.97,
+   "wild": false
+  },
+  {
+   "session": "2026-10-05",
+   "side": "LONG",
+   "ticker": "TECK-B.TO",
+   "r": 0.886,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.1688,
+   "wild_cut": 3.97,
+   "wild": false
+  },
+  {
+   "session": "2026-10-06",
+   "side": "SHORT",
+   "ticker": "CVE.TO",
+   "r": -0.1577,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.253,
+   "wild_cut": 3.97,
+   "wild": false
+  },
+  {
+   "session": "2026-10-07",
+   "side": "LONG",
+   "ticker": "CCO.TO",
+   "r": -1.3282,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.4335,
+   "wild_cut": 3.91,
+   "wild": false
+  },
+  {
+   "session": "2026-10-07",
+   "side": "SHORT",
+   "ticker": "EMA.TO",
+   "r": 0.6389,
+   "follows_rel_1pct": true,
+   "atr_pct": 1.5156,
+   "wild_cut": 3.91,
+   "wild": false
+  },
+  {
+   "session": "2026-10-08",
+   "side": "SHORT",
+   "ticker": "TD.TO",
+   "r": -0.4149,
+   "follows_rel_1pct": true,
+   "atr_pct": 1.693,
+   "wild_cut": 3.98,
+   "wild": false
+  },
+  {
+   "session": "2026-10-09",
+   "side": "LONG",
+   "ticker": "TD.TO",
+   "r": 1.3709,
+   "follows_rel_1pct": false,
+   "atr_pct": 1.6978,
+   "wild_cut": 4.06,
+   "wild": false
+  },
+  {
+   "session": "2026-10-13",
+   "side": "SHORT",
+   "ticker": "CCA.TO",
+   "r": -1.0612,
+   "follows_rel_1pct": true,
+   "atr_pct": 2.7398,
+   "wild_cut": 4.01,
+   "wild": false
+  },
+  {
+   "session": "2026-10-13",
+   "side": "LONG",
+   "ticker": "ATZ.TO",
+   "r": 2.4622,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.9222,
+   "wild_cut": 4.01,
+   "wild": false
+  },
+  {
+   "session": "2026-10-14",
+   "side": "SHORT",
+   "ticker": "SSRM.TO",
+   "r": 1.1977,
+   "follows_rel_1pct": true,
+   "atr_pct": 4.7032,
+   "wild_cut": 4.0,
+   "wild": true
+  },
+  {
+   "session": "2026-10-14",
+   "side": "LONG",
+   "ticker": "CNQ.TO",
+   "r": -0.4585,
+   "follows_rel_1pct": true,
+   "atr_pct": 2.3482,
+   "wild_cut": 4.0,
+   "wild": false
+  },
+  {
+   "session": "2026-10-15",
+   "side": "SHORT",
+   "ticker": "CLS.TO",
+   "r": -3.613,
+   "follows_rel_1pct": true,
+   "atr_pct": 6.7308,
+   "wild_cut": 4.86,
+   "wild": true
+  },
+  {
+   "session": "2026-10-15",
+   "side": "SHORT",
+   "ticker": "CCO.TO",
+   "r": -4.1898,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.8944,
+   "wild_cut": 4.86,
+   "wild": false
+  },
+  {
+   "session": "2026-10-16",
+   "side": "LONG",
+   "ticker": "L.TO",
+   "r": 0.879,
+   "follows_rel_1pct": true,
+   "atr_pct": 1.881,
+   "wild_cut": 4.88,
+   "wild": false
+  },
+  {
+   "session": "2026-10-16",
+   "side": "LONG",
+   "ticker": "WCN.TO",
+   "r": 0.6662,
+   "follows_rel_1pct": true,
+   "atr_pct": 2.0651,
+   "wild_cut": 4.88,
+   "wild": false
+  },
+  {
+   "session": "2026-10-19",
+   "side": "SHORT",
+   "ticker": "SU.TO",
+   "r": -0.2264,
+   "follows_rel_1pct": false,
+   "atr_pct": 2.3654,
+   "wild_cut": 5.11,
+   "wild": false
+  },
+  {
+   "session": "2026-10-19",
+   "side": "LONG",
+   "ticker": "ATD.TO",
+   "r": -0.0955,
+   "follows_rel_1pct": true,
+   "atr_pct": 1.7169,
+   "wild_cut": 5.11,
+   "wild": false
+  },
+  {
+   "session": "2026-10-20",
+   "side": "LONG",
+   "ticker": "GFL.TO",
+   "r": -0.8249,
+   "follows_rel_1pct": true,
+   "atr_pct": 2.5817,
+   "wild_cut": 4.82,
+   "wild": false
+  },
+  {
+   "session": "2026-10-21",
+   "side": "LONG",
+   "ticker": "TRI.TO",
+   "r": 1.0174,
+   "follows_rel_1pct": true,
+   "atr_pct": 3.0056,
+   "wild_cut": 5.06,
+   "wild": false
+  },
+  {
+   "session": "2026-10-21",
+   "side": "SHORT",
+   "ticker": "CLS.TO",
+   "r": -0.5831,
+   "follows_rel_1pct": true,
+   "atr_pct": 7.3017,
+   "wild_cut": 5.06,
+   "wild": true
+  }
+ ]
+}
