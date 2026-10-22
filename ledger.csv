@@ -527,3 +527,11 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-10-21,TD.TO,SHORT,0.551,dense,173.2900,pair,primary,0.2082,60,4.0,1.050,0
 2026-10-21,T.TO,SHORT,0.551,dense,11.7700,board,,,,8.5,0.085,0
 2026-10-21,NTR.TO,SHORT,0.550,mid,96.6000,board,,,,,-0.983,1
+2026-10-22,SHOP.TO,LONG,0.576,sparse,240.5000,pair,primary,0.1877,39,,,
+2026-10-22,AEM.TO,LONG,0.555,sparse,252.9500,pair,extra,0.3076,61,,,
+2026-10-22,MFC.TO,SHORT,0.602,mid,63.6200,pair,extra,0.2381,187,4.7,,
+2026-10-22,SLF.TO,SHORT,0.602,dense,113.0900,pair,primary,0.2606,115,22.9,,
+2026-10-22,CNR.TO,SHORT,0.572,sparse,174.8400,board,,,,12.0,,
+2026-10-22,CP.TO,SHORT,0.565,sparse,126.5000,board,,,,,,
+2026-10-22,CM.TO,SHORT,0.564,sparse,160.1900,board,,,,9.4,,
+2026-10-22,CVE.TO,SHORT,0.559,sparse,46.3100,board,,,,2.2,,
