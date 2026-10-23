@@ -105,3 +105,28 @@ research that the language models and web searches are doing."
 * **All fail.** That is said plainly.
 
 Script: `replay_events.py` → `data/replay_day138_events.json`.
+
+---
+
+## Amendment 1 (2026-10-23, after E1's verdict, before E1-US was run)
+
+* **Why.** E1 passed, but its list is today's 150 most-traded TSX names. They
+  are survivors, and the two splits that tried to see past that are both
+  muddied by survival:
+  * By whole-period return, the best third shows the most premium. That return
+    contains the report days themselves.
+  * By the return away from reports, the worst third shows the most. A name
+    that lost between reports and still made today's list must have gained on
+    them.
+* **E1-US.** E1's rule runs unchanged on the S&P 500 as it stood on each date.
+  * Membership comes from FMP's history of index changes. A name counts from
+    the day it joined to the day it left; delisted names are included where
+    FMP still serves their bars, and every name that cannot be fetched is
+    counted and named.
+  * The market is SPY, and the period is 2012-01-01 → 2026-10-14.
+  * The window, statistic, placebo and bar are E1's.
+* **What it decides.**
+  * **E1-US PASS:** E1's premium is credible as something to expect. Its size
+    on the TSX is still not known, and the forward record measures it.
+  * **E1-US NULL:** E1 is not adopted; it is a survivor artifact until shown
+    otherwise.
