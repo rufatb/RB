@@ -1,5 +1,49 @@
 # Working notes for this repo
 
+## Day138 — before the news, held a few days: the one pass was the survivor list (rejection #56, owner, 2026-10-22)
+
+The owner, after the Top 2's losing run, asked for new council designs:
+* "not retrospective bias";
+* a hold of a few days;
+* nothing the price has already moved on.
+
+Registered first (`PREREGISTER_day138_events.md`, 4fb0885; amendment 1,
+f5f8a9d). Read `AUDIT_day138_events.md`; script `replay_events.py`, summary
+`data/replay_day138_events.json`.
+* **The designs.** No input is the stock's own past move.
+  * E1–E3 enter at the close before a scheduled report and exit at the close
+    of D1 + 2 (three to four sessions), on the 150 names, 2012–2026.
+  * E1: long every report (the earnings-announcement premium).
+  * E2: the side of the name's previous surprise.
+  * E3: the side of the peers' surprises already public.
+  * E4: DeepSeek's read of an overnight release (day-122's cached answers),
+    where the open had not moved its way; held from the open to the close two
+    sessions later.
+* **Results.**
+  * E1: +0.37% a report over the same names' other windows, t = 3.78, all
+    four blocks positive: PASS as registered.
+  * E2 NULL (t = 1.27); E3 UNDERPOWERED (t = 1.68); E4 UNDERPOWERED
+    (n = 133, smallest detectable effect 1.5%).
+* **E1 is a survivor artifact** (amendment 1, registered after its verdict and
+  before the check).
+  * The same rule on the S&P 500 as it stood on each date (27,701 reports,
+    delisted names included where FMP serves them) gives +0.01%, t = 0.20.
+    A planted 0.50% shows at t = 8.1: NULL.
+  * Names still in the index today: +0.15% (t = 2.4). Names since removed:
+    −0.65% (t = −4.8). Testing on survivors manufactures the premium.
+  * On the TSX list it is largest in 2024–2026 (+0.5% to +1.1% a report).
+  * E1's checks after its verdict all held: against non-reporters, on a market
+    model, trimmed, and by date quality. Survival explains each one, because
+    it sits on the report days.
+* **So:** nothing ships, and no forward event council is proposed.
+* **Rule: never judge a long-only or event rule on today's list.**
+  * `tsx_universe.json` is ranked on the last 20 sessions' trading; history
+    on it is survivor history.
+  * The check is a point-in-time universe:
+    `replay_events.sp500_membership` rebuilds the S&P 500 from FMP's change
+    history.
+  * Earlier nulls on the list stand; a PASS on it needs this check.
+
 ## Day137b — the newest DeepSeek on the replay: no better (rejection #55, owner, 2026-10-21)
 
 The owner asked whether "the new DeepSeek model and FMP in a better way"
@@ -2809,8 +2853,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **55 rejections, 5
-adoptions** (as of day-137b; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **56 rejections, 5
+adoptions** (as of day-138; skipping the morning's widest-swinging names is the
 fifth adoption). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 

@@ -5705,3 +5705,27 @@ more accurate.
 * **Paired against the day-117 DeepSeek:** +0.145% a session, t = 1.15.
 * **Cost:** $0.34. Nothing changes; the inputs, not the model, are the
   limit (day-117).
+
+## Day-138: REJECTION #56 — positions before the news, held a few days; the one pass was survivorship
+
+Registered in `PREREGISTER_day138_events.md` (4fb0885, amendment 1 f5f8a9d)
+before any return. The owner asked for council designs with no retrospective
+bias, a hold of a few days, and nothing the price has already moved on. No
+input below is the stock's own past move.
+
+* **E1, long every scheduled report.** Enter at the close before it, exit at
+  D1 + 2 (TSX list, 2012–2026): +0.37% a report over the same names' other
+  windows, t = 3.78. PASS as registered.
+* **E2, the previous surprise's side:** NULL, t = 1.27.
+* **E3, the peers' surprises' side:** UNDERPOWERED, t = 1.68.
+* **E4, DeepSeek's read of an overnight release the open had not priced:**
+  UNDERPOWERED, n = 133.
+* **E1-US.** The same rule on the S&P 500 as it stood on each date (27,701
+  reports, delisted names included): +0.01%, t = 0.20, with a planted 0.50% at
+  t = 8.07. NULL.
+  * Names still in the index today: +0.15%.
+  * Names since removed: −0.65% (t = −4.76).
+  * E1 is the survivor list's artifact and is not adopted.
+* **Rule:** never judge a long-only or event rule on today's list (it is
+  ranked on the last 20 sessions). Check a PASS on a point-in-time universe
+  (`replay_events.sp500_membership`).

@@ -130,3 +130,40 @@ Script: `replay_events.py` → `data/replay_day138_events.json`.
     on the TSX is still not known, and the forward record measures it.
   * **E1-US NULL:** E1 is not adopted; it is a survivor artifact until shown
     otherwise.
+
+---
+
+## Results (2026-10-23, after the runs; nothing above was changed)
+
+| Test | Reports | Excess a report | t | Placebo p | Blocks | Verdict |
+|---|---:|---:|---:|---:|---|---|
+| E1, long every report (TSX list) | 8,203 | +0.37% | +3.78 | 0.000 | +0.46 +0.25 +0.28 +0.49 | PASS as registered |
+| E2, the previous surprise | 6,926 | +0.11% | +1.27 | 0.013 | +0.13 +0.19 −0.20 +0.32 | NULL |
+| E3, the peers' surprises | 2,208 | +0.33% | +1.68 | 0.007 | +0.57 +0.80 −0.21 +0.16 | UNDERPOWERED |
+| E4, the model's unpriced read | 133 | +0.24% | +0.63 | 0.278 | +2.25 −0.51 −0.36 −0.40 | UNDERPOWERED |
+| E1-US, long every report (S&P 500 as it stood) | 27,701 | +0.01% | +0.20 | 0.244 | +0.11 +0.06 +0.10 −0.21 | NULL |
+
+* **E1 is not adopted (amendment 1).**
+  * On the S&P 500 as it stood on each date (673 names with bars; 46 delisted
+    names FMP no longer serves), the same rule earns nothing. A planted 0.50%
+    would show at t = 8.07 (smallest detectable effect 0.24%).
+  * Split by survival, names still in the index today show +0.15% (t = 2.42)
+    and names since removed −0.65% (t = −4.76). Testing on today's names
+    manufactures the premium.
+  * The TSX list is today's 150 most-traded names, ranked on the last 20
+    sessions, and its premium is largest in 2024–2026 (+0.47%, +0.90%, +1.07%
+    a report): the years a recent-trading ranking tilts hardest toward recent
+    winners.
+* **E1's checks after its verdict all held, and survival explains each one:**
+  * against the names not reporting in the same window: +0.40%, t = 4.05;
+  * on a market model: +0.34%, t = 3.50;
+  * trimmed: +0.36%;
+  * only when the report fell inside the window: +0.48%, against −0.00% when
+    FMP's date put it after the exit.
+
+  A survivor's good reports sit on its report days too.
+* **The other three.** E2's and E3's long legs carry E1's survivor premium,
+  and their short legs lose. E4 is three months of archive (smallest
+  detectable effect 1.47%).
+
+**Nothing passes; rejection #56.** No forward event council is proposed.
