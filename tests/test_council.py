@@ -214,6 +214,22 @@ def test_two_rounds_then_a_tally(staged):
     assert saved['picks'] == ['P1'] and saved['prompt_version'] == K.PROMPT_VERSION
 
 
+def test_round1_ballots_are_sealed_the_moment_they_are_cast(staged):
+    """Day-140: council.stage freezes the blind Round-1 ballots into
+    round1.json, so the fix pack can score them apart from the final."""
+    ds = FakeDeepSeek([b('ENDORSE 0.7', 'OPPOSE 0.6', 'ENDORSE 0.6', top=['P1']),
+                       b('ENDORSE 0.7', 'OPPOSE 0.6', 'OPPOSE 0.7', top=['P1'])])
+    gm = FakeGemini([b('ENDORSE 0.6', 'ABSTAIN', 'ENDORSE 0.8', top=['P3']),
+                     b('ENDORSE 0.65', 'ABSTAIN', 'ENDORSE 0.75', top=['P1', 'P3'])])
+    post = jev_poster({'P1': 0.5, 'P2': 0.1, 'P3': 0.2, 'NONE': 0.2})
+    out = K.stage(staged, now=NOW, clients={'deepseek': ds, 'gemini': gm}, jev_poster=post,
+                  wait=False, clock=lambda: NOW)
+    frozen = json.loads((staged/K.ROUND1).read_text())
+    assert frozen['session'] == '2026-10-05' and frozen['frozen_at']
+    assert frozen['ballots'] == out['rounds']['round1']
+    assert set(frozen['ballots']) == {'DeepSeek', 'Gemini'}
+
+
 def test_a_failed_member_is_absent_and_named_and_round_two_keeps_round_one(staged):
     ds = FakeDeepSeek([b('ENDORSE 0.7', 'ABSTAIN', 'ENDORSE 0.6'), {'nonsense': 1}])
     gm = FakeGemini([ValueError('HTTP_503'), ValueError('HTTP_503')])
