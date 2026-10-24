@@ -167,3 +167,15 @@ Script: `replay_events.py` → `data/replay_day138_events.json`.
   detectable effect 1.47%).
 
 **Nothing passes; rejection #56.** No forward event council is proposed.
+
+---
+
+## Erratum (appended 2026-10-24, after the Results; corrects wording only)
+
+The E1-US paragraph of the Results says "673 names with bars; 46 delisted
+names FMP no longer serves". The committed record
+(`data/replay_day138_events.json`) says 738 names had bars and 46 did not;
+673 is the number of distinct names that contribute measured E1-US events.
+The sentence should read: "738 names with bars, 46 without; 673 names
+contribute measured events." No number, test or verdict changes —
+rejection #56 stands as recorded. (Review: GitHub issue #18, finding 3.)

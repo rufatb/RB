@@ -269,6 +269,61 @@ def test_preopen_is_scored_from_the_open_and_has_its_own_record_line(tmp_path):
     assert 'none scored yet' in N.record_line(ledger)
 
 
+def _preopen_rows(spec):
+    """spec: [(session, [w_day, ...]), ...] -> ledger rows for preopen_record."""
+    rows = []
+    for session, vals in spec:
+        for i, v in enumerate(vals):
+            rows.append({'session': session, 'ticker': 'T%03d.TO' % i, 'arm': 'preopen',
+                         'w_day': repr(v)})
+    return rows
+
+
+def test_preopen_record_t_tests_the_printed_per_call_mean(tmp_path):
+    """Regression (review day-138/139, finding 1): the t beside the per-call
+    mean was a one-sample t of the session means — a different estimand that
+    can carry the opposite sign when sessions hold unequal call counts."""
+    ledger = tmp_path / 'news_calls.csv'
+    spec = [('2026-08-%02d' % d, [0.20]) for d in range(1, 29)]
+    spec += [('2026-09-%02d' % d, [0.20]) for d in range(1, 12)]          # 39 sessions of one +0.20 call
+    spec += [('2026-10-01', [-1.00] * 100)]                               # one session of 100 calls at -1.00
+    N._write(_preopen_rows(spec), ledger)
+    r = N.preopen_record(ledger)
+    assert r['sessions'] == 40 and r['calls'] == 139
+    assert r['mean'] == pytest.approx(-92.2 / 139)
+    assert r['t'] is not None and r['t'] < 0                              # same sign as the mean it tests
+    assert r['t'] == pytest.approx(-2.67, abs=0.01)
+
+
+def test_preopen_record_matches_the_session_mean_t_when_balanced(tmp_path):
+    """With equal calls per session the clustered t is the session-mean t."""
+    ledger = tmp_path / 'news_calls.csv'
+    N._write(_preopen_rows([('2026-09-01', [1.0, 3.0]), ('2026-09-02', [2.0, 2.0]),
+                            ('2026-09-03', [0.0, 0.0])]), ledger)
+    r = N.preopen_record(ledger)
+    assert r['mean'] == pytest.approx(4.0 / 3.0)
+    assert r['t'] == pytest.approx(2.0)
+
+
+def test_a_failed_write_leaves_the_ledger_byte_for_byte_intact(tmp_path, monkeypatch):
+    """Regression (review day-138/139, finding 2): the ledger rewrite is
+    atomic — a failure at replace time (the 09:29 timeout's kill is the
+    real-world version) leaves the old ledger whole and no temp behind."""
+    ledger = tmp_path / 'news_calls.csv'
+    rows = [{'session': '2026-09-01', 'ticker': 'AAA.TO', 'arm': 'full', 'w_day': '1.0'}]
+    N._write(rows, ledger)
+    before = ledger.read_bytes()
+
+    def boom(src, dst):
+        raise OSError('killed mid-write')
+
+    monkeypatch.setattr(N.os, 'replace', boom)
+    with pytest.raises(OSError):
+        N._write(rows + [{'session': '2026-09-02', 'ticker': 'BBB.TO', 'arm': 'full'}], ledger)
+    assert ledger.read_bytes() == before
+    assert not (tmp_path / 'news_calls.csv.tmp').exists()
+
+
 def test_the_full_report_carries_the_preopen_record_and_the_email_does_not(tmp_path):
     client = Client()
     _, ledger, now = staged(tmp_path, client)
