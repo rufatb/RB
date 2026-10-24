@@ -52,7 +52,8 @@ logic every morning". Registered as the rewritten
     averaged 0.00%; the Round-1 picks it replaced averaged −0.52% (5 each);
   * the sector cap never bound.
 * **The council lab (`COUNCIL_LAB.md`).** A scheduled task, "RB council
-  lab", fires into this session at 10:10 ET on weekdays and ends by 11:40.
+  lab" (`trig_013GZE39BaLVfndpyCcPMGNu`, `CRON_TZ=America/New_York 10 10 * * 1-5`),
+  fires into this session at 10:10 ET on weekdays and ends by 11:40.
   * Each weekday it takes one step from the backlog: register, test on
     history, write up.
   * Nothing live changes from the slot. A pass goes to the owner as a
