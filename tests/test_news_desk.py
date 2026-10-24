@@ -202,3 +202,76 @@ def test_score_fills_same_day_after_the_close_and_never_before(tmp_path):
     assert float(r['w945']) == pytest.approx(1.0) and float(r['w_day']) == pytest.approx(3.0)
     assert r['scored_at'] and not r['scored_5d_at']
     assert '1/1 right' in N.record_line(ledger)
+
+
+# ── day-139: the news desk asked before the open ───────────────────────────
+
+def preopen(tmp_path, client, now, clock=None, path=None):
+    root = archive(tmp_path, [
+        rel('2026-10-02T07:00:00-04:00', ['AAA.TO'], 'Big deal', url='https://www.newswire.ca/aaa.html'),
+        rel('2026-10-02T09:25:00-04:00', ['BBB.TO'], 'Too late', url='https://www.newswire.ca/bbb.html')])
+    ledger = path or tmp_path / 'news_calls.csv'
+    page = '<section class="release-body container">AAA agrees to <b>a deal</b>.</section>'
+    import newswire
+    orig = newswire._get
+    newswire._get = lambda url, session=None: page
+    try:
+        out = N.stage_preopen(tmp_path, now, chart=lambda t: (EQ, daily(last=S - dt.timedelta(days=1))),
+                              archive=root, client=client, collect=False, path=ledger, clock=clock)
+    finally:
+        newswire._get = orig
+    return out, ledger
+
+
+def test_preopen_asks_the_full_question_on_what_is_out_by_then_and_records_it(tmp_path):
+    client = Client()
+    now = dt.datetime(2026, 10, 2, 9, 20, tzinfo=ET)
+    out, ledger = preopen(tmp_path, client, now)
+    assert out['status'] == 'RECORDED' and out['events'] == 1
+    assert len(client.seen) == 1 and client.seen[0][0]['ticker'] == 'AAA.TO'
+    assert client.seen[0][0]['releases'][0]['text'] == 'AAA agrees to a deal .'   # the FULL arm
+    rows = N.read(ledger)
+    assert [(r['ticker'], r['arm'], r['side']) for r in rows] == [('AAA.TO', 'preopen', 'LONG')]
+    assert rows[0]['prompt_version'] == 'day122-v1+day139-preopen'
+    assert rows[0]['asked_at'].startswith('2026-10-02T09:20')
+    assert json.loads((tmp_path / N.PREOPEN_STAGED).read_text())['added'] == 1
+    # a rerun never writes a second row, and the 09:31 arms sit beside it
+    N.stage_preopen(tmp_path, now, chart=lambda t: (EQ, daily(last=S - dt.timedelta(days=1))),
+                    archive=tmp_path / 'wire', client=client, collect=False, path=ledger)
+    assert len(N.read(ledger)) == 1
+
+
+def test_preopen_refuses_at_the_open_and_drops_an_answer_that_came_after_it(tmp_path):
+    client = Client()
+    out, ledger = preopen(tmp_path, client, dt.datetime(2026, 10, 2, 9, 30, tzinfo=ET))
+    assert out['status'] == 'REFUSED' and 'PREOPEN_ONLY' in out['reason']
+    assert client.seen == [] and not ledger.exists()
+    ticks = iter([dt.datetime(2026, 10, 2, 9, 28, tzinfo=ET), dt.datetime(2026, 10, 2, 9, 30, 5, tzinfo=ET)])
+    (tmp_path / 'late').mkdir()
+    out, ledger = preopen(tmp_path / 'late', client, None, clock=lambda: next(ticks))
+    assert out['status'] == 'REFUSED' and 'ANSWERED_AFTER_THE_OPEN' in out['reason']
+    assert not ledger.exists()
+
+
+def test_preopen_is_scored_from_the_open_and_has_its_own_record_line(tmp_path):
+    client = Client()
+    _, ledger = preopen(tmp_path, client, dt.datetime(2026, 10, 2, 9, 20, tzinfo=ET))
+    assert 'none scored yet' in N.preopen_line(ledger)
+    frames = {'AAA.TO': daily(open_=10.0, final=10.3), N.MARKET: daily(close=40.0)}
+    b5 = {'AAA.TO': bars5(S, 10.0, 10.1), N.MARKET: bars5(S, 40.0, 40.0)}
+    assert N.score(path=ledger, now=dt.datetime(2026, 10, 2, 16, 20, tzinfo=ET), bars_for=b5.get,
+                   chart=lambda t: (EQ, frames[t])) == 1
+    r = N.read(ledger)[0]
+    assert float(r['w_day']) == pytest.approx(3.0)
+    line = N.preopen_line(ledger)
+    assert '1/1 right' in line and '+3.00%' in line and 'decision at 40 sessions' in line
+    # the record line for the 09:45 test is untouched: it counts the FULL arm only
+    assert 'none scored yet' in N.record_line(ledger)
+
+
+def test_the_full_report_carries_the_preopen_record_and_the_email_does_not(tmp_path):
+    client = Client()
+    _, ledger, now = staged(tmp_path, client)
+    sec = N.section(tmp_path, now, path=ledger)
+    assert 'day-139' in '\n'.join(N.lines(sec))
+    assert 'day-139' not in '\n'.join(N.lines(sec, concise=True))

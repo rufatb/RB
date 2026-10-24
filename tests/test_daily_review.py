@@ -188,3 +188,21 @@ def test_the_table_readout_never_costs_the_review(tmp_path):
     text = dr.table_section(DAY, council_report(DAY), root=tmp_path, ledger_rows=type(
         'L', (), {'__iter__': lambda self: broken()})())
     assert 'unavailable (OSError)' in text
+
+
+def test_the_preopen_section_prints_todays_calls_and_the_running_record(tmp_path):
+    """Day-139: the review prints the pre-open news calls and their record;
+    a failure costs the section only."""
+    import news_desk
+    ledger = tmp_path / 'news_calls.csv'
+    news_desk._write([
+        {'session': '2026-10-26', 'ticker': 'AAA.TO', 'arm': 'preopen', 'side': 'LONG',
+         'w_day': '1.5', 'asked_at': '2026-10-26T09:20:30-04:00'},
+        {'session': '2026-10-26', 'ticker': 'BBB.TO', 'arm': 'full', 'side': 'SHORT', 'w_day': '-2.0'},
+    ], ledger)
+    text = dr.preopen_section('2026-10-26', path=ledger)
+    assert 'day-139' in text and 'LONG AAA.TO +1.50%' in text and 'BBB.TO' not in text.split('Today:')[1].split('\n')[0]
+    assert '1/1 right' in text
+    assert 'no pre-open call' in dr.preopen_section('2026-10-27', path=ledger)
+    assert 'none scored yet' in dr.preopen_section('2026-10-26', path=tmp_path / 'missing.csv')
+    assert 'unavailable' in dr.preopen_section('2026-10-26', path=tmp_path)   # a directory: unreadable

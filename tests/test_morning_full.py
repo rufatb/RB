@@ -191,8 +191,9 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     halfway through writing its snapshot."""
     body = code()
     # 14 since day-134 (the 150-name TSX list has its own named skip branch);
-    # 13 since 2026-10-19, when the biotech universe step was retired.
-    assert body.count('SKIPPED —') == 13, 'a step can still be starved in silence'
+    # 13 since 2026-10-19, when the biotech universe step was retired; 14 again
+    # since day-139 (the pre-open news read names its own skip).
+    assert body.count('SKIPPED —') == 14, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():
@@ -308,3 +309,16 @@ def test_the_150_name_list_is_built_before_the_pool_reads_it():
     body = code()
     assert body.index('prepare_tsx_universe.py --state-dir') < body.index('prepare_factor_pool.py --state-dir')
     assert 'slice 180' in body
+
+
+def test_the_preopen_news_read_runs_at_0920_and_ends_before_the_open():
+    """Day-139: the news desk asked before the open. It sits after the memory
+    council and before Part 6's 09:31 wait, ends by 09:29 inside its own
+    budget, and its failure is not a staging fault (a shadow)."""
+    body = code()
+    at = body.index('news_desk.py --preopen')
+    assert body.index('council_memory.py --stage') < at < body.index('-lt 0931 ]')
+    assert 'PREOPEN_NEWS_AT=0920' in body and "today 09:29:00" in body
+    assert 'preopen_left < 480 ? preopen_left : 480' in body
+    block = body[body.index('PREOPEN_NEWS_AT=0920'):body.index('-lt 0931 ]')]
+    assert 'stage_faults' not in block

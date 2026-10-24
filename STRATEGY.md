@@ -5729,3 +5729,21 @@ input below is the stock's own past move.
 * **Rule:** never judge a long-only or event rule on today's list (it is
   ranked on the last 20 sessions). Check a PASS on a point-in-time universe
   (`replay_events.sp500_membership`).
+
+## Day-139: a forward test — the news desk asked before the open (no result yet)
+
+Registered in `PREREGISTER_day139_newsdesk_open.md` (42efb37) before the first
+call. Day-138b found the news desk's lead in the owner's spreadsheet sits from
+the 09:30 open, before its 09:31 calls exist. On the tradable window it is
+47%, +0.10%, and on the 419-release replay its open → close was +0.09%
+(t = 0.71).
+
+* **The test.** `news_desk.py --preopen` asks the same FULL-arm question at
+  09:20, on the releases out by then, and refuses at 09:30. It is scored on
+  open → close against XIU (`w_day`, arm `preopen`).
+* **The decision:**
+  * at 40 sessions: PASS needs t ≥ 3, placebo p < 0.01, both halves positive
+    and a mean above the 0.13% cost;
+  * a mean ≤ 0 is a FAIL;
+  * a positive mean short of the bar runs on to 80 sessions.
+* **Expectation:** the replay says not to expect a pass.

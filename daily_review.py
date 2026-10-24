@@ -364,7 +364,7 @@ def main(argv=None):
         return 2
     out = review(a.session, report)
     md = (out['markdown'] + lab_section() + memory_section(a.session, report)
-          + table_section(a.session, report))
+          + table_section(a.session, report) + preopen_section(a.session))
     (REVIEWS / f'{a.session}.md').write_text(md)
     print(md)
     return 0
@@ -383,6 +383,32 @@ def lab_section(update=None, table=None):
         lines.append('Lab bar fetches failed for: ' + ', '.join(
             f'{t} ({e})' for t, e in sorted(got['fetch_failures'].items())) + '.')
     return '\n' + '\n'.join(lines) + '\n'
+
+
+def preopen_section(session, path=None):
+    """Day-139: the news desk asked before the open, judged open → close
+    against XIU (PREREGISTER_day139_newsdesk_open.md). A forward test; it
+    never costs the review, and a failure says so."""
+    import news_desk
+    try:
+        path = path or news_desk.LEDGER
+        today = [r for r in news_desk.read(path)
+                 if r.get('arm') == news_desk.PREOPEN_ARM and r.get('session') == session]
+        line = news_desk.preopen_line(path)
+    except Exception as exc:
+        return f"\nThe pre-open news desk readout is unavailable ({type(exc).__name__}).\n"
+
+    def one(r):
+        v = r.get('w_day')
+        return '%s %s %s' % (r['side'], r['ticker'],
+                             'not scored' if v in (None, '') else '%+.2f%%' % float(v))
+    out = ['', '## The news desk asked before the open (day-139 test)',
+           "Part 6's FULL-arm question, asked at about 09:20 on the releases out by then, scored "
+           'from the open to the close against XIU. Not sized, not in the Top 2.',
+           ('Today: ' + ', '.join(one(r) for r in sorted(today, key=lambda r: r['ticker'])) + '.')
+           if today else 'Today: no pre-open call was recorded.',
+           line]
+    return '\n'.join(out) + '\n'
 
 
 def memory_section(session, report, lines=None):

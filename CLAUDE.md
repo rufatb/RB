@@ -1,5 +1,40 @@
 # Working notes for this repo
 
+## Day139 — the news desk asked before the open, a forward test (owner, 2026-10-24)
+
+The owner said yes to testing day-138b's one idea: ask the news desk before
+the open and enter at the open. Registered first
+(`PREREGISTER_day139_newsdesk_open.md`, 42efb37).
+* **What runs:** `news_desk.py --preopen` at 09:20 (`morning_full.sh`, after
+  the memory council, ending by 09:29).
+  * It asks Part 6's FULL-arm question with day-122's prompt byte for byte, on
+    the releases published by the moment of asking (`events(until=)`).
+  * Each call is recorded in `data/news_calls.csv` as arm `preopen`, with
+    `asked_at` (a new last column; older rows carry it blank) and prompt
+    version `day122-v1+day139-preopen`.
+* **The guards:**
+  * it refuses at or after 09:30;
+  * a call answered at or after 09:30 is dropped (`ANSWERED_AFTER_THE_OPEN`);
+  * its failure is not a staging fault, and it has its own named skip branch.
+* **The measure** is `w_day`: open → close against XIU, filled by the evening
+  `news_desk.py --score`, which scores every arm.
+* **Where it shows:**
+  * `news_desk.preopen_line` in the full report's and the page's Part 6 (not
+    the email);
+  * `daily_review.preopen_section` every evening.
+* **The bar:**
+  * decision at 40 sessions with a call (about 2026-12-18);
+  * PASS: t ≥ 3, sign-flip placebo p < 0.01, both halves positive, mean above
+    0.13%;
+  * a mean ≤ 0 → FAIL; positive but short → run on to 80 sessions.
+
+  The replay's open → close was +0.09%, t = 0.71: do not expect a pass.
+* **The dry run** on 10-23's releases asked at 09:20 recorded SHORT SLF.TO
+  0.60 in 12 s; the scorer filled its `w_day` (+1.49%).
+* **The live Routine's text** does not mention the step; `morning_full.sh`
+  runs it. `ROUTINE_PROMPT.md` (the repo copy) does.
+* **Review instructions** for the owner's Muse bot are in `REVIEW_MUSE.md`.
+
 ## Day138b — the owner's picks spreadsheet: the news desk leads only from the open (owner, 2026-10-24)
 
 The owner sent every pick from 09-24 to 10-23 (307 rows, by source) and read

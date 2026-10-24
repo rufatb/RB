@@ -19,7 +19,14 @@ The event rule (registered, unchanged after):
             body cut at 3,000 characters
 
     python news_desk.py --stage    # after 09:30: today's events, both arms; appends data/news_calls.csv
+    python news_desk.py --preopen  # day-139, ~09:20: the FULL arm on the releases out by then, arm 'preopen'
     python news_desk.py --score    # evening: W945 / W_day / W_5d, market-adjusted by XIU.TO
+
+Day-139 (PREREGISTER_day139_newsdesk_open.md) asks the same FULL-arm question
+before the open, on the releases published by the time it asks, and records
+it as arm 'preopen' with `asked_at`; it is judged on W_day (open → close
+against XIU), the trade a market-on-open order could take. It refuses at or
+after 09:30, and a call answered after 09:30 is not recorded.
 """
 from __future__ import annotations
 
@@ -57,7 +64,13 @@ ARMS = ('full', 'headline')
 FIELDS = ('session', 'ticker', 'arm', 'side', 'confidence', 'material', 'reason', 'releases',
           'first_at', 'title', 'url', 'model', 'prompt_version',
           'w945', 'w945_raw', 'w_day', 'w_day_raw', 'gap', 'gap_raw', 'w5d', 'w5d_raw',
-          'scored_at', 'scored_5d_at')
+          'scored_at', 'scored_5d_at', 'asked_at')
+# Day-139: the FULL arm asked before the open (PREREGISTER_day139_newsdesk_open.md).
+PREOPEN_ARM = 'preopen'
+PREOPEN_VERSION = PROMPT_VERSION + '+day139-preopen'
+PREOPEN_CUTOFF = dt.time(9, 30)
+PREOPEN_STAGED = 'news_desk_preopen.json'
+PREOPEN_DECISION = 40
 
 SYSTEM_PROMPT = """You read Canadian company press releases that came out overnight, before the 09:30 ET open of the Toronto Stock Exchange. For EACH item, decide which side you would take in that company's shares from 09:45 ET to the close of the same trading day: LONG or SHORT. You must choose a side for every item; there is no abstain.
 
@@ -102,10 +115,13 @@ def liquid(meta, frame, session):
     return None
 
 
-def candidates(session, archive=None):
-    """{ticker: [release rows, oldest first]} in the session's window, by first lead symbol."""
+def candidates(session, archive=None, until=None):
+    """{ticker: [release rows, oldest first]} in the session's window, by first
+    lead symbol. `until` cuts the window at the moment of asking (day-139)."""
     import newswire
     start, end = newswire.window(session)
+    if until is not None and until < end:
+        end = until
     out = collections.defaultdict(list)
     for r in newswire.read(archive, since=start.astimezone(ET).date()):
         at = dt.datetime.fromisoformat(r['published_at'])
@@ -115,11 +131,11 @@ def candidates(session, archive=None):
     return {t: sorted(v, key=lambda r: r['published_at']) for t, v in out.items()}
 
 
-def events(session, *, chart=daily_chart, archive=None, pending_ok=False):
+def events(session, *, chart=daily_chart, archive=None, pending_ok=False, until=None):
     """(events, excluded) for `session`. `pending_ok` lets the morning stage
     before the session has a daily bar of its own."""
     found, excluded = [], collections.Counter()
-    for t, rows in sorted(candidates(session, archive).items()):
+    for t, rows in sorted(candidates(session, archive, until).items()):
         try:
             meta, frame = chart(t)
         except Exception as exc:              # counted, never swallowed
@@ -304,6 +320,94 @@ def stage(state_dir, now=None, *, chart=daily_chart, archive=None, client=None,
     return out
 
 
+def stage_preopen(state_dir, now=None, *, chart=daily_chart, archive=None, client=None,
+                  collect=True, path=LEDGER, clock=None):
+    """Day-139: the FULL arm asked BEFORE the open, on the releases published
+    by the moment of asking, recorded as arm 'preopen' with `asked_at`.
+
+    It refuses at or after 09:30, and a call answered at or after 09:30 is not
+    recorded: every call it keeps existed before the open, so the open is a
+    price it could have traded. The prompt is day-122's, byte for byte."""
+    import newswire
+    clock = clock or ((lambda: now) if now else (lambda: dt.datetime.now(ET)))
+    now = now or clock()
+    session = now.date()
+    refused = {'session': session.isoformat(), 'status': 'REFUSED', 'events': 0, 'calls': []}
+    if now.astimezone(ET).time() >= PREOPEN_CUTOFF:
+        return {**refused, 'reason': 'PREOPEN_ONLY: asked at or after 09:30'}
+    if collect:                     # the latest releases before asking
+        try:
+            newswire.collect(session - dt.timedelta(days=1), root=archive, max_pages=3)
+        except Exception as exc:    # the earlier collection still stands
+            print(f'news desk (pre-open): collection failed ({type(exc).__name__})', file=sys.stderr)
+    if client is None:
+        import prepare_deepseek
+        prepare_deepseek.load_private_key(state_dir)
+    evs, excluded = events(session, chart=chart, archive=archive, pending_ok=True, until=now)
+    texts, body_failed = {}, collections.Counter()
+    for e in evs:
+        for r in e['releases']:
+            try:
+                texts[r['url']] = body(r['url'], Path(state_dir) / 'news_bodies')
+            except Exception as exc:     # counted; the item goes with its title only
+                body_failed[type(exc).__name__] += 1
+    calls, problems, model = answer(evs, 'full', texts, client=client)
+    answered = clock()
+    if answered.astimezone(ET).time() >= PREOPEN_CUTOFF:
+        return {**refused, 'events': len(evs),
+                'reason': 'ANSWERED_AFTER_THE_OPEN at %s' % answered.astimezone(ET).strftime('%H:%M:%S')}
+    rows = []
+    for e in evs:
+        c = calls.get(e['id'])
+        if c:
+            rows.append({'session': session.isoformat(), 'ticker': e['ticker'], 'arm': PREOPEN_ARM,
+                         **c, 'releases': len(e['releases']),
+                         'first_at': e['releases'][0]['published_at'],
+                         'title': e['releases'][-1]['title'][:200], 'url': e['releases'][-1]['url'],
+                         'model': model or MODEL, 'prompt_version': PREOPEN_VERSION,
+                         'asked_at': answered.astimezone(ET).isoformat(timespec='seconds')})
+    ledger = read(path)
+    seen = {(r['session'], r['ticker'], r['arm']) for r in ledger}
+    added = [r for r in rows if (r['session'], r['ticker'], r['arm']) not in seen]
+    if added:
+        _write(ledger + added, path)
+    out = {'session': session.isoformat(), 'status': 'RECORDED', 'asked_from': now.isoformat(),
+           'answered_at': answered.isoformat(), 'prompt_version': PREOPEN_VERSION,
+           'events': len(evs), 'excluded': excluded, 'bodies_failed': dict(body_failed),
+           'problems': problems, 'calls': rows, 'added': len(added)}
+    Path(state_dir, PREOPEN_STAGED).write_text(json.dumps(out, indent=1, ensure_ascii=False))
+    return out
+
+
+def preopen_record(path=LEDGER):
+    """The day-139 running record on its registered measure: W_day, by session."""
+    done = [r for r in read(path) if r.get('arm') == PREOPEN_ARM and r.get('w_day') not in (None, '')]
+    by = collections.defaultdict(list)
+    for r in done:
+        by[r['session']].append(float(r['w_day']))
+    means = [sum(v) / len(v) for v in by.values()]
+    t = None
+    if len(means) > 2:
+        m = sum(means) / len(means)
+        sd = math.sqrt(sum((x - m) ** 2 for x in means) / (len(means) - 1))
+        t = m / (sd / math.sqrt(len(means))) if sd else None
+    v = [float(r['w_day']) for r in done]
+    return {'calls': len(v), 'right': sum(x > 0 for x in v), 'sessions': len(means),
+            'mean': (sum(v) / len(v)) if v else None, 't': t}
+
+
+def preopen_line(path=LEDGER):
+    r = preopen_record(path)
+    if not r['calls']:
+        return ('Asked before the open (day-139 test): none scored yet; judged on the open to the '
+                'close against the market at %d sessions.' % PREOPEN_DECISION)
+    return ('Asked before the open (day-139 test), the open to the close against the market: '
+            '%d/%d right, %+.2f%% per call, %d session(s)%s; decision at %d sessions '
+            '(PREREGISTER_day139_newsdesk_open.md).' % (
+                r['right'], r['calls'], r['mean'], r['sessions'],
+                '' if r['t'] is None else ', t = %.2f' % r['t'], PREOPEN_DECISION))
+
+
 # ── the report (pure) ───────────────────────────────────────────────────────
 
 REPLAY = ROOT / 'data' / 'replay_day122_releases.json'
@@ -331,6 +435,7 @@ def section(state_dir, now, path=LEDGER):
     return {'status': 'READY' if fresh and (fresh.get('calls') or not fresh.get('events'))
             else 'UNAVAILABLE',
             'reason': reason, 'replay': replay_line(), 'record': record_line(path),
+            'preopen': preopen_line(path),
             'calls': (fresh or {}).get('calls') or [], 'headline': (fresh or {}).get('headline') or {},
             'events': (fresh or {}).get('events'), 'excluded': (fresh or {}).get('excluded') or {},
             'prompt_version': PROMPT_VERSION}
@@ -345,6 +450,8 @@ def lines(sec, concise=False):
            'take a side, 09:45 to the close. Not sized, not in the Top 2.']
     if not concise:
         out += [sec.get('replay') or '', sec.get('record') or '']
+        if sec.get('preopen'):
+            out.append(sec['preopen'])
     if sec.get('status') != 'READY':
         out.append(f"Unavailable today — {sec.get('reason')}.")
         return out
@@ -487,9 +594,18 @@ def record_line(path=LEDGER):
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     p.add_argument('--stage', action='store_true')
+    p.add_argument('--preopen', action='store_true',
+                   help='day-139: the FULL arm before the open, recorded as arm preopen')
     p.add_argument('--score', action='store_true')
     p.add_argument('--state-dir', default=os.environ.get('RB_STATE_DIR') or '.rb-state')
     a = p.parse_args(argv)
+    if a.preopen:
+        out = stage_preopen(a.state_dir)
+        print(json.dumps({k: out.get(k) for k in ('status', 'reason', 'events', 'added', 'excluded',
+                                                  'problems', 'bodies_failed', 'answered_at')}))
+        if out['status'] == 'REFUSED':
+            return 3
+        return 0 if out['calls'] or not out['events'] else 1
     if a.stage:
         out = stage(a.state_dir)
         print(json.dumps({'events': out['events'], 'calls': len(out['calls']),

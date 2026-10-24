@@ -424,6 +424,29 @@ else
     log "  memory council (shadow): SKIPPED — too close to the open"
 fi
 
+# ── 1b'''. THE NEWS DESK ASKED BEFORE THE OPEN (day-139) ───────────────────
+# PREREGISTER_day139_newsdesk_open.md. A forward test: Part 6's FULL-arm
+# question, asked at 09:20 on the releases out by then, so the call exists
+# before the open and is scored from the open. It records arm 'preopen' and
+# must end by 09:29; the script refuses at 09:30 and drops a call answered
+# after it. A shadow: its failure changes nothing else and is not a fault.
+PREOPEN_NEWS_AT=0920
+while [ "$(minutes_now)" -lt "$PREOPEN_NEWS_AT" ]; do
+    log "holding for the pre-open news read (now $(minutes_now), read at ${PREOPEN_NEWS_AT})"
+    sleep 60
+done
+preopen_left=$(( $(TZ=America/New_York date -d 'today 09:29:00' +%s) - $(date +%s) ))
+if [ "$preopen_left" -gt 30 ]; then
+    if timeout "$(( preopen_left < 480 ? preopen_left : 480 ))" python news_desk.py --preopen \
+            --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1; then
+        log "  news desk before the open (day-139 test): recorded (news_desk.log)"
+    else
+        log "  news desk before the open (day-139 test): NOT recorded — nothing else changes (news_desk.log)"
+    fi
+else
+    log "  news desk before the open (day-139 test): SKIPPED — too close to the open"
+fi
+
 # ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
 # A model reads every liquid TSX name's overnight release. The window runs to
 # 09:30, so this waits for it to close, then has until 09:43 — it can never
