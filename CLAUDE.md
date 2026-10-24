@@ -1,5 +1,28 @@
 # Working notes for this repo
 
+## Day138b — the owner's picks spreadsheet: the news desk leads only from the open (owner, 2026-10-24)
+
+The owner sent every pick from 09-24 to 10-23 (307 rows, by source) and read
+the news desk as doing better. Descriptive only; read
+`AUDIT_day138b_picks_sheet.md`.
+* **The sheet's returns.** They are raw and mixed-window.
+  * The news desk is scored from the 09:30 open, but it calls at 09:35–09:43.
+  * The LATE picks (09-24, 09-28) are scored from an open they came after:
+    16 of 18 right.
+* **The news desk, from our own `news_calls.csv`:**
+  * open → close raw: 57% right, +0.67% (the sheet's number);
+  * against XIU: +0.45%;
+  * 09:45 → close against XIU (tradable on its call): 47%, +0.10%.
+
+  The gap is the market (+0.2%, it is long-biased) and 09:30–09:45 (+0.35%).
+  On the day-122 replay (419 releases) its open → close was +0.09%,
+  t = 0.71: noise.
+* **No source or combination reaches t = 2** over 19 sessions. Jev forced from
+  the open is +0.69%, t = 1.7; the council's Top 2 is 43%.
+* **The one testable change.** Ask the news desk before the open and enter at
+  the open. `w_day` is already recorded for every call, but nothing is
+  proposed without a registration and the owner's decision.
+
 ## Day138 — before the news, held a few days: the one pass was the survivor list (rejection #56, owner, 2026-10-22)
 
 The owner, after the Top 2's losing run, asked for new council designs:
