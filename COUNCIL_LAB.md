@@ -63,7 +63,7 @@ Ordered by what a result could change, then by cost.
 | 3 | **Skip a pick the open already paid** | The owner's day-138 rule: "the price shouldn't already have changed" | Continuation after a further gap was null (day-132); never tried as a remove-only gate | Replay picks whose open gap ran ≥ 1 ATR their way, vs the rest | None | Queued |
 | 4 | **A report-day size rule** | A name reporting before the open swings wider; skipping it is a size rule, like day-137's | Report-day direction was null (#46); size untested | Ten years of daily bars, volume-confirmed report dates (day-135b): next-session sd on report days vs others | None | Queued |
 | 5 | **One pick a day** | Half the cost, and no same-side stacking | One position per side failed as a size rule (#51); the top pick alone vs two is untested | Counted Top 2 replay (day-121b): rank 1 vs rank 2, net | None | Queued |
-| 6 | **Round 1 against the discussion, on history** | Arm B forward needs 40 sessions where both arms pick | The 14 councils before the test (day-140 backfill) show how often the arms differ | A council replay of Round 1 alone on the day-117 sessions, if the backfill shows the arms differ often enough to matter | DeepSeek and Gemini calls | Waits on the backfill |
+| 6 | **Round 1 against the discussion, on history** | Arm B forward needs 40 sessions where both arms pick | The 14 councils before the test (day-140 backfill) show how often the arms differ | A council replay of Round 1 alone on the day-117 sessions. The backfill: the arms differed on 5 of 12 sessions | DeepSeek and Gemini calls | Queued |
 | 7 | **Weight the desks by their record** | The review's point 5 | No desk's record is beyond \|t\| = 1.1 | — | — | Not before a desk clears a bar |
 
 ## Done
@@ -71,3 +71,4 @@ Ordered by what a result could change, then by cost.
 | Date | Step | Result |
 |---|---|---|
 | 2026-10-24 | Day-140 registered and fixed (`PREREGISTER_day140_fixpack.md`) | Forward from 10-26; no result yet |
+| 2026-10-24 | Day-140 backfill: the 23 live picks before the test (descriptive) | Stop in reach: 7 picks +0.47%, the 16 without −0.80% (t = 1.8, with 10-15 among them). The discussion changed the picks on 5 of 12 sessions: its own 0.00%, Round 1's −0.52% |

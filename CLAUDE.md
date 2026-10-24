@@ -42,6 +42,15 @@ logic every morning". Registered as the rewritten
   * a tie-break that favoured the last-move habit;
   * the live arm read from the raw council, not the record;
   * scoring on a second basis (open → close).
+* **Before the test (the backfill of 09-29 → 10-23, period `before`;
+  descriptive, never part of it):**
+  * of 23 live picks, the 7 with a stop in reach averaged +0.47% (4 right)
+    and the 16 without −0.80% (5 right), t = 1.8;
+  * 10-15, the day that inspired the reach rule, is in the dropped group.
+    Without it the gap is about +0.8%;
+  * the discussion changed the picks on 5 of 12 sessions. Its own picks
+    averaged 0.00%; the Round-1 picks it replaced averaged −0.52% (5 each);
+  * the sector cap never bound.
 * **The council lab (`COUNCIL_LAB.md`).** A scheduled task, "RB council
   lab", fires into this session at 10:10 ET on weekdays and ends by 11:40.
   * Each weekday it takes one step from the backlog: register, test on
