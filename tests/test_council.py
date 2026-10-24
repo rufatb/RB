@@ -230,6 +230,27 @@ def test_round1_ballots_are_sealed_the_moment_they_are_cast(staged):
     assert set(frozen['ballots']) == {'DeepSeek', 'Gemini'}
 
 
+def test_a_failed_round1_copy_never_costs_the_council(staged, monkeypatch):
+    """Day-140: the Round-1 copy is evidence of the order only; the council
+    sits and names the failure."""
+    real = K._write
+
+    def write(path, obj):
+        if str(path).endswith(K.ROUND1):
+            raise OSError('No space left on device')
+        return real(path, obj)
+    monkeypatch.setattr(K, '_write', write)
+    ds = FakeDeepSeek([b('ENDORSE 0.7', 'OPPOSE 0.6', 'ENDORSE 0.6', top=['P1']),
+                       b('ENDORSE 0.7', 'OPPOSE 0.6', 'OPPOSE 0.7', top=['P1'])])
+    gm = FakeGemini([b('ENDORSE 0.6', 'ABSTAIN', 'ENDORSE 0.8', top=['P3']),
+                     b('ENDORSE 0.65', 'ABSTAIN', 'ENDORSE 0.75', top=['P1', 'P3'])])
+    post = jev_poster({'P1': 0.5, 'P2': 0.1, 'P3': 0.2, 'NONE': 0.2})
+    out = K.stage(staged, now=NOW, clients={'deepseek': ds, 'gemini': gm}, jev_poster=post,
+                  wait=False, clock=lambda: NOW)
+    assert out['picks'] == ['P1'] and out['errors']['round1 copy'] == 'OSError'
+    assert not (staged/K.ROUND1).exists()
+
+
 def test_a_failed_member_is_absent_and_named_and_round_two_keeps_round_one(staged):
     ds = FakeDeepSeek([b('ENDORSE 0.7', 'ABSTAIN', 'ENDORSE 0.6'), {'nonsense': 1}])
     gm = FakeGemini([ValueError('HTTP_503'), ValueError('HTTP_503')])

@@ -1,5 +1,55 @@
 # Working notes for this repo
 
+## Day140 — the fix pack, fixed and registered; a council lab every weekday (owner, 2026-10-24)
+
+The owner merged the review's draft (PR #19) and its implementation branch,
+then said "Fix it" and "continue creative improvements for council picks
+logic every morning". Registered as the rewritten
+`PREREGISTER_day140_fixpack.md`, before the first shadow session on 10-26.
+* **Arm A (judged): a stop within reach.** Each live Top 2 pick (`top2/pick`)
+  is KEPT when its own wrong-if is within `council_flash.REACH_ATR` (1)
+  normal day of the 09:45 entry, and DROPPED otherwise (no level, or one out
+  of reach). It is judged on kept against dropped picks, never against a
+  shadow that scores 0 on the days it stands aside.
+* **Arm B (judged, both ways): Round 1 against the discussion.**
+  * Round 1 is the frozen tally over the two blind ballots, DeepSeek's and
+    Gemini's. Claude and Jev vote after reading Round 1.
+  * It is compared with the council's own picks before the pass-over rules.
+* **The bar,** for each arm at its 40th qualifying session:
+  * t ≥ 3 with a placebo, the halves agreeing, and, for A, 10 or more picks
+    in each group;
+  * an arm short of the bar runs on to 80 sessions for one final look.
+  * Arm A can see only a large effect (about 1.5–1.9% a pick), so the
+    history test of the same gate is `COUNCIL_LAB.md` item 1.
+* **Recorded, never judged:**
+  * two same-side picks in one sector fund;
+  * a dated catalyst (earnings within 0–5 sessions; an issuer release in the
+    wire window);
+  * whether a pick had any level at all. Only 2 of 17 council picks had none.
+* **How it runs.**
+  * The evening review calls `fixpack.record_session` (decisions only) into
+    `data/reviews/fixpack.csv`, which the evening push carries. Outcomes come
+    from `data/model_picks.csv`.
+  * `python fixpack.py --verdict` gives the decision. Nothing runs in the
+    morning.
+  * The council's `round1.json` copy can never fail the council.
+* **Fixed from the pushed branch:**
+  * the sector map's dict entries would have crashed the first gated
+    position;
+  * its ledgers were in no push list, so every morning's provenance check
+    would have read NOT CLEAN;
+  * a fixed-timeout morning step;
+  * a tie-break that favoured the last-move habit;
+  * the live arm read from the raw council, not the record;
+  * scoring on a second basis (open → close).
+* **The council lab (`COUNCIL_LAB.md`).** A scheduled task, "RB council
+  lab", fires into this session at 10:10 ET on weekdays and ends by 11:40.
+  * Each weekday it takes one step from the backlog: register, test on
+    history, write up.
+  * Nothing live changes from the slot. A pass goes to the owner as a
+    proposal.
+  * No OpenRouter spend without the owner's yes.
+
 ## Day139 — the news desk asked before the open, a forward test (owner, 2026-10-24)
 
 The owner said yes to testing day-138b's one idea: ask the news desk before
@@ -58,9 +108,8 @@ the open and enter at the open. Registered first
   * Day-138's "673 names with bars" was 738 with bars and 46 without; 673 had
     events. Erratum appended.
   * The dry run left no artifact; now it does.
-* **`PREREGISTER_day140_fixpack.md` is a DRAFT** (PR #19). It covers
-  abstention, Round-1 scoring and sector-neutral ranking, in shadow. Nothing
-  runs until the owner commits it as the registration.
+* **`PREREGISTER_day140_fixpack.md`** was a DRAFT in PR #19; it is registered,
+  rewritten, as day-140 above.
 
 ## Day138b — the owner's picks spreadsheet: the news desk leads only from the open (owner, 2026-10-24)
 
@@ -2939,7 +2988,7 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 ## Before touching anything, read STRATEGY.md
 
 It is the running record of every change tested — **56 rejections, 5
-adoptions** (as of day-138; skipping the morning's widest-swinging names is the
+adoptions** (as of day-140; skipping the morning's widest-swinging names is the
 fifth adoption). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 

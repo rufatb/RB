@@ -365,7 +365,7 @@ def main(argv=None):
     out = review(a.session, report)
     md = (out['markdown'] + lab_section() + memory_section(a.session, report)
           + table_section(a.session, report) + preopen_section(a.session)
-          + fixpack_section(a.session))
+          + fixpack_section(a.session, report))
     (REVIEWS / f'{a.session}.md').write_text(md)
     print(md)
     return 0
@@ -412,12 +412,15 @@ def preopen_section(session, path=None):
     return '\n'.join(out) + '\n'
 
 
-def fixpack_section(session):
-    """Day-140: the fix pack in shadow beside the live Top 2
-    (PREREGISTER_day140_fixpack.md). It never costs the review, and a
-    failure says so."""
-    import fixpack
-    return fixpack.section(session)
+def fixpack_section(session, report=None):
+    """Day-140: the fix pack, recorded from the frozen publication and judged
+    on the record (PREREGISTER_day140_fixpack.md). It never costs the review,
+    and a failure says so."""
+    try:
+        import fixpack
+    except Exception as exc:
+        return f"\nThe fix-pack readout is unavailable ({type(exc).__name__}).\n"
+    return fixpack.section(session, report)
 
 
 def memory_section(session, report, lines=None):

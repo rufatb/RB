@@ -5759,3 +5759,28 @@ the 09:30 open, before its 09:31 calls exist. On the tradable window it is
     `news_desk.preopen_verdict` computes it.
   * Not changed: the prompt asks for 09:45 → close while the test scores
     open → close. That is the registered design.
+
+## Day-140: a forward test — the fix pack in shadow, fixed before its first session (no result yet)
+
+The review's draft (PR #19) and its implementation branch were merged, then
+rewritten at the owner's request, and registered before the first shadow
+session on 10-26 (`PREREGISTER_day140_fixpack.md`).
+* **Arm A:** a live Top 2 pick is kept when its own wrong-if is within one
+  normal day of the 09:45 entry. It is judged on kept against dropped picks,
+  on the record's 09:45 → close.
+* **Arm B:** the frozen tally over the two blind Round-1 ballots, against the
+  council's own picks before the pass-over rules. Judged both ways.
+* **The bar:** t ≥ 3 with a placebo for each arm, both halves agreeing, at
+  40 qualifying sessions, with one final look at 80.
+* **Recorded only:**
+  * the sector cap;
+  * a dated catalyst;
+  * whether a pick had any level.
+* **Expectation:** arm A can detect only about 1.5–1.9% a pick. Its history
+  test is `COUNCIL_LAB.md` item 1.
+* **The draft's design flaws, removed:**
+  * a zero-scored shadow compared with the live Top 2, which lets the live
+    losses pass any rule that rarely trades;
+  * a paired t ≥ 2 without a placebo;
+  * a second scoring basis;
+  * a ranking that favoured the last-move habit.

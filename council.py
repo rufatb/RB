@@ -612,11 +612,16 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     with cf.ThreadPoolExecutor(2) as pool:
         r1 = dict(pool.map(lambda m: run('R1 ' + m, lambda: chat(m, ROUND_1)), ['DeepSeek', 'Gemini']))
     round1 = {m.split(' ', 1)[1]: b for m, b in r1.items() if b}
-    # Day-140: the blind Round-1 ballots are sealed the moment they are cast,
-    # before Claude, Jev or Round 2 see anything — the fix pack scores them
-    # apart from the deliberated final (PREREGISTER_day140_fixpack.md).
-    _write(root/ROUND1, {'session': session, 'frozen_at': _now(clock()).isoformat(),
-                         'ballots': round1})
+    # Day-140: a timestamped copy of the blind Round-1 ballots, written before
+    # Claude, Jev or Round 2 see anything. The fix pack reads them from the
+    # frozen council (PREREGISTER_day140_fixpack.md); the copy is evidence of
+    # the order only, so a failure to write it is named and never costs the
+    # council.
+    try:
+        _write(root/ROUND1, {'session': session, 'frozen_at': _now(clock()).isoformat(),
+                             'ballots': round1})
+    except Exception as exc:
+        errors['round1 copy'] = type(exc).__name__
     discussion1 = discussion_of(round1, seat)
 
     # Claude and Jev, after reading Round 1. Claude answers STATELESS through
