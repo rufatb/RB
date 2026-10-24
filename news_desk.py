@@ -21,6 +21,7 @@ The event rule (registered, unchanged after):
     python news_desk.py --stage    # after 09:30: today's events, both arms; appends data/news_calls.csv
     python news_desk.py --preopen  # day-139, ~09:20: the FULL arm on the releases out by then, arm 'preopen'
     python news_desk.py --score    # evening: W945 / W_day / W_5d, market-adjusted by XIU.TO
+    python news_desk.py --verdict  # day-139's registered decision (NOT_DUE before 40 sessions)
 
 Day-139 (PREREGISTER_day139_newsdesk_open.md) asks the same FULL-arm question
 before the open, on the releases published by the time it asks, and records
@@ -39,6 +40,7 @@ import io
 import json
 import math
 import os
+import random
 import re
 import sys
 from pathlib import Path
@@ -71,6 +73,12 @@ PREOPEN_VERSION = PROMPT_VERSION + '+day139-preopen'
 PREOPEN_CUTOFF = dt.time(9, 30)
 PREOPEN_STAGED = 'news_desk_preopen.json'
 PREOPEN_DECISION = 40
+PREOPEN_FINAL = 80
+PREOPEN_BAR = 3.0
+PREOPEN_PLACEBO_P = 0.01
+PREOPEN_DRAWS = 2000
+PREOPEN_SEED = 139
+COST = 0.13
 
 SYSTEM_PROMPT = """You read Canadian company press releases that came out overnight, before the 09:30 ET open of the Toronto Stock Exchange. For EACH item, decide which side you would take in that company's shares from 09:45 ET to the close of the same trading day: LONG or SHORT. You must choose a side for every item; there is no abstain.
 
@@ -390,19 +398,69 @@ def preopen_record(path=LEDGER):
     means; with unequal counts it still tests the printed per-call mean,
     where a session-mean t would test a different, unprinted number.
     """
-    done = [r for r in read(path) if r.get('arm') == PREOPEN_ARM and r.get('w_day') not in (None, '')]
+    sessions = _preopen_sessions(path)
+    m, t = _clustered(sessions)
+    v = [x for _, xs in sessions for x in xs]
+    return {'calls': len(v), 'right': sum(x > 0 for x in v), 'sessions': len(sessions),
+            'mean': m, 't': t}
+
+
+def _preopen_sessions(path=LEDGER):
+    """Each session's scored pre-open W_day values, in date order."""
     by = collections.defaultdict(list)
-    for r in done:
-        by[r['session']].append(float(r['w_day']))
-    v = [float(r['w_day']) for r in done]
-    t = None
-    if len(by) > 2 and v:
-        m = sum(v) / len(v)
-        ss = sum(sum(x - m for x in vals) ** 2 for vals in by.values())
-        var = (len(by) / (len(by) - 1)) * ss / (len(v) ** 2)
-        t = m / math.sqrt(var) if var > 0 else None
-    return {'calls': len(v), 'right': sum(x > 0 for x in v), 'sessions': len(by),
-            'mean': (sum(v) / len(v)) if v else None, 't': t}
+    for r in read(path):
+        if r.get('arm') == PREOPEN_ARM and r.get('w_day') not in (None, ''):
+            by[r['session']].append(float(r['w_day']))
+    return [(s, by[s]) for s in sorted(by)]
+
+
+def _clustered(sessions):
+    """The mean over calls and its session-clustered t (preopen_record)."""
+    v = [x for _, xs in sessions for x in xs]
+    if not v:
+        return None, None
+    m = sum(v) / len(v)
+    if len(sessions) < 3:
+        return m, None
+    ss = sum(sum(x - m for x in xs) ** 2 for _, xs in sessions)
+    var = (len(sessions) / (len(sessions) - 1)) * ss / (len(v) ** 2)
+    return m, (m / math.sqrt(var) if var > 0 else None)
+
+
+def _preopen_bar(sessions, draws, seed):
+    m, t = _clustered(sessions)
+    half = len(sessions) // 2
+    halves = [_clustered(sessions[:half])[0], _clustered(sessions[half:])[0]]
+    rng = random.Random(seed)
+    hits = 0
+    for _ in range(draws):
+        flipped = [x if rng.random() < 0.5 else -x for _, xs in sessions for x in xs]
+        if sum(flipped) / len(flipped) >= m:
+            hits += 1
+    p = hits / draws
+    passed = (m > 0 and t is not None and t >= PREOPEN_BAR and p < PREOPEN_PLACEBO_P
+              and all(h > 0 for h in halves) and m > COST)
+    return {'status': 'PASS' if passed else 'FAIL' if m <= 0 else 'UNDERPOWERED',
+            'sessions': len(sessions), 'calls': sum(len(xs) for _, xs in sessions),
+            'mean': m, 't': t, 'placebo_p': p, 'halves': halves,
+            'from': sessions[0][0], 'to': sessions[-1][0]}
+
+
+def preopen_verdict(path=LEDGER, *, draws=PREOPEN_DRAWS, seed=PREOPEN_SEED):
+    """The registered decision, as the review note at the end of
+    PREREGISTER_day139_newsdesk_open.md pins it: the first 40 sessions holding
+    a scored call; if those are UNDERPOWERED, the first 80 for the one final
+    look, after which anything short of PASS retires the arm."""
+    sessions = _preopen_sessions(path)
+    if len(sessions) < PREOPEN_DECISION:
+        return {'status': 'NOT_DUE', 'sessions': len(sessions)}
+    out = _preopen_bar(sessions[:PREOPEN_DECISION], draws, seed)
+    out['look'] = PREOPEN_DECISION
+    if out['status'] == 'UNDERPOWERED' and len(sessions) >= PREOPEN_FINAL:
+        out = _preopen_bar(sessions[:PREOPEN_FINAL], draws, seed)
+        out['look'] = PREOPEN_FINAL
+    out['final'] = out['status'] != 'UNDERPOWERED' or out['look'] == PREOPEN_FINAL
+    return out
 
 
 def preopen_line(path=LEDGER):
@@ -410,11 +468,20 @@ def preopen_line(path=LEDGER):
     if not r['calls']:
         return ('Asked before the open (day-139 test): none scored yet; judged on the open to the '
                 'close against the market at %d sessions.' % PREOPEN_DECISION)
-    return ('Asked before the open (day-139 test), the open to the close against the market: '
-            '%d/%d right, %+.2f%% per call, %d session(s)%s; decision at %d sessions '
-            '(PREREGISTER_day139_newsdesk_open.md).' % (
+    line = ('Asked before the open (day-139 test), the open to the close against the market: '
+            '%d/%d right, %+.2f%% per call, %d session(s)%s' % (
                 r['right'], r['calls'], r['mean'], r['sessions'],
-                '' if r['t'] is None else ', t = %.2f' % r['t'], PREOPEN_DECISION))
+                '' if r['t'] is None else ', t = %.2f' % r['t']))
+    if r['sessions'] < PREOPEN_DECISION:
+        return line + ('; decision at %d sessions (PREREGISTER_day139_newsdesk_open.md).'
+                       % PREOPEN_DECISION)
+    v = preopen_verdict(path)
+    return line + ('. Decision on the first %d sessions: %s (%+.2f%% per call, t = %s, placebo '
+                   'p = %.3f)%s.' % (
+                       v['look'], v['status'], v['mean'],
+                       'n/a' if v['t'] is None else '%.2f' % v['t'], v['placebo_p'],
+                       '; the arm is retired' if v['final'] and v['status'] != 'PASS'
+                       else '' if v['final'] else '; it runs on to %d sessions' % PREOPEN_FINAL))
 
 
 # ── the report (pure) ───────────────────────────────────────────────────────
@@ -620,8 +687,13 @@ def main(argv=None):
     p.add_argument('--preopen', action='store_true',
                    help='day-139: the FULL arm before the open, recorded as arm preopen')
     p.add_argument('--score', action='store_true')
+    p.add_argument('--verdict', action='store_true',
+                   help='day-139: the registered decision on the pre-open arm (NOT_DUE before 40 sessions)')
     p.add_argument('--state-dir', default=os.environ.get('RB_STATE_DIR') or '.rb-state')
     a = p.parse_args(argv)
+    if a.verdict:
+        print(json.dumps(preopen_verdict()))
+        return 0
     if a.preopen:
         out = stage_preopen(a.state_dir)
         print(json.dumps({k: out.get(k) for k in ('status', 'reason', 'events', 'added', 'excluded',

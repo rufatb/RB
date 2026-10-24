@@ -78,3 +78,42 @@ before the open, enter at the open.
 * **PASS.** A pre-open news email at about 09:22, and the reads as a council
   input, are proposed to the owner and registered separately.
 * **FAIL, or UNDERPOWERED at 80 sessions.** The arm is retired as a rejection.
+
+## Review note (2026-10-24, before the first live call; the bar is unchanged)
+
+Muse's review (issue #18) found that the running line printed a per-call mean
+beside a t computed on session means. PR #19 made the t test the printed
+mean. What the decision computes is pinned here, before any live call is
+recorded.
+* **The statistic** is the mean of y over calls. t is that mean over its
+  session-clustered (cluster-robust) standard error (`preopen_record`,
+  PR #19). With equal calls per session it equals the t of the session means.
+  The replay figures above (+0.09%, t = 0.71, and the 1.04% sd) were computed
+  on session means (`replay_news.clustered`). Where sessions hold unequal
+  numbers of calls they are close to this statistic, not the same.
+* **The sessions** are the first 40, in date order, that hold at least one
+  scored call. If those are UNDERPOWERED, the final look is on the first 80.
+* **The placebo** flips each call's sign at random (its side drawn at random)
+  and recomputes the same mean: 2,000 draws, seed 139. p is the share of
+  draws at or above the real mean.
+* **The halves** are the calls of the first and of the last 20 sessions (40
+  at the final look), each on the same mean.
+* **The cost:** the same mean must exceed 0.13%.
+
+`news_desk.preopen_verdict` (and `news_desk.py --verdict`) computes exactly
+this. From the 40th session, the running line prints its verdict.
+
+Two things the text above does not say:
+* **The command** is `news_desk.py --preopen`, not `--stage-preopen`. It was
+  renamed so that `--stage` still names only the 09:31 step in
+  `morning_full.sh`. Nothing else differs.
+* **The question and the measure differ.** The day-122 prompt asks for the
+  side from 09:45 to the close, and says the open will already reflect the
+  release. This test scores the open to the close. Keeping the prompt byte for
+  byte is the registered design, so the arm is judged on a window it was not
+  asked about. A prompt that asks about the open would be a separate
+  registration.
+
+The engineering dry run (10-23's releases, a mocked 09:20 clock, a scratch
+ledger) is in `data/dryrun_day139_preopen.json`. It is not a record and not
+part of this test.

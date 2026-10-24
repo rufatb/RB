@@ -1,0 +1,78 @@
+{
+ "what": "DRY RUN of news_desk.py --preopen: an engineering check of the day-139 step, not a record. It is not in data/news_calls.csv and is never part of the day-139 test.",
+ "registration": "42efb37, committed 2026-10-24 12:30:30 UTC",
+ "run": {
+  "asked_at_utc": "about 2026-10-24T12:33:58Z to 12:34:10Z (12.1 s; the staged file was written at 12:34:09.87Z)",
+  "scored_at_utc": "2026-10-24T12:34:19Z",
+  "code": "the working tree later committed as 2de6d58 (2026-10-24 12:49:16 UTC); the registration was already committed",
+  "clock": "mocked: now = 2026-10-23 09:20 ET. The answer time is the same mocked clock, so answered_at equals asked_from; the real call took 12.1 s.",
+  "releases": "the committed wire archive (collect=False): 10-22 16:00 to 10-23 09:20 ET, day-122's event rule cut at the mocked time",
+  "state_dir": "a temporary scratch directory. The DeepSeek key was copied in as a file for the run and deleted after it; no credential is in this file.",
+  "ledger": "a scratch copy of data/news_calls.csv as of 2026-10-24 12:33 UTC; the evening scorer (news_desk.score) then ran on that copy",
+  "commands": [
+   "N.stage_preopen(D + '/state', dt.datetime(2026, 10, 23, 9, 20, tzinfo=N.ET), collect=False, path=D + '/news_calls.csv')",
+   "N.score(path=D + '/news_calls.csv')"
+  ]
+ },
+ "staged": {
+  "session": "2026-10-23",
+  "status": "RECORDED",
+  "asked_from": "2026-10-23T09:20:00-04:00",
+  "answered_at": "2026-10-23T09:20:00-04:00",
+  "prompt_version": "day122-v1+day139-preopen",
+  "events": 1,
+  "excluded": {
+   "traded value under C$3M a day": 6,
+   "price under C$2": 1
+  },
+  "bodies_failed": {},
+  "problems": {},
+  "calls": [
+   {
+    "session": "2026-10-23",
+    "ticker": "SLF.TO",
+    "arm": "preopen",
+    "side": "SHORT",
+    "confidence": 0.6,
+    "material": false,
+    "reason": "The release is just a notice of an upcoming earnings call, containing no new financial information, so it is unlikely to move the stock, and any minor drift might be downward as routine announcements provide no positive catalyst.",
+    "releases": 1,
+    "first_at": "2026-10-22T17:01:00-04:00",
+    "title": "Sunlife hosts third quarter 2026 earnings conference call",
+    "url": "https://www.newswire.ca/news-releases/sunlife-hosts-third-quarter-2026-earnings-conference-call-843307735.html",
+    "model": "deepseek-v4-pro",
+    "prompt_version": "day122-v1+day139-preopen",
+    "asked_at": "2026-10-23T09:20:00-04:00"
+   }
+  ],
+  "added": 1
+ },
+ "scored_row": {
+  "session": "2026-10-23",
+  "ticker": "SLF.TO",
+  "arm": "preopen",
+  "side": "SHORT",
+  "confidence": "0.6",
+  "material": "False",
+  "reason": "The release is just a notice of an upcoming earnings call, containing no new financial information, so it is unlikely to move the stock, and any minor drift might be downward as routine announcements provide no positive catalyst.",
+  "releases": "1",
+  "first_at": "2026-10-22T17:01:00-04:00",
+  "title": "Sunlife hosts third quarter 2026 earnings conference call",
+  "url": "https://www.newswire.ca/news-releases/sunlife-hosts-third-quarter-2026-earnings-conference-call-843307735.html",
+  "model": "deepseek-v4-pro",
+  "prompt_version": "day122-v1+day139-preopen",
+  "w945": "0.8497",
+  "w945_raw": "0.6638",
+  "w_day": "1.4882",
+  "w_day_raw": "1.4325",
+  "gap": "0.0564",
+  "gap_raw": "0.6102",
+  "w5d": "",
+  "w5d_raw": "",
+  "scored_at": "2026-10-24T08:34:19.352424-04:00",
+  "scored_5d_at": "",
+  "asked_at": "2026-10-23T09:20:00-04:00"
+ },
+ "line_then": "Asked before the open (day-139 test), the open to the close against the market: 1/1 right, +1.49% per call, 1 session(s); decision at 40 sessions (PREREGISTER_day139_newsdesk_open.md).",
+ "note": "One call on one past session is an engineering check; its +1.49% says nothing about the test. The 09:31 FULL arm had called the same SHORT SLF.TO that morning."
+}

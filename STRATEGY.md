@@ -5747,3 +5747,15 @@ the 09:30 open, before its 09:31 calls exist. On the tradable window it is
   * a mean ≤ 0 is a FAIL;
   * a positive mean short of the bar runs on to 80 sessions.
 * **Expectation:** the replay says not to expect a pass.
+* **After Muse's review (issue #18, 2026-10-24, before the first live call).**
+  * PR #19 made the running line's t test its printed per-call mean (a
+    cluster-robust session t). It also made the ledger write atomic and
+    added the day-138 erratum.
+  * A review note appended to the registration pins the rest:
+    * the first 40 sessions;
+    * the placebo, at seed 139;
+    * the halves and the cost, on the same mean.
+
+    `news_desk.preopen_verdict` computes it.
+  * Not changed: the prompt asks for 09:45 → close while the test scores
+    open → close. That is the registered design.

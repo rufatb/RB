@@ -18,6 +18,13 @@ the open and enter at the open. Registered first
   * its failure is not a staging fault, and it has its own named skip branch.
 * **The measure** is `w_day`: open → close against XIU, filled by the evening
   `news_desk.py --score`, which scores every arm.
+  * The statistic is the mean over calls, with its session-clustered
+    (cluster-robust) t (PR #19). With equal calls per session it is the
+    session-mean t the replay used.
+  * `news_desk.preopen_verdict` (`news_desk.py --verdict`) computes the
+    registered decision: the first 40 sessions with a scored call, the sign-flip
+    placebo at seed 139, both halves, the cost. The review note at the end of
+    the registration pins all of it.
 * **Where it shows:**
   * `news_desk.preopen_line` in the full report's and the page's Part 6 (not
     the email);
@@ -29,11 +36,31 @@ the open and enter at the open. Registered first
   * a mean ≤ 0 → FAIL; positive but short → run on to 80 sessions.
 
   The replay's open → close was +0.09%, t = 0.71: do not expect a pass.
-* **The dry run** on 10-23's releases asked at 09:20 recorded SHORT SLF.TO
-  0.60 in 12 s; the scorer filled its `w_day` (+1.49%).
+* **The dry run** is in `data/dryrun_day139_preopen.json`: 10-23's releases
+  with a mocked 09:20 clock and a scratch ledger, run after 42efb37. It
+  recorded SHORT SLF.TO 0.60 in 12.1 s, and the scorer filled its `w_day`
+  (+1.49%). It is not a record.
+* **The question and the measure differ.** The day-122 prompt asks for
+  09:45 → close and says the open will price the release; the test scores
+  open → close. That is the registered design, kept byte for byte; a prompt
+  about the open would be its own registration.
 * **The live Routine's text** does not mention the step; `morning_full.sh`
   runs it. `ROUTINE_PROMPT.md` (the repo copy) does.
 * **Review instructions** for the owner's Muse bot are in `REVIEW_MUSE.md`.
+* **Muse's review (issue #18): four findings.** PR #19 (merged by the owner)
+  fixed the first three; this session added the fourth and the pinning.
+  * The running line paired a per-call mean with a session-mean t; it could
+    read −0.66% with t = +5.67. Now the t tests the printed per-call mean.
+  * `news_desk._write` rewrote `data/news_calls.csv` in place under the 09:29
+    kill. Now it writes a `.tmp`, fsyncs and replaces. A hard kill leaves the
+    old ledger and a stray `.tmp`, which the next write replaces; provenance
+    names it until then.
+  * Day-138's "673 names with bars" was 738 with bars and 46 without; 673 had
+    events. Erratum appended.
+  * The dry run left no artifact; now it does.
+* **`PREREGISTER_day140_fixpack.md` is a DRAFT** (PR #19). It covers
+  abstention, Round-1 scoring and sector-neutral ranking, in shadow. Nothing
+  runs until the owner commits it as the registration.
 
 ## Day138b — the owner's picks spreadsheet: the news desk leads only from the open (owner, 2026-10-24)
 

@@ -2,6 +2,8 @@
 import datetime as dt
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -330,3 +332,103 @@ def test_the_full_report_carries_the_preopen_record_and_the_email_does_not(tmp_p
     sec = N.section(tmp_path, now, path=ledger)
     assert 'day-139' in '\n'.join(N.lines(sec))
     assert 'day-139' not in '\n'.join(N.lines(sec, concise=True))
+
+
+# ── day-139: the registered decision, and a hard kill mid-write ─────────────
+
+def preopen_ledger(path, sessions):
+    """`sessions`: one list of scored W_day values per session, in date order."""
+    rows = [{'session': (dt.date(2026, 10, 26) + dt.timedelta(days=i)).isoformat(),
+             'ticker': 'T%03d.TO' % j, 'arm': N.PREOPEN_ARM, 'side': 'LONG', 'w_day': v}
+            for i, vs in enumerate(sessions) for j, v in enumerate(vs)]
+    N._write(rows, path)
+    return path
+
+
+def test_the_preopen_verdict_is_the_registered_bar(tmp_path):
+    def verdict(sessions, name):
+        return N.preopen_verdict(preopen_ledger(tmp_path / name, sessions))
+
+    clear = [[0.5 + 0.1 * (i % 5), 1.5 - 0.1 * (i % 3)] for i in range(40)]
+    assert verdict(clear[:39], 'a.csv') == {'status': 'NOT_DUE', 'sessions': 39}
+    v = verdict(clear, 'b.csv')
+    assert v['status'] == 'PASS' and v['final'] and v['look'] == 40 and v['placebo_p'] < 0.01
+    # only the first 40 sessions are judged
+    later = verdict(clear + [[-5.0]] * 10, 'c.csv')
+    assert later['status'] == 'PASS' and later['to'] == v['to'] and later['calls'] == 80
+    fail = verdict([[0.3], [-0.7]] * 20, 'd.csv')
+    assert fail['status'] == 'FAIL' and fail['final']
+    # positive, t and placebo clear, but under the 0.13% cost: it runs on to 80 ...
+    short = verdict([[0.05], [0.15]] * 20, 'e.csv')
+    assert short['status'] == 'UNDERPOWERED' and not short['final'] and short['t'] > 3
+    # ... and at 80 the same bar is the last look
+    last = verdict([[0.05], [0.15]] * 40, 'f.csv')
+    assert last['status'] == 'UNDERPOWERED' and last['look'] == 80 and last['final']
+    # both halves must be positive
+    halves = verdict([[1.0]] * 20 + [[-0.05]] * 20, 'g.csv')
+    assert halves['status'] == 'UNDERPOWERED' and halves['halves'][1] < 0 < halves['t'] - 3
+    # the decision judges the printed per-call mean: Muse's case is a FAIL
+    muse = verdict([[0.20]] * 39 + [[-1.00] * 100], 'h.csv')
+    assert muse['status'] == 'FAIL' and muse['mean'] == pytest.approx(-92.2 / 139)
+    assert 'runs on to 80' in N.preopen_line(tmp_path / 'e.csv')
+    assert 'FAIL' in N.preopen_line(tmp_path / 'h.csv')
+    assert 'the arm is retired' in N.preopen_line(tmp_path / 'f.csv')
+    # before the 40th session the line is the running record alone
+    assert 'Decision on' not in N.preopen_line(tmp_path / 'a.csv')
+
+
+def test_an_unscored_call_does_not_count_as_a_session(tmp_path):
+    ledger = preopen_ledger(tmp_path / 'news_calls.csv', [[0.5], [None]])
+    assert N.preopen_record(ledger)['sessions'] == 1
+
+
+def test_the_verdict_constants_are_the_registered_ones():
+    doc = (Path(__file__).resolve().parent.parent / 'PREREGISTER_day139_newsdesk_open.md').read_text()
+    assert (N.PREOPEN_DECISION, N.PREOPEN_FINAL, N.PREOPEN_BAR, N.PREOPEN_PLACEBO_P,
+            N.PREOPEN_DRAWS, N.COST) == (40, 80, 3.0, 0.01, 2000, 0.13)
+    for words in ('Decision at 40 sessions', 'to 80', 't ≥ 3.0', 'p < 0.01', '2,000 draws',
+                  '0.13%', 'session-clustered (cluster-robust) standard error', 'seed 139'):
+        assert words in doc, words
+
+
+# A writer that stops halfway through a file it opened for writing, as the
+# 09:29 timeout's kill would stop it (os._exit, so no cleanup code runs).
+HALF = """
+import builtins, io, os
+real = io.open
+class Half:
+    def __init__(self, f):
+        self.f = f
+    def write(self, text):
+        self.f.write(text[:len(text) // 2])
+        self.f.flush()
+        os._exit(9)
+    def __enter__(self):
+        return self
+    def __exit__(self, *a):
+        self.f.close()
+    def __getattr__(self, k):
+        return getattr(self.f, k)
+def cut(file, mode='r', *a, **k):
+    f = real(file, mode, *a, **k)
+    return Half(f) if 'w' in mode else f
+io.open = builtins.open = cut
+"""
+
+
+def test_a_kill_during_the_ledger_write_leaves_the_old_ledger(tmp_path):
+    ledger = tmp_path / 'news_calls.csv'
+    N._write([{'session': '2026-10-02', 'ticker': 'AAA.TO', 'arm': 'full', 'side': 'LONG',
+               'w_day': 1.0, 'reason': 'x' * 2000}], ledger)
+    before = ledger.read_bytes()
+    code = ('import sys\nimport news_desk as N\n' + HALF +
+            "N._write(N.read(sys.argv[1]) + [{'session': '2026-10-05', 'ticker': 'BBB.TO', "
+            "'arm': 'full', 'side': 'SHORT'}], sys.argv[1])\n")
+    done = subprocess.run([sys.executable, '-c', code, str(ledger)],
+                          cwd=Path(N.__file__).resolve().parent, capture_output=True, text=True)
+    assert done.returncode == 9, done.stderr
+    assert ledger.read_bytes() == before            # not a prefix of the new file
+    stray = Path(str(ledger) + '.tmp')
+    assert stray.exists()                           # the cut-off copy, beside it
+    N._write(N.read(ledger), ledger)                # the next write replaces it
+    assert ledger.read_bytes() == before and not stray.exists()

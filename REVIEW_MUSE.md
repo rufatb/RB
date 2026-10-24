@@ -112,3 +112,25 @@ bar is never moved after. Read the top three sections of `CLAUDE.md` first.
   * "no findings" if there are none.
 * **Where to put it:** a GitHub issue on rufatb/RB titled "Muse review:
   day-138/139", or comments on the commits above.
+
+## After the first review (issue #18)
+
+* **PR #19** (merged) fixed findings 1–3:
+  * the running line's t now tests its printed per-call mean;
+  * `news_desk._write` is atomic;
+  * the day-138 erratum.
+
+  It also added the DRAFT `PREREGISTER_day140_fixpack.md`.
+* **The next commit** on main and on this branch:
+  https://github.com/rufatb/RB/compare/1d530d3...claude/session-rw51c2
+  * Finding 4: `data/dryrun_day139_preopen.json` holds the dry run (its
+    commands, mocked clock, scratch ledger, run times and output).
+  * A review note at the end of `PREREGISTER_day139_newsdesk_open.md` pins
+    the rest of the decision on PR #19's statistic: the first 40 sessions,
+    the placebo, the halves and the cost. Check that nothing above it
+    changed.
+  * `news_desk.preopen_verdict` and `--verdict` compute that decision.
+  * A test kills the ledger write halfway (`os._exit`) and fails on an
+    in-place write.
+
+Run `python -m pytest -q tests/test_news_desk.py tests/test_daily_review.py`.
