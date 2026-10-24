@@ -364,7 +364,8 @@ def main(argv=None):
         return 2
     out = review(a.session, report)
     md = (out['markdown'] + lab_section() + memory_section(a.session, report)
-          + table_section(a.session, report) + preopen_section(a.session))
+          + table_section(a.session, report) + preopen_section(a.session)
+          + fixpack_section(a.session))
     (REVIEWS / f'{a.session}.md').write_text(md)
     print(md)
     return 0
@@ -409,6 +410,14 @@ def preopen_section(session, path=None):
            if today else 'Today: no pre-open call was recorded.',
            line]
     return '\n'.join(out) + '\n'
+
+
+def fixpack_section(session):
+    """Day-140: the fix pack in shadow beside the live Top 2
+    (PREREGISTER_day140_fixpack.md). It never costs the review, and a
+    failure says so."""
+    import fixpack
+    return fixpack.section(session)
 
 
 def memory_section(session, report, lines=None):

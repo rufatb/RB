@@ -1,10 +1,11 @@
-# Day-140 — the fix pack, in shadow (DRAFT)
+# Day-140 — the fix pack, in shadow
 
-**Status: draft, prepared 2026-10-24 at the owner's request after the
-day-138/139 review (GitHub issue #18). This becomes the registration when
-the owner commits it before the first shadow session. Until then nothing
-here runs, and nothing here changes a live pick, a size, the Top 2 or the
-email.**
+**Status: REGISTERED 2026-10-24 — merged to main by the owner (PR #19)
+before the first shadow session. Prepared the same day at the owner's
+request after the day-138/139 review (GitHub issue #18). Nothing here
+changes a live pick, a size, the Top 2 or the email. The implementation
+is `fixpack.py`; the Round-1 freeze is sealed by `council.stage` into
+`round1.json`.**
 
 ## Why
 

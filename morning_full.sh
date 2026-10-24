@@ -408,6 +408,17 @@ else
     stage_faults+=("council skipped: too late")
 fi
 
+# ── DAY-140: THE FIX PACK, IN SHADOW (PREREGISTER_day140_fixpack.md) ─────
+# Reads the sealed council only: the abstention gate's verdicts, the shadow
+# Top 2, and the frozen Round-1 ballots go to their ledgers. It changes no
+# pick and no email, and a failure costs this test only — never a fault.
+if timeout 120 python fixpack.py --stage --state-dir "$RB_STATE_DIR" \
+        >>"$RB_STATE_DIR/fixpack.log" 2>&1; then
+    log "  fix pack (day-140 shadow): recorded (fixpack.log)"
+else
+    log "  fix pack (day-140 shadow): NOT recorded — nothing else changes (fixpack.log)"
+fi
+
 # ── 1b''. THE COUNCIL WITH MEMORY (day-130, PREREGISTER_day130_memory.md) ──
 # A SHADOW: a second council on the live council's table, with its own last
 # five sessions in front of it. It decides nothing, writes only

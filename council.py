@@ -42,6 +42,7 @@ PROMPT_VERSION = 'day124-council-v2'
 RULE_VERSION = 'day124-council+day129-nominations'
 MAX_POSITIONS = 16
 SNAPSHOT = 'council.json'
+ROUND1 = 'round1.json'
 BRIEF_TXT = 'council_brief.txt'
 BRIEF_JSON = 'council_brief.json'
 CLAUDE_BALLOT = 'claude_ballot.json'
@@ -611,6 +612,11 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
     with cf.ThreadPoolExecutor(2) as pool:
         r1 = dict(pool.map(lambda m: run('R1 ' + m, lambda: chat(m, ROUND_1)), ['DeepSeek', 'Gemini']))
     round1 = {m.split(' ', 1)[1]: b for m, b in r1.items() if b}
+    # Day-140: the blind Round-1 ballots are sealed the moment they are cast,
+    # before Claude, Jev or Round 2 see anything — the fix pack scores them
+    # apart from the deliberated final (PREREGISTER_day140_fixpack.md).
+    _write(root/ROUND1, {'session': session, 'frozen_at': _now(clock()).isoformat(),
+                         'ballots': round1})
     discussion1 = discussion_of(round1, seat)
 
     # Claude and Jev, after reading Round 1. Claude answers STATELESS through
