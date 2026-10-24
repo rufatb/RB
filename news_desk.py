@@ -380,19 +380,28 @@ def stage_preopen(state_dir, now=None, *, chart=daily_chart, archive=None, clien
 
 
 def preopen_record(path=LEDGER):
-    """The day-139 running record on its registered measure: W_day, by session."""
+    """The day-139 running record on its registered measure: W_day.
+
+    One estimand, as registered ("a mean y > 0 with session-clustered
+    t >= 3.0"): the mean is over calls, and t is that same mean divided by
+    its session-clustered (cluster-robust) standard error — each session's
+    score is the sum of its calls' deviations from the mean. With equal
+    calls per session this is exactly the one-sample t of the session
+    means; with unequal counts it still tests the printed per-call mean,
+    where a session-mean t would test a different, unprinted number.
+    """
     done = [r for r in read(path) if r.get('arm') == PREOPEN_ARM and r.get('w_day') not in (None, '')]
     by = collections.defaultdict(list)
     for r in done:
         by[r['session']].append(float(r['w_day']))
-    means = [sum(v) / len(v) for v in by.values()]
-    t = None
-    if len(means) > 2:
-        m = sum(means) / len(means)
-        sd = math.sqrt(sum((x - m) ** 2 for x in means) / (len(means) - 1))
-        t = m / (sd / math.sqrt(len(means))) if sd else None
     v = [float(r['w_day']) for r in done]
-    return {'calls': len(v), 'right': sum(x > 0 for x in v), 'sessions': len(means),
+    t = None
+    if len(by) > 2 and v:
+        m = sum(v) / len(v)
+        ss = sum(sum(x - m for x in vals) ** 2 for vals in by.values())
+        var = (len(by) / (len(by) - 1)) * ss / (len(v) ** 2)
+        t = m / math.sqrt(var) if var > 0 else None
+    return {'calls': len(v), 'right': sum(x > 0 for x in v), 'sessions': len(by),
             'mean': (sum(v) / len(v)) if v else None, 't': t}
 
 
@@ -484,13 +493,27 @@ def read(path=LEDGER):
 
 
 def _write(rows, path):
+    """Rewrite the ledger atomically: a temp file in the same directory,
+    fsynced, then os.replace. The day-139 step runs under a hard 09:29
+    timeout; a kill mid-write must never leave the committed ledger
+    truncated — the old file survives whole, or the new one does."""
     out = io.StringIO()
     w = csv.DictWriter(out, fieldnames=FIELDS, extrasaction='ignore')
     w.writeheader()
     for r in sorted(rows, key=lambda r: (r['session'], r['ticker'], r['arm'])):
         w.writerow({k: '' if r.get(k) is None else r.get(k) for k in FIELDS})
-    Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(out.getvalue())
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + '.tmp')
+    try:
+        with open(tmp, 'w', newline='') as f:
+            f.write(out.getvalue())
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def _pct(a, b):
