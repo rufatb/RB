@@ -1,5 +1,23 @@
 # Working notes for this repo
 
+## Operating note — install with `python -m pip` (2026-10-25)
+
+A container reset on 10-25 brought a new image.
+* **The mismatch.** `python` is 3.11 (`/usr/local/bin/python`), but `pip` is
+  Python 3.13's (`/usr/bin/pip`).
+  * The Routines' `pip install -q -r requirements.txt` exits 0 and installs
+    nothing the scripts can import (`ModuleNotFoundError: No module named
+    'pandas'`).
+  * Always run `python -m pip install -q -r requirements.txt`.
+* **Waiting for the owner.** The live morning (STEP 1) and evening (step 0)
+  Routines still say `pip install`; changing them is the owner's decision.
+  `ROUTINE_PROMPT.md` already says `python -m pip`.
+* **A reset also wipes `.rb-state`.**
+  * STEP 2 rewrites the credentials every morning.
+  * `reports.sqlite3`, the frozen publications, starts empty. The committed
+    record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
+    unaffected.
+
 ## Day140 — the fix pack, fixed and registered; a council lab every weekday (owner, 2026-10-24)
 
 The owner merged the review's draft (PR #19) and its implementation branch,

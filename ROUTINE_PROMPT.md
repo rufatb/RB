@@ -46,7 +46,7 @@ THE HTML CHECK — after EVERY email you send (day-130). On 2026-10-07 the repor
 
 STEP 1 — sync and tools
   cd /home/user/RB && git fetch origin && git checkout main && git pull --ff-only
-  pip install -q -r requirements.txt
+  python -m pip install -q -r requirements.txt
 If the pull refuses because of local changes, `git stash push -m morning-$(date +%F)`, pull again, and say so in the summary.
 If dashboard.is_trading_day says today is not a trading day, stop and report "not a trading day — nothing to run". That is a success. Send no email.
 Load the Gmail tools NOW: if `mcp__Gmail__send_message` or `mcp__Gmail__get_message` is not callable, run ToolSearch `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`. Loading a deferred tool pauses the turn until "Tool loaded." arrives — at 08:50 that costs nothing; at 09:50 it cost the 09-28 email fourteen minutes. Load nothing else later in the morning.
