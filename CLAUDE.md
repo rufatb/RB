@@ -18,6 +18,20 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day141 — the council lab's first slot: a stop within reach, registered on the record (2026-10-26)
+
+* **The replay caches are gone.** The 10-26 container reset wiped
+  `.rb-state`, so lab item 1 runs on the record instead.
+* **The test.** `PREREGISTER_day141_reach_history.md`: the 172 scored desk
+  picks (Claude, DeepSeek, Gemini; selected and nominated) of 09-17 → 10-23,
+  with 10-15 left out.
+  * KEPT: a pick whose own wrong-if is within one normal day of its 09:45
+    entry. Against the rest.
+  * The bar: t ≥ 3 by session, a placebo, both halves, 10 picks a group, and
+    a planted 1.0% control.
+* **Next:** `reach_history.py` runs it in the next slot. A PASS goes to the
+  owner as a proposed remove-only rule; anything else is rejection #57.
+
 ## Day140 — the fix pack, fixed and registered; a council lab every weekday (owner, 2026-10-24)
 
 The owner merged the review's draft (PR #19) and its implementation branch,

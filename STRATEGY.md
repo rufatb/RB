@@ -5784,3 +5784,12 @@ session on 10-26 (`PREREGISTER_day140_fixpack.md`).
   * a paired t ≥ 2 without a placebo;
   * a second scoring basis;
   * a ranking that favoured the last-move habit.
+
+## Day-141: registered — a stop within reach, tested on the record (no result yet)
+
+The council lab's first slot. Day-140 arm A's question (does a pick whose own
+wrong-if sits within one normal day of the 09:45 entry beat one without?) is
+registered on the record's 172 desk picks of 09-17 → 10-23, with 10-15 left
+out. The day-117 replay cache it was meant to use went with the 10-26
+container reset. See `PREREGISTER_day141_reach_history.md`; it runs in the
+next slot.
