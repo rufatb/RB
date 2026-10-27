@@ -5785,11 +5785,26 @@ session on 10-26 (`PREREGISTER_day140_fixpack.md`).
   * a second scoring basis;
   * a ranking that favoured the last-move habit.
 
-## Day-141: registered — a stop within reach, tested on the record (no result yet)
+## Day-141: REJECTION #57 — a stop within reach sorts nothing on the record
 
-The council lab's first slot. Day-140 arm A's question (does a pick whose own
-wrong-if sits within one normal day of the 09:45 entry beat one without?) is
-registered on the record's 172 desk picks of 09-17 → 10-23, with 10-15 left
-out. The day-117 replay cache it was meant to use went with the 10-26
-container reset. See `PREREGISTER_day141_reach_history.md`; it runs in the
-next slot.
+The council lab's first two slots. Day-140 arm A's question (does a pick whose
+own wrong-if sits within one normal day of the 09:45 entry beat one without?)
+was registered on the record's 172 desk picks of 09-17 → 10-23, with 10-15
+left out (`PREREGISTER_day141_reach_history.md`, cd011b6). The day-117 replay
+cache it was meant to use went with the 10-26 container reset. Read
+`AUDIT_day141_reach_history.md`; script `reach_history.py`.
+* **The verdict: FAIL, powered.** 158 picks over 20 sessions.
+  * Kept, 39 picks: −0.05%, 18 right. Dropped, 119 picks: +0.12%, 62 right.
+  * The difference is −0.17%, t = −0.72, placebo p = 0.67, and the halves
+    disagree (+0.30%, −0.35%).
+  * A planted 1.0% shows at t = 4.17; the smallest detectable effect is 0.92%.
+* **The day-140 backfill's gap was one day.** With 10-15 the difference is
+  +0.12% (t = 0.32): its 14 picks were all dropped and averaged −2.61%.
+* **Nothing else sorts either:**
+  * unique positions, t = −0.10;
+  * any level against none, t = −0.63;
+  * by model and by kind, |t| ≤ 0.77, with the models split on the sign.
+* **So:**
+  * no rule;
+  * day-140 arm A runs on unchanged, forward;
+  * the open check's "OUT OF REACH" label stays as a description.

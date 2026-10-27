@@ -18,19 +18,35 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
-## Day141 — the council lab's first slot: a stop within reach, registered on the record (2026-10-26)
+## Day141 — a stop within reach sorts nothing on the record (rejection #57, council lab, 2026-10-26/27)
 
-* **The replay caches are gone.** The 10-26 container reset wiped
-  `.rb-state`, so lab item 1 runs on the record instead.
-* **The test.** `PREREGISTER_day141_reach_history.md`: the 172 scored desk
-  picks (Claude, DeepSeek, Gemini; selected and nominated) of 09-17 → 10-23,
-  with 10-15 left out.
+* **Why the record.** The 10-26 container reset wiped `.rb-state`, including
+  the replay caches, so lab item 1 was registered on the record instead
+  (`PREREGISTER_day141_reach_history.md`, cd011b6) and run on 10-27.
+* **The test.**
+  * The population: the 172 scored desk picks (Claude, DeepSeek, Gemini;
+    selected and nominated) of 09-17 → 10-23, with 10-15 left out.
   * KEPT: a pick whose own wrong-if is within one normal day of its 09:45
-    entry. Against the rest.
-  * The bar: t ≥ 3 by session, a placebo, both halves, 10 picks a group, and
-    a planted 1.0% control.
-* **Next:** `reach_history.py` runs it in the next slot. A PASS goes to the
-  owner as a proposed remove-only rule; anything else is rejection #57.
+    entry (`fixpack.gate`). Against the rest.
+  * The bar: day-140's arm-A test (`fixpack.arm_a`, seed 141).
+* **Result: FAIL, powered.** Read `AUDIT_day141_reach_history.md`; script
+  `reach_history.py`, summary `data/reach_day141.json`.
+  * 158 picks over 20 sessions. Kept 39 −0.05% (18 right); dropped 119
+    +0.12% (62 right).
+  * The difference is −0.17%, t = −0.72, placebo p = 0.67, and the halves
+    disagree.
+  * A planted 1.0% shows at t = 4.17; the smallest detectable effect is 0.92%
+    a pick.
+* **The backfill's gap was one day.** With 10-15 put back the difference is
+  +0.12%, t = 0.32: its 14 picks were all dropped and averaged −2.61%.
+* **Nothing else sorts either:** unique positions (t = −0.10), any level
+  against none (t = −0.63), each model and each kind.
+* **So:**
+  * no rule is proposed;
+  * day-140 arm A runs on unchanged, forward; do not expect it to pass;
+  * the open check's "OUT OF REACH" label stays as a description.
+* **Next lab item:** 2, the news desk asked about the open (DeepSeek calls,
+  no OpenRouter).
 
 ## Day140 — the fix pack, fixed and registered; a council lab every weekday (owner, 2026-10-24)
 
@@ -3029,8 +3045,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **56 rejections, 5
-adoptions** (as of day-140; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **57 rejections, 5
+adoptions** (as of day-141; skipping the morning's widest-swinging names is the
 fifth adoption). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 

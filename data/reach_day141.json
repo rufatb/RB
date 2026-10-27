@@ -1,0 +1,282 @@
+{
+ "registration": "PREREGISTER_day141_reach_history.md",
+ "population": {
+  "picks": 172,
+  "with_level": 85,
+  "sessions": 21,
+  "judged": 172,
+  "excluded_no_atr": 0,
+  "primary_picks": 158,
+  "primary_sessions": 20
+ },
+ "verdict": {
+  "status": "FAIL",
+  "diff": -0.17205091575091574,
+  "t": -0.7167822466468612,
+  "placebo_p": 0.6715,
+  "halves": [
+   0.2991451704545455,
+   -0.34832261904761896
+  ],
+  "kept": 39,
+  "dropped": 119,
+  "sessions": 20,
+  "kept_mean": -0.05087948717948715,
+  "dropped_mean": 0.1211714285714286,
+  "control": {
+   "plant": 1.0,
+   "diff": 1.0000000000000002,
+   "t": 4.166105385248704,
+   "detected": true
+  },
+  "mde80": 0.9221082149295338,
+  "kept_net_mean": -0.18087948717948715
+ },
+ "descriptive": {
+  "with_held_out_day": {
+   "status": "UNDERPOWERED",
+   "diff": 0.1150490842490843,
+   "t": 0.32041020008625665,
+   "placebo_p": 0.42,
+   "halves": [
+    0.2991451704545455,
+    0.047740417256011566
+   ],
+   "kept": 39,
+   "dropped": 133,
+   "sessions": 21,
+   "kept_mean": -0.05087948717948715,
+   "dropped_mean": -0.16592857142857145
+  },
+  "held_out_day": [
+   {
+    "model": "claude",
+    "kind": "nominated",
+    "ticker": "ATD.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "wrong-if 1.8 normal days away",
+    "reach_atr": 1.802,
+    "y": -1.0304
+   },
+   {
+    "model": "claude",
+    "kind": "nominated",
+    "ticker": "WCN.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": 3.3421
+   },
+   {
+    "model": "claude",
+    "kind": "nominated",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": -3.613
+   },
+   {
+    "model": "claude",
+    "kind": "nominated",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": 0.6938
+   },
+   {
+    "model": "deepseek",
+    "kind": "nominated",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": 2.1749
+   },
+   {
+    "model": "deepseek",
+    "kind": "nominated",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": -0.6938
+   },
+   {
+    "model": "deepseek",
+    "kind": "nominated",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "wrong-if 1.9 normal days away",
+    "reach_atr": 1.863,
+    "y": -3.613
+   },
+   {
+    "model": "deepseek",
+    "kind": "nominated",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": -11.1626
+   },
+   {
+    "model": "gemini",
+    "kind": "nominated",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "wrong-if 2.7 normal days away",
+    "reach_atr": 2.698,
+    "y": 0.6687
+   },
+   {
+    "model": "gemini",
+    "kind": "nominated",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "gate": "dropped",
+    "reason": "no wrong-if",
+    "reach_atr": null,
+    "y": -0.6938
+   },
+   {
+    "model": "gemini",
+    "kind": "nominated",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "wrong-if 2.4 normal days away",
+    "reach_atr": 2.358,
+    "y": -3.613
+   },
+   {
+    "model": "gemini",
+    "kind": "nominated",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "wrong-if 2.1 normal days away",
+    "reach_atr": 2.078,
+    "y": -11.1626
+   },
+   {
+    "model": "gemini",
+    "kind": "selected",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "wrong-if 1.8 normal days away",
+    "reach_atr": 1.794,
+    "y": -4.1722
+   },
+   {
+    "model": "gemini",
+    "kind": "selected",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "gate": "dropped",
+    "reason": "wrong-if 1.9 normal days away",
+    "reach_atr": 1.863,
+    "y": -3.613
+   }
+  ],
+  "unique_positions": {
+   "diff": -0.024192943201376965,
+   "t": -0.10237315670082128,
+   "yes": 35,
+   "no": 83,
+   "yes_mean": -0.011285714285714298,
+   "no_mean": 0.012907228915662669,
+   "yes_right": 17,
+   "no_right": 40,
+   "sessions": 20,
+   "max_outcome_spread": 0.0
+  },
+  "by_model": {
+   "claude": {
+    "diff": -0.13425111111111113,
+    "t": -0.5166495191638848,
+    "yes": 10,
+    "no": 27,
+    "yes_mean": -0.05794000000000001,
+    "no_mean": 0.07631111111111111,
+    "yes_right": 5,
+    "no_right": 16,
+    "sessions": 12
+   },
+   "deepseek": {
+    "diff": 0.32321572327044024,
+    "t": 0.5120815560581371,
+    "yes": 9,
+    "no": 53,
+    "yes_mean": 0.5175666666666666,
+    "no_mean": 0.1943509433962264,
+    "yes_right": 5,
+    "no_right": 24,
+    "sessions": 16
+   },
+   "gemini": {
+    "diff": -0.3559294871794871,
+    "t": -0.7707319286984387,
+    "yes": 20,
+    "no": 39,
+    "yes_mean": -0.3031499999999999,
+    "no_mean": 0.052779487179487175,
+    "yes_right": 8,
+    "no_right": 22,
+    "sessions": 13
+   }
+  },
+  "by_kind": {
+   "selected": {
+    "diff": -0.15609586702605566,
+    "t": -0.4211403904945797,
+    "yes": 21,
+    "no": 53,
+    "yes_mean": -0.19386190476190474,
+    "no_mean": -0.037766037735849065,
+    "yes_right": 10,
+    "no_right": 24,
+    "sessions": 20
+   },
+   "nominated": {
+    "diff": -0.13286969696969703,
+    "t": -0.3442226459889906,
+    "yes": 18,
+    "no": 66,
+    "yes_mean": 0.11593333333333329,
+    "no_mean": 0.2488030303030303,
+    "yes_right": 8,
+    "no_right": 38,
+    "sessions": 7
+   }
+  },
+  "any_level": {
+   "diff": -0.2882372435897436,
+   "t": -0.6349724720840694,
+   "yes": 78,
+   "no": 80,
+   "yes_mean": -0.06723974358974362,
+   "no_mean": 0.2209975,
+   "yes_right": 42,
+   "no_right": 38,
+   "sessions": 20
+  },
+  "dropped_reasons": {
+   "no wrong-if": 80,
+   "wrong-if already crossed at the 09:45 entry": 7,
+   "out of reach": 32
+  },
+  "excluded": []
+ }
+}
