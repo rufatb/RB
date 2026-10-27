@@ -396,3 +396,23 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-26,top2count,pick,SHORT,AC.TO,0.64,,21.9,day121-agreement+day120-entry,published_report,21.32,21.54,-1.0319,0,0,2026-10-26T16:21:28.683530-04:00,,,,,2 of 4
 2026-10-26,top2mover,pick,SHORT,OVV.TO,0.07,,,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,102.17,101.68,0.4796,1,,2026-10-26T16:21:28.683530-04:00,,,,,4 of 4 endorse
 2026-10-26,top2runner,pick,SHORT,VET.TO,0.08,,20.12,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,19.19,19.77,-3.0224,0,0,2026-10-26T16:21:28.683530-04:00,,,,,4 of 4 endorse
+2026-10-27,claude,nominated,LONG,CAE.TO,0.42,,35.23,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,claude,nominated,LONG,IAG.TO,0.4,,206.75,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,claude,nominated,SHORT,CLS.TO,0.4,,365.98,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,claude,nominated,SHORT,DPM.TO,0.38,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,deepseek,nominated,LONG,CNQ.TO,0.5,,76.19,day129-nominations,published_report,,,,,,,macro,,,,
+2026-10-27,deepseek,nominated,LONG,TD.TO,0.55,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,deepseek,nominated,SHORT,CLS.TO,0.55,,365,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,deepseek,nominated,SHORT,HUT.TO,0.5,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,engine,board,SHORT,BNS.TO,0.564,,,,published_report,,,,,,,,,,,
+2026-10-27,engine,board,SHORT,CM.TO,0.588,,,,published_report,,,,,,,,,,,
+2026-10-27,gemini,nominated,LONG,ATZ.TO,0.62,,,day129-nominations,published_report,,,,,,,news,,,,
+2026-10-27,gemini,nominated,LONG,CAE.TO,0.58,,35.23,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,gemini,nominated,SHORT,CLS.TO,0.65,,364.5,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,gemini,nominated,SHORT,K.TO,0.61,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-10-27,gemini,selected,LONG,CM.TO,0.58,,160.44,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-10-27,gemini,selected,SHORT,ABX.TO,0.61,,,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-10-27,jev,forced,LONG,CAE.TO,0.19,0.45,,,published_report,,,,,,,,,,,
+2026-10-27,jev,forced,SHORT,CLS.TO,0.3,0.46,,,published_report,,,,,,,,,,,
+2026-10-27,top2mover,pick,LONG,CAE.TO,0.58,,35.23,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
+2026-10-27,top2wild,pick,SHORT,CLS.TO,0.4,,365.98,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,,,,,,,,,,,4 of 4 endorse
