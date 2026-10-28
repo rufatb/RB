@@ -5808,3 +5808,14 @@ cache it was meant to use went with the 10-26 container reset. Read
   * no rule;
   * day-140 arm A runs on unchanged, forward;
   * the open check's "OUT OF REACH" label stays as a description.
+
+## Day-142: registered — the news desk asked about the window it is scored on (no result yet)
+
+The council lab's item 2. Day-139's pre-open desk asks day-122's prompt (a
+side from 09:45 to the close) and is scored from the open to the close against
+XIU. One re-worded prompt (three exact substitutions that move the window to
+the open), fixed before any call, is registered on the day-122 releases (07-02
+→ 10-01) with day-139's bar at seed 142 and a planted 0.5%. Day-122's prompt
+is re-asked beside it as a paired comparison. See
+`PREREGISTER_day142_newsdesk_open_prompt.md`; it runs in the next slot. A FAIL
+or NULL is rejection #58.
