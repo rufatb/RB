@@ -5809,13 +5809,30 @@ cache it was meant to use went with the 10-26 container reset. Read
   * day-140 arm A runs on unchanged, forward;
   * the open check's "OUT OF REACH" label stays as a description.
 
-## Day-142: registered — the news desk asked about the window it is scored on (no result yet)
+## Day-142: REJECTION #58 — the news desk asked about the open earns nothing more
 
 The council lab's item 2. Day-139's pre-open desk asks day-122's prompt (a
 side from 09:45 to the close) and is scored from the open to the close against
 XIU. One re-worded prompt (three exact substitutions that move the window to
-the open), fixed before any call, is registered on the day-122 releases (07-02
-→ 10-01) with day-139's bar at seed 142 and a planted 0.5%. Day-122's prompt
-is re-asked beside it as a paired comparison. See
-`PREREGISTER_day142_newsdesk_open_prompt.md`; it runs in the next slot. A FAIL
-or NULL is rejection #58.
+the open), fixed before any call, was registered on the day-122 releases
+(07-02 → 10-01) with day-139's bar at seed 142 and a planted 0.5%
+(`PREREGISTER_day142_newsdesk_open_prompt.md`, baf7e8f). Run on 10-29; read
+`AUDIT_day142_newsdesk_open_prompt.md`; script `replay_news_open.py`.
+* **The population** rebuilt to day-122's count: 420 events over 63 sessions,
+  with every body refetched. The open wording answered 418.
+* **The verdict: NULL, powered.**
+  * +0.11% a call open → close against XIU, 49% right, t = 0.99, sign-flip
+    placebo p = 0.19.
+  * The halves are +0.06% and +0.16%. Net of the round trip it is −0.02%.
+  * A planted 0.5% shows at t = 4.41; the smallest detectable effect is 0.44%.
+* **Beside it** (descriptive):
+  * day-122's prompt re-asked on the same items reads +0.05% (t = 0.44);
+  * the paired difference is +0.06% (t = 0.46), and 24% of the sides changed;
+  * the gap the release caused still reads +0.21% (t = 2.48): the desk reads
+    which way a release points, and the open prices it.
+* **The contamination probe** missed prices by a median of 48%: not void.
+* **So:**
+  * the wording of the window costs day-139 nothing measurable;
+  * day-139 runs on unchanged, byte for byte;
+  * no second pre-open arm is proposed;
+  * the prompt is not re-worded against this replay.

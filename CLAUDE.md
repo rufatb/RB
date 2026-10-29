@@ -18,25 +18,49 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
-## Day142 — the news desk asked about the window it is scored on, registered (council lab item 2, 2026-10-28)
+## Operating note — OpenRouter is out of credit (2026-10-29)
+
+* **What broke.** On 10-29 OpenRouter answered HTTP 402 to Claude's council
+  ballot and to every web-scout call. Claude's desk had sealed at 09:15, just
+  before.
+* **What it costs.** Claude sits out the council (it met as DeepSeek, Gemini
+  and Jev), and the positions carry no web news. The email, the desks and the
+  record are unaffected.
+* **The session's fallback ballot is too late on a late morning.** The council
+  sat at 09:24 ("no ballot sealed by 09:24 ET"), although the brief says
+  09:27. The ballot sealed at 09:26 was not counted.
+* **The trigger fired late.** The 08:50 morning task arrived at 09:09 on 10-29
+  (08:57 on 10-28), so the flash went out at 09:26.
+* **Waiting for the owner:** an OpenRouter top-up. Until then, expect "absent:
+  Claude" every morning.
+
+## Day142 — the news desk asked about the open: NULL (rejection #58, council lab item 2, 2026-10-28/29)
 
 * **The question.** Day-139 asks day-122's prompt (a side "from 09:45 ET to
   the close") and scores open → close against XIU. Does a prompt asking about
   the scored window earn anything from the open?
-* **The test.** `PREREGISTER_day142_newsdesk_open_prompt.md`.
+* **The test.** `PREREGISTER_day142_newsdesk_open_prompt.md` (baf7e8f).
   * The prompt is day-122's with three exact substitutions that move the
-    window to the open. It is fixed before any call and gets one look.
-  * The population is the day-122 releases (07-02 → 10-01, about 420 events
-    over 63 sessions), rebuilt by `news_desk.events`, with the bodies
-    refetched.
-  * The bar is day-139's `news_desk._preopen_bar` at seed 142: mean > 0.13%,
-    t ≥ 3, a sign-flip placebo p < 0.01, both halves; a planted 0.5%.
-  * Day-122's own prompt is re-asked beside it on the same items, as a paired
-    comparison.
-* **Next:** `replay_news_open.py` runs it in the next slot (about 130 DeepSeek
-  calls, no OpenRouter). A PASS goes to the owner as a proposed second
-  pre-open arm in shadow; anything else is rejection #58. Day-139 runs on
-  unchanged either way.
+    window to the open. It was fixed before any call and got one look.
+  * The population: the day-122 releases rebuilt by `news_desk.events`, 420
+    events over 63 sessions (07-02 → 10-01), with every body refetched.
+  * The bar: day-139's `news_desk._preopen_bar` at seed 142, with a planted
+    0.5%.
+* **Result: NULL, powered.** Read `AUDIT_day142_newsdesk_open_prompt.md`;
+  script `replay_news_open.py`, summary `data/replay_day142_open_prompt.json`.
+  * 418 calls: +0.11% a call, 49% right, t = 0.99, placebo p = 0.19; the
+    halves +0.06% and +0.16%; net −0.02%.
+  * A planted 0.5% shows at t = 4.41. The smallest detectable effect is 0.44%.
+  * Day-122's prompt re-asked on the same items reads +0.05%. The paired
+    difference is +0.06% (t = 0.46), and 24% of the sides changed.
+  * The gap still reads +0.21% (t = 2.48): the open prices the release.
+  * The contamination probe missed prices by a median of 48%: not void.
+* **So:**
+  * day-139 runs on unchanged, byte for byte;
+  * no second pre-open arm is proposed;
+  * the prompt is not re-worded against this replay.
+* **Next lab item:** 3, skipping a pick the open already paid (on the record,
+  no API spend).
 
 ## Day141 — a stop within reach sorts nothing on the record (rejection #57, council lab, 2026-10-26/27)
 
@@ -3065,8 +3089,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **57 rejections, 5
-adoptions** (as of day-141; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **58 rejections, 5
+adoptions** (as of day-142; skipping the morning's widest-swinging names is the
 fifth adoption). Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 

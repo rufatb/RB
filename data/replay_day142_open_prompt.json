@@ -1,0 +1,154 @@
+{
+ "registered": "PREREGISTER_day142_newsdesk_open_prompt.md",
+ "prompt_version": "day122-v1+day142-open",
+ "model": "deepseek-v4-pro",
+ "events": 420,
+ "day122_events": 420,
+ "sessions_with_events": 63,
+ "excluded": {
+  "traded value under C$3M a day": 289,
+  "fewer than 21 prior sessions": 24,
+  "price under C$2": 72,
+  "not quoted in CAD": 13,
+  "bars failed: ChartAcquisitionError": 6,
+  "not an equity": 9
+ },
+ "charts_failed": {
+  "ChartAcquisitionError": 4
+ },
+ "bodies_failed": {},
+ "bodies_fetched": 446,
+ "requests": 132,
+ "requests_retried": {
+  "open": 0,
+  "day122": 0
+ },
+ "problems": {
+  "open": {
+   "confidence outside 0.5-1": 2
+  },
+  "day122": {}
+ },
+ "verdict": {
+  "status": "NULL",
+  "sessions": 63,
+  "calls": 418,
+  "mean": 0.112,
+  "t": 0.9878,
+  "placebo_p": 0.1945,
+  "halves": [
+   0.0598,
+   0.1636
+  ],
+  "from": "2026-07-02",
+  "to": "2026-10-01",
+  "control": {
+   "plant": 0.5,
+   "t": 4.41,
+   "detected": true,
+   "mde80": 0.4355
+  }
+ },
+ "descriptive": {
+  "open": {
+   "w_day": {
+    "n": 418,
+    "sessions": 63,
+    "right": 205,
+    "hit": 0.49,
+    "mean": 0.112,
+    "t": 0.99
+   },
+   "gap": {
+    "n": 418,
+    "sessions": 63,
+    "right": 214,
+    "hit": 0.512,
+    "mean": 0.2123,
+    "t": 2.48
+   },
+   "long_share": 0.708,
+   "material_w_day": {
+    "n": 273,
+    "sessions": 62,
+    "right": 144,
+    "hit": 0.527,
+    "mean": 0.2656,
+    "t": 1.75
+   },
+   "routine_w_day": {
+    "n": 145,
+    "sessions": 56,
+    "right": 61,
+    "hit": 0.421,
+    "mean": -0.1772,
+    "t": -0.95
+   },
+   "confidence_0.6_w_day": {
+    "n": 230,
+    "sessions": 61,
+    "right": 122,
+    "hit": 0.53,
+    "mean": 0.3677,
+    "t": 2.22
+   }
+  },
+  "day122": {
+   "w_day": {
+    "n": 420,
+    "sessions": 63,
+    "right": 210,
+    "hit": 0.5,
+    "mean": 0.0504,
+    "t": 0.44
+   },
+   "gap": {
+    "n": 420,
+    "sessions": 63,
+    "right": 222,
+    "hit": 0.529,
+    "mean": 0.2096,
+    "t": 2.17
+   },
+   "long_share": 0.664,
+   "material_w_day": {
+    "n": 274,
+    "sessions": 62,
+    "right": 144,
+    "hit": 0.526,
+    "mean": 0.1383,
+    "t": 0.84
+   },
+   "routine_w_day": {
+    "n": 146,
+    "sessions": 56,
+    "right": 66,
+    "hit": 0.452,
+    "mean": -0.1146,
+    "t": -0.88
+   },
+   "confidence_0.6_w_day": {
+    "n": 236,
+    "sessions": 61,
+    "right": 125,
+    "hit": 0.53,
+    "mean": 0.1115,
+    "t": 0.55
+   }
+  }
+ },
+ "open_minus_day122": {
+  "events": 418,
+  "side_changed": 99,
+  "side_changed_share": 0.237,
+  "mean": 0.0554,
+  "t": 0.46,
+  "sessions": 63
+ },
+ "contamination": {
+  "asked": 12,
+  "answered": 12,
+  "median_abs_error_pct": 48.36,
+  "void": false
+ }
+}
