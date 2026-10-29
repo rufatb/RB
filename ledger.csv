@@ -572,8 +572,8 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-10-28,CP.TO,SHORT,0.552,dense,127.3350,board,,,,,-1.284,1
 2026-10-28,ENB.TO,SHORT,0.551,dense,68.1900,pair,primary,0.2891,212,5.9,-0.440,1
 2026-10-28,CNR.TO,SHORT,0.550,dense,175.2000,board,,,,,-0.656,1
-2026-10-29,SLF.TO,LONG,0.591,mid,114.2100,pair,extra,0.2925,128,,,
-2026-10-29,CM.TO,LONG,0.579,mid,165.9300,pair,primary,0.2058,62,15.7,,
-2026-10-29,AC.TO,SHORT,0.613,mid,21.7800,pair,extra,0.1931,444,,,
-2026-10-29,NTR.TO,SHORT,0.579,mid,96.9800,board,,,,,,
-2026-10-29,SU.TO,SHORT,0.562,dense,108.8100,pair,primary,0.3062,141,9.2,,
+2026-10-29,SLF.TO,LONG,0.591,mid,114.2100,pair,extra,0.2925,128,,0.245,1
+2026-10-29,CM.TO,LONG,0.579,mid,165.9300,pair,primary,0.2058,62,15.7,0.175,1
+2026-10-29,AC.TO,SHORT,0.613,mid,21.7800,pair,extra,0.1931,444,,0.413,0
+2026-10-29,NTR.TO,SHORT,0.579,mid,96.9800,board,,,,,-1.268,1
+2026-10-29,SU.TO,SHORT,0.562,dense,108.8100,pair,primary,0.3062,141,9.2,-0.147,1
