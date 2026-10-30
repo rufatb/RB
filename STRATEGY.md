@@ -5836,3 +5836,25 @@ the open), fixed before any call, was registered on the day-122 releases
   * day-139 runs on unchanged, byte for byte;
   * no second pre-open arm is proposed;
   * the prompt is not re-worded against this replay.
+
+## Day-143: registered — a name on its report day, a size rule (no result yet); lab item 3 closed without a test
+
+The council lab's 10-30 slot.
+* **Item 3, skipping a pick the open already paid, cannot be judged on the
+  record.** It was sized on gaps and ATR alone, with no outcome read.
+  * Of the record's 189 positions (09-17 → 10-29, each name, side and day
+    once), the open ran ≥ 1 ATR the pick's way once.
+  * At ≥ 0.5 ATR it was 15 times over 8 sessions.
+  * On history a ≥ 1 ATR gap continues slightly from the open (#42,
+    t = 2.63), the opposite of the premise.
+  * Closed without a test; not a numbered rejection.
+* **Item 4 is registered** (`PREREGISTER_day143_report_day.md`, names pinned
+  in `data/report_day143_names.json`).
+  * The question: does a name's report window (D0 and D1 around FMP's date)
+    swing ≥ 1.15× wider from 09:45 to the close than its other days?
+  * The comparison counts only name-days the two live rules (big movers,
+    widest swings) would not already pass over.
+  * It must also show no lean (|t| < 2), a placebo with dates moved 20
+    sessions earlier below 1.15, and the same ratio on the point-in-time
+    S&P 500.
+  * It runs in the next slot. A FAIL is rejection #59.

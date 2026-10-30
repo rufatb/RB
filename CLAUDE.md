@@ -18,21 +18,44 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
-## Operating note — OpenRouter is out of credit (2026-10-29)
+## Day143 — lab item 3 closed without a test; item 4, a report-day size rule, registered (council lab, 2026-10-30)
 
-* **What broke.** On 10-29 OpenRouter answered HTTP 402 to Claude's council
+* **Item 3 cannot be judged on the record.** It was sized on gaps and ATR
+  only, with no outcome read.
+  * The open ran ≥ 1 ATR the pick's way on 1 of the record's 189 positions
+    (09-17 → 10-29); at ≥ 0.5 ATR, 15 over 8 sessions.
+  * History (#42) shows a ≥ 1 ATR gap continuing slightly from the open, the
+    opposite of the premise. Closed; not a numbered rejection.
+* **Item 4 is registered:** `PREREGISTER_day143_report_day.md`, with the 150
+  names pinned in `data/report_day143_names.json`.
+  * The question: does a name's report window (D0 and D1 around FMP's date)
+    swing ≥ 1.15× wider from 09:45 to the close (FMP 15-minute bars,
+    2024-01 → 2026-10-29) than its other days?
+  * It counts only name-days the two live rules would not already pass over.
+  * It must also show no lean (|t| < 2), a placebo below 1.15 (dates moved 20
+    sessions earlier), and the same ratio on the point-in-time S&P 500
+    (daily, 2016 →).
+* **Next:** `report_day.py` runs it in the next slot, on FMP calls only. A
+  PASS goes to the owner as a proposed remove-only switch; a FAIL is
+  rejection #59.
+
+## Operating note — OpenRouter: out of credit on 10-29, answering again on 10-30
+
+* **10-30:** Claude's desk, its council ballot and the web scout all came
+  through OpenRouter; the council sat with four members at 08:59. Whether the
+  credit was topped up is not known here, so keep watching for HTTP 402.
+* **What broke on 10-29.** OpenRouter answered HTTP 402 to Claude's council
   ballot and to every web-scout call. Claude's desk had sealed at 09:15, just
   before.
-* **What it costs.** Claude sits out the council (it met as DeepSeek, Gemini
-  and Jev), and the positions carry no web news. The email, the desks and the
-  record are unaffected.
+* **What a 402 costs.** Claude sits out the council (on 10-29 it met as
+  DeepSeek, Gemini and Jev), and the positions carry no web news. The email,
+  the desks and the record are unaffected.
 * **The session's fallback ballot is too late on a late morning.** The council
   sat at 09:24 ("no ballot sealed by 09:24 ET"), although the brief says
-  09:27. The ballot sealed at 09:26 was not counted.
-* **The trigger fired late.** The 08:50 morning task arrived at 09:09 on 10-29
-  (08:57 on 10-28), so the flash went out at 09:26.
-* **Waiting for the owner:** an OpenRouter top-up. Until then, expect "absent:
-  Claude" every morning.
+  09:27. The ballot sealed at 09:26 was not counted. On a 402, answer the
+  ballot as soon as `--wait-ballot` prints READY.
+* **The trigger fired late** on 10-28 (08:57) and 10-29 (09:09); on 10-30 it
+  fired at 08:52 and the flash went out at 08:59.
 
 ## Day142 — the news desk asked about the open: NULL (rejection #58, council lab item 2, 2026-10-28/29)
 
