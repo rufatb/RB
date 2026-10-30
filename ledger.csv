@@ -577,3 +577,9 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-10-29,AC.TO,SHORT,0.613,mid,21.7800,pair,extra,0.1931,444,,0.413,0
 2026-10-29,NTR.TO,SHORT,0.579,mid,96.9800,board,,,,,-1.268,1
 2026-10-29,SU.TO,SHORT,0.562,dense,108.8100,pair,primary,0.3062,141,9.2,-0.147,1
+2026-10-30,T.TO,LONG,0.606,mid,12.2500,board,,,,8.2,,
+2026-10-30,SU.TO,LONG,0.605,mid,109.4600,pair,extra,0.1801,82,,,
+2026-10-30,BMO.TO,LONG,0.599,mid,242.4600,board,,,,15.2,,
+2026-10-30,SLF.TO,LONG,0.556,dense,114.1600,pair,primary,0.3177,139,,,
+2026-10-30,TD.TO,LONG,0.553,mid,175.9200,board,,,,,,
+2026-10-30,CNR.TO,SHORT,0.557,sparse,176.7600,pair,primary,0.4991,141,7.3,,
