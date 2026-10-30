@@ -85,3 +85,7 @@ session,period,kind,ticker,side,etf,invalid_at,entry,atr_pct,reach_atr,gate,reas
 2026-10-29,test,final,EFN.TO,LONG,ZIN.TO,21.71,,,,,,5,1,1,2026-10-29T16:23:45-04:00
 2026-10-29,test,round1,CP.TO,SHORT,ZIN.TO,128.1,,,,,,90,1,2,2026-10-29T16:23:45-04:00
 2026-10-29,test,round1,EFN.TO,LONG,ZIN.TO,21.71,,,,,,5,1,1,2026-10-29T16:23:45-04:00
+2026-10-30,test,final,AGI.TO,SHORT,XGD.TO,,,,,,,-2,0,1,2026-10-30T16:22:40-04:00
+2026-10-30,test,final,K.TO,SHORT,XGD.TO,,,,,,,-2,0,2,2026-10-30T16:22:40-04:00
+2026-10-30,test,round1,AGI.TO,SHORT,XGD.TO,,,,,,,-2,0,1,2026-10-30T16:22:40-04:00
+2026-10-30,test,round1,K.TO,SHORT,XGD.TO,,,,,,,-2,0,2,2026-10-30T16:22:40-04:00
