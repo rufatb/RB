@@ -71,11 +71,13 @@ def memory(session, table, *, picks=None, lab=None, sectors=None, n=RECENT):
     import exposure as X
     picks = _read(LEDGER) if picks is None else picks
     lab = _read(LAB) if lab is None else lab
-    top = [r for r in picks if r.get('model') == 'top2' and r.get('kind') == 'pick'
-           and r.get('session', '') < session]
+    import model_picks as M
+    # Day-144: the council's own Top 2 (`top2council` once Claude leads), so the
+    # box keeps showing the council its own decisions.
+    top = [r for r in M.council_rows(picks) if r.get('session', '') < session]
     sessions = sorted({r['session'] for r in top})[-n:]
     labs = {(r.get('session'), r.get('side'), r.get('ticker')): r for r in lab
-            if r.get('model') == 'top2' and r.get('kind') == 'pick'}
+            if r.get('model') in ('top2', 'top2council') and r.get('kind') == 'pick'}
     recent, raw = [], []
     for r in sorted((r for r in top if r['session'] in sessions),
                     key=lambda r: (r['session'], r['side'], r['ticker'])):
@@ -273,7 +275,7 @@ def section(snap, *, prices=None):
     """The shadow's Top 2, in the Top 2 section's shape, with the same 09:46 check."""
     if not isinstance(snap, dict) or snap.get('status') not in ('READY', 'NO_CONSENSUS'):
         return None
-    out = K.top_two(snap, None, prices=prices, previous={})
+    out = K.top_two(snap, None, prices=prices, previous={}, claude_leads=False)
     import entry_checks
     out['rule_version'] = (RULE_VERSION + ('+' + K.MOVER_RULE if K.SKIP_MOVERS and 'moves' in snap else '')
                            + ('+' + K.WILD_RULE if K.SKIP_WILD and snap.get('wild') else '')
@@ -294,11 +296,16 @@ def comparison(picks=None):
     """The registered paired readout: per session, each arm's mean r_pct (0 with
     no picks), d = memory - live, over sessions where the shadow was recorded
     and every pick of both arms is scored."""
+    import model_picks as M
     picks = _read(LEDGER) if picks is None else picks
     by = {}
+    # Day-144: 'live' is the council's own decision (`top2council` once Claude
+    # leads), so the pair still differs only by the memory.
+    for r in M.council_rows(picks):
+        by.setdefault(r['session'], {}).setdefault('top2', []).append(r)
     for r in picks:
-        if r.get('kind') == 'pick' and r.get('model') in ('top2', 'top2memory'):
-            by.setdefault(r['session'], {}).setdefault(r['model'], []).append(r)
+        if r.get('kind') == 'pick' and r.get('model') == 'top2memory':
+            by.setdefault(r['session'], {}).setdefault('top2memory', []).append(r)
     shadow_days = sorted(s for s, v in by.items() if 'top2memory' in v)
     days = []
     for s in shadow_days:
@@ -323,7 +330,10 @@ def review_lines(session, report=None, picks=None):
            'It decides nothing; it is recorded to be compared at 20 and 40 sessions '
            '(PREREGISTER_day130_memory.md).']
     i = (report or {}).get('intraday') or {}
-    live = [(p['side'], p['ticker']) for p in (i.get('top_two') or {}).get('picks') or []]
+    t2 = i.get('top_two') or {}
+    # Day-144: once Claude leads, the live council's decision is `council_own`.
+    live = [(p['side'], p['ticker']) for p in (t2.get('council_own') if t2.get('claude_leads')
+                                                else t2.get('picks')) or []]
     mem = i.get('top_two_memory')
     if mem is None:
         snap = i.get('council_memory') or {}

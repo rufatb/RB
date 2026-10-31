@@ -33,6 +33,25 @@ def _no_previous_top2(tmp_path_factory, monkeypatch):
     monkeypatch.setattr(council, 'PREVIOUS_LEDGER', tmp_path_factory.mktemp('picks')/'none.csv')
 
 
+@pytest.fixture(autouse=True)
+def _pre_day144_rules(request, monkeypatch):
+    """Day-144 (owner, 2026-10-30) changed four switches for the morning of
+    2026-11-02: Claude's picks lead the Top 2 (`council.CLAUDE_LEADS`), and the
+    big-mover, high-volatility and 09:46 void rules are off (`SKIP_MOVERS`,
+    `SKIP_WILD`, `entry_checks.VOID_TOP2`). The suite was written for the
+    council's own Top 2 under all three, so every test runs on those rules
+    unless it is marked `day144`, which runs on the production values
+    (tests/test_claude_leads.py)."""
+    if request.node.get_closest_marker('day144'):
+        return
+    import council
+    import entry_checks
+    monkeypatch.setattr(council, 'CLAUDE_LEADS', False)
+    monkeypatch.setattr(council, 'SKIP_MOVERS', True)
+    monkeypatch.setattr(council, 'SKIP_WILD', True)
+    monkeypatch.setattr(entry_checks, 'VOID_TOP2', True)
+
+
 @pytest.fixture()
 def biotech_live(monkeypatch):
     """Day-136: Part 2 is retired (`biotech.RETIRED`). A test of the kept

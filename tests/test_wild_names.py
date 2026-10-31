@@ -25,6 +25,8 @@ def with_wild(snap, cut=5.0, **atrs):
 
 
 def test_the_switch_is_on_and_the_cut_is_the_ninetieth_percentile():
+    # The rule as it ran 10-22 → 10-30: tests/conftest.py pins it ON for the suite.
+    # Production is OFF from 2026-11-02 (day-144, tests/test_claude_leads.py).
     assert K.SKIP_WILD is True and K.WILD_PCTILE == 90 and K.WILD_RULE == 'day137-wild'
     rows = [{'ticker': 'N%d' % i, 'atr_pct': float(i)} for i in range(1, 21)]
     assert K.wild_cut(rows) == {'pctile': 90, 'atr_pct': 18.1, 'names': 20}     # numpy's linear rule

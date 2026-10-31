@@ -642,7 +642,8 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
     try:
         import top_picks
         import entry_checks
-        prices = entry_checks.marks(quotes) if quotes else None
+        # Day-144: the 09:46 void is off for the Top 2 (owner, 2026-10-30).
+        prices = entry_checks.marks(quotes) if quotes and entry_checks.VOID_TOP2 else None
         top_two = top_picks.select(claude_evidence, opportunity_evidence, jev_evidence,
                                    gemini=gemini_evidence, prices=prices,
                                    session=now.date().isoformat())

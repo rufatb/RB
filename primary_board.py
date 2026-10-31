@@ -160,6 +160,13 @@ LATE_BOARD = (('claude_late', 'Claude (late, after the open)'),
               ('gemini_late', 'Gemini (late, after the open)'))
 
 
+# Day-144 (owner, 2026-10-30): the Top 2 led by Claude's picks from 2026-11-02,
+# and the council's own choice recorded beside it (never a pick) — the owner's
+# comparison, under the Top 2 row once scored rows exist (claude_leads.py).
+LED_BOARD = (('top2claude_pick', 'Top 2 led by Claude (from 2026-11-02)'),
+             ('top2council_pick', "The council's own choice, not a pick (from 2026-11-02)"))
+
+
 # Amendment 2 to day-129 (owner, 2026-10-13): each model's nominations to the
 # council — a FORCED answer, scored apart and shown only once scored rows exist.
 NOMINATED_BOARD = (('claude_nominated', 'Claude (nominated, forced)'),
@@ -206,8 +213,10 @@ def leaderboard(card, verify=None, wire=None, pooled=None):
     rows = []
     late = [(k, n) for k, n in LATE_BOARD + NOMINATED_BOARD
             if ((card or {}).get(k) or {}).get('picks')]
+    led = tuple((k, n) for k, n in LED_BOARD if ((card or {}).get(k) or {}).get('picks'))
     card = {**(card or {}), **(verify or {}), **(wire or {}), **(pooled or {})}
-    board = (LEADERBOARD + tuple(late) + (VERIFY_BOARD if verify is not None else ())
+    board = (LEADERBOARD[:1] + led + LEADERBOARD[1:] + tuple(late)
+             + (VERIFY_BOARD if verify is not None else ())
              + (WIRE_BOARD if wire is not None else ())
              + (POOLED_BOARD if pooled is not None else ()))
     for key, name in board:

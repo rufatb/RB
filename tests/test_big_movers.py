@@ -48,6 +48,8 @@ def octfifteen():
 # ── the switch: on from 10-16; off is the frozen rule, unchanged ────────────
 
 def test_the_switch_is_on_from_ten_sixteen_and_the_default_follows_it():
+    # The rule as it ran 10-19 → 10-30: tests/conftest.py pins it ON for the suite.
+    # Production is OFF from 2026-11-02 (day-144, tests/test_claude_leads.py).
     assert K.SKIP_MOVERS is True and K.MOVER_ATR == 1.0
     snap = with_moves(snap_of(ALL_AGREE), AC_TO=2.5, SU_TO=-1.2)
     assert K.top_two(snap, previous={}) == K.top_two(snap, previous={}, skip_movers=True)

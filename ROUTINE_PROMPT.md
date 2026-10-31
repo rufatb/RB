@@ -84,7 +84,7 @@ Repeat while it prints STILL_WAITING. CLOSED: Claude's ballot was already cast s
   python council.py --state-dir .rb-state --check-ballot .rb-state/claude_ballot_answer.json
   python council.py --state-dir .rb-state --seal-ballot .rb-state/claude_ballot_answer.json
 Seal before 09:27 ET; the first sealed ballot stands.
-Then THE COUNCIL FLASH (owner, 2026-10-06): the council's decision by email the moment it is sealed, ahead of the report.
+Then THE COUNCIL FLASH (owner, 2026-10-06): the Top 2 by email the moment the council is sealed, ahead of the report (from 2026-11-02 Claude's first-named long and short with the council's vote on each, day-144).
   python council_flash.py --state-dir .rb-state --wait 100
 Repeat while it prints STILL_WAITING. READY: Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject / body / htmlBody the exact contents of the subject_path, text_path and html_path it printed, no attachments; then THE HTML CHECK, then `python council_flash.py --state-dir .rb-state --record --message-id <id>`. NOTHING, TOO_LATE, ALREADY_SENT or FAILED: send nothing and go on. The flash never replaces the report and never delays it.
 Then THE OPEN CHECK (day-127): at 09:31 the flashed positions are re-checked on the live quote.
@@ -139,7 +139,7 @@ STEP 10 — finish with a SHORT summary, in this order:
   - DELIVERY, one line, never omitted: "emailed <mode> at HH:MM ET, Gmail id <id>, HTML check OK" (or "HTML resent, id <id>") or the exact failure.
   - FLASH, one line: "council flash at HH:MM ET, Gmail id <id>; open check at HH:MM ET: <verdicts>, Gmail id <id>", or why either did not go out.
   - the job's exit code, and what broke if anything, in plain words (including whether the FMP context was staged, and whether Claude's desk and ballot came through OpenRouter or from you).
-  - TOP 2 — the council's decision at the top of the email: side, ticker, its vote ("3 of 4 endorse, 1 object"), who endorsed, who was absent; or "no consensus" with the closest positions. If the council did not sit, say so and give the counted rule's names.
+  - TOP 2 — at the top of the email. From 2026-11-02 (day-144, the owner's decision) it is Claude's first-named long and short: side, ticker, Claude's own confidence, the council's vote on each ("3 of 4 endorse, 1 object"), and the council's own choice beside it, never a pick. If Claude's picks were unavailable, say so: the council's own decision stands (side, ticker, its vote, who endorsed, who was absent; or "no consensus" with the closest positions). If the council did not sit, say so and give the names that stood.
   - PART 1 — each desk in order, Claude, DeepSeek, Gemini, Jev: its picks (side, ticker, status, share count, own confidence, wrong-if, and the wire release beside it if there was one) or its reason. Jev: forced picks only, with "below its own none" where true. Then the scoreboard rows, and the engine's legs as comparison only.
   - PARTS 3 and 4 — the gap signals and the post-earnings drift signals (new and still held), or why there were none. (Part 2, biotech, and Part 5, the debate, are retired.)
   - PART 6 — the news desk: how many overnight releases it read and its MATERIAL calls (side, ticker, own confidence), or why it is unavailable.

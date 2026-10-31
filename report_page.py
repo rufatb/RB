@@ -612,12 +612,19 @@ def _top_two_section(intra):
                 'a position is here only when most of those present endorsed it and at most one '
                 'objected. Consensus is not confirmation: they read the same brief, and none has '
                 'beaten random picks on the replay.</p>')
+    led = bool(sec.get('claude_leads'))
+    if led:                                           # day-144: Claude leads the Top 2
+        head = ('<section><h2 class="head">Top 2 · Claude\'s picks, with the council\'s vote</h2>'
+                '<p class="sub">Claude\'s first-named long and short from this morning\'s nominations '
+                '(the owner\'s decision of 2026-10-30). The other models voted on them in the council; '
+                'their vote is shown and cannot replace a pick. Neither Claude\'s record nor the '
+                'council\'s is distinguishable from a coin flip yet.</p>')
     direction = top_picks.direction_line(sec)         # day-135: above the table, a caution
     movers = top_picks.mover_line(sec)                # day-135c: the last session's big movers
     cautions = [x for x in (direction, movers) if x]
     extra = ''.join(f'<p>{escape(x)}</p>' for x in top_picks.table(sec)[2:]
                     if not x.startswith('|') and x and not x.startswith('Consensus is not')
-                    and x not in cautions)
+                    and not x.startswith("Neither Claude's record") and x not in cautions)
     if cautions:
         head += ('<ul class="gaps">' + ''.join(f'<li class="g-caution">{escape(x)}</li>' for x in cautions)
                  + '</ul>')
@@ -625,6 +632,23 @@ def _top_two_section(intra):
     if not picks:
         return head + f'{extra}</section>'
     rows = ''
+    if led:
+        for p in picks:
+            wrong = (f'{"below" if p["side"] == "LONG" else "above"} {fmt(p.get("invalid_at"))}'
+                     if isinstance(p.get('invalid_at'), (int, float)) else '&mdash;')
+            conf = (f'{p["confidence"]:.2f}' if isinstance(p.get('confidence'), (int, float))
+                    else '&mdash;')
+            w = p.get('wire')
+            rows += (f'<tr><td class="tick">{escape(p["ticker"])}</td><td>{escape(p["side"])}</td>'
+                     f'<td class="num">{conf}</td>'
+                     f'<td><span class="status">{escape(str(p.get("council_vote") or "—"))}</span></td>'
+                     f'<td>{wrong}</td>'
+                     f'<td>{escape(safe_detail(w["at"] + " " + w["title"], 120)) if w else "&mdash;"}</td></tr>'
+                     f'<tr class="reason"><td></td><td colspan="5">Claude: '
+                     f'{escape(safe_detail(str(p.get("reason") or "no reason given"), 200))}</td></tr>')
+        return (head + '<div class="scroll"><table><thead><tr><th>Name</th><th>Side</th>'
+                '<th>Claude\'s conf.</th><th>Council vote</th><th>Wrong if</th><th>Wire release</th>'
+                f'</tr></thead><tbody>{rows}</tbody></table></div>{extra}</section>')
     for p in picks:
         wrong = (f'{"below" if p["side"] == "LONG" else "above"} {fmt(p.get("invalid_at"))}'
                  if isinstance(p.get('invalid_at'), (int, float)) else '&mdash;')

@@ -10,6 +10,10 @@ pass or a fail. These are not signals and claim no accuracy.
 from __future__ import annotations
 
 RULE_VERSION = 'day120-entry'
+# Day-144 (owner, 2026-10-30, "get rid of these guardrails rules"): E1 no
+# longer removes a Top 2 pick at 09:46. `check` still runs for the 09:31 open
+# check, which reports it. True restores the day-120 rule.
+VOID_TOP2 = False
 USABLE = ('OK', 'CORROBORATED')
 
 

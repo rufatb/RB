@@ -288,7 +288,8 @@ def _line(rows, key, label):
 
 def table(rows=None):
     rows = read() if rows is None else rows
-    models = _unique([r for r in rows if r['model'] not in ('engine', 'top2count', 'top2memory', 'top2mover', 'top2wild')
+    models = _unique([r for r in rows if r['model'] not in ('engine', 'top2count', 'top2memory', 'top2mover',
+                                                            'top2wild', 'top2council')
                       and r['kind'] != 'nominated'])
     top2 = [r for r in rows if r['model'] == 'top2']
     out = ['## Execution lab — the same picks, executed other ways (day-130)',

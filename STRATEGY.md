@@ -5858,3 +5858,44 @@ The council lab's 10-30 slot.
     sessions earlier below 1.15, and the same ratio on the point-in-time
     S&P 500.
   * It runs in the next slot. A FAIL is rejection #59.
+
+## Day-144: the owner's decision — Claude's picks lead the Top 2, and the guardrails come off (not a test result)
+
+The owner, 2026-10-30: "Claude picks are doing much better than council. I
+want council to be led by Claude picks." On the guardrails: "Let's get rid of
+these guardrails rules as they may be interfering with our pick accuracies."
+Registered before the first session it governs
+(`PREREGISTER_day144_claude_leads.md`).
+* **From 2026-11-02 the Top 2 is Claude's first-named long and short** from its
+  council nominations (`council.CLAUDE_LEADS`, rule `day144-claude-leads`).
+  * The council still sits, unchanged. Its vote on each pick is shown and
+    cannot replace it.
+  * Its own choice is recorded beside as the `top2council` shadow, with a
+    scoreboard row labelled "not a pick".
+  * Without Claude's nominations (an OpenRouter error), the council's own Top 2
+    stands, labelled.
+* **Off:**
+  * adoption #4, the big-mover skip (`SKIP_MOVERS`);
+  * adoption #5, the widest-swinging names (`SKIP_WILD`);
+  * the 09:46 void (`entry_checks.VOID_TOP2`, day-120 E1).
+
+  Each is one switch to restore. The big-mover caution line still prints.
+* **What the record said when the owner decided:**
+  * Claude's nominations: 50 picks, 60% right, +0.06% gross.
+  * The printed Top 2: 25 picks, 40% right, −0.49%.
+* **The rule replayed on the record** (12 sessions, 10-14 → 10-29;
+  `data/claude_leads_before.json`):
+  * Claude's first-named long and short: 24 picks, 58% right, −0.11% gross.
+  * The printed Top 2: −0.98% gross, and it stood aside on 5 sessions.
+  * Net per session: +0.43%, t = 1.02. Without 10-15: +0.13%, t = 0.40.
+  * Claude's second-named picks did no worse (+0.05%).
+* **The forward comparison** (`claude_leads.py`, in the evening review):
+  * Claude-led net minus the council's own net, per session;
+  * a harm check at 20 sessions;
+  * the decision at 40: t ≥ 3 with a sign-flip placebo, or t ≤ −2 the other
+    way.
+
+  The owner decides either way.
+* **Not claimed:** that Claude's picks are more accurate. The lead is t ≈ 1,
+  most of it one day. Removing the size rules widens the swing; their tests
+  found no lean, so they were never what the hit rate depended on.

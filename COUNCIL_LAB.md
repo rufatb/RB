@@ -66,6 +66,14 @@ Ordered by what a result could change, then by cost.
 | 6 | **Round 1 against the discussion, on history** | Arm B forward needs 40 sessions where both arms pick | The 14 councils before the test (day-140 backfill) show how often the arms differ | A council replay of Round 1 alone, once the day-117 pools are rebuilt (their cache is gone). The backfill: the arms differed on 5 of 12 sessions | DeepSeek and Gemini calls | Queued |
 | 7 | **Weight the desks by their record** | The review's point 5 | No desk's record is beyond \|t\| = 1.1 | — | — | Not before a desk clears a bar |
 
+**2026-11-02: Claude leads the Top 2, and the guardrails are off (owner,
+day-144).** The council's own choice is now a recorded shadow (`top2council`).
+* **Item 4** still runs as registered: its filter is part of its
+  registration. A PASS goes to the owner as information, since they chose
+  against size rules on 10-30.
+* **Items 5 and 6** test the council's own choice, which is now a shadow.
+* **The live question** is day-144's forward comparison (`claude_leads.py`).
+
 **2026-10-26: the replay caches are gone.** The container reset wiped
 `.rb-state`, including the day-117 replay cache and the FMP caches. The
 backlog now uses the committed record, or refetches.
@@ -82,3 +90,4 @@ backlog now uses the committed record, or refetches.
 | 2026-10-29 | Item 2 run (`replay_news_open.py`, `data/replay_day142_open_prompt.json`; 133 DeepSeek calls) | NULL, powered (rejection #58): 418 calls +0.11% open → close against XIU, t = 0.99, placebo p = 0.19; a planted 0.5% shows at t = 4.41. Day-122's prompt re-asked: +0.05%; paired difference +0.06%, t = 0.46 |
 | 2026-10-30 | Item 3 sized before any test (gaps and ATR only; no outcome read): of the record's 189 positions (09-17 → 10-29, each name, side and day once), the open ran ≥ 1 ATR the pick's way once, ≥ 0.5 ATR 15 times (8 sessions), ≥ 0.25 ATR 43 times | Closed without a test. A gate at 1 ATR cannot be judged on the record. On history a ≥ 1 ATR gap continues slightly from the open (#42, t = 2.63), the opposite of the premise. Not a numbered rejection |
 | 2026-10-30 | Item 4 registered (`PREREGISTER_day143_report_day.md`; names pinned in `data/report_day143_names.json`) | Runs next slot |
+| 2026-10-31 | Day-144 registered (`PREREGISTER_day144_claude_leads.md`): the owner's decision, Claude leads the Top 2 and the guardrails come off, with the council's own choice kept as a shadow | Forward comparison from 11-02 (`claude_leads.py`); harm check at 20 sessions, decision at 40. Before (descriptive): Claude's first-named picks 24, 58% right, −0.11%; the printed Top 2 −0.98%; per session +0.43%, t = 1.02 |

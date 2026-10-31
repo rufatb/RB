@@ -79,8 +79,10 @@ def subject_state(report):
     if not legs and intraday.get('desks') and council_picks:
         # Day-124: the council can agree on Jev's forced picks when no desk
         # selected anything; the subject must not say there is nothing.
-        return 'COUNCIL TOP 2 ONLY — %d position%s, no sized desk leg — ' % (
-            council_picks, '' if council_picks == 1 else 's')
+        # Day-144: once Claude's picks lead the Top 2, the subject says whose they are.
+        who = "CLAUDE'S TOP 2" if (intraday.get('top_two') or {}).get('claude_leads') else 'COUNCIL TOP 2'
+        return '%s ONLY — %d position%s, no sized desk leg — ' % (
+            who, council_picks, '' if council_picks == 1 else 's')
     top = intraday.get('top_two') or {}
     if not legs and intraday.get('desks') and (top.get('passed_movers') or top.get('passed_wild')):
         # Day-135c, the switch on: the models did pick; the big-mover rule took

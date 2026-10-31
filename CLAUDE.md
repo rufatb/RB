@@ -18,6 +18,61 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day144 — Claude's picks lead the Top 2; the guardrails come off (owner, 2026-10-30; live 11-02)
+
+The owner: "Claude picks are doing much better than council. I want council to
+be led by Claude picks." Then "Claude's best long + short", and "Let's get rid
+of these guardrails rules as they may be interfering with our pick
+accuracies." Registered before 11-02 (`PREREGISTER_day144_claude_leads.md`).
+* **The Top 2** (`council.CLAUDE_LEADS = True`, rule `day144-claude-leads`).
+  * It is the first long and the first short in Claude's council nominations
+    (`nomination_picks.claude`, best first), with Claude's own confidence,
+    reason and "wrong if".
+  * The council sits as before. Its vote on each pick prints beside it
+    ("Council vote") and cannot replace it.
+  * Its own choice prints under the picks, "recorded beside and not a pick".
+  * The section is `council.claude_top_two`; `council.top_two` wraps the old
+    rule, renamed `council_top_two`.
+* **The fallbacks.**
+  * Without Claude's nominations (an OpenRouter error or none): the council's
+    own Top 2, with `claude_note`.
+  * The council did not sit but Claude nominated: Claude's picks "without its
+    vote" (`decide`).
+* **Off:** `SKIP_MOVERS`, `SKIP_WILD` and `entry_checks.VOID_TOP2` (the 09:46
+  void). `brief` passes no prices to the Top 2.
+  * The caution line still prints.
+  * The open check still says VOID or STILL VALID, and that 09:46 no longer
+    drops a pick.
+* **The record.**
+  * `top2/pick` is Claude's picks.
+  * `top2council/pick` is the council's own, a shadow: never sized, never
+    pooled, out of the lab's pool. The review scores it as "Council's own
+    choice (shadow)".
+  * `model_picks.council_rows` gives the council's own picks per session. The
+    memory council's box and comparison read it, and the memory council
+    itself keeps the council's rule (`claude_leads=False`).
+  * Day-140 arm A keeps reading `top2` (now Claude's picks); split it by
+    `prompt_version`.
+* **Where it shows.**
+  * The scoreboard adds "Top 2 led by Claude" and "The council's own choice,
+    not a pick" under the Top 2 row once scored (`primary_board.LED_BOARD`).
+  * The report subject says "CLAUDE'S TOP 2 ONLY" when no desk is sized.
+* **The forward comparison** (`claude_leads.py`, printed in the evening
+  review).
+  * Per session: Claude-led net minus the council's own net, with 0 for a
+    council that chose nothing.
+  * Harm check at 20 sessions; decision at 40: t ≥ 3 with a sign-flip placebo
+    p < 0.01 and both halves positive, or t ≤ −2 → tell the owner.
+  * `--before` replays the rule on the record (descriptive):
+    * Claude's first-named picks 24, 58% right, −0.11% gross;
+    * the printed Top 2 −0.98%;
+    * per session +0.43%, t = 1.02, and +0.13% without 10-15.
+* **Tests.** `tests/conftest.py` pins the earlier rules for the suite. Tests
+  marked `day144` run on the production values (`tests/test_claude_leads.py`).
+* **It depends on OpenRouter.** On a 402 the council's own Top 2 stands,
+  labelled. Keep the credit up.
+* **Not claimed:** any accuracy gain. Say so plainly when asked.
+
 ## Day143 — lab item 3 closed without a test; item 4, a report-day size rule, registered (council lab, 2026-10-30)
 
 * **Item 3 cannot be judged on the record.** It was sized on gaps and ATR
@@ -3114,7 +3169,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 It is the running record of every change tested — **58 rejections, 5
 adoptions** (as of day-142; skipping the morning's widest-swinging names is the
-fifth adoption). Almost every "obvious improvement" in this space has already been
+fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
+09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The five adopted changes were all VARIANCE results. None improved accuracy.

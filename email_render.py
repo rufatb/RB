@@ -411,7 +411,9 @@ def _hero(d):
         head, sub = f'{len(legs)} picks sized', 'Share counts use the 09:46 ET prices.'
     elif intra.get('desks') and (intra.get('top_two') or {}).get('council') \
             and (intra.get('top_two') or {}).get('picks'):
-        head = 'No desk sized a pick; the council agreed on the Top 2'
+        head = ('No desk sized a pick; the Top 2 is Claude\'s best long and short'
+                if (intra.get('top_two') or {}).get('claude_leads') else
+                'No desk sized a pick; the council agreed on the Top 2')
         sub = 'Its positions are above, unsized; each desk below says why it declined.'
     elif intra.get('desks'):
         head = 'No model picked anything today'

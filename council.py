@@ -59,7 +59,11 @@ PICKS = 2
 # Top 2s in a row followed the day before's big move (owner: "it's pretty risky
 # for me to long again the next day"); False restores the frozen day-124 rule.
 MOVER_ATR = 1.0
-SKIP_MOVERS = True
+# OFF again from 2026-11-02 (day-144): the owner removed the guardrails ("Let's
+# get rid of these guardrails rules as they may be interfering with our pick
+# accuracies", 2026-10-30). The rule is kept, switchable, and its caution line
+# still prints.
+SKIP_MOVERS = False
 MOVER_RULE = 'day135c-movers'
 MOVER_NOTE = ('After a move that size a name swings about a quarter wider the next session '
               '(2016–2026, 49,295 cases), and neither following the move nor betting on a bounce '
@@ -73,8 +77,17 @@ MOVER_NOTE = ('After a move that size a name swings about a quarter wider the ne
 # to council picks"); False restores the day-135d rule.
 WILD_PCTILE = 90
 WILD_MIN_NAMES = 20
-SKIP_WILD = True
+SKIP_WILD = False            # OFF from 2026-11-02 with the other guardrails (day-144)
 WILD_RULE = 'day137-wild'
+# Day-144 (owner, 2026-10-30): "Claude picks are doing much better than council.
+# I want council to be led by Claude picks." The Top 2 is Claude's first-named
+# long and first-named short from its council nominations (best first). The
+# council still sits: its vote on each is shown and cannot replace a pick, and
+# its own choice is kept beside as a recorded shadow (`council_own`). When
+# Claude's nominations are missing, the council's own Top 2 stands, labelled.
+# PREREGISTER_day144_claude_leads.md. False restores the council's own Top 2.
+CLAUDE_LEADS = True
+CLAUDE_RULE = 'day144-claude-leads'
 MEMBERS = ('Claude', 'DeepSeek', 'Gemini', 'Jev')
 LEAD_ORDER = ('claude', 'deepseek', 'gemini', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
@@ -924,7 +937,121 @@ def mover_phrase(x):
                                            'reversal' if m > 0 else 'bounce', move_words(m))
 
 
-def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None, skip_wild=None):
+def _previous(council):
+    """(previous_top2, note): the repeat flag's record, never fatal."""
+    try:
+        return previous_top2((council or {}).get('session') or ''), None
+    except Exception as exc:              # display only: it never costs the section, and says so
+        return {}, 'The repeat check could not read the record (%s).' % type(exc).__name__
+
+
+def claude_picks(council):
+    """[(side, nomination)]: Claude's first-named long and first-named short
+    from its council nominations, which it names best first (day-144)."""
+    got = ((council or {}).get('nomination_picks') or {}).get('claude') or {}
+    out = []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        first = next((p for p in got.get(key) or [] if isinstance(p, dict) and p.get('ticker')), None)
+        if first:
+            out.append((side, first))
+    return out
+
+
+def claude_top_two(council, own, *, previous=None):
+    """Day-144 (owner, 2026-10-30): the Top 2 led by Claude — its first-named
+    long and short, each with the council's vote on it, which cannot replace
+    it. `own` is the council's own section; its picks are kept beside as
+    `council_own`, the recorded shadow. None when Claude nominated nothing."""
+    chosen = claude_picks(council)
+    if not chosen:
+        return None
+    by_pos = {(p['ticker'], p['side']): p for p in council.get('positions') or []}
+    tally_ = council.get('tally') or {}
+    rows = {r['id']: r for r in tally_.get('rows') or []}
+    members = tally_.get('members') or []
+    moves = council.get('moves') or {}
+    picks = []
+    for side, nom in chosen:
+        pos = by_pos.get((nom['ticker'], side))
+        r = rows.get(pos['id']) if pos else None
+        if pos and r:
+            x = _shape(pos, r, members, None)
+            vote = x['verdict']
+        else:
+            x = {'ticker': nom['ticker'], 'side': side, 'votes': {}, 'votes_against': [],
+                 'split': False, 'council': True, 'entry_check': None, 'proposed': []}
+            vote = ('not voted on (the council did not sit)' if not members else
+                    "not voted on (not on the council's table)")
+        conf = nom.get('confidence')
+        conf_txt = ('%.2f' % conf) if isinstance(conf, (int, float)) else '—'
+        x.update({'lead': 'Claude', 'reason': nom.get('reason'), 'invalid_at': nom.get('invalid_at'),
+                  'confidence': conf, 'claude_pick': True, 'council_vote': vote,
+                  'models': ['claude'], 'backing': ['Claude %s' % conf_txt],
+                  'agreement': 'Claude %s; council %s' % (conf_txt, vote.split(';')[0]),
+                  'verdict': "Claude's pick; council %s" % vote})
+        if nom['ticker'] in (previous or {}):
+            x['repeat'] = previous[nom['ticker']]
+        m = (moves.get(nom['ticker']) or {}).get('move_atr')
+        if isinstance(m, (int, float)):
+            x['move_atr'] = float(m)
+        picks.append(x)
+    return {'picks': picks, 'status': 'READY' if len(picks) == PICKS else 'PARTIAL',
+            'council': True, 'claude_leads': True,
+            'answered': members, 'absent': tally_.get('absent') or [],
+            'rule_version': CLAUDE_RULE,
+            'reason': (None if len(picks) == PICKS else
+                       'Claude named only one side today, so the second slot is left empty.'),
+            'near': [], 'runner_up': None, 'runner_up_note': None,
+            'council_own': list((own or {}).get('picks') or []),
+            'council_own_status': (own or {}).get('status'),
+            'council_own_rule': (own or {}).get('rule_version'),
+            'council_own_reason': (own or {}).get('reason')}
+
+
+def claude_own_line(section):
+    """The council's own choice beside Claude's picks, labelled as no pick."""
+    if not (section or {}).get('claude_leads'):
+        return None
+    own = section.get('council_own') or []
+    if own:
+        return ("The council's own choice, recorded beside and not a pick: "
+                + ' · '.join('%s %s (%s)' % (p['side'], p['ticker'], p.get('agreement') or '')
+                             for p in own) + '.')
+    if section.get('council_own_status') is None:
+        return None
+    return "The council's own choice, recorded beside and not a pick: none (no consensus)."
+
+
+def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None, skip_wild=None,
+            claude_leads=None):
+    """The Top 2 section. Day-144 (`CLAUDE_LEADS`, owner 2026-10-30): Claude's
+    first-named long and short, with the council's vote on each and the
+    council's own decision kept beside (`council_own`, a recorded shadow).
+    Off, or with no Claude nominations, it is the council's own decision
+    (`council_top_two`), labelled when Claude's picks were missing."""
+    leads = CLAUDE_LEADS if claude_leads is None else claude_leads
+    note = None
+    if previous is None:
+        previous, note = _previous(council)
+    own = council_top_two(council, counted, prices=prices, previous=previous,
+                          skip_movers=skip_movers, skip_wild=skip_wild)
+    if note:
+        own['repeat_note'] = note
+    if not leads:
+        return own
+    led = claude_top_two(council, own, previous=previous)
+    if led is None:
+        why = _clip(str((council.get('errors') or {}).get('nominations claude')
+                        or 'it nominated nothing'), 120)
+        return {**own, 'claude_note': "Claude's picks were unavailable today (%s); the council's "
+                                      'own Top 2 stands.' % why}
+    if note:
+        led['repeat_note'] = note
+    return led
+
+
+def council_top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None,
+                    skip_wild=None):
     """The council's decision in the Top 2 section's shape. The 09:46 entry check
     (day-120 E1) drops a position already past its lead proposer's "wrong if".
 
@@ -1154,6 +1281,16 @@ def decide(counted, council, *, prices=None, moves=None):
     if (isinstance(council, dict) and council.get('status') in ('READY', 'NO_CONSENSUS')
             and len((council.get('tally') or {}).get('members') or []) >= 2):
         return top_two(council, counted, prices=prices)
+    if CLAUDE_LEADS and isinstance(council, dict) and claude_picks(council):
+        # Day-144: Claude's nominations exist but the room did not sit; its
+        # picks still lead, without a vote.
+        previous, note = _previous(council)
+        led = claude_top_two(council, {}, previous=previous)
+        led['council_note'] = ("The council did not sit today (%s); Claude's picks stand without "
+                               'its vote.' % str(council.get('reason') or 'it was not staged')[:120])
+        if note:
+            led['repeat_note'] = note
+        return led
     if not isinstance(counted, dict):
         return counted
     why = (council or {}).get('reason') or 'it was not staged'
@@ -1289,6 +1426,10 @@ def council_lines(section, concise=True):
             conv = ' %.2f' % v['conviction'] if v.get('conviction') is not None else ''
             arg = _clip(v.get('argument') or '', 110 if concise else 200)
             parts.append('%s %s%s%s' % (m, v['stance'].lower(), conv, (' — ' + arg) if arg else ''))
+        if not parts and p.get('claude_pick'):  # day-144: a Claude pick the council never voted on
+            out.append('Council on %s %s: %s.' % (p['side'], p['ticker'],
+                                                   p.get('council_vote') or 'not voted on'))
+            continue
         out.append('Council on %s %s: %s' % (p['side'], p['ticker'], ' · '.join(parts)))
     return out
 

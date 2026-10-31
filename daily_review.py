@@ -84,6 +84,11 @@ def picks_of(report):
     for p in (i.get('top_two') or {}).get('passed_wild') or []:            # day-137
         add('Passed over (high volatility)', '+'.join(p.get('models') or []), p['side'], p,
             extra={'agreement': p.get('agreement')})
+    # Day-144: with Claude leading the Top 2, the council's own decision is a
+    # shadow, scored in its own section and kept out of the lessons.
+    for p in (i.get('top_two') or {}).get('council_own') or []:
+        add("Council's own choice (shadow)", '+'.join(p.get('models') or []), p['side'], p,
+            extra={'agreement': p.get('agreement')})
     # Amendment 2 to day-129: the models' forced nominations, scored in their own
     # section and kept out of the lessons (which read named sections only).
     for model, got in ((i.get('council') or {}).get('nomination_picks') or {}).items():
@@ -363,7 +368,8 @@ def main(argv=None):
         print(f"the report is for {report.get('session')}, not {a.session}", file=sys.stderr)
         return 2
     out = review(a.session, report)
-    md = (out['markdown'] + lab_section() + memory_section(a.session, report)
+    md = (out['markdown'] + lab_section() + claude_led_section(a.session)
+          + memory_section(a.session, report)
           + table_section(a.session, report) + preopen_section(a.session)
           + fixpack_section(a.session, report))
     (REVIEWS / f'{a.session}.md').write_text(md)
@@ -421,6 +427,17 @@ def fixpack_section(session, report=None):
     except Exception as exc:
         return f"\nThe fix-pack readout is unavailable ({type(exc).__name__}).\n"
     return fixpack.section(session, report)
+
+
+def claude_led_section(session, lines=None):
+    """Day-144: the Claude-led Top 2 against the council's own choice
+    (claude_leads.py). It never costs the review, and a failure says so."""
+    import claude_leads
+    try:
+        got = (lines or claude_leads.lines)(session)
+    except Exception as exc:
+        return f"\nThe Claude-led readout is unavailable ({type(exc).__name__}).\n"
+    return '\n' + '\n'.join(got) + '\n'
 
 
 def memory_section(session, report, lines=None):

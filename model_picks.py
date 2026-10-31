@@ -145,6 +145,13 @@ def rows_from_report(report, source='published_report'):
     for pick in (intra.get('top_two') or {}).get('passed_wild') or []:
         add('top2wild', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
             prompt_version=(intra.get('top_two') or {}).get('rule_version'))
+    # Day-144: with Claude leading the Top 2, the council's own decision is a
+    # SHADOW recorded beside it, so the two are scored on one yardstick; never
+    # sized, never pooled, never on the scoreboard.
+    t2 = intra.get('top_two') or {}
+    for pick in t2.get('council_own') or []:
+        add('top2council', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
+            prompt_version=t2.get('council_own_rule'))
     # Day-124: the counted rule beside the council, a SHADOW recorded for the
     # registered 40-session comparison and never printed in the email.
     for pick in (intra.get('top_two_counted') or {}).get('picks') or []:
@@ -321,23 +328,30 @@ def _float(value):
 
 def scorecard(rows=None):
     """Per (model, kind): picks, hits, rate, mean r, sessions, 95% interval."""
+    import council
     rows = read() if rows is None else rows
     out = {}
     for row in rows:
         if not row.get('scored_at'):
             continue
         key = f"{row['model']}_{row['kind']}"
-        entry = out.setdefault(key, {'n': 0, 'hits': 0, 'r': [], 'sessions': set(),
-                                     'invalid_n': 0, 'invalidated': 0})
-        entry['n'] += 1
-        entry['hits'] += row.get('hit') == '1'
-        r = _float(row.get('r_pct'))
-        if r is not None:
-            entry['r'].append(r)
-        entry['sessions'].add(row['session'])
-        if row.get('invalidated') in ('0', '1'):
-            entry['invalid_n'] += 1
-            entry['invalidated'] += row['invalidated'] == '1'
+        keys = [key]
+        # Day-144: the Top 2's Claude-led sessions also on their own, beside the
+        # council's own choice (`top2council_pick`), so the owner's comparison shows.
+        if key == 'top2_pick' and str(row.get('prompt_version') or '').startswith(council.CLAUDE_RULE):
+            keys.append('top2claude_pick')
+        for key in keys:
+            entry = out.setdefault(key, {'n': 0, 'hits': 0, 'r': [], 'sessions': set(),
+                                         'invalid_n': 0, 'invalidated': 0})
+            entry['n'] += 1
+            entry['hits'] += row.get('hit') == '1'
+            r = _float(row.get('r_pct'))
+            if r is not None:
+                entry['r'].append(r)
+            entry['sessions'].add(row['session'])
+            if row.get('invalidated') in ('0', '1'):
+                entry['invalid_n'] += 1
+                entry['invalidated'] += row['invalidated'] == '1'
     result = {}
     for key, e in out.items():
         n = e['n']
@@ -397,7 +411,22 @@ def wire_card(rows=None, root=None):
 # picks (asked after the open), the engine (not a language model) and the
 # shadows that re-choose the same picks are left out.
 POOLED_KINDS = ('selected', 'forced', 'nominated', 'pick', 'final')
-POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner', 'top2mover', 'top2wild')
+POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner', 'top2mover', 'top2wild',
+                   'top2council')
+
+
+def council_rows(rows):
+    """The council's OWN Top 2 rows, session by session (day-144): `top2/pick`
+    while the council decided the Top 2, the `top2council/pick` shadow once
+    Claude leads (that session's `top2` rows carry `council.CLAUDE_RULE`).
+    On a Claude-led session the council's own may be empty (no consensus,
+    or the council did not sit). Readers of \"the council's picks\" use this,
+    so their population stays the council's."""
+    import council
+    led = {r.get('session') for r in rows if r.get('model') == 'top2' and r.get('kind') == 'pick'
+           and str(r.get('prompt_version') or '').startswith(council.CLAUDE_RULE)}
+    return [r for r in rows if r.get('kind') == 'pick'
+            and r.get('model') == ('top2council' if r.get('session') in led else 'top2')]
 
 
 def pooled_card(rows=None):

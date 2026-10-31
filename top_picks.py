@@ -259,6 +259,8 @@ def table(section, concise=False):
     `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
     if not section:
         return []
+    if section.get('claude_leads'):              # day-144: Claude leads the Top 2
+        return _claude_table(section, concise)
     if section.get('council'):
         return _council_table(section, concise)
     if concise:
@@ -303,6 +305,61 @@ def table(section, concise=False):
         out.append(section['reason'])
     if single and section.get('single'):
         out.append(single)
+    return out + _notes(section)
+
+
+def _claude_table(section, concise):
+    """Day-144 (owner, 2026-10-30): the Top 2 is Claude's first-named long and
+    short; the council's vote on each is shown and cannot replace a pick, and
+    the council's own choice is printed beside, labelled as no pick."""
+    import council
+    out = ["## Top 2 — Claude's picks, with the council's vote",
+           "Claude's first-named long and short from this morning's nominations (the owner's "
+           "decision of 2026-10-30). The other models voted on them in the council; their vote is "
+           "shown and cannot replace a pick."]
+    if not concise:
+        out.append("Neither Claude's record nor the council's is distinguishable from a coin flip "
+                   "yet; the council's own choice is recorded beside these picks so the two can be "
+                   'compared.')
+    sat = section.get('answered') or []
+    absent = section.get('absent') or []
+    if sat or absent:
+        out.append('Council sat: %s%s.' % (', '.join(sat) or 'nobody',
+                                          ('; absent: ' + ', '.join(absent)) if absent else ''))
+    picks = section.get('picks') or []
+    repeats = [line for line in (council.repeat_line(x) for x in picks) if line]
+    if not picks:
+        return out + ['', section.get('reason') or 'No pick today.'] + _notes(section)
+    out += ['', "| # | Pick | Claude's conf. | Council vote | Wrong if | Wire release | Why (Claude) |",
+            '|---|---|---:|---|---|---|---|']
+    for i, p in enumerate(picks, 1):
+        wrong = (f"{'below' if p['side'] == 'LONG' else 'above'} {p['invalid_at']:g}"
+                 if isinstance(p.get('invalid_at'), (int, float)) else '—')
+        conf = f"{p['confidence']:.2f}" if isinstance(p.get('confidence'), (int, float)) else '—'
+        w = p.get('wire')
+        release = f"{w['at']} {w['title']}"[:90].replace('|', '/') if w else '—'
+        vote = str(p.get('council_vote') or '—').replace('|', '/')
+        why = str(p.get('reason') or '—').replace('|', '/')[:200]
+        out.append(f"| {i} | {p['side']} {p['ticker']} | {conf} | {vote} | {wrong} | {release} | {why} |")
+    movers = mover_line(section)                 # day-135c: a caution, display only
+    if movers:
+        out.append(movers)
+    out += council.council_lines(section, concise=concise)
+    own = council.claude_own_line(section)
+    if own:
+        out.append(own)
+    try:                                         # day-127: what each position is a bet on
+        import exposure
+        line = exposure.exposure_line(picks)
+    except Exception:                            # display only; never costs the section
+        line = None
+    if line:
+        out.append(line)
+    import execution_lab
+    out.append(execution_lab.NOON_NOTE)
+    if section.get('reason'):
+        out.append(section['reason'])
+    out += repeats
     return out + _notes(section)
 
 
@@ -381,6 +438,8 @@ def _notes(section):
     out = []
     if section.get('council_note'):
         out.append(section['council_note'])
+    if section.get('claude_note'):               # day-144: Claude's picks were missing
+        out.append(section['claude_note'])
     if section.get('split'):
         out.append('The models took opposite sides of: ' + ', '.join(section['split']) + ' — left out.')
     if section.get('void_at_entry'):

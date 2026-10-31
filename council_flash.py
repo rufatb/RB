@@ -114,7 +114,9 @@ def compose(council, now):
         % _prior(council),
         ('Preliminary. Decided from the previous session\'s data and not yet checked against the '
          'open: the 09:46 report drops a position already past its "wrong if", so check that level '
-         'against your own quote first.'),
+         'against your own quote first.' if _entry_void() else
+         'Preliminary. Decided from the previous session\'s data and not yet checked against the '
+         'open: check each "wrong if" against your own quote first.'),
         'Research only, not an order. No share counts here; the full report sizes the desks.',
     ])
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
@@ -123,6 +125,12 @@ def compose(council, now):
                email_render.direction_html(section)          # day-135: one side, one bet
                + email_render.mover_html(section)))          # day-135c: the last session's big movers
     return subject(session, section), body, email_render.html_from_text(body, hero=hero)
+
+
+def _entry_void():
+    """Whether the 09:46 report still drops a pick past its \"wrong if\" (day-144: off)."""
+    import entry_checks
+    return entry_checks.VOID_TOP2
 
 
 def _prior(council):
@@ -402,7 +410,9 @@ def compose_open(council, rows, now, section=None):
               'chosen is proven wrong today. STILL VALID means only that it is not; it is not a '
               'forecast. A "wrong if" more than one normal day\'s move (ATR) from the price is OUT OF '
               'REACH: an ordinary day would not touch it, so it does not limit a loss. A positive '
-              '"for the pick" figure is a move the pick\'s way.',
+              '"for the pick" figure is a move the pick\'s way.'
+              + ('' if _entry_void() else ' The 09:46 report no longer drops a VOID pick (day-144): '
+                 'the verdict is for you to weigh.'),
               'Research only, not an order.']
     body = '\n'.join(lines)
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
