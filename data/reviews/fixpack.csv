@@ -89,3 +89,8 @@ session,period,kind,ticker,side,etf,invalid_at,entry,atr_pct,reach_atr,gate,reas
 2026-10-30,test,final,K.TO,SHORT,XGD.TO,,,,,,,-2,0,2,2026-10-30T16:22:40-04:00
 2026-10-30,test,round1,AGI.TO,SHORT,XGD.TO,,,,,,,-2,0,1,2026-10-30T16:22:40-04:00
 2026-10-30,test,round1,K.TO,SHORT,XGD.TO,,,,,,,-2,0,2,2026-10-30T16:22:40-04:00
+2026-11-02,test,final,MX.TO,LONG,XMA.TO,92.09,,,,,,86,0,1,2026-11-02T16:23:45-05:00
+2026-11-02,test,live,MX.TO,LONG,XMA.TO,97.91,96.02,3.7428,,dropped,wrong-if already crossed at the 09:45 entry,86,0,1,2026-11-02T16:23:45-05:00
+2026-11-02,test,live,TFII.TO,SHORT,ZIN.TO,135.49,130.855,4.8317,0.733,kept,,-4,0,2,2026-11-02T16:23:45-05:00
+2026-11-02,test,round1,MX.TO,LONG,XMA.TO,92.09,,,,,,86,0,1,2026-11-02T16:23:45-05:00
+2026-11-02,test,round1,X.TO,LONG,XFN.TO,57.22,,,,,,-4,0,2,2026-11-02T16:23:45-05:00
