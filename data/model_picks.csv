@@ -493,3 +493,29 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-10-30,top2mover,pick,SHORT,AGI.TO,0.49,,,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,38.47,38.34,0.3379,1,,2026-10-30T16:21:06.183084-04:00,,,,,4 of 4 endorse
 2026-10-30,top2mover,pick,SHORT,K.TO,0.24,,,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,28.65,28.13,1.815,1,,2026-10-30T16:21:06.183084-04:00,,,,,4 of 4 endorse
 2026-10-30,top2runner,pick,LONG,MDA.TO,0.04,,,day124-council+day129-nominations+day135c-movers+day137-wild+day120-entry,published_report,38.93,37.98,-2.4403,0,,2026-10-30T16:21:06.183084-04:00,,,,,3 of 4 endorse
+2026-11-02,claude,nominated,LONG,CP.TO,0.36,,123.6,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,claude,nominated,LONG,MX.TO,0.4,,97.91,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,claude,nominated,SHORT,AC.TO,0.33,,20.89,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,claude,nominated,SHORT,TFII.TO,0.35,,135.49,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,deepseek,nominated,LONG,MX.TO,0.58,,92.09,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,deepseek,nominated,LONG,X.TO,0.62,,57.22,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,deepseek,nominated,SHORT,CCO.TO,0.61,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,deepseek,nominated,SHORT,TFII.TO,0.57,,135.49,day129-nominations,published_report,,,,,,,news,,,,
+2026-11-02,engine,board,LONG,BNS.TO,0.573,,,,published_report,,,,,,,,,,,
+2026-11-02,engine,board,LONG,TD.TO,0.564,,,,published_report,,,,,,,,,,,
+2026-11-02,engine,board,SHORT,BCE.TO,0.638,,,,published_report,,,,,,,,,,,
+2026-11-02,engine,board,SHORT,ENB.TO,0.614,,,,published_report,,,,,,,,,,,
+2026-11-02,gemini,nominated,LONG,MX.TO,0.65,,92.09,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,gemini,nominated,LONG,X.TO,0.62,,57.22,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,gemini,nominated,SHORT,AC.TO,0.64,,20.89,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,gemini,nominated,SHORT,TFII.TO,0.68,,138.39,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-02,gemini,selected,LONG,MX.TO,0.65,,92.09,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-11-02,gemini,selected,SHORT,TFII.TO,0.68,,138.39,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-11-02,jev,forced,LONG,X.TO,0.17,0.4,,,published_report,,,,,,,,,,,
+2026-11-02,jev,forced,SHORT,TFII.TO,0.41,0.35,,,published_report,,,,,,,,,,,
+2026-11-02,top2,pick,LONG,MX.TO,0.4,,97.91,day144-claude-leads,published_report,,,,,,,,,,,Claude 0.40; council 4 of 4 endorse
+2026-11-02,top2,pick,SHORT,TFII.TO,0.35,,135.49,day144-claude-leads,published_report,,,,,,,,,,,"Claude 0.35; council 0 of 4 endorse, 1 object"
+2026-11-02,top2council,pick,LONG,MX.TO,0.68,,92.09,day124-council+day129-nominations,published_report,,,,,,,,,,,4 of 4 endorse
+2026-11-02,top2count,pick,LONG,MX.TO,0.65,,92.09,day121-agreement,published_report,,,,,,,,,,,2 of 4
+2026-11-02,top2count,pick,SHORT,TFII.TO,0.68,,138.39,day121-agreement,published_report,,,,,,,,,,,2 of 4
+2026-11-02,top2memory,pick,LONG,MX.TO,0.72,,92.09,day130-memory,published_report,,,,,,,,,,,4 of 4 endorse
