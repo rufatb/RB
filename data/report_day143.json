@@ -1,0 +1,200 @@
+{
+ "registered": "PREREGISTER_day143_report_day.md",
+ "run_on": "2026-11-02",
+ "window": [
+  "2024-01-02",
+  "2026-10-29"
+ ],
+ "names": 150,
+ "counts": {
+  "reports_in_window": 1658,
+  "reports_outside_window": 13809,
+  "reports_without_a_bar": 13,
+  "short_history": 27,
+  "not_the_market_session": 6,
+  "not_a_member": 0
+ },
+ "comparison": {
+  "sessions_too_few_names": 0,
+  "no_move_or_atr": 0,
+  "passed_over_mover": 14043,
+  "passed_over_wild": 9022
+ },
+ "name_days": 104025,
+ "kept_name_days": 80960,
+ "primary": {
+  "window_name_days": 2298,
+  "rest_name_days": 78662,
+  "sd_window_pct": 2.239,
+  "sd_rest_pct": 1.447,
+  "ratio": 1.548,
+  "bootstrap": {
+   "draws": 2000,
+   "ci95": [
+    1.452,
+    1.64
+   ],
+   "sd": 0.0481,
+   "smallest_detectable_ratio": 1.135
+  }
+ },
+ "lean": {
+  "continuation_vs_xiu": {
+   "n": 2228,
+   "mean_pct": 0.0481,
+   "se": 0.0474,
+   "t": 1.01,
+   "hit": 0.517
+  },
+  "long_vs_xiu": {
+   "n": 2298,
+   "mean_pct": 0.1484,
+   "se": 0.0528,
+   "t": 2.81,
+   "hit": 0.527
+  }
+ },
+ "placebo": {
+  "shift_sessions": 20,
+  "ratio": 1.184
+ },
+ "point_in_time_sp500": {
+  "window": [
+   "2016-01-04",
+   "2026-10-29"
+  ],
+  "members_in_window": 716,
+  "names_with_bars": 703,
+  "counts": {
+   "reports_in_window": 27160,
+   "reports_outside_window": 54243,
+   "reports_without_a_bar": 5898,
+   "short_history": 1176,
+   "not_the_market_session": 131,
+   "not_a_member": 353209
+  },
+  "comparison": {
+   "sessions_too_few_names": 0,
+   "no_move_or_atr": 0,
+   "passed_over_mover": 172223,
+   "passed_over_wild": 118696
+  },
+  "window_name_days": 28344,
+  "rest_name_days": 1035252,
+  "sd_window_pct": 2.666,
+  "sd_rest_pct": 1.295,
+  "ratio": 2.059
+ },
+ "control": {
+  "n": 2298,
+  "unscaled": 1.007,
+  "scaled": 1.259,
+  "detected": true
+ },
+ "bar": {
+  "size": true,
+  "no_lean": false,
+  "placebo": false,
+  "point_in_time": true
+ },
+ "verdict": "FAIL",
+ "descriptive": {
+  "D0": 1.4,
+  "D1": 1.711,
+  "without_the_live_rule_filter": 1.461,
+  "within_name_median_ratio": {
+   "names": 144,
+   "median": 1.482
+  },
+  "share_moving_3pct": {
+   "window": 0.15,
+   "rest": 0.046
+  },
+  "volume_confirmed_reports_FLAGGED": {
+   "note": "selecting on the volume spike inflates the ratio",
+   "window_name_days": 1468,
+   "ratio": 1.673
+  },
+  "daily_open_to_close_tsx": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "counts": {
+    "reports_in_window": 6221,
+    "reports_outside_window": 9246,
+    "reports_without_a_bar": 68,
+    "short_history": 208,
+    "not_the_market_session": 68,
+    "not_a_member": 0
+   },
+   "ratio": 1.716,
+   "by_year": {
+    "2016": {
+     "window": 720,
+     "rest": 26036,
+     "ratio": 1.592
+    },
+    "2017": {
+     "window": 717,
+     "rest": 26462,
+     "ratio": 1.89
+    },
+    "2018": {
+     "window": 798,
+     "rest": 26862,
+     "ratio": 1.774
+    },
+    "2019": {
+     "window": 791,
+     "rest": 27319,
+     "ratio": 1.859
+    },
+    "2020": {
+     "window": 746,
+     "rest": 26940,
+     "ratio": 1.346
+    },
+    "2021": {
+     "window": 815,
+     "rest": 28074,
+     "ratio": 1.662
+    },
+    "2022": {
+     "window": 822,
+     "rest": 27458,
+     "ratio": 1.689
+    },
+    "2023": {
+     "window": 809,
+     "rest": 28000,
+     "ratio": 2.123
+    },
+    "2024": {
+     "window": 813,
+     "rest": 28514,
+     "ratio": 2.073
+    },
+    "2025": {
+     "window": 866,
+     "rest": 28348,
+     "ratio": 1.779
+    },
+    "2026": {
+     "window": 642,
+     "rest": 23402,
+     "ratio": 1.692
+    }
+   }
+  },
+  "council_positions": {
+   "positions": 32,
+   "in_a_report_window": 2,
+   "names_not_in_the_list": 1,
+   "which": [
+    "2026-10-27 SHORT CLS.TO",
+    "2026-10-29 SHORT CP.TO"
+   ]
+  }
+ }
+}

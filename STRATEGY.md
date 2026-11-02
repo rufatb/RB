@@ -5899,3 +5899,33 @@ Registered before the first session it governs
 * **Not claimed:** that Claude's picks are more accurate. The lead is t ≈ 1,
   most of it one day. Removing the size rules widens the swing; their tests
   found no lean, so they were never what the hit rate depended on.
+
+## Day-143: REJECTION #59 — the report window swings wider, but it is not a size rule
+
+Council lab item 4, run 2026-11-02 in one look (`PREREGISTER_day143_report_day.md`;
+`report_day.py`, 8602c5d; `AUDIT_day143_report_day.md`;
+`data/report_day143.json`).
+* **The test.** The 150 names, FMP 15-minute bars, 2024-01 → 2026-10-29, among
+  the 80,960 name-days the two live size rules would not pass over. Does a
+  report window (D0 and D1 around FMP's date) swing wider from 09:45 to the
+  close?
+* **The verdict: FAIL.** Two of the four registered conditions fail.
+  * **Size, met:** 1.55× the rest (2.24% against 1.45%; bootstrap 95%
+    1.45–1.64).
+  * **Point in time, met:** the S&P 500 as it stood on each date, 2016 → ,
+    reads 2.06×.
+  * **No lean, not met:** the window leans long against XIU, +0.15% a
+    name-day, t = 2.81. That is day-138's survivor effect on today's list.
+  * **Placebo, not met:** dates moved 20 sessions earlier still read 1.18×.
+    Part of the ratio belongs to which names and sessions the windows pick,
+    not to the report.
+  * The planted control was detected (1.01 unscaled, 1.26 at 1.25×). The test
+    could tell 1.135 from 1.00.
+* **Descriptive:**
+  * D0 1.40×, D1 1.71×;
+  * 15% of window name-days move more than 3% after 09:45, against 4.6%;
+  * every year from 2016 sits at 1.35–2.12× on daily bars;
+  * 2 of the record's 32 council positions sat in a report window.
+* **So:** no rule. A report day is wider, but skipping it removes a slice that
+  leans long on survivors, and the placebo cannot give the report the ratio.
+  The bar does not move.

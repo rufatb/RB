@@ -18,6 +18,28 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day143b — the report window swings wider, but it is not a size rule (rejection #59, council lab item 4, 2026-11-02)
+
+* **The test.** `PREREGISTER_day143_report_day.md`, run in one look by
+  `report_day.py` (8602c5d, committed before any return). Read
+  `AUDIT_day143_report_day.md`; summary `data/report_day143.json`; cache
+  `.rb-state/report_day_cache/`.
+* **FAIL as registered.**
+  * The 150 names' report windows (D0 and D1) swing 1.55× the rest from 09:45
+    to the close: 2.24% against 1.45%, among the 80,960 name-days the two live
+    rules keep.
+  * On the point-in-time S&P 500 the ratio is 2.06×.
+  * Not met: the window leans long against XIU (+0.15%, t = 2.81, the
+    survivor effect of day-138), and a placebo window 20 sessions earlier
+    still reads 1.18×.
+  * The planted control was detected.
+* **Descriptive:** D1 1.71× against D0 1.40×. 15% of window name-days move
+  more than 3% after 09:45, against 4.6%. Every year from 2016 reads
+  1.35–2.12× on daily bars.
+* **So:** no rule is proposed, and nothing live changes. The bar does not
+  move. The owner chose against size rules on 10-30 anyway.
+* **Next lab item:** 5, one pick a day (on the record, no API spend).
+
 ## Day144 — Claude's picks lead the Top 2; the guardrails come off (owner, 2026-10-30; live 11-02)
 
 The owner: "Claude picks are doing much better than council. I want council to
@@ -3167,8 +3189,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **58 rejections, 5
-adoptions** (as of day-142; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **59 rejections, 5
+adoptions** (as of day-143; skipping the morning's widest-swinging names is the
 fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
