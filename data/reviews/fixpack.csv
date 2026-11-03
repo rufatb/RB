@@ -94,3 +94,9 @@ session,period,kind,ticker,side,etf,invalid_at,entry,atr_pct,reach_atr,gate,reas
 2026-11-02,test,live,TFII.TO,SHORT,ZIN.TO,135.49,130.855,4.8317,0.733,kept,,-4,0,2,2026-11-02T16:23:45-05:00
 2026-11-02,test,round1,MX.TO,LONG,XMA.TO,92.09,,,,,,86,0,1,2026-11-02T16:23:45-05:00
 2026-11-02,test,round1,X.TO,LONG,XFN.TO,57.22,,,,,,-4,0,2,2026-11-02T16:23:45-05:00
+2026-11-03,test,final,CP.TO,LONG,ZIN.TO,125.0,,,,,,85,1,2,2026-11-03T16:24:14-05:00
+2026-11-03,test,final,SHOP.TO,SHORT,XIT.TO,224.88,,,,,,0,0,1,2026-11-03T16:24:14-05:00
+2026-11-03,test,live,FTS.TO,LONG,XUT.TO,81.5,82.96,1.5018,1.172,dropped,wrong-if 1.2 normal days away,0,0,1,2026-11-03T16:24:14-05:00
+2026-11-03,test,live,SHOP.TO,SHORT,XIT.TO,,197.76,5.1435,,dropped,no wrong-if,0,0,2,2026-11-03T16:24:14-05:00
+2026-11-03,test,round1,CP.TO,LONG,ZIN.TO,125.0,,,,,,85,1,2,2026-11-03T16:24:14-05:00
+2026-11-03,test,round1,SHOP.TO,SHORT,XIT.TO,224.88,,,,,,0,0,1,2026-11-03T16:24:14-05:00
