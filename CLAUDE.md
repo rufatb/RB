@@ -18,6 +18,36 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day145 — lab item 5: the counted Top 2 cannot judge one pick a day; "best first" registered on the nominations (council lab, 2026-11-03)
+
+* **Item 5 as written is closed without a test** (counts only, no outcome
+  read).
+  * The counted Top 2 (`top2count`) filled both slots on 6 of its 16
+    sessions.
+  * Its slot order survives only in the frozen reports, so it is known for
+    one session (11-02, since the 10-25 reset).
+  * The printed Top 2 filled both slots on 11 of 18 sessions.
+  * That could only see about 2.5–3% a pick. Not a numbered rejection.
+* **Re-scoped and registered:** `PREREGISTER_day145_best_first.md`.
+  * The question: does each model's first-named nomination beat its
+    second-named, per model and side, 10-14 → 11-03?
+  * That is 84 scored pairs over 14 sessions now, and 90 over 15 once 11-03
+    is scored.
+  * The order comes from the frozen report, else the review (day-144's
+    sources; they agreed on 34 of 34 sides).
+  * Every model put its higher own confidence first (30 of 30 each), so the
+    test is also one of each model's own confidence within a side.
+* **The bar.**
+  * Session-clustered paired t ≥ 3, a sign-flip placebo p < 0.01 (seed 145),
+    and both halves positive.
+  * A planted 1.0% must show at t ≥ 3.
+  * Anything but FIRST_BETTER is rejection #60.
+* **Not blind for Claude.** Day-144's replay read its first-named arm. The
+  verdict pools all three models, and Claude's arm is descriptive.
+* **Why it matters:** day-144's Top 2 takes each side's first-named pick, on
+  the assumption that it is Claude's best.
+* **Next:** `best_first.py` runs it in the next slot, on the record alone.
+
 ## Day143b — the report window swings wider, but it is not a size rule (rejection #59, council lab item 4, 2026-11-02)
 
 * **The test.** `PREREGISTER_day143_report_day.md`, run in one look by
