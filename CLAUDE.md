@@ -18,6 +18,32 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day145c — best first: a model's first-named nomination does no better than its second (rejection #60, council lab item 5, 2026-11-04)
+
+* **The test.** `PREREGISTER_day145_best_first.md`, run in one look by
+  `best_first.py` (857ff4d, committed before any return). Read
+  `AUDIT_day145_best_first.md`; summary `data/best_first_day145.json`; no API
+  call.
+* **The population.** 90 pairs over 15 sessions (10-14 → 11-03): Claude,
+  DeepSeek and Gemini, long and short.
+  * The order came from the frozen reports (42) and the reviews (48). They
+    agreed on 40 of 40.
+  * Every model put its higher confidence first (90 of 90).
+* **NULL, powered.**
+  * First minus second is +0.20% a pick, t = 0.94, placebo p = 0.18.
+  * A planted 1.0% shows at t = 4.75; the smallest detectable effect is
+    0.81%.
+* **Descriptive:**
+  * Claude's first-named picks 17/30 (−0.14%), its second-named 19/30
+    (+0.31%): first minus second −0.45% a session, t = −1.68;
+  * DeepSeek's first-named +0.95% (t = 2.40 paired), one of six splits and
+    below the bar;
+  * the confidence gap ranks nothing.
+* **So:** "best first" is not a ranking the record can see. Day-144's rule is
+  the owner's decision and stays. One pick a day is a size choice with
+  nothing to say which pick to keep.
+* **Next lab item:** 8, Claude's reads over longer holds (free).
+
 ## Day145b — Claude keeps leading, the guardrails stay off; the lab now works on Claude's accuracy (owner, 2026-11-03 evening)
 
 The owner, after 11-03's SHOP short lost: "Keep Claude but I want to increase
@@ -3260,8 +3286,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **59 rejections, 5
-adoptions** (as of day-143; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **60 rejections, 5
+adoptions** (as of day-145; skipping the morning's widest-swinging names is the
 fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.

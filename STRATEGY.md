@@ -5929,3 +5929,32 @@ Council lab item 4, run 2026-11-02 in one look (`PREREGISTER_day143_report_day.m
 * **So:** no rule. A report day is wider, but skipping it removes a slice that
   leans long on survivors, and the placebo cannot give the report the ratio.
   The bar does not move.
+
+## Day-145: REJECTION #60 — best first: a model's first-named nomination does no better than its second
+
+Council lab item 5, run 2026-11-04 in one look (`PREREGISTER_day145_best_first.md`;
+`best_first.py`, 857ff4d; `AUDIT_day145_best_first.md`;
+`data/best_first_day145.json`).
+* **The question.** Day-144's Top 2 takes Claude's first-named long and short,
+  which assumes a model's first-named nomination is its best.
+* **The test.** 90 pairs over 15 sessions, 10-14 → 11-03: Claude, DeepSeek and
+  Gemini, long and short.
+  * The order came from the frozen reports (42 pairs) and the reviews (48).
+    They agreed on 40 of 40 where both existed.
+  * Every model put its higher own confidence first in all 90 pairs.
+* **The verdict: NULL, powered.**
+  * First minus second is +0.20% a pick, t = 0.94, placebo p = 0.18; the
+    halves are +0.25% and +0.15%.
+  * A planted 1.0% shows at t = 4.75. The smallest detectable effect is
+    0.81%.
+* **Descriptive:**
+  * by model, Claude −0.45% (t = −1.68), DeepSeek +1.36% (t = 2.40), Gemini
+    −0.32%;
+  * Claude's first-named picks went 17/30 at −0.14%; its second-named went
+    19/30 at +0.31%;
+  * a wide confidence gap reads no better than a narrow one.
+* **So:**
+  * no rule;
+  * day-144's rule is the owner's decision and stays;
+  * nothing on the record says Claude's first-named pick is its best;
+  * one pick a day is a size choice with nothing to say which pick to keep.
