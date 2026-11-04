@@ -600,3 +600,7 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-03,BCE.TO,SHORT,0.589,mid,28.7150,board,,,,3.5,0.296,0
 2026-11-03,ENB.TO,SHORT,0.587,dense,68.4000,board,,,,,0.263,0
 2026-11-03,SLF.TO,SHORT,0.579,dense,112.1700,pair,extra,0.2584,115,,0.508,0
+2026-11-04,BNS.TO,LONG,0.593,sparse,133.5750,pair,primary,0.2162,81,,,
+2026-11-04,CM.TO,LONG,0.581,sparse,166.3800,board,,,,,,
+2026-11-04,RY.TO,LONG,0.579,sparse,290.8350,pair,extra,0.2791,48,4.5,,
+2026-11-04,ENB.TO,SHORT,0.575,mid,67.8800,pair,primary,0.4992,368,,,
