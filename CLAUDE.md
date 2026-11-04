@@ -18,6 +18,47 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day145b — Claude keeps leading, the guardrails stay off; the lab now works on Claude's accuracy (owner, 2026-11-03 evening)
+
+The owner, after 11-03's SHOP short lost: "Keep Claude but I want to increase
+accuracy of picks. Council and guardrails didn't do us any favours in the
+past."
+* **Nothing live changes.** `CLAUDE_LEADS = True`, and `SKIP_MOVERS`,
+  `SKIP_WILD` and `VOID_TOP2` stay False (day-144).
+  * On 11-03 the guardrails would not have touched either pick:
+    * SHOP's normal day was 5.1% against the 5.7% cut;
+    * no pick followed a ≥ 1 ATR move;
+    * FTS never crossed its wrong-if.
+  * On 11-02 they would have removed both.
+* **Said plainly to the owner.** None of the 64 registered tests raised the
+  hit rate. What the models read is priced by the open (day-117/118/122/125).
+  11-03 was 8 of 14 unique positions right: 7 of 8 longs and 1 of 6 shorts,
+  with XIU +0.17% after 09:45. The one losing bet, SHORT SHOP.TO, was printed
+  seven times.
+* **The lab's backlog is re-aimed at Claude's picks** (`COUNCIL_LAB.md` items
+  8–10; item 6 is parked):
+  * item 5 (day-145, best first) runs first;
+  * item 8: Claude's reads over longer holds (free);
+  * item 9: the release traded on a US listing before the TSX open. This is
+    the one measured signal (day-122's gap, t = 2.7), and it needs the owner
+    to trade US pre-market;
+  * item 10: Claude's nominations with reasoning switched on. Today it is one
+    call with no reasoning (`council.ask_claude_openrouter`, max_tokens
+    4000). That needs OpenRouter credit and the owner's yes.
+* **OpenRouter credit, read 11-03 22:23 ET** (`/api/v1/credits`, no spend):
+  * $30 bought, $22.00 used, so $8.00 left;
+  * this week $1.64 over two mornings, about $0.82 a session;
+  * the web scout is about $0.085 of that; Claude's calls (desk, nominations,
+    ballot, memory-council ballot) are most of the rest;
+  * at this rate it runs out in about 10 sessions (~11-17). Without it Claude
+    cannot lead, and the council's own Top 2 stands, labelled.
+* **Waiting for the owner:**
+  * whether they can trade US listings before 09:30;
+  * whether to stop the council's ballots, the web scout and the memory
+    council, keeping Claude's nominations (they run in the same staging
+    step);
+  * a top-up, and a budget for item 10.
+
 ## Day145 — lab item 5: the counted Top 2 cannot judge one pick a day; "best first" registered on the nominations (council lab, 2026-11-03)
 
 * **Item 5 as written is closed without a test** (counts only, no outcome
