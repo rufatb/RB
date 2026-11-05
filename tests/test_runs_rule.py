@@ -269,3 +269,15 @@ def test_a_rule_that_could_not_read_the_closes_says_so():
     # switched off, or a council from before day-146, says nothing
     assert 'run_note' not in K.top_two(s, previous={}, skip_runs=False)
     assert 'run_note' not in K.top_two(led_snap(), previous={})
+
+
+def test_the_page_says_so_too():
+    import report_page
+    s = led_snap()
+    s['runs'] = {'CNQ.TO': rec(3, 0.5, 0.8, 1.2)}
+    html = report_page._top_two_section({'top_two': K.top_two(s, previous={})})
+    assert "or its next one where the first followed a three-day run" in html
+    assert 'Passed over as following a three-day run' in html and 'LONG CNQ.TO rose three sessions' in html
+    # a section from before day-146 reads as it did
+    old = report_page._top_two_section({'top_two': K.top_two(led_snap(), previous={})})
+    assert 'three-day run' not in old
