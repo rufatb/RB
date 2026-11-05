@@ -5958,3 +5958,33 @@ Council lab item 5, run 2026-11-04 in one look (`PREREGISTER_day145_best_first.m
   * day-144's rule is the owner's decision and stays;
   * nothing on the record says Claude's first-named pick is its best;
   * one pick a day is a size choice with nothing to say which pick to keep.
+
+## Day-146: REJECTION #61 — three days one way: following a three-day run does no worse on day four
+
+The owner asked for this on 2026-11-04 (`PREREGISTER_day146_runs.md`, 4498c81;
+`runs_history.py`, ee98ee8; `AUDIT_day146_runs.md`; `data/runs_day146.json`).
+It ran on cached bars in one look.
+* **The question.** Does a pick that follows a three-day run (LONG after three
+  rises, SHORT after three falls) lose on day four to a rebound or
+  profit-taking, from 09:45 to the close against XIU?
+* **The verdict: NULL, powered.**
+  * 24,915 name-days (the 150 names, 2024-01 → 2026-10): −0.021%, t = −0.96,
+    placebo p = 0.12; the blocks +0.05, −0.07, −0.06, +0.00.
+  * Ten years on the TSX: −0.011% (t = −0.80). Point-in-time S&P 500:
+    −0.012% (t = −1.18).
+  * A planted 0.10% shows at t = 4.57. The smallest detectable effect is
+    0.061%.
+* **Descriptive:**
+  * runs of 4 or more −0.063% (t = −2.07);
+  * longs after up runs +0.000%, shorts after down runs −0.052% (t = −1.70);
+  * from the open to 09:45 the run carries on, +0.043% (t = 3.17);
+  * live picks that followed runs went 28/53 (+0.01%), the rest 88/175
+    (+0.00%).
+* **So:**
+  * the owner's rule is on from 11-05 at their request (`council.SKIP_RUNS`),
+    labelled as not shown to raise accuracy;
+  * a Claude pick that follows a run gives way to Claude's next nomination on
+    that side;
+  * the passed-over picks are the `top2run` shadow;
+  * it would not have changed 11-04's CLS.TO loss, which followed a single up
+    day.

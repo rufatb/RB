@@ -18,6 +18,57 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day146 — the owner's three-day-run rule: on from 11-05, NULL on history (rejection #61, owner, 2026-11-04)
+
+The owner, after 11-04's CLS.TO long lost 5.21%: when a stock has gone one way
+for three days, "if you give it a short the day after it declined for three
+days there is that risk of rebounding … same in the other direction where it's
+been pumping for three days and you still say long", because of profit-taking.
+* **The test.** `PREREGISTER_day146_runs.md` (4498c81), run by
+  `runs_history.py` (ee98ee8, committed before any return). Read
+  `AUDIT_day146_runs.md`; summary `data/runs_day146.json`. Cached bars only.
+* **NULL, powered.**
+  * Following a three-day run (LONG after three rises, SHORT after three falls),
+    09:45 → close against XIU: −0.021% a name-day, t = −0.96, placebo
+    p = 0.12, over 24,915 name-days. The blocks disagree in sign.
+  * Ten years on the TSX: −0.011%. Point-in-time S&P 500: −0.012%.
+  * A planted 0.10% shows at t = 4.57.
+  * Live picks that followed runs went 28/53 (+0.01%), the rest 88/175.
+* **The rule is ON anyway, as registered, because the owner asked for it**
+  (`council.SKIP_RUNS = True`, rule `day146-runs`; False restores day-144).
+  * `council.stage` records `runs` (`runs.py`): each name's signed run from
+    FMP's daily closes, which must end on the prior session (else
+    NOT_THE_PRIOR_SESSION).
+    * The names covered are the table's plus every nomination.
+    * One call each, 20 s cap; a failure is named in `errors['runs']` and
+      printed under the picks (`run_note`): a name it could not read stands
+      unchecked, never silently.
+    * The runs are never sent to the members.
+  * **Claude's picks.** A nomination that follows a run is passed over, and
+    Claude's next nomination on that side stands (`claude_choice`). If both
+    follow runs, that side is empty. A name whose run was not read stands.
+  * **The council's own Top 2,** when it is the live one (Claude's picks
+    missing), and the counted fallback: remove-only (`runs_remove_only`).
+    * The shadow beside Claude's picks keeps the council's own rule.
+    * The memory council records no runs, so it is unchanged.
+  * **Shown** as "Passed over as following a three-day run (…; not shown to
+    raise accuracy on history): …" (`council.run_line`).
+  * **Recorded** as `top2run/pick`, a shadow: never sized, never pooled, out
+    of the lab. The review scores it as "Passed over (three-day run)".
+  * **Judged forward** at 40 sessions with a passed-over pick: the passed-over
+    picks against what stood in their place.
+* **Splits from 11-05.** The `top2` rows carry
+  `day144-claude-leads+day146-runs`. Day-144's comparison and day-140 arm A
+  read the same rows, so split them by `prompt_version`.
+* **The dry run on 11-02 → 11-04** (sealed councils, live FMP, 0.5–1.8 s):
+  * only 11-03 changes. FTS.TO (+0.77%) gives way to BAM.TO (+0.27%), and
+    SHOP.TO (−1.18%) to WCP.TO (−1.14%);
+  * 11-04's CLS.TO long (one rise after a month's fall) is untouched.
+* **Tests.** `tests/conftest.py` runs the suite with the rule off. Tests marked
+  `day146` run on the production values (`tests/test_runs_rule.py`,
+  `tests/test_runs_history.py`).
+* **Not claimed:** any accuracy gain. Say so plainly when asked.
+
 ## Day145c — best first: a model's first-named nomination does no better than its second (rejection #60, council lab item 5, 2026-11-04)
 
 * **The test.** `PREREGISTER_day145_best_first.md`, run in one look by
@@ -3286,8 +3337,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **60 rejections, 5
-adoptions** (as of day-145; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **61 rejections, 5
+adoptions** (as of day-146; skipping the morning's widest-swinging names is the
 fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.

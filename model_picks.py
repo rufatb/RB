@@ -145,6 +145,10 @@ def rows_from_report(report, source='published_report'):
     for pick in (intra.get('top_two') or {}).get('passed_wild') or []:
         add('top2wild', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
             prompt_version=(intra.get('top_two') or {}).get('rule_version'))
+    # Day-146: the picks the owner's three-day-run rule passed over, the same way.
+    for pick in (intra.get('top_two') or {}).get('passed_run') or []:
+        add('top2run', 'pick', pick.get('side'), pick, agreement=pick.get('agreement'),
+            prompt_version=(intra.get('top_two') or {}).get('rule_version'))
     # Day-144: with Claude leading the Top 2, the council's own decision is a
     # SHADOW recorded beside it, so the two are scored on one yardstick; never
     # sized, never pooled, never on the scoreboard.
@@ -412,7 +416,7 @@ def wire_card(rows=None, root=None):
 # shadows that re-choose the same picks are left out.
 POOLED_KINDS = ('selected', 'forced', 'nominated', 'pick', 'final')
 POOLED_EXCLUDED = ('engine', 'top2count', 'top2memory', 'top2runner', 'top2mover', 'top2wild',
-                   'top2council')
+                   'top2council', 'top2run')
 
 
 def council_rows(rows):

@@ -84,11 +84,12 @@ def subject_state(report):
         return '%s ONLY — %d position%s, no sized desk leg — ' % (
             who, council_picks, '' if council_picks == 1 else 's')
     top = intraday.get('top_two') or {}
-    if not legs and intraday.get('desks') and (top.get('passed_movers') or top.get('passed_wild')):
+    if not legs and intraday.get('desks') and (top.get('passed_movers') or top.get('passed_wild')
+                                               or top.get('passed_run')):
         # Day-135c, the switch on: the models did pick; the big-mover rule took
         # the council's picks away. "No model picks" would misstate why.
-        # Day-137: the high-volatility rule, the same way.
-        if not top.get('passed_wild'):
+        # Day-137: the high-volatility rule, the same way; day-146 the run rule.
+        if not (top.get('passed_wild') or top.get('passed_run')):
             return '⛔ NO COUNCIL PICK — big movers passed over — '
         import council_flash
         return '⛔ NO COUNCIL PICK — %s passed over — ' % council_flash.passed_words(top)

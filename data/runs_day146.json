@@ -1,0 +1,2154 @@
+{
+ "registered": "PREREGISTER_day146_runs.md",
+ "run_on": "2026-11-05",
+ "window": [
+  "2024-01-02",
+  "2026-10-29"
+ ],
+ "names": 150,
+ "run_days": 3,
+ "seed": 146,
+ "counts": {
+  "short_history": 27,
+  "not_the_market_session": 6,
+  "not_a_member": 0,
+  "no_market": 0
+ },
+ "name_days_with_a_run_of_2_or_more": 50773,
+ "primary": {
+  "n": 24915,
+  "mean_pct": -0.021,
+  "se": 0.0219,
+  "t": -0.96,
+  "hit": 0.495,
+  "sessions": 707
+ },
+ "block_means_pct": [
+  0.0475,
+  -0.0719,
+  -0.0641,
+  0.0043
+ ],
+ "placebo": {
+  "draws": 2000,
+  "events_used": 24915,
+  "p_two_sided": 0.1195,
+  "sd_of_draws_pct": 0.0123
+ },
+ "control": {
+  "planted_pct": 0.1,
+  "t_planted": 4.57,
+  "mde80_pct": 0.061
+ },
+ "secondary_means_negative": true,
+ "verdict": "NULL",
+ "secondary": {
+  "tsx_daily_open_to_close": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "counts": {
+    "short_history": 208,
+    "not_the_market_session": 68,
+    "not_a_member": 0,
+    "no_market": 14
+   },
+   "n": 91159,
+   "mean_pct": -0.011,
+   "se": 0.0137,
+   "t": -0.8,
+   "hit": 0.504,
+   "sessions": 2717
+  },
+  "point_in_time_sp500_daily": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "counts": {
+    "short_history": 1176,
+    "not_the_market_session": 131,
+    "not_a_member": 353209,
+    "no_market": 0
+   },
+   "names_with_bars": 703,
+   "n": 322224,
+   "mean_pct": -0.0119,
+   "se": 0.0101,
+   "t": -1.18,
+   "hit": 0.498,
+   "sessions": 2722
+  }
+ },
+ "descriptive": {
+  "by_length": {
+   "2 or more": {
+    "n": 50773,
+    "mean_pct": -0.0327,
+    "se": 0.0165,
+    "t": -1.98,
+    "hit": 0.492,
+    "sessions": 707
+   },
+   "3 or more": {
+    "n": 24915,
+    "mean_pct": -0.021,
+    "se": 0.0219,
+    "t": -0.96,
+    "hit": 0.495,
+    "sessions": 707
+   },
+   "4 or more": {
+    "n": 12224,
+    "mean_pct": -0.0625,
+    "se": 0.0302,
+    "t": -2.07,
+    "hit": 0.49,
+    "sessions": 707
+   },
+   "5 or more": {
+    "n": 5993,
+    "mean_pct": -0.0632,
+    "se": 0.0313,
+    "t": -2.02,
+    "hit": 0.49,
+    "sessions": 702
+   },
+   "exactly 3": {
+    "n": 12691,
+    "mean_pct": 0.0189,
+    "se": 0.0289,
+    "t": 0.65,
+    "hit": 0.5,
+    "sessions": 707
+   }
+  },
+  "by_side": {
+   "LONG after an up run": {
+    "n": 14687,
+    "mean_pct": 0.0002,
+    "se": 0.028,
+    "t": 0.01,
+    "hit": 0.498,
+    "sessions": 702
+   },
+   "SHORT after a down run": {
+    "n": 10228,
+    "mean_pct": -0.0515,
+    "se": 0.0303,
+    "t": -1.7,
+    "hit": 0.49,
+    "sessions": 704
+   }
+  },
+  "by_size_in_normal_days": {
+   "under 1": {
+    "n": 5944,
+    "mean_pct": -0.0296,
+    "se": 0.0222,
+    "t": -1.34,
+    "hit": 0.489,
+    "sessions": 702
+   },
+   "1 to 2": {
+    "n": 12289,
+    "mean_pct": -0.0215,
+    "se": 0.027,
+    "t": -0.79,
+    "hit": 0.494,
+    "sessions": 707
+   },
+   "2 or more": {
+    "n": 6682,
+    "mean_pct": -0.0126,
+    "se": 0.0408,
+    "t": -0.31,
+    "hit": 0.502,
+    "sessions": 695
+   }
+  },
+  "raw_not_against_xiu": {
+   "n": 24915,
+   "mean_pct": -0.0454,
+   "se": 0.0384,
+   "t": -1.18,
+   "hit": 0.489,
+   "sessions": 707
+  },
+  "open_to_0945_against_xiu": {
+   "n": 24915,
+   "mean_pct": 0.0427,
+   "se": 0.0135,
+   "t": 3.17,
+   "hit": 0.521,
+   "sessions": 707
+  },
+  "open_to_close_against_xiu": {
+   "n": 24915,
+   "mean_pct": 0.0217,
+   "se": 0.0254,
+   "t": 0.85,
+   "hit": 0.512,
+   "sessions": 707
+  },
+  "daily_by_year_tsx": {
+   "2016": {
+    "n": 7286,
+    "mean_pct": -0.0341,
+    "se": 0.0487,
+    "t": -0.7,
+    "hit": 0.495,
+    "sessions": 251
+   },
+   "2017": {
+    "n": 7439,
+    "mean_pct": -0.0134,
+    "se": 0.0259,
+    "t": -0.52,
+    "hit": 0.506,
+    "sessions": 250
+   },
+   "2018": {
+    "n": 7711,
+    "mean_pct": -0.0099,
+    "se": 0.0335,
+    "t": -0.3,
+    "hit": 0.501,
+    "sessions": 251
+   },
+   "2019": {
+    "n": 8114,
+    "mean_pct": 0.0211,
+    "se": 0.0351,
+    "t": 0.6,
+    "hit": 0.501,
+    "sessions": 251
+   },
+   "2020": {
+    "n": 8197,
+    "mean_pct": -0.1158,
+    "se": 0.0896,
+    "t": -1.29,
+    "hit": 0.49,
+    "sessions": 252
+   },
+   "2021": {
+    "n": 8821,
+    "mean_pct": 0.0147,
+    "se": 0.0357,
+    "t": 0.41,
+    "hit": 0.509,
+    "sessions": 251
+   },
+   "2022": {
+    "n": 9094,
+    "mean_pct": -0.0462,
+    "se": 0.0418,
+    "t": -1.11,
+    "hit": 0.495,
+    "sessions": 250
+   },
+   "2023": {
+    "n": 9173,
+    "mean_pct": 0.0203,
+    "se": 0.0301,
+    "t": 0.67,
+    "hit": 0.519,
+    "sessions": 250
+   },
+   "2024": {
+    "n": 9153,
+    "mean_pct": 0.0529,
+    "se": 0.035,
+    "t": 1.51,
+    "hit": 0.513,
+    "sessions": 252
+   },
+   "2025": {
+    "n": 8689,
+    "mean_pct": -0.047,
+    "se": 0.0437,
+    "t": -1.08,
+    "hit": 0.504,
+    "sessions": 251
+   },
+   "2026": {
+    "n": 7482,
+    "mean_pct": 0.0305,
+    "se": 0.0528,
+    "t": 0.58,
+    "hit": 0.513,
+    "sessions": 208
+   }
+  },
+  "sp500_by_side": {
+   "LONG after an up run": {
+    "n": 183429,
+    "mean_pct": -0.0195,
+    "se": 0.012,
+    "t": -1.62,
+    "hit": 0.494,
+    "sessions": 2686
+   },
+   "SHORT after a down run": {
+    "n": 138795,
+    "mean_pct": -0.0019,
+    "se": 0.0167,
+    "t": -0.12,
+    "hit": 0.503,
+    "sessions": 2689
+   }
+  }
+ },
+ "live_record": {
+  "window": [
+   "2026-09-17",
+   "2026-11-04"
+  ],
+  "unique_picks": 228,
+  "unknown": 0,
+  "fetch_failed": [],
+  "groups": {
+   "follows a run": {
+    "picks": 53,
+    "right": 28,
+    "mean_pct": 0.01,
+    "sessions": 22
+   },
+   "does not": {
+    "picks": 175,
+    "right": 88,
+    "mean_pct": 0.003,
+    "sessions": 30
+   }
+  },
+  "note": "the record's yardstick: 09:45 -> close, raw, no costs",
+  "picks": [
+   {
+    "session": "2026-09-17",
+    "ticker": "AGI.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": -1.957,
+    "follows": true
+   },
+   {
+    "session": "2026-09-17",
+    "ticker": "CAE.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.177,
+    "follows": false
+   },
+   {
+    "session": "2026-09-17",
+    "ticker": "CG.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.596,
+    "follows": false
+   },
+   {
+    "session": "2026-09-17",
+    "ticker": "EMA.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.102,
+    "follows": false
+   },
+   {
+    "session": "2026-09-22",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.674,
+    "follows": false
+   },
+   {
+    "session": "2026-09-22",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.887,
+    "follows": false
+   },
+   {
+    "session": "2026-09-22",
+    "ticker": "STN.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.623,
+    "follows": false
+   },
+   {
+    "session": "2026-09-22",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.095,
+    "follows": false
+   },
+   {
+    "session": "2026-09-23",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 0.783,
+    "follows": true
+   },
+   {
+    "session": "2026-09-23",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.208,
+    "follows": true
+   },
+   {
+    "session": "2026-09-23",
+    "ticker": "SSRM.TO",
+    "side": "SHORT",
+    "run": 6,
+    "r_pct": 0.525,
+    "follows": false
+   },
+   {
+    "session": "2026-09-23",
+    "ticker": "TECK-B.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": 1.127,
+    "follows": true
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "AC.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 3.529,
+    "follows": false
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": -3,
+    "r_pct": 0.887,
+    "follows": false
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.896,
+    "follows": false
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "GIL.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 0.498,
+    "follows": false
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "K.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.94,
+    "follows": false
+   },
+   {
+    "session": "2026-09-25",
+    "ticker": "LUG.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": 0.798,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.373,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "BCE.TO",
+    "side": "LONG",
+    "run": -10,
+    "r_pct": -1.379,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "BCE.TO",
+    "side": "SHORT",
+    "run": -10,
+    "r_pct": 1.379,
+    "follows": true
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.244,
+    "follows": true
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "HBM.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.183,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "RY.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": -0.453,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "SHOP.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -1.732,
+    "follows": false
+   },
+   {
+    "session": "2026-09-29",
+    "ticker": "WPM.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": -0.282,
+    "follows": true
+   },
+   {
+    "session": "2026-09-30",
+    "ticker": "BCE.TO",
+    "side": "SHORT",
+    "run": -11,
+    "r_pct": -0.608,
+    "follows": true
+   },
+   {
+    "session": "2026-09-30",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.471,
+    "follows": false
+   },
+   {
+    "session": "2026-09-30",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": -0.754,
+    "follows": false
+   },
+   {
+    "session": "2026-09-30",
+    "ticker": "WSP.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.009,
+    "follows": false
+   },
+   {
+    "session": "2026-10-01",
+    "ticker": "ELD.TO",
+    "side": "SHORT",
+    "run": -6,
+    "r_pct": 1.237,
+    "follows": true
+   },
+   {
+    "session": "2026-10-01",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": -1.905,
+    "follows": true
+   },
+   {
+    "session": "2026-10-01",
+    "ticker": "T.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 0.512,
+    "follows": false
+   },
+   {
+    "session": "2026-10-02",
+    "ticker": "GIB-A.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.329,
+    "follows": false
+   },
+   {
+    "session": "2026-10-02",
+    "ticker": "SAP.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.441,
+    "follows": false
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.7,
+    "follows": false
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "CVE.TO",
+    "side": "SHORT",
+    "run": 3,
+    "r_pct": -2.185,
+    "follows": false
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "ERO.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.576,
+    "follows": false
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "GIL.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": -0.433,
+    "follows": true
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "QSR.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -0.768,
+    "follows": false
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 5,
+    "r_pct": -1.477,
+    "follows": true
+   },
+   {
+    "session": "2026-10-05",
+    "ticker": "TECK-B.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.891,
+    "follows": false
+   },
+   {
+    "session": "2026-10-06",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.781,
+    "follows": false
+   },
+   {
+    "session": "2026-10-06",
+    "ticker": "CVE.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.169,
+    "follows": false
+   },
+   {
+    "session": "2026-10-06",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 6,
+    "r_pct": -0.929,
+    "follows": true
+   },
+   {
+    "session": "2026-10-07",
+    "ticker": "BCE.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": -0.285,
+    "follows": true
+   },
+   {
+    "session": "2026-10-07",
+    "ticker": "CCO.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -1.328,
+    "follows": false
+   },
+   {
+    "session": "2026-10-07",
+    "ticker": "CS.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.506,
+    "follows": false
+   },
+   {
+    "session": "2026-10-07",
+    "ticker": "EMA.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 0.639,
+    "follows": false
+   },
+   {
+    "session": "2026-10-07",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 7,
+    "r_pct": 2.548,
+    "follows": true
+   },
+   {
+    "session": "2026-10-08",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.032,
+    "follows": false
+   },
+   {
+    "session": "2026-10-08",
+    "ticker": "TD.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.415,
+    "follows": false
+   },
+   {
+    "session": "2026-10-09",
+    "ticker": "NA.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.144,
+    "follows": false
+   },
+   {
+    "session": "2026-10-09",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 2.339,
+    "follows": false
+   },
+   {
+    "session": "2026-10-09",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": 2,
+    "r_pct": -0.723,
+    "follows": false
+   },
+   {
+    "session": "2026-10-09",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": 1.371,
+    "follows": false
+   },
+   {
+    "session": "2026-10-13",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 2.466,
+    "follows": false
+   },
+   {
+    "session": "2026-10-13",
+    "ticker": "BCE.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.581,
+    "follows": false
+   },
+   {
+    "session": "2026-10-13",
+    "ticker": "CCA.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.061,
+    "follows": false
+   },
+   {
+    "session": "2026-10-13",
+    "ticker": "RCI-B.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.968,
+    "follows": false
+   },
+   {
+    "session": "2026-10-13",
+    "ticker": "SSRM.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -4.322,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "AC.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -1.588,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 1.588,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "BEP-UN.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.949,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 3.815,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": -0.432,
+    "follows": true
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "EMA.TO",
+    "side": "SHORT",
+    "run": -6,
+    "r_pct": -2.403,
+    "follows": true
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "HBM.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": -3.115,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "OTEX.TO",
+    "side": "SHORT",
+    "run": 6,
+    "r_pct": 1.058,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "RBA.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": -0.43,
+    "follows": true
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -3.534,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "SSRM.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 1.198,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": 0.269,
+    "follows": true
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "T.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -0.963,
+    "follows": false
+   },
+   {
+    "session": "2026-10-14",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.552,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "ATD.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -1.03,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 2.175,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -4.172,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -3.613,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "CSU.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": 2.844,
+    "follows": true
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "DOL.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": 0.669,
+    "follows": true
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "EFR.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -7.339,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -11.163,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 5,
+    "r_pct": -0.694,
+    "follows": true
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": 5,
+    "r_pct": 0.694,
+    "follows": false
+   },
+   {
+    "session": "2026-10-15",
+    "ticker": "WCN.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 3.342,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -4.023,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 0.68,
+    "follows": true
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "CSU.TO",
+    "side": "LONG",
+    "run": 5,
+    "r_pct": -4.473,
+    "follows": true
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "CVE.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.392,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "HBM.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 2.339,
+    "follows": true
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 9.907,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "L.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.879,
+    "follows": true
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.304,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "TRP.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.916,
+    "follows": false
+   },
+   {
+    "session": "2026-10-16",
+    "ticker": "WCN.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.666,
+    "follows": true
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "ATD.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": -0.095,
+    "follows": true
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.158,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "CLS.TO",
+    "side": "LONG",
+    "run": -4,
+    "r_pct": -2.362,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": 2.362,
+    "follows": true
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -0.315,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "FTS.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -0.787,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "HUT.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": -0.774,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -0.226,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "TOU.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -1.038,
+    "follows": false
+   },
+   {
+    "session": "2026-10-19",
+    "ticker": "TRI.TO",
+    "side": "LONG",
+    "run": 8,
+    "r_pct": 0.626,
+    "follows": true
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "AC.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": 1.817,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.388,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": 2,
+    "r_pct": 0.47,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "GFL.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": -0.825,
+    "follows": true
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "IMO.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.095,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "MDA.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.103,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "RBA.TO",
+    "side": "LONG",
+    "run": -4,
+    "r_pct": 1.328,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "RBA.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": -1.328,
+    "follows": true
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.714,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": 2,
+    "r_pct": 0.009,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 0.462,
+    "follows": false
+   },
+   {
+    "session": "2026-10-20",
+    "ticker": "TOU.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.06,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "AC.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.565,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -1.565,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "ATD.TO",
+    "side": "LONG",
+    "run": 6,
+    "r_pct": -1.651,
+    "follows": true
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -6,
+    "r_pct": -0.703,
+    "follows": true
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "CNQ.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.528,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "FSV.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -2.009,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "MDA.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": -0.572,
+    "follows": true
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "OTEX.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -1.262,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 0.964,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.964,
+    "follows": false
+   },
+   {
+    "session": "2026-10-21",
+    "ticker": "TRI.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.017,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "BNS.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.076,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": -1.501,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "CS.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.641,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": 3,
+    "r_pct": 6.324,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "IVN.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -2.116,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "LUN.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 1.271,
+    "follows": true
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -2.588,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "T.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 3.081,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.603,
+    "follows": false
+   },
+   {
+    "session": "2026-10-22",
+    "ticker": "WSP.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 4.807,
+    "follows": false
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "CDE.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": 1.772,
+    "follows": true
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.415,
+    "follows": false
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "CP.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.152,
+    "follows": true
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "HBM.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.033,
+    "follows": false
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 4.983,
+    "follows": false
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.669,
+    "follows": true
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "TRI.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 1.351,
+    "follows": true
+   },
+   {
+    "session": "2026-10-23",
+    "ticker": "WCN.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.275,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.032,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -3.111,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 7.264,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.586,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "EFR.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -1.925,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "GFL.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.827,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "OVV.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -0.48,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "OVV.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 0.48,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.623,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "VET.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -3.022,
+    "follows": false
+   },
+   {
+    "session": "2026-10-26",
+    "ticker": "WCN.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.149,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "ABX.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -2.567,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "ATZ.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 1.894,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "CAE.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -0.028,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 1.486,
+    "follows": true
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "CM.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.894,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -0.836,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "DPM.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": -0.0,
+    "follows": true
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -0.875,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "IAG.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 1.229,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "K.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -2.276,
+    "follows": false
+   },
+   {
+    "session": "2026-10-27",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.478,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "CLS.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 3.388,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": -3.388,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "MDA.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.293,
+    "follows": true
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "POW.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 1.617,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.268,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "TD.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.389,
+    "follows": false
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "TRI.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 0.806,
+    "follows": true
+   },
+   {
+    "session": "2026-10-28",
+    "ticker": "WCN.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.961,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CLS.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -1.68,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": 2,
+    "r_pct": 1.68,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CM.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.199,
+    "follows": true
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CNR.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.453,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CP.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 1.056,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "CVE.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 0.022,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "EFN.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": -3.733,
+    "follows": true
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "GFL.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": -0.623,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": 3,
+    "r_pct": 1.567,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "MFC.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.063,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.465,
+    "follows": false
+   },
+   {
+    "session": "2026-10-29",
+    "ticker": "WSP.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 2.026,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "AGI.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.338,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "BMO.TO",
+    "side": "LONG",
+    "run": 4,
+    "r_pct": -1.34,
+    "follows": true
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "CLS.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 2.039,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 1.2,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "ENB.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.051,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "HUT.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 3.825,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "K.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 1.815,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "MDA.TO",
+    "side": "LONG",
+    "run": -2,
+    "r_pct": -2.44,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "SU.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 1.444,
+    "follows": false
+   },
+   {
+    "session": "2026-10-30",
+    "ticker": "TRP.TO",
+    "side": "LONG",
+    "run": 5,
+    "r_pct": -0.15,
+    "follows": true
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "AC.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 2.588,
+    "follows": false
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 6.045,
+    "follows": false
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "CP.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.979,
+    "follows": false
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "MX.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -0.062,
+    "follows": false
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "TFII.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -2.686,
+    "follows": false
+   },
+   {
+    "session": "2026-11-02",
+    "ticker": "X.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": -1.758,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "BAM.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.267,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "CCO.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": 2.754,
+    "follows": true
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "CNQ.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 0.013,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "CNR.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": 0.723,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "CP.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.757,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "CVE.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -0.796,
+    "follows": false
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "FTS.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 0.771,
+    "follows": true
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "SHOP.TO",
+    "side": "SHORT",
+    "run": -3,
+    "r_pct": -1.178,
+    "follows": true
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "TRI.TO",
+    "side": "LONG",
+    "run": 3,
+    "r_pct": 1.457,
+    "follows": true
+   },
+   {
+    "session": "2026-11-03",
+    "ticker": "WCP.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.142,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "CG.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -2.326,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "CLS.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -5.214,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "K.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": 0.033,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "OVV.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 2.297,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "SHOP.TO",
+    "side": "LONG",
+    "run": -4,
+    "r_pct": 3.418,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "SHOP.TO",
+    "side": "SHORT",
+    "run": -4,
+    "r_pct": -3.418,
+    "follows": true
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "SU.TO",
+    "side": "SHORT",
+    "run": -2,
+    "r_pct": 1.052,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "T.TO",
+    "side": "LONG",
+    "run": -1,
+    "r_pct": 1.496,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "TIH.TO",
+    "side": "LONG",
+    "run": 1,
+    "r_pct": -3.397,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "TIH.TO",
+    "side": "SHORT",
+    "run": 1,
+    "r_pct": 3.397,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "TRI.TO",
+    "side": "SHORT",
+    "run": -1,
+    "r_pct": -1.188,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "VNP.TO",
+    "side": "LONG",
+    "run": 2,
+    "r_pct": 0.0,
+    "follows": false
+   },
+   {
+    "session": "2026-11-04",
+    "ticker": "VNP.TO",
+    "side": "SHORT",
+    "run": 2,
+    "r_pct": -0.0,
+    "follows": false
+   }
+  ]
+ }
+}

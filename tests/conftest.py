@@ -42,7 +42,7 @@ def _pre_day144_rules(request, monkeypatch):
     council's own Top 2 under all three, so every test runs on those rules
     unless it is marked `day144`, which runs on the production values
     (tests/test_claude_leads.py)."""
-    if request.node.get_closest_marker('day144'):
+    if request.node.get_closest_marker('day144') or request.node.get_closest_marker('day146'):
         return
     import council
     import entry_checks
@@ -50,6 +50,18 @@ def _pre_day144_rules(request, monkeypatch):
     monkeypatch.setattr(council, 'SKIP_MOVERS', True)
     monkeypatch.setattr(council, 'SKIP_WILD', True)
     monkeypatch.setattr(entry_checks, 'VOID_TOP2', True)
+
+
+@pytest.fixture(autouse=True)
+def _pre_day146_rules(request, monkeypatch):
+    """Day-146 (owner, 2026-11-04) passes over a Top 2 pick that follows a
+    three-day run (`council.SKIP_RUNS`). The suite was written before it, so
+    every test runs with it off unless it is marked `day146`, which runs on the
+    production values (tests/test_runs_rule.py)."""
+    if request.node.get_closest_marker('day146'):
+        return
+    import council
+    monkeypatch.setattr(council, 'SKIP_RUNS', False)
 
 
 @pytest.fixture()

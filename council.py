@@ -79,6 +79,18 @@ WILD_PCTILE = 90
 WILD_MIN_NAMES = 20
 SKIP_WILD = False            # OFF from 2026-11-02 with the other guardrails (day-144)
 WILD_RULE = 'day137-wild'
+# Day-146 (owner, 2026-11-04; PREREGISTER_day146_runs.md): a pick that follows
+# a three-day run — LONG after three rises in a row, SHORT after three falls —
+# is passed over, for the rebound or the profit-taking the owner sees after
+# one. On Claude's picks, Claude's next nomination on that side that does not
+# follow a run stands in its place; on the council's own Top 2 (Claude's picks
+# missing) it is remove-only. The runs are FMP's daily closes, recorded in
+# `council['runs']` at staging (`runs.py`). The registered history test was
+# NULL (#61): following a run was -0.02% a pick against XIU, t = -0.96, so this
+# changes which picks are made, not how often they are right. ON from
+# 2026-11-05 at the owner's request; False restores the day-144 rule.
+SKIP_RUNS = True
+RUN_RULE = 'day146-runs'
 # Day-144 (owner, 2026-10-30): "Claude picks are doing much better than council.
 # I want council to be led by Claude picks." The Top 2 is Claude's first-named
 # long and first-named short from its council nominations (best first). The
@@ -507,10 +519,12 @@ def nominee_rows(council, model):
 
 
 def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, sleep=time.sleep,
-          clock=None, claude_post=None, scout_fn=None, nominate=None):
+          clock=None, claude_post=None, scout_fn=None, nominate=None, runs_fn=None):
     """Run both rounds and seal council.json. Never raises past its own failures.
     `nominate` maps model -> fn(system, user) for the day-129 nomination round;
-    the live morning uses the real routes, and tests opt in."""
+    the live morning uses the real routes, and tests opt in. `runs_fn` maps
+    [ticker] -> ({ticker: run record}, {ticker: error}) for day-146; the live
+    morning reads FMP's daily closes (`runs.fetch`), and tests opt in."""
     import claude_opportunities as C
     import deepseek_opportunities as O
     import gemini_opportunities as G
@@ -583,6 +597,27 @@ def stage(state_dir, *, now=None, clients=None, jev_poster=None, wait=True, slee
             errors['wild'] = 'fewer than %d names with an ATR' % WILD_MIN_NAMES
     except Exception as exc:
         errors['wild'] = (str(exc) if str(exc).isupper() else type(exc).__name__)[:80]
+    # Day-146: how many sessions each name on the table, and each nomination,
+    # has closed one way (FMP's daily closes), kept beside the decision for
+    # the three-day-run rule. Never sent to the members. A failure costs the
+    # rule only, for the names it could not read, and is named in `errors`.
+    if runs_fn is None and live:
+        import runs as RU
+        prior = O.prior_session(now.date()).isoformat()
+
+        def runs_fn(tickers):
+            return RU.fetch(tickers, prior, state_dir=root)
+    if runs_fn:
+        want = {p['ticker'] for p in table} | {
+            p['ticker'] for v in noms.values() for k in ('longs', 'shorts')
+            for p in v.get(k) or [] if isinstance(p, dict) and p.get('ticker')}
+        try:
+            got_runs, run_errors = runs_fn(sorted(want))
+            base['runs'] = got_runs
+            if run_errors:
+                errors['runs'] = '; '.join('%s %s' % kv for kv in sorted(run_errors.items()))[:160]
+        except Exception as exc:
+            errors['runs'] = (str(exc) if str(exc).isupper() else type(exc).__name__)[:80]
     pub = public(table)
     if scout_fn is None and live:
         import scout as SC
@@ -894,10 +929,13 @@ def passed_head(section):
     section = section or {}
     passed = section.get('passed_movers') or []
     wild = section.get('passed_wild') or []      # day-137
-    if not (passed or wild) or section.get('picks'):
+    runs_ = section.get('passed_run') or []      # day-146
+    if not (passed or wild or runs_) or section.get('picks'):
         return None
     if wild:
         return _wild_head(section, passed, wild)
+    if runs_ and not passed:
+        return _run_head(section, runs_)
     if not section.get('council'):               # the counted fallback (day-135d)
         return ("the agreed names were the last session's big movers, passed over" if len(passed) > 1
                 else "the agreed name was one of the last session's big movers, passed over")
@@ -906,6 +944,38 @@ def passed_head(section):
                 'other was already past its own "wrong if" at 09:46')
     return ("the council's picks were the last session's big movers, passed over" if len(passed) > 1
             else "the council's pick was one of the last session's big movers, passed over")
+
+
+def _run_head(section, passed):
+    """passed_head's line when the day-146 three-day-run rule took every pick."""
+    many = len(passed) > 1
+    if section.get('claude_leads'):
+        return ("Claude's nominations followed three-day runs, passed over" if many else
+                "Claude's nomination followed a three-day run, passed over")
+    if not section.get('council'):               # the counted fallback
+        return ('the agreed names followed three-day runs, passed over' if many else
+                'the agreed name followed a three-day run, passed over')
+    return ("the council's picks followed three-day runs, passed over" if many else
+            "the council's pick followed a three-day run, passed over")
+
+
+def run_line(section):
+    """Day-146: the passed-over picks, one line, or None."""
+    passed = (section or {}).get('passed_run') or []
+    if not passed:
+        return None
+    parts = []
+    for x in passed:
+        what = '%s %s %s' % (x['side'], x['ticker'], x.get('run_words') or 'followed a three-day run')
+        if section.get('claude_leads'):
+            side = 'long' if x['side'] == 'LONG' else 'short'
+            what += ("; Claude's next %s, %s %s, stands in its place" % (side, x['side'], x['replaced_by'])
+                     if x.get('replaced_by') else "; no other %s of Claude's stands, so the %s slot "
+                     'is empty' % (side, side))
+        parts.append(what)
+    return ('Passed over as following a three-day run (the owner\'s three-day-run rule, day-146; '
+            'not shown to raise accuracy on history): ' + ' · '.join(parts)
+            + '. Recorded as a shadow, never sized.')
 
 
 def _wild_head(section, passed, wild):
@@ -957,21 +1027,93 @@ def claude_picks(council):
     return out
 
 
-def claude_top_two(council, own, *, previous=None):
+def runs_on(council, skip_runs=None):
+    """Day-146: True when the three-day-run rule applies to this council — the
+    switch is on and the council recorded its names' runs."""
+    on = SKIP_RUNS if skip_runs is None else skip_runs
+    return bool(on) and isinstance((council or {}).get('runs'), dict)
+
+
+def with_run_note(section, council, skip_runs=None):
+    """Day-146: the section, with `run_note` when the rule is on and the
+    council could not read some names' closes, or any: never silent."""
+    on = SKIP_RUNS if skip_runs is None else skip_runs
+    err = ((council or {}).get('errors') or {}).get('runs') if isinstance(council, dict) else None
+    if not (section and on and err):
+        return section
+    if not isinstance(council.get('runs'), dict):
+        note = ('The three-day-run rule (day-146) could not be applied today (%s); the picks stand '
+                'unchecked.' % _clip(str(err), 100))
+    else:
+        note = ("The three-day-run rule (day-146) could not read some names' daily closes (%s); "
+                'those names stand unchecked.' % _clip(str(err), 100))
+    return {**section, 'run_note': note}
+
+
+def claude_choice(council, *, skip_runs=None):
+    """([(side, nomination)], [(side, nomination, run record)]): Claude's
+    picks, one per side, and the nominations passed over for them.
+
+    Day-144: Claude's first-named long and short. Day-146 (`SKIP_RUNS`): a
+    nomination that follows a three-day run (`council['runs']`) is passed over
+    and Claude's next nomination on that side stands, unless it follows a run
+    too; a side whose nominations all follow runs is left empty. A name whose
+    run was not recorded stands: the rule cannot be applied to it."""
+    import runs as RU
+    on = runs_on(council, skip_runs)
+    runs_ = (council or {}).get('runs') or {}
+    got = ((council or {}).get('nomination_picks') or {}).get('claude') or {}
+    chosen, passed = [], []
+    for side, key in (('LONG', 'longs'), ('SHORT', 'shorts')):
+        for nom in (p for p in got.get(key) or [] if isinstance(p, dict) and p.get('ticker')):
+            rec = runs_.get(nom['ticker']) if on else None
+            if rec and RU.follows(side, rec.get('run')):
+                passed.append((side, nom, rec))
+                continue
+            chosen.append((side, nom))
+            break
+    return chosen, passed
+
+
+def run_reason(picks, passed, *, claude):
+    """The Top 2's reason when the day-146 rule left a slot empty, else None."""
+    if len(picks) >= PICKS or not passed:
+        return None
+    rule = 'passed over by the three-day-run rule (day-146)'
+    if claude:
+        empty = sorted({side for side, _, _ in passed} - {p['side'] for p in picks})
+        if not empty:
+            return None
+        sides = ' and '.join('long' if s == 'LONG' else 'short' for s in empty)
+        return ("Claude's %s nominations followed three-day runs, %s, so the %s slot%s left empty."
+                % (sides, rule, sides, ' is' if len(empty) == 1 else 's are'))
+    if picks:
+        return ("The council's other pick followed a three-day run, %s; the second slot is left "
+                'empty.' % rule)
+    return (("The council's picks followed three-day runs" if len(passed) > 1 else
+             "The council's pick followed a three-day run") + ', %s, so there is nothing here to act on.'
+            % rule)
+
+
+def claude_top_two(council, own, *, previous=None, skip_runs=None):
     """Day-144 (owner, 2026-10-30): the Top 2 led by Claude — its first-named
     long and short, each with the council's vote on it, which cannot replace
     it. `own` is the council's own section; its picks are kept beside as
-    `council_own`, the recorded shadow. None when Claude nominated nothing."""
-    chosen = claude_picks(council)
-    if not chosen:
+    `council_own`, the recorded shadow. None when Claude nominated nothing.
+    Day-146: with the three-day-run rule on, `claude_choice` picks per side,
+    and the nominations passed over are kept in `passed_run`, shaped like the
+    picks, so they are shown and recorded as a shadow."""
+    import runs as RU
+    chosen, passed_noms = claude_choice(council, skip_runs=skip_runs)
+    if not chosen and not passed_noms:
         return None
     by_pos = {(p['ticker'], p['side']): p for p in council.get('positions') or []}
     tally_ = council.get('tally') or {}
     rows = {r['id']: r for r in tally_.get('rows') or []}
     members = tally_.get('members') or []
     moves = council.get('moves') or {}
-    picks = []
-    for side, nom in chosen:
+
+    def shaped(side, nom):
         pos = by_pos.get((nom['ticker'], side))
         r = rows.get(pos['id']) if pos else None
         if pos and r:
@@ -994,18 +1136,61 @@ def claude_top_two(council, own, *, previous=None):
         m = (moves.get(nom['ticker']) or {}).get('move_atr')
         if isinstance(m, (int, float)):
             x['move_atr'] = float(m)
-        picks.append(x)
-    return {'picks': picks, 'status': 'READY' if len(picks) == PICKS else 'PARTIAL',
-            'council': True, 'claude_leads': True,
-            'answered': members, 'absent': tally_.get('absent') or [],
-            'rule_version': CLAUDE_RULE,
-            'reason': (None if len(picks) == PICKS else
-                       'Claude named only one side today, so the second slot is left empty.'),
-            'near': [], 'runner_up': None, 'runner_up_note': None,
-            'council_own': list((own or {}).get('picks') or []),
-            'council_own_status': (own or {}).get('status'),
-            'council_own_rule': (own or {}).get('rule_version'),
-            'council_own_reason': (own or {}).get('reason')}
+        return x
+    picks = [shaped(side, nom) for side, nom in chosen]
+    passed = []
+    for side, nom, rec in passed_noms:
+        x = shaped(side, nom)
+        stood = next((p['ticker'] for p in picks if p['side'] == side), None)
+        x.update({'run': rec.get('run'), 'run_words': RU.words(rec), 'replaced_by': stood})
+        passed.append(x)
+    status = 'READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT'
+    out = {'picks': picks, 'status': status,
+           'council': True, 'claude_leads': True,
+           'answered': members, 'absent': tally_.get('absent') or [],
+           'rule_version': CLAUDE_RULE + ('+' + RUN_RULE if runs_on(council, skip_runs) else ''),
+           'reason': (None if len(picks) == PICKS else
+                      run_reason(picks, passed_noms, claude=True)
+                      or 'Claude named only one side today, so the second slot is left empty.'),
+           'near': [], 'runner_up': None, 'runner_up_note': None,
+           'council_own': list((own or {}).get('picks') or []),
+           'council_own_status': (own or {}).get('status'),
+           'council_own_rule': (own or {}).get('rule_version'),
+           'council_own_reason': (own or {}).get('reason')}
+    if passed:
+        out['passed_run'] = passed
+    return out
+
+
+def runs_remove_only(section, council, *, skip_runs=None):
+    """Day-146 on the council's own Top 2, when it is the live one (Claude's
+    picks missing): remove-only, as the big-mover rule is. A pick that follows
+    a three-day run is passed over (`passed_run`) and nothing is added in its
+    place; a runner-up that follows one is not shown either."""
+    if not section or not runs_on(council, skip_runs):
+        return section
+    import runs as RU
+    runs_ = council['runs']
+    keep, passed = [], []
+    for x in section.get('picks') or []:
+        rec = runs_.get(x['ticker'])
+        if rec and RU.follows(x['side'], rec.get('run')):
+            passed.append({**x, 'run': rec.get('run'), 'run_words': RU.words(rec), 'replaced_by': None})
+        else:
+            keep.append(x)
+    out = {**section, 'rule_version': (section.get('rule_version') or RULE_VERSION) + '+' + RUN_RULE}
+    ru = section.get('runner_up')
+    rec = runs_.get(ru['ticker']) if isinstance(ru, dict) else None
+    if rec and RU.follows(ru['side'], rec.get('run')):
+        out['runner_up'] = None
+        out['runner_up_note'] = ('No runner-up: %s %s followed a three-day run (the three-day-run '
+                                 'rule, day-146).' % (ru['side'], ru['ticker']))
+    if passed:
+        out['picks'] = keep
+        out['passed_run'] = passed
+        out['status'] = 'READY' if len(keep) == PICKS else 'PARTIAL' if keep else 'NO_AGREEMENT'
+        out['reason'] = run_reason(keep, passed, claude=False)
+    return out
 
 
 def claude_own_line(section):
@@ -1023,12 +1208,16 @@ def claude_own_line(section):
 
 
 def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None, skip_wild=None,
-            claude_leads=None):
+            claude_leads=None, skip_runs=None):
     """The Top 2 section. Day-144 (`CLAUDE_LEADS`, owner 2026-10-30): Claude's
     first-named long and short, with the council's vote on each and the
     council's own decision kept beside (`council_own`, a recorded shadow).
     Off, or with no Claude nominations, it is the council's own decision
-    (`council_top_two`), labelled when Claude's picks were missing."""
+    (`council_top_two`), labelled when Claude's picks were missing.
+    Day-146 (`SKIP_RUNS`): the three-day-run rule on whichever is the live
+    Top 2 — Claude's next nomination stands in a passed-over one's place;
+    the council's own is remove-only. The shadow beside Claude's picks keeps
+    the council's own rule."""
     leads = CLAUDE_LEADS if claude_leads is None else claude_leads
     note = None
     if previous is None:
@@ -1038,16 +1227,18 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
     if note:
         own['repeat_note'] = note
     if not leads:
-        return own
-    led = claude_top_two(council, own, previous=previous)
+        return with_run_note(runs_remove_only(own, council, skip_runs=skip_runs), council, skip_runs)
+    led = claude_top_two(council, own, previous=previous, skip_runs=skip_runs)
     if led is None:
         why = _clip(str((council.get('errors') or {}).get('nominations claude')
                         or 'it nominated nothing'), 120)
-        return {**own, 'claude_note': "Claude's picks were unavailable today (%s); the council's "
-                                      'own Top 2 stands.' % why}
+        return with_run_note(runs_remove_only({**own, 'claude_note': "Claude's picks were unavailable "
+                                                                     "today (%s); the council's own "
+                                                                     'Top 2 stands.' % why},
+                                              council, skip_runs=skip_runs), council, skip_runs)
     if note:
         led['repeat_note'] = note
-    return led
+    return with_run_note(led, council, skip_runs)
 
 
 def council_top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None,
@@ -1290,7 +1481,7 @@ def decide(counted, council, *, prices=None, moves=None):
                                'its vote.' % str(council.get('reason') or 'it was not staged')[:120])
         if note:
             led['repeat_note'] = note
-        return led
+        return with_run_note(led, council)
     if not isinstance(counted, dict):
         return counted
     why = (council or {}).get('reason') or 'it was not staged'
@@ -1306,7 +1497,9 @@ def decide(counted, council, *, prices=None, moves=None):
     cut = (council or {}).get('wild') if isinstance(council, dict) else None
     if not cut and not recorded:
         cut = wild_cut(list((known or {}).values()))
-    return counted_wild(out, known, cut)
+    # Day-146: the counted picks too, remove-only, when the council recorded runs.
+    council_ = council if isinstance(council, dict) else {}
+    return with_run_note(runs_remove_only(counted_wild(out, known, cut), council_), council_)
 
 
 def brief_moves(root, now):

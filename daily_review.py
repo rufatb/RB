@@ -84,6 +84,9 @@ def picks_of(report):
     for p in (i.get('top_two') or {}).get('passed_wild') or []:            # day-137
         add('Passed over (high volatility)', '+'.join(p.get('models') or []), p['side'], p,
             extra={'agreement': p.get('agreement')})
+    for p in (i.get('top_two') or {}).get('passed_run') or []:             # day-146
+        add('Passed over (three-day run)', '+'.join(p.get('models') or []), p['side'], p,
+            extra={'agreement': p.get('agreement')})
     # Day-144: with Claude leading the Top 2, the council's own decision is a
     # shadow, scored in its own section and kept out of the lessons.
     for p in (i.get('top_two') or {}).get('council_own') or []:
