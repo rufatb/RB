@@ -18,6 +18,26 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day147 — lab item 8 registered: do the models' reads come true over days? (council lab, 2026-11-05)
+
+* **The question.** Held from the 09:45 entry to the close three sessions
+  later, against XIU, are the models' picks right more often than chance?
+  H = 1 and H = 5 are reported beside it. Registered in
+  `PREREGISTER_day147_holds.md` before any multi-day return was computed.
+* **The population.** The pooled model picks (`model_picks.pooled_card`'s
+  rule), 09-17 → 10-29: 189 picks over 26 sessions. It was re-scoped from
+  Claude's 48 nominations for power. Claude's arm and its first-named picks
+  are descriptive.
+* **The bar.** Day-145's machinery at seed 147:
+  * t ≥ 3 over session means, a sign-flip placebo p < 0.01, both halves
+    positive, and the mean net of 0.13%;
+  * a planted 1.0% must show, else the verdict is UNDERPOWERED, which is
+    likely at 26 sessions;
+  * anything but DRIFT is rejection #62.
+* **Next:** `holds_history.py` runs it in the next slot (FMP daily and
+  5-minute bars; no model call). A DRIFT goes to the owner as a proposal for
+  a forward `hold3` shadow, not a rule.
+
 ## Day146 — the owner's three-day-run rule: on from 11-05, NULL on history (rejection #61, owner, 2026-11-04)
 
 The owner, after 11-04's CLS.TO long lost 5.21%: when a stock has gone one way
