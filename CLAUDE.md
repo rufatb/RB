@@ -88,25 +88,37 @@ the picks win or lose with the market's and the sector's move after the entry.
   release in 30.
 * **Not claimed:** any accuracy gain. Day-118/122: the open prices a release.
 
-## Day147 — lab item 8 registered: do the models' reads come true over days? (council lab, 2026-11-05)
+## Day147 — held for days, the models' reads come true no more often; the record cannot see 1% (rejection #63, council lab item 8, 2026-11-06)
 
-* **The question.** Held from the 09:45 entry to the close three sessions
-  later, against XIU, are the models' picks right more often than chance?
-  H = 1 and H = 5 are reported beside it. Registered in
-  `PREREGISTER_day147_holds.md` before any multi-day return was computed.
-* **The population.** The pooled model picks (`model_picks.pooled_card`'s
-  rule), 09-17 → 10-29: 189 picks over 26 sessions. It was re-scoped from
-  Claude's 48 nominations for power. Claude's arm and its first-named picks
-  are descriptive.
-* **The bar.** Day-145's machinery at seed 147:
-  * t ≥ 3 over session means, a sign-flip placebo p < 0.01, both halves
-    positive, and the mean net of 0.13%;
-  * a planted 1.0% must show, else the verdict is UNDERPOWERED, which is
-    likely at 26 sessions;
-  * anything but DRIFT is rejection #63 (#62 went to day-147c; amendment 1).
-* **Next:** `holds_history.py` runs it in the next slot (FMP daily and
-  5-minute bars; no model call). A DRIFT goes to the owner as a proposal for
-  a forward `hold3` shadow, not a rule.
+* **The question** (the owner, 11-03: "direction didn't come true"). Held from
+  the 09:45 entry to the close three sessions later, against XIU, are the
+  models' picks right more often than chance? H = 1 and H = 5 are reported
+  beside it.
+* **The test.** `PREREGISTER_day147_holds.md` (85d9a54), run once by
+  `holds_history.py` (414d24a, committed before it ran). Read
+  `AUDIT_day147_holds.md`; summary `data/holds_day147.json`. FMP bars only,
+  cached in `.rb-state/holds_day147_cache/`; no model call.
+* **The population:** the pooled model picks (`model_picks.pooled_card`'s
+  rule), 09-17 → 10-29, 189 picks over 26 sessions. All were scored.
+* **UNDERPOWERED at three sessions.**
+  * +0.075% a session (net −0.055%), t = 0.17, placebo p = 0.43, halves
+    +0.69% and −0.54%, 95 of 189 right.
+  * A planted 1.0% shows only at t = 2.50; the smallest detectable effect is
+    1.73% a pick.
+* **Beside it:**
+  * one session: −0.02%, t = −0.09, a powered null;
+  * five sessions: +0.74%, t = 1.60, all on the short side (shorts +2.28%,
+    longs −0.66%). Below every bar; it would take about 150 sessions to judge;
+  * three sessions held against the same day's close: +0.03%, t = 0.30;
+  * Claude's first-named picks (24): −0.21% at three sessions, 12 right.
+* **So:** nothing changes, and no `hold3` shadow is proposed. Holding does not
+  make a read come true.
+* **Next lab item: 11, a council veto on Claude's picks** (positions with two
+  or more objections against the rest). The votes survive only in the frozen
+  reports from 10-26, so it is sized first. Items 9 and 10 wait for the owner;
+  6 is parked; 7 waits for a desk to clear a bar (`COUNCIL_LAB.md`).
+* **Not claimed:** that any pick, held for any length of time, is right more
+  often. Say so plainly when asked.
 
 ## Day146 — the owner's three-day-run rule: on from 11-05, NULL on history (rejection #61, owner, 2026-11-04)
 
@@ -3427,8 +3439,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **62 rejections, 5
-adoptions** (as of day-147c; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **63 rejections, 5
+adoptions** (as of day-147; skipping the morning's widest-swinging names is the
 fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.

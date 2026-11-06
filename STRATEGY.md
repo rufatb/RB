@@ -6022,3 +6022,35 @@ SPY bars.
   * nothing changes;
   * day-43's list of untested new information is down to L1/L2 depth.
 * Lab item 8 (day-147), registered as #62, takes #63 (its amendment 1).
+
+## Day-147: REJECTION #63 — held for days, the models' reads come true no more often; the record cannot see 1%
+
+Lab item 8. The owner, 11-03: "direction didn't come true." A read the open has
+priced might still come true over a few days. Registered first
+(`PREREGISTER_day147_holds.md`, 85d9a54; amendment 1 for the number);
+`holds_history.py` (414d24a, committed before it ran);
+`AUDIT_day147_holds.md`; `data/holds_day147.json`. One look, FMP bars only.
+* **The population:** the pooled model picks (`model_picks.pooled_card`'s
+  rule), 09-17 → 10-29: 189 picks over 26 sessions, all scored. Held from the
+  recorded 09:45 entry to FMP's close 1, 3 and 5 sessions later, against XIU
+  over the same window.
+* **The verdict at three sessions: UNDERPOWERED.**
+  * +0.075% a session, net −0.055%, t = 0.17, placebo p = 0.43; the halves
+    disagree (+0.69%, −0.54%); 95 of 189 right (50%).
+  * A planted 1.0% shows only at t = 2.50. The smallest detectable effect is
+    1.73% a pick: a three-session hold swings about 1.8 times a single day.
+* **Reported beside it:**
+  * one session: −0.02%, t = −0.09, a powered null (control t = 4.05);
+  * five sessions: +0.74%, t = 1.60, placebo p = 0.066, halves +0.74% and
+    +0.75%, control t = 2.04. All of it is on the short side (shorts +2.28% a
+    pick, t = 1.79; longs −0.66%).
+* **Descriptive:**
+  * holding three sessions against closing the same day: +0.03%, t = 0.30;
+  * Claude's 48 nominations: −0.22% at three sessions (25 right); its
+    first-named 24: −0.21% (12 right), +0.98% at five (t = 1.11).
+* **So:**
+  * a read does not come true more often for being held;
+  * no `hold3` shadow is proposed (any verdict but DRIFT);
+  * the five-session lean is below every bar and would need about 150
+    sessions to judge, so no forward test is proposed;
+  * nothing changes.
