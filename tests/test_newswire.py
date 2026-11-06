@@ -75,18 +75,136 @@ def fake_fetch(pages):
 
 
 def test_collect_archives_once_counts_failures_and_stops_at_since(tmp_path):
-    pages = {N.LIST_URL.format(page=1): LIST,
+    """A page that fails is archived from its card; a card that cannot make a
+    row either (no time on it) is COUNTED and left for the next run."""
+    undated = ('<div class="row newsCards" lang="en"><a class="newsreleaseconsolidatelink" '
+               'href="/news-releases/undated-3.html"><h3><small>Sep 26, 2026</small> Undated card'
+               '</h3></a></div>')
+    pages = {N.LIST_URL.format(page=1): LIST.replace('<div class="row newsCards" lang="en"><a '
+                                                     'class="newsreleaseconsolidatelink" href="/news-releases/gov-2.html">',
+                                                     undated + '<div class="row newsCards" lang="en"><a '
+                                                     'class="newsreleaseconsolidatelink" href="/news-releases/gov-2.html">'),
              'https://www.newswire.ca/news-releases/acme-q3-1.html': release(),
+             'https://www.newswire.ca/news-releases/undated-3.html': ValueError('HTTP_503'),
              'https://www.newswire.ca/news-releases/gov-2.html': ValueError('HTTP_503')}
     out = N.collect(dt.date(2026, 9, 25), today=dt.date(2026, 9, 28), root=tmp_path,
                     fetch=fake_fetch(pages), pause=0)
-    assert out['archived'] == 1 and out['failed'] == 1 and out['failures'] == {'HTTP_503': 1}
+    assert out['archived'] == 2 and out['from_list'] == 1 and out['page_failures'] == {'HTTP_503': 1}
+    assert out['failed'] == 1 and out['failures'] == {'HTTP_503+NO_LIST_TIME': 1}
     assert out['reached_since'] is False           # the list ended without an older card
     assert json.loads((tmp_path/'2026-09-28.jsonl').read_text())['tickers'] == ['ACM.TO']
-    # Stopping: a card older than `since` ends the walk; an archived URL is not refetched.
+    gov = json.loads((tmp_path/'2026-09-25.jsonl').read_text())
+    assert gov['source'] == N.LIST_SOURCE and gov['page_error'] == 'HTTP_503'
+    assert gov['published_at'] == '2026-09-25T16:10:00-04:00' and gov['tickers'] == []
+    # Stopping: a card older than `since` ends the walk; an archived URL is not
+    # refetched, and the card that made no row is the only one asked again.
     out = N.collect(dt.date(2026, 9, 26), today=dt.date(2026, 9, 28), root=tmp_path,
                     fetch=fake_fetch(pages), pause=0)
-    assert out['reached_since'] is True and out['new_releases'] == 0 and out['archived'] == 0
+    assert out['reached_since'] is True and out['new_releases'] == 1 and out['archived'] == 0
+    assert out['failures'] == {'HTTP_503+NO_LIST_TIME': 1}
+
+
+CARDS = '''
+<div class="row newsCards" lang="en"><div class="card col-view" role="group" aria-label="News Release">
+<a class="newsreleaseconsolidatelink display-outline w-100" href="/news-releases/enbridge-dividends-%d.html">
+<div class="col-sm-8 col-lg-9 pull-left card"><h3>
+  <small>Nov 04, 2026, 06:%02d ET</small>
+  Enbridge Inc. Declares Quarterly Dividends %d
+</h3>
+<p class="remove-outline">Enbridge Inc. (TSX: ENB) (NYSE: ENB) (Enbridge or the Company) announced that its Board of Directors has declared a quarterly dividend of $0...</p>
+</div></a></div></div>
+'''
+
+
+def cards(n):
+    return ''.join(CARDS % (i, i, i) for i in range(n))
+
+
+def test_the_card_carries_the_opening_sentence_and_its_minute():
+    (url, listed, title, summary), = N.parse_list(cards(1))
+    assert url.endswith('/news-releases/enbridge-dividends-0.html')
+    assert title == 'Enbridge Inc. Declares Quarterly Dividends 0'
+    assert summary.startswith('Enbridge Inc. (TSX: ENB) (NYSE: ENB)')
+    assert N.listed_at(listed, dt.date(2026, 11, 5)) == dt.datetime(2026, 11, 4, 6, 0, tzinfo=ET)
+    assert N.listed_at('19:23 ET', dt.date(2026, 11, 5)) == dt.datetime(2026, 11, 5, 19, 23, tzinfo=ET)
+    assert N.listed_at('Nov 04, 2026', dt.date(2026, 11, 5)) is None
+    assert N.parse_list(LIST)[0][3] == ''          # an old card without one
+
+
+def test_the_summary_supplies_a_symbol_the_lead_was_read_without():
+    """From 10-26 the page's lead was read without its symbol on ~40% of the
+    releases naming one; the card's opening sentence names it."""
+    page = release(lead='The company today reported')        # no symbol in the lead
+    row = N.parse_release(page, 'u', 'T', 'Enbridge Inc. (TSX: ENB) (NYSE: ENB) announced')
+    assert row['tickers'] == ['ENB.TO'] and row['summary'].startswith('Enbridge Inc.')
+    # The summary's symbols come first; the lead's further ones follow, once.
+    row = N.parse_release(release(lead='ACME Mining Corp. (TSX: ACM) and Beta (TSX: BTA) agreed'),
+                          'u', 'T', 'Beta Corp. (TSX: BTA) and ACME')
+    assert row['tickers'] == ['BTA.TO', 'ACM.TO']
+    assert 'summary' not in N.parse_release(release(), 'u', 'T')
+
+
+def test_a_style_block_in_the_body_is_not_part_of_the_lead():
+    """From ~10-26 the body opened with a ~300-character style block; counted as
+    text it pushed the issuer's symbol past LEAD_CHARS."""
+    css = '<style>' + '.release-content span.prnews_span{font-size:8pt;color:black}' * 14 + '</style>'
+    page = release().replace('<p>TORONTO', css + '<p>TORONTO')
+    assert len(css) > N.LEAD_CHARS
+    assert N.parse_release(page, 'u')['tickers'] == ['ACM.TO']
+    assert N._text('<p>a</p><script type="x">var b = 1;</script><STYLE>p{}</STYLE> c') == 'a c'
+
+
+def test_a_page_without_a_declared_charset_is_read_as_utf8():
+    import requests
+
+    class Session:
+        def get(self, url, **kw):
+            r = requests.models.Response()
+            r.status_code, r._content = 200, 'AtkinsRéalis (TSX: ATRL)'.encode('utf-8')
+            r.headers['content-type'] = 'text/html'
+            r.encoding = 'ISO-8859-1'                       # what requests infers
+            return r
+    assert N._get('u', Session()) == 'AtkinsRéalis (TSX: ATRL)'
+
+
+def test_refused_pages_are_archived_from_their_cards_and_the_run_stops_asking(tmp_path):
+    asked = []
+
+    def fetch(url):
+        if url == N.LIST_URL.format(page=1):
+            return cards(8)
+        if url == N.LIST_URL.format(page=2):
+            return ''
+        asked.append(url)
+        raise ValueError('HTTP_403')
+
+    out = N.collect(dt.date(2026, 11, 4), today=dt.date(2026, 11, 5), root=tmp_path,
+                    fetch=fetch, pause=0, workers=1)
+    assert out['archived'] == 8 and out['from_list'] == 8 and out['failed'] == 0
+    assert len(asked) == N.BREAK_AFTER                      # then it stops asking
+    assert out['page_failures'] == {'HTTP_403': N.BREAK_AFTER,
+                                    'NOT_FETCHED_AFTER_HTTP_403': 8 - N.BREAK_AFTER}
+    rows = N.read(tmp_path)
+    assert {r['source'] for r in rows} == {N.LIST_SOURCE}
+    assert all(r['tickers'] == ['ENB.TO'] for r in rows) and out['with_tsx_symbol'] == 8
+    first = min(rows, key=lambda r: r['published_at'])
+    assert first['published_at'] == '2026-11-04T06:00:00-05:00'
+    # The archived card is an issuer release to the desks, with the wire's minute.
+    meta = classify_headline(first['title'], first['url'], 'ENB.TO', tmp_path)
+    assert meta['classification'] == 'ISSUER_RELEASE' and meta['issuer_role'] == 'VERIFIED'
+    assert meta['first_disclosed_at'] == first['published_at']
+
+
+def test_main_names_a_list_only_collection_with_its_own_exit(monkeypatch, capsys):
+    base = {'reached_since': True, 'failed': 0, 'from_list': 0, 'page_failures': {}}
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: dict(base))
+    assert N.main(['--collect', '--since', '2026-11-04']) == 0
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: {**base, 'from_list': 4,
+                                                       'page_failures': {'HTTP_403': 3}})
+    assert N.main(['--collect', '--since', '2026-11-04']) == 5
+    assert 'archived from the list card' in capsys.readouterr().err
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: {**base, 'failed': 1, 'from_list': 4})
+    assert N.main(['--collect', '--since', '2026-11-04']) == 3
 
 
 def test_a_list_page_that_keeps_failing_ends_the_walk_but_keeps_what_came_before(tmp_path):

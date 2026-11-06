@@ -216,6 +216,8 @@ else
         case $? in
             0) log "  wire releases: collected" ;;
             3) log "  wire releases: collected, some release pages failed (retried next run)" ;;
+            5) log "  wire releases: collected from the wire's list — release pages refused;"
+               log "    titles, times and the opening sentence's symbols, no body (day-147b)" ;;
             *) log "  wire releases: NOT collected or incomplete — the desks see yesterday's archive"
                stage_faults+=("wire releases not collected") ;;
         esac

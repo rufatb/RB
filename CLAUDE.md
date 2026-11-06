@@ -18,6 +18,47 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day147b — the wire was half-blind from 10-26 and blind from 11-04; it reads the list cards now (2026-11-05 evening)
+
+* **Two faults, found while looking for the owner's "main root problem".**
+  * **From ~10-26** the release pages open their body with a ~300-character
+    style block. `newswire._text` kept it as text, so the 700-character lead
+    often ended before the issuer's symbol. 92 releases naming one were
+    archived without it, about 40% (12 of 25 on 10-26; ENB, VET, MFI, GIB.A on
+    11-04). The pages also stopped declaring a charset ("AtkinsRÃ©alis").
+  * **From 11-04 09:31** newswire.ca refuses every release page to the
+    collector (HTTP 403, a bot challenge). Nothing was archived after it.
+    11-05's news desk had none of the 36 overnight names it should have had
+    (SLF, BCE, OTEX, LUN, TOU …). Each refusal also cost 6 s of retries, so the
+    morning's 60-second slot ran out.
+* **The fix** (`newswire.py`):
+  * `_text` drops <style> and <script> with their contents; `_get` reads UTF-8
+    when no charset is declared.
+  * Each list card's opening sentence (`summary`, the lead's first sentence)
+    is parsed; its symbols come first (`opening_symbols`).
+  * A page that cannot be read is archived from its card (`list_row`):
+    `source: 'newswire.ca list'`, the card's minute, title and summary, and
+    `page_error`. The card's minute was the page's own on 2,324 of 2,336
+    releases checked; the other 12 were re-listed later, never earlier.
+  * A card that cannot make a row is counted and retried, as before.
+  * A release page is asked once; after 3 refusals (`BREAK_AFTER`) the run
+    stops asking. Exit 5 means archived, some from the list. The 254 releases
+    since 11-04 09:31 took 6.9 s. Nothing is bypassed: the list pages load
+    normally.
+* **The record.**
+  * 254 rows archived from their cards, 64 of them naming a TSX symbol.
+  * 92 empty symbol lists from 10-26 → 11-04 filled from their cards and
+    marked `tickers_repaired`; nothing else changed.
+  * Rows before 10-24 are left as collected: day-122's and day-142's replays
+    read them. 37 of them carry a card symbol the lead missed.
+  * The wire card ("Desk picks on an overnight wire release") goes from 4/9 to
+    6/12, three picks the archive had missed. Still a coin flip.
+* **What a list row lacks: the body.** The news desk's FULL arm asks for it, is
+  refused and sends the title alone, counted, as registered. The HEADLINE arm
+  is unchanged. The summary misses a symbol the full lead names on about 1
+  release in 30.
+* **Not claimed:** any accuracy gain. Day-118/122: the open prices a release.
+
 ## Day147 — lab item 8 registered: do the models' reads come true over days? (council lab, 2026-11-05)
 
 * **The question.** Held from the 09:45 entry to the close three sessions

@@ -34,6 +34,23 @@ What a row claims, and no more:
                 about them.
 A release is not a verified catalyst, its content is not read or judged here,
 and a symbol match is not a claim that the market has not already moved.
+
+The list card (day-147b). Each card on the list also carries the release's
+opening sentence (`summary`, about 150 characters, the dateline dropped), so
+the lead's symbols are taken from it as well, summary first. From about
+2026-10-26 the page's lead was read without its symbol on about 40% of the
+releases that name one (ENB, VET, MFI, GIB.A on 11-04): the redesigned body
+opens with a ~300-character <style> block, which `_text` kept as text until
+day-147b, and the site stopped declaring its charset (read as Latin-1, so
+"AtkinsRÃ©alis"). From 11-04 09:31 newswire.ca refuses release pages to this
+collector (HTTP 403, a bot challenge, never bypassed here). A release whose
+page cannot be read is archived FROM ITS CARD:
+`source: 'newswire.ca list'`, the card's time (the page's own minute on 2,324
+of 2,336 releases checked on 11-05; the other 12 were re-listed later, never
+earlier), the card's title, the summary's symbols, and `page_error` naming why.
+The summary misses a symbol the 700-character lead names on about 1 release in
+30. After BREAK_AFTER refusals in one run the rest of the run's cards are taken
+from the list without asking for their pages.
 """
 from __future__ import annotations
 
@@ -58,9 +75,13 @@ LEAD_CHARS = 700
 MAX_PAGES = 120
 WORKERS = 4
 TIMEOUT = 20
+LIST_SOURCE = 'newswire.ca list'
+BREAK_AFTER = 3          # release pages refused (HTTP 403) before a run stops asking
 
 _CARD = re.compile(
-    r'href="(/news-releases/[^"]+-\d+\.html)".*?<small>([^<]+)</small>\s*(.*?)\s*</h3>', re.S)
+    r'href="(/news-releases/[^"]+-\d+\.html)".*?<small>([^<]+)</small>\s*(.*?)\s*</h3>'
+    r'(?:\s*<p class="remove-outline">(.*?)</p>)?', re.S)
+_LISTED = re.compile(r'(?:([A-Z][a-z]{2}) (\d{1,2}), (\d{4}), )?(\d{1,2}):(\d{2}) ET$')
 _DATE = re.compile(r"<meta name=['\"]date['\"] content=\"([^\"]+)\"")
 _BODY = re.compile(r'<section class="release-body[^"]*"[^>]*>(.*?)</section>', re.S)
 _TITLE = re.compile(r'<h1[^>]*>(.*?)</h1>', re.S)
@@ -75,8 +96,15 @@ _SYMBOLS = re.compile(r'\b(TSX[\s\-]?V(?:enture)?(?:\s+Exchange)?|TSX)'
 _ONE = re.compile(_SYM)
 
 
+_NOT_TEXT = re.compile(r'<(style|script)\b[^>]*>.*?</\1\s*>', re.S | re.I)
+
+
 def _text(fragment):
-    return ' '.join(htmllib.unescape(re.sub(r'<[^>]+>', ' ', fragment)).split())
+    """Visible text: tags dropped, and a <style> or <script> element dropped
+    WITH its contents. From ~10-26 every release body opened with a ~300
+    character style block, which ate into LEAD_CHARS and pushed the issuer's
+    own symbol out of the lead on about 40% of the releases that name one."""
+    return ' '.join(htmllib.unescape(re.sub(r'<[^>]+>', ' ', _NOT_TEXT.sub(' ', fragment))).split())
 
 
 def yahoo_symbol(symbol, venture=False):
@@ -97,9 +125,10 @@ def symbols(text):
 
 
 def parse_list(page):
-    """[(url, listed, title)] from one list page, newest first."""
-    return [(BASE + href, ' '.join(listed.split()), _text(title))
-            for href, listed, title in _CARD.findall(page)]
+    """[(url, listed, title, summary)] from one list page, newest first. The
+    summary is the card's opening sentence ('' when the card has none)."""
+    return [(BASE + href, ' '.join(listed.split()), _text(title), _text(summary or ''))
+            for href, listed, title, summary in _CARD.findall(page)]
 
 
 def listed_date(listed, today):
@@ -110,8 +139,39 @@ def listed_date(listed, today):
     return dt.datetime.strptime(' '.join(m.groups()), '%b %d %Y').date()
 
 
-def parse_release(page, url, title=None):
-    """One archive row, or ValueError naming what the page lacked."""
+def listed_at(listed, today):
+    """'Nov 04, 2026, 06:02 ET' -> 2026-11-04 06:02 ET; a bare '17:39 ET' is
+    today. None when the card's time cannot be read."""
+    m = _LISTED.match(' '.join(listed.split()))
+    if not m:
+        return None
+    day = (dt.datetime.strptime(' '.join(m.group(1, 2, 3)), '%b %d %Y').date()
+           if m.group(1) else today)
+    return dt.datetime.combine(day, dt.time(int(m.group(4)), int(m.group(5))), tzinfo=ET)
+
+
+def opening_symbols(summary, lead=''):
+    """The symbols the release's opening names: the list summary's first (it is
+    the lead's first sentence), then any further ones in the page's lead."""
+    first = symbols(summary or '')
+    return first + [s for s in symbols(lead or '') if s not in first]
+
+
+def list_row(url, listed, title, summary, today, page_error):
+    """One archive row from the list card alone, or ValueError."""
+    at = listed_at(listed, today)
+    if at is None:
+        raise ValueError('NO_LIST_TIME')
+    if not title:
+        raise ValueError('NO_RELEASE_TITLE')
+    return {'url': url, 'title': title[:400], 'published_at': at.isoformat(),
+            'tickers': symbols(summary), 'source': LIST_SOURCE,
+            'summary': summary[:400], 'page_error': page_error}
+
+
+def parse_release(page, url, title=None, summary=None):
+    """One archive row, or ValueError naming what the page lacked. With the
+    list card's `summary`, its symbols come first (`opening_symbols`)."""
     d = _DATE.search(page)
     if not d:
         raise ValueError('NO_RELEASE_DATE')
@@ -127,9 +187,12 @@ def parse_release(page, url, title=None):
     if not title:
         raise ValueError('NO_RELEASE_TITLE')
     lead = _text(body.group(1))[:LEAD_CHARS]
-    return {'url': url, 'title': title[:400],
-            'published_at': published.astimezone(ET).isoformat(),
-            'tickers': symbols(lead), 'source': 'newswire.ca'}
+    row = {'url': url, 'title': title[:400],
+           'published_at': published.astimezone(ET).isoformat(),
+           'tickers': opening_symbols(summary, lead), 'source': 'newswire.ca'}
+    if summary:
+        row['summary'] = summary[:400]
+    return row
 
 
 def _get(url, session=None):
@@ -137,6 +200,8 @@ def _get(url, session=None):
     r = (session or requests).get(url, headers={'User-Agent': USER_AGENT}, timeout=TIMEOUT)
     if r.status_code != 200:
         raise ValueError(f'HTTP_{r.status_code}')
+    if 'charset' not in (r.headers.get('content-type') or '').lower():
+        r.encoding = 'utf-8'   # from ~10-26 the site declares none; requests then reads Latin-1
     return r.text
 
 
@@ -295,33 +360,55 @@ def _retrying(fetch, tries=3, pause=2.0):
     return get
 
 
+def _code(exc):
+    return str(exc) if re.fullmatch(r'[A-Z0-9_]{1,40}', str(exc)) else type(exc).__name__
+
+
 def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
-            workers=WORKERS, pause=0.5):
+            workers=WORKERS, pause=0.5, break_after=BREAK_AFTER):
     """Walk the list back to `since` (a date), fetch every release page not yet
     archived, append. Each list page is archived before the next is read, so a
-    failure keeps what came before it. Failures are COUNTED and returned, never
-    swallowed; a failed release page is not archived, so the next run retries
-    it. A list page that fails three times ends the walk (`list_error`)."""
+    failure keeps what came before it. A list page is tried three times, and one
+    that keeps failing ends the walk (`list_error`).
+
+    A release page is asked for ONCE. One that cannot be read is archived from
+    its list card (`list_row`, counted in `from_list` and `page_failures` by
+    code); after `break_after` HTTP 403 refusals the run stops asking for pages
+    and takes the rest from their cards. A card that cannot make a row either
+    is not archived, is COUNTED in `failures`, and the next run retries it.
+    Nothing is swallowed (house rule 1)."""
+    import threading
     import requests
     session = requests.Session()
-    fetch = _retrying(fetch or (lambda u: _get(u, session)), pause=2.0 if pause else 0)
+    raw = fetch or (lambda u: _get(u, session))
+    list_fetch = _retrying(raw, pause=2.0 if pause else 0)
     today = today or dt.datetime.now(ET).date()
     known = {r['url'] for r in read(root)}
-    pages = seen = written = with_symbol = 0
-    reached, list_error, failures = False, None, {}
+    pages = seen = written = with_symbol = from_list = 0
+    reached, list_error, failures, page_failures = False, None, {}, {}
+    refused, lock = [0], threading.Lock()
 
     def one(card):
-        url, title = card
+        url, listed, title, summary = card
+        if refused[0] >= break_after:
+            code = 'NOT_FETCHED_AFTER_HTTP_403'
+        else:
+            try:
+                return parse_release(raw(url), url, title, summary), None
+            except Exception as exc:     # counted below, never silent (house rule 1)
+                code = _code(exc)
+                if code == 'HTTP_403':
+                    with lock:
+                        refused[0] += 1
         try:
-            return parse_release(fetch(url), url, title), None
-        except Exception as exc:     # counted below, never silent (house rule 1)
-            code = str(exc) if re.fullmatch(r'[A-Z0-9_]{1,40}', str(exc)) else type(exc).__name__
-            return None, code
+            return list_row(url, listed, title, summary, today, code), code
+        except Exception as exc:
+            return None, f'{code}+{_code(exc)}'
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         for page in range(1, max_pages + 1):
             try:
-                listing = parse_list(fetch(LIST_URL.format(page=page)))
+                listing = parse_list(list_fetch(LIST_URL.format(page=page)))
             except Exception as exc:
                 list_error = f'page {page}: {type(exc).__name__}'
                 break
@@ -329,20 +416,23 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
             if not listing:
                 break
             cards = []
-            for url, listed, title in listing:
+            for url, listed, title, summary in listing:
                 if listed_date(listed, today) < since:
                     reached = True
                     break
                 if url not in known:
-                    cards.append((url, title))
+                    cards.append((url, listed, title, summary))
                     known.add(url)
             seen += len(cards)
             rows = []
             for row, code in pool.map(one, cards):
-                if row:
-                    rows.append(row)
-                else:
+                if not row:
                     failures[code] = failures.get(code, 0) + 1
+                    continue
+                rows.append(row)
+                if code is not None:          # archived from its card
+                    from_list += 1
+                    page_failures[code] = page_failures.get(code, 0) + 1
             written += append(rows, root)
             with_symbol += sum(1 for r in rows if r['tickers'])
             if reached:
@@ -350,7 +440,8 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
             time.sleep(pause)
     return {'since': since.isoformat(), 'list_pages': pages, 'reached_since': reached,
             'list_error': list_error, 'new_releases': seen, 'archived': written,
-            'with_tsx_symbol': with_symbol,
+            'with_tsx_symbol': with_symbol, 'from_list': from_list,
+            'page_failures': page_failures,
             'failed': sum(failures.values()), 'failures': failures}
 
 
@@ -376,7 +467,14 @@ def main(argv=None):
     if not out['reached_since']:
         print(f'NEWSWIRE: list ended before {since} — the archive has a hole', file=sys.stderr)
         return 4
-    return 0 if not out['failed'] else 3
+    if out['failed']:
+        return 3
+    if out['from_list']:
+        print(f"NEWSWIRE: {out['from_list']} release(s) archived from the list card "
+              f"(pages: {out['page_failures']}) — titles, times and symbols, no body",
+              file=sys.stderr)
+        return 5
+    return 0
 
 
 if __name__ == '__main__':
