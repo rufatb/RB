@@ -18,6 +18,35 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day147c — the market's direction after 09:45 cannot be read at 09:45 (rejection #62, owner, 2026-11-05 evening)
+
+The owner, after 11-05's broad selloff: "Fix the main root problem." Read as:
+the picks win or lose with the market's and the sector's move after the entry.
+* **On the record** (every model pick reviewed 09-29 → 11-05, each name, side
+  and day once, 218 picks):
+  * the stock's own move against its sector: 107/208 right, +0.19% a pick;
+  * its sector's move: 87/216 the pick's way, −0.22%;
+  * the market's move: 107/218, −0.03%;
+  * for the Top 2 the sector is 60% of a pick's variance.
+* **The test.** `PREREGISTER_day147c_market_direction.md` (ca823c4), run once
+  by `market_direction.py` (fd7b142). Read `AUDIT_day147c_market_direction.md`;
+  summary `data/market_direction_day147c.json`. Cache plus FMP's SPY bars
+  (`.rb-state/market_direction_cache/`); no model call.
+* **NULL, powered.**
+  * Following XIU's move from the prior close to 09:45 into the rest of the
+    day, over 707 sessions: −0.030%, t = −1.41, placebo p = 0.16, 51.4% right.
+    The blocks disagree.
+  * SPY's own version t = −0.72. A planted 0.10% shows at t = 4.62.
+  * Holm p = 1.0 for all six arms: the first fifteen minutes, the gap, SPY,
+    the prior session, breadth, and each sector's own morning.
+* **So:**
+  * nothing at 09:45 says which way the market or a sector goes next;
+  * the pair (one long, one short; Claude's rule) is the only protection the
+    record supports;
+  * nothing live changes;
+  * day-147's item 8 takes #63.
+* **Not claimed:** that anything is fixed. Say so plainly when asked.
+
 ## Day147b — the wire was half-blind from 10-26 and blind from 11-04; it reads the list cards now (2026-11-05 evening)
 
 * **Two faults, found while looking for the owner's "main root problem".**
@@ -74,7 +103,7 @@ A container reset on 10-25 brought a new image.
     positive, and the mean net of 0.13%;
   * a planted 1.0% must show, else the verdict is UNDERPOWERED, which is
     likely at 26 sessions;
-  * anything but DRIFT is rejection #62.
+  * anything but DRIFT is rejection #63 (#62 went to day-147c; amendment 1).
 * **Next:** `holds_history.py` runs it in the next slot (FMP daily and
   5-minute bars; no model call). A DRIFT goes to the owner as a proposal for
   a forward `hold3` shadow, not a rule.
@@ -3398,8 +3427,8 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **61 rejections, 5
-adoptions** (as of day-146; skipping the morning's widest-swinging names is the
+It is the running record of every change tested — **62 rejections, 5
+adoptions** (as of day-147c; skipping the morning's widest-swinging names is the
 fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.

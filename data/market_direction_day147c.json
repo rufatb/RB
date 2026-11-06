@@ -1,0 +1,368 @@
+{
+ "registration": "PREREGISTER_day147c_market_direction.md",
+ "window": [
+  "2024-01-02",
+  "2026-10-29"
+ ],
+ "seed": 1473,
+ "draws": 10000,
+ "bar": {
+  "t": 3.0,
+  "placebo_p": 0.01,
+  "spy_t": 2.0,
+  "cost_pct": 0.02,
+  "plant_pct": 0.1
+ },
+ "verdict": "NULL",
+ "primary": {
+  "sessions": 707,
+  "mean_pct": -0.0305,
+  "t": -1.41,
+  "placebo_p_two": 0.1593840615938406,
+  "blocks": [
+   -0.0431,
+   -0.072,
+   0.0284,
+   -0.0348
+  ],
+  "halves": [
+   -0.0591,
+   -0.002
+  ],
+  "hit_rate": 0.514,
+  "followed_up_share": 0.5785,
+  "outcome_mean_pct": 0.0302,
+  "outcome_sd_pct": 0.5816,
+  "control": {
+   "planted_pct": 0.1,
+   "t": 4.62,
+   "detected": true
+  },
+  "mde_pct": 0.0832,
+  "first": "2024-01-02",
+  "last": "2026-10-29"
+ },
+ "spy_own": {
+  "sessions": 704,
+  "mean_pct": -0.0208,
+  "t": -0.72,
+  "placebo_p_two": 0.47105289471052897,
+  "blocks": [
+   -0.0268,
+   -0.0167,
+   -0.0502,
+   0.0107
+  ],
+  "halves": [
+   -0.0217,
+   -0.0198
+  ],
+  "hit_rate": 0.4836,
+  "followed_up_share": 0.5852,
+  "outcome_mean_pct": 0.021,
+  "outcome_sd_pct": 0.7617,
+  "control": {
+   "planted_pct": 0.1,
+   "t": 3.48,
+   "detected": true
+  },
+  "mde_pct": 0.1102,
+  "first": "2024-01-02",
+  "last": "2026-10-29"
+ },
+ "secondary": {
+  "S1_first15": {
+   "sessions": 707,
+   "mean_pct": -0.0016,
+   "t": -0.07,
+   "placebo_p_two": 0.946005399460054,
+   "blocks": [
+    -0.0594,
+    0.0513,
+    0.0378,
+    -0.0357
+   ],
+   "halves": [
+    -0.0054,
+    0.0023
+   ],
+   "hit_rate": 0.5098,
+   "followed_up_share": 0.5092,
+   "outcome_mean_pct": 0.0302,
+   "outcome_sd_pct": 0.5816,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.61,
+    "detected": true
+   },
+   "mde_pct": 0.0832,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  },
+  "S2_gap": {
+   "sessions": 707,
+   "mean_pct": -0.0154,
+   "t": -0.71,
+   "placebo_p_two": 0.4831516848315168,
+   "blocks": [
+    0.0035,
+    -0.1128,
+    0.0315,
+    0.0166
+   ],
+   "halves": [
+    -0.0561,
+    0.0253
+   ],
+   "hit_rate": 0.5186,
+   "followed_up_share": 0.5601,
+   "outcome_mean_pct": 0.0302,
+   "outcome_sd_pct": 0.5816,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.61,
+    "detected": true
+   },
+   "mde_pct": 0.0833,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  },
+  "S3_spy_so_far": {
+   "sessions": 688,
+   "mean_pct": -0.024,
+   "t": -1.07,
+   "placebo_p_two": 0.2856714328567143,
+   "blocks": [
+    -0.0061,
+    -0.0264,
+    -0.0346,
+    -0.0286
+   ],
+   "halves": [
+    -0.0163,
+    -0.0316
+   ],
+   "hit_rate": 0.5022,
+   "followed_up_share": 0.5858,
+   "outcome_mean_pct": 0.0286,
+   "outcome_sd_pct": 0.5871,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.47,
+    "detected": true
+   },
+   "mde_pct": 0.0859,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  },
+  "S4_prior_session": {
+   "sessions": 707,
+   "mean_pct": -0.0062,
+   "t": -0.29,
+   "placebo_p_two": 0.7829217078292171,
+   "blocks": [
+    0.0411,
+    -0.0788,
+    0.0159,
+    -0.003
+   ],
+   "halves": [
+    -0.0175,
+    0.0051
+   ],
+   "hit_rate": 0.5082,
+   "followed_up_share": 0.5672,
+   "outcome_mean_pct": 0.0302,
+   "outcome_sd_pct": 0.5816,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.6,
+    "detected": true
+   },
+   "mde_pct": 0.0835,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  },
+  "S5_breadth": {
+   "sessions": 707,
+   "mean_pct": -0.0263,
+   "t": -1.21,
+   "placebo_p_two": 0.2278772122787721,
+   "blocks": [
+    -0.0446,
+    -0.0178,
+    0.0046,
+    -0.0473
+   ],
+   "halves": [
+    -0.0326,
+    -0.02
+   ],
+   "hit_rate": 0.4875,
+   "followed_up_share": 0.553,
+   "outcome_mean_pct": 0.0302,
+   "outcome_sd_pct": 0.5816,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.6,
+    "detected": true
+   },
+   "mde_pct": 0.0834,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  },
+  "sector_arm": {
+   "sessions": 707,
+   "mean_pct": 0.0028,
+   "t": 0.19,
+   "placebo_p_two": 0.8489151084891511,
+   "blocks": [
+    0.0052,
+    -0.0177,
+    0.0125,
+    0.0112
+   ],
+   "halves": [
+    -0.0055,
+    0.011
+   ],
+   "hit_rate": 0.5304,
+   "followed_up_share": 1.0,
+   "outcome_mean_pct": 0.0028,
+   "outcome_sd_pct": 0.3815,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 6.97,
+    "detected": true
+   },
+   "mde_pct": 0.0551,
+   "first": "2024-01-02",
+   "last": "2026-10-29",
+   "holm_p": 1.0,
+   "a_lead": false
+  }
+ },
+ "left_out": {
+  "xiu_bar_dates_in_window": 707,
+  "sessions": 707,
+  "xiu_without_prior_close_or_prices": 0
+ },
+ "spy_fetch": {
+  "failed_calls": 0,
+  "capped_calls": 0,
+  "sessions": 704
+ },
+ "describe": {
+  "by_year": {
+   "2024": {
+    "sessions": 249,
+    "mean_pct": -0.0413,
+    "t": -1.4
+   },
+   "2025": {
+    "sessions": 250,
+    "mean_pct": -0.0324,
+    "t": -0.76
+   },
+   "2026": {
+    "sessions": 208,
+    "mean_pct": -0.0152,
+    "t": -0.39
+   }
+  },
+  "big_mornings": {
+   "sessions": 214,
+   "mean_pct": -0.0274,
+   "t": -0.61,
+   "placebo_p_two": 0.5455454454554545,
+   "blocks": [
+    0.0082,
+    -0.1078,
+    -0.06,
+    0.0477
+   ],
+   "halves": [
+    -0.0493,
+    -0.0056
+   ],
+   "hit_rate": 0.5215,
+   "followed_up_share": 0.5888,
+   "outcome_mean_pct": 0.0616,
+   "outcome_sd_pct": 0.6577,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 2.22,
+    "detected": false
+   },
+   "mde_pct": 0.1732,
+   "first": "2024-01-03",
+   "last": "2026-10-23"
+  },
+  "small_mornings": {
+   "sessions": 493,
+   "mean_pct": -0.0318,
+   "t": -1.32,
+   "placebo_p_two": 0.19148085191480851,
+   "blocks": [
+    -0.0479,
+    -0.0788,
+    0.0257,
+    -0.0266
+   ],
+   "halves": [
+    -0.0634,
+    -0.0004
+   ],
+   "hit_rate": 0.5107,
+   "followed_up_share": 0.574,
+   "outcome_mean_pct": 0.0165,
+   "outcome_sd_pct": 0.5455,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 4.14,
+    "detected": true
+   },
+   "mde_pct": 0.0927,
+   "first": "2024-01-02",
+   "last": "2026-10-29"
+  },
+  "ten_year_daily_gap": {
+   "sessions": 2864,
+   "mean_pct": 0.0047,
+   "t": 0.37,
+   "placebo_p_two": 0.708029197080292,
+   "blocks": [
+    0.041,
+    -0.0159,
+    -0.0045,
+    -0.0018
+   ],
+   "halves": [
+    0.0126,
+    -0.0032
+   ],
+   "hit_rate": 0.507,
+   "followed_up_share": 0.5538,
+   "outcome_mean_pct": 0.0046,
+   "outcome_sd_pct": 0.6859,
+   "control": {
+    "planted_pct": 0.1,
+    "t": 7.88,
+    "detected": true
+   },
+   "mde_pct": 0.0487,
+   "first": "2015-06-02",
+   "last": "2026-10-29"
+  }
+ }
+}

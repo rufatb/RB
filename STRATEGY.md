@@ -5988,3 +5988,37 @@ It ran on cached bars in one look.
   * the passed-over picks are the `top2run` shadow;
   * it would not have changed 11-04's CLS.TO loss, which followed a single up
     day.
+
+## Day-147c: REJECTION #62 — the market's direction after 09:45 cannot be read at 09:45
+
+The owner, after 11-05: "Fix the main root problem." The picks win or lose with
+the market's and the sector's move after the entry: on 11-03, 7 of 8 longs were
+right and 5 of 6 shorts wrong; on 11-05, 1 of 14 longs and 8 of 10 shorts. The
+question: is that move foreseeable at 09:45? Day-43 had listed "index futures
+state at 9:45" as untested. Registered first
+(`PREREGISTER_day147c_market_direction.md`, ca823c4); `market_direction.py`
+(fd7b142); `AUDIT_day147c_market_direction.md`;
+`data/market_direction_day147c.json`. One look, on the day-143 cache and FMP's
+SPY bars.
+* **The verdict: NULL, powered.**
+  * Following the market's move so far (XIU's prior close → 09:45) into the
+    rest of the day, 707 sessions (2024-01 → 2026-10): −0.030% a session,
+    t = −1.41, placebo p = 0.16, 51.4% right. The blocks: −0.04, −0.07, +0.03,
+    −0.03.
+  * SPY's own version: −0.021%, t = −0.72.
+  * A planted 0.10% shows at t = 4.62. The smallest detectable effect is
+    0.083% a session, a hit rate of about 57%.
+* **Nothing beside it either** (Holm p = 1.0 for all six): the first fifteen
+  minutes (t = −0.07), the overnight gap (−0.71), SPY's move so far (−1.07),
+  the prior session (−0.29), breadth at 09:45 (−1.21), and a sector's move so
+  far for the same sector (+0.19).
+* **Descriptive:** big mornings (≥ 0.5% by 09:45, 214 sessions) −0.03%,
+  t = −0.61; ten years of daily gaps against open → close +0.005%, t = 0.37.
+* **So:**
+  * the market's and the sectors' part of a pick's result cannot be foreseen
+    at 09:45;
+  * one long and one short together, Claude's rule since 11-02, is the only
+    protection the record supports;
+  * nothing changes;
+  * day-43's list of untested new information is down to L1/L2 depth.
+* Lab item 8 (day-147), registered as #62, takes #63 (its amendment 1).
