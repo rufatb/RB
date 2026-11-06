@@ -28,8 +28,8 @@ whether that move can be seen coming at 09:45. Registered first
 * **Each year leans slightly to fading the morning, never significantly:**
   2024 −0.04% (t = −1.40), 2025 −0.03% (t = −0.76), 2026 −0.02% (t = −0.39).
 * **The control:** a planted 0.10% a session shows at t = 4.62. The smallest
-  detectable effect at 80% power is 0.083% a session, a hit rate of about 57%.
-  A lean that would matter to a pick would have shown.
+  detectable effect at 80% power is 0.083% a session, about 60% right (the
+  average move after 09:45 is 0.41%); a 55% lean could hide below it.
 
 ## Beside the verdict (descriptive; Holm across six)
 

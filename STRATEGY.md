@@ -6007,7 +6007,7 @@ SPY bars.
     −0.03.
   * SPY's own version: −0.021%, t = −0.72.
   * A planted 0.10% shows at t = 4.62. The smallest detectable effect is
-    0.083% a session, a hit rate of about 57%.
+    0.083% a session, about 60% right; a 55% lean could hide below it.
 * **Nothing beside it either** (Holm p = 1.0 for all six): the first fifteen
   minutes (t = −0.07), the overnight gap (−0.71), SPY's move so far (−1.07),
   the prior session (−0.29), breadth at 09:45 (−1.21), and a sector's move so
