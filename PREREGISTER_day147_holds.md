@@ -100,3 +100,9 @@ here changes a live pick, a size, the Top 2, a prompt or the email.
 * **The script** (`holds_history.py`) is committed before it runs, in the next
   slot, and gets one look. It reads `data/model_picks.csv` and FMP daily and
   5-minute bars: no OpenRouter, no model call.
+
+## Amendment 1 — the rejection number only (2026-11-05 evening, before this test runs)
+
+The day-147c market-direction test (`PREREGISTER_day147c_market_direction.md`)
+reaches its verdict before this one. If it is a rejection it takes #62, and
+this test's "anything but DRIFT" becomes #63. Nothing else here changes.
