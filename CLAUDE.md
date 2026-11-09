@@ -18,6 +18,75 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day148b — the owner's "think deeper": what 11-09 teaches, and a search for one- to three-day opportunities (owner, 2026-11-09 evening)
+
+The owner, after a good day (the Top 2's LONG SHOP.TO made +2.52%): "see what
+we can learn", and look for TSX longs and shorts, intraday or held up to three
+sessions from 11-10, with macro, technicals, sentiment and forums. They pasted
+a swing app's shortlist: SHORT BYD.TO, SHORT NPI.TO, LONG EQX.TO.
+* **Descriptive only.** No registration, no verdict, no pick of mine, nothing
+  live changed. One-off scripts (scratchpad), FMP and StockTwits only, cache
+  `.rb-state/swing_1110_cache`; no OpenRouter.
+* **11-09 was the market.**
+  * 108 of the 150 names rose after 09:45; XIU made +0.77%.
+  * The models' unique positions: longs 5 of 6, shorts 2 of 5. Against sector
+    peers they were behind: −0.26% and −0.18%.
+  * The run rule had emptied the short slot, so the Top 2 was one long.
+* **Side × market, every reviewed day** (29 days, 243 unique model positions;
+  XIU's 09:45 → close, flat within ±0.15%):
+
+  | XIU after 09:45 | Days | Longs right | Shorts right |
+  |---|---:|---|---|
+  | rose | 15 | 45/60 (+0.63%) | 23/62 (−0.68%) |
+  | flat | 7 | 15/30 | 12/30 |
+  | fell | 7 | 10/32 (−0.92%) | 18/29 (+1.21%) |
+
+  Against sector peers the same positions beat 121 of 233, +0.20% a day,
+  t = 1.62. This is day-147c's reading again, on the reviews.
+* **US CPI days** (128 since 2016; FMP's calendar, actual against estimate;
+  daily bars):
+  * the surprise is in the gap: hotter (48 days) XIU −0.15%, cooler (57)
+    +0.19%, and XGD +0.77% on a cooler print;
+  * after the open, following the gap made −0.04%, t = −0.64, 45% right;
+  * XIU's open → close sd is 0.70% against 0.68% on other days.
+* **Report days** (the 150; 2,628 reports since 2022-06; the reaction day is
+  the higher-volume of D0 and D1, chosen with hindsight, so sizes only):
+  * the median |reaction| is 2.8% against XIU;
+  * the EPS surprise's sign matched the reaction's 61% of the time;
+  * the two sessions after: +0.09%, 50% right.
+* **A trap, caught.** On those rows "open → close following the gap" read
+  +0.35%. On day-130's rows (927 report days, five-minute bars, the day chosen
+  causally) it is −0.01%, t = −0.11. FMP's daily open matched the first
+  five-minute bar on 293 of 300 name-days, so the hindsight day choice made
+  it, not the open. Never read gap-following off a day chosen by its volume.
+* **The gap signal's 31 of 41** is its sector's move: against sector peers it
+  is 20 of 37, +0.03%. Its registered bar decides at 40 sessions (~11-24).
+* **Sentiment is not a variable here.**
+  * StockTwits, 35 names: 7 have no TSX stream, 23 had no message in 72
+    hours, 5 had one to three. The US streams of CLS, Barrick and SHOP had
+    7–25 a day, every tag bullish after an up day.
+  * Reddit and Stockhouse refuse automated readers (HTTP 403); not bypassed.
+  * `data/social/` is empty: day-94's collector never ran (no host timer).
+* **The three names** (dates from the companies' notices unless said):
+  * BYD reports 11-11 before the open. Its last three report days were
+    −11.5%, −11.2% and −13.1%; the previous side has not predicted the next
+    (day-138, E2).
+  * NPI reports 11-12 after the close.
+  * EQX: results on the evening of 11-09 (call 11-10, 10:00 ET). It rose four
+    sessions running, +20.6% in five, so the run rule would pass the long
+    over.
+  * Also: CGI 11-11 before the open; CAE 11-11 after the close. FMP's other
+    dates are unconfirmed (a third run early, day-135b).
+* **Told the owner:** nothing measured gives better than a coin flip on
+  direction; what the data gives is the size and the timing of the moves.
+* **Waiting for the owner:**
+  * print the hedge (XIU or the sector fund) when the Top 2 has one side;
+  * an evening note of the next three sessions' events and typical moves;
+  * US pre-market (item 9);
+  * OpenRouter: $4.30 left at 17:20 ET on 11-09, about five mornings.
+* **Lab item 12 added** (`COUNCIL_LAB.md`): a name's own intraday habit (Lou,
+  Polk & Skouras 2019), on the cached 15-minute bars. After day-148.
+
 ## Day148 — lab item 11 registered: a council veto on Claude's picks (council lab, 2026-11-09)
 
 * **The question.** Do the positions two or more council members object to do
