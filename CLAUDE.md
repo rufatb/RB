@@ -18,6 +18,25 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day148 — lab item 11 registered: a council veto on Claude's picks (council lab, 2026-11-09)
+
+* **The question.** Do the positions two or more council members object to do
+  worse, 09:45 → close against XIU, than the rest of the same morning's table?
+  If so, a remove-only veto on Claude's picks could be proposed. On 11-06
+  three of four members objected to Claude's ENB.TO long.
+* **Registered** in `PREREGISTER_day148_veto.md` before any two-objection split
+  was computed. The tallies are pinned in `data/veto_day148_positions.json`
+  (no returns), because `.rb-state/reports.sqlite3` dies with a reset.
+* **The population:** 239 positions over 23 sessions (10-05 → 10-21 from
+  day-137's tables, 10-26 → 11-09 from the frozen reports), 106 vetoed; both
+  groups every session.
+* **Not blind:** day-137 reported the one-objection split for 10-05 → 10-21
+  (51 positions, +0.17% raw). Said in the registration.
+* **The bar:** day-145's machinery at seed 148, a planted 1.0%, and the vetoed
+  positions must lose money net of 0.13%. The smallest detectable effect is
+  near 1% a position. Anything but VETO_SORTS is rejection #64.
+* **Next:** `council_veto.py` runs it in the next slot (FMP bars only).
+
 ## Day147c — the market's direction after 09:45 cannot be read at 09:45 (rejection #62, owner, 2026-11-05 evening)
 
 The owner, after 11-05's broad selloff: "Fix the main root problem." Read as:
