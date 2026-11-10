@@ -1718,6 +1718,11 @@ def main(argv=None):
     try:
         if a.stage:
             out = stage(root)
+            try:
+                import dda_hooks
+                dda_hooks.start(root, 'opening')
+            except Exception:
+                pass  # Optional data export cannot cost the original council.
             print(json.dumps({'status': out['status'], 'positions': len(out.get('positions') or []),
                               'picks': out.get('picks'), 'members': (out.get('tally') or {}).get('members'),
                               'errors': out.get('errors')}, indent=1))

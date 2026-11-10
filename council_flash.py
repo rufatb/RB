@@ -1056,6 +1056,12 @@ def main(argv=None):
     if a.open_check is not None:
         try:
             code, info = wait_open(a.state_dir, a.open_check)
+            if code == 0:
+                try:
+                    import dda_hooks
+                    dda_hooks.start(a.state_dir, 'open-check')
+                except Exception:
+                    pass  # No change to the existing email or its schedule.
         except Exception as exc:      # the check must never cost the morning
             print(json.dumps({'status': 'FAILED', 'reason': type(exc).__name__}))
             return 1

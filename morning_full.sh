@@ -299,6 +299,9 @@ else
         timeout "$budget" python claude_opportunities.py --state-dir "$RB_STATE_DIR" --brief
         case $? in
             0) log "  Claude brief: written — waiting for Claude's sealed answer until ${CLAUDE_DEADLINE}"
+               # DDA uses the same frozen pool in a separate bounded process.
+               # Data-only publication; no wait and no email/schedule change.
+               python dda_hooks.py "$RB_STATE_DIR" research || true
                # DAY-126: Claude answers STATELESS through OpenRouter, with the
                # research round. The session's own answer is the fallback.
                if [ -f "$RB_STATE_DIR/secrets/openrouter_api_key" ]; then

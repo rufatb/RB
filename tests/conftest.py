@@ -9,6 +9,17 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def _no_real_dda_child_processes(request, monkeypatch):
+    """Mock the process boundary, not the DDA rules. Hook tests inject Popen.
+
+    Offline CLI tests must never start a real provider/Git publication process.
+    """
+    if not request.node.get_closest_marker('dda'):
+        import dda_hooks
+        monkeypatch.setattr(dda_hooks, 'start', lambda *a, **k: False)
+
+
+@pytest.fixture(autouse=True)
 def _empty_wire_archive(tmp_path_factory, monkeypatch):
     import newswire
     monkeypatch.setattr(newswire, 'ARCHIVE', tmp_path_factory.mktemp('wire'))

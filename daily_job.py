@@ -83,6 +83,11 @@ def main(argv=None):
     p.add_argument('--output-dir',default='.rb-state/latest')
     p.add_argument('--send',action='store_true')
     a=p.parse_args(argv);report=run(a.state_dir,a.output_dir)
+    try:
+        import dda_hooks
+        dda_hooks.start(a.state_dir, 'report')
+    except Exception:
+        pass  # Publishing data is separate from delivery of the original email.
     if a.send:
         from deliver_report import send
         sender=os.environ.get('RB_SMTP_USER');recipient=os.environ.get('RB_REPORT_TO')
