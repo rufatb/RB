@@ -353,6 +353,18 @@ def direction_html(section):
             f'{full.escape(line)}</div>' if line else '')
 
 
+def hedge_html(section):
+    """The day-148c hedge sentence for a hero, or '' (display only; a fault
+    here never costs the hero)."""
+    try:
+        import top_picks
+        line = top_picks.hedge_short(section)
+    except Exception:
+        line = None
+    return (f'<div style="font:600 14px/1.5 Arial,sans-serif;color:{CAUTION};margin-top:9px">'
+            f'{full.escape(line)}</div>' if line else '')
+
+
 def mover_html(section):
     """The day-135c big-mover caution for a hero, or '' (display only; a fault
     here never costs the hero)."""
@@ -452,6 +464,7 @@ def _hero(d):
     top_line = (f'<div style="font:600 15px/1.45 Arial,sans-serif;color:{INK};margin-top:9px">'
                 f'{full.escape(top_text)}</div>' if top_text else '')
     top_line += direction_html(intra.get('top_two'))
+    top_line += hedge_html(intra.get('top_two'))         # day-148c: one side only
     top_line += mover_html(intra.get('top_two'))
     return (f'<tr><td style="padding:22px 26px;background:{WASH};border-bottom:1px solid {RULE}">'
             f'{top_line}'
@@ -560,9 +573,10 @@ def html(d):
 # class attributes and backgrounds, so the padding moves to the table's own
 # cellpadding, the alignment to valign and the colour to the table: attributes
 # and inline styles survive it.
-def html_from_text(body, hero=''):
+def html_from_text(body, hero='', label='Morning research note · not an order'):
     """The newsletter view of any report text in this dialect (# title, a
-    stamp line, ## / ### sections, | tables). One styling, every email."""
+    stamp line, ## / ### sections, | tables). One styling, every email.
+    `label` is the small line over the title (day-148c: the evening note's)."""
     head = body.splitlines()[0].lstrip('# ')
     stamp = body.splitlines()[1] if len(body.splitlines()) > 1 else ''
     return (
@@ -576,7 +590,7 @@ def html_from_text(body, hero=''):
         f'style="width:640px;max-width:100%;background:{CARD};border:1px solid {RULE}">'
         f'<tr><td style="padding:26px 26px 20px;border-bottom:3px solid {INK}">'
         f'<div style="font:600 11px/1.4 Arial,sans-serif;color:{ACCENT};letter-spacing:.14em;'
-        f'text-transform:uppercase">Morning research note · not an order</div>'
+        f'text-transform:uppercase">{full.escape(label)}</div>'
         f'<div style="font:600 27px/1.2 Georgia,serif;color:{INK};margin-top:8px">'
         f'{full.escape(head)}</div>'
         f'<div style="font:12px/1.5 Arial,sans-serif;color:{MUTED};margin-top:8px">'

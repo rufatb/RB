@@ -674,6 +674,9 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         for p in top_two['picks']:
             if wire_releases.get(p['ticker']):
                 p['wire'] = wire_releases[p['ticker']]
+        # Day-148c (owner, 2026-11-09): when the Top 2 stands on one side, the
+        # fund that hedges it is frozen with the section. Display only.
+        top_two = top_picks.with_hedge(top_two)
     except Exception as exc:
         error('top_two', RuntimeError(type(exc).__name__))
     # PART 3 (the owner's VWAP/rvol strategy picks) and the per-pick open check

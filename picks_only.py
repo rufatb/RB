@@ -81,6 +81,7 @@ def compose(state_dir, *, now=None, reason='the full report did not publish'):
                                           moves=council.brief_moves(root, now))
     except Exception as exc:
         snaps['top_two']['council_note'] = 'The council could not be read (%s).' % type(exc).__name__
+    snaps['top_two'] = top_picks.with_hedge(snaps['top_two'])     # day-148c: display only
     body = (['# RB Daily Report — %s — PICKS ONLY' % session,
              'Sent %s ET from the picks sealed before the open.' % now.strftime('%H:%M'),
              'The full 09:46 report did not publish today: %s. These are the desks\' own '

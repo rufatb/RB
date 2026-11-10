@@ -64,6 +64,20 @@ def _pre_day146_rules(request, monkeypatch):
     monkeypatch.setattr(council, 'SKIP_RUNS', False)
 
 
+@pytest.fixture(autouse=True)
+def _pre_day148_hedge(request, monkeypatch):
+    """Day-148c (owner, 2026-11-09) prints a hedge line under a Top 2 whose
+    picks all stand on one side (`top_picks.HEDGE`), with the lab's running
+    record beside it. The suite was written before it, so every test runs with
+    it off unless it is marked `day148`, which runs on the production value
+    (tests/test_hedge_line.py) and passes its own record: tomorrow's lab rows
+    must not change today's fixture."""
+    if request.node.get_closest_marker('day148'):
+        return
+    import top_picks
+    monkeypatch.setattr(top_picks, 'HEDGE', False)
+
+
 @pytest.fixture()
 def biotech_live(monkeypatch):
     """Day-136: Part 2 is retired (`biotech.RETIRED`). A test of the kept

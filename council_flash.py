@@ -101,7 +101,7 @@ def compose(council, now):
         lines = ['## Top 2 — the council\'s decision', '',
                  'No model proposed a position today, so the council had nothing to decide.']
     else:
-        section = K.top_two(council)
+        section = top_picks.with_hedge(K.top_two(council))    # day-148c: display only
         lines = top_picks.table(section, concise=True)
     pre_open = at < '09:30'
     body = '\n'.join([
@@ -126,6 +126,7 @@ def compose(council, now):
             '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
             % (email_render.full.escape(subject(session, section).split(' — ', 2)[-1]),
                email_render.direction_html(section)          # day-135: one side, one bet
+               + email_render.hedge_html(section)            # day-148c: one side only, its hedge
                + email_render.mover_html(section)))          # day-135c: the last session's big movers
     return subject(session, section), body, email_render.html_from_text(body, hero=hero)
 
@@ -395,10 +396,13 @@ def compose_open(council, rows, now, section=None):
             ' (runner-up, %s)' % K.runner_up_label(r) if r.get('runner_up') else '',
             r['verdict'], wrong, _distance(r) if r.get('price') is not None else '—', price,
             _opened(r), _fmt(r.get('now_for_pick')), r.get('etf') or '—', _fmt(r.get('etf_move'))))
-    picks = {'picks': [r for r in rows if not r.get('runner_up')]}
+    picks = top_picks.with_hedge({'picks': [r for r in rows if not r.get('runner_up')]})
     direction = top_picks.direction_line(picks)
     if direction:
         lines.append(direction)
+    hedged = top_picks.hedge_line(picks)          # day-148c: one side only, its hedge
+    if hedged:
+        lines.append(hedged)
     moved = ['%s %s %s %s' % (r['side'], r['ticker'],
                               'opened %.1f%% its way' % r['open_for_pick'] if r['open_for_pick'] >= 0
                               else 'opened %.1f%% against it' % -r['open_for_pick'],
@@ -420,7 +424,8 @@ def compose_open(council, rows, now, section=None):
     body = '\n'.join(lines)
     hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
             '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
-            % (email_render.full.escape(verdicts), email_render.direction_html(picks)))
+            % (email_render.full.escape(verdicts),
+               email_render.direction_html(picks) + email_render.hedge_html(picks)))
     return subj, body, email_render.html_from_text(body, hero=hero)
 
 

@@ -625,7 +625,8 @@ def _top_two_section(intra):
                 'council\'s is distinguishable from a coin flip yet.</p>')
     direction = top_picks.direction_line(sec)         # day-135: above the table, a caution
     movers = top_picks.mover_line(sec)                # day-135c: the last session's big movers
-    cautions = [x for x in (direction, movers) if x]
+    hedged = top_picks.hedge_line(sec)                # day-148c: one side only, its hedge
+    cautions = [x for x in (direction, hedged, movers) if x]
     extra = ''.join(f'<p>{escape(x)}</p>' for x in top_picks.table(sec)[2:]
                     if not x.startswith('|') and x and not x.startswith('Consensus is not')
                     and not x.startswith("Neither Claude's record") and x not in cautions)

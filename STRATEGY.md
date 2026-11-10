@@ -6054,3 +6054,22 @@ priced might still come true over a few days. Registered first
   * the five-session lean is below every bar and would need about 150
     sessions to judge, so no forward test is proposed;
   * nothing changes.
+
+## Day-148c: the owner's decisions — a hedge line under a one-sided Top 2, and an evening note (not a test result)
+
+The owner, 2026-11-09 evening, to two questions: "Yes should display in
+email" and "Yes".
+* **The hedge line** (`top_picks.hedge_line`). When every pick of the Top 2
+  stands on one side, the email names the fund that takes the market out: the
+  pick's sector fund, or XIU.TO, for about the same dollars. Display only.
+  * Why it matters: on the 29 reviewed days the models' longs were right 75%
+    of the time when XIU rose after 09:45 and 31% when it fell (shorts 37%
+    and 62%). A one-sided Top 2 is a bet on the market.
+  * The hedge's own registered test failed (day-130, H2: the replay swung
+    18% less and made 0.11% a pick less). The line says so, beside the lab's
+    running record (124 picks on 11-09: +0.18% a pick, 15% less swing).
+    `PREREGISTER_day130_learning.md`, amendment 2.
+* **The evening note** (`events_note.py`). On the evening before a session:
+  the next three sessions' scheduled releases, and each reporting name's
+  typical move on a report day. Sizes and timing, never direction; no pick.
+* **Counts unchanged:** 63 rejections, 5 adoptions. Neither is a test.

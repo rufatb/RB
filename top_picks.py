@@ -254,6 +254,112 @@ def mover_line(section):
             % (DIRECTION_MARK, ' · '.join(council.mover_phrase(p) for p in movers), council.MOVER_NOTE))
 
 
+# Day-148c (owner, 2026-11-09): "Yes should display in email." When every pick
+# of the Top 2 stands on one side (11-09: the three-day-run rule emptied the
+# short slot and LONG SHOP.TO stood alone), the pick is also a bet on the
+# market's direction: on the 29 reviewed days longs were right 75% of the time
+# when XIU rose after 09:45 and 31% when it fell. The line names the fund that
+# takes that out. DISPLAY ONLY: no pick, no size, no record. The hedge's own
+# registered test failed its bars (day-130, H2), and the line says so.
+HEDGE = True                   # False restores every table and hero without the line
+HEDGE_REPLAY = ('On the 379-pick replay it swung 18% less and made 0.11% a pick less, which failed '
+                'its registered test (day-130)')
+
+
+def hedge(section):
+    """{'side', 'legs': [{'ticker', 'etf'}], 'market'} when the section has picks
+    and all of them stand on one side, else None. A runner-up or a single-model
+    pointer is never a pick. The fund is `exposure.position_exposure`'s."""
+    if not HEDGE:
+        return None
+    picks = (section or {}).get('picks') or []
+    sides = {p.get('side') for p in picks}
+    if not picks or len(sides) != 1 or not sides <= {'LONG', 'SHORT'}:
+        return None
+    import exposure
+    sectors = exposure.load_sectors()
+    return {'side': sides.pop(), 'market': exposure.MARKET_ETF,
+            'legs': [{'ticker': p['ticker'],
+                      'etf': exposure.position_exposure(p['ticker'], sectors)['etf']} for p in picks]}
+
+
+def with_hedge(section, record=None):
+    """The section with its hedge frozen in (`hedge`), computed once where the
+    section is computed, or the section as it was. `record` is the lab's
+    running record (`execution_lab.hedge_record`), read here when not given.
+    Display only, so it never raises: a fault costs the line, not the section."""
+    try:
+        h = hedge(section)
+        if not h:
+            return section
+        if record is None:
+            try:
+                import execution_lab
+                record = execution_lab.hedge_record()
+            except Exception:
+                record = None
+        return {**section, 'hedge': {**h, 'record': record}}
+    except Exception:
+        return section
+
+
+def _hedge_how(h):
+    act = 'short' if h['side'] == 'LONG' else 'buy'
+    market = h.get('market') or 'XIU.TO'
+    legs = h['legs']
+    funds = [x.get('etf') if x.get('etf') and x['etf'] != market else None for x in legs]
+    same = 'for about the same dollars'
+    if len(legs) == 1:
+        return ('%s %s, its sector fund, or %s, %s' % (act, funds[0], market, same) if funds[0]
+                else '%s %s %s' % (act, market, same))
+    if all(funds) and len(set(funds)) == 1:
+        return '%s %s, the sector fund of both, or %s, %s' % (act, funds[0], market, same)
+    if all(funds):
+        return '%s %s, or %s against both, %s' % (
+            act, ' and '.join('%s against %s' % (f, x['ticker']) for f, x in zip(funds, legs)),
+            market, same)
+    return '%s %s against both %s' % (act, market, same)
+
+
+def hedge_short(section):
+    """The hero's one sentence, or None."""
+    h = (section or {}).get('hedge')
+    if not isinstance(h, dict) or not h.get('legs') or h.get('side') not in ('LONG', 'SHORT'):
+        return None
+    try:                                  # display only: a malformed hedge costs the line alone
+        lead = ('Only a %s stands today: it is also a bet on the market. ' % h['side']
+                if len(h['legs']) == 1 else '')
+        return '%s%sHedge (shown, not a pick): %s.' % (DIRECTION_MARK, lead, _hedge_how(h))
+    except Exception:
+        return None
+
+
+def hedge_line(section):
+    """The full line under the picks, or None. Rendered from the frozen `hedge`
+    only: a publication from before day-148c has none and renders as it did."""
+    h = (section or {}).get('hedge')
+    if not isinstance(h, dict) or not h.get('legs') or h.get('side') not in ('LONG', 'SHORT'):
+        return None
+    try:                                  # display only: a malformed hedge costs the line alone
+        side, legs = h['side'], h['legs']
+        lead = ('Only a %s stands today, so %s %s is also a bet that the market does not turn %s. '
+                % (side, side, legs[0]['ticker'], 'down' if side == 'LONG' else 'up')
+                if len(legs) == 1 else '')
+        out = '%s%sHedge (shown, not a pick): %s.' % (DIRECTION_MARK, lead, _hedge_how(h))
+    except Exception:
+        return None
+    r = h.get('record')
+    if isinstance(r, dict) and isinstance(r.get('picks'), int) and isinstance(r.get('more_pct'), (int, float)):
+        more = r['more_pct']
+        swing = r.get('swing_cut_pct')
+        out += (' On the record so far (%d picks, the hedge sized by each stock\'s beta to its fund) '
+                'the hedged pick made %.2f%% a pick %s than the unhedged one%s.'
+                % (r['picks'], abs(more), 'more' if more >= 0 else 'less',
+                   '' if not isinstance(swing, (int, float)) else
+                   ' and swung %d%% %s' % (abs(swing), 'less' if swing >= 0 else 'more')))
+    return out + ' %s. Never sized, never recorded.' % HEDGE_REPLAY
+
+
 def table(section, concise=False):
     """The section as text lines, one table. Used by every email and view.
     `concise` is the email (owner, 2026-10-03): one line of rule, no caveats."""
@@ -298,6 +404,9 @@ def table(section, concise=False):
     direction = direction_line(section)          # day-135: right under the picks
     if direction:
         out.append(direction)
+    hedged = hedge_line(section)                 # day-148c: one side only, the fund that hedges it
+    if hedged:
+        out.append(hedged)
     movers = mover_line(section)                 # day-135c: picks on the last session's big movers
     if movers:
         out.append(movers)
@@ -344,6 +453,9 @@ def _claude_table(section, concise):
         vote = str(p.get('council_vote') or '—').replace('|', '/')
         why = str(p.get('reason') or '—').replace('|', '/')[:200]
         out.append(f"| {i} | {p['side']} {p['ticker']} | {conf} | {vote} | {wrong} | {release} | {why} |")
+    hedged = hedge_line(section)                 # day-148c: one side only, the fund that hedges it
+    if hedged:
+        out.append(hedged)
     movers = mover_line(section)                 # day-135c: a caution, display only
     if movers:
         out.append(movers)
@@ -410,6 +522,9 @@ def _council_table(section, concise):
     direction = direction_line(section)          # day-135: right under the picks
     if direction:
         out.append(direction)
+    hedged = hedge_line(section)                 # day-148c: one side only, the fund that hedges it
+    if hedged:
+        out.append(hedged)
     movers = mover_line(section)                 # day-135c: picks on the last session's big movers
     if movers:
         out.append(movers)

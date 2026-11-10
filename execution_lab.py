@@ -286,11 +286,39 @@ def _line(rows, key, label):
         '—' if key == 'r' else '%+.2f%%' % diff, sd)
 
 
+def _model_picks(rows):
+    """The lab's "model picks" population: one row per name and side, without
+    the engine, the shadows and the forced nominations."""
+    return _unique([r for r in rows if r['model'] not in ('engine', 'top2count', 'top2memory', 'top2mover',
+                                                          'top2wild', 'top2council', 'top2run')
+                    and r['kind'] != 'nominated'])
+
+
+HEDGE_MIN = 30                  # picks measured both ways before the record is quoted
+
+
+def hedge_record(rows=None):
+    """Day-148c (owner, 2026-11-09): the running record of the sector-fund
+    hedge on the model picks, for the hedge line under a one-sided Top 2
+    (`top_picks.hedge_line`). Over the picks measured both ways:
+    {'picks', 'more_pct', 'swing_cut_pct'} — the hedged pick's mean minus the
+    unhedged one's, and how much smaller its sd is. None below HEDGE_MIN picks.
+    A file read: no network, and never part of a pick."""
+    rows = read() if rows is None else rows
+    pairs = [(_float(r.get('r')), _float(r.get('r_vs_etf'))) for r in _model_picks(rows)]
+    pairs = [(a, b) for a, b in pairs if a is not None and b is not None]
+    if len(pairs) < HEDGE_MIN:
+        return None
+    raw = st.pstdev([a for a, _ in pairs])
+    return {'picks': len(pairs),
+            'more_pct': round(st.mean(b - a for a, b in pairs), 2),
+            'swing_cut_pct': (round(100 * (1 - st.pstdev([b for _, b in pairs]) / raw))
+                              if raw > 0 else None)}
+
+
 def table(rows=None):
     rows = read() if rows is None else rows
-    models = _unique([r for r in rows if r['model'] not in ('engine', 'top2count', 'top2memory', 'top2mover',
-                                                            'top2wild', 'top2council', 'top2run')
-                      and r['kind'] != 'nominated'])
+    models = _model_picks(rows)
     top2 = [r for r in rows if r['model'] == 'top2']
     out = ['## Execution lab — the same picks, executed other ways (day-130)',
            'Every scored pick, measured each evening. A rule is shown, never applied: the record '

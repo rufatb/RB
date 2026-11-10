@@ -151,3 +151,25 @@ See `AUDIT_day130_learning.md`. Only H3's noon exit passed, and it is shown
 under the council's picks, never applied. H1, H2, H5, H6, H7 and H8 failed,
 and H4 could not be run. H2 was re-run after a data fix: a thin ETF with no
 trade in the 09:40 bar now takes its last trade before it. It still fails.
+
+## Amendment 2 (2026-11-09, the owner's decision; H2's verdict is unchanged)
+
+H2 failed both bars, so under this registration the email does not print the
+hedged version beside each pick. That stands.
+
+On 11-09 the three-day-run rule emptied the short slot and the Top 2 was a
+single long. Asked whether the email should print the hedge under the picks
+when a side is empty, display only, the owner said: "Yes should display in
+email."
+* **What prints** (`top_picks.hedge_line`, switch `top_picks.HEDGE`): when
+  every pick of the Top 2 stands on one side, one line naming the pick's
+  sector fund (`exposure.position_exposure`) and XIU.TO as the hedge, for
+  about the same dollars.
+* **What the line says about itself:** the lab's running record of the hedge
+  (`execution_lab.hedge_record`, the picks measured both ways), and that the
+  hedge failed this registered test on the replay.
+* **What does not change:** no pick, no size, no record. The hedge is never a
+  leg, never sized and never written to a ledger. A Top 2 with a long and a
+  short carries no line.
+* **Not claimed:** that the hedge raises the mean. On the replay it lowered
+  it by 0.11% a pick.

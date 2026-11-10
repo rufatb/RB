@@ -168,7 +168,7 @@ def test_the_passed_over_picks_are_recorded_as_a_shadow_and_reviewed(tmp_path):
     assert 'top2run' in M.POOLED_EXCLUDED
     import inspect
     import execution_lab
-    assert "'top2run'" in inspect.getsource(execution_lab.table)
+    assert "'top2run'" in inspect.getsource(execution_lab._model_picks)      # the table's population
     assert 'Passed over (three-day run)' in inspect.getsource(daily_review)
 
 

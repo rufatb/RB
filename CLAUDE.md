@@ -18,6 +18,94 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day148c — the owner's yeses: a hedge line under a one-sided Top 2, and an evening note (owner, 2026-11-09 evening)
+
+Asked four things after day-148b, the owner answered all four.
+
+**1. "Yes should display in email": the hedge line** (`top_picks.HEDGE = True`;
+False restores every table and hero).
+* **When.** Every pick of the Top 2 stands on one side: one pick (as on 11-09,
+  when the run rule emptied the short slot), or two on the same side. A long
+  and a short carry no line.
+* **What it says** (`top_picks.hedge_line`; the hero's short form is
+  `hedge_short`):
+  * for one pick, "Only a LONG stands today, so LONG SHOP.TO is also a bet
+    that the market does not turn down";
+  * the hedge: short (or buy) its sector fund (`exposure.position_exposure`),
+    or XIU.TO, for about the same dollars;
+  * the lab's running record (`execution_lab.hedge_record`: the model picks
+    measured both ways; 124 on 11-09, +0.18% a pick, 15% less swing; the lab
+    sizes the hedge by beta);
+  * that the hedge failed its registered test (day-130 H2: the replay swung
+    18% less and made 0.11% a pick less);
+  * "Never sized, never recorded."
+* **Frozen, like every line.** `top_picks.with_hedge` computes `hedge` once
+  where the section is computed (`brief`, the flash, the open check, the
+  picks-only and late emails) and never raises. Renderers print from the
+  frozen `hedge` only, so a publication from before it renders as it did
+  (checked byte for byte on 11-09's report).
+* **Where it shows:** right under the picks in every Top 2 table, in the
+  heroes of the flash, the open check and the report email, and among the
+  page's cautions. Not the noon check.
+* **Display only.** No pick, size, subject, record or rule changes;
+  `model_picks.rows_from_report` writes the same rows. Registered as
+  amendment 2 of `PREREGISTER_day130_learning.md`: H2's FAIL stands.
+* **Tests.** `tests/conftest.py` runs the suite with the line off; tests
+  marked `day148` run on the production value (`tests/test_hedge_line.py`).
+* **Correction.** I told the owner the hedge "swings about 10% less". That
+  compared two populations (1.94 on 124 picks against 2.14 on 162). On the
+  same 124 picks it is 15%.
+
+**2. "Yes": the evening note** (`events_note.py`, step 1c of the evening job).
+* **When.** Every evening before a trading day (`sessions`: nothing on a
+  Friday or before a holiday). One a day (`evening_note/sent.json`).
+* **What.** For the next three sessions:
+  * US and Canadian releases of High or Medium impact, in ET, with consensus
+    (index levels dropped, Fed speakers on one line);
+  * the list's names FMP dates a report for, each with its typical move (the
+    median move against XIU on the report day over its last 17 reports; the
+    day is the busier of FMP's date and the next session) and its last four;
+  * on the evening before a US inflation print, day-148b's table;
+  * every evening, what past reports say: sizes, never a direction.
+* **How.** FMP only, about 60 calls, 7 s. A failure is a code. With no list
+  staged it sends the calendar alone and says so; with nothing read it is
+  FAILED and nothing is sent. After a reset the FMP key is gone until the
+  next morning, so that evening's note is not sent.
+* **It names no pick** and writes no ledger; nothing of it is pushed.
+* **The Routine.** The evening job's stored prompt gained step 1c on 11-09
+  (the owner's yes); `ROUTINE_EVENING.md` is its repo copy, new that day.
+  Nothing else in the prompt changed.
+* **The subject** is "RB Evening Note — DATE — for …" and never contains
+  "RB Daily Report — ".
+
+* **To do before 2026-11-23: refresh the sector map.** `data/tsx_sectors.json`
+  was captured 09-22 and expires 62 days later (day-113). After that every
+  name falls back to XIU.TO in the hedge and exposure lines, and the pool
+  loses its sector-relative fields.
+
+**3. "I can trade US shares also yes."** Lab item 9 (the release on a US
+listing before the TSX open) is no longer waiting. It goes next after item 11.
+
+**4. "I just added more $."** OpenRouter read $40.00 bought, $25.70 used,
+$14.30 left at 17:31 ET on 11-09: about 17 mornings at $0.82. Item 10 (about
+$35) still needs its own yes.
+
+**The owner then pasted another assistant's "Information Surprise Alpha"
+engine** (catalysts and expectation surprises first; an abstain option; EV =
+P(W)·G − P(L)·L − C) and asked what I think.
+* **Told the owner:** the philosophy matches this record (the one measured
+  signal is new information before the price has it), but the engine names no
+  source for its "independent estimate", its weights are invented, and before
+  a report nothing tested gives P(W) above a half.
+* **One live example, 11-09.** Equinox pre-announced 248,484 oz sold on 10-14;
+  gold averaged US$4,297 in the quarter, so revenue ≈ US$1,068M. FMP's
+  consensus was US$987M and it reported US$1,050M (EPS 0.19 against 0.173).
+  The US shares were flat after hours (12.05 against a 12.09 close). An
+  independent estimate existed and beat consensus; the price already had it.
+* **Proposed, waiting for the owner's go:** lab item 13 (the commodity
+  nowcast, on history) and item 14 (an event desk with an abstain rule, a
+  forward shadow). Item 9 needs no go: it was only waiting for the US answer.
+
 ## Day148b — the owner's "think deeper": what 11-09 teaches, and a search for one- to three-day opportunities (owner, 2026-11-09 evening)
 
 The owner, after a good day (the Top 2's LONG SHOP.TO made +2.52%): "see what
@@ -79,7 +167,7 @@ a swing app's shortlist: SHORT BYD.TO, SHORT NPI.TO, LONG EQX.TO.
     dates are unconfirmed (a third run early, day-135b).
 * **Told the owner:** nothing measured gives better than a coin flip on
   direction; what the data gives is the size and the timing of the moves.
-* **Waiting for the owner:**
+* **Asked the owner** (all four answered the same evening; see Day148c):
   * print the hedge (XIU or the sector fund) when the Top 2 has one side;
   * an evening note of the next three sessions' events and typical moves;
   * US pre-market (item 9);
