@@ -1,0 +1,496 @@
+{
+ "captured": "2026-11-09",
+ "names_asked": 150,
+ "not_listed": {
+  "no US listing": 69
+ },
+ "rule": "same ISIN on NYSE, NASDAQ or AMEX (FMP profile and search-isin)",
+ "twins": {
+  "AAUC.TO": {
+   "exchange": "NYSE",
+   "isin": "CA01921D2041",
+   "name": "Allied Gold Corporation",
+   "us": "AAUC"
+  },
+  "ABX.TO": {
+   "exchange": "NYSE",
+   "isin": "CA06849F1080",
+   "name": "Barrick Mining Corporation",
+   "us": "B"
+  },
+  "AEM.TO": {
+   "exchange": "NYSE",
+   "isin": "CA0084741085",
+   "name": "Agnico Eagle Mines Limited",
+   "us": "AEM"
+  },
+  "AG.TO": {
+   "exchange": "NYSE",
+   "isin": "CA32076V1031",
+   "name": "First Majestic Silver Corp.",
+   "us": "AG"
+  },
+  "AGI.TO": {
+   "exchange": "NYSE",
+   "isin": "CA0115321089",
+   "name": "Alamos Gold Inc.",
+   "us": "AGI"
+  },
+  "AQN.TO": {
+   "exchange": "NYSE",
+   "isin": "CA0158571053",
+   "name": "Algonquin Power & Utilities Corp.",
+   "us": "AQN"
+  },
+  "ARIS.TO": {
+   "exchange": "NYSE",
+   "isin": "CA04040Y1097",
+   "name": "Aris Mining Corporation",
+   "us": "ARIS"
+  },
+  "AYA.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA05466C1095",
+   "name": "Aya Gold & Silver Inc.",
+   "us": "AYA"
+  },
+  "BAM.TO": {
+   "exchange": "NYSE",
+   "isin": "CA1130041058",
+   "name": "Brookfield Asset Management Ltd.",
+   "us": "BAM"
+  },
+  "BB.TO": {
+   "exchange": "NYSE",
+   "isin": "CA09228F1036",
+   "name": "BlackBerry Limited",
+   "us": "BB"
+  },
+  "BCE.TO": {
+   "exchange": "NYSE",
+   "isin": "CA05534B7604",
+   "name": "BCE Inc.",
+   "us": "BCE"
+  },
+  "BEPC.TO": {
+   "exchange": "NYSE",
+   "isin": "CA11285B1085",
+   "name": "Brookfield Renewable Corporation",
+   "us": "BEPC"
+  },
+  "BMO.TO": {
+   "exchange": "NYSE",
+   "isin": "CA0636711016",
+   "name": "Bank of Montreal",
+   "us": "BMO"
+  },
+  "BN.TO": {
+   "exchange": "NYSE",
+   "isin": "CA11271J1075",
+   "name": "Brookfield Corporation",
+   "us": "BN"
+  },
+  "BNS.TO": {
+   "exchange": "NYSE",
+   "isin": "CA0641491075",
+   "name": "The Bank of Nova Scotia",
+   "us": "BNS"
+  },
+  "BTE.TO": {
+   "exchange": "NYSE",
+   "isin": "CA07317Q1054",
+   "name": "Baytex Energy Corp.",
+   "us": "BTE"
+  },
+  "BTO.TO": {
+   "exchange": "AMEX",
+   "isin": "CA11777Q2099",
+   "name": "B2Gold Corp.",
+   "us": "BTG"
+  },
+  "CAE.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA1247651088",
+   "name": "CAE Inc.",
+   "us": "CAE"
+  },
+  "CCO.TO": {
+   "exchange": "NYSE",
+   "isin": "CA13321L1085",
+   "name": "Cameco Corporation",
+   "us": "CCJ"
+  },
+  "CG.TO": {
+   "exchange": "NYSE",
+   "isin": "CA1520061021",
+   "name": "Centerra Gold Inc.",
+   "us": "CGAU"
+  },
+  "CIGI.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA1946931070",
+   "name": "Colliers International Group Inc.",
+   "us": "CIGI"
+  },
+  "CLS.TO": {
+   "exchange": "NYSE",
+   "isin": "CA15101Q2071",
+   "name": "Celestica Inc.",
+   "us": "CLS"
+  },
+  "CM.TO": {
+   "exchange": "NYSE",
+   "isin": "CA1360691010",
+   "name": "Canadian Imperial Bank of Commerce",
+   "us": "CM"
+  },
+  "CNQ.TO": {
+   "exchange": "NYSE",
+   "isin": "CA1363851017",
+   "name": "Canadian Natural Resources Limited",
+   "us": "CNQ"
+  },
+  "CNR.TO": {
+   "exchange": "NYSE",
+   "isin": "CA1363751027",
+   "name": "Canadian National Railway Company",
+   "us": "CNI"
+  },
+  "CP.TO": {
+   "exchange": "NYSE",
+   "isin": "CA13646K1084",
+   "name": "Canadian Pacific Kansas City Ltd.",
+   "us": "CP"
+  },
+  "CVE.TO": {
+   "exchange": "NYSE",
+   "isin": "CA15135U1093",
+   "name": "Cenovus Energy Inc.",
+   "us": "CVE"
+  },
+  "DOO.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA05577W2004",
+   "name": "BRP Inc.",
+   "us": "DOO"
+  },
+  "DSG.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA2499061083",
+   "name": "The Descartes Systems Group Inc.",
+   "us": "DSGX"
+  },
+  "EFR.TO": {
+   "exchange": "AMEX",
+   "isin": "CA2926717083",
+   "name": "Energy Fuels Inc.",
+   "us": "UUUU"
+  },
+  "EFX.TO": {
+   "exchange": "NYSE",
+   "isin": "CA29269R1055",
+   "name": "Enerflex Ltd.",
+   "us": "EFXT"
+  },
+  "ELD.TO": {
+   "exchange": "NYSE",
+   "isin": "CA2849025093",
+   "name": "Eldorado Gold Corporation",
+   "us": "EGO"
+  },
+  "EMA.TO": {
+   "exchange": "NYSE",
+   "isin": "CA2908761018",
+   "name": "Emera Incorporated",
+   "us": "EMA"
+  },
+  "ENB.TO": {
+   "exchange": "NYSE",
+   "isin": "CA29250N1050",
+   "name": "Enbridge Inc.",
+   "us": "ENB"
+  },
+  "EQX.TO": {
+   "exchange": "AMEX",
+   "isin": "CA29446Y5020",
+   "name": "Equinox Gold Corp.",
+   "us": "EQX"
+  },
+  "ERO.TO": {
+   "exchange": "NYSE",
+   "isin": "CA2960061091",
+   "name": "Ero Copper Corp.",
+   "us": "ERO"
+  },
+  "FNV.TO": {
+   "exchange": "NYSE",
+   "isin": "CA3518581051",
+   "name": "Franco-Nevada Corporation",
+   "us": "FNV"
+  },
+  "FSV.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA33767E2024",
+   "name": "FirstService Corporation",
+   "us": "FSV"
+  },
+  "FTS.TO": {
+   "exchange": "NYSE",
+   "isin": "CA3495531079",
+   "name": "Fortis Inc.",
+   "us": "FTS"
+  },
+  "FVI.TO": {
+   "exchange": "NYSE",
+   "isin": "CA3499421020",
+   "name": "Fortuna Mining Corp.",
+   "us": "FSM"
+  },
+  "GFL.TO": {
+   "exchange": "NYSE",
+   "isin": "CA36168Q1046",
+   "name": "GFL Environmental Inc.",
+   "us": "GFL"
+  },
+  "GIB-A.TO": {
+   "exchange": "NYSE",
+   "isin": "CA12532H1047",
+   "name": "CGI Inc.",
+   "us": "GIB"
+  },
+  "GIL.TO": {
+   "exchange": "NYSE",
+   "isin": "CA3759161035",
+   "name": "Gildan Activewear Inc.",
+   "us": "GIL"
+  },
+  "HBM.TO": {
+   "exchange": "NYSE",
+   "isin": "CA4436281022",
+   "name": "Hudbay Minerals Inc.",
+   "us": "HBM"
+  },
+  "HUT.TO": {
+   "exchange": "NASDAQ",
+   "isin": "US44812J1043",
+   "name": "Hut 8 Corp.",
+   "us": "HUT"
+  },
+  "IMG.TO": {
+   "exchange": "NYSE",
+   "isin": "CA4509131088",
+   "name": "Iamgold Corporation",
+   "us": "IAG"
+  },
+  "IMO.TO": {
+   "exchange": "AMEX",
+   "isin": "CA4530384086",
+   "name": "Imperial Oil Limited",
+   "us": "IMO"
+  },
+  "K.TO": {
+   "exchange": "NYSE",
+   "isin": "CA4969024047",
+   "name": "Kinross Gold Corporation",
+   "us": "KGC"
+  },
+  "MDA.TO": {
+   "exchange": "NYSE",
+   "isin": "CA55293N1096",
+   "name": "MDA Space Ltd",
+   "us": "MDA"
+  },
+  "MFC.TO": {
+   "exchange": "NYSE",
+   "isin": "CA56501R1064",
+   "name": "Manulife Financial Corporation",
+   "us": "MFC"
+  },
+  "MG.TO": {
+   "exchange": "NYSE",
+   "isin": "CA5592224011",
+   "name": "Magna International Inc.",
+   "us": "MGA"
+  },
+  "MX.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA59151K1084",
+   "name": "Methanex Corporation",
+   "us": "MEOH"
+  },
+  "NTR.TO": {
+   "exchange": "NYSE",
+   "isin": "CA67077M1086",
+   "name": "Nutrien Ltd.",
+   "us": "NTR"
+  },
+  "NXE.TO": {
+   "exchange": "NYSE",
+   "isin": "CA65340P1062",
+   "name": "NexGen Energy Ltd.",
+   "us": "NXE"
+  },
+  "OGC.TO": {
+   "exchange": "NYSE",
+   "isin": "CA6752224007",
+   "name": "OceanaGold Corporation",
+   "us": "OGC"
+  },
+  "OTEX.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA6837151068",
+   "name": "Open Text Corporation",
+   "us": "OTEX"
+  },
+  "OVV.TO": {
+   "exchange": "NYSE",
+   "isin": "US69047Q1022",
+   "name": "Ovintiv Inc.",
+   "us": "OVV"
+  },
+  "PAAS.TO": {
+   "exchange": "NYSE",
+   "isin": "CA6979001089",
+   "name": "Pan American Silver Corp.",
+   "us": "PAAS"
+  },
+  "PD.TO": {
+   "exchange": "NYSE",
+   "isin": "CA74022D4075",
+   "name": "Precision Drilling Corporation",
+   "us": "PDS"
+  },
+  "PPL.TO": {
+   "exchange": "NYSE",
+   "isin": "CA7063271034",
+   "name": "Pembina Pipeline Corporation",
+   "us": "PBA"
+  },
+  "QSR.TO": {
+   "exchange": "NYSE",
+   "isin": "CA76131D1033",
+   "name": "Restaurant Brands International Inc.",
+   "us": "QSR"
+  },
+  "RBA.TO": {
+   "exchange": "NYSE",
+   "isin": "CA74935Q1072",
+   "name": "RB Global, Inc.",
+   "us": "RBA"
+  },
+  "RCI-B.TO": {
+   "exchange": "NYSE",
+   "isin": "CA7751092007",
+   "name": "Rogers Communications Inc.",
+   "us": "RCI"
+  },
+  "RY.TO": {
+   "exchange": "NYSE",
+   "isin": "CA7800871021",
+   "name": "Royal Bank of Canada",
+   "us": "RY"
+  },
+  "SHOP.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA82509L1076",
+   "name": "Shopify Inc.",
+   "us": "SHOP"
+  },
+  "SKE.TO": {
+   "exchange": "NYSE",
+   "isin": "CA83056P7157",
+   "name": "Skeena Resources Limited",
+   "us": "SKE"
+  },
+  "SLF.TO": {
+   "exchange": "NYSE",
+   "isin": "CA8667961053",
+   "name": "Sun Life Financial Inc.",
+   "us": "SLF"
+  },
+  "SOBO.TO": {
+   "exchange": "NYSE",
+   "isin": "CA83671M1059",
+   "name": "South Bow Corporation",
+   "us": "SOBO"
+  },
+  "SSRM.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA7847301032",
+   "name": "SSR Mining Inc.",
+   "us": "SSRM"
+  },
+  "STN.TO": {
+   "exchange": "NYSE",
+   "isin": "CA85472N1096",
+   "name": "Stantec Inc.",
+   "us": "STN"
+  },
+  "SU.TO": {
+   "exchange": "NYSE",
+   "isin": "CA8672241079",
+   "name": "Suncor Energy Inc.",
+   "us": "SU"
+  },
+  "T.TO": {
+   "exchange": "NYSE",
+   "isin": "CA87971M1032",
+   "name": "TELUS Corporation",
+   "us": "TU"
+  },
+  "TA.TO": {
+   "exchange": "NYSE",
+   "isin": "CA89346D1078",
+   "name": "TransAlta Corporation",
+   "us": "TAC"
+  },
+  "TD.TO": {
+   "exchange": "NYSE",
+   "isin": "CA8911605092",
+   "name": "The Toronto-Dominion Bank",
+   "us": "TD"
+  },
+  "TFII.TO": {
+   "exchange": "NYSE",
+   "isin": "CA87241L1094",
+   "name": "TFI International Inc.",
+   "us": "TFII"
+  },
+  "TRI.TO": {
+   "exchange": "NASDAQ",
+   "isin": "CA8849038812",
+   "name": "Thomson Reuters Corporation",
+   "us": "TRI"
+  },
+  "TRP.TO": {
+   "exchange": "NYSE",
+   "isin": "CA87807B1076",
+   "name": "TC Energy Corporation",
+   "us": "TRP"
+  },
+  "VET.TO": {
+   "exchange": "NYSE",
+   "isin": "CA9237251058",
+   "name": "Vermilion Energy Inc.",
+   "us": "VET"
+  },
+  "WCN.TO": {
+   "exchange": "NYSE",
+   "isin": "CA94106B1013",
+   "name": "Waste Connections, Inc.",
+   "us": "WCN"
+  },
+  "WFG.TO": {
+   "exchange": "NYSE",
+   "isin": "CA9528451052",
+   "name": "West Fraser Timber Co. Ltd.",
+   "us": "WFG"
+  },
+  "WPM.TO": {
+   "exchange": "NYSE",
+   "isin": "CA9628791027",
+   "name": "Wheaton Precious Metals Corp.",
+   "us": "WPM"
+  }
+ }
+}

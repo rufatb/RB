@@ -48,6 +48,7 @@ RECORD_FILES = ("ledger.csv", "universe_prints.csv", "positions.csv",
 # path still fails the check. A path ending in "/" is a directory.
 RUN_RECORDS = RECORD_FILES + ("data/model_picks.csv", "data/gap_calls.csv",
                               "data/pead_calls.csv", "data/news_calls.csv",
+                              "data/us_preopen_calls.csv", "data/event_calls.csv",
                               "data/newswire/", "data/social/", "data/reviews/")
 
 # Branches read and deliberately left unmerged, each pinned to the head it was
