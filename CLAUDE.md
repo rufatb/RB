@@ -62,6 +62,17 @@ live changes: no pick, size, Top 2, morning report or older record.
   fixed and pinned by tests.
 * **Do not expect a pass.** By the morning read the US after-hours and
   pre-market sessions have traded the release.
+* **The first live morning, 11-10** (read at 08:20 ET; Gmail
+  `1a1c5a0602d7bc65`): LONG AAUC.TO, LONG ARIS.TO, SHORT GFL.TO, LONG EQX.TO.
+  * The pre-market feeds answer before the bell: trades stamped 08:18–08:20
+    and a quote mid on KGC. AAUC had no fresh price and is not scored.
+  * **Amendment 1, made at 08:25 before any outcome.** A law firm's notice
+    whose title opens with the company's name ("Kinross Gold Corporation Sued
+    for Securities Law Violations - Contact the DJS Law Group …") was recorded
+    as SHORT K.TO. `NOTICE` is widened to that wording. The row stays in the
+    ledger; a row whose title is a notice is never shown or counted.
+  * If the price lookup fails on both feeds, a one-minute extended-hours bar
+    stands in (`snapshot`, third source; registered before the first call).
 
 **2. The commodity nowcast** (`nowcast.py`, lab item 13): UNDERPOWERED,
 rejection #65. Read `AUDIT_day149_nowcast.md`.
