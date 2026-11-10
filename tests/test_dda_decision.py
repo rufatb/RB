@@ -145,7 +145,7 @@ def test_publish_only_commits_one_presentation_record_and_never_force_pushes(tmp
     calls = []
     def run(command, **kwargs):
         calls.append(command)
-        return subprocess.CompletedProcess(command, 1 if 'ls-files' in command else 0, '', '')
+        return subprocess.CompletedProcess(command, 1 if 'cat-file' in command else 0, '', '')
     assert D.publish(path, runner=run)['status'] == 'PUBLISHED'
     commit = next(c for c in calls if 'commit' in c)
     assert '--only' in commit and commit[-1] == path.relative_to(tmp_path).as_posix()
@@ -262,3 +262,32 @@ def test_fmp_source_budget_and_failure_keep_the_original_summary_without_key_lea
     receipt = enrich(data, Path('.'), NOW, get=lambda *a, **k: pytest.fail('Budget already spent'),
                      clock=lambda: NOW, twins={}, seconds=0)
     assert receipt['excerpts_expanded'] == 0
+
+
+def test_real_git_publication_commits_an_already_staged_record_without_unrelated_code(tmp_path, monkeypatch):
+    repo, bare = tmp_path/'repo', tmp_path/'remote.git'
+    repo.mkdir()
+    def git(*args, cwd=repo):
+        return subprocess.check_output(['git', *args], cwd=cwd, text=True, stderr=subprocess.PIPE).strip()
+    git('init', '--bare', str(bare), cwd=tmp_path)
+    git('init', '-b', 'main')
+    git('config', 'user.email', 'dda-fixture@example.test')
+    git('config', 'user.name', 'DDA fixture')
+    code = repo/'council.py'
+    code.write_text('original fixture code\n')
+    git('add', '--', 'council.py')
+    git('commit', '-m', 'fixture baseline')
+    git('remote', 'add', 'origin', str(bare))
+    git('push', '-u', 'origin', 'main')
+    monkeypatch.setattr(D, 'ROOT', repo)
+    path = repo/'data/reviews/dda/2026-11-11.decision.json'
+    D.first_write(path, {'choice_ids': []})
+    code.write_text('unrelated staged change\n')
+    git('add', '--', 'council.py', path.relative_to(repo).as_posix())
+    assert D.publish(path, budget=8)['status'] == 'PUBLISHED'
+    assert git('show', 'HEAD:council.py') == 'original fixture code'
+    assert git('diff', '--cached', '--name-only') == 'council.py'
+    assert json.loads(git('show', 'HEAD:'+path.relative_to(repo).as_posix())) == {'choice_ids': []}
+    original_head = git('rev-parse', 'HEAD')
+    assert D.publish(path, budget=8)['status'] == 'PUBLISHED'
+    assert git('rev-parse', 'HEAD') == original_head

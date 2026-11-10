@@ -289,8 +289,8 @@ def _publish(path, *, runner, budget):
             return {'status': 'NOT_PUBLISHED', 'reason': 'NON_DDA_COMMITS_AHEAD'}
         # --only commits exactly this new presentation record while preserving
         # unrelated staged work. No automatic merge into a running morning.
-        staged = git('ls-files', '--error-unmatch', relative).returncode == 0
-        if not staged:
+        committed = git('cat-file', '-e', 'HEAD:'+relative).returncode == 0
+        if not committed:
             if git('add', '--', relative).returncode:
                 return {'status': 'NOT_PUBLISHED', 'reason': 'GIT_STAGE_FAILED'}
             if git('commit', '--only', '-m', 'record: DDA presentation '+Path(path).name, '--', relative).returncode:
