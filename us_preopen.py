@@ -177,7 +177,10 @@ ALIASES = {'TD.TO': ('td bank', 'td announces', 'td reports'), 'RY.TO': ('rbc', 
 NOTICE = re.compile(r'class action|investor alert|shareholder alert|stock drop|securities fraud|'
                     r'lead plaintiff|law firm|law offices|\bLLP\b|\bBFA Law\b|shareholder rights|'
                     r'recover (?:your )?losses|reminds? (?:investors|shareholders)|'
-                    r'encourages? (?:investors|shareholders)|investors? (?:who|with) (?:lost|losses)', re.I)
+                    r'encourages? (?:investors|shareholders)|investors? (?:who|with) (?:lost|losses)|'
+                    # amendment 1 (2026-11-10): a notice whose title opens with the company's name
+                    r'\blaw group\b|\bPLLC\b|your (?:legal )?rights|sued for|securities law violations|'
+                    r'investors? (?:are )?(?:encouraged|urged|notified)|\battorneys?\b', re.I)
 
 
 def _squash(text):
@@ -390,7 +393,8 @@ def write_ledger(rows, path=LEDGER):
 
 def record_line(path=LEDGER):
     """The running record on the registered measure, one sentence."""
-    rows = [r for r in read_ledger(path) if r.get('material') == 'true' and r.get('w_open') not in (None, '')]
+    rows = [r for r in read_ledger(path) if r.get('material') == 'true' and r.get('w_open') not in (None, '')
+            and not notice(r.get('title'))]
     if not rows:
         return 'Record so far: no scored call yet. This desk started on 2026-11-10.'
     w = [float(r['w_open']) for r in rows]
@@ -535,6 +539,7 @@ def build(state_dir, now=None, *, read=None, client=None, twins=None, archive=No
     rows = kept + added
     if not rows:
         return 'FAILED', {'reason': 'no call answered: ' + (', '.join(sorted(problems)) or 'NO_CALLS')}
+    rows = [r for r in rows if not notice(r.get('title'))]     # amendment 1: recorded, never shown
     rows.sort(key=lambda r: (-r['confidence'], r['ticker']))
     if not any(r['material'] for r in rows):            # recorded above; nothing worth an email
         return 'NOTHING', {'reason': 'no release the model marked as material', 'calls': len(rows),
@@ -644,7 +649,7 @@ def _sessions(path=LEDGER):
     out = {}
     for r in read_ledger(path):
         w = _float(r.get('w_open'))
-        if r.get('material') != 'true' or w is None:
+        if r.get('material') != 'true' or w is None or notice(r.get('title')):
             continue
         bid, ask, px = _float(r.get('us_bid')), _float(r.get('us_ask')), _float(r.get('us_px'))
         half = 100 * (ask - bid) / 2 / px if (bid and ask and px) else DEFAULT_HALF

@@ -117,6 +117,26 @@ def test_a_law_firms_notice_is_not_the_companys_news():
                   'SHAREHOLDER ALERT: Pomerantz Law Firm Investigates Claims'):
         assert U.notice(title)
     assert not U.notice('Kinross reports 2026 third-quarter results')
+    # 2026-11-10, the first live morning: this one opens with the company's name and got through.
+    assert U.notice('Kinross Gold Corporation Sued for Securities Law Violations - Contact the DJS Law Group '
+                    'to Discuss Your Rights')
+    for real in ('GFL Environmental Concludes Review of Unsolicited Inbound Proposals; Board Unanimously '
+                 'Reaffirms Strategy', 'Aris Mining Increases Segovia Gold Reserves by 28% to 1.9 Million Ounces',
+                 'Allied Gold Announces First Gold at Kurmuk Mine', 'Barrick Announces Settlement of Lawsuit'):
+        assert not U.notice(real), real
+
+
+def test_a_notice_already_recorded_is_never_shown_or_counted(tmp_path):
+    (_, _), ledger = build(tmp_path)
+    rows = U.read_ledger(ledger)
+    ad = {**rows[0], 'ticker': 'TD.TO', 'us': 'TD', 'w_open': '9.0',
+          'title': 'TD Bank Sued for Securities Law Violations - Contact the XYZ Law Group'}
+    U.write_ledger(rows + [ad], ledger)
+    (status, info), _ = build(tmp_path)
+    text = Path(info['text_path']).read_text()
+    assert status == 'READY' and 'TD.TO' not in text and 'TD.TO' not in Path(info['subject_path']).read_text()
+    assert len(U.read_ledger(ledger)) == 2                       # the row stays as it was recorded
+    assert 'no scored call yet' in U.record_line(ledger) and U._sessions(ledger) == {}
 
 
 def test_releases_keeps_the_window_drops_notices_and_merges_the_wire(tmp_path):

@@ -137,3 +137,22 @@ size, the Top 2, the morning report or any other record. Council lab item 9.
   bars held that morning's pre-market (55 bars on EQX from 05:07). Whether
   the first two answer before the bell is seen on the first morning. A call
   none of the three can price is counted and not scored.
+
+
+## Amendment 1 — a law firm's notice recorded as a call on the first morning (2026-11-10, 08:25 ET)
+
+Made before the first 09:30 open and before any outcome exists.
+* **What happened.** The first read recorded seven calls. One was SHORT
+  K.TO on "Kinross Gold Corporation Sued for Securities Law Violations -
+  Contact the DJS Law Group to Discuss Your Rights": a law firm's notice. Its
+  title opens with the company's name, and `us_preopen.NOTICE` did not know
+  its wording. Eight other notices were left out that morning.
+* **What the registration already said:** a law firm's notice is left out.
+  This is that rule's pattern, widened ("law group", "your rights", "sued
+  for", "securities law violations", "investors are encouraged", "attorneys",
+  "PLLC").
+* **The record is not rewritten.** The row stays in
+  `data/us_preopen_calls.csv` as recorded. A row whose title is a third-party
+  notice by `us_preopen.notice` is not shown as a call, and is not counted by
+  the record line or the verdict.
+* **Nothing else changes:** no prompt, window, price rule or bar.
