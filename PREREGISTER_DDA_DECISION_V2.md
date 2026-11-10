@@ -61,3 +61,28 @@ retroactively at 09:30. Report outcomes by rule version and session, include
 losses and missing fills, benchmark against XIU and the original choices, and
 show user-entered friction separately. No result or bar will be rewritten.
 No accuracy or profitability claim is made by deploying this decision workflow.
+
+## Scope amendment — 2026-11-10, before outcome analysis
+
+The owner's subsequent instruction supersedes the email consolidation in item 8:
+**keep all existing emails separate and leave the scheduled task running as is.**
+This implementation changes only DDA research, presentation, evaluation and
+data-only publication hooks. It does not change the original desk prompts,
+council selection, email senders or schedule. The original protocol stays above
+so this amendment is visible.
+
+The blind screen uses at most two eligible recent articles per issuer, verified
+issuer releases first and then newest. Filter future/invalid/notice items BEFORE
+applying that input budget. Publish available and supplied counts. Preserve
+available release summaries and the staged, time-checked FMP analyst/earnings
+context with its limitations. The later review sees price execution context,
+but technical patterns alone cannot establish a business case.
+
+Use the existing configured DeepSeek route for the full-universe screen and the
+existing OpenRouter Claude route for a separate-context challenge and comparison,
+with explicit reasoning/output budgets and recorded actual model/pass failures.
+Neither repeats nor provider self-ratings count as independent empirical skill.
+Model performance comparisons must separate nomination/selection, rule versions
+and trading windows, and compare common sessions where possible. Existing
+09:45-to-close bar proxies are gross research returns, not market-open fills or
+realized profits. The new DDA policy has no forward results at deployment.
