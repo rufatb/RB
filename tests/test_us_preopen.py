@@ -23,9 +23,9 @@ def ms(when):
 
 class FMP:
     """Canned answers by path and symbol; counts what it was asked."""
-    def __init__(self, press=None, quotes=None, trades=None, closes=None, bars=None):
+    def __init__(self, press=None, quotes=None, trades=None, closes=None, bars=None, minutes=None):
         self.press, self.quotes, self.trades = press or {}, quotes or {}, trades or {}
-        self.closes, self.bars = closes or {}, bars or {}
+        self.closes, self.bars, self.minutes = closes or {}, bars or {}, minutes or {}
         self.failures, self.asked = {}, []
 
     def __call__(self, path, **p):
@@ -41,6 +41,9 @@ class FMP:
             return self.closes.get(sym, [])
         if path == 'historical-chart/5min':
             return self.bars.get(sym, [])
+        if path == 'historical-chart/1min':
+            assert p.get('extended') == 'true'
+            return self.minutes.get(sym, [])
         raise AssertionError(path)
 
 
@@ -163,6 +166,18 @@ def test_a_wide_or_old_quote_falls_back_to_a_fresh_trade_and_never_to_a_stale_on
     assert U.snapshot(live(quotes={'EQX': wide}, trades={'EQX': old}), 'EQX', NOW)['px'] is None
     stale_quote = {'bidPrice': 12.30, 'askPrice': 12.34, 'timestamp': ms(NOW - dt.timedelta(minutes=25))}
     assert U.snapshot(live(quotes={'EQX': stale_quote}), 'EQX', NOW)['px'] is None
+
+
+def test_with_no_quote_and_no_trade_the_last_one_minute_bar_stands():
+    minutes = [{'date': '2026-11-10 07:58:00', 'close': 12.20}, {'date': '2026-11-10 08:03:00', 'close': 12.26},
+               {'date': '2026-11-09 19:58:00', 'close': 11.00}, {'date': 'bad', 'close': 1.0}]
+    s = U.snapshot(live(quotes={}, minutes={'EQX': minutes}), 'EQX', NOW)
+    assert (s['px'], s['source'], s['at'][11:16]) == (12.26, 'last bar', '08:04') and s['bid'] is None
+    old = [{'date': '2026-11-10 07:30:00', 'close': 12.20}]                  # ended 44 minutes ago
+    assert U.snapshot(live(quotes={}, minutes={'EQX': old}), 'EQX', NOW)['px'] is None
+    trade = {'price': 12.31, 'timestamp': ms(NOW - dt.timedelta(minutes=3))}
+    s = U.snapshot(live(quotes={}, trades={'EQX': trade}, minutes={'EQX': minutes}), 'EQX', NOW)
+    assert (s['px'], s['source']) == (12.31, 'last trade')                   # the trade feed comes first
 
 
 def test_yesterdays_after_hours_print_is_never_todays_price():

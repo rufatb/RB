@@ -294,7 +294,8 @@ def last_close(read, symbol, today):
 def snapshot(read, symbol, now):
     """The US listing's price at the read, in the registered order: the mid of
     a fresh, tight quote (stamped in the last 10 minutes, no wider than 1%);
-    else the last extended-hours trade of the last 30 minutes; else nothing.
+    else the last extended-hours trade of the last 30 minutes, or failing that
+    feed the close of the last one-minute bar of the last 30 minutes; else nothing.
     Never a price from before today's pre-market, and never a stale trade:
     one made before the release would hand the desk the whole reaction."""
     floor = dt.datetime.combine(now.date(), EARLIEST, tzinfo=ET)
@@ -319,6 +320,21 @@ def snapshot(read, symbol, now):
     px, trade_at = _num(t.get('price')), stamped(t)
     if px and px > 0 and trade_at and now - trade_at <= TRADE_FRESH:
         out.update(px=px, at=trade_at.isoformat(timespec='seconds'), source='last trade')
+        return out
+    # The same fact from a second endpoint: the last extended-hours one-minute bar.
+    day = now.date().isoformat()
+    last = None
+    for r in read('historical-chart/1min', symbol=symbol, **{'from': day, 'to': day, 'extended': 'true'}) or []:
+        try:
+            end = (dt.datetime.strptime(str((r or {}).get('date')), '%Y-%m-%d %H:%M:%S').replace(tzinfo=ET)
+                   + dt.timedelta(minutes=1))
+        except ValueError:
+            continue
+        c = _num(r.get('close'))
+        if c and c > 0 and floor <= end <= now + CLOCK_SLACK and (last is None or end > last[0]):
+            last = (end, c)
+    if last and now - last[0] <= TRADE_FRESH:
+        out.update(px=last[1], at=last[0].isoformat(timespec='seconds'), source='last bar')
     return out
 
 

@@ -54,7 +54,9 @@ size, the Top 2, the morning report or any other record. Council lab item 9.
 * **The price at the read,** taken after the model answers, in this order:
   1. the mid of the New York listing's extended-hours quote, when the quote is
      stamped within the last 10 minutes and is no wider than 1%;
-  2. else its last extended-hours trade, when made within the last 30 minutes;
+  2. else its last extended-hours trade, when made within the last 30 minutes
+     (FMP's trade feed, or failing that the close of its last one-minute
+     extended-hours bar);
   3. else no price.
   * Never a price stamped before 04:00 ET today, and never one stamped before
     the newest release: that would hand the test the whole reaction.
@@ -130,3 +132,8 @@ size, the Top 2, the morning report or any other record. Council lab item 9.
   forward bar does not move.
 * **A US holiday on a TSX trading day** leaves every call without a price.
   They are counted and not scored.
+* **The price feeds were checked after hours only.** FMP's extended-hours
+  quote and trade endpoints answered at 20:00 ET on 11-09; its one-minute
+  bars held that morning's pre-market (55 bars on EQX from 05:07). Whether
+  the first two answer before the bell is seen on the first morning. A call
+  none of the three can price is counted and not scored.

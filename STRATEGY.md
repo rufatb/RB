@@ -6073,3 +6073,61 @@ email" and "Yes".
   the next three sessions' scheduled releases, and each reporting name's
   typical move on a report day. Sizes and timing, never direction; no pick.
 * **Counts unchanged:** 63 rejections, 5 adoptions. Neither is a test.
+
+## Day-149: two forward tests — a pre-open desk on New York listings and an event desk (no result yet)
+
+The owner, 2026-11-09 night, after my view of a pasted "Information Surprise
+Alpha" engine: "Build all that are missing from above ... schedule them when
+it makes sense to get into the trade". Both were registered before their
+first call. Neither changes a pick, a size, the Top 2 or the morning report.
+* **The pre-open desk** (`us_preopen.py`, `PREREGISTER_day149_us_preopen.md`,
+  08:12 ET). The one measured signal here is a model's read of an overnight
+  release, which calls the gap (+0.21% a call, t = 2.7, day-122) and which
+  the TSX open has priced. 81 of the 150 names also trade in New York from
+  04:00 ET. The desk records DeepSeek's side on each overnight release with
+  the New York price at the read.
+  * Judged at 40 sessions with a call: from the read to the 09:30 open against
+    SPY, t ≥ 3, a placebo, both halves, net of each call's own half-spread.
+  * Do not expect a pass: by the morning read the after-hours and pre-market
+    sessions have traded the release.
+* **The event desk** (`event_desk.py`, `PREREGISTER_day149_event_desk.md`,
+  15:14 ET). For each report dated the next session, DeepSeek calls the
+  result and may take a side, seeing no company name and no price.
+  * The abstain rule is code: a side needs two supplied facts that agree
+    (surprise history, peers, analyst changes, nowcast) and none against.
+    Left to the prompt, the model sided on names with nothing to read in 2
+    control runs of 5.
+  * Judged at the 60th confirmed call with a side: from the close before the
+    report to the close of the session after it, against XIU.
+  * Do not expect a pass: its mechanical relatives were null or underpowered
+    (day-138 E2, E3).
+* **Counts unchanged by these two.** They are forward shadows.
+
+## Day-149b: REJECTION #65 — the commodity nowcast against consensus: the history cannot see it
+
+Registered first (`PREREGISTER_day149_nowcast.md`); `nowcast_history.py` was
+committed before it ran (239afff). Read `AUDIT_day149_nowcast.md`. #64 is
+held by day-148's registration for the veto test, which runs on 11-10.
+* **The idea.** For a gold or silver producer, last quarter's revenue ×
+  (this quarter's average metal price ÷ last quarter's) is public weeks before
+  the report. When it stands 3% or more from consensus, do the shares react
+  that way?
+* **UNDERPOWERED.** 159 sided quarters on 19 names: −0.20% a report against
+  XGD.TO over the four sessions around the report, t = −0.34, placebo
+  p = 0.63, the halves disagree, 73 right. A planted 1.0% reaches t = 1.67;
+  the smallest detectable effect is 2.56%.
+* **Reported with it:**
+  * the nowcast's side matched the revenue surprise 59% of the time
+    (t = 2.37);
+  * siding by the reported surprise itself made +0.41% (t = 0.72): revenue
+    against consensus is not what moves these shares;
+  * the 20 sessions before the entry: −0.10%, t = −0.14.
+* **A data fault, measured.** FMP's revenue consensus agrees between a
+  company's Toronto and New York rows on 269 of 606 quarters. On the rows as
+  they stand the nowcast "calls" the surprise 68% of the time (t = 7.3),
+  which reads the feed's errors. A consensus signal must be checked against
+  the other listing before it is tested.
+* **So:** no shadow is proposed for it, and nothing live changes. The event
+  desk shows it as one labelled fact.
+* **Counts:** 63 rejections through day-147; #64 is day-148's unless it
+  passes; this is #65. 5 adoptions.

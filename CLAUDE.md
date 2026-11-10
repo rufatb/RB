@@ -18,6 +18,115 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day149 — three builds at the owner's "Build all that are missing": a pre-open desk, the nowcast (rejection #65), an event desk (owner, 2026-11-09 night)
+
+The owner, after my view of the pasted engine: "Build all that are missing
+from above, and make sure starting tomorrow we are in good position and
+schedule them when it makes sense to get into the trade at market open or
+later up to you". Each piece was registered before its first number. Nothing
+live changes: no pick, size, Top 2, morning report or older record.
+
+**1. The pre-open desk** (`us_preopen.py`, lab item 9's forward arm;
+`PREREGISTER_day149_us_preopen.md`).
+* **What it does.** At 08:12 ET it reads every release published since the
+  last close on a listed name that also trades in New York, asks DeepSeek
+  day-122's question byte for byte, and records the side with the New York
+  price at the read.
+* **The names.** `data/us_twins.json`: 81 of the 150, matched by ISIN and US
+  exchange (`--build-twins`). The letters prove nothing: IAG in New York is
+  IAMGOLD, IAG in Toronto is iA Financial.
+* **The releases.** FMP's press feed for the US symbol, kept only when the
+  title starts with the company's name (`_names_issuer`, `ALIASES`), plus the
+  wire archive. A law firm's notice is dropped (`NOTICE`). The model reads
+  the title and summary: the release pages answer HTTP 403.
+* **The price at the read.** A quote's mid when stamped in the last 10
+  minutes and no wider than 1%; else a trade of the last 30 minutes; else
+  none. Never from before 04:00 today or from before the release.
+* **The measure.** Side × (New York 09:30 open ÷ price at the read − 1, less
+  SPY's). Decision at 40 sessions with a material, priced call
+  (`--verdict`): t ≥ 3, placebo p < 0.01 (seed 149), both halves, above each
+  call's own half-spread plus 0.05%.
+* **The email.** "RB Pre-Open Desk — DATE — …", only when the model marks a
+  release material. It says the entry is before the bell, and that from the
+  open on the record shows nothing left.
+* **The Routine.** `trig_011Fphbey8QMAHSv4jbMmnDC`, 08:12 ET weekdays
+  (`ROUTINE_PREOPEN.md`). It collects the wire first and pushes its own
+  ledger, `data/us_preopen_calls.csv`.
+  * 08:12 because 78% of overnight releases on these names are out by 08:15
+    (235 releases; 72% by 07:45), and it must end before the 08:50 morning.
+  * After a container reset the keys are missing until 08:50, so that
+    morning's desk reads FAILED.
+* **The dry run** (11-09's evening releases, a mocked 07:45 clock): LONG
+  EQX.TO and LONG AAUC.TO. As first written it also "read" iA Financial's
+  results as IAMGOLD's and two law-firm notices as company news; both are
+  fixed and pinned by tests.
+* **Do not expect a pass.** By the morning read the US after-hours and
+  pre-market sessions have traded the release.
+
+**2. The commodity nowcast** (`nowcast.py`, lab item 13): UNDERPOWERED,
+rejection #65. Read `AUDIT_day149_nowcast.md`.
+* **The estimate:** last quarter's revenue × (this quarter's average gold or
+  silver price ÷ last quarter's). A gap beyond 25% against consensus is a
+  change in ounces and takes no side.
+* **The test** (`nowcast_history.py`, 239afff, one look): 159 sided quarters
+  on 19 producers, −0.20% a report against XGD.TO, t = −0.34. A planted 1.0%
+  shows only at t = 1.67.
+* **Beside it:** its side matched the revenue surprise 59% of the time
+  (t = 2.37). Siding by the reported surprise itself made +0.41% (t = 0.72).
+* **Never test a consensus signal on FMP's revenue estimates unchecked.**
+  The Toronto and New York rows of one company agree on the surprise on 269
+  of 606 quarters. On the rows as they stand the nowcast "calls" the surprise
+  68% of the time (t = 7.3): that is the feed's errors.
+* Oil and copper are untested: the plan serves no WTI or copper series
+  (HTTP 402; Brent and gold, silver, USDCAD are served).
+
+**3. The event desk** (`event_desk.py`, lab item 14;
+`PREREGISTER_day149_event_desk.md`).
+* **What it does.** At 15:14 ET, for each listed name FMP dates a report for
+  on the next session, DeepSeek calls BEAT, MISS or ABSTAIN and LONG, SHORT
+  or ABSTAIN. One call per report, ever.
+* **What the model sees:** no company name and no price. Consensus, the last
+  eight EPS surprises, industry peers that reported in the last 35 days,
+  rating changes, and the nowcast as a labelled fact.
+* **The abstain rule is code** (`points`, `gate`). A side stands only when
+  two facts point its way and none against. Anything else is recorded as
+  ABSTAIN, whatever the model says.
+  * The first control left the rule to the prompt and FAILED, 3 clean of 5:
+    the model sided on names with nothing to read and counted a 4-of-8
+    history as six misses. With the gate: 5 of 5 (`--control`).
+  * So the model's part is small: the result call, declining an open side,
+    and the reason.
+* **The measure.** Side × (the Toronto listing from today's close to the
+  close of the session after the report date, less XIU.TO). The window holds
+  the reaction whether the report is before the open or after the close.
+  * A call counts only when FMP later posts a result dated inside the window
+    (`confirmed`; FMP's dates run early about a third of the time).
+  * Decision at the 60th confirmed call with a side; one final look at the
+    120th.
+* **The email.** "RB Event Desk — DATE — for <day>: …", on any day a listed
+  name reports next session, sided or not.
+* **The Routine.** `trig_01Y1tjWG62258hXYAzzBFaDB`, 15:14 ET weekdays
+  (`ROUTINE_EVENTDESK.md`); it pushes `data/event_calls.csv`.
+* **The dry run** for 11-11's reports: LONG BDT.TO and LONG CAE.TO (history
+  and peers up); FNV.TO, GIB-A.TO and POW.TO abstained. Not a record.
+* **Do not expect a pass.** Its mechanical relatives earned nothing
+  (day-138 E2 null, E3 underpowered).
+
+**The evening job** gained step 1d: it scores both ledgers
+(`us_preopen.py --score`, `event_desk.py --score`), pushes them and prints
+their record lines. `ROUTINE_EVENING.md` and the live trigger carry the same
+text. `provenance.RUN_RECORDS` lists both ledgers.
+
+**What the pasted engine's three gaps look like now:**
+* a source for the independent estimate: the nowcast exists and could not be
+  shown to matter;
+* weights: there are none; the gate is a count of agreeing facts;
+* a win probability above a half: still none. Two forward records are
+  running to find out.
+
+**Not claimed:** that either desk has an edge, or that any pick is more
+accurate. Say so plainly when asked.
+
 ## Day148c — the owner's yeses: a hedge line under a one-sided Top 2, and an evening note (owner, 2026-11-09 evening)
 
 Asked four things after day-148b, the owner answered all four.
@@ -102,9 +211,10 @@ P(W)·G − P(L)·L − C) and asked what I think.
   consensus was US$987M and it reported US$1,050M (EPS 0.19 against 0.173).
   The US shares were flat after hours (12.05 against a 12.09 close). An
   independent estimate existed and beat consensus; the price already had it.
-* **Proposed, waiting for the owner's go:** lab item 13 (the commodity
-  nowcast, on history) and item 14 (an event desk with an abstain rule, a
-  forward shadow). Item 9 needs no go: it was only waiting for the US answer.
+* **Proposed that evening, and built the same night at the owner's go**
+  (see Day149): lab item 13 (the commodity nowcast, on history), item 14 (an
+  event desk with an abstain rule, a forward shadow) and item 9's forward
+  desk.
 
 ## Day148b — the owner's "think deeper": what 11-09 teaches, and a search for one- to three-day opportunities (owner, 2026-11-09 evening)
 
@@ -3615,9 +3725,10 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **63 rejections, 5
-adoptions** (as of day-147; skipping the morning's widest-swinging names is the
-fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
+It is the running record of every change tested — **63 rejections through
+day-147, #64 held for day-148's veto test (it runs on 11-10), #65 the
+commodity nowcast; 5 adoptions** (skipping the morning's widest-swinging names
+is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 

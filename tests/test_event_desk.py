@@ -379,3 +379,17 @@ def test_the_registration_fixes_what_the_code_does():
     assert (E.DECISION, E.FINAL, E.SEED, E.BAR, E.PLACEBO_P, E.COST, E.CONFIRM_DAYS) == \
         (60, 120, 149, 3.0, 0.01, 0.13, 5)
     assert E.LAST_ENTRY == dt.time(15, 55) and E.BENCH == 'XIU.TO'
+
+
+def test_the_evening_job_scores_both_shadow_desks_and_pushes_their_ledgers():
+    prompt = (ROOT/'ROUTINE_EVENING.md').read_text().split('\n---\n', 1)[1]
+    assert prompt.index('1c. NOTE') < prompt.index('1d. DESKS') < prompt.index('2. PUSH')
+    assert 'python us_preopen.py --score' in prompt and 'python event_desk.py --score' in prompt
+    push = prompt[prompt.index('2. PUSH'):prompt.index('3. REPORT')]
+    assert 'data/us_preopen_calls.csv' in push and 'data/event_calls.csv' in push
+    assert 'step 1d (the shadow desks\' scores)' in prompt             # it runs on a Sunday evening too
+    import provenance
+    assert provenance.run_record('data/us_preopen_calls.csv') and provenance.run_record('data/event_calls.csv')
+    import us_preopen
+    assert 'no scored call yet' in us_preopen.record_line(ROOT/'nothing.csv')
+    assert 'no scored call yet' in E.record_line(ROOT/'nothing.csv')
