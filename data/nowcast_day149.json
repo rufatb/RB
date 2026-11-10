@@ -1,0 +1,113 @@
+{
+ "registration": "PREREGISTER_day149_nowcast.md",
+ "names": 19,
+ "counts": {
+  "quarters": 830,
+  "agree": 269,
+  "no_prices": 0,
+  "window_incomplete": 5,
+  "priced": 825,
+  "priced_and_agree": 264,
+  "sided": 159,
+  "long": 64,
+  "short": 95,
+  "from": "2012-05-08",
+  "to": "2026-11-04"
+ },
+ "reaction_sd_pct": 7.288,
+ "verdict": {
+  "n": 159,
+  "weeks": 83,
+  "mean_pct": -0.2012,
+  "t": -0.34,
+  "placebo_p": 0.6327,
+  "halves_pct": [
+   -1.2278,
+   0.8125
+  ],
+  "net_pct": -0.3312,
+  "right": 73,
+  "control_t_planted_1pct": 1.67,
+  "mde_pct": 2.56,
+  "verdict": "UNDERPOWERED"
+ },
+ "information": {
+  "n": 154,
+  "matched": 91,
+  "rate": 0.5909,
+  "t_against_half": 2.37
+ },
+ "descriptive": {
+  "all_quarters_uncorroborated_consensus": {
+   "n": 398,
+   "weeks": 168,
+   "mean_pct": 0.0538,
+   "t": 0.16,
+   "placebo_p": 0.4383,
+   "halves_pct": [
+    -0.2296,
+    0.3373
+   ],
+   "net_pct": -0.0762,
+   "right": 193,
+   "control_t_planted_1pct": 2.9,
+   "mde_pct": 1.48,
+   "verdict": "UNDERPOWERED",
+   "information": {
+    "n": 378,
+    "matched": 258,
+    "rate": 0.6825,
+    "t_against_half": 7.3
+   }
+  },
+  "long": {
+   "n": 64,
+   "mean_pct": -0.3586,
+   "t": -0.36,
+   "right": 29
+  },
+  "short": {
+   "n": 95,
+   "mean_pct": -0.0952,
+   "t": -0.11,
+   "right": 44
+  },
+  "gap_10pct_or_more": {
+   "n": 79,
+   "mean_pct": 0.252,
+   "t": 0.31,
+   "right": 41
+  },
+  "gap_under_10pct": {
+   "n": 80,
+   "mean_pct": -0.6488,
+   "t": -0.73,
+   "right": 32
+  },
+  "2012_2021": {
+   "n": 22,
+   "mean_pct": -3.1414,
+   "t": -1.52,
+   "right": 8
+  },
+  "2022_2026": {
+   "n": 137,
+   "mean_pct": 0.2709,
+   "t": 0.45,
+   "right": 65
+  },
+  "twenty_sessions_before_entry": {
+   "n": 159,
+   "mean_pct": -0.0981,
+   "t": -0.14,
+   "right": 75
+  },
+  "sided_by_surprise_instead": {
+   "n": 154,
+   "mean_pct": 0.405,
+   "t": 0.72,
+   "right": 84
+  }
+ },
+ "failures": {}
+}
