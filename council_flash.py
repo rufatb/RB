@@ -22,6 +22,14 @@ must not stop the report being sent.
     python council_flash.py --state-dir .rb-state --open-check 540  # day-127: is it still alive at 09:31?
     python council_flash.py --state-dir .rb-state --record-open --message-id <id>
 
+DAY-150 (owner, 2026-11-10; PREREGISTER_day150_morning_decision.md): with
+`COMBINED` on, the 09:00 email is "RB Morning Decision": the decision on top
+(what stands on each side after the quality floor, or why nothing does), then
+one table of Claude's picks and the pre-open desk's release reads with the New
+York price just before the email. The 09:31 email gives each pick KEEP, DROP
+or CAUTION by fixed rules, shows where each release read opened, and records
+the verdicts in `data/reviews/open_checks.csv`. Same commands as below.
+
 DAY-127 (PREREGISTER_day127_dated.md): at 09:31 the flashed positions are
 re-checked against FMP's live quote. The verdict is the day-120 E1 rule,
 unchanged: VOID when the price is already past the position's "wrong if",
@@ -51,7 +59,7 @@ SAT = ('READY', 'NO_CONSENSUS', 'NO_POSITIONS')
 # decision on top and one table of Claude's picks and the pre-open desk's
 # release reads, and the 09:31 email gives each pick KEEP / DROP / CAUTION.
 # Off, both emails are as they were on 2026-11-10.
-COMBINED = False
+COMBINED = True
 
 
 def _now(now=None):
@@ -137,6 +145,322 @@ def compose(council, now):
     return subject(session, section), body, email_render.html_from_text(body, hero=hero)
 
 
+# ── day-150: one decision at 09:00 ───────────────────────────────────────────
+DECISION_SUBJECT = 'RB Morning Decision'
+READS_ALONE_AT = dt.time(9, 20)      # no council by now: the release reads go alone
+MAX_READS = 8
+PRICE_WAIT = 25                      # seconds for the New York prices; late ones are left out
+
+
+def reads_today(now, path=None):
+    """(material, routine): today's pre-open desk calls from its ledger, the
+    most confident first. A third party's notice is never shown (amendment 1).
+    Never raises: a ledger that cannot be read gives no reads."""
+    try:
+        import us_preopen as U
+        rows = [U._typed(r) for r in U.read_ledger(path or U.LEDGER)
+                if r.get('session') == _now(now).date().isoformat()]
+        rows = [r for r in rows if r.get('side') in ('LONG', 'SHORT') and not U.notice(r.get('title'))]
+    except Exception:
+        return [], []
+    rows.sort(key=lambda r: (-(r.get('confidence') or 0), r['ticker']))
+    return [r for r in rows if r['material']], [r for r in rows if not r['material']]
+
+
+def new_york_prices(symbols, now, read=None):
+    """{US symbol: snapshot} read just before the email, pre-market only. One
+    name's failure costs that name's price; the whole read is bounded."""
+    now = _now(now)
+    symbols = sorted(set(s for s in symbols if s))
+    if not symbols or now.time() >= dt.time(9, 30):
+        return {}
+    import concurrent.futures as cf
+    try:
+        import us_preopen as U
+        read = read or U._reader()
+    except Exception:
+        return {}
+    out = {}
+    pool = cf.ThreadPoolExecutor(8)
+    jobs = {pool.submit(U.snapshot, read, s, now): s for s in symbols}
+    try:
+        for job in cf.as_completed(jobs, timeout=PRICE_WAIT):
+            try:
+                out[jobs[job]] = job.result()
+            except Exception:
+                continue
+    except cf.TimeoutError:
+        pass
+    pool.shutdown(wait=False, cancel_futures=True)
+    return out
+
+
+def _ny_cell(us, snap, recorded=None):
+    """'ARIS 16.14 at 08:58, -3.0% since the US close', or the price at the read."""
+    if not us:
+        return '—'
+    px, at, prev, tag = None, None, None, ''
+    if isinstance(snap, dict) and snap.get('px'):
+        px, at, prev = snap['px'], str(snap.get('at') or '')[11:16], snap.get('prev_close')
+    elif isinstance(recorded, dict) and recorded.get('us_px'):
+        px, at, prev = recorded['us_px'], str(recorded.get('us_px_at') or '')[11:16], recorded.get('us_prev_close')
+        tag = ' (at the read)'
+    if not px:
+        return '%s: no fresh pre-market price' % us
+    move = ', %+.1f%% since the US close' % (100 * (px / prev - 1)) if prev else ''
+    return '%s %.2f at %s%s%s' % (us, px, at or '?', tag, move)
+
+
+def _wrong(p):
+    return ('%s %g' % ('below' if p['side'] == 'LONG' else 'above', p['invalid_at'])
+            if isinstance(p.get('invalid_at'), (int, float)) else '—')
+
+
+def _release_cell(r):
+    try:
+        at = dt.datetime.fromisoformat(r.get('last_at') or r['first_at']).astimezone(ET).strftime('%a %H:%M')
+    except (KeyError, TypeError, ValueError):
+        at = ''
+    return ('%s %s' % (at, str(r.get('title') or '').replace('|', '/')[:100])).strip() or '—'
+
+
+def _council_on(council, ticker, side):
+    """The council's vote on a position that was on its table, else None."""
+    import council as K
+    try:
+        tally = (council or {}).get('tally') or {}
+        rows = {r['id']: r for r in tally.get('rows') or []}
+        for p in (council or {}).get('positions') or []:
+            if (p['ticker'], p['side']) == (ticker, side) and p['id'] in rows:
+                return K._shape(p, rows[p['id']], tally.get('members') or [], None)['verdict'].split(';')[0]
+    except Exception:
+        return None
+    return None
+
+
+def _claude_named(council, ticker, side):
+    """Claude's own confidence when it nominated that position, else None."""
+    got = (((council or {}).get('nomination_picks') or {}).get('claude') or {})
+    for nom in got.get('longs' if side == 'LONG' else 'shorts') or []:
+        if isinstance(nom, dict) and nom.get('ticker') == ticker and isinstance(nom.get('confidence'), (int, float)):
+            return nom['confidence']
+    return None
+
+
+def decision_lines(section, reads, why=None):
+    """The decision on top: what stands on each side, or why nothing does."""
+    import council as K
+    out = []
+    section = section or {}
+    picks = section.get('picks') or []
+    if why:
+        out.append('- ' + why)
+    elif section.get('claude_leads'):
+        dropped = section.get('passed_floor') or []
+        ran = section.get('passed_run') or []
+        for p in picks:                           # what stands first, then why a side is empty
+            level = _wrong(p)
+            out.append('- %s %s stands: %s. Wrong if: %s.' % (
+                p['side'], p['ticker'], p['agreement'], level if level != '—' else 'none given'))
+        for side, word in (('LONG', 'long'), ('SHORT', 'short')):
+            if any(x['side'] == side for x in picks):
+                continue
+            d = next((x for x in dropped if x['side'] == side), None)
+            if d:
+                out.append("- No %s today: Claude's %s %s was below the quality floor (%s)."
+                           % (word, side, d['ticker'], K.floor_words(d)))
+            elif any(x['side'] == side for x in ran):
+                out.append("- No %s today: Claude's %s nominations followed three-day runs, passed over."
+                           % (word, word))
+            else:
+                out.append('- No %s today: Claude named none.' % word)
+    elif section.get('no_positions'):
+        out.append('- No model proposed a position today, so there is nothing to decide.')
+    elif picks:
+        who = "the council's pick" if section.get('council') else 'two models agree'
+        out += ['- %s %s stands: %s (%s). Wrong if: %s.' % (
+            p['side'], p['ticker'], who, p.get('agreement') or '', _wrong(p) if _wrong(p) != '—' else 'none given')
+            for p in picks]
+    else:
+        head = K.passed_head(section)
+        out.append('- No pick today: %s.' % (head or 'no position won the council'))
+    if reads:
+        out.append('- Overnight releases with a call (a separate read; its entry is the New York listing '
+                   'before the bell): ' + ' · '.join('%s %s' % (r['side'], r['ticker']) for r in reads) + '.')
+    return out
+
+
+def decision_head(section, reads, why=None):
+    """The subject's tail and the hero line."""
+    section = section or {}
+    picks = section.get('picks') or []
+    parts = ['%s %s (%s)' % (p['side'], p['ticker'], p.get('agreement') or '') for p in picks]
+    if why:
+        parts = ['no council decision yet']
+    elif section.get('claude_leads'):
+        have = {p['side'] for p in picks}
+        parts += ['no %s' % w for s_, w in (('LONG', 'long'), ('SHORT', 'short')) if s_ not in have]
+        if not picks:
+            parts = ['no pick today']
+    elif not picks:
+        parts = ['no pick today']
+    tail = (' · %d overnight release read%s' % (len(reads), '' if len(reads) == 1 else 's')) if reads else ''
+    return ' · '.join(parts) + tail
+
+
+def _read_rows(council, reads, prices, shown):
+    """The table rows of the release reads not already shown beside a pick."""
+    rows = []
+    for r in reads[:MAX_READS]:
+        if (r['ticker'], r['side']) in shown:
+            continue
+        named = _claude_named(council, r['ticker'], r['side'])
+        vote = _council_on(council, r['ticker'], r['side']) or 'not on its table'
+        rows.append('| Release read | %s %s (read %.2f) | %s | %s | %s | %s | — | DeepSeek: %s |' % (
+            r['side'], r['ticker'], r.get('confidence') or 0,
+            ('%.2f' % named) if named is not None else '—', vote, _release_cell(r),
+            _ny_cell(r.get('us'), (prices or {}).get(r.get('us')), r),
+            str(r.get('reason') or '—').replace('|', '/')[:200]))
+    return rows
+
+
+TABLE_HEAD = ['| What | Name | Claude\'s conf. | Council vote | Overnight release | New York before the bell | Wrong if | Why |',
+              '|---|---|---:|---|---|---|---|---|']
+READS_NOTE = ('A release read is DeepSeek\'s side on an overnight company release, read from its title and the '
+              'feed\'s summary. It is a separate test with no record yet: its entry is the New York listing '
+              'before the bell and its registered exit is the 09:30 open. From the open on, the record '
+              'shows nothing left (asked the same way, +0.09% from the open to the close, which is noise).')
+
+
+def compose_decision(council, now, *, reads=None, routine=None, prices=None, twins=None, why=None,
+                     record=None):
+    """Day-150: (subject, text, html) of the one 09:00 email. `council` None
+    (with `why`) is the morning the council has not sat: the reads go alone.
+    None when there is neither a council that sat nor a release read."""
+    import council as K
+    import email_render
+    import execution_lab
+    import top_picks
+    reads, routine, prices, twins = reads or [], routine or [], prices or {}, twins or {}
+    sat = isinstance(council, dict) and council.get('status') in SAT
+    if not sat and not reads:
+        return None
+    now = _now(now)
+    session = council.get('session') if sat else now.date().isoformat()
+    if not sat:
+        section = {}
+        why = why or 'The council has not sat yet; its decision comes with the 09:46 report.'
+    elif council.get('status') == 'NO_POSITIONS':
+        section = {'picks': [], 'no_positions': True}
+    else:
+        section = top_picks.with_hedge(K.top_two(council))
+    picks = section.get('picks') or []
+    by_read = {r['ticker']: r for r in reads}
+    lines = ['## Today\'s decision'] + decision_lines(section, reads, why)
+    after = []
+    if section.get('claude_leads'):
+        dropped = section.get('passed_floor') or []
+        lines += ['', '## The picks and the overnight releases'] + TABLE_HEAD
+        shown = set()
+        for what, group in (('PICK', picks), ('No pick: below the floor', dropped)):
+            for p in group:
+                r = by_read.get(p['ticker'])
+                same = bool(r) and r['side'] == p['side']
+                if same:
+                    shown.add((r['ticker'], r['side']))
+                us = (twins.get(p['ticker']) or {}).get('us')
+                conf = '%.2f' % p['confidence'] if isinstance(p.get('confidence'), (int, float)) else '—'
+                lines.append('| %s | %s %s | %s | %s | %s | %s | %s | Claude: %s |' % (
+                    what, p['side'], p['ticker'], conf,
+                    str(p.get('council_vote') or '—').replace('|', '/'),
+                    (_release_cell(r) + (' (read: %s %.2f)' % (r['side'], r.get('confidence') or 0))) if r else '—',
+                    _ny_cell(us, prices.get(us), r if same else None), _wrong(p),
+                    str(p.get('reason') or '—').replace('|', '/')[:200]))
+        lines += _read_rows(council, reads, prices, shown)
+        after = [x for x in (top_picks.hedge_line(section), top_picks.mover_line(section)) if x]
+        after += K.council_lines(section, concise=True) + K.council_lines({'picks': dropped}, concise=True)
+        own = K.claude_own_line(section)
+        if own:
+            after.append(own)
+        try:
+            import exposure
+            line = exposure.exposure_line(picks)
+        except Exception:
+            line = None
+        if line:
+            after.append(line)
+        if picks:
+            after.append(execution_lab.NOON_NOTE)
+        after += [x for x in (K.repeat_line(p) for p in picks) if x]
+        after += top_picks._notes(section)
+    else:
+        if sat:
+            lines += [''] + top_picks.table(section, concise=True)
+        rows = _read_rows(council if sat else None, reads, prices, set())
+        if rows:
+            lines += ['', '## Overnight releases with a call'] + TABLE_HEAD + rows
+    if routine:
+        after.append('Routine releases, no call: ' + ' · '.join(
+            '%s (%s)' % (r['ticker'], str(r.get('title') or '')[:60]) for r in routine[:8]) + '.')
+    if reads:
+        after += ['', '## How to read the release reads', READS_NOTE]
+        if record:
+            after.append(record)
+    decided = ((council.get('finished_at') or council.get('asked_at') or '') if sat else '')
+    at = decided[11:16] if len(decided) >= 16 else None
+    stamp = ('The council decided at %s ET%s; sent %s ET.' % (at, ' (before the open)' if at < '09:30' else '',
+                                                              now.strftime('%H:%M'))
+             if at else 'Sent %s ET.' % now.strftime('%H:%M'))
+    body = '\n'.join([
+        '# %s — %s' % (DECISION_SUBJECT, session),
+        stamp + ' One more email at 09:31 checks each pick against the open; the full report follows at ~09:46.',
+        '',
+        *lines,
+        *after,
+        '',
+        '---',
+        'Every reason above describes %s, the prior session, and the morning\'s pre-market prints. The '
+        '09:31 email gives each pick KEEP, DROP or CAUTION from where it opened.'
+        % (_prior(council) if sat else 'the prior session'),
+        'Research only, not an order. No share counts here; the full report sizes the desks. No pick is '
+        'a prediction: every source on the record is still a coin flip.',
+    ])
+    head = decision_head(section, reads, why if not sat else None)
+    subj = '%s — %s — %s' % (DECISION_SUBJECT, session, head)
+    hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
+            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
+            % (email_render.full.escape(head),
+               email_render.direction_html(section) + email_render.hedge_html(section)
+               + email_render.mover_html(section)))
+    return subj, body, email_render.html_from_text(body, hero=hero)
+
+
+def _decision(root, council, now, why=None):
+    """compose_decision with today's reads, the New York prices and the map."""
+    reads, routine = reads_today(now)
+    try:
+        import us_preopen as U
+        twins, record = U.load_twins(), U.record_line(U.LEDGER)
+    except Exception:
+        twins, record = {}, None
+    sat = isinstance(council, dict) and council.get('status') in SAT
+    picked = []
+    if sat and council.get('status') != 'NO_POSITIONS':
+        try:
+            import council as K
+            sec = K.top_two(council)
+            picked = [p['ticker'] for p in (sec.get('picks') or []) + (sec.get('passed_floor') or [])]
+        except Exception:
+            picked = []
+    symbols = [r.get('us') for r in reads[:MAX_READS]] + [(twins.get(t) or {}).get('us') for t in picked]
+    try:
+        prices = new_york_prices(symbols, now)
+    except Exception:
+        prices = {}
+    return compose_decision(council if sat else None, now, reads=reads, routine=routine, prices=prices,
+                            twins=twins, why=why, record=record)
+
+
 def _entry_void():
     """Whether the 09:46 report still drops a pick past its \"wrong if\" (day-144: off)."""
     import entry_checks
@@ -176,11 +500,22 @@ def prepare(state_dir, now=None):
     if sent_today(root, now):
         return 'ALREADY_SENT', {}
     council = K.load(root, now)
-    if council.get('status') == 'UNAVAILABLE' and 'not staged' in str(council.get('reason')):
-        return 'WAITING', {}
-    if council.get('status') == 'UNAVAILABLE' and 'not today' in str(council.get('reason')):
-        return 'WAITING', {}
-    made = compose(council, now)
+    waiting = (council.get('status') == 'UNAVAILABLE'
+               and any(w in str(council.get('reason')) for w in ('not staged', 'not today')))
+    kind = 'council'
+    if waiting:
+        # Day-150: with no council by 09:20 the release reads go alone, and say so.
+        if not (COMBINED and now.time() >= READS_ALONE_AT and reads_today(now)[0]):
+            return 'WAITING', {}
+        made, kind = _decision(root, None, now), 'reads_only'
+    elif COMBINED:
+        made = _decision(root, council, now, why=(
+            None if council.get('status') in SAT else
+            'The council did not sit today (%s); the 09:46 report decides the Top 2 by the counted rule.'
+            % str(council.get('reason') or council.get('status'))[:120]))
+        kind = 'council' if council.get('status') in SAT else 'reads_only'
+    else:
+        made = compose(council, now)
     if made is None:
         return 'NOTHING', {'reason': 'the council did not sit (%s); the report\'s counted rule '
                            'decides the Top 2' % (council.get('reason') or council.get('status'))}
@@ -190,7 +525,7 @@ def prepare(state_dir, now=None):
     for name, content in (('subject.txt', subj), ('report.txt', text), ('report.html', html)):
         (out/name).write_text(content, encoding='utf-8')
     write_atomic(out/'plan.json', {'session': now.date().isoformat(), 'subject': subj,
-                                   'council_status': council.get('status'),
+                                   'council_status': council.get('status'), 'kind': kind,
                                    'prepared_at': now.isoformat()})
     return 'READY', {'subject_path': str(out/'subject.txt'), 'text_path': str(out/'report.txt'),
                      'html_path': str(out/'report.html'), 'subject': subj}
@@ -333,7 +668,199 @@ def check_open(council, now, *, quote=None, atr=None):
                                       if _pct(q['price'], q.get('previousClose')) is not None else None),
                      'atr_pct': a, 'reach': reach(p['side'], p.get('invalid_at'), q['price'], a),
                      'etf': x['etf'], 'etf_move': etf_move})
+        moved = rows[-1]['now_for_pick']          # day-150: the verdict's two facts
+        rows[-1]['now_days'] = moved / a if moved is not None and a else None
+        rows[-1]['vs_sector'] = (moved - sign * etf_move if moved is not None and etf_move is not None
+                                 and x['etf'] else None)
     return rows
+
+
+# ── day-150: KEEP / DROP / CAUTION at 09:31 ──────────────────────────────────
+# The owner, 2026-11-10: "another at 9:31 because it would look at the data
+# points and technicals at market open to adjust if needed in case it already
+# spiked or tanked". Fixed rules on the live quote, registered before the
+# first use; not a forecast, and nothing is voided (day-144).
+MOVED_ATR = 1.0
+OPEN_LEDGER = Path(__file__).resolve().parent/'data'/'reviews'/'open_checks.csv'
+OPEN_FIELDS = ('session', 'ticker', 'side', 'decision', 'why', 'e1', 'price', 'at', 'prev_close', 'open',
+               'open_for_pick', 'now_for_pick', 'open_days', 'now_days', 'atr_pct', 'invalid_at',
+               'etf', 'etf_move', 'vs_sector', 'checked_at')
+
+
+def open_decision(r):
+    """('KEEP' | 'DROP' | 'CAUTION', why) for one checked pick, in the
+    registered order: no live quote; past its own \"wrong if\"; already one
+    normal day or more from the prior close, either way; otherwise KEEP."""
+    if r.get('price') is None:
+        return 'CAUTION', 'not checked: %s' % (r.get('why') or 'no live quote')
+    if r.get('verdict') == 'VOID':
+        return 'DROP', 'already past its own "wrong if"'
+    d = r.get('now_days')
+    if d is not None and d <= -MOVED_ATR:
+        return 'CAUTION', 'already %s against it' % _days(d)
+    if d is not None and d >= MOVED_ATR:
+        return 'CAUTION', 'already %s its way; an entry now does not get that part' % _days(d)
+    if d is None:
+        return 'KEEP', 'not past its "wrong if"; its normal range is unknown'
+    return 'KEEP', 'nothing at the open contradicts it'
+
+
+def reads_at_open(reads, now, *, quote, atr=None):
+    """Where the Toronto listing of each release read opened, signed to the read."""
+    rows = []
+    for r in (reads or [])[:MAX_READS]:
+        sign = 1 if r['side'] == 'LONG' else -1
+        try:
+            q = quote(r['ticker'])
+        except Exception:
+            q = None
+        at = _live(q, now)
+        row = {'ticker': r['ticker'], 'side': r['side'], 'us': r.get('us'), 'title': r.get('title')}
+        if at is not None:
+            gap, moved = _pct(q.get('open'), q.get('previousClose')), _pct(q['price'], q.get('previousClose'))
+            a = (atr or {}).get(r['ticker'])
+            row.update(price=q['price'], at=at.strftime('%H:%M'),
+                       open_for_read=sign * gap if gap is not None else None,
+                       now_for_read=sign * moved if moved is not None else None,
+                       now_days=sign * moved / a if moved is not None and a else None)
+        rows.append(row)
+    return rows
+
+
+def read_words(x):
+    """What the open says about a release read. No verdict: its window ended at the open."""
+    if x.get('price') is None:
+        return 'not checked: no live quote'
+    d, m = x.get('now_days'), x.get('now_for_read')
+    if d is not None and d >= MOVED_ATR:
+        return 'moved its way by %s: the news is in the price' % _days(d)
+    if d is not None and d <= -MOVED_ATR:
+        return 'moved against the read by %s' % _days(d)
+    if m is None:
+        return 'no prior close to compare'
+    return ('little reaction so far' if abs(m) < 0.5 else
+            'moved its way, less than a normal day' if m > 0 else 'moved against the read, less than a normal day')
+
+
+def record_open_checks(rows, now, path=None):
+    """One row per checked pick in `data/reviews/open_checks.csv`, once a day.
+    Atomic; a row already there for the session and name is never rewritten."""
+    import csv
+    import io
+    import os
+    path = Path(path or OPEN_LEDGER)
+    now = _now(now)
+    session = now.date().isoformat()
+    old = list(csv.DictReader(io.StringIO(path.read_text()))) if path.is_file() else []
+    have = {(r.get('session'), r.get('ticker'), r.get('side')) for r in old}
+    new = []
+    for r in rows:
+        if r.get('runner_up') or (session, r['ticker'], r['side']) in have:
+            continue
+        word, why = open_decision(r)
+        new.append({'session': session, 'ticker': r['ticker'], 'side': r['side'], 'decision': word,
+                    'why': why, 'e1': r.get('verdict'), 'price': r.get('price'), 'at': r.get('at'),
+                    'prev_close': r.get('prev_close'), 'open': r.get('open'),
+                    'open_for_pick': r.get('open_for_pick'), 'now_for_pick': r.get('now_for_pick'),
+                    'open_days': r.get('open_days'), 'now_days': r.get('now_days'),
+                    'atr_pct': r.get('atr_pct'), 'invalid_at': r.get('invalid_at'), 'etf': r.get('etf'),
+                    'etf_move': r.get('etf_move'), 'vs_sector': r.get('vs_sector'),
+                    'checked_at': now.isoformat(timespec='seconds')})
+    if not new:
+        return 0
+    out = io.StringIO()
+    w = csv.DictWriter(out, fieldnames=OPEN_FIELDS, extrasaction='ignore', lineterminator='\n')
+    w.writeheader()
+    for r in old + new:
+        w.writerow({k: ('' if r.get(k) is None else ('%.4f' % r[k]).rstrip('0').rstrip('.')
+                        if isinstance(r.get(k), float) else r[k]) for k in OPEN_FIELDS})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = Path(str(path) + '.tmp')
+    with open(tmp, 'w') as f:
+        f.write(out.getvalue())
+        f.flush()
+        os.fsync(f.fileno())
+    tmp.replace(path)
+    return len(new)
+
+
+def compose_open_decision(council, rows, now, section=None, reads=None):
+    """Day-150: the 09:31 email — one verdict per pick, and where each release
+    read opened. None when there is neither a pick nor a read to check."""
+    import council as K
+    import email_render
+    import top_picks
+    reads = reads or []
+    if not rows and not reads:
+        return None
+    now = _now(now)
+    session = (council or {}).get('session') or now.date().isoformat()
+    for r in rows:
+        r['decision'], r['decision_why'] = open_decision(r)
+    verdicts = ' · '.join('%s%s %s %s' % ('runner-up ' if r.get('runner_up') else '', r['decision'],
+                                           r['side'], r['ticker']) for r in rows)
+    if not rows:
+        verdicts = 'no pick today · %d release read%s at the open' % (len(reads), '' if len(reads) == 1 else 's')
+    elif all(r.get('runner_up') for r in rows):
+        verdicts = 'no council pick · ' + verdicts
+    subj = 'RB Open Check — %s — %s' % (session, verdicts)
+    lines = ['# RB Open Check — %s' % session,
+             'Checked at %s ET against the live quote (FMP last trade). The full report follows at ~09:46.'
+             % now.strftime('%H:%M')]
+    if rows:
+        lines += ['', '## The 09:00 picks at the open',
+                  '| Pick | Verdict | Why | Price now | Open vs prior close, for the pick | Now vs prior close, for the pick | Against its sector fund | Wrong if | Wrong if, from here |',
+                  '|---|---|---|---|---|---|---|---|---|']
+        for r in rows:
+            price = ('%g at %s' % (r['price'], r['at'])) if r.get('price') is not None else '—'
+            now_cell = _fmt(r.get('now_for_pick')) + (
+                ' (%s)' % _days(r['now_days']) if r.get('now_days') is not None else '')
+            sector = ('%s vs %s' % (_fmt(r.get('vs_sector')), r['etf']) if r.get('vs_sector') is not None
+                      else '—')
+            lines.append('| %s %s%s | %s | %s | %s | %s | %s | %s | %s | %s |' % (
+                r['side'], r['ticker'],
+                ' (runner-up, %s)' % K.runner_up_label(r) if r.get('runner_up') else '',
+                r['decision'], r['decision_why'], price, _opened(r), now_cell, sector, _wrong(r),
+                _distance(r) if r.get('price') is not None else '—'))
+        picks = top_picks.with_hedge({'picks': [r for r in rows if not r.get('runner_up')]})
+        for line in (top_picks.direction_line(picks), top_picks.hedge_line(picks)):
+            if line:
+                lines.append(line)
+    else:
+        picks = {}
+        why = K.passed_head(section) if section else None
+        lines += ['', 'No pick stood at 09:00%s, so there is no verdict to give.' % ((': ' + why) if why else '')]
+    if reads:
+        lines += ['', '## The overnight releases at the open (Toronto listing)',
+                  '| Read | Price now | Open vs prior close, for the read | Now vs prior close, for the read | What the open says |',
+                  '|---|---|---|---|---|']
+        for x in reads:
+            price = ('%g at %s' % (x['price'], x['at'])) if x.get('price') is not None else '—'
+            now_cell = _fmt(x.get('now_for_read')) + (
+                ' (%s)' % _days(x['now_days']) if x.get('now_days') is not None else '')
+            lines.append('| %s %s | %s | %s | %s | %s |' % (x['side'], x['ticker'], price,
+                                                          _fmt(x.get('open_for_read')), now_cell, read_words(x)))
+        lines.append('No verdict is given on a release read: its own window ended at the open. Asked the '
+                     'same way on 419 past releases, the read made +0.09% from the open to the close, '
+                     'which is noise.')
+    lines += ['',
+              '## How to read it',
+              'KEEP, DROP and CAUTION are fixed rules on where the price is, not a forecast. DROP: the '
+              'price is already past the pick\'s own "wrong if", so the reason it was chosen is proven '
+              'wrong today. CAUTION: it has already moved one normal day (ATR) or more from the prior '
+              'close, either way, or it could not be checked. KEEP: neither. On this record a move '
+              'already made is a reason in neither direction (day-132).',
+              'A "wrong if" more than one normal day from the price is OUT OF REACH: an ordinary day '
+              'would not touch it, so it does not limit a loss. A positive "for the pick" figure is a '
+              'move the pick\'s way. The 09:46 report keeps every pick the 09:00 email named: the '
+              'verdict is for you to weigh.',
+              'Research only, not an order.']
+    body = '\n'.join(lines)
+    hero = ('<tr><td style="padding:22px 26px;background:#f4f7f9;border-bottom:1px solid #dde4ea">'
+            '<div style="font:600 15px/1.45 Arial,sans-serif;color:#17212b">%s</div>%s</td></tr>'
+            % (email_render.full.escape(verdicts),
+               email_render.direction_html(picks) + email_render.hedge_html(picks)))
+    return subj, body, email_render.html_from_text(body, hero=hero)
 
 
 def _fmt(v):
@@ -445,24 +972,36 @@ def prepare_open(state_dir, now=None, *, quote=None):
     if now.time() >= LATEST:
         return 'TOO_LATE', {'reason': 'the full report is minutes away'}
     council = K.load(root, now)
-    if council.get('status') not in SAT:
+    reads = reads_today(now)[0] if COMBINED else []        # day-150: the release reads are checked too
+    sat = council.get('status') in SAT
+    if not sat and not reads:
         return 'NOTHING', {'reason': 'no council today, so nothing to check'}
-    sec = K.top_two(council)
-    if not sec.get('picks') and not sec.get('runner_up'):
+    sec = K.top_two(council) if sat and council.get('status') != 'NO_POSITIONS' else {}
+    if not sec.get('picks') and not sec.get('runner_up') and not reads:
         return 'NOTHING', {'reason': 'the council chose no position, so nothing to check'}
     if now.time() < OPEN_AT:
         return 'WAITING', {}
     items = (sec.get('picks') or []) + ([sec['runner_up']] if sec.get('runner_up') else [])
-    rows = check_open(council, now, quote=quote or (lambda sym: fmp_quote(sym, root)),
-                      atr=atr_map(root, now, {p['ticker'] for p in items}))
-    subj, text, html = compose_open(council, rows, now, section=sec)
+    quote = quote or (lambda sym: fmp_quote(sym, root))
+    atr = atr_map(root, now, {p['ticker'] for p in items} | {r['ticker'] for r in reads})
+    rows = check_open(council, now, quote=quote, atr=atr) if items else []
+    if COMBINED:
+        subj, text, html = compose_open_decision(council if sat else None, rows, now, section=sec,
+                                                 reads=reads_at_open(reads, now, quote=quote, atr=atr))
+        try:                                  # the record never costs the email
+            record_open_checks(rows, now)
+        except Exception:
+            pass
+    else:
+        subj, text, html = compose_open(council, rows, now, section=sec)
     out = root/OUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     for name, content in (('open_subject.txt', subj), ('open_report.txt', text), ('open_report.html', html)):
         (out/name).write_text(content, encoding='utf-8')
     write_atomic(out/'open_plan.json', {'session': now.date().isoformat(), 'subject': subj,
                                         'rows': [{k: r.get(k) for k in ('ticker', 'side', 'verdict', 'price',
-                                                                        'at', 'atr_pct', 'reach', 'open_days')}
+                                                                        'at', 'atr_pct', 'reach', 'open_days',
+                                                                        'decision', 'decision_why', 'now_days')}
                                                  for r in rows], 'prepared_at': now.isoformat()})
     return 'READY', {'subject_path': str(out/'open_subject.txt'), 'text_path': str(out/'open_report.txt'),
                      'html_path': str(out/'open_report.html'), 'subject': subj}

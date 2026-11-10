@@ -98,6 +98,24 @@ def _pre_day150_rules(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _no_preopen_ledger(tmp_path_factory, monkeypatch):
+    """Day-150: the 09:00 email shows today's pre-open desk calls from
+    `data/us_preopen_calls.csv`. A test must not see the real ledger: a call
+    recorded tomorrow would change today's fixture. Tests that need calls
+    write their own ledger and point `us_preopen.LEDGER` at it."""
+    import us_preopen
+    monkeypatch.setattr(us_preopen, 'LEDGER', tmp_path_factory.mktemp('preopen')/'calls.csv')
+
+
+@pytest.fixture(autouse=True)
+def _no_open_check_ledger(tmp_path_factory, monkeypatch):
+    """Day-150: the 09:31 check records its verdicts in
+    `data/reviews/open_checks.csv`. A test must never write the real record."""
+    import council_flash
+    monkeypatch.setattr(council_flash, 'OPEN_LEDGER', tmp_path_factory.mktemp('open')/'open_checks.csv')
+
+
+@pytest.fixture(autouse=True)
 def _empty_press_archive(tmp_path_factory, monkeypatch):
     """Day-150: the press archive (`data/newswire/press/`) grows every
     morning, like the wire archive. A test must not see the real one."""

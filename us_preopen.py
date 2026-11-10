@@ -29,8 +29,9 @@ A FORWARD SHADOW: never sized, never in the Top 2, never on the desks'
 scoreboard, never fed to a prompt. A failure is a code, never the URL.
 
     python us_preopen.py --build-twins                   refresh data/us_twins.json (FMP, about a minute)
-    python us_preopen.py --state-dir .rb-state --build   0 READY, 3 NOTHING/TOO_LATE, 4 ALREADY_SENT, 1 FAILED
-    python us_preopen.py --state-dir .rb-state --record --message-id ID
+    python us_preopen.py --state-dir .rb-state --build   0 RECORDED, 3 NOTHING/TOO_LATE, 1 FAILED
+                                                         (day-150: no email of its own; with EMAIL on,
+                                                         0 READY, 4 ALREADY_SENT and --record --message-id ID)
     python us_preopen.py --score                         evening: fills the blanks, never rewrites a cell
     python us_preopen.py --verdict                       the registered decision (NOT_DUE before 40 sessions)
 """
@@ -68,7 +69,7 @@ PROMPT_VERSION = 'day122-v1+day149-us-preopen'
 SUBJECT = 'RB Pre-Open Desk'
 # Day-150 (owner, 2026-11-10): the desk's calls are shown in the 09:00 email
 # (`council_flash`), so it sends none of its own. True restores its own email.
-EMAIL = True
+EMAIL = False
 LABEL = 'Pre-open research note · not an order'
 DECISION, FINAL = 40, 80             # sessions with a material, priced call
 BAR, PLACEBO_P, DRAWS, SEED = 3.0, 0.01, 2000, 149
@@ -556,6 +557,10 @@ def build(state_dir, now=None, *, read=None, client=None, twins=None, archive=No
         return 'FAILED', {'reason': 'no call answered: ' + (', '.join(sorted(problems)) or 'NO_CALLS')}
     rows = [r for r in rows if not notice(r.get('title'))]     # amendment 1: recorded, never shown
     rows.sort(key=lambda r: (-r['confidence'], r['ticker']))
+    if not EMAIL:                                       # amendment 2 (day-150): no email of its own
+        return 'RECORDED', {'calls': len(rows), 'material': sum(1 for r in rows if r['material']),
+                            'recorded': len(added), 'dropped': dropped, 'press_archived': press,
+                            'shown_in': 'the 09:00 email (council_flash)'}
     if not any(r['material'] for r in rows):            # recorded above; nothing worth an email
         return 'NOTHING', {'reason': 'no release the model marked as material', 'calls': len(rows),
                            'recorded': len(added), 'dropped': dropped}
@@ -753,7 +758,7 @@ def main(argv=None):
         print(json.dumps({'status': 'FAILED', 'reason': type(exc).__name__}))
         return 1
     print(json.dumps({'status': status, **info}))
-    return {'READY': 0, 'NOTHING': 3, 'TOO_LATE': 3, 'ALREADY_SENT': 4}.get(status, 1)
+    return {'READY': 0, 'RECORDED': 0, 'NOTHING': 3, 'TOO_LATE': 3, 'ALREADY_SENT': 4}.get(status, 1)
 
 
 if __name__ == '__main__':

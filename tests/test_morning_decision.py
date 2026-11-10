@@ -283,7 +283,7 @@ def test_the_pre_open_desk_keeps_what_it_read_for_the_desks(tmp_path):
                                press('Equinox Gold Corp Sued for Securities Law Violations - Contact the '
                                      'DJS Law Group', dt.datetime(2026, 11, 10, 6, 0), '', 'https://x.test/n')]})
     (status, info), _ = build(tmp_path, feed=feed, client=Client(), press_root=tmp_path/'press')
-    assert status == 'READY'
+    assert status == 'RECORDED' and info['press_archived'] == 1
     rows = PF.read(tmp_path/'press')
     assert [(r['title'], r['tickers'], r['url']) for r in rows] == [
         ('Equinox Gold Reports Q3 Results', ['EQX.TO'], 'https://www.globenewswire.com/eqx-q3')]
@@ -292,3 +292,315 @@ def test_the_pre_open_desk_keeps_what_it_read_for_the_desks(tmp_path):
     assert status == 'NOTHING' and PF.read(tmp_path/'none') == []
     assert U._archive_press({'X.TO': [{'source': PF.SOURCE, 'url': 'https://a.test/1', 'title': 't'}]},
                             tmp_path/'bad') == 'KeyError'                  # a fault is named, never raised
+
+
+# ── 3. the pre-open desk sends no email of its own ──────────────────────────
+
+def test_the_pre_open_desk_records_and_sends_nothing(tmp_path):
+    import us_preopen as U
+    from tests.test_us_preopen import Client, build
+    assert U.EMAIL is False
+    (status, info), ledger = build(tmp_path, client=Client(), press_root=tmp_path/'press')
+    assert status == 'RECORDED' and info['recorded'] == 1 and info['material'] == 1
+    assert 'the 09:00 email' in info['shown_in']
+    assert not (tmp_path/'state'/'us_preopen'/'subject.txt').exists()          # nothing to send
+    assert [r['ticker'] for r in U.read_ledger(ledger)] == ['EQX.TO']
+    # a second read (the morning job's, about 08:52) asks nothing twice and is never "already sent"
+    again = Client()
+    (status, info), _ = build(tmp_path, client=again, press_root=tmp_path/'press')
+    assert status == 'RECORDED' and info['recorded'] == 0 and again.seen == []
+
+
+def test_a_second_read_adds_only_the_names_with_a_release_since(tmp_path):
+    import us_preopen as U
+    from tests.test_us_preopen import NOW, Client, build, live, ms, press
+    build(tmp_path, client=Client(), press_root=tmp_path/'press')
+    later = NOW + dt.timedelta(minutes=37)                                      # 08:52
+    td = press('TD Bank Group to Acquire a US Wealth Manager', dt.datetime(2026, 11, 10, 8, 30), 'A deal.',
+               'https://www.prnewswire.com/td-1')
+    eqx = press('Equinox Gold Reports Q3 Results', dt.datetime(2026, 11, 9, 17, 30), 'Record revenue.')
+    feed = live(press={'EQX': [eqx], 'TD': [td]},
+                quotes={'TD': {'bidPrice': 90.0, 'askPrice': 90.1, 'timestamp': ms(later - dt.timedelta(minutes=1))},
+                        'SPY': {'bidPrice': 751.0, 'askPrice': 751.1,
+                                'timestamp': ms(later - dt.timedelta(minutes=1))}},
+                closes={'TD': [{'date': '2026-11-09', 'close': 89.0}], 'SPY': [{'date': '2026-11-09', 'close': 752.69}],
+                        'EQX': [{'date': '2026-11-09', 'close': 12.09}]})
+    second = Client(side='SHORT')
+    (status, info), ledger = build(tmp_path, feed=feed, client=second, now=later, press_root=tmp_path/'press')
+    assert status == 'RECORDED' and info['recorded'] == 1
+    assert [i['ticker'] for i in second.seen[0]] == ['TD.TO']                    # EQX's first answer stands
+    rows = {r['ticker']: r for r in U.read_ledger(ledger)}
+    assert rows['EQX.TO']['side'] == 'LONG' and rows['EQX.TO']['asked_at'].startswith('2026-11-10T08:15')
+    assert rows['TD.TO']['side'] == 'SHORT' and rows['TD.TO']['asked_at'].startswith('2026-11-10T08:52')
+    assert float(rows['TD.TO']['us_px']) == pytest.approx(90.05)                 # its own price, at its own read
+
+
+# ── 4. the one 09:00 email ───────────────────────────────────────────────────
+
+import council_flash as F                                                # noqa: E402
+
+AT = dt.datetime(2026, 11, 10, 8, 59, tzinfo=ET)
+TWINS = {'SU.TO': {'us': 'SU'}, 'ARIS.TO': {'us': 'ARIS'}, 'GFL.TO': {'us': 'GFL'}}
+
+
+def read(ticker, side, conf=0.6, us=None, material=True, title=None, at='2026-11-10T07:00:00-05:00', **kw):
+    return {'session': '2026-11-10', 'ticker': ticker, 'us': us or ticker.split('.')[0], 'side': side,
+            'confidence': conf, 'material': material, 'reason': 'the release says so',
+            'title': title or ticker + ' announces something', 'first_at': at, 'last_at': at,
+            'us_px': 16.14, 'us_px_at': '2026-11-10T08:18:00-05:00', 'us_prev_close': 16.64, **kw}
+
+
+READS = [read('ARIS.TO', 'LONG', title='Aris Mining Increases Segovia Gold Reserves by 28%'),
+         read('GFL.TO', 'SHORT', 0.6, title='GFL Environmental Concludes Review of Unsolicited Inbound Proposals')]
+PRICES = {'SU': {'px': 66.34, 'at': '2026-11-10T08:59:00-05:00', 'prev_close': 67.42},
+          'GFL': {'px': 39.75, 'at': '2026-11-10T08:58:00-05:00', 'prev_close': 45.90}}
+
+
+def day(claude=None, session='2026-11-10'):
+    s = led_snap(claude or noms(long_conf=0.40, short_conf=0.38))
+    s.update(session=session, finished_at=session + 'T08:59:20-05:00')
+    return s
+
+
+def test_the_production_switch_and_the_subject_that_never_blocks_the_report():
+    assert F.COMBINED is True and F.DECISION_SUBJECT == 'RB Morning Decision'
+    subj, text, html = F.compose_decision(day(), AT, reads=READS, prices=PRICES, twins=TWINS)
+    assert subj == ('RB Morning Decision — 2026-11-10 — SHORT SU.TO (Claude 0.38; council 3 of 3 endorse) '
+                    '· no long · 2 overnight release reads')
+    assert 'RB Daily Report' not in subj
+    assert html.startswith('<!doctype html>') and '<style' not in html
+
+
+def test_the_decision_is_on_top_and_one_table_holds_the_picks_and_the_releases():
+    subj, text, html = F.compose_decision(day(), AT, reads=READS, routine=[read('MDA.TO', 'LONG', material=False)],
+                                          prices=PRICES, twins=TWINS, record='Record so far: none.')
+    lines = text.splitlines()
+    top = lines.index("## Today's decision")
+    assert lines[top + 1] == '- SHORT SU.TO stands: Claude 0.38; council 3 of 3 endorse. Wrong if: above 52.'
+    assert lines[top + 2].startswith("- No long today: Claude's LONG CNQ.TO was below the quality floor "
+                                     '(its own 0.40; council 1 of 3 endorse')
+    assert lines[top + 3] == ('- Overnight releases with a call (a separate read; its entry is the New York '
+                              'listing before the bell): LONG ARIS.TO · SHORT GFL.TO.')
+    assert top < lines.index('## The picks and the overnight releases')
+    rows = [x for x in lines if x.startswith('| ') and not x.startswith('| What')]
+    assert [x.split(' | ')[0:2] for x in rows] == [
+        ['| PICK', 'SHORT SU.TO'], ['| No pick: below the floor', 'LONG CNQ.TO'],
+        ['| Release read', 'LONG ARIS.TO (read 0.60)'], ['| Release read', 'SHORT GFL.TO (read 0.60)']]
+    assert text.count('| What | Name |') == 1                                    # one table
+    # the New York price is the one read just before the email, else the one at the read, labelled
+    assert '| SU 66.34 at 08:59, -1.6% since the US close |' in rows[0]
+    assert '| ARIS 16.14 at 08:18 (at the read), -3.0% since the US close |' in rows[2]
+    assert '| GFL 39.75 at 08:58, -13.4% since the US close |' in rows[3]
+    assert '| not on its table |' in rows[2]
+    # what the flash carried is under it: the votes of the pick and of the dropped pick, the council's own
+    assert any(x.startswith('Council on SHORT SU.TO: ') for x in lines)
+    assert any(x.startswith('Council on LONG CNQ.TO: ') for x in lines)
+    assert any(x.startswith("The council's own choice, recorded beside and not a pick: ") for x in lines)
+    assert any(x.startswith('Below the quality floor, so not a pick') for x in lines)
+    assert 'Routine releases, no call: MDA.TO (MDA.TO announces something).' in lines
+    assert 'Record so far: none.' in lines and 'no record yet' in text
+    assert 'every source on the record is still a coin flip' in lines[-1]
+
+
+def test_a_release_on_a_picks_own_name_sits_in_its_row_and_the_council_vote_is_shown():
+    claude = noms(long_conf=0.55, short_conf=0.52)
+    reads = [read('SU.TO', 'SHORT', 0.7, us='SU', title='Suncor Energy Reports Third Quarter Results'),
+             read('CNQ.TO', 'SHORT', 0.6, us='CNQ'), read('AC.TO', 'LONG', 0.55, us='AC')]
+    subj, text, _ = F.compose_decision(day(claude), AT, reads=reads, prices={}, twins=TWINS)
+    rows = [x for x in text.splitlines() if x.startswith('| ') and not x.startswith('| What')]
+    assert [x.split(' | ')[0:2] for x in rows] == [
+        ['| PICK', 'LONG CNQ.TO'], ['| PICK', 'SHORT SU.TO'],
+        ['| Release read', 'SHORT CNQ.TO (read 0.60)'], ['| Release read', 'LONG AC.TO (read 0.55)']]
+    assert 'Suncor Energy Reports Third Quarter Results (read: SHORT 0.70)' in rows[1]
+    assert 'CNQ.TO announces something (read: SHORT 0.60)' in rows[0]              # the read disagrees: both shown
+    # AC.TO long was on the council's table (2 of 3 endorse) and is Claude's second long (0.50)
+    assert rows[3].split(' | ')[2:4] == ['0.50', '2 of 3 endorse, 1 object']
+    assert subj.endswith('· 3 overnight release reads')
+
+
+def test_no_release_gives_the_decision_alone_and_no_council_gives_nothing():
+    subj, text, _ = F.compose_decision(day(noms()), AT)
+    assert subj == ('RB Morning Decision — 2026-11-10 — LONG CNQ.TO (Claude 0.55; council 1 of 3 endorse, '
+                    '2 object) · SHORT SU.TO (Claude 0.52; council 3 of 3 endorse)')
+    assert 'Release read' not in text and 'How to read the release reads' not in text
+    assert F.compose_decision(None, AT) is None
+    assert F.compose_decision({'status': 'UNAVAILABLE'}, AT) is None
+
+
+def test_the_councils_own_top_two_keeps_its_table_and_the_releases_follow(monkeypatch):
+    monkeypatch.setattr(K, 'CLAUDE_LEADS', False)
+    subj, text, _ = F.compose_decision(day(), AT, reads=READS[:1], prices={}, twins=TWINS)
+    lines = text.splitlines()
+    assert lines[lines.index("## Today's decision") + 1].startswith("- LONG AC.TO stands: the council's pick")
+    assert "## Top 2 — the council's decision" in lines and '## Overnight releases with a call' in lines
+    assert any(x.startswith('| Release read | LONG ARIS.TO (read 0.60) |') for x in lines)
+
+
+def write_state(tmp_path, snap=None, reads=(), monkeypatch=None):
+    import us_preopen as U
+    if snap is not None:
+        (tmp_path/'council.json').write_text(json.dumps(snap))
+    ledger = tmp_path/'calls.csv'
+    U.write_ledger(list(reads), ledger)
+    monkeypatch.setattr(U, 'LEDGER', ledger)
+    monkeypatch.setattr(F, 'new_york_prices', lambda symbols, now, read=None: {})
+    return ledger
+
+
+def test_the_wait_sends_the_combined_email_from_the_ledger(tmp_path, monkeypatch):
+    notice = read('K.TO', 'SHORT', title='Kinross Gold Corporation Sued for Securities Law Violations - '
+                                         'Contact the DJS Law Group')
+    write_state(tmp_path, day(), [*READS, notice, read('MDA.TO', 'LONG', material=False)], monkeypatch)
+    code, info = F.wait(tmp_path, 0, now_fn=lambda: AT)
+    assert code == 0 and info['subject'].startswith('RB Morning Decision — 2026-11-10 — SHORT SU.TO')
+    text = (tmp_path/'flash'/'report.txt').read_text()
+    assert '| Release read | LONG ARIS.TO (read 0.60) |' in text and 'K.TO' not in text      # a notice is never shown
+    assert 'Routine releases, no call: MDA.TO' in text
+    assert json.loads((tmp_path/'flash'/'plan.json').read_text())['kind'] == 'council'
+    F.record(tmp_path, 'id1', now=AT)
+    assert F.wait(tmp_path, 0, now_fn=lambda: AT)[0] == 4                                     # one a day
+
+
+def test_with_no_council_by_0920_the_releases_go_alone_and_say_so(tmp_path, monkeypatch):
+    write_state(tmp_path, None, READS, monkeypatch)
+    assert F.wait(tmp_path, 0, now_fn=lambda: AT)[0] == 2                                     # still waiting at 08:59
+    late = dt.datetime(2026, 11, 10, 9, 20, tzinfo=ET)
+    code, info = F.wait(tmp_path, 0, now_fn=lambda: late)
+    assert code == 0 and info['subject'] == ('RB Morning Decision — 2026-11-10 — no council decision yet · '
+                                             '2 overnight release reads')
+    text = (tmp_path/'flash'/'report.txt').read_text()
+    assert '- The council has not sat yet; its decision comes with the 09:46 report.' in text
+    assert '## Overnight releases with a call' in text and 'Top 2' not in text
+    assert json.loads((tmp_path/'flash'/'plan.json').read_text())['kind'] == 'reads_only'
+    # no council and no release: nothing to send, as before
+    write_state(tmp_path/'x' if (tmp_path/'x').mkdir() is None else tmp_path, None, [], monkeypatch)
+    assert F.wait(tmp_path/'x', 0, now_fn=lambda: late)[0] == 2
+
+
+def test_a_council_that_did_not_sit_still_sends_the_releases(tmp_path, monkeypatch):
+    write_state(tmp_path, {'status': 'UNAVAILABLE', 'session': '2026-11-10', 'reason': 'one member answered'},
+                READS, monkeypatch)
+    code, info = F.wait(tmp_path, 0, now_fn=lambda: AT)
+    assert code == 0 and 'no council decision yet' in info['subject']
+    assert 'The council did not sit today (one member answered)' in (tmp_path/'flash'/'report.txt').read_text()
+    write_state(tmp_path, {'status': 'UNAVAILABLE', 'session': '2026-11-10', 'reason': 'one member answered'},
+                [], monkeypatch)
+    assert F.wait(tmp_path, 0, now_fn=lambda: AT)[1]['status'] == 'NOTHING'
+
+
+def test_the_new_york_prices_are_read_before_the_bell_only_and_one_failure_costs_one_price():
+    asked = []
+
+    def feed(path, **p):
+        asked.append((path, p.get('symbol')))
+        if p.get('symbol') == 'BAD':
+            raise RuntimeError('FMP_HTTP_500')
+        if path == 'historical-price-eod/full':
+            return [{'date': '2026-11-09', 'close': 10.0}]
+        if path == 'aftermarket-quote':
+            return [{'bidPrice': 10.98, 'askPrice': 11.02, 'timestamp': int(AT.timestamp() * 1000) - 60000}]
+        return []
+    got = F.new_york_prices(['GOOD', 'BAD', None, 'GOOD'], AT, read=feed)
+    assert set(got) == {'GOOD'} and got['GOOD']['px'] == 11.0 and got['GOOD']['prev_close'] == 10.0
+    assert F.new_york_prices(['GOOD'], dt.datetime(2026, 11, 10, 9, 30, tzinfo=ET), read=feed) == {}
+    assert F._ny_cell('GOOD', got['GOOD']) == 'GOOD 11.00 at 08:58, +10.0% since the US close'
+    assert F._ny_cell('X', None) == 'X: no fresh pre-market price' and F._ny_cell(None, None) == '—'
+
+
+# ── 5. KEEP / DROP / CAUTION at 09:31 ────────────────────────────────────────
+
+OPEN = dt.datetime(2026, 11, 10, 9, 31, tzinfo=ET)
+
+
+def checked(**kw):
+    return {'ticker': 'SU.TO', 'side': 'SHORT', 'verdict': 'STILL VALID', 'price': 94.0, 'at': '09:31',
+            'now_days': 0.3, **kw}
+
+
+def test_the_verdict_follows_the_registered_order():
+    assert F.MOVED_ATR == 1.0
+    assert F.open_decision({'ticker': 'SU.TO', 'side': 'SHORT', 'verdict': 'NOT CHECKED',
+                            'why': 'no quote stamped today after 09:30'}) == (
+        'CAUTION', 'not checked: no quote stamped today after 09:30')
+    assert F.open_decision(checked(verdict='VOID', now_days=-2.0)) == ('DROP', 'already past its own "wrong if"')
+    assert F.open_decision(checked(now_days=-1.0)) == ('CAUTION', 'already 1.0 normal day against it')
+    assert F.open_decision(checked(now_days=1.4)) == (
+        'CAUTION', 'already 1.4 normal days its way; an entry now does not get that part')
+    assert F.open_decision(checked(now_days=0.99)) == ('KEEP', 'nothing at the open contradicts it')
+    assert F.open_decision(checked(now_days=-0.99))[0] == 'KEEP'
+    # no "wrong if" is not a reason by itself; no normal range leaves only the "wrong if"
+    assert F.open_decision(checked(verdict='NOT CHECKED'))[0] == 'KEEP'
+    assert F.open_decision(checked(now_days=None)) == ('KEEP', 'not past its "wrong if"; its normal range is unknown')
+
+
+def quotes(su=50.0, etf=20.1):
+    def q(symbol):
+        price, prev, open_ = {'SU.TO': (su, 50.5, 50.25), 'ARIS.TO': (22.0, 23.5, 22.6),
+                              'GFL.TO': (60.0, 65.0, 58.0)}.get(symbol, (etf, 20.2, 20.15))
+        return {'price': price, 'open': open_, 'previousClose': prev, 'timestamp': OPEN.timestamp()}
+    return q
+
+
+def test_the_0931_email_gives_each_pick_one_word_and_the_releases_none(tmp_path, monkeypatch):
+    write_state(tmp_path, day(), READS, monkeypatch)
+    monkeypatch.setattr(F, 'atr_map', lambda root, now, tickers: {'SU.TO': 2.0, 'ARIS.TO': 5.0, 'GFL.TO': 3.0})
+    assert F.wait_open(tmp_path, 0, now_fn=lambda: AT, quote=quotes())[0] == 2          # waits for 09:31
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quotes())
+    assert code == 0 and info['subject'] == 'RB Open Check — 2026-11-10 — KEEP SHORT SU.TO'
+    text = (tmp_path/'flash'/'open_report.txt').read_text()
+    # SU fell 0.99% from 50.50 to 50: 0.5 normal days the short's way; its fund fell 0.50%
+    assert ('| SHORT SU.TO | KEEP | nothing at the open contradicts it | 50 at 09:31 | +0.50% (0.2 normal days) '
+            '| +0.99% (0.5 normal days) | +0.50% vs XEG.TO | above 52 '
+            '| 4.0% away = 2.0 normal days: OUT OF REACH, not a usable stop |') in text
+    assert 'CNQ.TO' not in text                                    # a pick below the floor is not checked
+    assert '| LONG ARIS.TO | 22 at 09:31 | -3.83% | -6.38% (1.3 normal days) | moved against the read by 1.3 normal days |' in text
+    assert '| SHORT GFL.TO | 60 at 09:31 | +10.77% | +7.69% (2.6 normal days) | moved its way by 2.6 normal days: the news is in the price |' in text
+    assert 'No verdict is given on a release read' in text and 'not a forecast' in text
+    assert 'The 09:46 report keeps every pick the 09:00 email named' in text
+    # recorded once, the pick only
+    import csv
+    rows = list(csv.DictReader(F.OPEN_LEDGER.open()))
+    assert [(r['session'], r['ticker'], r['side'], r['decision']) for r in rows] == [
+        ('2026-11-10', 'SU.TO', 'SHORT', 'KEEP')]
+    assert rows[0]['now_days'] == '0.495' and rows[0]['e1'] == 'STILL VALID'
+    assert F.record_open_checks([checked(open_days=0.1)], OPEN) == 0                 # never rewritten
+    plan = json.loads((tmp_path/'flash'/'open_plan.json').read_text())
+    assert plan['rows'][0]['decision'] == 'KEEP'
+
+
+def test_a_pick_past_its_wrong_if_is_dropped_and_a_big_move_is_a_caution(tmp_path, monkeypatch):
+    write_state(tmp_path, day(noms(short_conf=0.6)), [], monkeypatch)
+    monkeypatch.setattr(F, 'atr_map', lambda root, now, tickers: {'SU.TO': 2.0, 'CNQ.TO': 2.0})
+    rows = F.check_open(K.load(tmp_path, OPEN), OPEN, quote=quotes(su=51.8), atr={'SU.TO': 2.0})
+    su = next(r for r in rows if r['ticker'] == 'SU.TO')
+    # up 2.6% against a short whose "wrong if" (52) is not crossed: 1.3 normal days against it
+    assert F.open_decision(su) == ('CAUTION', 'already 1.3 normal days against it')
+    past = next(r for r in F.check_open(K.load(tmp_path, OPEN), OPEN, quote=quotes(su=52.4), atr={'SU.TO': 2.0})
+                if r['ticker'] == 'SU.TO')
+    assert past['verdict'] == 'VOID' and F.open_decision(past)[0] == 'DROP'
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quotes(su=49.0))
+    assert code == 0 and 'CAUTION SHORT SU.TO' in info['subject']                            # 1.5 days its way
+    assert 'an entry now does not get that part' in (tmp_path/'flash'/'open_report.txt').read_text()
+
+
+def test_a_day_with_no_pick_still_checks_the_releases_and_a_quiet_day_sends_nothing(tmp_path, monkeypatch):
+    nothing = day(noms(long_conf=0.40, short_conf=0.30, short='TD.TO'))
+    write_state(tmp_path, nothing, READS[:1], monkeypatch)
+    monkeypatch.setattr(F, 'atr_map', lambda root, now, tickers: {})
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quotes())
+    assert code == 0 and info['subject'].endswith('— no pick today · 1 release read at the open')
+    text = (tmp_path/'flash'/'open_report.txt').read_text()
+    assert "No pick stood at 09:00: Claude's picks were below the quality floor, so there is no verdict" in text
+    assert not F.OPEN_LEDGER.exists()
+    write_state(tmp_path, nothing, [], monkeypatch)
+    assert F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quotes())[1]['status'] == 'NOTHING'
+
+
+def test_a_release_read_gets_words_and_never_a_verdict():
+    assert F.read_words({}) == 'not checked: no live quote'
+    assert F.read_words({'price': 1, 'now_days': None, 'now_for_read': 0.2}) == 'little reaction so far'
+    assert F.read_words({'price': 1, 'now_days': 0.4, 'now_for_read': 1.2}) == 'moved its way, less than a normal day'
+    assert F.read_words({'price': 1, 'now_days': -0.4, 'now_for_read': -1.2}) == (
+        'moved against the read, less than a normal day')
+    for words in map(F.read_words, ({'price': 1, 'now_days': 2.0, 'now_for_read': 5.0}, {})):
+        assert not any(w in words for w in ('KEEP', 'DROP', 'CAUTION'))
