@@ -92,9 +92,11 @@ restores day-144/146).
   * A new name keeps its own read time and its own price.
   * After a container reset the 08:12 read fails for want of keys, and this
     read is the first.
-* **The job's own push** (`morning.sh`) adds `data/us_preopen_calls.csv` and
-  `data/newswire/press`, each on its own line: a path git does not know fails
-  its whole `git add`.
+* **The pushes.** The job's own push (`morning.sh`) adds
+  `data/us_preopen_calls.csv`, on its own line: a path git does not know fails
+  its whole `git add`. The press archive rides in the session's
+  `git add data/newswire/` (STEP 9, the 08:12 Routine, the evening push); the
+  unattended job never stages a directory (`tests/test_morning.py`).
 
 **4. The 09:00 email** (`council_flash.COMBINED = True`; False restores both
 emails as they were).

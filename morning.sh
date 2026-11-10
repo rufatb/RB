@@ -248,10 +248,11 @@ fi
 
 git add -- ledger.csv universe_prints.csv positions.csv data/advice.csv 2>/dev/null
 # Day-150: the pre-open desk's second read (morning_full.sh, about 08:52)
-# appends to its own ledger and to the press archive. By exact path, on their
-# own lines: a path git does not know fails its whole `git add`.
+# appends to its own ledger. By exact path and on its own line: a path git
+# does not know fails its whole `git add`. The press archive it also writes
+# rides in the session's own `git add data/newswire/` (STEP 9, and the 08:12
+# Routine); a directory is never staged from this unattended job.
 git add -- data/us_preopen_calls.csv 2>/dev/null
-git add -- data/newswire/press 2>/dev/null
 # Only TODAY'S snapshot, by exact path — never the directory. A directory
 # stage would carry anything that happened to be sitting in it, which is the
 # same "publish edits nobody has read" failure this job stages narrowly to

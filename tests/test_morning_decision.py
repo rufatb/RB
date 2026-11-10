@@ -630,10 +630,14 @@ def test_the_morning_job_reads_a_second_time_beside_the_pool_and_joins_before_th
     assert 'pre-open desk second read failed' in body and 'pre-open desk second read timed out' in body
 
 
-def test_the_jobs_own_push_carries_the_second_reads_files_each_on_its_own_line():
+def test_the_jobs_own_push_carries_the_second_reads_ledger_and_never_a_directory():
     body = _code('morning.sh')
     assert 'git add -- data/us_preopen_calls.csv 2>/dev/null' in body
-    assert 'git add -- data/newswire/press 2>/dev/null' in body
+    # the press archive rides in the session's `git add data/newswire/` (STEP 9 and the 08:12 Routine)
+    assert 'data/newswire' not in body
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+    assert 'data/newswire/' in (root/'ROUTINE_PROMPT.md').read_text().split('STEP 9')[1].split('STEP 10')[0]
     import provenance
     assert 'data/us_preopen_calls.csv' in provenance.RUN_RECORDS
     assert any(r == 'data/newswire/' for r in provenance.RUN_RECORDS)          # covers press/
