@@ -87,11 +87,17 @@ def freeze(staged, now, *, requested=None):
             eligible += 1
             if len(references) >= 2:
                 continue
-            summary = words(headline.get('summary'), 600)
+            retrieved = stamp(headline.get('source_retrieved_at'))
+            if retrieved and retrieved > now:
+                continue
+            summary = words(headline.get('summary'), 4000)
             fact = {'ticker': ticker, 'kind': 'issuer_release' if verified and classification == 'ISSUER_RELEASE' else 'headline',
                     'text': title + ('\n'+summary if summary else ''), 'published_at': when.isoformat(), 'url': link,
                     'issuer_verified': verified, 'classification': classification,
                     'verification': 'feed-classified' if verified else 'unverified'}
+            if retrieved:
+                fact['retrieved_at'] = retrieved.isoformat()
+                fact['excerpt_provider'] = words(headline.get('excerpt_provider'), 100)
             fact['id'] = digest(fact)[:20]
             if fact['id'] not in {f['id'] for f in facts}:
                 facts.append(fact)

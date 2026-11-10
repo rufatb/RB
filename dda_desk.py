@@ -99,6 +99,10 @@ def capture(root, now):
                 existing['summary'] = summary
             else:
                 heads.append(item)
+    from dda_source_text import enrich
+    source_text = enrich(staged, root, now)
+    # A provider response received later cannot be backdated to request start.
+    now = dt.datetime.now(ET)
     # The actual prepared universe may be broader than the legacy roster. An
     # incomplete roster remains explicit rather than shrinking the denominator.
     status = read(root/'factor_pool_status.json') or {}
@@ -109,6 +113,10 @@ def capture(root, now):
         requested = list(factor_pool_policy.TICKERS)
     requested = sorted({t for t in requested if isinstance(t, str) and t.endswith('.TO')} | set(by_ticker))
     snapshot = freeze(staged, now, requested=requested)
+    snapshot['source_text'] = source_text
+    unmatched = sum(r['status'] != 'EXPANDED' for r in source_text['receipts'])
+    if unmatched:
+        snapshot['gaps'].append(f'Longer issuer text not obtained for {unmatched} source checks; archived excerpts retained.')
     snapshot['upstream_coverage'] = {k: status.get(k) for k in ('requested', 'eligible', 'status')}
     snapshot['universe_mode'] = words(declaration.get('mode'), 80)
     snapshot['evidence_digest'] = digest({k: v for k, v in snapshot.items() if k != 'evidence_digest'})
@@ -220,6 +228,7 @@ def stage(root, *, now=None, clock=None, capture_fn=None, askers=None, verify_fn
                        'code': str(exc)[:100] if isinstance(exc, ValueError) and str(exc).startswith('DDA_') else 'PROVIDER_OR_VALIDATION_FAILURE'})
     decision = assemble(snapshot, research, challenge, clock(), route_log, errors=errors)
     decision['verification_context'] = verification
+    decision['source_text'] = snapshot.get('source_text')
     decision['original_council'] = baseline
     decision['comparison_note'] = 'Original council was not yet available at the challenge cutoff.' if baseline is None else 'Original council supplied as a comparison, not a vote weight.'
     decision['source_revision'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()

@@ -16,8 +16,12 @@ No thinking transcript is published. Actual model routes, failure codes and
 clocks are recorded. Truncated/invalid responses cannot become choices.
 
 The primary pass has at most two recent eligible articles per issuer, including
-available summary excerpts. This is not full-document diligence. Claims require
-exact source excerpts; new numerical magnitudes absent from cited texts are
+available summary excerpts. This is not full-document diligence.
+At capture, a separate 15-second FMP budget expands available release text by
+matching existing issuer-classified archive URLs. Each excerpt is capped at
+4,000 characters. Future/unknown-time/unmatched responses cannot add facts;
+retrieval clocks and coverage are recorded. Missing text retains its summary.
+Claims require exact source excerpts; new numerical magnitudes absent from cited texts are
 rejected. The FMP check excludes same-day actuals with unknown disclosure times.
 Current provider history is not a point-in-time backtest. Broker rating consensus
 is not earnings consensus. Missing evidence stays explicit.

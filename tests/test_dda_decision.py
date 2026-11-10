@@ -220,3 +220,45 @@ def test_publisher_refuses_unreviewed_code_ahead_of_remote(tmp_path, monkeypatch
         return subprocess.CompletedProcess(command, 0, 'council.py\n', '')
     assert D.publish(path, runner=run)['reason'] == 'NON_DDA_COMMITS_AHEAD'
     assert not any('push' in c or 'commit' in c for c in commands)
+
+
+def test_longer_fmp_text_reaches_the_blind_screen_with_its_real_retrieval_clock():
+    from dda_source_text import enrich
+    data = staged()
+    longer = 'Operating guidance and contract details. '*20+'Revenue actual 130 versus comparable estimate 100.'
+    def get(path, **params):
+        symbol = params['symbols']
+        return [{'url': 'https://issuer.test/'+symbol, 'title': 'Issuer reports guidance',
+                 'publishedDate': '2026-11-11 07:00:00', 'text': longer}]
+    received = NOW+dt.timedelta(seconds=2)
+    receipt = enrich(data, Path('.'), NOW, get=get, clock=lambda: received, twins={})
+    assert receipt['excerpts_expanded'] == 3
+    snap = P.freeze(data, received)
+    assert all('Revenue actual 130' in f['text'] and f['retrieved_at'] == received.isoformat() for f in snap['facts'])
+    assert not P.freeze(data, NOW)['facts']  # Later text cannot be used at the request start.
+
+
+@pytest.mark.parametrize('bad', ['future', 'unknown_time', 'wrong_url'])
+def test_fmp_text_cannot_replace_an_excerpt_without_a_matching_dated_source(bad):
+    from dda_source_text import enrich
+    data = staged()
+    original = copy.deepcopy(data)
+    def get(path, **params):
+        return [{'url': 'https://unrelated.test/release' if bad == 'wrong_url' else 'https://issuer.test/'+params['symbols'],
+                 'title': 'Issuer release', 'text': 'untrusted future data '*100,
+                 'publishedDate': '2026-11-11 10:00:00' if bad == 'future' else '' if bad == 'unknown_time' else '2026-11-11 07:00:00'}]
+    receipt = enrich(data, Path('.'), NOW, get=get, clock=lambda: NOW, twins={})
+    assert receipt['excerpts_expanded'] == 0 and data == original
+
+
+def test_fmp_source_budget_and_failure_keep_the_original_summary_without_key_leaks():
+    from dda_source_text import enrich
+    data = staged()
+    original = copy.deepcopy(data)
+    def get(*a, **kw):
+        raise ValueError('apikey=private-key-in-url')
+    receipt = enrich(data, Path('.'), NOW, get=get, clock=lambda: NOW, twins={})
+    assert data == original and 'private-key' not in json.dumps(receipt)
+    receipt = enrich(data, Path('.'), NOW, get=lambda *a, **k: pytest.fail('Budget already spent'),
+                     clock=lambda: NOW, twins={}, seconds=0)
+    assert receipt['excerpts_expanded'] == 0
