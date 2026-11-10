@@ -86,3 +86,17 @@ Model performance comparisons must separate nomination/selection, rule versions
 and trading windows, and compare common sessions where possible. Existing
 09:45-to-close bar proxies are gross research returns, not market-open fills or
 realized profits. The new DDA policy has no forward results at deployment.
+
+## Input completeness amendment — 2026-11-10, before any DDA forward results
+
+Archive summaries are only opening excerpts. Before the blind screen, use a
+separate 15-second read-only FMP budget to retrieve press text for the already
+issuer-classified, recent, URL-linked releases in the staged universe. Match
+the exact archived source URL, recheck disclosure times, and retain at most
+4,000 characters per release and two releases per issuer. Use existing verified
+US twin mappings only to find the feed; never treat a US pre-market call as an
+intraday signal. Apply no outcome-based issuer priority or price filter.
+The evidence cutoff is the completed capture, not the request start. Record
+retrieval clocks, supplied excerpt counts and failures; an unmatched, future,
+unknown-time or unavailable response cannot invent a source. The screen can
+still abstain. The original desk/council inputs and email streams stay unchanged.
