@@ -290,7 +290,8 @@ def _model_picks(rows):
     """The lab's "model picks" population: one row per name and side, without
     the engine, the shadows and the forced nominations."""
     return _unique([r for r in rows if r['model'] not in ('engine', 'top2count', 'top2memory', 'top2mover',
-                                                          'top2wild', 'top2council', 'top2run')
+                                                          'top2wild', 'top2council', 'top2run',
+                                                          'top2floor')
                     and r['kind'] != 'nominated'])
 
 

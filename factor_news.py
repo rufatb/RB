@@ -56,11 +56,30 @@ def wire_release(title, source_url, ticker=None, archive=None):
     return row
 
 
-def classify_headline(title, source_url, ticker=None, archive=None):
+def press_release(title, source_url, ticker=None, archive=None):
+    """The archived press-feed row this headline IS, or None (day-150).
+
+    Recomputed from `data/newswire/press/` (written by the pre-open desk from
+    FMP's press feed, each row already tested as the issuer's own release and
+    not a third party's notice): the URL must be an archived row AND the title
+    must be that row's title."""
+    try:
+        import press_feed
+        row = press_feed.index(archive).get(canonical_url(source_url))
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    if not row or normalized_title(row.get('title') or '') != normalized_title(title):
+        return None
+    return row
+
+
+def classify_headline(title, source_url, ticker=None, archive=None, press=None):
     """Labels are derived from explicit title words, never claimed as facts —
     except an ISSUER_RELEASE, which is derived from the wire archive (day-118):
     its disclosure time is the wire's own, and the issuer is VERIFIED only when
-    the release's lead names `ticker`."""
+    the release's lead names `ticker`. Day-150: a release the press archive
+    holds is one too, with the feed's time; the issuer is VERIFIED when the
+    row was filed for `ticker` (its title opens with that company's name)."""
     wire = wire_release(title, source_url, ticker, archive)
     if wire:
         return {
@@ -71,6 +90,18 @@ def classify_headline(title, source_url, ticker=None, archive=None):
             'impact_horizon': 'MULTI_YEAR_TITLE' if _MULTI_YEAR.search(title) else 'UNSPECIFIED',
             'primary_source_verified': True,
             'classification_basis': 'archived newswire.ca release; symbol named in its lead',
+            'canonical_url': canonical_url(source_url),
+        }
+    row = press_release(title, source_url, ticker, press)
+    if row:
+        return {
+            'classification': 'ISSUER_RELEASE',
+            'issuer_role': 'VERIFIED' if ticker and ticker in (row.get('tickers') or []) else 'UNVERIFIED',
+            'novelty': 'UNVERIFIED',
+            'first_disclosed_at': row['published_at'], 'updated_at': None,
+            'impact_horizon': 'MULTI_YEAR_TITLE' if _MULTI_YEAR.search(title) else 'UNSPECIFIED',
+            'primary_source_verified': False,
+            'classification_basis': "archived FMP press-feed release; its title opens with the company's name",
             'canonical_url': canonical_url(source_url),
         }
     commentary = bool(_COMMENTARY.search(title))
@@ -91,7 +122,7 @@ def _rank(row):
     return 0 if c == 'ISSUER_RELEASE' else 2 if c == 'COMMENTARY' else 1
 
 
-def prepare_headlines(items, maximum, ticker=None, archive=None):
+def prepare_headlines(items, maximum, ticker=None, archive=None, press=None):
     """Deduplicate validated rows before capping; expose every removed row.
 
     Retain provider order within the unclassified/commentary groups. An
@@ -100,7 +131,7 @@ def prepare_headlines(items, maximum, ticker=None, archive=None):
     """
     unique, urls, titles, reasons = [], set(), set(), {}
     for item in items:
-        metadata = classify_headline(item['title'], item['source_url'], ticker, archive)
+        metadata = classify_headline(item['title'], item['source_url'], ticker, archive, press)
         url, title = metadata['canonical_url'], normalized_title(item['title'])
         duplicate = ('DUPLICATE_CANONICAL_URL' if url in urls else
                      'DUPLICATE_NORMALIZED_TITLE' if title in titles else None)

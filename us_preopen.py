@@ -66,6 +66,9 @@ MAX_RELEASES = 3
 SUMMARY_CHARS = 600
 PROMPT_VERSION = 'day122-v1+day149-us-preopen'
 SUBJECT = 'RB Pre-Open Desk'
+# Day-150 (owner, 2026-11-10): the desk's calls are shown in the 09:00 email
+# (`council_flash`), so it sends none of its own. True restores its own email.
+EMAIL = True
 LABEL = 'Pre-open research note · not an order'
 DECISION, FINAL = 40, 80             # sessions with a material, priced call
 BAR, PLACEBO_P, DRAWS, SEED = 3.0, 0.01, 2000, 149
@@ -471,8 +474,19 @@ def sent_today(root, now):
     return isinstance(obj, dict) and obj.get('session') == now.date().isoformat()
 
 
+def _archive_press(found, root=None):
+    """Day-150: keep the feed's releases where the desks' headlines are read
+    from (`press_feed`). Returns the rows written, or the failure's name: the
+    archive is a second use of the read and never costs the desk its calls."""
+    try:
+        import press_feed
+        return press_feed.append(press_feed.rows_from(found), root)
+    except Exception as exc:
+        return type(exc).__name__
+
+
 def build(state_dir, now=None, *, read=None, client=None, twins=None, archive=None, path=LEDGER,
-          is_trading=None, clock=None):
+          is_trading=None, clock=None, press_root=None):
     """(status, info). Every answered call is appended to the ledger; READY
     also writes the email's three files, and needs at least one release the
     model marked as material. A call answered at or after 09:30 is not
@@ -493,6 +507,7 @@ def build(state_dir, now=None, *, read=None, client=None, twins=None, archive=No
         return 'FAILED', {'reason': 'NO_US_LISTINGS_MAP'}
     read = read or _reader()
     found, dropped = releases(read, twins, prior_close(now, is_trading), now, archive)
+    press = _archive_press(found, press_root)      # day-150: the desks' headlines read it
     if not found:
         fails = dict(getattr(read, 'failures', None) or {})
         if fails and sum(fails.values()) >= len(twins):

@@ -42,7 +42,7 @@ def _pre_day144_rules(request, monkeypatch):
     council's own Top 2 under all three, so every test runs on those rules
     unless it is marked `day144`, which runs on the production values
     (tests/test_claude_leads.py)."""
-    if request.node.get_closest_marker('day144') or request.node.get_closest_marker('day146'):
+    if any(request.node.get_closest_marker(m) for m in ('day144', 'day146', 'day150')):
         return
     import council
     import entry_checks
@@ -58,7 +58,7 @@ def _pre_day146_rules(request, monkeypatch):
     three-day run (`council.SKIP_RUNS`). The suite was written before it, so
     every test runs with it off unless it is marked `day146`, which runs on the
     production values (tests/test_runs_rule.py)."""
-    if request.node.get_closest_marker('day146'):
+    if request.node.get_closest_marker('day146') or request.node.get_closest_marker('day150'):
         return
     import council
     monkeypatch.setattr(council, 'SKIP_RUNS', False)
@@ -76,6 +76,34 @@ def _pre_day148_hedge(request, monkeypatch):
         return
     import top_picks
     monkeypatch.setattr(top_picks, 'HEDGE', False)
+
+
+@pytest.fixture(autouse=True)
+def _pre_day150_rules(request, monkeypatch):
+    """Day-150 (owner, 2026-11-10) changed three switches for the morning of
+    2026-11-11: a quality floor on Claude's Top 2 (`council.FLOOR`), one
+    combined 09:00 email with KEEP / DROP / CAUTION at 09:31
+    (`council_flash.COMBINED`), and no email of the pre-open desk's own
+    (`us_preopen.EMAIL`). The suite was written before them, so every test
+    runs with them as they were unless it is marked `day150`, which runs on
+    the production values (tests/test_morning_decision.py)."""
+    if request.node.get_closest_marker('day150'):
+        return
+    import council
+    import council_flash
+    import us_preopen
+    monkeypatch.setattr(council, 'FLOOR', False)
+    monkeypatch.setattr(council_flash, 'COMBINED', False)
+    monkeypatch.setattr(us_preopen, 'EMAIL', True)
+
+
+@pytest.fixture(autouse=True)
+def _empty_press_archive(tmp_path_factory, monkeypatch):
+    """Day-150: the press archive (`data/newswire/press/`) grows every
+    morning, like the wire archive. A test must not see the real one."""
+    import press_feed
+    monkeypatch.setattr(press_feed, 'ARCHIVE', tmp_path_factory.mktemp('press'))
+    press_feed._INDEX.clear()
 
 
 @pytest.fixture()

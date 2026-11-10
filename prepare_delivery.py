@@ -84,6 +84,9 @@ def subject_state(report):
         return '%s ONLY — %d position%s, no sized desk leg — ' % (
             who, council_picks, '' if council_picks == 1 else 's')
     top = intraday.get('top_two') or {}
+    if not legs and intraday.get('desks') and top.get('passed_floor'):
+        # Day-150: Claude did name picks; the owner's quality floor dropped them.
+        return "⛔ NO PICK — Claude's picks were below the quality floor — "
     if not legs and intraday.get('desks') and (top.get('passed_movers') or top.get('passed_wild')
                                                or top.get('passed_run')):
         # Day-135c, the switch on: the models did pick; the big-mover rule took

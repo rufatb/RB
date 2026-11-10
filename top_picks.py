@@ -426,9 +426,12 @@ def _claude_table(section, concise):
            "Claude's first-named long and short from this morning's nominations (the owner's "
            "decision of 2026-10-30)" + (
                ", or its next one where the first followed a three-day run (the owner's rule of "
-               "2026-11-04)" if str(section.get('rule_version') or '').endswith('+day146-runs') else '')
+               "2026-11-04)" if '+day146-runs' in str(section.get('rule_version') or '') else '')
            + ". The other models voted on them in the council; their vote is shown and cannot "
-           "replace a pick."]
+           "replace a pick."
+           + (" A pick stands only when Claude rates it 0.50 or higher or at least two council "
+              "members endorse it (the owner's quality floor of 2026-11-10)."
+              if '+day150-floor' in str(section.get('rule_version') or '') else '')]
     if not concise:
         out.append("Neither Claude's record nor the council's is distinguishable from a coin flip "
                    "yet; the council's own choice is recorded beside these picks so the two can be "
@@ -576,6 +579,9 @@ def _notes(section):
                    + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], council.wild_words(x))
                                 for x in section['passed_wild'])
                    + '. Recorded as a shadow, never sized.')
+    if section.get('passed_floor'):              # day-150, the owner's quality floor
+        import council
+        out.append(council.floor_line(section))
     if section.get('passed_run'):                # day-146, the owner's three-day-run rule
         import council
         out.append(council.run_line(section))

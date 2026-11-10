@@ -614,14 +614,18 @@ def _top_two_section(intra):
                 'beaten random picks on the replay.</p>')
     led = bool(sec.get('claude_leads'))
     if led:                                           # day-144: Claude leads the Top 2
-        runs = str(sec.get('rule_version') or '').endswith('+day146-runs')    # day-146
+        runs = '+day146-runs' in str(sec.get('rule_version') or '')           # day-146
+        floor = '+day150-floor' in str(sec.get('rule_version') or '')         # day-150
         head = ('<section><h2 class="head">Top 2 · Claude\'s picks, with the council\'s vote</h2>'
                 '<p class="sub">Claude\'s first-named long and short from this morning\'s nominations '
                 '(the owner\'s decision of 2026-10-30)'
                 + (', or its next one where the first followed a three-day run (the owner\'s rule '
                    'of 2026-11-04)' if runs else '')
                 + '. The other models voted on them in the council; '
-                'their vote is shown and cannot replace a pick. Neither Claude\'s record nor the '
+                'their vote is shown and cannot replace a pick.'
+                + (' A pick stands only when Claude rates it 0.50 or higher or at least two council '
+                   'members endorse it (the owner\'s quality floor of 2026-11-10).' if floor else '')
+                + ' Neither Claude\'s record nor the '
                 'council\'s is distinguishable from a coin flip yet.</p>')
     direction = top_picks.direction_line(sec)         # day-135: above the table, a caution
     movers = top_picks.mover_line(sec)                # day-135c: the last session's big movers

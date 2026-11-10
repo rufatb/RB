@@ -46,6 +46,12 @@ LATEST = dt.time(9, 44)      # past this the full report is minutes away; no fla
 OPEN_AT = dt.time(9, 31)     # the open check waits for a minute of trading
 OPEN_SENT = 'open_sent.json'
 SAT = ('READY', 'NO_CONSENSUS', 'NO_POSITIONS')
+# Day-150 (owner, 2026-11-10; PREREGISTER_day150_morning_decision.md): one
+# decision at 09:00 and one check at 09:31. On, the 09:00 email carries the
+# decision on top and one table of Claude's picks and the pre-open desk's
+# release reads, and the 09:31 email gives each pick KEEP / DROP / CAUTION.
+# Off, both emails are as they were on 2026-11-10.
+COMBINED = False
 
 
 def _now(now=None):

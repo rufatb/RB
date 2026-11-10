@@ -447,8 +447,10 @@ def _hero(d):
             for x in (intra.get('top_two') or {}).get('near') or []]
     import council
     passed = council.passed_head(intra.get('top_two'))             # day-135c, switch on
+    floored = bool((intra.get('top_two') or {}).get('passed_floor'))   # day-150: the quality floor
     top_text = (f'Top 2 today: {" · ".join(top)}' if top else
-                (f"Top 2 today: {passed} — " + (f"no council pick · {ru_text}, not a pick" if ru
+                (f"Top 2 today: {passed} — no pick" if no_agreement and passed and floored else
+                 f"Top 2 today: {passed} — " + (f"no council pick · {ru_text}, not a pick" if ru
                                                  else 'nothing to act on')
                  if no_agreement and passed else
                  f"Top 2 today: no council pick — {ru_text}, not a pick"

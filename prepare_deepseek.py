@@ -554,6 +554,15 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
         gaps.append(f'Headline coverage: {len(queried)}/{len(tickers)} queried; remaining names unassessed.')
     # Day-118: the issuer's own wire releases (newswire.py's committed archive)
     # go FIRST in each name's staged headlines. A file read; no network here.
+    # Day-150: the press feed's releases (press_feed.py, written by the
+    # pre-open desk) go in first, so that the wire's merge below leaves the
+    # wire's own releases ahead of them. A file read; no network here.
+    press = []
+    try:
+        import press_feed
+        press = press_feed.merge_into_news(root, tickers, now, maximum=P.MAX_NEWS_PER_CANDIDATE)
+    except Exception as exc:
+        gaps.append('Press releases not merged: '+type(exc).__name__)
     wire = []
     try:
         import newswire
@@ -568,6 +577,7 @@ def refresh_public_inputs(state_dir, cfg, now, *, clock=None, diagnostic=False):
         'unqueried_tickers': [t for t in tickers if t not in queried],
         'stop_reason': stopped, 'gaps': list(dict.fromkeys(map(safe_detail, gaps))),
         'wire_release_tickers': wire,
+        'press_release_tickers': press,
         'news_status': {ticker: news.get(ticker, {}).get('status', 'UNAVAILABLE')
                         if ticker in queried else 'NOT_QUERIED' for ticker in tickers},
         **({'kind': 'CURRENT_TIME_DIAGNOSTIC', 'morning_snapshot': False} if diagnostic else {})})

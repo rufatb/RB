@@ -100,6 +100,19 @@ RUN_RULE = 'day146-runs'
 # PREREGISTER_day144_claude_leads.md. False restores the council's own Top 2.
 CLAUDE_LEADS = True
 CLAUDE_RULE = 'day144-claude-leads'
+# Day-150 (owner, 2026-11-10; PREREGISTER_day150_morning_decision.md): the
+# quality floor. On 11-10 the Top 2 printed LONG AC.TO, which Claude itself
+# rated 0.40 and no council member endorsed; the owner: "i dont think these
+# are good picks", then "Yes" to dropping a weak pick. A pick of Claude's
+# stands only when Claude rates it FLOOR_CONFIDENCE or higher, or
+# FLOOR_ENDORSE or more members endorse it on the council's final tally.
+# Otherwise that side reads "no pick": nothing stands in its place, and the
+# dropped pick is kept in `passed_floor`, shown and recorded as a shadow.
+# Not shown to raise accuracy. False restores the day-144/146 rule.
+FLOOR = True
+FLOOR_RULE = 'day150-floor'
+FLOOR_CONFIDENCE = 0.50
+FLOOR_ENDORSE = 2
 MEMBERS = ('Claude', 'DeepSeek', 'Gemini', 'Jev')
 LEAD_ORDER = ('claude', 'deepseek', 'gemini', 'jev')
 NAMES = {'claude': 'Claude', 'deepseek': 'DeepSeek', 'gemini': 'Gemini', 'jev': 'Jev'}
@@ -930,6 +943,10 @@ def passed_head(section):
     passed = section.get('passed_movers') or []
     wild = section.get('passed_wild') or []      # day-137
     runs_ = section.get('passed_run') or []      # day-146
+    floor_ = section.get('passed_floor') or []   # day-150
+    if floor_ and not section.get('picks'):
+        return ("Claude's picks were below the quality floor" if len(floor_) > 1 else
+                "Claude's pick was below the quality floor")
     if not (passed or wild or runs_) or section.get('picks'):
         return None
     if wild:
@@ -970,7 +987,11 @@ def run_line(section):
         if section.get('claude_leads'):
             side = 'long' if x['side'] == 'LONG' else 'short'
             what += ("; Claude's next %s, %s %s, stands in its place" % (side, x['side'], x['replaced_by'])
-                     if x.get('replaced_by') else "; no other %s of Claude's stands, so the %s slot "
+                     if x.get('replaced_by') else
+                     "; Claude's next %s, %s %s, was below the quality floor, so the %s slot is empty"
+                     % (side, x['side'], x['replaced_dropped'], side)      # day-150
+                     if x.get('replaced_dropped') else
+                     "; no other %s of Claude's stands, so the %s slot "
                      'is empty' % (side, side))
         parts.append(what)
     return ('Passed over as following a three-day run (the owner\'s three-day-run rule, day-146; '
@@ -1095,7 +1116,49 @@ def run_reason(picks, passed, *, claude):
             % rule)
 
 
-def claude_top_two(council, own, *, previous=None, skip_runs=None):
+def clears_floor(x):
+    """Day-150: whether a pick of Claude's stands — its own confidence is
+    FLOOR_CONFIDENCE or higher, or FLOOR_ENDORSE or more council members
+    endorsed it. A pick the council did not vote on has only the first leg."""
+    conf = x.get('confidence')
+    if isinstance(conf, (int, float)) and not isinstance(conf, bool) and conf >= FLOOR_CONFIDENCE:
+        return True
+    return isinstance(x.get('endorsed'), int) and x['endorsed'] >= FLOOR_ENDORSE
+
+
+def floor_words(x):
+    """'its own 0.40; council 0 of 4 endorse, 1 object': why a pick fell below the floor."""
+    conf = x.get('confidence')
+    conf_txt = ('%.2f' % conf) if isinstance(conf, (int, float)) else 'no number'
+    return 'its own %s; council %s' % (conf_txt, str(x.get('council_vote') or 'did not vote').split(';')[0])
+
+
+def floor_reason(picks, dropped):
+    """The Top 2's reason when the floor emptied a side, else None."""
+    if not dropped:
+        return None
+    named = ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], floor_words(x)) for x in dropped)
+    rule = ('the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing)')
+    if not picks:
+        return (("Neither of Claude's picks cleared %s, so there is no pick today: %s."
+                 if len(dropped) > 1 else
+                 "Claude's pick did not clear %s, so there is no pick today: %s.") % (rule, named))
+    side = 'long' if dropped[0]['side'] == 'LONG' else 'short'
+    return "No %s today: Claude's %s was below %s." % (side, named, rule)
+
+
+def floor_line(section):
+    """Day-150: the picks the floor dropped, one line, or None."""
+    dropped = (section or {}).get('passed_floor') or []
+    if not dropped:
+        return None
+    return ("Below the quality floor, so not a pick (the owner's rule of 2026-11-10: Claude 0.50 or "
+            'higher, or two council members endorsing; not shown to raise accuracy): '
+            + ' · '.join('%s %s (%s)' % (x['side'], x['ticker'], floor_words(x)) for x in dropped)
+            + '. Recorded as a shadow, never sized.')
+
+
+def claude_top_two(council, own, *, previous=None, skip_runs=None, floor=None):
     """Day-144 (owner, 2026-10-30): the Top 2 led by Claude — its first-named
     long and short, each with the council's vote on it, which cannot replace
     it. `own` is the council's own section; its picks are kept beside as
@@ -1119,6 +1182,7 @@ def claude_top_two(council, own, *, previous=None, skip_runs=None):
         if pos and r:
             x = _shape(pos, r, members, None)
             vote = x['verdict']
+            x['endorsed'] = len(r['endorse'])      # day-150: the floor's second leg
         else:
             x = {'ticker': nom['ticker'], 'side': side, 'votes': {}, 'votes_against': [],
                  'split': False, 'council': True, 'entry_check': None, 'proposed': []}
@@ -1138,20 +1202,31 @@ def claude_top_two(council, own, *, previous=None, skip_runs=None):
             x['move_atr'] = float(m)
         return x
     picks = [shaped(side, nom) for side, nom in chosen]
+    # Day-150: the quality floor, after the run rule has chosen. A pick below
+    # it is dropped and nothing stands in its place.
+    floor_on = FLOOR if floor is None else floor
+    dropped = [x for x in picks if not clears_floor(x)] if floor_on else []
+    picks = [x for x in picks if x not in dropped]
     passed = []
     for side, nom, rec in passed_noms:
         x = shaped(side, nom)
         stood = next((p['ticker'] for p in picks if p['side'] == side), None)
+        fell = next((p['ticker'] for p in dropped if p['side'] == side), None)
         x.update({'run': rec.get('run'), 'run_words': RU.words(rec), 'replaced_by': stood})
+        if fell and not stood:
+            x['replaced_dropped'] = fell
         passed.append(x)
     status = 'READY' if len(picks) == PICKS else 'PARTIAL' if picks else 'NO_AGREEMENT'
+    # A side the floor emptied is not one the run rule emptied: say each once.
+    ran = run_reason(picks + dropped, passed_noms, claude=True)
+    why = ' '.join(x for x in (floor_reason(picks, dropped), ran) if x)
     out = {'picks': picks, 'status': status,
            'council': True, 'claude_leads': True,
            'answered': members, 'absent': tally_.get('absent') or [],
-           'rule_version': CLAUDE_RULE + ('+' + RUN_RULE if runs_on(council, skip_runs) else ''),
+           'rule_version': (CLAUDE_RULE + ('+' + RUN_RULE if runs_on(council, skip_runs) else '')
+                            + ('+' + FLOOR_RULE if floor_on else '')),
            'reason': (None if len(picks) == PICKS else
-                      run_reason(picks, passed_noms, claude=True)
-                      or 'Claude named only one side today, so the second slot is left empty.'),
+                      why or 'Claude named only one side today, so the second slot is left empty.'),
            'near': [], 'runner_up': None, 'runner_up_note': None,
            'council_own': list((own or {}).get('picks') or []),
            'council_own_status': (own or {}).get('status'),
@@ -1159,6 +1234,8 @@ def claude_top_two(council, own, *, previous=None, skip_runs=None):
            'council_own_reason': (own or {}).get('reason')}
     if passed:
         out['passed_run'] = passed
+    if dropped:
+        out['passed_floor'] = dropped
     return out
 
 
@@ -1208,7 +1285,7 @@ def claude_own_line(section):
 
 
 def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=None, skip_wild=None,
-            claude_leads=None, skip_runs=None):
+            claude_leads=None, skip_runs=None, floor=None):
     """The Top 2 section. Day-144 (`CLAUDE_LEADS`, owner 2026-10-30): Claude's
     first-named long and short, with the council's vote on each and the
     council's own decision kept beside (`council_own`, a recorded shadow).
@@ -1228,7 +1305,7 @@ def top_two(council, counted=None, *, prices=None, previous=None, skip_movers=No
         own['repeat_note'] = note
     if not leads:
         return with_run_note(runs_remove_only(own, council, skip_runs=skip_runs), council, skip_runs)
-    led = claude_top_two(council, own, previous=previous, skip_runs=skip_runs)
+    led = claude_top_two(council, own, previous=previous, skip_runs=skip_runs, floor=floor)
     if led is None:
         why = _clip(str((council.get('errors') or {}).get('nominations claude')
                         or 'it nominated nothing'), 120)
