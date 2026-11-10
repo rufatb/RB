@@ -247,6 +247,11 @@ else
 fi
 
 git add -- ledger.csv universe_prints.csv positions.csv data/advice.csv 2>/dev/null
+# Day-150: the pre-open desk's second read (morning_full.sh, about 08:52)
+# appends to its own ledger and to the press archive. By exact path, on their
+# own lines: a path git does not know fails its whole `git add`.
+git add -- data/us_preopen_calls.csv 2>/dev/null
+git add -- data/newswire/press 2>/dev/null
 # Only TODAY'S snapshot, by exact path — never the directory. A directory
 # stage would carry anything that happened to be sitting in it, which is the
 # same "publish edits nobody has read" failure this job stages narrowly to

@@ -192,8 +192,9 @@ def test_every_budgeted_step_has_a_skip_branch_that_names_the_consequence():
     body = code()
     # 14 since day-134 (the 150-name TSX list has its own named skip branch);
     # 13 since 2026-10-19, when the biotech universe step was retired; 14 again
-    # since day-139 (the pre-open news read names its own skip).
-    assert body.count('SKIPPED —') == 14, 'a step can still be starved in silence'
+    # since day-139 (the pre-open news read names its own skip); 15 since
+    # day-150 (the pre-open desk's second read, skipped by name without an FMP key).
+    assert body.count('SKIPPED —') == 15, 'a step can still be starved in silence'
 
 
 def test_an_exhausted_budget_is_never_passed_through_as_a_number():

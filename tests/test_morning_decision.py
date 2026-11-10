@@ -604,3 +604,75 @@ def test_a_release_read_gets_words_and_never_a_verdict():
         'moved against the read, less than a normal day')
     for words in map(F.read_words, ({'price': 1, 'now_days': 2.0, 'now_for_read': 5.0}, {})):
         assert not any(w in words for w in ('KEEP', 'DROP', 'CAUTION'))
+
+
+# ── 6. the wiring: the morning job, its push, the 08:12 Routine ─────────────
+
+def _code(name):
+    from pathlib import Path
+    body = (Path(__file__).resolve().parent.parent/name).read_text()
+    return '\n'.join(line for line in body.splitlines() if not line.lstrip().startswith('#'))
+
+
+def test_the_morning_job_reads_a_second_time_beside_the_pool_and_joins_before_the_news_refresh():
+    body = _code('morning_full.sh')
+    second = body.index('python us_preopen.py --state-dir "$RB_STATE_DIR" --build')
+    pool = body.index('python prepare_factor_pool.py')
+    wire = body.index('python newswire.py --collect')
+    join = body.index('wait "$preopen_pid"')
+    refresh = body.index('python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs')
+    assert body.index('python prepare_tsx_universe.py') < second < pool < wire < join < refresh
+    # in the background and bounded: it can never hold the staging window
+    line = body[body.rfind('\n', 0, second) + 1:body.index('\n', second)]
+    assert line.strip().startswith('( timeout 170 python us_preopen.py')
+    assert 'preopen_pid=$!' in body[second:pool]
+    # a failure is named, never fatal
+    assert 'pre-open desk second read failed' in body and 'pre-open desk second read timed out' in body
+
+
+def test_the_jobs_own_push_carries_the_second_reads_files_each_on_its_own_line():
+    body = _code('morning.sh')
+    assert 'git add -- data/us_preopen_calls.csv 2>/dev/null' in body
+    assert 'git add -- data/newswire/press 2>/dev/null' in body
+    import provenance
+    assert 'data/us_preopen_calls.csv' in provenance.RUN_RECORDS
+    assert any(r == 'data/newswire/' for r in provenance.RUN_RECORDS)          # covers press/
+    assert any(r == 'data/reviews/' for r in provenance.RUN_RECORDS)           # covers open_checks.csv
+
+
+def test_the_0812_routine_records_and_never_sends():
+    from pathlib import Path
+    doc = (Path(__file__).resolve().parent.parent/'ROUTINE_PREOPEN.md').read_text()
+    prompt = doc[doc.index('RB PRE-OPEN DESK (08:12 ET).'):]
+    assert 'It sends NO email' in prompt and 'Send no email from this Routine' in prompt
+    assert 'send_message' not in prompt and '--record --message-id' not in prompt
+    assert 'python us_preopen.py --state-dir .rb-state --build' in prompt
+    assert 'git add data/us_preopen_calls.csv data/newswire/' in prompt        # press/ rides in newswire/
+    assert 'Never create, modify, enable, disable or delete any Routine.' in prompt
+
+
+def test_the_morning_prompt_needs_no_new_command_for_the_two_emails():
+    """The 09:00 and 09:31 emails are what the flash and the open check now
+    compose: the morning Routine's commands are the ones it already runs."""
+    from pathlib import Path
+    body = (Path(__file__).resolve().parent.parent/'ROUTINE_PROMPT.md').read_text()
+    for command in ('python council_flash.py --state-dir .rb-state --wait 100',
+                    'python council_flash.py --state-dir .rb-state --record --message-id <id>',
+                    'python council_flash.py --state-dir .rb-state --open-check 540',
+                    'python council_flash.py --state-dir .rb-state --record-open --message-id <id>'):
+        assert command in body
+    import inspect
+    assert "'--wait'" in inspect.getsource(F.main) and "'--open-check'" in inspect.getsource(F.main)
+
+
+def test_the_registration_fixes_what_the_code_does():
+    from pathlib import Path
+    import us_preopen as U
+    reg = (Path(__file__).resolve().parent.parent/'PREREGISTER_day150_morning_decision.md').read_text()
+    for needle in ('`council.FLOOR = True`', "`day150-floor`", '0.50 or higher', 'two or more members endorse',
+                   '`top2floor/pick`', '`data/newswire/press/YYYY-MM-DD.jsonl`', '`us_preopen.EMAIL = False`',
+                   '`council_flash.COMBINED = True`', 'RB Morning Decision', 'No council by 09:20',
+                   '`data/reviews/open_checks.csv`', 'one normal day (ATR', 'KEEP is not a forecast'):
+        assert needle in reg, needle
+    assert (K.FLOOR_CONFIDENCE, K.FLOOR_ENDORSE, F.MOVED_ATR, F.READS_ALONE_AT) == (0.50, 2, 1.0, dt.time(9, 20))
+    assert U.EMAIL is False and F.COMBINED is True

@@ -156,3 +156,24 @@ Made before the first 09:30 open and before any outcome exists.
   notice by `us_preopen.notice` is not shown as a call, and is not counted by
   the record line or the verdict.
 * **Nothing else changes:** no prompt, window, price rule or bar.
+
+## Amendment 2 (2026-11-10, before the morning of 11-11): no email of its own, and a second read
+
+The owner asked for one decision at 09:00 (`PREREGISTER_day150_morning_decision.md`).
+
+* **No email of its own** (`us_preopen.EMAIL = False`). The calls are shown in
+  the 09:00 "RB Morning Decision" email. The 08:12 Routine reads, records and
+  pushes; `--build` prints RECORDED.
+* **A second read at about 08:52,** started by `morning_full.sh` beside the
+  factor pool, for names with a release published since the first read. The
+  first recorded answer on a name stands and is never re-asked. Each call
+  keeps its own read time (`asked_at`) and its own New York price at that
+  read.
+* **The 09:00 email reads the New York prices again** for display. The ledger
+  keeps the price at the read.
+* **Every read keeps the feed's releases** in `data/newswire/press/`, which the
+  desks' headlines read.
+* **Unchanged:** the question, the price rule, the measure, the bar and the
+  decision at 40 sessions. A call read at 08:52 has a shorter span to the open
+  than one read at 08:12; `asked_at` records which.
+

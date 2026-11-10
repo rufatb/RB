@@ -417,10 +417,13 @@ def test_the_committed_map_is_real_and_holds_the_known_traps():
 
 def test_the_routine_prompt_names_real_commands_and_carries_no_key():
     text = (ROOT/'ROUTINE_PREOPEN.md').read_text()
-    for flag in ('--build', '--record', '--message-id', '--state-dir'):
+    for flag in ('--build', '--state-dir'):
         assert 'us_preopen.py' in text and flag in text
-    assert 'send_check.py' in text and 'newswire.py --collect' in text
-    assert 'RB Daily Report — ' not in text.replace('never contains "RB Daily Report — "', '')
+    # Day-150: the desk's calls are shown in the 09:00 email; this Routine sends none.
+    prompt = text[text.index('RB PRE-OPEN DESK (08:12 ET).'):]
+    assert 'send_message' not in prompt and 'send_check.py' not in prompt
+    assert 'newswire.py --collect' in text
+    assert 'RB Daily Report — ' not in text
     for secret in ('sk-', 'apikey=', 'AIza'):
         assert secret not in text
     assert 'Never create, modify, enable, disable or delete any Routine' in text

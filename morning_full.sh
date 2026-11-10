@@ -178,6 +178,22 @@ else
     # it is documented to use. It must precede the news refresh, so headlines
     # are fetched for the pool's names and not just the baseline twenty-one.
     # Its own budget is already clamped to the time remaining before 09:30.
+    # DAY-150 (owner, 2026-11-10): THE PRE-OPEN DESK'S SECOND READ. The 08:12
+    # Routine read the releases that were out by then; this reads the ones
+    # published since, and every read keeps the feed's releases in the press
+    # archive (data/newswire/press/) that the news refresh below merges into
+    # the desks' headlines. It runs BESIDE the factor pool, which takes two to
+    # three minutes and does not ask FMP, and is joined before the news
+    # refresh, so it costs the window nothing. A failure costs the 09:00 email
+    # its newest releases and is named; it never costs the morning.
+    preopen_pid=''
+    if [ -n "${FMP_API_KEY:-}" ] || [ -f "$RB_STATE_DIR/secrets/fmp_api_key" ]; then
+        ( timeout 170 python us_preopen.py --state-dir "$RB_STATE_DIR" --build \
+              >>"$RB_STATE_DIR/us_preopen.log" 2>&1 ) &
+        preopen_pid=$!
+    else
+        log "  pre-open desk, second read: SKIPPED — no FMP key staged"
+    fi
     if budget="$(slice 900 $((360 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python prepare_factor_pool.py --state-dir "$RB_STATE_DIR"
         pool_exit=$?
@@ -228,6 +244,17 @@ else
 
     # Exits 2 when some names lack complete inputs. That is the ordinary
     # result, not an error: coverage is gated by contiguous session warm-up.
+    if [ -n "$preopen_pid" ]; then
+        wait "$preopen_pid"
+        case $? in
+            0) log "  pre-open desk, second read: recorded (us_preopen.log)" ;;
+            3) log "  pre-open desk, second read: nothing new since 08:12 (us_preopen.log)" ;;
+            124) log "  pre-open desk, second read: TIMED OUT — the 09:00 email shows the 08:12 reads"
+                 stage_faults+=("pre-open desk second read timed out") ;;
+            *) log "  pre-open desk, second read: FAILED — the 09:00 email shows the 08:12 reads (us_preopen.log)"
+               stage_faults+=("pre-open desk second read failed") ;;
+        esac
+    fi
     if budget="$(slice 900 $((120 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python prepare_deepseek.py --state-dir "$RB_STATE_DIR" --refresh-public-inputs
         case $? in
