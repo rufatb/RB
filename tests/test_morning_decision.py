@@ -676,3 +676,22 @@ def test_the_registration_fixes_what_the_code_does():
         assert needle in reg, needle
     assert (K.FLOOR_CONFIDENCE, K.FLOOR_ENDORSE, F.MOVED_ATR, F.READS_ALONE_AT) == (0.50, 2, 1.0, dt.time(9, 20))
     assert U.EMAIL is False and F.COMBINED is True
+
+
+def test_a_fault_in_the_new_emails_falls_back_to_the_ones_they_replaced(tmp_path, monkeypatch):
+    write_state(tmp_path, day(noms()), READS, monkeypatch)
+
+    def boom(*a, **k):
+        raise RuntimeError('unexpected shape')
+    monkeypatch.setattr(F, '_decision', boom)
+    code, info = F.wait(tmp_path, 0, now_fn=lambda: AT)
+    assert code == 0 and info['subject'].startswith('RB Council Flash — 2026-11-10 — LONG CNQ.TO')
+    assert json.loads((tmp_path/'flash'/'plan.json').read_text())['fell_back_to_the_flash'] == 'RuntimeError'
+    monkeypatch.setattr(F, 'compose_open_decision', boom)
+    monkeypatch.setattr(F, 'atr_map', lambda root, now, tickers: {})
+    code, info = F.wait_open(tmp_path, 0, now_fn=lambda: OPEN, quote=quotes())
+    assert code == 0 and 'SHORT SU.TO STILL VALID' in info['subject']
+    # with no council to fall back on, the reads wait rather than fail
+    (tmp_path/'council.json').unlink()
+    late = dt.datetime(2026, 11, 10, 9, 21, tzinfo=ET)
+    assert F.wait(tmp_path, 0, now_fn=lambda: late)[0] == 2

@@ -6131,3 +6131,26 @@ held by day-148's registration for the veto test, which runs on 11-10.
   desk shows it as one labelled fact.
 * **Counts:** 63 rejections through day-147; #64 is day-148's unless it
   passes; this is #65. 5 adoptions.
+
+## Day-150: the owner's quality floor, and one morning decision (a decision, not a test)
+
+The owner, after 11-10's 09:00 flash and the 08:23 pre-open desk email: "i dont
+think these are good picks ... can we combine them so that i get one good
+quality decision by 9am? and another at 9:31". Then "Yes" to dropping a weak
+pick. Registered first (`PREREGISTER_day150_morning_decision.md`).
+* **The floor.** A pick of Claude's stands only when Claude rates it 0.50 or
+  higher or two council members endorse it; otherwise that side reads "no
+  pick". Dropped picks are the `top2floor` shadow.
+* **The press feed** reaches the desks' and the council's headlines
+  (`data/newswire/press/`), classed as the issuer's own release.
+* **One email at 09:00** with the decision on top and one table of Claude's
+  picks and the pre-open desk's release reads; the desk sends none of its own.
+* **One email at 09:31** with KEEP, DROP or CAUTION per pick by fixed rules.
+* **Why no test.** It is the owner's choice, as day-144 and day-146 were. On
+  the record Claude's first-named picks are 7 of 11; nothing there can see
+  whether the floor helps.
+* **Judged forward:** the dropped picks' own mean at 40 sessions with one
+  (harm check at 20); the 09:31 verdicts read as a description at 40.
+* **Counts unchanged:** 63 rejections through day-147, #64 held for day-148,
+  #65 the nowcast; 5 adoptions.
+

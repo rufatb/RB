@@ -73,6 +73,17 @@ Ordered by what a result could change, then by cost.
 | 13 | **The commodity nowcast** | The owner's pasted "Information Surprise" engine needs an independent estimate; for a commodity producer one exists: last quarter's revenue scaled by the quarter's average commodity price. On 11-09 Equinox's pre-announced ounces times the quarter's gold average gave US$1,068M against a US$987M consensus; it reported US$1,050M | One example, and the shares were flat after hours: the market had done the arithmetic. A surprise's sign matches the reaction 61% of the time (day-148b). FMP holds revenue estimates and actuals back to 2007 for the older names | Miners and oil and gas producers on the list, 2012 → 2026: the side of (nowcast − consensus) beyond a registered threshold, else abstain; the reaction against the sector fund from the close before FMP's date to the close after it; each leg judged alone (day-138's survivor warning) and a point-in-time check on US producers | None (FMP) | Done 11-09 night, at the owner's go: UNDERPOWERED, rejection #65 (`AUDIT_day149_nowcast.md`). Gold and silver producers with a New York listing only (19 names): 159 sided quarters −0.20% a report, t = −0.34; a planted 1.0% shows at t = 1.67 (smallest detectable 2.56%). The nowcast's side matched the revenue surprise 59% of the time (t = 2.37). FMP's revenue consensus agrees between a company's two listings on only 269 of 606 quarters. Oil and copper not tested: no WTI or copper series on the plan |
 | 14 | **An event desk with an abstain rule, in shadow** | The pasted engine as a forward test: for each report due in the evening note, a model states consensus, its own estimate and the reason they differ, or abstains | Before a report nothing tested gives a side (previous surprise, peers, run-up: day-138, day-148b). A replay is contaminated for older reports; DeepSeek showed no memory of 2026-07 → 10 (day-122) | Forward: recorded each evening, scored on the surprise's sign and on the reaction against XIU; never sized, never in the Top 2; decided at a registered count of non-abstained calls | DeepSeek; Claude through OpenRouter only with the owner's yes | **Live in shadow from 11-10** (day-149c: `event_desk.py`, `PREREGISTER_day149_event_desk.md`, the 15:14 ET Routine): every report FMP dates for the next session; the model sees no name and no price; a side needs two supplied facts that agree and none against, enforced in code. Judged at the 60th confirmed call with a side, from the close before the report to the close of the session after it. Planted control 5 of 5 with the gate (3 of 5 without it) |
 
+**2026-11-10: the slot was missed, and the owner changed the Top 2 rule.**
+* A worker restart held this session from about 09:50 to 13:31 ET, past the
+  slot's 11:40 end. Item 11's run (`council_veto.py`, day-148) carries to
+  11-11.
+* Outside the lab, at the owner's "Yes": a quality floor on Claude's Top 2
+  from 11-11 (day-150: Claude 0.50 or higher, or two council members
+  endorsing). It is the owner's decision and does not use item 11's result.
+  Item 11's population is pinned and ends 11-09, so the floor does not touch
+  it. If item 11 passes, its proposal is weighed against the floor already in
+  place.
+
 **2026-11-09 night: the owner said "Build all that are missing from above"**
 (day-149). Items 9 (its forward desk), 13 and 14 were built outside the slot,
 each registered before its first number:

@@ -503,17 +503,24 @@ def prepare(state_dir, now=None):
     waiting = (council.get('status') == 'UNAVAILABLE'
                and any(w in str(council.get('reason')) for w in ('not staged', 'not today')))
     kind = 'council'
+    fallback = None
     if waiting:
         # Day-150: with no council by 09:20 the release reads go alone, and say so.
         if not (COMBINED and now.time() >= READS_ALONE_AT and reads_today(now)[0]):
             return 'WAITING', {}
-        made, kind = _decision(root, None, now), 'reads_only'
+        try:
+            made, kind = _decision(root, None, now), 'reads_only'
+        except Exception:                 # nothing to fall back on: keep waiting for the council
+            return 'WAITING', {}
     elif COMBINED:
-        made = _decision(root, council, now, why=(
-            None if council.get('status') in SAT else
-            'The council did not sit today (%s); the 09:46 report decides the Top 2 by the counted rule.'
-            % str(council.get('reason') or council.get('status'))[:120]))
-        kind = 'council' if council.get('status') in SAT else 'reads_only'
+        try:
+            made = _decision(root, council, now, why=(
+                None if council.get('status') in SAT else
+                'The council did not sit today (%s); the 09:46 report decides the Top 2 by the counted '
+                'rule.' % str(council.get('reason') or council.get('status'))[:120]))
+            kind = 'council' if council.get('status') in SAT else 'reads_only'
+        except Exception as exc:          # the new email must never cost the one it replaced
+            made, fallback = compose(council, now), type(exc).__name__
     else:
         made = compose(council, now)
     if made is None:
@@ -526,6 +533,7 @@ def prepare(state_dir, now=None):
         (out/name).write_text(content, encoding='utf-8')
     write_atomic(out/'plan.json', {'session': now.date().isoformat(), 'subject': subj,
                                    'council_status': council.get('status'), 'kind': kind,
+                                   **({'fell_back_to_the_flash': fallback} if fallback else {}),
                                    'prepared_at': now.isoformat()})
     return 'READY', {'subject_path': str(out/'subject.txt'), 'text_path': str(out/'report.txt'),
                      'html_path': str(out/'report.html'), 'subject': subj}
@@ -985,15 +993,22 @@ def prepare_open(state_dir, now=None, *, quote=None):
     quote = quote or (lambda sym: fmp_quote(sym, root))
     atr = atr_map(root, now, {p['ticker'] for p in items} | {r['ticker'] for r in reads})
     rows = check_open(council, now, quote=quote, atr=atr) if items else []
+    made = None
     if COMBINED:
-        subj, text, html = compose_open_decision(council if sat else None, rows, now, section=sec,
-                                                 reads=reads_at_open(reads, now, quote=quote, atr=atr))
+        try:
+            made = compose_open_decision(council if sat else None, rows, now, section=sec,
+                                         reads=reads_at_open(reads, now, quote=quote, atr=atr))
+        except Exception:                     # the new email must never cost the one it replaced
+            made = None
         try:                                  # the record never costs the email
             record_open_checks(rows, now)
         except Exception:
             pass
-    else:
-        subj, text, html = compose_open(council, rows, now, section=sec)
+    if made is None:
+        if not rows:
+            return 'NOTHING', {'reason': 'nothing could be checked'}
+        made = compose_open(council, rows, now, section=sec)
+    subj, text, html = made
     out = root/OUT_DIR
     out.mkdir(parents=True, exist_ok=True)
     for name, content in (('open_subject.txt', subj), ('open_report.txt', text), ('open_report.html', html)):

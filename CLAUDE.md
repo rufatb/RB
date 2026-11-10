@@ -18,6 +18,141 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day150 — one decision at 09:00, one check at 09:31; a quality floor on Claude's Top 2 (owner, 2026-11-10)
+
+The owner, after 11-10's 09:00 flash (LONG AC.TO, Claude 0.40, council 0 of 4;
+SHORT SU.TO, Claude 0.38, 3 of 4) and the 08:23 pre-open desk email: "i dont
+think these are good picks, and the 8:12 am was much more elaborate and better
+quality picks … can we combine them so that i get one good quality decision by
+9am? and another at 9:31 … in case it already spiked or tanked". Asked whether
+a weak pick should be dropped, the owner: "Yes". Registered first
+(`PREREGISTER_day150_morning_decision.md`, 1c4a523). First live morning: 11-11.
+
+**1. The quality floor** (`council.FLOOR = True`, rule `day150-floor`; False
+restores day-144/146).
+* **The rule.** A pick of Claude's stands only when Claude rates it 0.50 or
+  higher (`FLOOR_CONFIDENCE`), or two or more members endorse it on the final
+  tally (`FLOOR_ENDORSE`, Claude's own ballot included).
+* **Otherwise that side reads "no pick".** Claude's second nomination is not
+  tried (day-145c: a first is no better than a second).
+* **Order.** The run rule chooses, then the floor (`claude_top_two`). A
+  run-rule replacement that falls below the floor leaves the side empty, and
+  `run_line` says so (`replaced_dropped`).
+* **Without a council** only the confidence leg applies. The council's own
+  Top 2 and the counted fallback are unchanged.
+* **A dropped pick** is kept in `passed_floor`, shown ("Below the quality
+  floor, so not a pick") and recorded as `top2floor/pick`: a shadow, out of
+  the pooled row, the lab and the scoreboard. The review scores it as "Below
+  the quality floor (shadow)".
+* **Splits from 11-11.** The `top2` rows carry `+day150-floor`: split
+  day-144's comparison and day-140 arm A by `prompt_version`.
+* **Renderers** test `'+day146-runs' in rule_version`, never `endswith`: the
+  floor's label follows it.
+* **The subject when both fall:** "⛔ NO PICK — Claude's picks were below the
+  quality floor".
+* **Judged forward** over sessions with a dropped pick: harm check at 20
+  (t ≥ 2, it removes winners → tell the owner); decision at 40 (t ≤ −3, a
+  placebo at seed 150, both halves negative).
+* **On 11-10** it would have dropped LONG AC.TO and kept SHORT SU.TO.
+
+**2. The press feed in the headlines** (`press_feed.py`).
+* **The gap.** The desks, the nominations and the council read Yahoo and the
+  newswire.ca archive. FMP's press feed, the pre-open desk's source, never
+  reached them.
+* **The archive.** `data/newswire/press/YYYY-MM-DD.jsonl`, written by
+  `us_preopen.build` on every read (`_archive_press`). Its rows have already
+  passed `_names_issuer` and `notice`; only the feed's rows with an https
+  address are kept.
+* **A subdirectory on purpose.**
+  * Every `git add data/newswire/` carries it, and `provenance.RUN_RECORDS`
+    covers it.
+  * The wire's readers glob `*.jsonl` and never open it, so the wire card,
+    the news desk and PEAD keep their registered populations.
+* **Into the headlines.** `refresh_public_inputs` merges the press first, then
+  the wire, so the wire's releases stay ahead. A title a name already carries
+  is not added twice.
+* **The class is recomputed.** `factor_news.classify_headline` labels a
+  headline ISSUER_RELEASE when the press archive holds that URL with that
+  exact title. `first_disclosed` is the feed's time.
+* **The prompts are unchanged, byte for byte.** No control was re-run: neither
+  the prompt nor the fields changed.
+* **Coverage:** the 81 names with a New York listing. FMP's feed answers
+  nothing for a Toronto symbol.
+* **Dry run on 11-10's state:** the brief would have carried Aris, GFL,
+  Equinox (two), Allied Gold and FirstService as ISSUER_RELEASE.
+
+**3. The pre-open desk** (amendment 2 of `PREREGISTER_day149_us_preopen.md`).
+* **No email of its own** (`us_preopen.EMAIL = False`). `--build` prints
+  RECORDED. The 08:12 Routine's prompt was replaced on 11-10, live and in
+  `ROUTINE_PREOPEN.md`: read, record, push, one line.
+* **A second read at about 08:52.** `morning_full.sh` starts
+  `us_preopen.py --build` in the background before the factor pool and joins
+  it before the news refresh. 10.6 s on 11-10's feed.
+  * The first answer on a name stands.
+  * A new name keeps its own read time and its own price.
+  * After a container reset the 08:12 read fails for want of keys, and this
+    read is the first.
+* **The job's own push** (`morning.sh`) adds `data/us_preopen_calls.csv` and
+  `data/newswire/press`, each on its own line: a path git does not know fails
+  its whole `git add`.
+
+**4. The 09:00 email** (`council_flash.COMBINED = True`; False restores both
+emails as they were).
+* **Subject:** "RB Morning Decision — DATE — SHORT SU.TO (…) · no long · 4
+  overnight release reads". Never "RB Daily Report — ".
+* **On top** (`decision_lines`): what stands, then why a side is empty, then
+  the releases with a call, named as a separate read.
+* **One table** (`TABLE_HEAD`): PICK rows, "No pick: below the floor" rows and
+  "Release read" rows. For a read, the council's vote shows when that position
+  was on its table.
+* **The New York prices are read again** when the email is composed
+  (`new_york_prices`: pre-market only, 25 s cap, 2.9 s on 11-10). A missing
+  one falls back to the price at the read, labelled. The ledger is untouched.
+* **Under the table:** the lines the flash carried, with the members' votes on
+  a dropped pick too.
+* **Fallbacks.**
+  * The council's own Top 2 stands: its table, then the releases.
+  * No council by 09:20 (`READS_ALONE_AT`), or one that did not sit: the
+    releases alone, saying so.
+  * No release: the decision alone.
+* **The same commands** (`council_flash.py --wait`, `--record`). The live
+  morning Routine's text still says "council flash"; that is wording only.
+
+**5. The 09:31 email.**
+* **One word per pick** (`open_decision`), in this order:
+  * no live quote → CAUTION;
+  * past its own "wrong if" → DROP;
+  * one normal day or more from the prior close, either way (`MOVED_ATR`) →
+    CAUTION;
+  * otherwise KEEP.
+
+  With no normal range, the "wrong if" alone decides.
+* **Each row:** the verdict and why, the price, the open and now against the
+  prior close in normal days, the move against its sector fund, the
+  "wrong if" and its distance.
+* **Release reads get words, never a verdict** (`read_words`): where the
+  Toronto listing opened against the read. Their own window ended at the open.
+* **A day with no pick** still sends the releases' opens. A day with neither
+  sends nothing.
+* **Recorded** once a day in `data/reviews/open_checks.csv`
+  (`record_open_checks`); the evening push carries `data/reviews/`. Read by
+  verdict at 40 sessions, as a description.
+* **Nothing is voided:** the 09:46 report keeps every 09:00 pick.
+
+**Tests.** `tests/conftest.py` pins the three switches as they were and
+isolates the press archive, the pre-open ledger and the open-check ledger.
+Tests marked `day150` run on the production values
+(`tests/test_morning_decision.py`).
+
+**Not claimed:** that any pick is more accurate. The floor makes the Top 2
+smaller, and the email shows news the system already had. Say so plainly when
+asked.
+
+**11-10's operating note.** A worker restart held this session from about
+09:50 to 13:31 ET. The report had gone at 09:49. The noon check was TOO_LATE
+(it refuses after 13:30) and the council-lab slot was missed: day-148's run
+carries to 11-11.
+
 ## Day149 — three builds at the owner's "Build all that are missing": a pre-open desk, the nowcast (rejection #65), an event desk (owner, 2026-11-09 night)
 
 The owner, after my view of the pasted engine: "Build all that are missing
@@ -48,7 +183,8 @@ live changes: no pick, size, Top 2, morning report or older record.
   call's own half-spread plus 0.05%.
 * **The email.** "RB Pre-Open Desk — DATE — …", only when the model marks a
   release material. It says the entry is before the bell, and that from the
-  open on the record shows nothing left.
+  open on the record shows nothing left. **From 11-11 the desk sends none:**
+  its calls are in the 09:00 email (Day150).
 * **The Routine.** `trig_011Fphbey8QMAHSv4jbMmnDC`, 08:12 ET weekdays
   (`ROUTINE_PREOPEN.md`). It collects the wire first and pushes its own
   ledger, `data/us_preopen_calls.csv`.
@@ -3737,10 +3873,11 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 ## Before touching anything, read STRATEGY.md
 
 It is the running record of every change tested — **63 rejections through
-day-147, #64 held for day-148's veto test (it runs on 11-10), #65 the
+day-147, #64 held for day-148's veto test (carried to 11-11), #65 the
 commodity nowcast; 5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
-09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. Almost every "obvious improvement" in this space has already been
+09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
+day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been
 measured here and refuted. Check before proposing.
 
 The five adopted changes were all VARIANCE results. None improved accuracy.
