@@ -6154,3 +6154,23 @@ pick. Registered first (`PREREGISTER_day150_morning_decision.md`).
 * **Counts unchanged:** 63 rejections through day-147, #64 held for day-148,
   #65 the nowcast; 5 adoptions.
 
+
+## Day-148: REJECTION #64 — a council veto on Claude's picks: underpowered, and the objected positions did better
+
+Council lab item 11, registered 11-09 (`PREREGISTER_day148_veto.md`), run once
+on 11-11 by `council_veto.py` (484b4f6, committed before the look). Read
+`AUDIT_day148_veto.md`; summary `data/veto_day148.json`.
+* **The question.** Do council positions with two or more objections do worse,
+  09:45 → close against XIU, than the rest of the same table? 239 positions
+  over 23 sessions, 106 vetoed.
+* **UNDERPOWERED.** Rest minus vetoed −0.82% a session, t = −2.28; placebo
+  lower p = 0.016; both halves negative. The vetoed positions made +0.50% a
+  session (+0.37% net). A planted 1.0% shows only at t = 2.80; the smallest
+  detectable effect is 1.37%.
+* **So:** a veto would have removed winners on this record. No rule either
+  way: the reverse is below the bar too.
+* **Beside it:** every-member endorsement did worst (−0.56%), as on day-137.
+  The day-150 floor (an owner's decision) keeps a pick two members endorse;
+  this record does not support endorsement either.
+* **Counts:** 64 rejections through day-148, #65 the nowcast (day-149b);
+  5 adoptions.

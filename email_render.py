@@ -408,6 +408,7 @@ def _hero(d):
     abstained. A neutral hero over a board nobody should act on is the same
     failure `subject_state` exists to prevent, one surface along."""
     intra = d.get('intraday') or {}
+    import primary_board
     from primary_board import headline_legs
     legs = headline_legs(intra)
     abstained = [l for l in legs if str(l.get('status')).upper() == 'ABSTAIN']
@@ -427,6 +428,12 @@ def _hero(d):
                 if (intra.get('top_two') or {}).get('claude_leads') else
                 'No desk sized a pick; the council agreed on the Top 2')
         sub = 'Its positions are above, unsized; each desk below says why it declined.'
+    elif intra.get('desks') and primary_board.desks_unavailable(intra):
+        # 2026-11-11: "every model declined" when none had been asked.
+        head = 'The models were not run today'
+        sub = ('No desk was asked: their inputs were not prepared before the open, so this is '
+               'a failed morning, not a reading of the market. Each desk below gives the reason. '
+               'The baseline engine further down is a comparison only.')
     elif intra.get('desks'):
         head = 'No model picked anything today'
         sub = ('Every model declined; each desk below says why. '

@@ -185,10 +185,10 @@ def compose(root, answer, *, now=None, reason=None):
     window = 'BEFORE the open' if asked.time() < dt.time(9, 30) else 'AFTER the open'
     name = 'RB Recovery Research' if early else 'RB Daily Report'
     subject = ('%s — %s — RECOVERY PICKS (scheduled morning decision unavailable)' % (name, session) if early else
-               '%s — %s — LATE PICKS (scheduled report unavailable)' % (name, session))
+               '%s — %s — LATE PICKS (scheduled morning picks unavailable)' % (name, session))
     explanation = ('The scheduled morning decision was unavailable when this recovery was prepared. '
                    'The full report window is 09:46 ET.' if early else
-                   'No frozen 09:46 report was available when this recovery was prepared.')
+                   'The scheduled morning picks were unavailable when this recovery was prepared.')
     if reason:
         explanation += ' Observed reason: %s.' % safe_detail(reason, 240)
     head = ['# %s — %s — %s' % (name, session, 'RECOVERY PICKS' if early else 'LATE PICKS'),

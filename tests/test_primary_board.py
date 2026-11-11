@@ -148,3 +148,22 @@ def test_the_scoreboard_prints_every_source_even_unscored():
                                                'DeepSeek', 'Gemini', 'Baseline engine (k-NN)']
     text = '\n'.join(daily_render.scoreboard_lines(rows))
     assert '3/8 (38%)' in text and 'not yet scored' in text and 'coin flip' in text
+
+
+def test_desks_never_asked_never_read_as_declined():
+    """2026-11-11: the machine was down until 09:20, nothing was staged, and the
+    email said "Every model declined" over four UNAVAILABLE desks. A desk that
+    was never asked has not declined anything."""
+    import email_render
+    down = P.build({'status': 'UNAVAILABLE', 'reason': 'No candidate carried complete prepared technicals.',
+                    'longs': [], 'shorts': []}, {}, CFG, OPEN, True)
+    d = digest(down, down)
+    assert P.desks_unavailable(d['intraday'])
+    assert prepare_delivery.subject_state(d) == '⛔ NO MODEL PICKS — the models were not run today — '
+    hero = email_render._hero(d)
+    assert 'The models were not run today' in hero and 'declined' not in hero
+    # one desk that read the evidence and declined keeps the old wording
+    empty = P.build({'status': 'NO_OPPORTUNITY', 'longs': [], 'shorts': []}, {}, CFG, OPEN, True)
+    mixed = digest(down, empty)
+    assert not P.desks_unavailable(mixed['intraday'])
+    assert prepare_delivery.subject_state(mixed) == '⛔ NO MODEL PICKS — nothing to act on — '

@@ -584,3 +584,16 @@ def test_the_counted_top_two_lead_rotates_too():
     leads = {top_picks.select(a, b_, {'status': 'UNAVAILABLE'}, gemini=g,
                               session='2026-10-%02d' % d)['picks'][0]['lead'] for d in range(5, 31)}
     assert leads == {'Claude', 'DeepSeek', 'Gemini'}
+
+
+def test_an_empty_table_is_not_called_a_split_vote():
+    """2026-11-11: nothing was staged, the council had no position, and the
+    section (and the DDA export of it) read "no position won most of the
+    council after two rounds"."""
+    import council
+    s = council.council_top_two({'session': '2026-11-11', 'status': 'NO_POSITIONS', 'picks': [],
+                                 'positions': [], 'errors': {},
+                                 'reason': 'no model proposed a position today'}, previous={})
+    assert s['picks'] == []
+    assert s['reason'].startswith('The council had nothing to vote on')
+    assert 'after two rounds' not in s['reason']

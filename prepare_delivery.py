@@ -97,6 +97,10 @@ def subject_state(report):
         import council_flash
         return '⛔ NO COUNCIL PICK — %s passed over — ' % council_flash.passed_words(top)
     if not legs and intraday.get('desks'):
+        import primary_board
+        if primary_board.desks_unavailable(intraday):
+            # 2026-11-11: not one model was asked; that is a failed morning, not a verdict.
+            return '⛔ NO MODEL PICKS — the models were not run today — '
         return '⛔ NO MODEL PICKS — nothing to act on — '
     if not legs:
         if any(r.get('role') == 'pair' for r in intraday.get('recorded_today', [])):

@@ -120,6 +120,17 @@ def build(evidence, quotes, cfg, clock, shadow, source=PRIMARY_LABEL):
     return out
 
 
+def desks_unavailable(intra):
+    """True when the desks exist and EVERY one is UNAVAILABLE: no model was asked.
+
+    2026-11-11: the machine was down until 09:20, nothing was staged, and the
+    email said "Every model declined". A desk that declined (NO_OPPORTUNITY)
+    read the evidence; a desk that is UNAVAILABLE never saw any. The two must
+    never share a sentence."""
+    desks = (intra or {}).get('desks') or []
+    return bool(desks) and all(str(d.get('status')).upper() == 'UNAVAILABLE' for d in desks)
+
+
 def headline_legs(intra):
     """The legs Part 1 leads with: every desk's, else the engine's.
 
