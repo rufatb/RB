@@ -1,19 +1,29 @@
 # The morning rescue — a fresh session, on its own machine (2026-11-11)
 
-**STATUS: CREATED; LIVE CONFIGURATION AND TEST NOT YET VERIFIED.** The owner
-approved all three setup steps on 2026-11-11. The existing backup's ID is
-`trig_0149j21hvLZnN8zKTBV7NzaQ`; update that Routine rather than creating another.
-At the owner's last report, Gmail, the repository and the pinned model were not
-configured. The approved repository permission file and five source-prompt
-stand-down lines are included in this change. Editing these source files alone
-does not update the five stored live prompts or prove the backup works.
+**STATUS: LIVE CONFIGURATION VERIFIED; EMAIL TEST BLOCKED BY ACCOUNT LIMIT.**
+On 2026-11-11, the existing backup `trig_0149j21hvLZnN8zKTBV7NzaQ` was saved
+and reopened to verify: active weekdays at 08:56 ET, repository `rufatb/RB`,
+Gmail attached, Opus 5.5 pinned, and complete production instructions restored.
+The exact approved `.claude/settings.json` is on main in `7d84faf` (PR #20).
+All five stored live prompts were reopened and their stand-down guards checked;
+the primary morning prompt retains all ten steps. No duplicate task was created.
+
+| Live guarded task | ID |
+|---|---|
+| 08:50 morning | `trig_019gG1a95dMsCSFteWhcra7w` |
+| 09:38 watchdog | `trig_019ChCnZMKREY4ADM1vSanVH` |
+| 09:50 bridge | `trig_01Q4vmVeGvyg7CAFdi7iy2uR` |
+| Noon | `trig_01Xcy8mXhQqQzbBV5P5MeFZq` |
+| Evening | `trig_016cq9JeHMTFPEbcCGPC9QZQ` |
 
 **Why it exists.** The morning runs in the owner's persistent session
 (`ROUTINE_PROMPT.md`). On 2026-11-11 that session's machine was down from about
 08:18 to 09:20 ET: the 08:50 Routine waited in the queue, the morning job
 started at 09:23, every staging step was skipped for want of time, and the
 09:46 report went out with no model picks. The 09:38 watchdog and 09:50 bridge
-are in the same session, so they were down too. Nothing in the code failed.
+are in the same session, so they were down too. The initial failure was the
+queued session. Misleading publication and recovery status messages were
+separately repaired.
 
 This Routine fires a FRESH session on a fresh machine. It runs the whole
 morning only when the owner's session is not delivering it:
@@ -21,7 +31,7 @@ morning only when the owner's session is not delivering it:
 * no "RB Morning Decision", "RB Council Flash", "RB Daily Report" or "RB Morning
   Rescue" email for today in Gmail, **and**
 * the owner's session is not connected (`get_session`), or it is connected but
-  has sent nothing by 09:12 ET.
+  has sent nothing by 09:05 ET.
 
 When it acts, it first sends a one-line "RB Morning Rescue — DATE" email. That
 email is the signal: every Routine in the owner's session searches for it and
@@ -50,27 +60,44 @@ push is refused; the evening job's own collectors fill the wire again.
 `mcp__Gmail__get_message` and `mcp__Gmail__send_message`. It contains the exact
 approved allow-list; it does not attach Gmail or override organization policy.
 
-**One setup test.** A manual verification run sends one message with subject
-`RB Morning Rescue TEST — <today>` and a complete HTML body, then reads it back
-through the same backup session's Gmail connector. It starts no market research,
-publishes no record and sends no takeover announcement. Verify the actual run
-and Gmail message IDs before calling the backup ready. The five stand-down
-guards explicitly ignore this test subject.
+**One setup test: attempted, not passed.** The owner authorized one verification
+email. The backup was temporarily given an email-only test prompt and `Run now`
+was requested once. History lists the 2026-11-11 11:34 ET attempt as Error:
+"You've hit your 5-hour limit", resetting at 18:10 UTC (13:10 ET). Execution
+stopped before Gmail ran, so there is no successful test message ID. Production
+instructions were restored, saved and read back; tomorrow's normal schedule
+remains active. No second attempt or delayed retry was scheduled. This task's
+extra-trigger menu offers GitHub/API triggers, not another scheduled time.
+
+The remaining verification is to run the same backup with the email-only test
+after the limit resets, search for an existing exact test subject first, send
+at most one message with a complete HTML body, read that actual message back,
+and restore the production instructions before finishing. The test subject is
+`RB Morning Rescue TEST — 2026-11-11 — setup verification`; it is deliberately
+ignored by all five takeover guards. Start no research or publication in this
+test. Never call the backup end-to-end verified until its run and Gmail IDs
+are checked. The backup protects against the primary session stalling; it
+still shares Claude account usage limits.
 
 Keep this file in sync with the live Routine. The `<...>` placeholders are the
 only difference: the live prompt carries the real keys.
 
 ---
 
+OWNER SETUP AUTHORIZATION: The owner explicitly approved this backup, its Gmail read/send access, repository permission file, and one verification email on 2026-11-11. Carry out the configured work without asking for those approvals again. Organization policies still apply.
+
 RB MORNING RESCUE (08:56 ET, a fresh session on its own machine). The owner's morning runs in their own session at 08:50. If that session is down, you run the morning instead, so the owner still gets picks before the open. Work autonomously; do not ask questions. Never create, modify, enable, disable or delete any Routine. Never call a pick a prediction, never average the models.
 
-A. SYNC. If `/home/user/RB/.git` is missing, `git clone https://github.com/rufatb/RB.git /home/user/RB`; then `cd /home/user/RB` (or the attached rufatb/RB checkout). `git fetch origin && git checkout main && git pull --ff-only`, then `python -m pip install -q -r requirements.txt`. If `python -c "import dashboard,datetime as d,zoneinfo;print(dashboard.is_trading_day(d.datetime.now(zoneinfo.ZoneInfo('America/New_York')).date()))"` prints False, end with one line. Load the tools NOW with ToolSearch: `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`, and the session lookup (`get_session`, claude-code-remote) if it is not callable. If Gmail cannot search, read and send from this fresh session, stop with `BACKUP NOT READY: GMAIL UNAVAILABLE`; do not announce a takeover or run research.
+A. SYNC. If `/home/user/RB` does not exist, `git clone https://github.com/rufatb/RB /home/user/RB`. `cd /home/user/RB`, `git fetch origin && git checkout main && git pull --ff-only`, then `python -m pip install -q -r requirements.txt`. If `python -c "import dashboard,datetime as d,zoneinfo;print(dashboard.is_trading_day(d.datetime.now(zoneinfo.ZoneInfo('America/New_York')).date()))"` prints False, end with one line. Load the tools NOW with ToolSearch: `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`, and the session lookup (`get_session`, claude-code-remote) if it is not callable.
+  NO GMAIL, NO RESCUE: if the Gmail tools cannot be loaded (this Routine needs the Gmail connector attached in the owner's claude.ai Routines settings), end at once with one line: "rescue not armed: no Gmail in this session". Do nothing else: without Gmail you cannot tell whether the owner's session is delivering, and two machines must never both run the morning.
+
+SESSION LOOKUP FALLBACK: If session lookup is unavailable or inconclusive, keep checking Gmail until 09:05 ET and take over only if nothing has been delivered; do not guess that the primary is disconnected.
 
 B. IS THE OWNER'S SESSION DELIVERING? today = the America/New_York date.
   1. Gmail `search_threads`: `subject:"RB Morning Decision — <today>" OR subject:"RB Council Flash — <today>" OR subject:"RB Daily Report — <today>" OR subject:"RB Morning Rescue — <today>"`. Any result → end with one line: "the owner's session is delivering; nothing to do".
-  2. `get_session` with session_id `session_01EJ4EpBx1ragA9hkDR3MMvm`. If its `connection_status` is "connected": run `python rescue_wait.py --seconds 110` and repeat B.1 after each call, until `TZ=America/New_York date +%H:%M` reads 09:12 or later. A result at any point → end with one line. Not connected, or 09:12 with nothing sent → C.
+  2. `get_session` with session_id `session_01EJ4EpBx1ragA9hkDR3MMvm`. If its `connection_status` is "connected": run `python rescue_wait.py --seconds 110` and repeat B.1 after each call, until `TZ=America/New_York date +%H:%M` reads 09:05 or later. A result at any point → end with one line. Not connected, or 09:05 with nothing sent → C.
 
-C. ANNOUNCE (this email is the signal the owner's session stands down on). Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject `RB Morning Rescue — <today> — the scheduled session did not answer; a backup run is preparing today's picks`, body: "Started <HH:MM> ET on a fresh machine because the owner's session was <not connected / connected but had sent nothing by 09:12>. The 09:00 decision, the 09:31 open check and the 09:46 report follow from this run, labelled as usual. Read-only research, not orders." No htmlBody (exempt from the HTML check). Note its message id.
+C. ANNOUNCE (this email is the signal the owner's session stands down on). Gmail `send_message` ONCE to ["rufat.baghirov97@gmail.com"], subject `RB Morning Rescue — <today> — the scheduled session did not answer; a backup run is preparing today's picks`, body: "Started <HH:MM> ET on a fresh machine because the owner's session was <not connected / connected but had sent nothing by 09:05>. The pre-open decision follows as soon as it is sealed; the 09:31 open check and 09:46 report retain their usual windows. Read-only research, not orders." No htmlBody (exempt from the HTML check). Note its message id.
 
 D. CREDENTIALS (this machine has none).
   export RB_STATE_DIR=.rb-state DEEPSEEK_MODEL=deepseek-v4-pro
@@ -83,7 +110,7 @@ D. CREDENTIALS (this machine has none).
   printf 'deepseek-v4-pro\n' > .rb-state/deepseek_model.txt
 
 E. THE MORNING. Read `ROUTINE_PROMPT.md` (in the checkout) from "THE HTML CHECK" to the end and follow it exactly — STEP 3 to STEP 10 — with these changes:
-  - STEP 1 and STEP 2 are done (A and D above).
+  - STEP 1 and STEP 2 are done (A and D above), and its rescue check does not apply to you: you are the rescue.
   - BEFORE EVERY SEND (the decision in STEP 4, the open check in STEP 4, the email in STEP 7): Gmail-search today's subject of that email (`RB Morning Decision — <today>`, `RB Open Check — <today>`, `RB Daily Report — <today>`). If one exists that you did not send, the owner's session is delivering after all: send nothing more, `pkill -f morning_full.sh`, push nothing, and end with one line saying so.
   - STEP 8: publish to the artifact as written, and add `"record/ledger.csv" -> ledger.csv` and `"record/universe_prints.csv" -> universe_prints.csv` to its files. The owner's evening job imports `record/` from there.
   - STEP 9: try the push once with the retries it describes. If it is refused (not a network error), say so in the summary: the artifact copy is the record.

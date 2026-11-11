@@ -7,11 +7,15 @@ stand-down guards in the morning/watchdog/bridge/noon/evening Routines, and the
 exact committed `.claude/settings.json` allow-list. The owner also approved one
 backup verification email. Do not ask for those approvals again.
 Use the existing backup `trig_0149j21hvLZnN8zKTBV7NzaQ`; do not create a duplicate.
-Repository guards and permissions do not prove the stored Routines are updated.
-At this setup checkpoint, live connector/repository/model configuration and the
-test run remain unverified. See `ROUTINE_RESCUE.md` and verify actual run/message
-IDs before claiming readiness. Account or organization access restrictions still
-need to be resolved through the supported sign-in/settings controls.
+Live setup was saved and reopened on 2026-11-11: the rescue is active on
+weekdays at 08:56 ET with Gmail, `rufatb/RB`, and Opus 5.5. All five stored
+stand-down guards were checked, and the complete ten-step morning prompt is
+preserved. The email-only verification was requested once but stopped before
+execution at the account's five-hour limit (reset 13:10 ET); no test email was
+sent. Production instructions were restored and verified. No retry is queued.
+See `ROUTINE_RESCUE.md`; verify a successful backup run and Gmail message ID
+before claiming end-to-end readiness. Do not create another backup or repeat
+the permissions discussion. Account and organization policies still apply.
 
 ## Operating note — install with `python -m pip` (2026-10-25)
 
