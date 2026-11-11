@@ -54,7 +54,7 @@ A container reset on 10-25 brought a new image.
   that either, and the floor is judged forward as the owner's decision.
 * **Next lab item:** 9's history replay, then 12.
 
-## Operating note — 11-11: the machine was down at 08:50; a rescue run is proposed
+## Operating note — 11-11: the machine was down at 08:50; a rescue run is live from 11-12
 
 * **What happened.**
   * This session's machine was down from about 08:18 to 09:20 ET. The
@@ -82,15 +82,22 @@ A container reset on 10-25 brought a new image.
 * **The machine itself is the single point of failure.** The watchdog and the
   bridge run in the same session, so they were down too. A daemon in the
   container would not help: the container itself was off.
-* **The fix, proposed, waiting for the owner's yes:** `ROUTINE_RESCUE.md`.
-  * It is a fresh-session Routine at 08:56 ET with Gmail attached, and acts
-    only when the owner's session is not delivering.
-  * It announces itself with an "RB Morning Rescue — DATE" email. Every Routine
-    here must then stand down.
-  * The auto-mode classifier refused both creating the Routine and writing
-    `.claude/settings.json` (the allow rules a fresh session may need to send
-    without a prompt). Both need the owner.
-  * `rescue_wait.py` is its wait-by-command.
+* **The fix, live from 11-12 (owner's "yes to all 3"):** `ROUTINE_RESCUE.md`.
+  * `trig_0149j21hvLZnN8zKTBV7NzaQ`: a fresh session at 08:56 ET on its own
+    machine, with Gmail attached and `claude-opus-5-5` pinned. It takes over
+    only when no morning email exists and the owner's session is not
+    connected, or has sent nothing by 09:05.
+  * It announces itself with an "RB Morning Rescue — DATE — …" email. The
+    morning, watchdog, bridge, noon and evening Routines here stand down when
+    they find it. Their guards are live and in the repo copies.
+  * `.claude/settings.json` (the owner's, PR #20) allows the tools it needs
+    without a prompt. `rescue_wait.py` is its wait-by-command.
+  * **Untested end to end.** Its first fire (11:34 ET) failed at once with
+    USAGE_LIMIT_REACHED. The account read `allowed_warning` on its seven-day
+    limit that morning: a rescue cannot run when the account is out of quota.
+* **The same afternoon the session was down again, ~10:20 → 15:15 ET.** The
+  noon check was TOO_LATE; the event desk ran at 15:15 (Gmail
+  `1a1cc41a3cb5bd15`).
 
 ## Day150 — one decision at 09:00, one check at 09:31; a quality floor on Claude's Top 2 (owner, 2026-11-10)
 
