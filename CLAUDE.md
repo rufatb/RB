@@ -18,6 +18,25 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day148 result — a council veto on Claude's picks: UNDERPOWERED (rejection #64, council lab, 2026-11-11)
+
+* **The test.** `PREREGISTER_day148_veto.md`, run once by `council_veto.py`
+  (484b4f6, committed before the look). Read `AUDIT_day148_veto.md`; summary
+  `data/veto_day148.json`. FMP bars only.
+* **The population:** the 239 pinned positions over 23 sessions; 106 with two
+  or more objections. All were scored.
+* **UNDERPOWERED.**
+  * Rest minus vetoed: −0.82% a session, t = −2.28, placebo lower p = 0.016,
+    both halves negative.
+  * The vetoed positions made +0.50% a session (+0.37% net).
+  * A planted 1.0% shows only at t = 2.80; the smallest detectable effect is
+    1.37%.
+* **So:** on this record a veto would have removed winners. No rule either
+  way. Every-member endorsement again did worst (−0.56%, day-137's finding).
+  The day-150 floor keeps a pick two members endorse; this does not support
+  that either, and the floor is judged forward as the owner's decision.
+* **Next lab item:** 9's history replay, then 12.
+
 ## Operating note — 11-11: the machine was down at 08:50; a rescue run is proposed
 
 * **What happened.**
@@ -3940,9 +3959,9 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **63 rejections through
-day-147, #64 held for day-148's veto test (carried to 11-11), #65 the
-commodity nowcast; 5 adoptions** (skipping the morning's widest-swinging names
+It is the running record of every change tested — **65 rejections through
+day-149 (#64 the council veto, day-148; #65 the commodity nowcast); 5
+adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been

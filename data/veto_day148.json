@@ -1,0 +1,338 @@
+{
+ "registration": "PREREGISTER_day148_veto.md",
+ "pin": "veto_day148_positions.json",
+ "population": 239,
+ "scored": 239,
+ "missing": [],
+ "verdict": {
+  "status": "UNDERPOWERED",
+  "sessions": 23,
+  "positions": 239,
+  "vetoed": 106,
+  "mean_d": -0.817,
+  "t": -2.28,
+  "placebo_p_upper": 0.9846,
+  "placebo_p_lower": 0.0155,
+  "halves": [
+   -0.846,
+   -0.79
+  ],
+  "vetoed_mean_of_sessions": 0.498,
+  "vetoed_net": 0.368,
+  "control": {
+   "planted_pct": 1.0,
+   "t": 2.8,
+   "detected": false
+  },
+  "mde": 1.373,
+  "by_session": [
+   {
+    "session": "2026-10-05",
+    "d": 0.546,
+    "vetoed": -0.605,
+    "rest": -0.06
+   },
+   {
+    "session": "2026-10-06",
+    "d": 0.068,
+    "vetoed": -0.611,
+    "rest": -0.543
+   },
+   {
+    "session": "2026-10-07",
+    "d": -0.734,
+    "vetoed": 0.389,
+    "rest": -0.345
+   },
+   {
+    "session": "2026-10-08",
+    "d": -1.256,
+    "vetoed": 0.936,
+    "rest": -0.319
+   },
+   {
+    "session": "2026-10-09",
+    "d": 0.405,
+    "vetoed": 0.359,
+    "rest": 0.764
+   },
+   {
+    "session": "2026-10-13",
+    "d": -0.843,
+    "vetoed": 0.002,
+    "rest": -0.841
+   },
+   {
+    "session": "2026-10-14",
+    "d": -0.894,
+    "vetoed": 0.533,
+    "rest": -0.362
+   },
+   {
+    "session": "2026-10-15",
+    "d": -2.242,
+    "vetoed": -0.386,
+    "rest": -2.628
+   },
+   {
+    "session": "2026-10-16",
+    "d": -5.238,
+    "vetoed": 3.758,
+    "rest": -1.48
+   },
+   {
+    "session": "2026-10-19",
+    "d": 0.974,
+    "vetoed": -0.656,
+    "rest": 0.317
+   },
+   {
+    "session": "2026-10-20",
+    "d": -0.092,
+    "vetoed": 0.126,
+    "rest": 0.034
+   },
+   {
+    "session": "2026-10-21",
+    "d": -0.464,
+    "vetoed": -0.296,
+    "rest": -0.759
+   },
+   {
+    "session": "2026-10-26",
+    "d": -3.574,
+    "vetoed": 2.138,
+    "rest": -1.436
+   },
+   {
+    "session": "2026-10-27",
+    "d": 0.522,
+    "vetoed": -0.298,
+    "rest": 0.223
+   },
+   {
+    "session": "2026-10-28",
+    "d": 0.342,
+    "vetoed": 0.293,
+    "rest": 0.635
+   },
+   {
+    "session": "2026-10-29",
+    "d": 0.328,
+    "vetoed": -0.02,
+    "rest": 0.308
+   },
+   {
+    "session": "2026-10-30",
+    "d": -0.14,
+    "vetoed": 0.803,
+    "rest": 0.662
+   },
+   {
+    "session": "2026-11-02",
+    "d": -2.137,
+    "vetoed": 2.34,
+    "rest": 0.204
+   },
+   {
+    "session": "2026-11-03",
+    "d": -0.701,
+    "vetoed": 0.622,
+    "rest": -0.079
+   },
+   {
+    "session": "2026-11-04",
+    "d": -3.717,
+    "vetoed": 1.128,
+    "rest": -2.589
+   },
+   {
+    "session": "2026-11-05",
+    "d": 0.869,
+    "vetoed": -0.097,
+    "rest": 0.771
+   },
+   {
+    "session": "2026-11-06",
+    "d": -2.527,
+    "vetoed": 1.494,
+    "rest": -1.034
+   },
+   {
+    "session": "2026-11-09",
+    "d": 1.724,
+    "vetoed": -0.502,
+    "rest": 1.222
+   }
+  ]
+ },
+ "describe": {
+  "one_objection_or_more": {
+   "sessions": 23,
+   "flagged": 128,
+   "rest": 111,
+   "mean_d_rest_minus_flagged": -0.603,
+   "t": -1.88,
+   "flagged_mean": 0.294,
+   "flagged_right": 71
+  },
+  "every_member_endorsed": {
+   "sessions": 21,
+   "flagged": 40,
+   "rest": 199,
+   "mean_d_rest_minus_flagged": 0.603,
+   "t": 1.68,
+   "flagged_mean": -0.56,
+   "flagged_right": 19
+  },
+  "raw_not_against_xiu": {
+   "sessions": 23,
+   "flagged": 106,
+   "rest": 133,
+   "mean_d_rest_minus_flagged": -0.944,
+   "t": -2.25,
+   "flagged_mean": 0.536,
+   "flagged_right": 62
+  },
+  "side_LONG": {
+   "sessions": 19,
+   "flagged": 48,
+   "rest": 75,
+   "mean_d_rest_minus_flagged": -0.359,
+   "t": -0.81,
+   "flagged_mean": 0.242,
+   "flagged_right": 26
+  },
+  "side_SHORT": {
+   "sessions": 20,
+   "flagged": 58,
+   "rest": 58,
+   "mean_d_rest_minus_flagged": -1.047,
+   "t": -1.72,
+   "flagged_mean": 0.684,
+   "flagged_right": 35
+  },
+  "source_day137_audit": {
+   "sessions": 12,
+   "flagged": 45,
+   "rest": 63,
+   "mean_d_rest_minus_flagged": -0.814,
+   "t": -1.71,
+   "flagged_mean": 0.193,
+   "flagged_right": 25
+  },
+  "source_frozen_report": {
+   "sessions": 11,
+   "flagged": 61,
+   "rest": 70,
+   "mean_d_rest_minus_flagged": -0.819,
+   "t": -1.45,
+   "flagged_mean": 0.699,
+   "flagged_right": 36
+  },
+  "claude_proposals": {
+   "positions": 73,
+   "vetoed": 19,
+   "vetoed_mean": 0.728,
+   "rest_mean": -0.062
+  },
+  "printed_top2": {
+   "positions": 13,
+   "vetoed": 4,
+   "rows": [
+    {
+     "session": "2026-10-26",
+     "ticker": "ATZ.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": -3.148
+    },
+    {
+     "session": "2026-10-28",
+     "ticker": "MDA.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": 0.054
+    },
+    {
+     "session": "2026-11-02",
+     "ticker": "MX.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": -0.155
+    },
+    {
+     "session": "2026-11-02",
+     "ticker": "TFII.TO",
+     "side": "SHORT",
+     "oppose": 1,
+     "y": -2.598
+    },
+    {
+     "session": "2026-11-03",
+     "ticker": "SHOP.TO",
+     "side": "SHORT",
+     "oppose": 0,
+     "y": -1.01
+    },
+    {
+     "session": "2026-11-03",
+     "ticker": "FTS.TO",
+     "side": "LONG",
+     "oppose": 2,
+     "y": 0.615
+    },
+    {
+     "session": "2026-11-04",
+     "ticker": "CLS.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": -6.032
+    },
+    {
+     "session": "2026-11-04",
+     "ticker": "OVV.TO",
+     "side": "SHORT",
+     "oppose": 3,
+     "y": 3.107
+    },
+    {
+     "session": "2026-11-05",
+     "ticker": "IFC.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": 2.693
+    },
+    {
+     "session": "2026-11-05",
+     "ticker": "HUT.TO",
+     "side": "SHORT",
+     "oppose": 3,
+     "y": 1.694
+    },
+    {
+     "session": "2026-11-06",
+     "ticker": "SLF.TO",
+     "side": "SHORT",
+     "oppose": 0,
+     "y": 0.856
+    },
+    {
+     "session": "2026-11-06",
+     "ticker": "ENB.TO",
+     "side": "LONG",
+     "oppose": 3,
+     "y": -0.346
+    },
+    {
+     "session": "2026-11-09",
+     "ticker": "SHOP.TO",
+     "side": "LONG",
+     "oppose": 0,
+     "y": 1.743
+    }
+   ]
+  }
+ },
+ "measure": "side x (09:45 -> 15:55 close, less XIU.TO), FMP five-minute bars"
+}
