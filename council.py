@@ -1434,6 +1434,10 @@ def council_top_two(council, counted=None, *, prices=None, previous=None, skip_m
               'is nothing here to act on.' if void else
               'No consensus today: no position won most of the council after two rounds, so there '
               'is nothing here to act on.')
+    if council.get('status') == 'NO_POSITIONS':
+        reason = ('The council had no candidate positions to review. Morning inputs or nominations '
+                  'were unavailable; this is not a completed consensus decision.' if council.get('errors') else
+                  'The council had no candidate positions to review, so no consensus vote was formed.')
     repeat_note = None
     if previous is None:
         try:

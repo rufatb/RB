@@ -1,0 +1,18 @@
+[Unit]
+Description=RB complete morning preparation, decision delivery and frozen report
+After=network-online.target time-sync.target
+Wants=network-online.target
+Conflicts=rb-report.service
+
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+UMask=0077
+NoNewPrivileges=true
+WorkingDirectory=/opt/RB
+Environment="PATH=/opt/RB/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python /opt/RB/morning_service.py
+TimeoutStartSec=4500
+KillMode=control-group

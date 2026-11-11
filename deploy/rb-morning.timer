@@ -1,0 +1,12 @@
+[Unit]
+Description=RB full morning on the designated persistent host at 08:50 ET
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 08:50:00 America/New_York
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=false
+Unit=rb-morning.service
+
+[Install]
+WantedBy=timers.target

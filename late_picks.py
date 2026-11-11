@@ -114,9 +114,10 @@ def write_brief(root, cfg, now):
              'answer_path': str(answer),
              'seal_command': f'python late_picks.py --state-dir {root} --seal {answer}'}
     (root/BRIEF_JSON).write_text(json.dumps(brief))
+    window = 'before the open' if now.time() < dt.time(9, 30) else 'after the open'
     text = C.brief_text(brief).replace(
         f'The seal refuses at or after {C.CUTOFF:%H:%M} ET.',
-        f'LATE: asked at {now:%H:%M} ET, after the open; the morning report did not publish.')
+        f'RECOVERY: asked at {now:%H:%M} ET, {window}; the scheduled morning decision was unavailable.')
     (root/C.BRIEF_TEXT).write_text(text)
     return brief
 
@@ -159,7 +160,7 @@ def biotech_part(root, now):
     return ['', '## Part 2 — Biotech catalysts · 3–6 months'] + (table or ['No reviewed event today.'])
 
 
-def compose(root, answer, *, now=None, reason='the scheduled report session stopped before publication'):
+def compose(root, answer, *, now=None, reason=None):
     import email_render as E
     now = _now(now)
     root = Path(root)
@@ -179,14 +180,24 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
     except Exception as exc:
         gemini = G.unavailable('diagnostic snapshot unreadable (%s)' % type(exc).__name__)
     session = now.date().isoformat()
-    subject = 'RB Daily Report — %s — LATE PICKS (the 09:46 report did not publish)' % session
-    head = ['# RB Daily Report — %s — LATE PICKS' % session,
-            'Asked at %s ET, after the open. Not sized; scored separately.' % now.strftime('%H:%M'),
-            'The 09:46 report did not publish today: %s.' % reason,
-            'These picks were asked at %s ET, AFTER the open, by the same pipeline in its '
+    early = now.time() < dt.time(9, 46)
+    asked = dt.datetime.fromisoformat(brief['prepared_at']).astimezone(ET)
+    window = 'BEFORE the open' if asked.time() < dt.time(9, 30) else 'AFTER the open'
+    name = 'RB Recovery Research' if early else 'RB Daily Report'
+    subject = ('%s — %s — RECOVERY PICKS (scheduled morning decision unavailable)' % (name, session) if early else
+               '%s — %s — LATE PICKS (scheduled report unavailable)' % (name, session))
+    explanation = ('The scheduled morning decision was unavailable when this recovery was prepared. '
+                   'The full report window is 09:46 ET.' if early else
+                   'No frozen 09:46 report was available when this recovery was prepared.')
+    if reason:
+        explanation += ' Observed reason: %s.' % safe_detail(reason, 240)
+    head = ['# %s — %s — %s' % (name, session, 'RECOVERY PICKS' if early else 'LATE PICKS'),
+            'Asked at %s ET, %s. Not sized; scored separately.' % (asked.strftime('%H:%M'), window.lower()),
+            explanation,
+            'These recovery picks were asked at %s ET, %s, by the same pipeline in its '
             'diagnostic mode, from %d names. They are not the frozen report and are not sized; '
             'they are scored separately from the pre-open record, from the time they were sent. '
-            'Research only — not orders.' % (now.strftime('%H:%M'), brief['considered']),
+            'Research only — not orders.' % (asked.strftime('%H:%M'), window, brief['considered']),
             'Confidence numbers are each model\'s own, not calibrated win probabilities; the '
             'models are never averaged.']
 
@@ -199,9 +210,9 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
     top = top_picks.with_hedge(top_picks.select({'status': 'READY', **picks}, deepseek, jev,
                                                 gemini=gemini, session=now.date().isoformat()))
     body = (head + ['', *top_picks.table(top, concise=True),
-                    'These, too, were asked after the open; not recorded separately '
+                    'These, too, are recovery research; not recorded separately '
                     '(each desk\'s late pick is).']
-            + ['', '## Part 1 — Picks, asked after the open']
+            + ['', '## Part 1 — Recovery research, '+window.lower()]
             + desk('1 · Claude', {'status': 'READY', **picks})
             + (['Dropped from Claude\'s answer: %s' % '; '.join(problems)] if problems else [])
             + desk('2 · DeepSeek', deepseek)
@@ -274,7 +285,7 @@ def main(argv=None):
     g.add_argument('--stage', action='store_true')
     g.add_argument('--check', metavar='ANSWER')
     g.add_argument('--seal', metavar='ANSWER', help='compose the late email from this answer')
-    p.add_argument('--reason', default='the scheduled report session stopped before publication')
+    p.add_argument('--reason', help='Observed failure reason; omit when the cause is unknown')
     p.add_argument('--no-record', action='store_true',
                    help='compose without appending the late picks to data/model_picks.csv')
     a = p.parse_args(argv)
