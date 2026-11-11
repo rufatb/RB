@@ -92,9 +92,16 @@ A container reset on 10-25 brought a new image.
     they find it. Their guards are live and in the repo copies.
   * `.claude/settings.json` (the owner's, PR #20) allows the tools it needs
     without a prompt. `rescue_wait.py` is its wait-by-command.
-  * **Untested end to end.** Its first fire (11:34 ET) failed at once with
-    USAGE_LIMIT_REACHED. The account read `allowed_warning` on its seven-day
-    limit that morning: a rescue cannot run when the account is out of quota.
+  * **Tested once, the stand-down path only.** Its first fire (11:34 ET)
+    failed at once with USAGE_LIMIT_REACHED. A second fire at 15:17 ET
+    started on a fresh machine (repository attached, Opus, auto mode) and
+    ended in 47 s. Today's emails existed, so it sent nothing and pushed
+    nothing, as written. Its final line cannot be read from here.
+    * Each fire costs about $1.09 of account usage: 150k tokens of context,
+      mostly this file.
+    * The takeover path (announce, run, send) has never run.
+    * The account read `allowed_warning` on its seven-day limit: a rescue
+      cannot run when the account is out of quota.
 * **The same afternoon the session was down again, ~10:20 → 15:15 ET.** The
   noon check was TOO_LATE; the event desk ran at 15:15 (Gmail
   `1a1cc41a3cb5bd15`).
