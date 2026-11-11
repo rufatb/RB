@@ -48,6 +48,10 @@ def test_compose_is_labelled_late_and_never_sized(root, monkeypatch):
                                        'invalid_at': 98.0}], 'shorts': []}, now=NOW, reason='test')
     text = open(out['text_path']).read()
     assert 'LATE PICKS' in out['subject'] and '2026-09-24' in out['subject']
+    assert out['subject'].startswith('RB Daily Report — 2026-09-24 — ')   # every sender's dedupe key
+    # 2026-11-11: never claim the 09:46 report "did not publish"; it may still publish, empty.
+    assert 'did not publish' not in out['subject'] + text
+    assert 'No pre-open picks were made today: test.' in text
     assert 'AFTER the open' in text and 'not sized' in text and 'scored separately' in text
     assert '| LONG AAA.TO | 0.55 | below 98.00 | why |' in text      # Claude, one table row
     assert '| LONG BBB.TO | 0.60 | below 49.00 | r |' in text         # DeepSeek

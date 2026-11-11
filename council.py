@@ -1432,6 +1432,10 @@ def council_top_two(council, counted=None, *, prices=None, previous=None, skip_m
               'the second slot is left empty.' if picks else
               'The council\'s positions were already past their own "wrong if" at 09:46, so there '
               'is nothing here to act on.' if void else
+              # 2026-11-11: an empty table is not a split vote. The morning's
+              # inputs were never staged, and "no consensus" read as a verdict.
+              'The council had nothing to vote on: no model proposed a position today, so there '
+              'is nothing here to act on.' if (council or {}).get('status') == 'NO_POSITIONS' else
               'No consensus today: no position won most of the council after two rounds, so there '
               'is nothing here to act on.')
     repeat_note = None

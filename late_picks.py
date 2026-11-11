@@ -116,7 +116,7 @@ def write_brief(root, cfg, now):
     (root/BRIEF_JSON).write_text(json.dumps(brief))
     text = C.brief_text(brief).replace(
         f'The seal refuses at or after {C.CUTOFF:%H:%M} ET.',
-        f'LATE: asked at {now:%H:%M} ET, after the open; the morning report did not publish.')
+        f'LATE: asked at {now:%H:%M} ET, after the open; no pre-open picks were made today.')
     (root/C.BRIEF_TEXT).write_text(text)
     return brief
 
@@ -179,10 +179,12 @@ def compose(root, answer, *, now=None, reason='the scheduled report session stop
     except Exception as exc:
         gemini = G.unavailable('diagnostic snapshot unreadable (%s)' % type(exc).__name__)
     session = now.date().isoformat()
-    subject = 'RB Daily Report — %s — LATE PICKS (the 09:46 report did not publish)' % session
+    # 2026-11-11: the fixed wording said the 09:46 report "did not publish" on a
+    # morning it published at 09:46 without picks. Say what is true either way.
+    subject = 'RB Daily Report — %s — LATE PICKS (no pre-open picks today)' % session
     head = ['# RB Daily Report — %s — LATE PICKS' % session,
             'Asked at %s ET, after the open. Not sized; scored separately.' % now.strftime('%H:%M'),
-            'The 09:46 report did not publish today: %s.' % reason,
+            'No pre-open picks were made today: %s.' % reason,
             'These picks were asked at %s ET, AFTER the open, by the same pipeline in its '
             'diagnostic mode, from %d names. They are not the frozen report and are not sized; '
             'they are scored separately from the pre-open record, from the time they were sent. '

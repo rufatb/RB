@@ -18,6 +18,44 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Operating note — 11-11: the machine was down at 08:50; a rescue run is proposed
+
+* **What happened.**
+  * This session's machine was down from about 08:18 to 09:20 ET. The
+    container's uptime started at 09:20:39, while the disk survived.
+  * The 08:12 and 08:50 Routines waited in the queue. `morning_full.sh` started
+    at 09:23 and skipped every staging step for want of time. The four desks
+    read `STAGED_CANDIDATE_FILE_INVALID` (yesterday's pool), and the council had
+    `NO_POSITIONS` (`CLAUDE_BRIEF_NOT_TODAY`).
+  * There was no 09:00 decision and no 09:31 check. The 09:46 report published
+    with no model picks.
+  * Late picks went at 09:31 (Gmail `1a1cb057953125a0`), the report at 09:48
+    (`1a1cb14cfb721234`).
+* **Nothing in the code failed.** Every provider answered at 09:24–09:28 in the
+  late-picks run.
+* **The wording that misled the owner, fixed:**
+  * the report said "Every model declined" over four UNAVAILABLE desks. It now
+    says "The models were not run today" (`primary_board.desks_unavailable`),
+    and the subject reads "⛔ NO MODEL PICKS — the models were not run today";
+  * the council's empty table read "no position won most of the council after
+    two rounds" (also in the DDA export). It now reads "had nothing to vote
+    on";
+  * `morning_full.sh` logged "council: sat" on `NO_POSITIONS`;
+  * the late picks said "the 09:46 report did not publish". They now say "no
+    pre-open picks today".
+* **The machine itself is the single point of failure.** The watchdog and the
+  bridge run in the same session, so they were down too. A daemon in the
+  container would not help: the container itself was off.
+* **The fix, proposed, waiting for the owner's yes:** `ROUTINE_RESCUE.md`.
+  * It is a fresh-session Routine at 08:56 ET with Gmail attached, and acts
+    only when the owner's session is not delivering.
+  * It announces itself with an "RB Morning Rescue — DATE" email. Every Routine
+    here must then stand down.
+  * The auto-mode classifier refused both creating the Routine and writing
+    `.claude/settings.json` (the allow rules a fresh session may need to send
+    without a prompt). Both need the owner.
+  * `rescue_wait.py` is its wait-by-command.
+
 ## Day150 — one decision at 09:00, one check at 09:31; a quality floor on Claude's Top 2 (owner, 2026-11-10)
 
 The owner, after 11-10's 09:00 flash (LONG AC.TO, Claude 0.40, council 0 of 4;
