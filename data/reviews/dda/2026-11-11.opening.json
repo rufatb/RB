@@ -1,0 +1,13 @@
+{
+ "exported_at": "2026-11-11T09:23:51.714455-05:00",
+ "opening": {
+  "decided_at": "2026-11-11T09:23:51.372623-05:00",
+  "section": {
+   "picks": [],
+   "reason": "No consensus today: no position won most of the council after two rounds, so there is nothing here to act on.",
+   "rule_version": "day124-council+day129-nominations"
+  }
+ },
+ "schema_version": 1,
+ "session": "2026-11-11"
+}
