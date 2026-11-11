@@ -150,10 +150,38 @@ Tests marked `day150` run on the production values
 smaller, and the email shows news the system already had. Say so plainly when
 asked.
 
-**11-10's operating note.** A worker restart held this session from about
-09:50 to 13:31 ET. The report had gone at 09:49. The noon check was TOO_LATE
-(it refuses after 13:30) and the council-lab slot was missed: day-148's run
-carries to 11-11.
+**11-10's operating note.** Worker restarts held this session twice.
+* **09:50 → 13:31 ET.** The report had gone at 09:49. The noon check was
+  TOO_LATE (it refuses after 13:30) and the council-lab slot was missed:
+  day-148's run carries to 11-11.
+* **14:45 → 19:15 ET.** The event desk's first live run was TOO_LATE (its
+  entry is the close; it refuses from 15:55). The evening job ran at 19:15,
+  whole.
+
+**A second workstream landed on main the same afternoon** (the owner's
+account, 15:03–15:58 ET; branch `intelligent-capital/dda-decision-v2`, built
+on this day's commits). Read `DDA_DECISION.md` and
+`PREREGISTER_DDA_DECISION_V2.md`. It is not this session's work.
+* **What it is.** A separate research layer ("DDA") that publishes JSON for
+  the owner's platform under `data/reviews/dda/`. It changes no pick, no
+  email and no schedule.
+* **Where it hooks in.** `dda_hooks.start` is called from `morning_full.sh`
+  (after Claude's brief is written), `council.py --stage`,
+  `council_flash.py --open-check` and `daily_job.py`. Each call starts a
+  detached process and returns at once. `RB_DDA_ENABLED=0` switches it off.
+* **It commits and pushes by itself** (`dda_desk.publish`): only its own JSON,
+  `git commit --only`, no force, an 8-second budget, and nothing when a
+  non-DDA commit is ahead of `origin/main`. Its 09:46 export can meet
+  `morning.sh`'s own `git add` in the same second; a lost `git add` there is
+  picked up by STEP 9, and a DDA file left behind rides in the evening's
+  `git add data/reviews/`.
+* **It spends OpenRouter credit:** one Claude call a morning with high
+  reasoning and up to 14,000 output tokens, beside a DeepSeek call with
+  thinking on. The credit read $13.44 at 19:20 ET on 11-10 ($40.00 bought,
+  $26.56 used); the mornings were about $0.85 before it. Watch the first
+  morning's cost and tell the owner.
+* **Checked on the merged main:** the full suite passes (3,352), and
+  `provenance.py` reads CLEAN.
 
 ## Day149 — three builds at the owner's "Build all that are missing": a pre-open desk, the nowcast (rejection #65), an event desk (owner, 2026-11-09 night)
 
