@@ -430,14 +430,12 @@ council_left=$(( $(TZ=America/New_York date -d 'today 09:34:00' +%s) - $(date +%
 if [ "$council_left" -gt 30 ]; then
     if timeout "$(( council_left < 900 ? council_left : 900 ))" python council.py --stage \
             --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/council.log" 2>&1; then
-        # 2026-11-11: exit 0 also covers a table with nothing on it.
-        council_status=$(python -c "import json,sys; print(json.load(open(sys.argv[1])).get('status',''))" \
-            "$RB_STATE_DIR/council.json" 2>/dev/null || true)
+        council_status="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status", "UNAVAILABLE"))' "$RB_STATE_DIR/council.json" 2>/dev/null || printf UNAVAILABLE)"
         if [ "$council_status" = "NO_POSITIONS" ]; then
-            log "  council: NOTHING TO VOTE ON — no model proposed a position (council.log)"
-            stage_faults+=("council had no positions")
+            log "  council: NO_POSITIONS — no candidates to review; no consensus decision (council.log)"
+            stage_faults+=("council had no candidate positions")
         else
-            log "  council: sat — the Top 2 is its decision (council.log)"
+            log "  council: sat — status ${council_status}; the Top 2 is its decision (council.log)"
         fi
     else
         log "  council: did NOT sit — the counted rule decides the Top 2 (council.log)"

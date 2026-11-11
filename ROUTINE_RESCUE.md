@@ -1,8 +1,12 @@
 # The morning rescue — a fresh session, on its own machine (2026-11-11)
 
-**STATUS: PROPOSED, NOT LIVE.** Creating the Routine, and adding the stand-down
-check to the owner's session's morning, watchdog, bridge, noon and evening
-prompts, waits for the owner's yes (asked 2026-11-11 ~10:00 ET).
+**STATUS: CREATED; LIVE CONFIGURATION AND TEST NOT YET VERIFIED.** The owner
+approved all three setup steps on 2026-11-11. The existing backup's ID is
+`trig_0149j21hvLZnN8zKTBV7NzaQ`; update that Routine rather than creating another.
+At the owner's last report, Gmail, the repository and the pinned model were not
+configured. The approved repository permission file and five source-prompt
+stand-down lines are included in this change. Editing these source files alone
+does not update the five stored live prompts or prove the backup works.
 
 **Why it exists.** The morning runs in the owner's persistent session
 (`ROUTINE_PROMPT.md`). On 2026-11-11 that session's machine was down from about
@@ -30,6 +34,8 @@ again, and stands down if the owner's session sent first.
 | Name | `RB morning rescue — 08:56 ET, fresh session: runs the morning only if the owner's session is down` |
 | Schedule | `CRON_TZ=America/New_York 56 8 * * 1-5` (08:56 ET is 05:56 PT, outside the 06:00–09:00 PT window where runs can be delayed) |
 | Target | a fresh session per fire (`create_new_session_on_fire`), Gmail connector attached |
+| Repository | `rufatb/RB`, reviewed `main`; explicitly clone it if a fresh machine has no checkout |
+| Model | `claude-opus-5-5`, as explicitly selected by the owner |
 | Its record | pushed if this session can push; always published on the artifact (`record/…`), where the owner's 16:20 evening job imports it (`record_import.py`) |
 
 **What it cannot do.** It cannot answer a council ballot or the Claude desk as
@@ -39,11 +45,17 @@ Its record files that are not on the artifact (`data/news_calls.csv`,
 `data/us_preopen_calls.csv`, the wire archive) are lost for that day if its
 push is refused; the evening job's own collectors fill the wire again.
 
-**Permission prompts.** A fresh session may stop at a permission prompt before
-a send. The owner can stop that by committing `.claude/settings.json` with
+**Permission prompts.** The owner approved `.claude/settings.json` with
 `permissions.allow` entries for `Bash`, `Artifact`, `mcp__Gmail__search_threads`,
-`mcp__Gmail__get_message` and `mcp__Gmail__send_message` (a session cannot
-write that file itself).
+`mcp__Gmail__get_message` and `mcp__Gmail__send_message`. It contains the exact
+approved allow-list; it does not attach Gmail or override organization policy.
+
+**One setup test.** A manual verification run sends one message with subject
+`RB Morning Rescue TEST — <today>` and a complete HTML body, then reads it back
+through the same backup session's Gmail connector. It starts no market research,
+publishes no record and sends no takeover announcement. Verify the actual run
+and Gmail message IDs before calling the backup ready. The five stand-down
+guards explicitly ignore this test subject.
 
 Keep this file in sync with the live Routine. The `<...>` placeholders are the
 only difference: the live prompt carries the real keys.
@@ -52,7 +64,7 @@ only difference: the live prompt carries the real keys.
 
 RB MORNING RESCUE (08:56 ET, a fresh session on its own machine). The owner's morning runs in their own session at 08:50. If that session is down, you run the morning instead, so the owner still gets picks before the open. Work autonomously; do not ask questions. Never create, modify, enable, disable or delete any Routine. Never call a pick a prediction, never average the models.
 
-A. SYNC. `cd /home/user/RB` (or the rufatb/RB checkout you start in). `git fetch origin && git checkout main && git pull --ff-only`, then `python -m pip install -q -r requirements.txt`. If `python -c "import dashboard,datetime as d,zoneinfo;print(dashboard.is_trading_day(d.datetime.now(zoneinfo.ZoneInfo('America/New_York')).date()))"` prints False, end with one line. Load the tools NOW with ToolSearch: `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`, and the session lookup (`get_session`, claude-code-remote) if it is not callable.
+A. SYNC. If `/home/user/RB/.git` is missing, `git clone https://github.com/rufatb/RB.git /home/user/RB`; then `cd /home/user/RB` (or the attached rufatb/RB checkout). `git fetch origin && git checkout main && git pull --ff-only`, then `python -m pip install -q -r requirements.txt`. If `python -c "import dashboard,datetime as d,zoneinfo;print(dashboard.is_trading_day(d.datetime.now(zoneinfo.ZoneInfo('America/New_York')).date()))"` prints False, end with one line. Load the tools NOW with ToolSearch: `select:mcp__Gmail__send_message,mcp__Gmail__search_threads,mcp__Gmail__get_message`, and the session lookup (`get_session`, claude-code-remote) if it is not callable. If Gmail cannot search, read and send from this fresh session, stop with `BACKUP NOT READY: GMAIL UNAVAILABLE`; do not announce a takeover or run research.
 
 B. IS THE OWNER'S SESSION DELIVERING? today = the America/New_York date.
   1. Gmail `search_threads`: `subject:"RB Morning Decision — <today>" OR subject:"RB Council Flash — <today>" OR subject:"RB Daily Report — <today>" OR subject:"RB Morning Rescue — <today>"`. Any result → end with one line: "the owner's session is delivering; nothing to do".

@@ -313,7 +313,8 @@ def bridge(root, stage_name, now=None):
         snap = council.load(root, now)
         if snap.get('session') == data['session'] and snap.get('status') in {'READY', 'NO_CONSENSUS', 'NO_POSITIONS'}:
             original = council.top_two(snap)
-            data['opening'] = {'decided_at': snap.get('finished_at') or snap.get('asked_at'), 'section': {
+            data['opening'] = {'decided_at': snap.get('finished_at') or snap.get('asked_at'),
+                'council_status': snap['status'], 'section': {
                 'rule_version': original.get('rule_version'), 'reason': original.get('reason'),
                 'picks': [{k: p.get(k) for k in ('ticker', 'side', 'reason', 'invalid_at', 'confidence', 'agreement', 'council_vote')}
                           for p in original.get('picks', [])]}}
