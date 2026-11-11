@@ -1,0 +1,16 @@
+{
+ "exported_at": "2026-11-11T09:46:27.222497-05:00",
+ "report": {
+  "generated_at": "2026-11-11T09:46:25.115878-05:00",
+  "intraday": {
+   "top_two": {
+    "picks": [],
+    "reason": "No model answered today, so there is no name to put here.",
+    "rule_version": "day121-agreement"
+   }
+  },
+  "session": "2026-11-11"
+ },
+ "schema_version": 1,
+ "session": "2026-11-11"
+}
