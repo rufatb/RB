@@ -95,6 +95,51 @@ def test_record_publication_refuses_an_unrelated_code_commit(tmp_path, monkeypat
     assert len(commands) == 1
 
 
+def test_real_record_publication_preserves_unrelated_staged_code(tmp_path, monkeypatch):
+    repo, remote = tmp_path/'repo', tmp_path/'remote.git'
+    repo.mkdir()
+    def git(*args, cwd=repo):
+        return subprocess.run(['git', *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+    git('init', '--bare', str(remote))
+    git('init', '-b', 'main')
+    git('config', 'user.email', 'fixture@example.test')
+    git('config', 'user.name', 'Fixture')
+    git('config', 'core.autocrlf', 'false')
+    (repo/'ledger.csv').write_text('session,value\n')
+    (repo/'example.py').write_text('original = True\n')
+    git('add', '--', 'ledger.csv', 'example.py')
+    git('commit', '-m', 'Fixture baseline')
+    git('remote', 'add', 'origin', str(remote))
+    git('push', '-u', 'origin', 'main')
+    (repo/'ledger.csv').write_text('session,value\n2026-11-11,1\n')
+    (repo/'example.py').write_text('unreviewed = True\n')
+    git('add', '--', 'example.py')
+    monkeypatch.setattr(service, 'ROOT', repo)
+    service.record_and_push(repo/'.rb-state', NOW)
+    assert git('show', 'HEAD:example.py') == 'original = True'
+    assert git('diff', '--cached', '--name-only') == 'example.py'
+    assert '2026-11-11' in git('show', 'main:ledger.csv', cwd=remote)
+
+
+def test_child_exit_zero_does_not_hide_an_unsent_report(tmp_path, monkeypatch):
+    import dashboard
+    monkeypatch.setattr(dashboard, 'is_trading_day', lambda *a: True)
+    monkeypatch.setattr(service, 'now', lambda: NOW.replace(hour=8, minute=50))
+    monkeypatch.setattr(service, 'configuration', lambda *a: {'ready': True})
+    monkeypatch.setattr(service.subprocess, 'run', lambda *a, **kw: subprocess.CompletedProcess(a, 0))
+    class Finished:
+        def __init__(self, *a, **kw):
+            pass
+        def poll(self):
+            return 0
+    monkeypatch.setattr(service.subprocess, 'Popen', Finished)
+    monkeypatch.setattr(service, 'cycle', lambda *a: [])
+    monkeypatch.setattr(service, 'record_and_push', lambda *a: None)
+    assert service.run(tmp_path) == 2
+    status = json.loads((tmp_path/'autonomous'/'2026-11-11'/'run.json').read_text())
+    assert status['status'] == 'degraded' and status['delivery_failures'] == 1
+
+
 def test_the_opt_in_timer_stages_at_0850_and_does_not_replay_a_missed_start():
     root = Path(service.__file__).parent
     timer = (root/'deploy/rb-morning.timer').read_text()
