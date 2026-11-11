@@ -59,6 +59,10 @@ FIELDS = ('session', 'model', 'kind', 'side', 'ticker', 'confidence', 'abstain_p
 # recorded from the report, never recomputed).
 KEY = ('session', 'model', 'kind', 'side', 'ticker')
 ENTRY_BAR, EXIT_BAR = dt.time(9, 40), dt.time(15, 55)
+# The session's first five-minute bar. A late pick composed before the open
+# (2026-11-11: asked at 09:25, sent at 09:31) cannot enter before it, so it
+# enters at its close, never at a pre-open bar the session does not have.
+OPEN_BAR = dt.time(9, 30)
 
 
 # ── recording ───────────────────────────────────────────────────────────────
@@ -257,7 +261,7 @@ def score_one(row, bars):
     times = [ts.time() for ts in local.index]
     entry_bar = ENTRY_BAR
     if row.get('entry_time'):
-        entry_bar = dt.time.fromisoformat(row['entry_time'])
+        entry_bar = max(dt.time.fromisoformat(row['entry_time']), OPEN_BAR)
     if entry_bar not in times or EXIT_BAR not in times or entry_bar >= EXIT_BAR:
         return None
     entry = float(local['Close'].iloc[times.index(entry_bar)])

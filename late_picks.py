@@ -244,6 +244,8 @@ def late_rows(root, answer, *, now=None):
     now = _now(now)
     root = Path(root)
     bar = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+    # Composed before the open, a late pick enters at the session's first bar.
+    bar = max(bar, now.replace(hour=9, minute=30, second=0, microsecond=0))
     base = {'session': now.date().isoformat(), 'source': 'late_picks',
             'entry_time': bar.strftime('%H:%M')}
     def row(model, kind, side, p, **extra):

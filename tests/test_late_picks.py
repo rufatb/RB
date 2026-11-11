@@ -78,3 +78,7 @@ def test_late_rows_are_their_own_kind_and_enter_at_the_bar_they_were_sent(root, 
     assert {r['entry_time'] for r in rows} == {'10:10'}          # asked 10:12 -> the 10:10 bar
     assert {r['source'] for r in rows} == {'late_picks'}
     assert next(r for r in rows if r['model'] == 'claude')['basis'] == 'technical'
+    early = dt.datetime(2026, 9, 24, 9, 26, tzinfo=ZoneInfo('America/New_York'))
+    rows = L.late_rows(root, {'longs': [{'ticker': 'AAA.TO', 'confidence': 0.55, 'reason': 'r'}],
+                              'shorts': []}, now=early)
+    assert {r['entry_time'] for r in rows} == {'09:30'}         # before the open -> the first bar

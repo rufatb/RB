@@ -117,6 +117,11 @@ def test_a_late_pick_is_scored_from_its_own_bar_not_from_0945():
     assert M.score_one(base, bars)['entry'] == 90.0
     late = M.score_one({**base, 'entry_time': '10:10'}, bars)
     assert late['entry'] == 110.0 and late['hit'] is False
+    # 2026-11-11: composed at 09:25, before the open, it enters at the first bar.
+    close[0] = 95.0
+    bars = pd.DataFrame({'Open': close, 'High': close, 'Low': close, 'Close': close}, index=idx)
+    early = M.score_one({**base, 'entry_time': '09:25'}, bars)
+    assert early is not None and early['entry'] == 95.0
 
 
 def test_basis_is_recorded_and_carded_only_for_the_registered_population():
