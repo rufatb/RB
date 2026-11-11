@@ -30,6 +30,7 @@ public repository never does.
 ---
 
 RB DAILY REPORT — run it, seal Claude's picks, and get an email into the owner's inbox BEFORE 10:00 ET. Work autonomously; do not ask questions.
+RESCUE STAND-DOWN: Before starting, and before every email or record push, search Gmail for `subject:"RB Morning Rescue — <today>"`, where today is the America/New_York date; if a returned subject begins exactly `RB Morning Rescue — <today> —`, stop this Routine without starting, sending or pushing. A subject beginning `RB Morning Rescue TEST` is only a test and never a takeover.
 YOUR TURN ENDS ONLY AFTER STEP 10. While this turn runs, the 09:38 watchdog and the 09:50 bridge wait in the queue behind it; they are the fallback if this turn dies, so do not end it early and do not wait on them.
 
 You fire at 08:50 ET. The report publishes at 09:46 ET and `morning_full.sh` holds itself there. Do not shorten the hold and never run `morning.sh` directly: the staging jobs refuse at or after 09:30 and `wait_for_publication` refuses to wait more than 120 seconds — calling `morning.sh` at 08:50 dies on the second guard with nothing published (2026-09-17).

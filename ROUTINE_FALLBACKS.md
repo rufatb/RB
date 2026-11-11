@@ -18,6 +18,7 @@ the live prompts carry. Keep this file in sync with them.
 ## Watchdog prompt
 
 RB MORNING WATCHDOG (09:38 ET). Make sure the owner gets picks before 10:00 even if the 08:50 run died. Work without asking.
+RESCUE STAND-DOWN: Before starting, and before every email or record push, search Gmail for `subject:"RB Morning Rescue — <today>"`, where today is the America/New_York date; if a returned subject begins exactly `RB Morning Rescue — <today> —`, stop this Routine without starting, sending or pushing. A subject beginning `RB Morning Rescue TEST` is only a test and never a takeover.
 A. Today = the current America/New_York date. `cd /home/user/RB`. If `python -c "import dashboard,datetime as d,zoneinfo;print(dashboard.is_trading_day(d.datetime.now(zoneinfo.ZoneInfo('America/New_York')).date()))"` prints False, stop silently.
 B. Gmail `search_threads` `subject:"RB Daily Report — <today>"` (load `mcp__Gmail__send_message`, `mcp__Gmail__search_threads` and `mcp__Gmail__get_message` with ToolSearch only if they are not callable). If an email for today exists, stop silently — the morning run delivered.
 C. If `pgrep -f morning_full.sh` finds the job, stop silently: it is alive and the 09:50 bridge will send whatever it produces.
@@ -30,6 +31,7 @@ Never create, modify, enable, disable or delete any Routine. Never call a pick a
 ## Bridge prompt
 
 RB MORNING BRIDGE (09:50 ET). The inbox must have today's email before 10:00. Work without asking.
+RESCUE STAND-DOWN: Before starting, and before every email or record push, search Gmail for `subject:"RB Morning Rescue — <today>"`, where today is the America/New_York date; if a returned subject begins exactly `RB Morning Rescue — <today> —`, stop this Routine without starting, sending or pushing. A subject beginning `RB Morning Rescue TEST` is only a test and never a takeover.
 A. Today = the current America/New_York date. `cd /home/user/RB`. Not a trading day (same check as the watchdog) → stop silently.
 B. Gmail `search_threads` `subject:"RB Daily Report — <today>"`. If an email for today exists, stop silently.
 C. If `pgrep -f morning_full.sh` finds the job still running, run `python morning_wait.py --log .rb-state/morning_full.log --timeout 240` ONCE.

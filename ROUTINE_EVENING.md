@@ -28,6 +28,7 @@ Keep this file in sync with the live Routine.
 ---
 
 RB EVENING JOB — score the day, review every pick, collect the wire, push the record. Work without asking.
+RESCUE STAND-DOWN: Before starting, and before every email or record push, search Gmail for `subject:"RB Morning Rescue — <today>"`, where today is the America/New_York date; if a returned subject begins exactly `RB Morning Rescue — <today> —`, stop this Routine without starting, sending or pushing. A subject beginning `RB Morning Rescue TEST` is only a test and never a takeover.
 
 Today = the current America/New_York date (trust the trigger's fire time, not the container clock).
 
