@@ -694,3 +694,12 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-11-10,top2count,pick,LONG,MDA.TO,0.65,,40.54,day121-agreement,published_report,43.12,43.87,1.7393,1,0,2026-11-10T19:16:18.280683-05:00,,,,,2 of 4
 2026-11-10,top2memory,pick,LONG,MDA.TO,0.68,,40.54,day130-memory,published_report,43.12,43.87,1.7393,1,0,2026-11-10T19:16:18.280683-05:00,,,,,4 of 4 endorse
 2026-11-10,top2memory,pick,SHORT,CNQ.TO,0.04,,,day130-memory,published_report,67.03,68.4,-2.0439,0,,2026-11-10T19:16:18.280683-05:00,,,,,4 of 4 endorse
+2026-11-11,claude,late,LONG,TRI.TO,0.52,,,,late_picks,,,,,,,news,09:25,,,
+2026-11-11,deepseek,late,LONG,PPL.TO,0.45,,67.9,,late_picks,,,,,,,technical,09:25,,,
+2026-11-11,deepseek,late,SHORT,ENB.TO,0.4,,68.32,,late_picks,,,,,,,technical,09:25,,,
+2026-11-11,gemini,late,LONG,MG.TO,0.56,,,,late_picks,,,,,,,news,09:25,,,
+2026-11-11,gemini,late,LONG,TRI.TO,0.58,,,,late_picks,,,,,,,news,09:25,,,
+2026-11-11,gemini,late,SHORT,FTT.TO,0.62,,92,,late_picks,,,,,,,technical,09:25,,,
+2026-11-11,gemini,late,SHORT,GIL.TO,0.6,,,,late_picks,,,,,,,technical,09:25,,,
+2026-11-11,jev,late_forced,LONG,FFH.TO,0.2,0.44,,,late_picks,,,,,,,,09:25,,,
+2026-11-11,jev,late_forced,SHORT,FTT.TO,0.15,0.52,,,late_picks,,,,,,,,09:25,,,
