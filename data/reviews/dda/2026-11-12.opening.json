@@ -1,0 +1,33 @@
+{
+ "exported_at": "2026-11-12T08:58:22.701070-05:00",
+ "opening": {
+  "council_status": "READY",
+  "decided_at": "2026-11-12T08:58:22.660367-05:00",
+  "section": {
+   "picks": [
+    {
+     "agreement": "Claude 0.50; council 3 of 4 endorse",
+     "confidence": 0.5,
+     "council_vote": "3 of 4 endorse; named best by 2",
+     "invalid_at": 76.47,
+     "reason": "CA: rel_sector +2.44% with rvol 1.30 at range52_pos 1.0 and macd_hist +1.16; strength against its sector suggests persistent demand beyond the open.",
+     "side": "LONG",
+     "ticker": "QBR-B.TO"
+    },
+    {
+     "agreement": "Claude 0.52; council 1 of 4 endorse",
+     "confidence": 0.52,
+     "council_vote": "1 of 4 endorse",
+     "invalid_at": null,
+     "reason": "CA: VIX +8.3% pre-market hits high-beta AI hardware; sma50 -21.3%, macd_hist -2.71, r0 -0.96; the 6.5% bounce (rel_sector +5.6) looks fragile against a downtrend.",
+     "side": "SHORT",
+     "ticker": "CLS.TO"
+    }
+   ],
+   "reason": null,
+   "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+  }
+ },
+ "schema_version": 1,
+ "session": "2026-11-12"
+}
