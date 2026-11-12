@@ -650,10 +650,10 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-11,SHOP.TO,SHORT,0.574,sparse,211.6500,board,,,,26.4,0.435,0
 2026-11-11,CM.TO,SHORT,0.560,dense,165.0000,pair,primary,0.2970,90,8.5,0.618,0
 2026-11-11,CVE.TO,SHORT,0.554,sparse,39.8800,board,,,,,1.580,0
-2026-11-12,NTR.TO,LONG,0.581,sparse,100.0800,pair,primary,0.4992,249,19.0,,
-2026-11-12,TD.TO,SHORT,0.637,dense,176.9400,board,,,,1.7,,
-2026-11-12,MFC.TO,SHORT,0.624,dense,63.3200,board,,,,4.7,,
-2026-11-12,RY.TO,SHORT,0.612,dense,289.6800,pair,extra,0.2666,46,15.2,,
-2026-11-12,BNS.TO,SHORT,0.588,dense,132.7600,board,,,,7.5,,
-2026-11-12,CM.TO,SHORT,0.566,dense,165.6500,board,,,,12.1,,
-2026-11-12,BMO.TO,SHORT,0.562,dense,247.1300,pair,primary,0.2275,46,,,
+2026-11-12,NTR.TO,LONG,0.581,sparse,100.0800,pair,primary,0.4992,249,19.0,1.419,1
+2026-11-12,TD.TO,SHORT,0.637,dense,176.9400,board,,,,1.7,-0.141,1
+2026-11-12,MFC.TO,SHORT,0.624,dense,63.3200,board,,,,4.7,-1.058,1
+2026-11-12,RY.TO,SHORT,0.612,dense,289.6800,pair,extra,0.2666,46,15.2,-0.100,1
+2026-11-12,BNS.TO,SHORT,0.588,dense,132.7600,board,,,,7.5,-0.407,1
+2026-11-12,CM.TO,SHORT,0.566,dense,165.6500,board,,,,12.1,-0.072,1
+2026-11-12,BMO.TO,SHORT,0.562,dense,247.1300,pair,primary,0.2275,46,,-0.170,1
