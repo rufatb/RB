@@ -1,0 +1,39 @@
+{
+ "exported_at": "2026-11-12T09:31:04.831213-05:00",
+ "open_check": {
+  "prepared_at": "2026-11-12T09:31:02.471863-05:00",
+  "rows": [
+   {
+    "at": "09:30",
+    "atr_pct": 2.4008,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": 0.07999894188066616,
+    "price": 78.41,
+    "reach": {
+     "days": 1.0305624010633547,
+     "out_of_reach": true,
+     "pct": 2.4741742124729016
+    },
+    "side": "LONG",
+    "ticker": "QBR-B.TO",
+    "verdict": "STILL VALID"
+   },
+   {
+    "at": "09:31",
+    "atr_pct": 9.8207,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": 0.3121716522222176,
+    "price": 338.38,
+    "reach": null,
+    "side": "SHORT",
+    "ticker": "CLS.TO",
+    "verdict": "NOT CHECKED"
+   }
+  ],
+  "session": "2026-11-12"
+ },
+ "schema_version": 1,
+ "session": "2026-11-12"
+}
