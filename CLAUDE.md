@@ -35,6 +35,41 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day151 — lab item 9 on history registered; the first live mornings of the rescue and the late-pick fix (2026-11-12)
+
+* **Registered, runs next weekday.** `PREREGISTER_day151_us_preopen_history.md`
+  is the forward pre-open desk's question, asked of 2026-07-02 → 11-09.
+  * **The population** is pinned in `data/us_preopen_history_day151.json`
+    (titles, times and summaries; no price), written by
+    `us_preopen_history.py --population`.
+    * It is the live filter (`us_preopen.releases`) on a clock cut at each
+      read (`AsOf`: FMP's press feed fetched by month, the newest 15 at the
+      read), plus the wire archive.
+    * 530 events over 89 sessions, on all 81 names: 508 read at 08:15 and
+      22 at 08:55.
+    * FMP's `publishedDate` is Eastern time: it equals the wire's minute on
+      231 of 245 shared titles.
+  * **The bar** is `us_preopen.verdict`'s, at seed 151, with a cost of 0.15% a
+    call (`DEFAULT_HALF` plus `EXIT_COST`; history has no quotes).
+    * Entry: the last one-minute extended-hours bar within 30 minutes of the
+      read.
+    * The contamination probe is day-122's.
+    * Anything but PASS is rejection #66. Nothing live changes, and the
+      forward bar stays as registered.
+  * **The run code** is added in its own commit before it runs.
+* **11-12 morning, on time.**
+  * The decision went at 08:59, the open check at 09:32 (KEEP both) and the
+    report at 09:49.
+  * The rescue (fresh session) fired at 08:56:38 and ended at 09:01:20 with
+    nothing sent: the stand-down worked on a live morning. Its takeover path
+    is still untested.
+* **Late picks composed before the open** (11-11, asked at 09:25) were
+  recorded at a 09:25 bar the session does not have, so they could never be
+  scored.
+  * `model_picks.score_one` enters them at the 09:30 bar
+    (`OPEN_BAR`), and `late_picks.late_rows` records 09:30 (55bc879).
+  * 11-11's nine late picks scored 5 right.
+
 ## Day148 result — a council veto on Claude's picks: UNDERPOWERED (rejection #64, council lab, 2026-11-11)
 
 * **The test.** `PREREGISTER_day148_veto.md`, run once by `council_veto.py`
