@@ -21,6 +21,11 @@ from dda_protocol import (ET, VERSION, RESEARCH_PROMPT, CHALLENGE_PROMPT, assemb
                           validate_challenge, words)
 
 ROOT = Path(__file__).resolve().parent
+DEFAULT_BUDGET = 480
+RESEARCH_LIMIT = 240
+VERIFICATION_LIMIT = 18
+CHALLENGE_LIMIT = 180
+FINALIZE_RESERVE = 10
 
 
 def enabled():
@@ -123,7 +128,7 @@ def capture(root, now):
     return snapshot
 
 
-def routes(root, seconds):
+def _provider_routes(root):
     from prepare_deepseek import load_private_key, load_private_model
     import council
     import jev_opportunities as J
@@ -163,7 +168,58 @@ def routes(root, seconds):
     return [(os.getenv('DEEPSEEK_MODEL', 'deepseek-v4-pro'), deepseek), (council.OPENROUTER_CLAUDE, claude)]
 
 
-def stage(root, *, now=None, clock=None, capture_fn=None, askers=None, verify_fn=None, budget=180):
+def routes(root, seconds):
+    """Isolate network calls so socket activity cannot extend a pass deadline.
+
+    subprocess.run kills and reaps its worker on timeout. Neither provider
+    retries, and a timed-out pass is never silently reissued.
+    """
+    def bounded(index):
+        def ask(prompt, payload, budget):
+            ask.last = {}
+            code = 'DDA_RESEARCH_TIMEOUT' if index == 0 else 'DDA_CHALLENGE_TIMEOUT'
+            try:
+                result = subprocess.run(
+                    [sys.executable, str(Path(__file__).resolve()), '--provider-worker', str(index),
+                     '--state-dir', str(Path(root).resolve())],
+                    cwd=ROOT, input=json.dumps({'prompt': prompt, 'payload': payload, 'budget': budget}),
+                    capture_output=True, text=True, encoding='utf-8', timeout=budget, check=False)
+            except subprocess.TimeoutExpired:
+                raise ValueError(code) from None
+            # Never expose a provider traceback, request headers or stderr.
+            if result.returncode or len(result.stdout) > 4_000_000:
+                raise ValueError('DDA_PROVIDER_WORKER_FAILED')
+            try:
+                envelope = json.loads(result.stdout)
+                if envelope.get('code'):
+                    raise ValueError(envelope['code'])
+                ask.last = envelope['metadata']
+                return envelope['result']
+            except (KeyError, TypeError, json.JSONDecodeError):
+                raise ValueError('DDA_PROVIDER_WORKER_RESPONSE_INVALID') from None
+        return ask
+    return [(name, bounded(i)) for i, (name, _) in enumerate(_provider_routes(root))]
+
+
+def provider_worker(root, index):
+    """Private subprocess protocol: bounded input, sanitized failures, no sends."""
+    try:
+        raw = sys.stdin.read(4_000_001)
+        if len(raw) > 4_000_000:
+            raise ValueError('DDA_PROVIDER_INPUT_TOO_LARGE')
+        request = json.loads(raw)
+        _, ask = _provider_routes(root)[index]
+        result = ask(request['prompt'], request['payload'], request['budget'])
+        envelope = {'result': result, 'metadata': getattr(ask, 'last', {})}
+    except Exception as exc:
+        code = str(exc) if isinstance(exc, ValueError) else ''
+        envelope = {'code': code if re.fullmatch(r'DDA_[A-Z0-9_]{1,80}', code) else 'DDA_PROVIDER_FAILURE'}
+    print(json.dumps(envelope, ensure_ascii=False, allow_nan=False))
+    return 0
+
+
+def stage(root, *, now=None, clock=None, capture_fn=None, askers=None, verify_fn=None,
+          budget=DEFAULT_BUDGET, monotonic=None):
     root = Path(root)
     clock = clock or (lambda: dt.datetime.now(ET))
     now = stamp(now or clock())
@@ -176,31 +232,48 @@ def stage(root, *, now=None, clock=None, capture_fn=None, askers=None, verify_fn
     runtime = root/'dda'/now.date().isoformat()
     if not first_write(runtime/'research.claim.json', {'started_at': now.isoformat(), 'policy': VERSION}):
         raise ValueError('DDA_RESEARCH_ALREADY_STARTED')
-    deadline = time.monotonic() + min(budget, (now.replace(hour=9, minute=29, second=0)-now).total_seconds())
+    timer = monotonic or time.monotonic
+    effective_budget = min(max(15, budget), DEFAULT_BUDGET,
+                           (now.replace(hour=9, minute=29, second=0, microsecond=0)-now).total_seconds())
+    deadline = timer() + effective_budget
     snapshot = (capture_fn or capture)(root, now)
     first_write(runtime/'input.json', snapshot)
-    askers = askers or routes(root, budget)
     route_log, errors, verification = [], [], []
     baseline = None
-    remaining = lambda: max(0, deadline-time.monotonic())
+    remaining = lambda: max(0, deadline-timer())
     research = {'assessments': [], 'cases': []}
     challenge = {'reviews': [], 'ranked_choices': [], 'comparisons': []}
+    active_pass, label, name = 'research', 'Full-universe research', None
+    started, pass_start, allowance = stamp(clock()), timer(), 0
     try:
-        if remaining() < 10:
-            raise ValueError('DDA_RESEARCH_BUDGET_EXHAUSTED')
+        askers = askers or routes(root, effective_budget)
         name, ask = askers[0]
-        started = stamp(clock())
-        result = ask(RESEARCH_PROMPT, research_payload(snapshot), remaining())
+        # Reserve the entire challenge window before starting the screen. The
+        # 150-name, high-reasoning response took 182 s on 2026-11-12; the old
+        # whole-workflow budget was only 180 s, leaving no review at all.
+        allowance = min(RESEARCH_LIMIT, remaining()-VERIFICATION_LIMIT-CHALLENGE_LIMIT-FINALIZE_RESERVE)
+        if allowance < 10:
+            raise ValueError('DDA_RESEARCH_BUDGET_EXHAUSTED')
+        started, pass_start = stamp(clock()), timer()
+        result = ask(RESEARCH_PROMPT, research_payload(snapshot), allowance)
+        if timer()-pass_start > allowance:
+            raise ValueError('DDA_RESEARCH_TIMEOUT')
         research = validate_research(result, snapshot)
         route_log.append({'pass': 'Full-universe research', 'model': name, 'started_at': started.isoformat(),
                           'completed_at': stamp(clock()).isoformat(), 'status': 'complete', 'assessed': len(research['assessments']),
+                          'budget_seconds': round(allowance, 3), 'elapsed_seconds': round(timer()-pass_start, 3),
                           **getattr(ask, 'last', {})})
         if research['cases']:
             from dda_verification import verify
-            started = stamp(clock())
-            verification = (verify_fn or verify)(research['cases'], root, started, seconds=min(18, max(0, remaining()-50)))
+            active_pass, label, name = 'verification', 'FMP earnings verification', 'Financial Modeling Prep'
+            started, pass_start = stamp(clock()), timer()
+            allowance = min(VERIFICATION_LIMIT, remaining()-CHALLENGE_LIMIT-FINALIZE_RESERVE)
+            if allowance <= 0:
+                raise ValueError('DDA_VERIFICATION_BUDGET_EXHAUSTED')
+            verification = (verify_fn or verify)(research['cases'], root, started, seconds=allowance)
             route_log.append({'pass': 'FMP earnings verification', 'model': 'Financial Modeling Prep',
                               'started_at': started.isoformat(), 'completed_at': stamp(clock()).isoformat(),
+                              'budget_seconds': round(allowance, 3), 'elapsed_seconds': round(timer()-pass_start, 3),
                               'status': 'complete' if all(v['status'] != 'UNAVAILABLE' for v in verification) else 'partial'})
             # The original council is a labelled comparison, never a privileged
             # winner or a fact. It may not have completed when DDA is challenged.
@@ -209,24 +282,35 @@ def stage(root, *, now=None, clock=None, capture_fn=None, askers=None, verify_fn
                 baseline = snap
             except Exception:
                 baseline = None
-            if remaining() < 10:
-                raise ValueError('DDA_CHALLENGE_BUDGET_EXHAUSTED')
+            active_pass, label = 'challenge', 'Challenge and alternatives comparison'
             name, ask = askers[-1]
-            started = stamp(clock())
+            started, pass_start = stamp(clock()), timer()
+            allowance = min(CHALLENGE_LIMIT, remaining()-FINALIZE_RESERVE)
+            if allowance < 10:
+                raise ValueError('DDA_CHALLENGE_BUDGET_EXHAUSTED')
             raw = ask(CHALLENGE_PROMPT, {'cases': research['cases'], 'facts': snapshot['facts'],
                       'verification_context': verification, 'original_council': baseline,
                       'execution_context': snapshot['execution_context'],
                       'all_assessments': research['assessments'],
-                      'session': snapshot['session'], 'captured_at': snapshot['captured_at']}, remaining())
+                      'session': snapshot['session'], 'captured_at': snapshot['captured_at']}, allowance)
+            if timer()-pass_start > allowance:
+                raise ValueError('DDA_CHALLENGE_TIMEOUT')
             challenge = validate_challenge(raw, research, snapshot)
             route_log.append({'pass': 'Challenge and alternatives comparison', 'model': name,
                               'started_at': started.isoformat(), 'completed_at': stamp(clock()).isoformat(), 'status': 'complete',
+                              'budget_seconds': round(allowance, 3), 'elapsed_seconds': round(timer()-pass_start, 3),
                               **getattr(ask, 'last', {})})
     except Exception as exc:
-        errors.append({'pass': 'research' if not research['assessments'] else 'challenge', 'error': type(exc).__name__,
-                       'model': name if 'name' in locals() else None,
-                       'code': str(exc)[:100] if isinstance(exc, ValueError) and str(exc).startswith('DDA_') else 'PROVIDER_OR_VALIDATION_FAILURE'})
+        code = str(exc) if isinstance(exc, ValueError) else ''
+        code = code if re.fullmatch(r'DDA_[A-Z0-9_]{1,80}', code) else 'PROVIDER_OR_VALIDATION_FAILURE'
+        errors.append({'pass': active_pass, 'error': type(exc).__name__, 'model': name, 'code': code})
+        route_log.append({'pass': label, 'model': name, 'started_at': started.isoformat(),
+                          'completed_at': stamp(clock()).isoformat(), 'status': 'failed', 'code': code,
+                          'budget_seconds': round(max(0, allowance), 3), 'elapsed_seconds': round(timer()-pass_start, 3)})
     decision = assemble(snapshot, research, challenge, clock(), route_log, errors=errors)
+    decision['runtime_budget'] = {'version': 1, 'total_seconds': effective_budget,
+                                  'research_limit_seconds': RESEARCH_LIMIT, 'verification_limit_seconds': VERIFICATION_LIMIT,
+                                  'challenge_reserved_seconds': CHALLENGE_LIMIT, 'finalize_reserved_seconds': FINALIZE_RESERVE}
     decision['verification_context'] = verification
     decision['source_text'] = snapshot.get('source_text')
     decision['original_council'] = baseline
@@ -349,15 +433,18 @@ def main(argv=None):
     parser.add_argument('--stage', action='store_true')
     parser.add_argument('--export', choices=('opening', 'open-check', 'report'))
     parser.add_argument('--publish', action='store_true')
-    parser.add_argument('--budget', type=int, default=180)
+    parser.add_argument('--budget', type=int, default=DEFAULT_BUDGET)
+    parser.add_argument('--provider-worker', type=int, choices=(0, 1), help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.provider_worker is not None:
+        return provider_worker(args.state_dir, args.provider_worker)
     if not enabled():
         return 0
     try:
         if args.export:
             path = bridge(args.state_dir, args.export)
         else:
-            result = stage(args.state_dir, budget=min(max(args.budget, 15), 180))
+            result = stage(args.state_dir, budget=args.budget)
             path = ROOT/'data'/'reviews'/'dda'/(result['session']+'.decision.json')
         result = publish(path) if args.publish else {'status': 'RECORDED', 'path': str(path.relative_to(ROOT))}
         print(json.dumps(result))

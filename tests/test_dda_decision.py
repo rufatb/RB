@@ -1,9 +1,11 @@
 """Planted implementation controls, not a retrospective return experiment."""
 import copy
 import datetime as dt
+import io
 import json
 from pathlib import Path
 import subprocess
+import time
 
 import pytest
 
@@ -208,6 +210,7 @@ def test_sidecar_is_detached_data_only_and_has_no_wait_or_email_call(tmp_path):
     assert 'dda_desk.py' in args[0][1] and '--publish' in args[0]
     assert kwargs['start_new_session'] and kwargs['stdin'] == subprocess.DEVNULL
     assert 'send' not in ' '.join(args[0])
+    assert '--budget' not in args[0]  # Use the canonical default, not the old 180 s override.
 
 
 def test_publisher_refuses_unreviewed_code_ahead_of_remote(tmp_path, monkeypatch):
@@ -291,3 +294,143 @@ def test_real_git_publication_commits_an_already_staged_record_without_unrelated
     original_head = git('rev-parse', 'HEAD')
     assert D.publish(path, budget=8)['status'] == 'PUBLISHED'
     assert git('rev-parse', 'HEAD') == original_head
+
+
+def test_todays_182_second_screen_preserves_verification_and_full_challenge_window(tmp_path, monkeypatch):
+    """Replay elapsed time, never today's outcomes or another paid request."""
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D.subprocess, 'check_output', lambda *a, **kw: 'a'*40)
+    monkeypatch.setattr(D, 'council_snapshot', lambda *a: None)
+    elapsed, calls = [0.], []
+    data = staged()
+    for i in range(147):
+        row = copy.deepcopy(data['candidates'][0])
+        row['ticker'] = f'T{i:03}.TO'
+        data['candidates'].append(row)
+    snap = P.freeze(data, NOW+dt.timedelta(seconds=15))
+    clean = P.validate_research(research(snap), snap)
+    def capture(*a):
+        elapsed[0] += 15
+        return snap
+    def screen(prompt, payload, budget):
+        assert len(payload['candidates']) == 150
+        calls.append(('screen', budget))
+        elapsed[0] += 182
+        return research(snap)
+    def verify(*a, seconds):
+        calls.append(('verify', seconds))
+        elapsed[0] += 18
+        return [{'ticker': 'OTHER.TO', 'status': 'AVAILABLE'}]
+    def review(prompt, payload, budget):
+        calls.append(('challenge', budget))
+        elapsed[0] += 170
+        return challenge(clean)
+    kwargs = dict(now=NOW, clock=lambda: NOW+dt.timedelta(seconds=elapsed[0]),
+                  monotonic=lambda: elapsed[0], capture_fn=capture, verify_fn=verify,
+                  askers=[('screen-model', screen), ('challenge-model', review)])
+    out = D.stage(tmp_path/'state', **kwargs)
+    assert calls == [('screen', 240), ('verify', 18), ('challenge', 180)]
+    assert out['coverage']['assessed'] == 150 and out['coverage']['challenged'] == 1
+    assert out['opening_eligible'] and not out['errors'] and len(out['choice_ids']) == 1
+    assert [r['elapsed_seconds'] for r in out['routes']] == [182, 18, 170]
+    assert out['runtime_budget']['total_seconds'] == 480
+    assert D.stage(tmp_path/'state', **kwargs) == out and len(calls) == 3
+
+
+@pytest.mark.parametrize('when,budget', [(NOW, 180), (NOW.replace(minute=27), 480)])
+def test_short_window_stops_before_billing_instead_of_starving_the_challenge(tmp_path, monkeypatch, when, budget):
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D.subprocess, 'check_output', lambda *a, **kw: 'a'*40)
+    def never(*a, **kw):
+        pytest.fail('Do not bill a screen without room for the required review')
+    out = D.stage(tmp_path/'state', now=when, clock=lambda: when, monotonic=lambda: 0,
+                  capture_fn=lambda *a: snapshot(), askers=[('screen-model', never)], budget=budget)
+    assert out['status'] == 'RESEARCH INCOMPLETE' and not out['choice_ids']
+    assert out['errors'] == [{'pass': 'research', 'model': 'screen-model', 'error': 'ValueError',
+                              'code': 'DDA_RESEARCH_BUDGET_EXHAUSTED'}]
+    assert out['routes'][0]['status'] == 'failed'
+    assert out['runtime_budget']['total_seconds'] <= budget
+
+
+def test_research_overrun_cannot_promote_unreviewed_cases(tmp_path, monkeypatch):
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D.subprocess, 'check_output', lambda *a, **kw: 'a'*40)
+    elapsed = [0.]
+    def overrun(prompt, payload, budget):
+        elapsed[0] += budget+1
+        return research(snapshot())
+    out = D.stage(tmp_path/'state', now=NOW, clock=lambda: NOW+dt.timedelta(seconds=elapsed[0]),
+                  monotonic=lambda: elapsed[0], capture_fn=lambda *a: snapshot(),
+                  askers=[('screen-model', overrun)], verify_fn=lambda *a, **kw: pytest.fail('Screen timed out'))
+    assert out['status'] == 'RESEARCH INCOMPLETE' and not out['choice_ids']
+    assert out['errors'][0]['code'] == 'DDA_RESEARCH_TIMEOUT'
+    assert out['coverage']['assessed'] == 0
+
+
+def test_challenge_failure_records_the_reviewer_and_preserves_unapproved_screen(tmp_path, monkeypatch):
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D.subprocess, 'check_output', lambda *a, **kw: 'a'*40)
+    monkeypatch.setattr(D, 'council_snapshot', lambda *a: None)
+    def fail(*a):
+        raise ValueError('DDA_CHALLENGE_TIMEOUT')
+    out = D.stage(tmp_path/'state', now=NOW, clock=lambda: NOW,
+                  capture_fn=lambda *a: snapshot(),
+                  askers=[('screen-model', lambda *a: research(snapshot())), ('challenge-model', fail)],
+                  verify_fn=lambda *a, **kw: [{'ticker': 'OTHER.TO', 'status': 'AVAILABLE'}])
+    assert out['status'] == 'RESEARCH INCOMPLETE' and not out['choice_ids']
+    assert out['coverage']['assessed'] == 3 and out['coverage']['challenged'] == 0
+    assert out['errors'][0]['pass'] == 'challenge' and out['errors'][0]['model'] == 'challenge-model'
+    assert out['routes'][-1]['status'] == 'failed'
+
+
+@pytest.mark.parametrize('index,code', [(0, 'DDA_RESEARCH_TIMEOUT'), (1, 'DDA_CHALLENGE_TIMEOUT')])
+def test_wall_timeout_kills_and_reaps_a_still_active_provider_worker(tmp_path, monkeypatch, index, code):
+    """A real hung local process proves this is more than an HTTP idle timeout."""
+    worker = tmp_path/'hung_provider.py'
+    worker.write_text('import sys,time\nsys.stderr.write("private-provider-secret\\n")\n'
+                      'sys.stderr.flush()\ntime.sleep(60)\n', encoding='utf-8')
+    monkeypatch.setattr(D, '__file__', str(worker))
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D, '_provider_routes', lambda *a: [('screen', None), ('challenge', None)])
+    children, popen = [], subprocess.Popen
+    def track(*a, **kw):
+        child = popen(*a, **kw)
+        children.append(child)
+        return child
+    monkeypatch.setattr(D.subprocess, 'Popen', track)
+    _, ask = D.routes(tmp_path, 480)[index]
+    started = time.monotonic()
+    with pytest.raises(ValueError, match=code) as error:
+        ask('fixture', {'no': 'credentials'}, .3)
+    assert time.monotonic()-started < 3
+    assert len(children) == 1 and children[0].poll() is not None
+    assert 'private-provider-secret' not in str(error.value)
+
+
+def test_worker_roundtrip_preserves_result_and_actual_model_receipt(tmp_path, monkeypatch):
+    worker = tmp_path/'fixture_provider.py'
+    worker.write_text('import sys,json\nr=json.load(sys.stdin)\n'
+                      'print(json.dumps({"result":r["payload"],"metadata":{"actual_model":"fixture","usage":{"total_tokens":1}}}))\n',
+                      encoding='utf-8')
+    monkeypatch.setattr(D, '__file__', str(worker))
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    monkeypatch.setattr(D, '_provider_routes', lambda *a: [('fixture', None)])
+    _, ask = D.routes(tmp_path, 480)[0]
+    assert ask('fixture', {'thesis': 'priced in / déjà vu'}, 3) == {'thesis': 'priced in / déjà vu'}
+    assert ask.last == {'actual_model': 'fixture', 'usage': {'total_tokens': 1}}
+
+
+def test_provider_worker_never_serializes_private_exception_text(tmp_path, monkeypatch, capsys):
+    def fail(*a):
+        raise ValueError('apikey=private-provider-secret')
+    monkeypatch.setattr(D, '_provider_routes', lambda *a: [('fixture', fail)])
+    monkeypatch.setattr(D.sys, 'stdin', io.StringIO(json.dumps({'prompt': '', 'payload': {}, 'budget': 1})))
+    assert D.main(['--provider-worker', '0', '--state-dir', str(tmp_path)]) == 0
+    assert json.loads(capsys.readouterr().out) == {'code': 'DDA_PROVIDER_FAILURE'}
+
+
+def test_start_at_or_after_preopen_guard_does_not_create_claim_or_call_provider(tmp_path, monkeypatch):
+    monkeypatch.setattr(D, 'ROOT', tmp_path)
+    with pytest.raises(ValueError, match='DDA_INSUFFICIENT_PREOPEN_WINDOW'):
+        D.stage(tmp_path/'state', now=NOW.replace(minute=28), capture_fn=lambda *a: pytest.fail('Too late'))
+    assert not (tmp_path/'state').exists()

@@ -100,3 +100,19 @@ The evidence cutoff is the completed capture, not the request start. Record
 retrieval clocks, supplied excerpt counts and failures; an unmatched, future,
 unknown-time or unavailable response cannot invent a source. The screen can
 still abstain. The original desk/council inputs and email streams stay unchanged.
+
+## Runtime repair — 2026-11-12, no selection-policy change
+
+The first 150-name live screen consumed 181.906 seconds against a 180-second
+whole-workflow budget. Verification therefore received zero seconds and the
+required challenge never ran. The original incomplete record remains immutable.
+This incident establishes a runtime defect, not evidence about candidate returns.
+
+Allow at most 480 seconds for the detached research workflow, further bounded
+by 09:29 ET. Reserve 18 seconds for verification, 180 for challenge/comparison,
+and 10 for finalization before allocating up to 240 seconds to the screen.
+Terminate each model worker at its actual wall-clock limit; HTTP socket timeouts
+alone do not impose that limit. Do not retry or promote an unreviewed replacement.
+A window too short to leave the required review time stops before a model call.
+Record the per-pass allocation, elapsed time and correct failing route. Existing
+evidence, eligibility, prompts, ranking and opening rules remain unchanged.
