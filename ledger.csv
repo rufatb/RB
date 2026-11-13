@@ -657,3 +657,7 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-12,BNS.TO,SHORT,0.588,dense,132.7600,board,,,,7.5,-0.407,1
 2026-11-12,CM.TO,SHORT,0.566,dense,165.6500,board,,,,12.1,-0.072,1
 2026-11-12,BMO.TO,SHORT,0.562,dense,247.1300,pair,primary,0.2275,46,,-0.170,1
+2026-11-13,NTR.TO,LONG,0.595,mid,101.6800,pair,extra,0.2154,106,,,
+2026-11-13,CNQ.TO,LONG,0.584,mid,70.0800,pair,primary,0.2825,201,2.8,,
+2026-11-13,SHOP.TO,LONG,0.584,sparse,212.9200,board,,,,28.1,,
+2026-11-13,BCE.TO,SHORT,0.562,dense,30.5700,pair,primary,0.5000,819,0.0,,
