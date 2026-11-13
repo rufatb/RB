@@ -45,3 +45,53 @@ def test_population_uses_the_live_filter_and_the_first_read_stands(tmp_path, mon
     assert evs[1][:2] == ('2026-07-16', '08:55') and 'Agnico Eagle Late Release' not in evs[1][2]
     assert len(evs) == 2 and pop['notices_dropped'] >= 1
     assert H.summary(pop)['second_read'] == 1
+
+
+# ── the run (day-151) ───────────────────────────────────────────────────────
+
+def bar(day, hhmm, close):
+    return {'date': '%s %s:00' % (day, hhmm), 'close': close}
+
+
+def test_entry_is_the_last_bar_after_the_release_within_thirty_minutes():
+    at = dt.datetime(2026, 7, 15, 8, 15, tzinfo=ET)
+    bars = H.bars1([bar('2026-07-15', '07:30', 9.0), bar('2026-07-15', '07:50', 10.0),
+                    bar('2026-07-15', '08:10', 11.0), bar('2026-07-15', '08:20', 99.0)])
+    assert H.entry(bars, at)[:1] == (11.0,)                                  # 08:10 bar ends 08:11
+    rel = dt.datetime(2026, 7, 15, 8, 12, tzinfo=ET)
+    assert H.entry(bars, at, rel) == (None, None, 'no bar after the release')
+    assert H.entry(bars[:1], at)[2] == 'no bar in the 30 minutes before the read'
+    assert H.entry([], at)[2] == 'no one-minute bars'
+
+
+def test_judge_reads_the_registered_bar():
+    rows = [{'session': '2026-07-%02d' % (d + 1), 'material': True, 'w_open': w}
+            for d, w in enumerate([0.9, 1.1, 1.0, 0.8, 1.2, 1.0, 0.95, 1.05] * 3)]
+    assert H.judge(rows)['verdict'] == 'PASS'
+    noisy = [dict(r, w_open=(0.1 if i % 2 else -0.1)) for i, r in enumerate(rows)]
+    assert H.judge(noisy)['verdict'] == 'NULL'
+    assert H.judge(rows, probe={'void': True})['verdict'] == 'VOID'
+    wild = [dict(r, w_open=(50 if i % 2 else -49)) for i, r in enumerate(rows)]
+    assert H.judge(wild)['verdict'] == 'UNDERPOWERED'
+    routine = [dict(r, material=False) for r in rows]
+    assert H.judge(routine)['sessions'] == 0
+
+
+def test_price_scores_from_the_read_to_the_open(tmp_path, monkeypatch):
+    monkeypatch.setattr(H, 'CACHE', tmp_path)
+    day = '2026-07-15'
+    one = {'AEM': [bar(day, '08:00', 100.0)], 'SPY': [bar(day, '08:05', 500.0)]}
+    five = {'AEM': [{'date': day + ' 09:30:00', 'open': 102.0}], 'SPY': [{'date': day + ' 09:30:00', 'open': 500.0}]}
+
+    def read(path, symbol=None, **p):
+        if path == 'historical-chart/1min':
+            return one[symbol]
+        if path == 'historical-chart/5min':
+            return five[symbol]
+        return [{'date': '2026-07-14', 'close': 100.0 if symbol == 'AEM' else 500.0}]
+    pop = {'events': [{'session': day, 'ticker': 'AEM.TO', 'us': 'AEM', 'read_at': day + 'T08:15:00-04:00',
+                       'releases': [{'published_at': day + 'T07:47:00-04:00', 'title': 't', 'source': 'FMP press feed'}]}]}
+    answers = {day + 'T08:15:00-04:00': {'calls': {day + ':AEM.TO': {'side': 'SHORT', 'confidence': 0.6,
+                                                                      'material': True}}}}
+    rows, _ = H.price(pop, answers, read)
+    assert rows[0]['us_px'] == 100.0 and rows[0]['w_open'] == -2.0 and rows[0]['gap'] == -2.0
