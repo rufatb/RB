@@ -54,6 +54,37 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day151b — lab item 9 on history: NULL, rejection #66; 11-13's emails went out late (2026-11-13)
+
+* **The result.** `us_preopen_history.py --run` (3f6f887, committed before it
+  ran); read `AUDIT_day151_us_preopen_history.md`. Summary and calls:
+  `data/us_preopen_history_day151_result.json`.
+  * 209 material, priced calls over 72 sessions, read → 09:30 open against
+    SPY: −0.27% a session, t = −1.88, placebo p = 0.97, both halves negative.
+  * A planted 0.5% shows at t = 3.51; the smallest detectable effect is
+    0.40%. The probe's median miss is 36.6%: not void.
+  * Beside it: read → close +0.20%; the New York gap +0.01%; LONG −0.33%
+    (168 calls). 44% of answered calls had no pre-market bar within 30
+    minutes of the read.
+  * By 08:15 the US pre-market has traded the release. Nothing live changes;
+    the forward desk keeps its own bar, and stopping it is the owner's call.
+  * **Next lab item: 12** (a name's own intraday habit).
+* **11-13's morning: the machine and then the connectors failed.**
+  * Restarts at about 08:53 and 09:31 ET. The 08:12 Routine arrived at 08:53
+    and the 08:50 at 09:51.
+  * Recovery picks were composed at 09:36 (LONG CTC-A.TO, SHORT CS.TO). The
+    09:46 report published with no model picks.
+  * Every connector (Gmail, FMP, Gemini, Claude Docs) answered 502
+    `CLIENT_HTTP_NOT_IMPLEMENTED` in this session, in the 08:56 rescue's and
+    in two fresh sessions created to send.
+    * The rescue ended "not armed", as written.
+    * The owner reconnecting Gmail did not help: the fault was not theirs.
+  * Gmail came back about 10:26. The picks went at 10:27 (Gmail
+    `1a1d585365ff3e51`), the report at 10:51 (`1a1d59b38117ead2`, HTML OK,
+    recorded).
+  * **The rescue cannot help when connectors fail across the platform.** Its
+    takeover path is still untested.
+
 ## Day151 — lab item 9 on history registered; the first live mornings of the rescue and the late-pick fix (2026-11-12)
 
 * **Registered, runs next weekday.** `PREREGISTER_day151_us_preopen_history.md`
@@ -4044,9 +4075,9 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **65 rejections through
-day-149 (#64 the council veto, day-148; #65 the commodity nowcast); 5
-adoptions** (skipping the morning's widest-swinging names
+It is the running record of every change tested — **66 rejections through
+day-151 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+pre-open desk on history, day-151); 5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been

@@ -6174,3 +6174,34 @@ on 11-11 by `council_veto.py` (484b4f6, committed before the look). Read
   this record does not support endorsement either.
 * **Counts:** 64 rejections through day-148, #65 the nowcast (day-149b);
   5 adoptions.
+
+
+## Day-151: REJECTION #66 — the pre-open desk on history: what is left to the open runs against the read
+
+Council lab item 9's history replay, registered 11-12
+(`PREREGISTER_day151_us_preopen_history.md`), run once on 11-13 by
+`us_preopen_history.py --run` (3f6f887, committed before it ran). Read
+`AUDIT_day151_us_preopen_history.md`; summary and calls
+`data/us_preopen_history_day151_result.json`.
+* **The question.** The forward pre-open desk's, asked of 2026-07-02 → 11-09.
+  DeepSeek reads an overnight release on a name with a New York listing at
+  08:15 (or 08:55). Does that listing move the read's way more than SPY from
+  the read to the 09:30 open?
+* **The population.** 530 events over 89 sessions; 525 answered. 209
+  material calls over 72 sessions had a price at the read.
+* **NULL, powered.**
+  * −0.27% a session, t = −1.88, placebo p = 0.97, both halves negative.
+  * Net −0.42%; 94 of 209 right.
+  * A planted 0.5% shows at t = 3.51; the smallest detectable effect is
+    0.40%.
+  * The probe's median miss is 36.6%: not contaminated.
+* **Beside it:**
+  * read → 09:45 −0.15%; read → close +0.20%;
+  * the New York gap +0.01% (319 calls);
+  * LONG −0.33% (168), SHORT 0.00% (41);
+  * 44% of answered calls had no pre-market bar within 30 minutes of the
+    read.
+* **So:** the US pre-market has traded the release by 08:15, and what is
+  left to the open runs slightly against the read. Nothing live changes; the
+  forward desk keeps its own bar.
+* **Counts:** 66 rejections through day-151; 5 adoptions.
