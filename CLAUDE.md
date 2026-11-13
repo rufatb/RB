@@ -1,5 +1,24 @@
 # Working notes for this repo
 
+## DDA runtime repair — 2026-11-12
+
+The 11-12 DDA screen assessed all 150 names but took 181.906 seconds against
+the entire workflow's 180-second limit. FMP was handed zero seconds and the
+Claude challenge never ran. `DDA_CHALLENGE_BUDGET_EXHAUSTED` meant elapsed
+runtime, not an account spending limit. Keep that immutable incomplete record;
+do not rerun it or backfill an opening selection after seeing the session.
+
+`dda_desk` now defaults to 480 seconds, capped at 09:29 ET. Before the screen,
+it reserves 18 seconds for FMP, 180 for the separate-context challenge, and
+10 for finalization. The screen gets at most 240 seconds. Both model calls
+run in isolated workers with real wall-clock termination and no retry. A
+short window stops before billing a screen that would leave no review time.
+The detached hook uses this canonical default; do not restore `--budget 180`.
+Pass budgets, elapsed times and the correct failed model are recorded. This
+changes timing only: no prompts, eligibility, selection, email or schedule rules.
+Offline controls replay a 182-second 150-name screen plus verification and a
+170-second review, kill real hung local workers, and preserve immutable reruns.
+
 ## Morning rescue setup authorization — 2026-11-11
 
 The owner explicitly approved all three setup steps: the 08:56 ET weekday backup,

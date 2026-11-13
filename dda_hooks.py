@@ -13,7 +13,7 @@ def start(state_dir, action, *, popen=subprocess.Popen):
     state.mkdir(parents=True, exist_ok=True)
     if action not in {'research', 'opening', 'open-check', 'report'}:
         raise ValueError('DDA_UNKNOWN_HOOK')
-    args = ['--stage', '--budget', '180'] if action == 'research' else ['--export', action]
+    args = ['--stage'] if action == 'research' else ['--export', action]
     try:
         with (state/'dda-hook.log').open('ab') as log:
             popen([sys.executable, str(root/'dda_desk.py'), '--state-dir', str(state), *args, '--publish'],
