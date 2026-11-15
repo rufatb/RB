@@ -734,13 +734,13 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-11-12,top2memory,pick,SHORT,CLS.TO,0.68,,,day130-memory,published_report,359.99,362.18,-0.6084,0,,2026-11-12T16:21:11.760369-05:00,,,,,3 of 4 endorse
 2026-11-12,top2memory,pick,SHORT,GIL.TO,0.58,,,day130-memory,published_report,50.8,49.66,2.2441,1,,2026-11-12T16:21:11.760369-05:00,,,,,4 of 4 endorse
 2026-11-12,top2run,pick,LONG,WCN.TO,0.51,,269.47,day144-claude-leads+day146-runs+day150-floor,published_report,275.51,276.33,0.2976,1,0,2026-11-12T16:21:11.760369-05:00,,,,,Claude 0.51; council 1 of 4 endorse
-2026-11-13,deepseek,late,LONG,CCO.TO,0.62,,,,late_picks,,,,,,,technical,09:35,,,
-2026-11-13,engine,board,LONG,CNQ.TO,0.584,,,,published_report,,,,,,,,,,,
-2026-11-13,engine,board,LONG,NTR.TO,0.595,,,,published_report,,,,,,,,,,,
-2026-11-13,engine,board,SHORT,BCE.TO,0.562,,,,published_report,,,,,,,,,,,
-2026-11-13,gemini,late,LONG,CAE.TO,0.62,,,,late_picks,,,,,,,news,09:35,,,
-2026-11-13,gemini,late,LONG,CTC-A.TO,0.65,,210.22,,late_picks,,,,,,,news,09:35,,,
-2026-11-13,gemini,late,SHORT,CS.TO,0.64,,11.08,,late_picks,,,,,,,technical,09:35,,,
-2026-11-13,gemini,late,SHORT,PAAS.TO,0.61,,,,late_picks,,,,,,,technical,09:35,,,
-2026-11-13,jev,late_forced,LONG,CTC-A.TO,0.57,0.34,,,late_picks,,,,,,,,09:35,,,
-2026-11-13,jev,late_forced,SHORT,CS.TO,0.27,0.42,,,late_picks,,,,,,,,09:35,,,
+2026-11-13,deepseek,late,LONG,CCO.TO,0.62,,,,late_picks,102.42,100.88,-1.5036,0,,2026-11-15T16:21:26.150830-05:00,technical,09:35,,,
+2026-11-13,engine,board,LONG,CNQ.TO,0.584,,,,published_report,70.08,70.91,1.1844,1,,2026-11-15T16:21:26.150830-05:00,,,,,
+2026-11-13,engine,board,LONG,NTR.TO,0.595,,,,published_report,101.68,101.65,-0.0295,0,,2026-11-15T16:21:26.150830-05:00,,,,,
+2026-11-13,engine,board,SHORT,BCE.TO,0.562,,,,published_report,30.57,30.57,-0,0,,2026-11-15T16:21:26.150830-05:00,,,,,
+2026-11-13,gemini,late,LONG,CAE.TO,0.62,,,,late_picks,40.39,39.82,-1.4112,0,,2026-11-15T16:21:26.150830-05:00,news,09:35,,,
+2026-11-13,gemini,late,LONG,CTC-A.TO,0.65,,210.22,,late_picks,220.32,220.18,-0.0636,0,0,2026-11-15T16:21:26.150830-05:00,news,09:35,,,
+2026-11-13,gemini,late,SHORT,CS.TO,0.64,,11.08,,late_picks,10.565,10.23,3.1708,1,0,2026-11-15T16:21:26.150830-05:00,technical,09:35,,,
+2026-11-13,gemini,late,SHORT,PAAS.TO,0.61,,,,late_picks,54.14,53.51,1.1637,1,,2026-11-15T16:21:26.150830-05:00,technical,09:35,,,
+2026-11-13,jev,late_forced,LONG,CTC-A.TO,0.57,0.34,,,late_picks,220.32,220.18,-0.0636,0,,2026-11-15T16:21:26.150830-05:00,,09:35,,,
+2026-11-13,jev,late_forced,SHORT,CS.TO,0.27,0.42,,,late_picks,10.565,10.23,3.1708,1,,2026-11-15T16:21:26.150830-05:00,,09:35,,,
