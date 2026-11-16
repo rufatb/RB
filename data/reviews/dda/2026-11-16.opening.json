@@ -1,0 +1,33 @@
+{
+ "exported_at": "2026-11-16T09:00:17.502877-05:00",
+ "opening": {
+  "council_status": "READY",
+  "decided_at": "2026-11-16T09:00:17.468985-05:00",
+  "section": {
+   "picks": [
+    {
+     "agreement": "Claude 0.42; council 4 of 4 endorse",
+     "confidence": 0.42,
+     "council_vote": "4 of 4 endorse; named best by 4",
+     "invalid_at": null,
+     "reason": "CA market. The 07:30 ISSUER_RELEASE confirms an unsolicited Quebecor proposal; the bid gap is priced at the open, but targets often hold or drift toward terms; rsi 46, range52_pos 0.12.",
+     "side": "LONG",
+     "ticker": "T.TO"
+    },
+    {
+     "agreement": "Claude 0.40; council 3 of 4 endorse",
+     "confidence": 0.4,
+     "council_vote": "3 of 4 endorse; named best by 2",
+     "invalid_at": null,
+     "reason": "CA market. The acquirer proposed a $31B cash-and-stock bid for Telus while extended (rsi 75.6, sma50 +16.6%); dilution worry can keep pressing it after the open's first reaction.",
+     "side": "SHORT",
+     "ticker": "QBR-B.TO"
+    }
+   ],
+   "reason": null,
+   "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+  }
+ },
+ "schema_version": 1,
+ "session": "2026-11-16"
+}
