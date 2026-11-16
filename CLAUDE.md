@@ -54,6 +54,29 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day152 — lab item 12 registered: a name's own intraday habit (2026-11-16)
+
+* `PREREGISTER_day152_intraday_habit.md`, before any return.
+  * Each name's mean 09:45 → close against XIU over the prior 20 sessions;
+    the top fifth minus the bottom fifth on the next session.
+  * Cached bars only (day-143's cache), seed 152.
+  * Anything but PERSISTENCE is rejection #67. Nothing live changes.
+* `intraday_habit.py` is committed in its own commit before it runs, next
+  weekday.
+* **11-16's morning was on time:**
+
+  | Email | Sent (ET) | Gmail id |
+  |---|---|---|
+  | Decision | 09:01 | `1a1e4a98e6cf4730` |
+  | Open check | 09:31 | `1a1e4c55ec5f7043` |
+  | Report | 09:49 | `1a1e4d5afe9e4e97` |
+
+  The decision was LONG T.TO and SHORT QBR-B.TO. Both were CAUTION at the
+  open, having already moved their way before it.
+* **The 11-13 evening job did not run.** The machine was off from Friday
+  afternoon to Sunday 16:20. Sunday's job scored Friday's picks and wrote
+  Friday's review (a2efddd).
+
 ## Day151b — lab item 9 on history: NULL, rejection #66; 11-13's emails went out late (2026-11-13)
 
 * **The result.** `us_preopen_history.py --run` (3f6f887, committed before it
