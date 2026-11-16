@@ -1,0 +1,1809 @@
+{
+ "assessments": [
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "RY.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "TD.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "ENB.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "BMO.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "SU.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "BNS.TO"
+  },
+  {
+   "reason": "Issuer release lacks numerical surprise or evidence of repricing after open.",
+   "status": "NO_EDGE",
+   "ticker": "CNQ.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CM.TO"
+  },
+  {
+   "reason": "Issuer release lacks numerical surprise or evidence of repricing after open.",
+   "status": "NO_EDGE",
+   "ticker": "TRP.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "SHOP.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "NA.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CVE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "MFC.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CLS.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CNR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CSU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AEM.TO"
+  },
+  {
+   "reason": "Issuer release is immaterial and lacks numerical surprise or repricing evidence.",
+   "status": "NO_EDGE",
+   "ticker": "ABX.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CP.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "FTS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IMO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EMA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BCE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FFH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "POW.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "PPL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "NTR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TRI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WPM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SLF.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CCO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TOU.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "WCP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "K.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "RCI-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ATZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WCN.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "DOL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FNV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IFC.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "MG.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "ATD.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "WSP.TO"
+  },
+  {
+   "reason": "Unsolicited non-binding proposal lacks offer terms in issuer release; no clear directional repricing edge.",
+   "status": "NO_EDGE",
+   "ticker": "T.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "LUN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BBD-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BAM.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "QSR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "H.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TFII.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GIB-A.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PAAS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GWO.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "L.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TIH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "HBM.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "HUT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GFL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IAG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ATH.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "AC.TO"
+  },
+  {
+   "reason": "No issuer-classified release; insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "QBR-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "MDA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "MRU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "LUG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DPM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BB.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "RBA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AGI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EQX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KEY.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "X.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ATRL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FTT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ALA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EFN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ELD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "STN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IVN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CCL-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IMG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BTE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KXS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GMIN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TVE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OTEX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SCR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DSG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BTO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AG.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "GIL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IGM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SOBO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CPX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CAE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FSV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BDT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EFX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "RUS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "NXE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SAP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OGC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PEY.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EDV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ERO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DSV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "MX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AYA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EMP-A.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "REI-UN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "VET.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ACO-X.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AQN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "VNP.TO"
+  },
+  {
+   "reason": "Insufficient evidence for a same-day open-to-close edge.",
+   "status": "NO_EDGE",
+   "ticker": "CAR-UN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ARE.TO"
+  },
+  {
+   "reason": "No issuer-classified release; headline lacks numerical surprise or repricing evidence.",
+   "status": "NO_EDGE",
+   "ticker": "NPI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GEI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OVV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ARIS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "HPS-A.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PXT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CIGI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KNT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WDO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PBH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TPZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PSK.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EQB.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AAUC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "LNR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WFG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BEPC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CJ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EIF.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EXE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BIPC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EFR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TNZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BYD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SSRM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FVI.TO"
+  }
+ ],
+ "captured_at": "2026-11-16T08:57:58.459511-05:00",
+ "cases": [],
+ "choice_ids": [],
+ "comparison_note": "Original council was not yet available at the challenge cutoff.",
+ "completed_at": "2026-11-16T08:59:19.207607-05:00",
+ "coverage": {
+  "assessed": 150,
+  "available": 150,
+  "available_tickers": [
+   "AAUC.TO",
+   "ABX.TO",
+   "AC.TO",
+   "ACO-X.TO",
+   "AEM.TO",
+   "AG.TO",
+   "AGI.TO",
+   "ALA.TO",
+   "AQN.TO",
+   "ARE.TO",
+   "ARIS.TO",
+   "ATD.TO",
+   "ATH.TO",
+   "ATRL.TO",
+   "ATZ.TO",
+   "AYA.TO",
+   "BAM.TO",
+   "BB.TO",
+   "BBD-B.TO",
+   "BCE.TO",
+   "BDT.TO",
+   "BEPC.TO",
+   "BIPC.TO",
+   "BMO.TO",
+   "BN.TO",
+   "BNS.TO",
+   "BTE.TO",
+   "BTO.TO",
+   "BYD.TO",
+   "CAE.TO",
+   "CAR-UN.TO",
+   "CCL-B.TO",
+   "CCO.TO",
+   "CG.TO",
+   "CIGI.TO",
+   "CJ.TO",
+   "CLS.TO",
+   "CM.TO",
+   "CNQ.TO",
+   "CNR.TO",
+   "CP.TO",
+   "CPX.TO",
+   "CS.TO",
+   "CSU.TO",
+   "CU.TO",
+   "CVE.TO",
+   "DOL.TO",
+   "DPM.TO",
+   "DSG.TO",
+   "DSV.TO",
+   "EDV.TO",
+   "EFN.TO",
+   "EFR.TO",
+   "EFX.TO",
+   "EIF.TO",
+   "ELD.TO",
+   "EMA.TO",
+   "EMP-A.TO",
+   "ENB.TO",
+   "EQB.TO",
+   "EQX.TO",
+   "ERO.TO",
+   "EXE.TO",
+   "FFH.TO",
+   "FM.TO",
+   "FNV.TO",
+   "FSV.TO",
+   "FTS.TO",
+   "FTT.TO",
+   "FVI.TO",
+   "GEI.TO",
+   "GFL.TO",
+   "GIB-A.TO",
+   "GIL.TO",
+   "GMIN.TO",
+   "GWO.TO",
+   "H.TO",
+   "HBM.TO",
+   "HPS-A.TO",
+   "HUT.TO",
+   "IAG.TO",
+   "IFC.TO",
+   "IGM.TO",
+   "IMG.TO",
+   "IMO.TO",
+   "IVN.TO",
+   "K.TO",
+   "KEY.TO",
+   "KNT.TO",
+   "KXS.TO",
+   "L.TO",
+   "LNR.TO",
+   "LUG.TO",
+   "LUN.TO",
+   "MDA.TO",
+   "MFC.TO",
+   "MG.TO",
+   "MRU.TO",
+   "MX.TO",
+   "NA.TO",
+   "NPI.TO",
+   "NTR.TO",
+   "NXE.TO",
+   "OGC.TO",
+   "OTEX.TO",
+   "OVV.TO",
+   "PAAS.TO",
+   "PBH.TO",
+   "PD.TO",
+   "PEY.TO",
+   "POW.TO",
+   "PPL.TO",
+   "PSK.TO",
+   "PXT.TO",
+   "QBR-B.TO",
+   "QSR.TO",
+   "RBA.TO",
+   "RCI-B.TO",
+   "REI-UN.TO",
+   "RUS.TO",
+   "RY.TO",
+   "SAP.TO",
+   "SCR.TO",
+   "SHOP.TO",
+   "SLF.TO",
+   "SOBO.TO",
+   "SSRM.TO",
+   "STN.TO",
+   "SU.TO",
+   "T.TO",
+   "TA.TO",
+   "TD.TO",
+   "TFII.TO",
+   "TIH.TO",
+   "TNZ.TO",
+   "TOU.TO",
+   "TPZ.TO",
+   "TRI.TO",
+   "TRP.TO",
+   "TVE.TO",
+   "VET.TO",
+   "VNP.TO",
+   "WCN.TO",
+   "WCP.TO",
+   "WDO.TO",
+   "WFG.TO",
+   "WN.TO",
+   "WPM.TO",
+   "WSP.TO",
+   "X.TO"
+  ],
+  "challenged": 0,
+  "missing_tickers": [],
+  "requested": 150,
+  "requested_tickers": [
+   "AAUC.TO",
+   "ABX.TO",
+   "AC.TO",
+   "ACO-X.TO",
+   "AEM.TO",
+   "AG.TO",
+   "AGI.TO",
+   "ALA.TO",
+   "AQN.TO",
+   "ARE.TO",
+   "ARIS.TO",
+   "ATD.TO",
+   "ATH.TO",
+   "ATRL.TO",
+   "ATZ.TO",
+   "AYA.TO",
+   "BAM.TO",
+   "BB.TO",
+   "BBD-B.TO",
+   "BCE.TO",
+   "BDT.TO",
+   "BEPC.TO",
+   "BIPC.TO",
+   "BMO.TO",
+   "BN.TO",
+   "BNS.TO",
+   "BTE.TO",
+   "BTO.TO",
+   "BYD.TO",
+   "CAE.TO",
+   "CAR-UN.TO",
+   "CCL-B.TO",
+   "CCO.TO",
+   "CG.TO",
+   "CIGI.TO",
+   "CJ.TO",
+   "CLS.TO",
+   "CM.TO",
+   "CNQ.TO",
+   "CNR.TO",
+   "CP.TO",
+   "CPX.TO",
+   "CS.TO",
+   "CSU.TO",
+   "CU.TO",
+   "CVE.TO",
+   "DOL.TO",
+   "DPM.TO",
+   "DSG.TO",
+   "DSV.TO",
+   "EDV.TO",
+   "EFN.TO",
+   "EFR.TO",
+   "EFX.TO",
+   "EIF.TO",
+   "ELD.TO",
+   "EMA.TO",
+   "EMP-A.TO",
+   "ENB.TO",
+   "EQB.TO",
+   "EQX.TO",
+   "ERO.TO",
+   "EXE.TO",
+   "FFH.TO",
+   "FM.TO",
+   "FNV.TO",
+   "FSV.TO",
+   "FTS.TO",
+   "FTT.TO",
+   "FVI.TO",
+   "GEI.TO",
+   "GFL.TO",
+   "GIB-A.TO",
+   "GIL.TO",
+   "GMIN.TO",
+   "GWO.TO",
+   "H.TO",
+   "HBM.TO",
+   "HPS-A.TO",
+   "HUT.TO",
+   "IAG.TO",
+   "IFC.TO",
+   "IGM.TO",
+   "IMG.TO",
+   "IMO.TO",
+   "IVN.TO",
+   "K.TO",
+   "KEY.TO",
+   "KNT.TO",
+   "KXS.TO",
+   "L.TO",
+   "LNR.TO",
+   "LUG.TO",
+   "LUN.TO",
+   "MDA.TO",
+   "MFC.TO",
+   "MG.TO",
+   "MRU.TO",
+   "MX.TO",
+   "NA.TO",
+   "NPI.TO",
+   "NTR.TO",
+   "NXE.TO",
+   "OGC.TO",
+   "OTEX.TO",
+   "OVV.TO",
+   "PAAS.TO",
+   "PBH.TO",
+   "PD.TO",
+   "PEY.TO",
+   "POW.TO",
+   "PPL.TO",
+   "PSK.TO",
+   "PXT.TO",
+   "QBR-B.TO",
+   "QSR.TO",
+   "RBA.TO",
+   "RCI-B.TO",
+   "REI-UN.TO",
+   "RUS.TO",
+   "RY.TO",
+   "SAP.TO",
+   "SCR.TO",
+   "SHOP.TO",
+   "SLF.TO",
+   "SOBO.TO",
+   "SSRM.TO",
+   "STN.TO",
+   "SU.TO",
+   "T.TO",
+   "TA.TO",
+   "TD.TO",
+   "TFII.TO",
+   "TIH.TO",
+   "TNZ.TO",
+   "TOU.TO",
+   "TPZ.TO",
+   "TRI.TO",
+   "TRP.TO",
+   "TVE.TO",
+   "VET.TO",
+   "VNP.TO",
+   "WCN.TO",
+   "WCP.TO",
+   "WDO.TO",
+   "WFG.TO",
+   "WN.TO",
+   "WPM.TO",
+   "WSP.TO",
+   "X.TO"
+  ]
+ },
+ "errors": [],
+ "evidence_digest": "169f0d769a4d4777c79c03f905b21703b37713c4617500a14431da41c33cd4b6",
+ "facts": [
+  {
+   "classification": "COMMENTARY",
+   "id": "71dbcbd8ee0da24f3121",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-14T15:09:03-05:00",
+   "text": "Royal Bank Of Canada And 2 Other Top Canadian Dividend Stocks",
+   "ticker": "RY.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/royal-bank-canada-2-other-200903290.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "dfd77ca8f487dd5f4e19",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T12:00:00-05:00",
+   "text": "Real deal or a scam? Canadians worry they can't tell the difference this holiday shopping season: RBC poll",
+   "ticker": "RY.TO",
+   "url": "https://finance.yahoo.com/news/real-deal-scam-canadians-worry-170000560.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "8e25aaed936e093d880a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T16:00:00-05:00",
+   "text": "TD’s Dividend Is Only Half the Investment Case: Here’s the Recovery Math",
+   "ticker": "TD.TO",
+   "url": "https://ca.finance.yahoo.com/news/td-dividend-only-half-investment-210000592.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "83656a2da163d95c6e83",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T20:06:33-05:00",
+   "text": "Enbridge (TSX:ENB) Stock Looks About Right As Acquisition Activity Builds",
+   "ticker": "ENB.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/enbridge-tsx-enb-stock-looks-010633238.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "91f25573837d5897423a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T19:18:22-05:00",
+   "text": "Enbridge (TSX:ENB) Gets Government Backing For Woodfibre LNG Growth Plans",
+   "ticker": "ENB.TO",
+   "url": "https://finance.yahoo.com/energy/articles/enbridge-tsx-enb-gets-government-001822042.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "69e6e9c9398b5b395d7d",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-14T20:07:39-05:00",
+   "text": "KinderCare Learning Companies (KLC) Stock Sees Fair Value Cut After Analyst Target Resets",
+   "ticker": "BMO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/kindercare-learning-companies-klc-stock-010739001.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "b3954e0eda6396f2170a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-14T15:09:03-05:00",
+   "text": "Royal Bank Of Canada And 2 Other Top Canadian Dividend Stocks",
+   "ticker": "BMO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/royal-bank-canada-2-other-200903290.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "cbb0cbcc3944c04393a1",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T18:11:43-05:00",
+   "text": "How Investors Are Reacting To Suncor Energy (TSX:SU) Strong Earnings And Higher Dividend",
+   "ticker": "SU.TO",
+   "url": "https://finance.yahoo.com/energy/articles/investors-reacting-suncor-energy-tsx-231143079.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "2b503303dbdb7c9eb84b",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T12:14:00-05:00",
+   "text": "Cenovus' Oil Sands Strength and Cost Discipline Support Growth",
+   "ticker": "SU.TO",
+   "url": "https://finance.yahoo.com/energy/articles/cenovus-oil-sands-strength-cost-171400902.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "c50a48b6e6fb1e6d0c34",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T17:09:01-05:00",
+   "text": "Sun Life Financial And 2 Canadian Dividend Stocks To Watch",
+   "ticker": "BNS.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/sun-life-financial-2-canadian-220901454.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "68de212921a54c49bd2c",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:00:00-05:00",
+   "text": "Retiring in Canada: Create $750/Month in Dividend Income to Supplement CPP",
+   "ticker": "BNS.TO",
+   "url": "https://ca.finance.yahoo.com/news/retiring-canada-create-750-month-010000147.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "excerpt_provider": "FMP matched archived issuer URL",
+   "id": "4b06c13b05ecd4f25d30",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-16T04:30:00-05:00",
+   "retrieved_at": "2026-11-16T08:57:57.855309-05:00",
+   "text": "Canadian Natural Resources Limited Enters into Agreement to Acquire Advantage Energy Ltd.\nCalgary, Alberta--(Newsfile Corp. - November 16, 2026) - Canadian Natural Resources Limited (TSX: CNQ) (NYSE: CNQ) (\"Canadian Natural\" or the \"Company\") announces it has entered into a definitive arrangement agreement with Advantage Energy Ltd. (\"Advantage\") relating to the acquisition of all of the issued and outstanding common shares of Advantage for cash consideration of $13.55 per common share, representing aggregate equity consideration of approximately $2.255 billion on a fully diluted basis and a total transaction value of approximately $2.53 billion, including Advantage's net debt and outstanding convertible debentures.",
+   "ticker": "CNQ.TO",
+   "url": "https://www.newsfilecorp.com/release/324091/Canadian-Natural-Resources-Limited-Enters-into-Agreement-to-Acquire-Advantage-Energy-Ltd.",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "bfd18531d6298ba1cb7b",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:34:00-05:00",
+   "text": "TSX Futures Stumble First Thing Monday",
+   "ticker": "CNQ.TO",
+   "url": "https://ca.finance.yahoo.com/news/tsx-futures-stumble-first-thing-133400720.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "da52a1e14e3c2fafef89",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:00:00-05:00",
+   "text": "CIBC to launch Anthropic Canadian Depositary Receipt following U.S. IPO",
+   "ticker": "CM.TO",
+   "url": "https://ca.finance.yahoo.com/news/cibc-launch-anthropic-canadian-depositary-130000652.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "9b93b065968aabee0849",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:10:47-05:00",
+   "text": "What Is Canadian Imperial Bank Of Commerce (TSX:CM) Adding With Its New CDR?",
+   "ticker": "CM.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/canadian-imperial-bank-commerce-tsx-021047524.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "a1c5560c3dfd582d46f6",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-16T07:30:00-05:00",
+   "text": "TC Energy outlines next phase of NGTL System growth\nProposed Alberta Growth Connector and new service offerings will create scalable capacity to meet accelerating demand across Alberta Proposed Alberta Growth Connector and new service offerings will create scalable capacity to meet accelerating demand across Alberta",
+   "ticker": "TRP.TO",
+   "url": "https://www.globenewswire.com/news-release/2026/11/16/3403403/0/en/tc-energy-outlines-next-phase-of-ngtl-system-growth.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "ddefbc3a9a5b9ec7a574",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:30:00-05:00",
+   "text": "3 of the Best Canadian Stocks to Buy Right Now",
+   "ticker": "TRP.TO",
+   "url": "https://ca.finance.yahoo.com/news/3-best-canadian-stocks-buy-023000990.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "16fa48ca3fc8219fd6a7",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:17:01-05:00",
+   "text": "Shopify (SHOP) Stock Could Be 23% Overvalued As Shop.com Bet Draws Focus",
+   "ticker": "SHOP.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/shopify-shop-stock-could-23-011701360.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "d6230dc9857729275196",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T16:40:00-05:00",
+   "text": "3 Reasons Shopify Stock Is a Screaming Buy Now",
+   "ticker": "SHOP.TO",
+   "url": "https://ca.finance.yahoo.com/news/3-reasons-shopify-stock-screaming-214000743.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "7c141ddf7eb53c681647",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:30:00-05:00",
+   "text": "National Bank Investments Announces November 2026 Cash Distributions for NBI ETFs and NBI Funds ETF Series",
+   "ticker": "NA.TO",
+   "url": "https://ca.finance.yahoo.com/news/national-bank-investments-announces-november-133000512.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "27d3c9ed3901fac579ec",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T09:53:00-05:00",
+   "text": "Form 8.3",
+   "ticker": "NA.TO",
+   "url": "https://finance.yahoo.com/markets/options/articles/form-8-3-145300410.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "01a6f189d702502f3a37",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T14:24:00-05:00",
+   "text": "Independent Proxy Advisory Firms Recommend Athabasca Shareholders Vote “FOR” the Proposed Arrangement with Cenovus",
+   "ticker": "CVE.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/independent-proxy-advisory-firms-recommend-192400221.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "d68c0670c8dd4fcff4b6",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T12:14:00-05:00",
+   "text": "Cenovus' Oil Sands Strength and Cost Discipline Support Growth",
+   "ticker": "CVE.TO",
+   "url": "https://finance.yahoo.com/energy/articles/cenovus-oil-sands-strength-cost-171400902.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "e849b23c1b6e5673a088",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:30:00-05:00",
+   "text": "3 of the Best Canadian Stocks to Buy Right Now",
+   "ticker": "CLS.TO",
+   "url": "https://ca.finance.yahoo.com/news/3-best-canadian-stocks-buy-023000990.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "b3a8ef59717edb1691f6",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:14:46-05:00",
+   "text": "Celestica Heads These 3 Canadian Growth Stocks To Watch",
+   "ticker": "CLS.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/celestica-heads-3-canadian-growth-021446088.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "e349970f71feb8e363e4",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:34:00-05:00",
+   "text": "TSX Futures Stumble First Thing Monday",
+   "ticker": "CNR.TO",
+   "url": "https://ca.finance.yahoo.com/news/tsx-futures-stumble-first-thing-133400720.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "ed773e9c74ab64548f68",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-16T07:00:00-05:00",
+   "text": "Barrick Announces Exercise of Anti-Dilution Rights Under Investor Rights Agreement With Hercules Metals\nTORONTO, Nov. 16, 2026 (GLOBE NEWSWIRE) -- Barrick Mining Corporation (NYSE:B)(TSX:ABX) (“Barrick”) announced today that it has agreed to subscribe for 6,638,382 common shares of Hercules Metals Corp. (“Hercules”) in a non-brokered private placement (“Private Placement”) at a price of C$0.87 per common share, for total consideration of approximately C$5,775,392. Barrick's subscription under the Private Placement is being undertaken in accordance with the anti-dilution rights contained in its Investor Rights Agreement with Hercules dated November 7, 2023.",
+   "ticker": "ABX.TO",
+   "url": "https://www.globenewswire.com/news-release/2026/11/16/3403352/0/en/barrick-announces-exercise-of-anti-dilution-rights-under-investor-rights-agreement-with-hercules-metals.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "bcfe06550bb733ad69f6",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-14T17:08:59-05:00",
+   "text": "Top 3 Canadian Undervalued Stocks To Watch In November 2026",
+   "ticker": "ABX.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/top-3-canadian-undervalued-stocks-220859134.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "acccccb97e6199b7b36e",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T09:08:12-05:00",
+   "text": "Canadian Pacific Kansas City (TSX:CP) Rallies On Cross Border Network Story, Is It Still Undervalued?",
+   "ticker": "CP.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/canadian-pacific-kansas-city-tsx-140812672.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "a253508204892c9eccc8",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:45:00-05:00",
+   "text": "2 Canadian Stocks to Buy and Hold for 20 More Years",
+   "ticker": "CP.TO",
+   "url": "https://ca.finance.yahoo.com/news/2-canadian-stocks-buy-hold-014500197.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "8ab8f0f086d8771a75e7",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:30:00-05:00",
+   "text": "3 of the Best Canadian Stocks to Buy Right Now",
+   "ticker": "FTS.TO",
+   "url": "https://ca.finance.yahoo.com/news/3-best-canadian-stocks-buy-023000990.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "563e41ef8e8a580bfba4",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T16:30:00-05:00",
+   "text": "What $10,000 in Fortis Could Pay Now After Years of Dividend Growth",
+   "ticker": "FTS.TO",
+   "url": "https://ca.finance.yahoo.com/news/10-000-fortis-could-pay-213000545.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "debb5bf65fb6d4e8a28f",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T10:00:00-05:00",
+   "text": "I Keep Coming Back to This 4.2% Dividend Stock",
+   "ticker": "PPL.TO",
+   "url": "https://ca.finance.yahoo.com/news/keep-coming-back-4-2-150000609.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "4ed31f5c6266abee2e66",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T14:08:35-05:00",
+   "text": "3 Canadian Growth Stocks With Earnings Growth Up To 72%",
+   "ticker": "CCO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/3-canadian-growth-stocks-earnings-190835440.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "98651ba44722f22c7667",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:12:46-05:00",
+   "text": "Canadian Nuclear Stocks To Watch In November 2026",
+   "ticker": "CCO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/canadian-nuclear-stocks-watch-november-021246325.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "e4eb5ab8b89327400459",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:15:00-05:00",
+   "text": "Monthly Dividend Stocks: 3 TSX Picks That Pay Every 30 Days",
+   "ticker": "WCP.TO",
+   "url": "https://ca.finance.yahoo.com/news/monthly-dividend-stocks-3-tsx-011500048.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "6c31017fe93780d9bccb",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T07:00:00-05:00",
+   "text": "Leafs, Raptors, Jays empire is worth $25B: Rogers plans to sell pieces to pay down debt. What investors should watch",
+   "ticker": "RCI-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/leafs-raptors-jays-empire-worth-120000457.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "65de1b4a7787116cb5e6",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T16:20:00-05:00",
+   "text": "2 Canadian Stocks to Buy and Hold for Life in a TFSA",
+   "ticker": "DOL.TO",
+   "url": "https://ca.finance.yahoo.com/news/2-canadian-stocks-buy-hold-212000618.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "6ece442642a1437fb101",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T16:13:03-05:00",
+   "text": "Sun Life Financial Plus 2 Canadian Dividend Stocks To Own",
+   "ticker": "MG.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/sun-life-financial-plus-2-211303138.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "b488c98592b5cce756d1",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:45:00-05:00",
+   "text": "2 Canadian Stocks to Buy and Hold for 20 More Years",
+   "ticker": "ATD.TO",
+   "url": "https://ca.finance.yahoo.com/news/2-canadian-stocks-buy-hold-014500197.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "65c77caf9152a031030e",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:35:00-05:00",
+   "text": "WSP completes acquisition of GCM Corpo",
+   "ticker": "WSP.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/wsp-completes-acquisition-gcm-corpo-133500345.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "f93edcf74f40b329c37a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T20:00:00-05:00",
+   "text": "1 No Brainer Buy and Hold Canadian Stock",
+   "ticker": "WSP.TO",
+   "url": "https://ca.finance.yahoo.com/news/1-no-brainer-buy-hold-010000296.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "735cb46f19763fa31f6a",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-16T07:30:00-05:00",
+   "text": "TELUS confirms receipt of unsolicited proposal from Québecor, continues review of strategic alternatives\nTELUS Corporation (TSX: T) (NYSE: TU) today confirmed that its Board of Directors has received an unsolicited, non-binding, and conditional proposal...",
+   "ticker": "T.TO",
+   "url": "https://www.newswire.ca/news-releases/telus-confirms-receipt-of-unsolicited-proposal-from-quebecor-continues-review-of-strategic-alternatives-857006698.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "excerpt_provider": "FMP matched archived issuer URL",
+   "id": "c028bdf070f5754369a8",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-16T07:30:00-05:00",
+   "retrieved_at": "2026-11-16T08:57:58.458620-05:00",
+   "text": "TELUS confirms receipt of unsolicited proposal from Québecor, continues review of strategic alternatives\nSpecial Committee of independent directors is reviewing the unsolicited Québecor proposal, has identified several significant regulatory and execution risks Special Committee is also exploring strategic alternatives in the best interests of TELUS TELUS remains focused on the continued execution of its transformation plan VANCOUVER, BC, Nov. 16, 2026 /PRNewswire/ -- TELUS Corporation (TSX: T) (NYSE: TU) today confirmed that its Board of Directors has received an unsolicited, non-binding, and conditional proposal from Québecor regarding a transaction that would result in Québecor acquiring TELUS. The TELUS Board has formed a Special Committee of independent directors and engaged both financial and legal advisors to carefully review and evaluate the Québecor proposal.",
+   "ticker": "T.TO",
+   "url": "https://www.prnewswire.com/news-releases/telus-confirms-receipt-of-unsolicited-proposal-from-quebecor-continues-review-of-strategic-alternatives-302940393.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "040ec4497c13cdf63e1c",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T08:52:16-05:00",
+   "text": "5 Best Restaurant Stocks with Highest Upside",
+   "ticker": "QSR.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/5-best-restaurant-stocks-highest-135216614.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "d566d05740de75cba359",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T11:55:53-05:00",
+   "text": "8 Stocks Bill Ackman and Jim Cramer Are Bullish On",
+   "ticker": "QSR.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/8-stocks-bill-ackman-jim-165553588.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "95f245ec9b891442d61c",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T21:00:00-05:00",
+   "text": "Loblaw vs. Empire: Which Grocery Stock Would I Choose for Long-Term Growth?",
+   "ticker": "L.TO",
+   "url": "https://ca.finance.yahoo.com/news/loblaw-vs-empire-grocery-stock-020000265.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "2c5ea9fc8194dfc9fbf8",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T05:57:29-05:00",
+   "text": "Crypto stocks slide premarket as Bitcoin selloff continues",
+   "ticker": "HUT.TO",
+   "url": "https://finance.yahoo.com/markets/crypto/articles/crypto-stocks-slide-premarket-bitcoin-105729561.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "8821e32fdfba698e41ba",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-15T21:57:43-05:00",
+   "text": "Why is Hut 8 Corp. (HUT) Under Pressure Despite $26.6 Billion in AI Data Center Contracts?",
+   "ticker": "HUT.TO",
+   "url": "https://finance.yahoo.com/technology/ai/articles/why-hut-8-corp-hut-025743174.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "19013ced259906b047b3",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T22:41:53-05:00",
+   "text": "U.S. flights allowed to resume, but Canadians warned to expect delays",
+   "ticker": "AC.TO",
+   "url": "https://ca.finance.yahoo.com/news/montreal-trudeau-international-airport-says-220504774.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "e75c7f3f1d5a39aadb00",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T08:36:09-05:00",
+   "text": "Quebecor makes cash-and-stock offer for Telus worth $31 billion",
+   "ticker": "QBR-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/cp-newsalert-quebecor-makes-offer-131005288.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "1c9caf88b4fbc1e124cd",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-16T07:30:00-05:00",
+   "text": "QUEBECOR INC. ANNOUNCES PROPOSAL TO TELUS FOR A STRATEGIC COMBINATION",
+   "ticker": "QBR-B.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/quebecor-inc-announces-proposal-telus-123000900.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "e9913a66f356044ee7fe",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-14T06:10:30-05:00",
+   "text": "What Investors Got Wrong About Gildan Activewear Before The Drop",
+   "ticker": "GIL.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/investors-got-wrong-gildan-activewear-111030540.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "0e7ed44bf147addf0230",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T15:30:00-05:00",
+   "text": "Down 17% but Still a Perfect Buy for Long-Term Passive Income",
+   "ticker": "CAR-UN.TO",
+   "url": "https://ca.finance.yahoo.com/news/down-17-still-perfect-buy-203000782.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "ea81c67fdb250398acb5",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-13T18:02:02-05:00",
+   "text": "Northland Power Inc (NPIFF) (Q3 2026) Earnings Call Highlights: Adjusted EBITDA Climbs 9% as ...",
+   "ticker": "NPI.TO",
+   "url": "https://finance.yahoo.com/energy/articles/northland-power-inc-npiff-q3-230202203.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "id": "7b1ce2581a1ba5cf4992",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-16T08:46:29-05:00",
+   "text": "wti: 87.56",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/CL%3DF?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "2eb425f743a517c5e93d",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-16T08:56:28-05:00",
+   "text": "cadusd: 0.6994",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/CADUSD%3DX?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "1c8ac64f54bc5b81f54b",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-13T16:20:01-05:00",
+   "text": "tsx: 36105.9",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPTSE?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "0c2b6642e393b67abe20",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-16T08:41:16-05:00",
+   "text": "vix: 20.78",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  }
+ ],
+ "gaps": [
+  "Longer issuer text not obtained for 2 source checks; archived excerpts retained."
+ ],
+ "id": "db8545f5198dc5f54318955b",
+ "opening_eligible": true,
+ "original_council": null,
+ "policy": "dda-decision-v2",
+ "record_note": "Research choices, not orders or calibrated predictions. Separate contexts do not establish independent predictive skill.",
+ "routes": [
+  {
+   "actual_model": "deepseek-v4-pro",
+   "assessed": 150,
+   "budget_seconds": 240,
+   "completed_at": "2026-11-16T08:59:19.207571-05:00",
+   "elapsed_seconds": 80.72,
+   "model": "deepseek-v4-pro",
+   "output_budget": 20000,
+   "pass": "Full-universe research",
+   "reasoning": "high",
+   "started_at": "2026-11-16T08:57:58.487222-05:00",
+   "status": "complete",
+   "usage": {
+    "completion_tokens": 8139,
+    "completion_tokens_details": {
+     "accepted_prediction_tokens": null,
+     "audio_tokens": null,
+     "reasoning_tokens": 3441,
+     "rejected_prediction_tokens": null
+    },
+    "prompt_cache_hit_tokens": 384,
+    "prompt_cache_miss_tokens": 32302,
+    "prompt_tokens": 32686,
+    "prompt_tokens_details": {
+     "audio_tokens": null,
+     "cache_write_tokens": null,
+     "cached_tokens": 384
+    },
+    "total_tokens": 40825
+   }
+  }
+ ],
+ "runtime_budget": {
+  "challenge_reserved_seconds": 180,
+  "finalize_reserved_seconds": 10,
+  "research_limit_seconds": 240,
+  "total_seconds": 480,
+  "verification_limit_seconds": 18,
+  "version": 1
+ },
+ "schema_version": 2,
+ "session": "2026-11-16",
+ "source_revision": "8bc28c2a5bbfe296d686e84d3cdd6841f84c5cb8",
+ "source_text": {
+  "budget_seconds": 15,
+  "excerpts_expanded": 2,
+  "issuers_requested": 4,
+  "note": "Bounded release excerpts; unavailable or unmatched text retains the archived summary. No full-document diligence claim.",
+  "receipts": [
+   {
+    "excerpt_limit": 4000,
+    "matched": 1,
+    "status": "EXPANDED",
+    "ticker": "CNQ.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "TRP.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "ABX.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 1,
+    "status": "EXPANDED",
+    "ticker": "T.TO"
+   }
+  ]
+ },
+ "status": "MORNING RESEARCH",
+ "verification_context": []
+}
