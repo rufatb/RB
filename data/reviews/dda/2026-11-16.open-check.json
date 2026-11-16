@@ -1,0 +1,35 @@
+{
+ "exported_at": "2026-11-16T09:31:03.217789-05:00",
+ "open_check": {
+  "prepared_at": "2026-11-16T09:31:00.691703-05:00",
+  "rows": [
+   {
+    "at": "09:31",
+    "atr_pct": 2.6418,
+    "decision": "CAUTION",
+    "decision_why": "already 4.9 normal days its way; an entry now does not get that part",
+    "open_days": 3.9599080203789914,
+    "price": 13.71,
+    "reach": null,
+    "side": "LONG",
+    "ticker": "T.TO",
+    "verdict": "NOT CHECKED"
+   },
+   {
+    "at": "09:30",
+    "atr_pct": 2.4239,
+    "decision": "CAUTION",
+    "decision_why": "already 1.1 normal days its way; an entry now does not get that part",
+    "open_days": 1.1028679524315284,
+    "price": 75,
+    "reach": null,
+    "side": "SHORT",
+    "ticker": "QBR-B.TO",
+    "verdict": "NOT CHECKED"
+   }
+  ],
+  "session": "2026-11-16"
+ },
+ "schema_version": 1,
+ "session": "2026-11-16"
+}
