@@ -54,6 +54,32 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day152b — lab item 12: a name's own intraday habit, UNDERPOWERED, rejection #67 (2026-11-17)
+
+* **The result.** `intraday_habit.py` (1973c20, committed before it ran);
+  read `AUDIT_day152_intraday_habit.md`, summary
+  `data/intraday_habit_day152.json`. Cached bars only, 23 s, no cost.
+  * Top fifth minus bottom fifth by each name's 20-session habit, 09:45 →
+    close against XIU: −0.090% a session over 692 sessions, t = −2.52, all
+    four blocks negative.
+  * A planted 0.10% shows only at t = 2.79, so UNDERPOWERED as registered.
+  * The within-session placebo reads reversal (p < 0.0005), but it holds each
+    day's outcomes fixed and is narrower than the session series (sd 0.017%
+    against se 0.036%). The t binds.
+  * Beside it: the fifths fall in order; 2026 −0.20% (t = −2.55); the
+    overnight cross-effect +0.02%; the ten-year daily panel on today's list
+    +0.095% (t = 4.34), fading to negative in 2025–26; the point-in-time
+    S&P 500 +0.006%.
+* **So:** no tie-break by habit; nothing live changes. The reversal lean
+  matches day-137 H1 (#53) and is not a finding.
+* **Next lab step:** the backlog has no free row left. Item 10 needs the
+  owner's yes and a budget; item 6 is parked; item 7 waits for a desk to
+  clear a bar. The next slot proposes and registers a new free item.
+* **11-17's morning was on time:** decision 08:59 (`1a1e9cdcbc652815`),
+  open check 09:31 (`1a1e9eb9e8b39337`), report 09:49
+  (`1a1e9fbde9649d4c`). No pick stood: Claude's long CNQ.TO fell below the
+  quality floor and both of its shorts followed three-day runs.
+
 ## Day152 — lab item 12 registered: a name's own intraday habit (2026-11-16)
 
 * `PREREGISTER_day152_intraday_habit.md`, before any return.
@@ -4098,9 +4124,10 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **66 rejections through
-day-151 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
-pre-open desk on history, day-151); 5 adoptions** (skipping the morning's widest-swinging names
+It is the running record of every change tested — **67 rejections through
+day-152 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+pre-open desk on history, day-151; #67 a name's intraday habit, day-152);
+5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been

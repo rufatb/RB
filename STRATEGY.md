@@ -6205,3 +6205,33 @@ Council lab item 9's history replay, registered 11-12
   left to the open runs slightly against the read. Nothing live changes; the
   forward desk keeps its own bar.
 * **Counts:** 66 rejections through day-151; 5 adoptions.
+
+## Day-152: REJECTION #67 — a name's own intraday habit: underpowered, and it leans toward reversal
+
+Council lab item 12, registered 11-16
+(`PREREGISTER_day152_intraday_habit.md`), run once on 11-17 by
+`intraday_habit.py` (1973c20, committed before it ran). Read
+`AUDIT_day152_intraday_habit.md`; summary `data/intraday_habit_day152.json`.
+Cached bars only.
+* **The question** (Lou, Polk & Skouras 2019). Each name's mean 09:45 → close
+  against XIU over the prior 20 sessions; the top fifth minus the bottom
+  fifth on the next session. Persistence predicts a positive spread.
+* **The population:** 692 sessions, 2024-01 → 2026-10, a median of 147 names.
+* **UNDERPOWERED.**
+  * −0.090% a session, t = −2.52, all four blocks negative.
+  * The placebo says reversal (p < 0.0005 one-sided), but it measures only the
+    sort within each day (its sd 0.017% against a se of 0.036%). The t binds.
+  * A planted 0.10% shows only at t = 2.79; the smallest detectable effect is
+    0.100%.
+* **Beside it:**
+  * the fifths fall in order, from +0.05% to −0.04%;
+  * 2026 alone −0.20% (t = −2.55);
+  * the overnight cross-effect +0.02% (t = 0.32), not the predicted reversal;
+  * a 60-session habit −0.01%;
+  * the ten-year daily panel on today's list +0.095% (t = 4.34), fading to
+    negative in 2025–2026; the point-in-time S&P 500 +0.006%;
+  * the live record: 8 of 23 nomination pairs.
+* **So:** no tie-break by habit. Nothing live changes. The reversal lean
+  matches day-137 H1 (#53) and is not a finding; a rule from it would need its
+  own registration.
+* **Counts:** 67 rejections through day-152; 5 adoptions.

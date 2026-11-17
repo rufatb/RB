@@ -1,0 +1,420 @@
+{
+ "registered": "PREREGISTER_day152_intraday_habit.md",
+ "run_on": "2026-11-17",
+ "window": [
+  "2024-01-02",
+  "2026-10-29"
+ ],
+ "names": 150,
+ "habit": [
+  20,
+  15
+ ],
+ "seed": 152,
+ "sessions_skipped_under_25_names": 0,
+ "names_per_session_median": 147,
+ "primary": {
+  "sessions": 692,
+  "mean_pct": -0.0903,
+  "se": 0.0358,
+  "t": -2.52,
+  "positive_share": 0.468
+ },
+ "block_means_pct": [
+  -0.0414,
+  -0.0898,
+  -0.0421,
+  -0.1877
+ ],
+ "per_pick_edge_pct": -0.0452,
+ "cost_per_pick_pct": 0.13,
+ "placebo": {
+  "draws": 2000,
+  "seed": 152,
+  "p_one_sided_persistence": 1.0,
+  "p_one_sided_reversal": 0.0,
+  "sd_of_draws_pct": 0.017
+ },
+ "control": {
+  "planted_pct": 0.1,
+  "t_planted": 2.79,
+  "mde80_pct": 0.1002
+ },
+ "secondary_means_positive": true,
+ "verdict": "UNDERPOWERED",
+ "primary_newey_west_t_lag5": -2.46,
+ "secondary": {
+  "tsx_daily_open_to_close": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "sessions_skipped": 0,
+   "sessions": 2717,
+   "mean_pct": 0.095,
+   "se": 0.0219,
+   "t": 4.34,
+   "positive_share": 0.543,
+   "top_leg_pct": 0.0377,
+   "bottom_leg_negated_pct": 0.0572
+  },
+  "point_in_time_sp500_daily": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "sessions_skipped": 0,
+   "names_with_bars": 703,
+   "sessions": 2722,
+   "mean_pct": 0.0055,
+   "se": 0.0163,
+   "t": 0.34,
+   "positive_share": 0.507,
+   "top_leg_pct": -0.0069,
+   "bottom_leg_negated_pct": 0.0124
+  }
+ },
+ "descriptive": {
+  "legs": {
+   "top_fifth_pct": -0.0374,
+   "bottom_fifth_negated_pct": -0.0529
+  },
+  "fifths_1_low_to_5_high_pct": [
+   0.0517,
+   0.0375,
+   0.0261,
+   0.0112,
+   -0.0374
+  ],
+  "overnight_habit_predicts_0945_close (reversal expected, y < 0)": {
+   "sessions": 691,
+   "mean_pct": 0.0155,
+   "se": 0.0485,
+   "t": 0.32,
+   "positive_share": 0.521,
+   "top_leg_pct": 0.0459,
+   "bottom_leg_negated_pct": -0.0304
+  },
+  "habit_60_sessions": {
+   "sessions": 662,
+   "mean_pct": -0.0056,
+   "se": 0.0376,
+   "t": -0.15,
+   "positive_share": 0.517,
+   "top_leg_pct": 0.0104,
+   "bottom_leg_negated_pct": -0.016
+  },
+  "open_to_0945_by_the_20_session_habit": {
+   "sessions": 692,
+   "mean_pct": 0.0419,
+   "se": 0.0272,
+   "t": 1.54,
+   "positive_share": 0.532,
+   "top_leg_pct": 0.0508,
+   "bottom_leg_negated_pct": -0.0089
+  },
+  "by_year": {
+   "2024": {
+    "sessions": 234,
+    "mean_pct": -0.0378,
+    "se": 0.0562,
+    "t": -0.67,
+    "positive_share": 0.513,
+    "top_leg_pct": -0.0146,
+    "bottom_leg_negated_pct": -0.0232
+   },
+   "2025": {
+    "sessions": 250,
+    "mean_pct": -0.0485,
+    "se": 0.0527,
+    "t": -0.92,
+    "positive_share": 0.456,
+    "top_leg_pct": -0.0023,
+    "bottom_leg_negated_pct": -0.0462
+   },
+   "2026": {
+    "sessions": 208,
+    "mean_pct": -0.1994,
+    "se": 0.0783,
+    "t": -2.55,
+    "positive_share": 0.433,
+    "top_leg_pct": -0.1051,
+    "bottom_leg_negated_pct": -0.0943
+   }
+  },
+  "secondary_tsx_by_year": {
+   "2016": {
+    "sessions": 251,
+    "mean_pct": 0.0826,
+    "se": 0.0797,
+    "t": 1.04,
+    "positive_share": 0.554,
+    "top_leg_pct": 0.019,
+    "bottom_leg_negated_pct": 0.0636
+   },
+   "2017": {
+    "sessions": 250,
+    "mean_pct": 0.1091,
+    "se": 0.0575,
+    "t": 1.9,
+    "positive_share": 0.512,
+    "top_leg_pct": 0.0216,
+    "bottom_leg_negated_pct": 0.0876
+   },
+   "2018": {
+    "sessions": 251,
+    "mean_pct": 0.2099,
+    "se": 0.0618,
+    "t": 3.4,
+    "positive_share": 0.558,
+    "top_leg_pct": 0.0333,
+    "bottom_leg_negated_pct": 0.1767
+   },
+   "2019": {
+    "sessions": 251,
+    "mean_pct": 0.1179,
+    "se": 0.0699,
+    "t": 1.69,
+    "positive_share": 0.506,
+    "top_leg_pct": 0.0268,
+    "bottom_leg_negated_pct": 0.0911
+   },
+   "2020": {
+    "sessions": 252,
+    "mean_pct": 0.2281,
+    "se": 0.1009,
+    "t": 2.26,
+    "positive_share": 0.595,
+    "top_leg_pct": 0.1018,
+    "bottom_leg_negated_pct": 0.1263
+   },
+   "2021": {
+    "sessions": 251,
+    "mean_pct": 0.1052,
+    "se": 0.0653,
+    "t": 1.61,
+    "positive_share": 0.586,
+    "top_leg_pct": 0.0369,
+    "bottom_leg_negated_pct": 0.0682
+   },
+   "2022": {
+    "sessions": 250,
+    "mean_pct": 0.1102,
+    "se": 0.0878,
+    "t": 1.26,
+    "positive_share": 0.58,
+    "top_leg_pct": 0.0726,
+    "bottom_leg_negated_pct": 0.0376
+   },
+   "2023": {
+    "sessions": 250,
+    "mean_pct": 0.1699,
+    "se": 0.0485,
+    "t": 3.51,
+    "positive_share": 0.588,
+    "top_leg_pct": 0.097,
+    "bottom_leg_negated_pct": 0.0729
+   },
+   "2024": {
+    "sessions": 252,
+    "mean_pct": 0.0659,
+    "se": 0.0514,
+    "t": 1.28,
+    "positive_share": 0.532,
+    "top_leg_pct": 0.0879,
+    "bottom_leg_negated_pct": -0.022
+   },
+   "2025": {
+    "sessions": 251,
+    "mean_pct": -0.0268,
+    "se": 0.0644,
+    "t": -0.42,
+    "positive_share": 0.502,
+    "top_leg_pct": -0.0117,
+    "bottom_leg_negated_pct": -0.0152
+   },
+   "2026": {
+    "sessions": 208,
+    "mean_pct": -0.1735,
+    "se": 0.0944,
+    "t": -1.84,
+    "positive_share": 0.442,
+    "top_leg_pct": -0.0924,
+    "bottom_leg_negated_pct": -0.0812
+   }
+  }
+ },
+ "live_record": {
+  "window": [
+   "2026-10-14",
+   "2026-10-29"
+  ],
+  "pairs": 23,
+  "stronger_habit_did_better": 8,
+  "pairs_without_a_habit": 1,
+  "note": "cached bars end 2026-10-29, so later sessions are not read; a count, never a verdict",
+  "pairs_detail": [
+   {
+    "session": "2026-10-14",
+    "side": "LONG",
+    "stronger": "CNQ.TO",
+    "other": "SU.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-15",
+    "side": "LONG",
+    "stronger": "ATD.TO",
+    "other": "WCN.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-15",
+    "side": "SHORT",
+    "stronger": "SU.TO",
+    "other": "CLS.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-16",
+    "side": "LONG",
+    "stronger": "L.TO",
+    "other": "WCN.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-16",
+    "side": "SHORT",
+    "stronger": "CVE.TO",
+    "other": "SU.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-19",
+    "side": "LONG",
+    "stronger": "TRI.TO",
+    "other": "ATD.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-19",
+    "side": "SHORT",
+    "stronger": "SU.TO",
+    "other": "TOU.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-20",
+    "side": "LONG",
+    "stronger": "GFL.TO",
+    "other": "TD.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-20",
+    "side": "SHORT",
+    "stronger": "SU.TO",
+    "other": "CNQ.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-21",
+    "side": "LONG",
+    "stronger": "TRI.TO",
+    "other": "AC.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-21",
+    "side": "SHORT",
+    "stronger": "SU.TO",
+    "other": "CNQ.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-22",
+    "side": "LONG",
+    "stronger": "CNQ.TO",
+    "other": "TD.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-22",
+    "side": "SHORT",
+    "stronger": "IVN.TO",
+    "other": "LUN.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-23",
+    "side": "LONG",
+    "stronger": "WCN.TO",
+    "other": "CP.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-23",
+    "side": "SHORT",
+    "stronger": "CDE.TO",
+    "other": "HBM.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-26",
+    "side": "LONG",
+    "stronger": "ATZ.TO",
+    "other": "WCN.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-26",
+    "side": "SHORT",
+    "stronger": "OVV.TO",
+    "other": "VET.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-27",
+    "side": "LONG",
+    "stronger": "CAE.TO",
+    "other": "IAG.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-27",
+    "side": "SHORT",
+    "stronger": "DPM.TO",
+    "other": "CLS.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-28",
+    "side": "LONG",
+    "stronger": "POW.TO",
+    "other": "MDA.TO",
+    "stronger_did_better": true
+   },
+   {
+    "session": "2026-10-28",
+    "side": "SHORT",
+    "stronger": "TRI.TO",
+    "other": "WCN.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-29",
+    "side": "LONG",
+    "stronger": "EFN.TO",
+    "other": "CLS.TO",
+    "stronger_did_better": false
+   },
+   {
+    "session": "2026-10-29",
+    "side": "SHORT",
+    "stronger": "CVE.TO",
+    "other": "CP.TO",
+    "stronger_did_better": false
+   }
+  ]
+ }
+}
