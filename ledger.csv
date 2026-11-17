@@ -668,3 +668,11 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-16,BNS.TO,SHORT,0.577,dense,131.7200,board,,,,16.7,-1.526,1
 2026-11-16,RY.TO,SHORT,0.551,dense,289.1000,pair,primary,0.2834,49,6.2,-1.180,1
 2026-11-16,NTR.TO,SHORT,0.551,dense,101.1300,board,,,,22.7,-2.482,1
+2026-11-17,CVE.TO,LONG,0.650,mid,40.9000,board,,,,4.9,,
+2026-11-17,CNQ.TO,LONG,0.630,mid,69.6400,board,,,,2.9,,
+2026-11-17,SHOP.TO,LONG,0.599,sparse,208.3200,board,,,,8.2,,
+2026-11-17,SU.TO,LONG,0.572,mid,98.4800,pair,extra,0.1753,89,6.1,,
+2026-11-17,RY.TO,LONG,0.563,mid,282.5100,pair,primary,0.3224,57,,,
+2026-11-17,AC.TO,SHORT,0.600,mid,22.7800,board,,,,13.2,,
+2026-11-17,BNS.TO,SHORT,0.577,mid,128.4600,pair,primary,0.2316,90,4.7,,
+2026-11-17,MFC.TO,SHORT,0.552,mid,62.4200,pair,extra,0.2679,214,,,
