@@ -1,0 +1,16 @@
+{
+ "exported_at": "2026-11-17T09:46:28.304896-05:00",
+ "report": {
+  "generated_at": "2026-11-17T09:46:24.063412-05:00",
+  "intraday": {
+   "top_two": {
+    "picks": [],
+    "reason": "Claude's pick did not clear the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing), so there is no pick today: LONG CNQ.TO (its own 0.48; council 0 of 4 endorse, 3 object). Claude's short nominations followed three-day runs, passed over by the three-day-run rule (day-146), so the short slot is left empty.",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-17"
+ },
+ "schema_version": 1,
+ "session": "2026-11-17"
+}
