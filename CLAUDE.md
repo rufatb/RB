@@ -54,6 +54,38 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day153 — lab item 15 registered: the noon exit on the live record (2026-11-18)
+
+* **Why.** Every Top 2 section prints day-130's note that leaving at 12:00
+  ET "was no worse than holding to the close and swung 15% less". That came
+  from the replay (H3); the live picks were never checked.
+* **Registered:** `PREREGISTER_day153_noon_exit_live.md`, before any return.
+  * The population is the committed execution lab's live positions (pooled
+    kinds, no engine, no shadows), 09-17 → 11-17, each once: 179 positions
+    over 37 sessions.
+  * CONFIRMED needs:
+    * noon minus close ≥ −0.05% with t > −2;
+    * the swing ratio ≥ 1.15, with a session-bootstrap 5th percentile above
+      1.0 (seed 153);
+    * both halves;
+    * a planted 0.20% cost showing at t ≥ 3.
+  * Anything else is rejection #68. A wording change to the note goes to the
+    owner as a proposal; nothing live changes.
+  * Not blind: the evening review has printed the lab's running comparison
+    since 10-11.
+* `noon_exit_live.py` is committed in its own commit before it runs, next
+  weekday.
+* **11-18's morning was on time.**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:59 | `1a1eef461e5b9084` | |
+  | Open check | 09:31 | `1a1ef123957f0f9b` | KEEP both |
+  | Report | 09:49 | `1a1ef2272b9a4833` | |
+
+  The Top 2 was LONG IFC.TO (Claude 0.53, 0 of 4 endorse) and SHORT QBR-B.TO
+  (Claude 0.52, 4 of 4).
+
 ## Day152b — lab item 12: a name's own intraday habit, UNDERPOWERED, rejection #67 (2026-11-17)
 
 * **The result.** `intraday_habit.py` (1973c20, committed before it ran);
