@@ -1,0 +1,24 @@
+{
+ "exported_at": "2026-11-19T08:58:08.687976-05:00",
+ "opening": {
+  "council_status": "READY",
+  "decided_at": "2026-11-19T08:58:08.644933-05:00",
+  "section": {
+   "picks": [
+    {
+     "agreement": "Claude 0.38; council 3 of 4 endorse",
+     "confidence": 0.38,
+     "council_vote": "3 of 4 endorse; named best by 3",
+     "invalid_at": null,
+     "reason": "CA market: rel_sector +2.29 vs energy -3.10, macd_hist +0.22, sma50 +5.2%; a defensive leader that closed near vwap 91.51, so the move is not stretched",
+     "side": "LONG",
+     "ticker": "TRP.TO"
+    }
+   ],
+   "reason": "No short today: Claude's SHORT LUN.TO (its own 0.35; council 0 of 4 endorse, 3 object) was below the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing).",
+   "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+  }
+ },
+ "schema_version": 1,
+ "session": "2026-11-19"
+}
