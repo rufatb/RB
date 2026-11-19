@@ -6235,3 +6235,34 @@ Cached bars only.
   matches day-137 H1 (#53) and is not a finding; a rule from it would need its
   own registration.
 * **Counts:** 67 rejections through day-152; 5 adoptions.
+
+## Day-153: REJECTION #68 — the noon exit on the live picks: underpowered, and it leans worse
+
+Council lab item 15, registered 11-18
+(`PREREGISTER_day153_noon_exit_live.md`), run once on 11-19 by
+`noon_exit_live.py` (5cb0c94, committed before it ran). Read
+`AUDIT_day153_noon_exit_live.md`; summary `data/noon_exit_live_day153.json`.
+The committed execution lab only.
+* **The question.** Day-130's note under every Top 2 says closing at 12:00 ET
+  "was no worse than holding to the close and swung 15% less", from the
+  replay. Does it hold on the live picks?
+* **The population:** the lab's live positions (pooled kinds, no engine, no
+  shadows), 09-17 → 11-17, each once: 179 positions over 37 sessions.
+* **UNDERPOWERED, with the WORSE flag up.**
+  * Noon minus close −0.230% a position, t = −2.45 (bar: ≥ −0.05% with
+    t > −2). Both halves negative (−0.14%, −0.35%).
+  * The swing ratio 1.22 (bootstrap 5th percentile 1.085): noon swings 18%
+    less, as the replay said.
+  * A planted 0.20% cost shows only at t = 2.13; the smallest detectable
+    effect is 0.26%.
+* **Beside it:**
+  * the afternoon added +0.23% a position (t = 2.45); held to the close the
+    positions made +0.13%, out at noon −0.10%;
+  * the cost sits in the shorts (−0.43%, t = −2.32); longs −0.01%;
+  * the Top 2's own 42 positions −0.04%, 16% less swing;
+  * the lab's stops (wrong-if, 0.5 and 1 ATR) and the sector hedge reach no
+    bar either.
+* **So:** nothing live changes. "No worse" and "the afternoon added nothing"
+  are not what the live record shows. A wording correction to the note goes to
+  the owner as a proposal; the note stays as it is until they say yes.
+* **Counts:** 68 rejections through day-153; 5 adoptions.

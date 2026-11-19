@@ -1,0 +1,164 @@
+{
+ "registration": "PREREGISTER_day153_noon_exit_live.md",
+ "lab": "data/reviews/execution_lab.csv",
+ "cut": "2026-11-17",
+ "population": {
+  "rows": 250,
+  "rows_missing_a_window": 0,
+  "positions": 179,
+  "sessions": 37
+ },
+ "verdict": "UNDERPOWERED",
+ "legs": {
+  "mean": false,
+  "swing": true,
+  "halves": false,
+  "control": false
+ },
+ "worse": true,
+ "full": {
+  "n": 179,
+  "sessions": 37,
+  "mean_pct": -0.2303,
+  "se": 0.0941,
+  "t": -2.45,
+  "ratio": 1.2185
+ },
+ "bootstrap": {
+  "draws": 2000,
+  "seed": 153,
+  "p5": 1.0854,
+  "p50": 1.214,
+  "p95": 1.3643
+ },
+ "halves": {
+  "first": {
+   "n": 84,
+   "sessions": 18,
+   "mean_pct": -0.1411,
+   "se": 0.1235,
+   "t": -1.14,
+   "ratio": 1.2506
+  },
+  "second": {
+   "n": 90,
+   "sessions": 18,
+   "mean_pct": -0.3487,
+   "se": 0.139,
+   "t": -2.51,
+   "ratio": 1.1999
+  },
+  "middle_session_out": "2026-10-20"
+ },
+ "control": {
+  "planted_pct": 0.2,
+  "t_planted": 2.13,
+  "mde_pct": 0.2635
+ },
+ "describe": {
+  "top2": {
+   "n": 42,
+   "sessions": 25,
+   "mean_pct": -0.0359,
+   "se": 0.1821,
+   "t": -0.2,
+   "ratio": 1.1616
+  },
+  "long": {
+   "n": 85,
+   "sessions": 37,
+   "mean_pct": -0.0083,
+   "se": 0.1208,
+   "t": -0.07,
+   "ratio": 1.1791
+  },
+  "short": {
+   "n": 94,
+   "sessions": 37,
+   "mean_pct": -0.4311,
+   "se": 0.1857,
+   "t": -2.32,
+   "ratio": 1.2311
+  },
+  "afternoon": {
+   "n": 179,
+   "sessions": 37,
+   "mean_pct": 0.2303,
+   "se": 0.0941,
+   "t": 2.45
+  },
+  "noon_better_share": 0.469,
+  "hold_to_close": {
+   "mean_pct": 0.1324,
+   "sd": 2.2303
+  },
+  "exit_at_noon": {
+   "mean_pct": -0.0979,
+   "sd": 1.8304
+  },
+  "other_exits_minus_close": {
+   "r_stop_wrongif": {
+    "label": "the pick's own wrong-if stop",
+    "n": 71,
+    "sessions": 33,
+    "mean_pct": -0.0562,
+    "se": 0.1005,
+    "t": -0.56,
+    "ratio": 1.0161
+   },
+   "r_stop_half_atr": {
+    "label": "a 0.5 ATR stop",
+    "n": 179,
+    "sessions": 37,
+    "mean_pct": -0.0976,
+    "se": 0.0853,
+    "t": -1.14,
+    "ratio": 1.0734
+   },
+   "r_stop_1atr": {
+    "label": "a 1 ATR stop",
+    "n": 179,
+    "sessions": 37,
+    "mean_pct": -0.0627,
+    "se": 0.0432,
+    "t": -1.45,
+    "ratio": 0.9848
+   },
+   "r_vs_etf": {
+    "label": "hedged with its sector fund",
+    "n": 138,
+    "sessions": 37,
+    "mean_pct": 0.1343,
+    "se": 0.1207,
+    "t": 1.11,
+    "ratio": 1.1448
+   }
+  },
+  "by_month": {
+   "2026-09": {
+    "n": 30,
+    "sessions": 6,
+    "mean_pct": -0.1646,
+    "se": 0.1757,
+    "t": -0.94,
+    "ratio": 1.0164
+   },
+   "2026-10": {
+    "n": 95,
+    "sessions": 21,
+    "mean_pct": -0.1965,
+    "se": 0.1518,
+    "t": -1.29,
+    "ratio": 1.3274
+   },
+   "2026-11": {
+    "n": 54,
+    "sessions": 10,
+    "mean_pct": -0.3263,
+    "se": 0.1353,
+    "t": -2.41,
+    "ratio": 1.1071
+   }
+  }
+ }
+}

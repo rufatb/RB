@@ -54,6 +54,38 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day153b — lab item 15: the noon exit on the live picks, UNDERPOWERED, rejection #68 (2026-11-19)
+
+* **The result.** `noon_exit_live.py` (5cb0c94, committed before it ran);
+  read `AUDIT_day153_noon_exit_live.md`, summary
+  `data/noon_exit_live_day153.json`. The committed lab only, 0.9 s, no cost.
+  * 179 live positions over 37 sessions. Noon minus close −0.230% a position,
+    t = −2.45; both halves negative.
+  * The swing holds: ratio 1.22 (bootstrap 5th percentile 1.085), so noon
+    swings 18% less.
+  * A planted 0.20% shows only at t = 2.13, so UNDERPOWERED as registered,
+    with the WORSE flag up (mean below −0.05% at t ≤ −2).
+  * Beside it: the afternoon added +0.23% (t = 2.45); the cost sits in the
+    shorts (−0.43%); the Top 2's own 42 positions −0.04%.
+* **So:** nothing live changes. Day-130's note ("no worse … the afternoon
+  added nothing") overstates on the live picks. A wording correction is
+  proposed to the owner; the note stays until they say yes.
+* **11-19's morning was on time:**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:59 | `1a1f41af6e188202` | |
+  | Open check | 09:31 | `1a1f438749d1a255` | KEEP |
+  | Report | 09:49 | `1a1f449022893242` | |
+
+  The Top 2 was LONG TRP.TO alone (Claude 0.38, 3 of 4 endorse); Claude's
+  SHORT LUN.TO fell below the quality floor.
+* **Credit, read 11-18 20:52 ET** (owner asked):
+  * OpenRouter $9.93 left ($40 bought, $30.07 used; $2.57 over this week's
+    three mornings): about 11 mornings, so top up by about 12-01;
+  * DeepSeek $5.84, with no earlier reading to measure its burn against;
+  * Gemini's balance cannot be read from here; its key answers.
+
 ## Day153 — lab item 15 registered: the noon exit on the live record (2026-11-18)
 
 * **Why.** Every Top 2 section prints day-130's note that leaving at 12:00
@@ -4156,10 +4188,10 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **67 rejections through
-day-152 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
-pre-open desk on history, day-151; #67 a name's intraday habit, day-152);
-5 adoptions** (skipping the morning's widest-swinging names
+It is the running record of every change tested — **68 rejections through
+day-153 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+pre-open desk on history, day-151; #67 a name's intraday habit, day-152; #68
+the noon exit on the live picks, day-153); 5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been
