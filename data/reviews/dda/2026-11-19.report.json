@@ -1,0 +1,143 @@
+{
+ "exported_at": "2026-11-19T09:46:30.467637-05:00",
+ "report": {
+  "generated_at": "2026-11-19T09:46:24.678259-05:00",
+  "intraday": {
+   "news_desk": {
+    "calls": [
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.6,
+      "first_at": "2026-11-19T07:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Routine cash distribution announcement for ETFs, no new information that would impact share price.",
+      "session": "2026-11-19",
+      "side": "SHORT",
+      "ticker": "CM.TO",
+      "title": "CIBC Asset Management announces CIBC ETF cash distributions for November 2026",
+      "url": "https://www.newswire.ca/news-releases/cibc-asset-management-announces-cibc-etf-cash-distributions-for-november-2026-865398867.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.65,
+      "first_at": "2026-11-18T19:39:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "$500 million private placement of notes increases leverage and may dilute existing shareholders, likely negative for shares.",
+      "session": "2026-11-19",
+      "side": "SHORT",
+      "ticker": "DFY.TO",
+      "title": "DEFINITY FINANCIAL CORPORATION ANNOUNCES $500 MILLION PRIVATE PLACEMENT OF NOTES",
+      "url": "https://www.newswire.ca/news-releases/definity-financial-corporation-announces-500-million-private-placement-of-notes-850689127.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.7,
+      "first_at": "2026-11-19T09:18:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Completion of arrangement with Tamarack Valley Energy is a positive strategic move likely to unlock value.",
+      "session": "2026-11-19",
+      "side": "LONG",
+      "ticker": "HWX.TO",
+      "title": "HEADWATER EXPLORATION INC. AND TRIBUTARY EXPLORATION INC. ANNOUNCE COMPLETION OF PREVIOUSLY ANNOUNCED PLAN OF ARRANGEMENT WITH TAMARACK VALLEY ENERGY LTD.",
+      "url": "https://www.newswire.ca/news-releases/headwater-exploration-inc-and-tributary-exploration-inc-announce-completion-of-previously-announced-plan-of-arrangement-with-tamarack-valley-energy-ltd--809834406.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.55,
+      "first_at": "2026-11-18T16:05:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Update to dividend payment currency and DRIP is routine and unlikely to have material impact.",
+      "session": "2026-11-19",
+      "side": "SHORT",
+      "ticker": "RGSI.TO",
+      "title": "Rockpoint Gas Storage Inc. Announces Updates to Dividend Payment Currency and Dividend Reinvestment and Share Purchase Plan",
+      "url": "https://www.newswire.ca/news-releases/rockpoint-gas-storage-inc-announces-updates-to-dividend-payment-currency-and-dividend-reinvestment-and-share-purchase-plan-873563838.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.55,
+      "first_at": "2026-11-18T17:01:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Redemption of debentures is routine debt management and not a major market-moving event.",
+      "session": "2026-11-19",
+      "side": "SHORT",
+      "ticker": "SLF.TO",
+      "title": "Sunlife redeems Series 2021-1 Subordinated Unsecured 2.46% Fixed/Floating Debentures",
+      "url": "https://www.newswire.ca/news-releases/sunlife-redeems-series-2021-1-subordinated-unsecured-2-46-fixed-floating-debentures-840202026.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.65,
+      "first_at": "2026-11-18T22:40:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Voting results for special meetings indicate progress on the arrangement with Headwater, likely positive.",
+      "session": "2026-11-19",
+      "side": "LONG",
+      "ticker": "TVE.TO",
+      "title": "Tamarack Valley Energy Ltd. and Headwater Exploration Inc. Report Voting Results of Special Meetings of Shareholders",
+      "url": "https://www.newswire.ca/news-releases/tamarack-valley-energy-ltd-and-headwater-exploration-inc-report-voting-results-of-special-meetings-of-shareholders-868547464.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.7,
+      "first_at": "2026-11-19T05:00:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Update on Panuco project development could signal positive progress, likely to boost investor sentiment.",
+      "session": "2026-11-19",
+      "side": "LONG",
+      "ticker": "VZLA.TO",
+      "title": "VIZSLA SILVER PROVIDES UPDATE ON PANUCO PROJECT DEVELOPMENT",
+      "url": "https://www.newswire.ca/news-releases/vizsla-silver-provides-update-on-panuco-project-development-873470704.html"
+     }
+    ],
+    "prompt_version": "day122-v1",
+    "status": "READY"
+   },
+   "top_two": {
+    "picks": [
+     {
+      "agreement": "Claude 0.38; council 3 of 4 endorse",
+      "confidence": 0.38,
+      "invalid_at": null,
+      "reason": "CA market: rel_sector +2.29 vs energy -3.10, macd_hist +0.22, sma50 +5.2%; a defensive leader that closed near vwap 91.51, so the move is not stretched",
+      "side": "LONG",
+      "ticker": "TRP.TO"
+     }
+    ],
+    "reason": "No short today: Claude's SHORT LUN.TO (its own 0.35; council 0 of 4 endorse, 3 object) was below the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing).",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-19"
+ },
+ "schema_version": 1,
+ "session": "2026-11-19"
+}
