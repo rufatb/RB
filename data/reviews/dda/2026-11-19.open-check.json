@@ -1,0 +1,23 @@
+{
+ "exported_at": "2026-11-19T09:31:04.504816-05:00",
+ "open_check": {
+  "prepared_at": "2026-11-19T09:31:03.054389-05:00",
+  "rows": [
+   {
+    "at": "09:30",
+    "atr_pct": 1.9736,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": -0.016627268169993346,
+    "price": 91.265,
+    "reach": null,
+    "side": "LONG",
+    "ticker": "TRP.TO",
+    "verdict": "NOT CHECKED"
+   }
+  ],
+  "session": "2026-11-19"
+ },
+ "schema_version": 1,
+ "session": "2026-11-19"
+}
