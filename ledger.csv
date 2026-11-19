@@ -683,3 +683,9 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-18,AEM.TO,SHORT,0.621,sparse,231.9800,board,,,,,0.009,0
 2026-11-18,BCE.TO,SHORT,0.604,mid,31.5800,board,,,,,0.190,0
 2026-11-18,SLF.TO,SHORT,0.589,dense,103.7100,pair,primary,0.2609,126,,-1.533,1
+2026-11-19,CP.TO,LONG,0.571,sparse,131.4300,pair,extra,0.2577,98,6.8,,
+2026-11-19,TD.TO,LONG,0.553,mid,166.9100,pair,primary,0.2404,72,,,
+2026-11-19,ABX.TO,SHORT,0.647,dense,49.5100,board,,,,10.1,,
+2026-11-19,AEM.TO,SHORT,0.620,dense,231.2700,board,,,,12.6,,
+2026-11-19,ENB.TO,SHORT,0.575,dense,66.6700,pair,extra,0.2664,200,,,
+2026-11-19,TRP.TO,SHORT,0.552,dense,91.2800,pair,primary,0.2315,127,5.5,,
