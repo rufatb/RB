@@ -5,3 +5,4 @@ session,ticker,side,decision,why,e1,price,at,prev_close,open,open_for_pick,now_f
 2026-11-16,QBR-B.TO,SHORT,CAUTION,already 1.1 normal days its way; an entry now does not get that part,NOT CHECKED,75,09:30,77.06,75,2.6732,2.6732,1.1029,1.1029,2.4239,,XIU.TO,-0.2933,2.3799,2026-11-16T09:31:00-05:00
 2026-11-18,IFC.TO,LONG,KEEP,nothing at the open contradicts it,NOT CHECKED,281.58,09:30,281.53,281.53,0,0.0178,0,0.0075,2.3631,,XFN.TO,-0.3718,0.3896,2026-11-18T09:31:01-05:00
 2026-11-18,QBR-B.TO,SHORT,KEEP,nothing at the open contradicts it,STILL VALID,54.97,09:30,57,56.25,1.3158,3.5614,0.2332,0.6311,5.6429,60.73,XIU.TO,-0.9179,2.6435,2026-11-18T09:31:01-05:00
+2026-11-19,TRP.TO,LONG,KEEP,nothing at the open contradicts it,NOT CHECKED,91.265,09:30,91.42,91.39,-0.0328,-0.1695,-0.0166,-0.0859,1.9736,,XEG.TO,0.6684,-0.8379,2026-11-19T09:31:03-05:00
