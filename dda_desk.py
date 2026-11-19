@@ -419,6 +419,18 @@ def bridge(root, stage_name, now=None):
         data['report']['intraday'] = {'top_two': {'rule_version': original.get('rule_version'),
             'reason': words(original.get('reason')), 'picks': [{k: p.get(k) for k in ('ticker', 'side', 'reason', 'invalid_at', 'confidence', 'agreement')}
                 for p in original.get('picks', [])]}}
+        # Part 6 belongs to the same frozen report as the email. Publish its
+        # public inputs now, rather than waiting for the later CSV record push.
+        news = (report.get('intraday') or {}).get('news_desk')
+        if isinstance(news, dict):
+            news_rows = news.get('calls')
+            fields = ('session', 'ticker', 'side', 'arm', 'material', 'confidence', 'invalid_at',
+                      'reason', 'title', 'url', 'first_at', 'asked_at', 'model', 'prompt_version')
+            data['report']['intraday']['news_desk'] = {
+                'status': news.get('status') if isinstance(news_rows, list) else 'UNAVAILABLE',
+                'prompt_version': words(news.get('prompt_version'), 160),
+                'calls': [{k: row.get(k) for k in fields} for row in (news_rows if isinstance(news_rows, list) else [])[:1000]
+                          if isinstance(row, dict) and row.get('session') == data['session'] and row.get('arm') == 'full']}
     expected = {'opening': 'opening', 'open-check': 'open_check', 'report': 'report'}[stage_name]
     if not data.get(expected):
         raise ValueError('DDA_STAGE_NOT_AVAILABLE')
