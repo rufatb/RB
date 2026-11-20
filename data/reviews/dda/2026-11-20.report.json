@@ -1,0 +1,87 @@
+{
+ "exported_at": "2026-11-20T09:46:24.773129-05:00",
+ "report": {
+  "generated_at": "2026-11-20T09:46:20.586008-05:00",
+  "intraday": {
+   "news_desk": {
+    "calls": [
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.7,
+      "first_at": "2026-11-20T08:57:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "The bought deal offering closes with full over-allotment exercise, indicating significant share dilution which typically pressures stock price in the short term.",
+      "session": "2026-11-20",
+      "side": "SHORT",
+      "ticker": "BDT.TO",
+      "title": "Bird Announces Closing of $253 Million Bought Deal Public Offering of Common Shares and the Exercise in Full of Over-Allotment Option",
+      "url": "https://www.newswire.ca/news-releases/bird-announces-closing-of-253-million-bought-deal-public-offering-of-common-shares-and-the-exercise-in-full-of-over-allotment-option-897611270.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.65,
+      "first_at": "2026-11-20T08:00:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Renewal of normal course issuer bid signals company's belief shares are undervalued and provides buying support, likely positive for share price.",
+      "session": "2026-11-20",
+      "side": "LONG",
+      "ticker": "BEI-UN.TO",
+      "title": "BOARDWALK REIT ANNOUNCES RENEWAL OF NORMAL COURSE ISSUER BID",
+      "url": "https://www.newswire.ca/news-releases/boardwalk-reit-announces-renewal-of-normal-course-issuer-bid-828450430.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.55,
+      "first_at": "2026-11-19T16:30:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Participation in a conference is routine and not materially informative; any initial reaction may fade, leading to slight downside risk.",
+      "session": "2026-11-20",
+      "side": "SHORT",
+      "ticker": "QSR.TO",
+      "title": "Restaurant Brands International Inc. to Participate in Morgan Stanley Global Consumer & Retail Conference",
+      "url": "https://www.newswire.ca/news-releases/restaurant-brands-international-inc-to-participate-in-morgan-stanley-global-consumer-amp-retail-conference-884030319.html"
+     }
+    ],
+    "prompt_version": "day122-v1",
+    "status": "READY"
+   },
+   "top_two": {
+    "picks": [
+     {
+      "agreement": "Claude 0.53; council 4 of 4 endorse",
+      "confidence": 0.53,
+      "invalid_at": null,
+      "reason": "CA: post-report day, rel_sector +1.21, rvol 1.56, range52_pos 0.99, close 70.92 near high in a -1.59% TSX; defensive bid with VIX +10.7% premarket not fully in the open",
+      "side": "LONG",
+      "ticker": "L.TO"
+     },
+     {
+      "agreement": "Claude 0.53; council 3 of 4 endorse",
+      "confidence": 0.53,
+      "invalid_at": null,
+      "reason": "CA energy: rel_sector -3.28, move_atr -1.19, close 167.23 near the 166.45 low; WTI -1.03% premarket adds pressure that a weak tape may extend intraday",
+      "side": "SHORT",
+      "ticker": "IMO.TO"
+     }
+    ],
+    "reason": "",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-20"
+ },
+ "schema_version": 1,
+ "session": "2026-11-20"
+}
