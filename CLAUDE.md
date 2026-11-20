@@ -54,6 +54,34 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day154 — lab item 16 registered: the quality floor on Claude's past nominations (2026-11-20)
+
+* **Why.** The day-150 floor is live and judged forward, months away. The
+  record already holds Claude's nominations since 10-14 with its confidence,
+  and the councils' tallies survive, so the live rule can be applied to them.
+* **Registered:** `PREREGISTER_day154_floor_history.md`, before any return.
+  * The population is pinned in `data/floor_day154_positions.json` by
+    `floor_history.py --pin`, which applies `council.clears_floor` itself.
+  * 92 positions over 23 sessions (10-14 → 11-19; 10-22 and 10-23 have no
+    surviving tally): 67 kept, 25 dropped. Both of the live drops (CNQ.TO
+    11-17, LUN.TO 11-19) are among the dropped.
+  * SORTS needs day-140's arm A to PASS at seed 154, the dropped to lose
+    money net of 0.13%, and a planted 1.0% to show at t ≥ 3.
+  * REMOVES_WINNERS (dropped beat kept at t ≥ 2) is told to the owner.
+  * Anything else is rejection #69. Nothing live changes; the floor's own
+    forward bar stands.
+* The run code is committed in its own commit before it runs, next weekday.
+* **11-20's morning was on time:**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:59 | `1a1f9419a89943ce` | |
+  | Open check | 09:31 | `1a1f95ea6b15a267` | KEEP both |
+  | Report | 09:49 | `1a1f96ee546e1af1` | |
+
+  The Top 2 was LONG L.TO (Claude 0.53, 4 of 4 endorse) and SHORT IMO.TO
+  (Claude 0.53, 3 of 4).
+
 ## Day153b — lab item 15: the noon exit on the live picks, UNDERPOWERED, rejection #68 (2026-11-19)
 
 * **The result.** `noon_exit_live.py` (5cb0c94, committed before it ran);
