@@ -678,10 +678,16 @@ False restores every table and hero).
 * **The subject** is "RB Evening Note — DATE — for …" and never contains
   "RB Daily Report — ".
 
-* **To do before 2026-11-23: refresh the sector map.** `data/tsx_sectors.json`
-  was captured 09-22 and expires 62 days later (day-113). After that every
-  name falls back to XIU.TO in the hedge and exposure lines, and the pool
-  loses its sector-relative fields.
+* **The sector map was refreshed on 2026-11-22; the next refresh is due by
+  2027-01-23.** `data/tsx_sectors.json` expires 62 days after its `captured`
+  date (day-113). After that every name falls back to XIU.TO in the hedge and
+  exposure lines, and the pool loses its sector-relative fields.
+  * It was re-read from its two sources: Yahoo for the 117 names of 09-22 and
+    one FMP screener call for the 381 added on 10-14.
+  * 484 labels were unchanged. BNKR, ELO, FFM and SAM changed industry. 10
+    names are missing from FMP's screener now and are carried as captured.
+  * None of those 14 is on the 150-name list, and all 150 were re-read
+    unchanged. The details are in the file's `refreshes` entry.
 
 **3. "I can trade US shares also yes."** Lab item 9 (the release on a US
 listing before the TSX open) is no longer waiting. It goes next after item 11.

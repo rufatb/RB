@@ -1,5 +1,5 @@
 {
- "source": "Yahoo Finance assetProfile via yfinance, captured 2026-09-22",
+ "source": "Yahoo Finance assetProfile via yfinance (the original 117 names) and the FMP company screener (the day-134 additions), first captured 2026-09-22 and 2026-10-14, re-read 2026-11-22",
  "sectors": {
   "ABX.TO": {
    "sector": "Basic Materials",
@@ -687,7 +687,7 @@
   },
   "BNKR.TO": {
    "sector": "Basic Materials",
-   "industry": "Other Precious Metals"
+   "industry": "Silver"
   },
   "BNT.TO": {
    "sector": "Financial Services",
@@ -971,7 +971,7 @@
   },
   "ELO.TO": {
    "sector": "Basic Materials",
-   "industry": "Gold"
+   "industry": "Other Precious Metals"
   },
   "ELVA.TO": {
    "sector": "Industrials",
@@ -1031,7 +1031,7 @@
   },
   "FFM.TO": {
    "sector": "Basic Materials",
-   "industry": "Other Precious Metals"
+   "industry": "Industrial Materials"
   },
   "FLT.TO": {
    "sector": "Industrials",
@@ -1659,7 +1659,7 @@
   },
   "SAM.TO": {
    "sector": "Basic Materials",
-   "industry": "Industrial Materials"
+   "industry": "Other Precious Metals"
   },
   "SBI.TO": {
    "sector": "Basic Materials",
@@ -1994,13 +1994,79 @@
    "industry": "Oil & Gas Exploration & Production"
   }
  },
- "captured": "2026-09-22",
+ "captured": "2026-11-22",
  "additions": [
   {
    "source": "FMP company screener (day-134), the same receipt the 150-name list used",
    "captured": "2026-10-14",
    "count": 381,
    "note": "The file's 'captured' date (the Yahoo map) still sets its expiry."
+  }
+ ],
+ "refreshes": [
+  {
+   "captured": "2026-11-22",
+   "why": "The 62-day expiry (day-113, PREREGISTER_day101): 09-22's capture would have expired on 11-24.",
+   "sources": "the same two as before: Yahoo assetProfile for the 117 names of 09-22, one FMP screener call (day-134 parameters) for the 381 added on 10-14",
+   "reconfirmed_unchanged": 484,
+   "changed": {
+    "BNKR.TO": {
+     "was": {
+      "sector": "Basic Materials",
+      "industry": "Other Precious Metals"
+     },
+     "now": {
+      "sector": "Basic Materials",
+      "industry": "Silver"
+     }
+    },
+    "ELO.TO": {
+     "was": {
+      "sector": "Basic Materials",
+      "industry": "Gold"
+     },
+     "now": {
+      "sector": "Basic Materials",
+      "industry": "Other Precious Metals"
+     }
+    },
+    "FFM.TO": {
+     "was": {
+      "sector": "Basic Materials",
+      "industry": "Other Precious Metals"
+     },
+     "now": {
+      "sector": "Basic Materials",
+      "industry": "Industrial Materials"
+     }
+    },
+    "SAM.TO": {
+     "was": {
+      "sector": "Basic Materials",
+      "industry": "Industrial Materials"
+     },
+     "now": {
+      "sector": "Basic Materials",
+      "industry": "Other Precious Metals"
+     }
+    }
+   },
+   "not_reread": {
+    "tickers": [
+     "BBD-A.TO",
+     "CCL-A.TO",
+     "CSW-B.TO",
+     "LB.TO",
+     "MHC-UN.TO",
+     "QBR-A.TO",
+     "RCI-A.TO",
+     "TCL-B.TO",
+     "TXG.TO",
+     "VBNK.TO"
+    ],
+    "note": "Absent from FMP's screener on 11-22, so carried as captured on 10-14. None is on the 150-name list of 2026-11-20."
+   },
+   "list_coverage": "All 150 names of the 2026-11-20 list were re-read and unchanged."
   }
  ]
 }
