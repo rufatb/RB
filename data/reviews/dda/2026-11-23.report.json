@@ -1,0 +1,118 @@
+{
+ "exported_at": "2026-11-23T09:46:33.779988-05:00",
+ "report": {
+  "generated_at": "2026-11-23T09:46:28.293474-05:00",
+  "intraday": {
+   "news_desk": {
+    "calls": [
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.6,
+      "first_at": "2026-11-23T07:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Launch of a new fund is routine and unlikely to move the stock; any positive sentiment is already priced in by open.",
+      "session": "2026-11-23",
+      "side": "LONG",
+      "ticker": "CM.TO",
+      "title": "CIBC Global Asset Management launches CIBC Structured Equity Yield Fund",
+      "url": "https://www.newswire.ca/news-releases/cibc-global-asset-management-launches-cibc-structured-equity-yield-fund-846478245.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.65,
+      "first_at": "2026-11-23T07:45:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Opening a single dispensary is minor and likely already anticipated; no significant short-term catalyst.",
+      "session": "2026-11-23",
+      "side": "LONG",
+      "ticker": "CURA.TO",
+      "title": "Curaleaf Expands Retail Presence in Florida with North Fort Myers Dispensary Opening",
+      "url": "https://www.newswire.ca/news-releases/curaleaf-expands-retail-presence-in-florida-with-north-fort-myers-dispensary-opening-831029124.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.55,
+      "first_at": "2026-11-23T08:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "CEO conference participation is routine and provides no new information; shares may drift with market.",
+      "session": "2026-11-23",
+      "side": "SHORT",
+      "ticker": "DFY.TO",
+      "title": "DEFINITY CHIEF EXECUTIVE OFFICER ROWAN SAUNDERS TO PARTICIPATE IN FIRESIDE CHAT AT THE DESJARDINS TORONTO CONFERENCE",
+      "url": "https://www.newswire.ca/news-releases/definity-chief-executive-officer-rowan-saunders-to-participate-in-fireside-chat-at-the-desjardins-toronto-conference-802704760.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.7,
+      "first_at": "2026-11-23T08:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Winning awards is positive but non-material; slight sentiment boost may continue.",
+      "session": "2026-11-23",
+      "side": "LONG",
+      "ticker": "EFN.TO",
+      "title": "Element wins two 2026 AutoTech Breakthrough Awards for delivering AI powered fleet solutions",
+      "url": "https://www.newswire.ca/news-releases/element-wins-two-2026-autotech-breakthrough-awards-for-delivering-ai-powered-fleet-solutions-855804625.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.75,
+      "first_at": "2026-11-23T06:15:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Targeting additional one million pounds of uranium production is significant positive news likely to drive shares higher.",
+      "session": "2026-11-23",
+      "side": "LONG",
+      "ticker": "EFR.TO",
+      "title": "Energy Fuels Targets Additional One Million Pounds of Low-Cost U.S. Uranium Production in Upcoming Processing Campaign; Advances Additional Uranium Ramp-Ups",
+      "url": "https://www.newswire.ca/news-releases/energy-fuels-targets-additional-one-million-pounds-of-low-cost-u-s-uranium-production-in-upcoming-processing-campaign-advances-additional-uranium-ramp-ups-814049825.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.7,
+      "first_at": "2026-11-23T07:00:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Renewing share buyback is a positive signal of management confidence and returns capital to shareholders, supporting upside.",
+      "session": "2026-11-23",
+      "side": "LONG",
+      "ticker": "MRU.TO",
+      "title": "METRO INC. RENEWS ITS SHARE BUYBACK PROGRAM",
+      "url": "https://www.newswire.ca/news-releases/metro-inc-renews-its-share-buyback-program-884002888.html"
+     }
+    ],
+    "prompt_version": "day122-v1",
+    "status": "READY"
+   },
+   "top_two": {
+    "picks": [],
+    "reason": "Claude's pick did not clear the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing), so there is no pick today: LONG AEM.TO (its own 0.40; council 1 of 4 endorse, 1 object). Claude's short nominations followed three-day runs, passed over by the three-day-run rule (day-146), so the short slot is left empty.",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-23"
+ },
+ "schema_version": 1,
+ "session": "2026-11-23"
+}
