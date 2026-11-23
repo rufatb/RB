@@ -6266,3 +6266,34 @@ The committed execution lab only.
   are not what the live record shows. A wording correction to the note goes to
   the owner as a proposal; the note stays as it is until they say yes.
 * **Counts:** 68 rejections through day-153; 5 adoptions.
+
+
+## Day-154: REJECTION #69 — the quality floor on Claude's past nominations: underpowered, and its legs lean the wrong way
+
+Council lab item 16, registered 11-20
+(`PREREGISTER_day154_floor_history.md`), run once on 11-23 by
+`floor_history.py --run` (485e447, committed before it ran). Read
+`AUDIT_day154_floor_history.md`; summary `data/floor_day154.json`. The
+committed record and the pinned population only.
+* **The question.** The day-150 floor (Claude 0.50 or higher, or two council
+  members endorsing) is live and judged forward. Applied to Claude's past
+  nominations, does it keep the better ones?
+* **The population:** Claude's nominations 10-14 → 11-19 with a surviving
+  tally, pinned before any return: 92 positions over 23 sessions, 67 kept and
+  25 dropped. All scored.
+* **UNDERPOWERED.**
+  * Kept minus dropped −0.20% a position, t = −0.39, placebo p = 0.65, both
+    halves negative (−0.09%, −0.24%): arm A reads FAIL.
+  * The dropped made +0.27% (net +0.14%); the kept +0.07% (net −0.06%).
+  * A planted 1.0% shows only at t = 1.92; the smallest detectable effect is
+    1.46%.
+  * Not REMOVES_WINNERS: the harm reading needs t ≥ 2, and it is 0.39.
+* **Beside it:**
+  * the confidence leg alone −0.38% (t = −0.92), the endorsement leg alone
+    −0.59% (t = −1.33), first-named against second-named −0.37% (t = −0.92):
+    each points the wrong way, below any bar, as day-145c and day-148 did;
+  * the live floor's two drops: LONG CNQ.TO −1.94% (11-17), SHORT LUN.TO
+    +5.11% (11-19).
+* **So:** nothing live changes; the floor is the owner's decision with its own
+  forward bar. The owner is told that on history its legs lean the wrong way.
+* **Counts:** 69 rejections through day-154; 5 adoptions.

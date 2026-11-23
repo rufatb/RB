@@ -54,6 +54,37 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day154b — lab item 16: the quality floor on Claude's past nominations, UNDERPOWERED, rejection #69 (2026-11-23)
+
+* **The result.** `floor_history.py --run` (485e447, committed before it
+  ran); read `AUDIT_day154_floor_history.md`, summary
+  `data/floor_day154.json`. The record and the pin only, 0.1 s, no cost.
+  * 92 positions over 23 sessions, all scored. Kept (67) minus dropped (25)
+    −0.20% a position, t = −0.39, placebo p = 0.65, both halves negative.
+  * The dropped made +0.27% (net +0.14%), so the net condition fails too.
+  * A planted 1.0% shows only at t = 1.92 (smallest detectable 1.46%), so
+    UNDERPOWERED as registered. Not REMOVES_WINNERS (t = 0.39, not ≥ 2).
+  * Beside it, each leg alone leans the wrong way, below any bar: confidence
+    ≥ 0.50 −0.38% (t = −0.92); two endorsements −0.59% (t = −1.33);
+    first-named −0.37% (t = −0.92). Day-145c and day-148 read the same.
+* **So:** nothing live changes. The floor is the owner's rule with its own
+  forward bar; the owner is told that on history its legs lean the wrong way.
+* **Next lab step:** no free row is left again; the next slot proposes and
+  registers a new free item.
+* **11-23's morning was on time:**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:59 | `1a208b48edfed836` | no pick |
+  | Open check | 09:31 | `1a208d1fa67dcd7d` | release reads only |
+  | Report | 09:49 | `1a208e24c78a3e6d` | |
+
+  No pick stood: Claude's LONG AEM.TO (0.40, 1 of 4 endorse) fell below the
+  floor, and its shorts CCO.TO and CNQ.TO followed long runs of falls.
+* **A wording fault in the 09:31 email** (`council_flash.read_words`): a
+  release read on a name with no normal range (EFR.TO, +12.7%) was described
+  as "moved its way, less than a normal day". To be fixed outside the lab.
+
 ## Day154 — lab item 16 registered: the quality floor on Claude's past nominations (2026-11-20)
 
 * **Why.** The day-150 floor is live and judged forward, months away. The
@@ -4222,10 +4253,11 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **68 rejections through
-day-153 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+It is the running record of every change tested — **69 rejections through
+day-154 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
 pre-open desk on history, day-151; #67 a name's intraday habit, day-152; #68
-the noon exit on the live picks, day-153); 5 adoptions** (skipping the morning's widest-swinging names
+the noon exit on the live picks, day-153; #69 the quality floor on Claude's
+past nominations, day-154); 5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been
