@@ -83,7 +83,9 @@ A container reset on 10-25 brought a new image.
   floor, and its shorts CCO.TO and CNQ.TO followed long runs of falls.
 * **A wording fault in the 09:31 email** (`council_flash.read_words`): a
   release read on a name with no normal range (EFR.TO, +12.7%) was described
-  as "moved its way, less than a normal day". To be fixed outside the lab.
+  as "moved its way, less than a normal day". Fixed the same morning: such a
+  read now says "moved its way; no normal range to size it against". Display
+  only; no verdict, record or rule changes.
 
 ## Day154 — lab item 16 registered: the quality floor on Claude's past nominations (2026-11-20)
 

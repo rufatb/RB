@@ -606,6 +606,15 @@ def test_a_release_read_gets_words_and_never_a_verdict():
         assert not any(w in words for w in ('KEEP', 'DROP', 'CAUTION'))
 
 
+def test_a_read_with_no_normal_range_is_never_called_small():
+    # 11-23: EFR.TO had no normal range and was +12.7%, printed "less than a normal day"
+    up = F.read_words({'price': 1, 'now_days': None, 'now_for_read': 12.73})
+    down = F.read_words({'price': 1, 'now_days': None, 'now_for_read': -3.0})
+    assert 'less than a normal day' not in up and 'less than a normal day' not in down
+    assert up == 'moved its way; no normal range to size it against'
+    assert down == 'moved against the read; no normal range to size it against'
+
+
 # ── 6. the wiring: the morning job, its push, the 08:12 Routine ─────────────
 
 def _code(name):

@@ -746,8 +746,12 @@ def read_words(x):
         return 'moved against the read by %s' % _days(d)
     if m is None:
         return 'no prior close to compare'
-    return ('little reaction so far' if abs(m) < 0.5 else
-            'moved its way, less than a normal day' if m > 0 else 'moved against the read, less than a normal day')
+    if abs(m) < 0.5:
+        return 'little reaction so far'
+    if d is None:   # no normal range for this name: never call the move small (11-23, EFR.TO +12.7%)
+        return ('moved its way; no normal range to size it against' if m > 0
+                else 'moved against the read; no normal range to size it against')
+    return 'moved its way, less than a normal day' if m > 0 else 'moved against the read, less than a normal day'
 
 
 def record_open_checks(rows, now, path=None):
