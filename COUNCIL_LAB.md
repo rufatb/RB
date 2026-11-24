@@ -83,6 +83,9 @@ Ordered by what a result could change, then by cost.
 * Cached bars only. The events were counted from the prior session's prices
   (1,209 over 357 sessions); no outcome was read.
 * `faded_gap.py` is committed in its own commit before it runs, next weekday.
+* **Amendment 1, the same evening, before any return:** the 16:20 reset wiped
+  the bar cache, so the run first downloads it again with day-143's own
+  `report_day.py --fetch` (same names and windows, FMP calls only).
 
 **2026-11-23: item 16 ran — UNDERPOWERED, rejection #69.**
 * `floor_history.py --run` was committed first (485e447), then run once on the

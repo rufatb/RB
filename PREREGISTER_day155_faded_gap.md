@@ -157,3 +157,18 @@ dividend-adjusted daily bars.
 
 * None: cached bars, plus about 60 FMP daily calls for the descriptive live
   record. No model.
+
+## Amendment 1 (2026-11-24, 16:30 ET, before any return was computed)
+
+* **The cache is gone.** The machine was reset at 16:20:30 ET on 11-24, and
+  the reset wiped `.rb-state`, `report_day_cache` included.
+* **So the run downloads it again first,** with day-143's own code
+  (`python report_day.py --fetch`, which computes no return). It uses the
+  same names, the same endpoints and the same fixed windows (15-minute bars
+  2024-01-02 → 2026-10-29; daily bars from 2015-06-01; the S&P 500
+  membership rebuild). It costs FMP calls only.
+* **The counts may move slightly** if FMP has revised a bar. The run prints
+  its own event counts beside the 1,209 / 4,218 / 14,303 counted at
+  registration, along with the download's failed and capped calls.
+* **Nothing else changes:** not the definitions, the bar, the seed, the
+  control or the labels.

@@ -72,6 +72,19 @@ A container reset on 10-25 brought a new image.
     agreeing in sign. A planted 0.30% must show at t ≥ 3.
   * Anything else is rejection #70. Nothing live changes.
 * `faded_gap.py` is committed in its own commit before it runs, next weekday.
+* **Amendment 1, before any return:** the 16:20 reset (below) wiped
+  `.rb-state/report_day_cache`. The run first re-downloads it with day-143's
+  own `report_day.py --fetch` (same names, endpoints and windows; FMP calls
+  only, so it needs the FMP key the morning writes) and prints its counts
+  beside the registered ones.
+* **The machine was reset at 16:20:30 ET on 11-24,** as the evening job
+  fired. `.rb-state` was wiped: the keys, the frozen publications, the
+  caches.
+  * The committed record was unaffected, and the scorers ran.
+  * The review read the morning's report from the page's `record/report.json`
+    (`daily_review.py --report`).
+  * No evening note was sent (`NO_LIST_STAGED`, and no FMP key).
+  * The morning's STEP 2 writes the keys again.
 * **11-24's morning was on time:**
 
   | Email | Sent (ET) | Gmail id | Note |
