@@ -933,3 +933,30 @@ session,model,kind,side,ticker,confidence,abstain_probability,invalid_at,prompt_
 2026-11-23,top2memory,pick,SHORT,CCO.TO,0.23,,86.98,day130-memory,published_report,89.05,88.385,0.7468,1,1,2026-11-23T16:21:42.039219-05:00,,,,,3 of 4 endorse
 2026-11-23,top2run,pick,SHORT,CCO.TO,0.37,,,day144-claude-leads+day146-runs+day150-floor,published_report,89.05,88.385,0.7468,1,,2026-11-23T16:21:42.039219-05:00,,,,,Claude 0.37; council 3 of 4 endorse
 2026-11-23,top2run,pick,SHORT,CNQ.TO,0.33,,,day144-claude-leads+day146-runs+day150-floor,published_report,63.92,62.93,1.5488,1,,2026-11-23T16:21:42.039219-05:00,,,,,"Claude 0.33; council 0 of 4 endorse, 1 object"
+2026-11-24,claude,nominated,LONG,DOL.TO,0.52,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,claude,nominated,LONG,L.TO,0.5,,70.31,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,claude,nominated,SHORT,CLS.TO,0.52,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,claude,nominated,SHORT,HUT.TO,0.53,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,deepseek,nominated,LONG,CNQ.TO,0.33,,,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,deepseek,nominated,LONG,SU.TO,0.38,,,day129-nominations,published_report,,,,,,,news,,,,
+2026-11-24,deepseek,nominated,SHORT,DOL.TO,0.36,,,day129-nominations,published_report,,,,,,,news,,,,
+2026-11-24,deepseek,nominated,SHORT,T.TO,0.31,,15.54,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,engine,board,LONG,BCE.TO,0.558,,,,published_report,,,,,,,,,,,
+2026-11-24,engine,board,SHORT,ENB.TO,0.593,,,,published_report,,,,,,,,,,,
+2026-11-24,engine,board,SHORT,RY.TO,0.613,,,,published_report,,,,,,,,,,,
+2026-11-24,gemini,nominated,LONG,ARE.TO,0.55,,51.92,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,nominated,LONG,DOL.TO,0.58,,216.61,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,nominated,SHORT,T.TO,0.62,,15.54,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,nominated,SHORT,TOU.TO,0.57,,62.9,day129-nominations,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,selected,LONG,DOL.TO,0.58,,216.61,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,selected,SHORT,BTE.TO,0.59,,5.74,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-11-24,gemini,selected,SHORT,PXT.TO,0.62,,18.99,day126-research-v1,published_report,,,,,,,technical,,,,
+2026-11-24,jev,forced,LONG,STN.TO,0.18,0.39,,,published_report,,,,,,,,,,,
+2026-11-24,jev,forced,SHORT,CSU.TO,0.11,0.41,,,published_report,,,,,,,,,,,
+2026-11-24,top2,pick,LONG,DOL.TO,0.52,,,day144-claude-leads+day146-runs+day150-floor,published_report,,,,,,,,,,,Claude 0.52; council 4 of 4 endorse
+2026-11-24,top2,pick,SHORT,HUT.TO,0.53,,,day144-claude-leads+day146-runs+day150-floor,published_report,,,,,,,,,,,Claude 0.53; council 3 of 4 endorse
+2026-11-24,top2council,pick,LONG,DOL.TO,0.32,,216.61,day124-council+day129-nominations,published_report,,,,,,,,,,,4 of 4 endorse
+2026-11-24,top2council,pick,SHORT,CLS.TO,0.33,,,day124-council+day129-nominations,published_report,,,,,,,,,,,4 of 4 endorse
+2026-11-24,top2count,pick,SHORT,PXT.TO,0.62,,18.99,day121-agreement,published_report,,,,,,,,,,,2 of 4
+2026-11-24,top2memory,pick,LONG,DOL.TO,0.53,,216.61,day130-memory,published_report,,,,,,,,,,,4 of 4 endorse
+2026-11-24,top2memory,pick,SHORT,CLS.TO,0.09,,,day130-memory,published_report,,,,,,,,,,,4 of 4 endorse
