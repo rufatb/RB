@@ -54,6 +54,35 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day155 — lab item 17 registered: the faded gap, Claude's short thesis (2026-11-24)
+
+* **Why.** Both of Claude's 11-24 shorts rested on one setup: HUT.TO's
+  +19.4% gap and CLS.TO's +13.8% gap each closed back below the open. The
+  brief shows it to every model as `gap_atr` with the prior open and close.
+* **Registered:** `PREREGISTER_day155_faded_gap.md`, before any return.
+  * A faded up-gap is a gap of 1 ATR or more that closed below its open, so
+    SHORT; a faded down-gap is the mirror, so LONG. Measured the next session,
+    09:45 → close against XIU.
+  * The ATR and the gap use the brief's arithmetic (`daily_technicals.context`).
+  * 1,209 events over 357 sessions, 2024-01 → 2026-10-29, on cached bars,
+    counted from the prior session's prices only.
+  * FOLLOWS gives a proposed tie-break; REVERSES a proposed remove-only
+    pass-over. Each needs t ≥ 3, four blocks, a same-name placebo
+    p < 0.01 (seed 155), and the ten-year panel and the point-in-time S&P 500
+    agreeing in sign. A planted 0.30% must show at t ≥ 3.
+  * Anything else is rejection #70. Nothing live changes.
+* `faded_gap.py` is committed in its own commit before it runs, next weekday.
+* **11-24's morning was on time:**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:59 | `1a20ddacdaca4396` | |
+  | Open check | 09:31 | `1a20df8638cfafea` | KEEP both |
+  | Report | 09:51 | `1a20e0a2e3fe36a8` | |
+
+  The Top 2 was LONG DOL.TO (Claude 0.52, 4 of 4 endorse) and SHORT HUT.TO
+  (Claude 0.53, 3 of 4).
+
 ## Day154b — lab item 16: the quality floor on Claude's past nominations, UNDERPOWERED, rejection #69 (2026-11-23)
 
 * **The result.** `floor_history.py --run` (485e447, committed before it
