@@ -1,0 +1,2031 @@
+{
+ "assessments": [
+  {
+   "reason": "No material same-day catalyst supported by issuer release.",
+   "status": "NO_EDGE",
+   "ticker": "AAUC.TO"
+  },
+  {
+   "reason": "Evidence is unrelated or generic market commentary.",
+   "status": "NO_EDGE",
+   "ticker": "ABX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ACO-X.TO"
+  },
+  {
+   "reason": "Evidence is generic market recap.",
+   "status": "NO_EDGE",
+   "ticker": "AEM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AG.TO"
+  },
+  {
+   "reason": "Investment is immaterial and lacks numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "AGI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ALA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "APTX.TO"
+  },
+  {
+   "reason": "Consent solicitation is routine and immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "AQN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ARE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ARIS.TO"
+  },
+  {
+   "reason": "No issuer-specific event or numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "ATD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ATH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ATRL.TO"
+  },
+  {
+   "reason": "Commentary only, no actionable catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "ATZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "AYA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BAM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BB.TO"
+  },
+  {
+   "reason": "Strike mandate headline lacks issuer release and numbers.",
+   "status": "NO_EDGE",
+   "ticker": "BBD-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BCE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BDT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BEPC.TO"
+  },
+  {
+   "reason": "Headlines are unrelated or speculative.",
+   "status": "NO_EDGE",
+   "ticker": "BMO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BN.TO"
+  },
+  {
+   "reason": "No issuer release or numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "BNS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BTE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BTO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "BYD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CAE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CAR-UN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CCA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CCL-B.TO"
+  },
+  {
+   "reason": "Headlines are about other issuers.",
+   "status": "NO_EDGE",
+   "ticker": "CCO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CIGI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CJ.TO"
+  },
+  {
+   "reason": "Generic market commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "CLS.TO"
+  },
+  {
+   "reason": "Expansion and fund launch lack financial magnitude.",
+   "status": "NO_EDGE",
+   "ticker": "CM.TO"
+  },
+  {
+   "reason": "Commentary articles only.",
+   "status": "NO_EDGE",
+   "ticker": "CNQ.TO"
+  },
+  {
+   "reason": "Dividend commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "CNR.TO"
+  },
+  {
+   "reason": "No issuer release or numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "CP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CPX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CSU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "CU.TO"
+  },
+  {
+   "reason": "Headline is about Suncor, not Cenovus.",
+   "status": "NO_EDGE",
+   "ticker": "CVE.TO"
+  },
+  {
+   "reason": "Conference participation is immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "DFY.TO"
+  },
+  {
+   "reason": "Executive retirement is routine and immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "DOL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DPM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DSG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "DSV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EDR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EDV.TO"
+  },
+  {
+   "reason": "Awards are immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "EFN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EFX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EIF.TO"
+  },
+  {
+   "reason": "Operational update lacks financial catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "ELD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EMA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EMP-A.TO"
+  },
+  {
+   "reason": "Headlines are unrelated or commentary.",
+   "status": "NO_EDGE",
+   "ticker": "ENB.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EQB.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EQX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "ERO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "EXE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FFH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FNV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FSV.TO"
+  },
+  {
+   "reason": "Commentary articles only.",
+   "status": "NO_EDGE",
+   "ticker": "FTS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "FTT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GEI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GFL.TO"
+  },
+  {
+   "reason": "Certification lacks financial magnitude.",
+   "status": "NO_EDGE",
+   "ticker": "GIB-A.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GIL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GMIN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "GWO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "H.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "HBM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "HPS-A.TO"
+  },
+  {
+   "reason": "Headlines lack issuer release and numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "HUT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IAG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IFC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IGM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IMG.TO"
+  },
+  {
+   "reason": "Headlines are about Suncor or generic.",
+   "status": "NO_EDGE",
+   "ticker": "IMO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "IVN.TO"
+  },
+  {
+   "reason": "Headlines are about other issuers.",
+   "status": "NO_EDGE",
+   "ticker": "K.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KEY.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KNT.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "KXS.TO"
+  },
+  {
+   "reason": "Earnings headline lacks issuer release and full details.",
+   "status": "NO_EDGE",
+   "ticker": "L.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "LUG.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "LUN.TO"
+  },
+  {
+   "reason": "Headline is generic growth stock list.",
+   "status": "NO_EDGE",
+   "ticker": "MDA.TO"
+  },
+  {
+   "reason": "Commentary and distributions are immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "MFC.TO"
+  },
+  {
+   "reason": "Dividend commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "MG.TO"
+  },
+  {
+   "reason": "Share buyback renewal is routine.",
+   "status": "NO_EDGE",
+   "ticker": "MRU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "MX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "NA.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "NPI.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "NTR.TO"
+  },
+  {
+   "reason": "Drill results lack clear market reprice mechanism.",
+   "status": "NO_EDGE",
+   "ticker": "NXE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OGC.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OTEX.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "OVV.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PAAS.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PBH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PEY.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "POU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "POW.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PPL.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PSK.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "PXT.TO"
+  },
+  {
+   "reason": "M&A headlines lack issuer release and verification.",
+   "status": "NO_EDGE",
+   "ticker": "QBR-B.TO"
+  },
+  {
+   "reason": "Headline is unrelated to QSR.",
+   "status": "NO_EDGE",
+   "ticker": "QSR.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "RBA.TO"
+  },
+  {
+   "reason": "Streaming dispute lacks numeric catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "RCI-B.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "REI-UN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "RUS.TO"
+  },
+  {
+   "reason": "Headlines are unrelated to RY.",
+   "status": "NO_EDGE",
+   "ticker": "RY.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SAP.TO"
+  },
+  {
+   "reason": "Merger progress lacks immediate financial catalyst.",
+   "status": "NO_EDGE",
+   "ticker": "SCR.TO"
+  },
+  {
+   "reason": "Generic market commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "SHOP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SKE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SLF.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "SOBO.TO"
+  },
+  {
+   "reason": "Contract award was yesterday and immaterial relative to size.",
+   "status": "NO_EDGE",
+   "ticker": "STN.TO"
+  },
+  {
+   "reason": "CFO appointment is immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "SU.TO"
+  },
+  {
+   "reason": "M&A headline lacks issuer release and verification.",
+   "status": "NO_EDGE",
+   "ticker": "T.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TA.TO"
+  },
+  {
+   "reason": "ETF launches are immaterial.",
+   "status": "NO_EDGE",
+   "ticker": "TD.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TFII.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TIH.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TNZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TOU.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TPZ.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TRI.TO"
+  },
+  {
+   "reason": "Pipeline threat headlines lack issuer release and numbers.",
+   "status": "NO_EDGE",
+   "ticker": "TRP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "TVE.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "VET.TO"
+  },
+  {
+   "reason": "Valuation commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "VNP.TO"
+  },
+  {
+   "reason": "Headline is about Maximus, not WCN.",
+   "status": "NO_EDGE",
+   "ticker": "WCN.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WCP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WDO.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WN.TO"
+  },
+  {
+   "reason": "Valuation commentary only.",
+   "status": "NO_EDGE",
+   "ticker": "WPM.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "WSP.TO"
+  },
+  {
+   "reason": "No evidence available.",
+   "status": "NO_EDGE",
+   "ticker": "X.TO"
+  }
+ ],
+ "captured_at": "2026-11-24T08:56:22.852067-05:00",
+ "cases": [],
+ "choice_ids": [],
+ "comparison_note": "Original council was not yet available at the challenge cutoff.",
+ "completed_at": "2026-11-24T08:58:27.652526-05:00",
+ "coverage": {
+  "assessed": 150,
+  "available": 150,
+  "available_tickers": [
+   "AAUC.TO",
+   "ABX.TO",
+   "AC.TO",
+   "ACO-X.TO",
+   "AEM.TO",
+   "AG.TO",
+   "AGI.TO",
+   "ALA.TO",
+   "APTX.TO",
+   "AQN.TO",
+   "ARE.TO",
+   "ARIS.TO",
+   "ATD.TO",
+   "ATH.TO",
+   "ATRL.TO",
+   "ATZ.TO",
+   "AYA.TO",
+   "BAM.TO",
+   "BB.TO",
+   "BBD-B.TO",
+   "BCE.TO",
+   "BDT.TO",
+   "BEPC.TO",
+   "BMO.TO",
+   "BN.TO",
+   "BNS.TO",
+   "BTE.TO",
+   "BTO.TO",
+   "BYD.TO",
+   "CAE.TO",
+   "CAR-UN.TO",
+   "CCA.TO",
+   "CCL-B.TO",
+   "CCO.TO",
+   "CG.TO",
+   "CIGI.TO",
+   "CJ.TO",
+   "CLS.TO",
+   "CM.TO",
+   "CNQ.TO",
+   "CNR.TO",
+   "CP.TO",
+   "CPX.TO",
+   "CS.TO",
+   "CSU.TO",
+   "CU.TO",
+   "CVE.TO",
+   "DFY.TO",
+   "DOL.TO",
+   "DPM.TO",
+   "DSG.TO",
+   "DSV.TO",
+   "EDR.TO",
+   "EDV.TO",
+   "EFN.TO",
+   "EFX.TO",
+   "EIF.TO",
+   "ELD.TO",
+   "EMA.TO",
+   "EMP-A.TO",
+   "ENB.TO",
+   "EQB.TO",
+   "EQX.TO",
+   "ERO.TO",
+   "EXE.TO",
+   "FFH.TO",
+   "FM.TO",
+   "FNV.TO",
+   "FSV.TO",
+   "FTS.TO",
+   "FTT.TO",
+   "GEI.TO",
+   "GFL.TO",
+   "GIB-A.TO",
+   "GIL.TO",
+   "GMIN.TO",
+   "GWO.TO",
+   "H.TO",
+   "HBM.TO",
+   "HPS-A.TO",
+   "HUT.TO",
+   "IAG.TO",
+   "IFC.TO",
+   "IGM.TO",
+   "IMG.TO",
+   "IMO.TO",
+   "IVN.TO",
+   "K.TO",
+   "KEY.TO",
+   "KNT.TO",
+   "KXS.TO",
+   "L.TO",
+   "LUG.TO",
+   "LUN.TO",
+   "MDA.TO",
+   "MFC.TO",
+   "MG.TO",
+   "MRU.TO",
+   "MX.TO",
+   "NA.TO",
+   "NPI.TO",
+   "NTR.TO",
+   "NXE.TO",
+   "OGC.TO",
+   "OTEX.TO",
+   "OVV.TO",
+   "PAAS.TO",
+   "PBH.TO",
+   "PD.TO",
+   "PEY.TO",
+   "POU.TO",
+   "POW.TO",
+   "PPL.TO",
+   "PSK.TO",
+   "PXT.TO",
+   "QBR-B.TO",
+   "QSR.TO",
+   "RBA.TO",
+   "RCI-B.TO",
+   "REI-UN.TO",
+   "RUS.TO",
+   "RY.TO",
+   "SAP.TO",
+   "SCR.TO",
+   "SHOP.TO",
+   "SKE.TO",
+   "SLF.TO",
+   "SOBO.TO",
+   "STN.TO",
+   "SU.TO",
+   "T.TO",
+   "TA.TO",
+   "TD.TO",
+   "TFII.TO",
+   "TIH.TO",
+   "TNZ.TO",
+   "TOU.TO",
+   "TPZ.TO",
+   "TRI.TO",
+   "TRP.TO",
+   "TVE.TO",
+   "VET.TO",
+   "VNP.TO",
+   "WCN.TO",
+   "WCP.TO",
+   "WDO.TO",
+   "WN.TO",
+   "WPM.TO",
+   "WSP.TO",
+   "X.TO"
+  ],
+  "challenged": 0,
+  "missing_tickers": [],
+  "requested": 150,
+  "requested_tickers": [
+   "AAUC.TO",
+   "ABX.TO",
+   "AC.TO",
+   "ACO-X.TO",
+   "AEM.TO",
+   "AG.TO",
+   "AGI.TO",
+   "ALA.TO",
+   "APTX.TO",
+   "AQN.TO",
+   "ARE.TO",
+   "ARIS.TO",
+   "ATD.TO",
+   "ATH.TO",
+   "ATRL.TO",
+   "ATZ.TO",
+   "AYA.TO",
+   "BAM.TO",
+   "BB.TO",
+   "BBD-B.TO",
+   "BCE.TO",
+   "BDT.TO",
+   "BEPC.TO",
+   "BMO.TO",
+   "BN.TO",
+   "BNS.TO",
+   "BTE.TO",
+   "BTO.TO",
+   "BYD.TO",
+   "CAE.TO",
+   "CAR-UN.TO",
+   "CCA.TO",
+   "CCL-B.TO",
+   "CCO.TO",
+   "CG.TO",
+   "CIGI.TO",
+   "CJ.TO",
+   "CLS.TO",
+   "CM.TO",
+   "CNQ.TO",
+   "CNR.TO",
+   "CP.TO",
+   "CPX.TO",
+   "CS.TO",
+   "CSU.TO",
+   "CU.TO",
+   "CVE.TO",
+   "DFY.TO",
+   "DOL.TO",
+   "DPM.TO",
+   "DSG.TO",
+   "DSV.TO",
+   "EDR.TO",
+   "EDV.TO",
+   "EFN.TO",
+   "EFX.TO",
+   "EIF.TO",
+   "ELD.TO",
+   "EMA.TO",
+   "EMP-A.TO",
+   "ENB.TO",
+   "EQB.TO",
+   "EQX.TO",
+   "ERO.TO",
+   "EXE.TO",
+   "FFH.TO",
+   "FM.TO",
+   "FNV.TO",
+   "FSV.TO",
+   "FTS.TO",
+   "FTT.TO",
+   "GEI.TO",
+   "GFL.TO",
+   "GIB-A.TO",
+   "GIL.TO",
+   "GMIN.TO",
+   "GWO.TO",
+   "H.TO",
+   "HBM.TO",
+   "HPS-A.TO",
+   "HUT.TO",
+   "IAG.TO",
+   "IFC.TO",
+   "IGM.TO",
+   "IMG.TO",
+   "IMO.TO",
+   "IVN.TO",
+   "K.TO",
+   "KEY.TO",
+   "KNT.TO",
+   "KXS.TO",
+   "L.TO",
+   "LUG.TO",
+   "LUN.TO",
+   "MDA.TO",
+   "MFC.TO",
+   "MG.TO",
+   "MRU.TO",
+   "MX.TO",
+   "NA.TO",
+   "NPI.TO",
+   "NTR.TO",
+   "NXE.TO",
+   "OGC.TO",
+   "OTEX.TO",
+   "OVV.TO",
+   "PAAS.TO",
+   "PBH.TO",
+   "PD.TO",
+   "PEY.TO",
+   "POU.TO",
+   "POW.TO",
+   "PPL.TO",
+   "PSK.TO",
+   "PXT.TO",
+   "QBR-B.TO",
+   "QSR.TO",
+   "RBA.TO",
+   "RCI-B.TO",
+   "REI-UN.TO",
+   "RUS.TO",
+   "RY.TO",
+   "SAP.TO",
+   "SCR.TO",
+   "SHOP.TO",
+   "SKE.TO",
+   "SLF.TO",
+   "SOBO.TO",
+   "STN.TO",
+   "SU.TO",
+   "T.TO",
+   "TA.TO",
+   "TD.TO",
+   "TFII.TO",
+   "TIH.TO",
+   "TNZ.TO",
+   "TOU.TO",
+   "TPZ.TO",
+   "TRI.TO",
+   "TRP.TO",
+   "TVE.TO",
+   "VET.TO",
+   "VNP.TO",
+   "WCN.TO",
+   "WCP.TO",
+   "WDO.TO",
+   "WN.TO",
+   "WPM.TO",
+   "WSP.TO",
+   "X.TO"
+  ]
+ },
+ "errors": [],
+ "evidence_digest": "2ea453a4f4aea931a0f1412655687b8b75778f01424feac2707d9c9b03ba0c3b",
+ "facts": [
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "98f527f9cc412af90d2b",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:35:02-05:00",
+   "text": "PennantPark (PFLT) Misses Q4 Earnings and Revenue Estimates",
+   "ticker": "RY.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/pennantpark-pflt-misses-q4-earnings-213502767.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "c0f55f86316c92de4967",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T09:01:00-05:00",
+   "text": "RBC Capital Markets Hosts Global TIMT Conference Featuring 100 Technology, Internet, Media and Telecom Leaders",
+   "ticker": "RY.TO",
+   "url": "https://finance.yahoo.com/technology/articles/rbc-capital-markets-hosts-global-140100126.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "1c5268da53a1c411c957",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:00:00-05:00",
+   "text": "Suncor Names Enbridge Veteran Max Chan CFO Ahead of CEO Transition",
+   "ticker": "ENB.TO",
+   "url": "https://finance.yahoo.com/energy/articles/suncor-names-enbridge-veteran-max-020000209.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "29c11cfc5b46698ebf80",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T20:30:00-05:00",
+   "text": "Retirees: 2 High-Yield Dividend Stocks for Solid TFSA Passive Income",
+   "ticker": "ENB.TO",
+   "url": "https://ca.finance.yahoo.com/news/retirees-2-high-yield-dividend-013000918.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "7c795a90158347f30e3d",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:00:00-05:00",
+   "text": "TD Asset Management Inc. expands investment lineup with launch of TD Canadian Corporate Bond Index ETF (Ticker: TCB) and TD Canadian Government Bond Index ETF (Ticker: TGB)",
+   "ticker": "TD.TO",
+   "url": "https://ca.finance.yahoo.com/news/td-asset-management-inc-expands-120000960.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "1281271a598540a840a6",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:40:00-05:00",
+   "text": "I’m Betting a Big Chunk of My Retirement on This Canadian Dividend Giant",
+   "ticker": "TD.TO",
+   "url": "https://ca.finance.yahoo.com/news/m-betting-big-chunk-retirement-214000551.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "cda60b9c32b338e17ba8",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T05:10:07-05:00",
+   "text": "Can Quantum Utility Change The Bull Case For BMO (TSX:BMO)?",
+   "ticker": "BMO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/quantum-utility-change-bull-case-101007181.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "dd79732216b17b79a80f",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:00:00-05:00",
+   "text": "Suncor Names Enbridge Veteran Max Chan CFO Ahead of CEO Transition",
+   "ticker": "BMO.TO",
+   "url": "https://finance.yahoo.com/energy/articles/suncor-names-enbridge-veteran-max-020000209.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "57a728a152a9daedf025",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:30:00-05:00",
+   "text": "2 Canadian Oil Stocks to Consider With $1,000 as Crude Stays Elevated",
+   "ticker": "CNQ.TO",
+   "url": "https://ca.finance.yahoo.com/news/2-canadian-oil-stocks-consider-023000049.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "15452a4d9bfe9b433d62",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:20:00-05:00",
+   "text": "Where Could CNQ Stock Be in 3 Years?",
+   "ticker": "CNQ.TO",
+   "url": "https://ca.finance.yahoo.com/news/where-could-cnq-stock-3-212000982.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "9036ecaa69b56b1e119f",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T17:00:00-05:00",
+   "text": "Suncor Énergie annonce la nomination du chef des finances\nCalgary, Alberta--(Newsfile Corp. - 23 novembre 2026) - Suncor Énergie (TSX: SU) (NYSE: SU) annonce qu'à la suite",
+   "ticker": "SU.TO",
+   "url": "https://www.newsfilecorp.com/release/325409/Suncor-nergie-annonce-la-nomination-du-chef-des-finances",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "e0d3e0c0d28266552547",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T17:00:00-05:00",
+   "text": "Suncor Energy announces appointment of Chief Financial Officer\nCalgary, Alberta--(Newsfile Corp. - November 23, 2026) - Suncor Energy (TSX: SU) (NYSE: SU) announces that following a comprehensive search, Max Chan has been appointed Chief Financial Officer of Suncor, effective January 4, 2027. Chan will be responsible for all of the company's financial functions including controllers, treasury, tax, internal audit and enterprise risk management, as well as investor relations.",
+   "ticker": "SU.TO",
+   "url": "https://www.newsfilecorp.com/release/325408/Suncor-Energy-announces-appointment-of-Chief-Financial-Officer",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "e37312f40722d78315df",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:11:03-05:00",
+   "text": "Did AI Credit Tool Rollout Just Shift Scotiabank's (TSX:BNS) Investment Narrative?",
+   "ticker": "BNS.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/did-ai-credit-tool-rollout-111103922.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "c6ccf78d80045ecd03fd",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:45:00-05:00",
+   "text": "Is Scotiabank Stock a Buy for Its 3.5% Dividend?",
+   "ticker": "BNS.TO",
+   "url": "https://ca.finance.yahoo.com/news/scotiabank-stock-buy-3-5-024500196.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "592f767273238224bf92",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T05:11:22-05:00",
+   "text": "3 Canadian Dividend Stocks With Yields Up To 7%",
+   "ticker": "MFC.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/3-canadian-dividend-stocks-yields-101122227.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "cead95aa3e7939fd2c4d",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T07:30:00-05:00",
+   "text": "Manulife Investments Announces November 2026 Cash Distributions for Manulife Exchange Traded Funds and ETF Series of Manulife Funds",
+   "ticker": "MFC.TO",
+   "url": "https://ca.finance.yahoo.com/news/manulife-investments-announces-november-2026-123000440.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "bc73f959d57227ce1fa4",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T08:00:00-05:00",
+   "text": "CIBC plans Middle East expansion with new capital markets presence in Abu Dhabi\nCIBC (TSX: CM) (NYSE: CM) today announced its intention to establish a permanent capital markets presence in the Middle East through ADGM, the...",
+   "ticker": "CM.TO",
+   "url": "https://www.newswire.ca/news-releases/cibc-plans-middle-east-expansion-with-new-capital-markets-presence-in-abu-dhabi-884807837.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "fad4e1fb371a3cdacbb5",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T07:00:00-05:00",
+   "text": "CIBC Global Asset Management launches CIBC Structured Equity Yield Fund\nCIBC (TSX: CM) (NYSE: CM) – CIBC Global Asset Management™ (CIBC GAM) today announced the launch of the CIBC Structured Equity Yield Fund (the Fund),...",
+   "ticker": "CM.TO",
+   "url": "https://www.newswire.ca/news-releases/cibc-global-asset-management-launches-cibc-structured-equity-yield-fund-846478245.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "6896b3529fed3fdd622a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:38:00-05:00",
+   "text": "Equities Recover After Disastrous Week",
+   "ticker": "SHOP.TO",
+   "url": "https://ca.finance.yahoo.com/news/equities-recover-disastrous-week-213800771.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "5bc9cf291b2484f77149",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:00:00-05:00",
+   "text": "Actual, Profitable Growth: The Shopify Story People Seem to Forget",
+   "ticker": "SHOP.TO",
+   "url": "https://ca.finance.yahoo.com/news/actual-profitable-growth-shopify-story-210000185.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "2902455508adb78faf77",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T17:50:20-05:00",
+   "text": "Alberta bill could give province greater role in gas pipelines as 'last resort'",
+   "ticker": "TRP.TO",
+   "url": "https://ca.finance.yahoo.com/news/alberta-bill-could-province-greater-205038506.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "a49fcbbbe66be8ac73e4",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:17:44-05:00",
+   "text": "TC Energy threatens to scrap gas pipeline expansion over proposed Alberta bill",
+   "ticker": "TRP.TO",
+   "url": "https://financialpost.com/energy/tc-energy-threatens-to-scrap-gas-pipeline-expansion-over-proposed-alberta-bill/?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "0d5fd145133dfc672e9b",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T07:38:00-05:00",
+   "text": "Suncor's Record Q3 Cash Flow Fuels Optimism: Is the Stock a Buy Now?",
+   "ticker": "CVE.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/suncors-record-q3-cash-flow-123800940.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "461a2adb8f83e2c921c9",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:00:00-05:00",
+   "text": "Forte Minerals Secures Community Access Agreement for Exploration at the Alto Ruri High Sulphidation Gold Project, Peru",
+   "ticker": "ABX.TO",
+   "url": "https://finance.yahoo.com/markets/commodities/articles/forte-minerals-secures-community-access-110000970.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "1094d3f8775939a81463",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:38:00-05:00",
+   "text": "Equities Recover After Disastrous Week",
+   "ticker": "ABX.TO",
+   "url": "https://ca.finance.yahoo.com/news/equities-recover-disastrous-week-213800771.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "d0a476288b343d7a6a74",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:38:00-05:00",
+   "text": "Equities Recover After Disastrous Week",
+   "ticker": "CLS.TO",
+   "url": "https://ca.finance.yahoo.com/news/equities-recover-disastrous-week-213800771.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "c1d7fe69f8eec8312ab4",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:10:00-05:00",
+   "text": "$50,000 in a TFSA: 3 Stocks I’d Buy for Meaningful Monthly Cash Flow",
+   "ticker": "CLS.TO",
+   "url": "https://ca.finance.yahoo.com/news/50-000-tfsa-3-stocks-211000843.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "7712129feee5faa59930",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T11:30:00-05:00",
+   "text": "3 Dividend-Paying Stocks From the Railroad Industry You Should Count On",
+   "ticker": "CNR.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/3-dividend-paying-stocks-railroad-163000902.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "a88bd23c16b74990f816",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T22:14:32-05:00",
+   "text": "Is Freight Volume Growth Altering The Investment Case For CPKC Stock?",
+   "ticker": "CP.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/freight-volume-growth-altering-investment-031432325.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "4c227249285835486a6a",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T20:00:00-05:00",
+   "text": "CRA: Here’s the TFSA Contribution Limit for 2027",
+   "ticker": "CP.TO",
+   "url": "https://ca.finance.yahoo.com/news/cra-tfsa-contribution-limit-2027-010000912.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "aba5aab70a85a3d90814",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:38:00-05:00",
+   "text": "Equities Recover After Disastrous Week",
+   "ticker": "AEM.TO",
+   "url": "https://ca.finance.yahoo.com/news/equities-recover-disastrous-week-213800771.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "eb858425b04aabc62511",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T11:25:00-05:00",
+   "text": "Equities Revive",
+   "ticker": "AEM.TO",
+   "url": "https://ca.finance.yahoo.com/news/equities-revive-162500109.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "fbf00609075d5cc34a99",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:15:00-05:00",
+   "text": "Brookfield Infrastructure vs. Fortis: Which Stock Fits a Buy-and-Hold TFSA?",
+   "ticker": "FTS.TO",
+   "url": "https://ca.finance.yahoo.com/news/brookfield-infrastructure-vs-fortis-stock-021500031.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "COMMENTARY",
+   "id": "930c5ad22d2780cadadd",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:30:00-05:00",
+   "text": "Retiring at 60? How I’d Calculate the Income Gap Before Buying Dividend Stocks",
+   "ticker": "FTS.TO",
+   "url": "https://ca.finance.yahoo.com/news/retiring-60-d-calculate-income-213000551.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "90df0aaa104c46834a13",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T16:50:00-05:00",
+   "text": "Suncor vs. Imperial Oil: Which Stock Offers the Better Long-Term Dividend Case?",
+   "ticker": "IMO.TO",
+   "url": "https://ca.finance.yahoo.com/news/suncor-vs-imperial-oil-stock-215000339.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "2355b30adf39a44be86b",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T07:38:00-05:00",
+   "text": "Suncor's Record Q3 Cash Flow Fuels Optimism: Is the Stock a Buy Now?",
+   "ticker": "IMO.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/suncors-record-q3-cash-flow-123800940.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "035841c028336237310c",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T08:00:00-05:00",
+   "text": "Cosa Identifies Significant Anomalies in Ambient Noise Tomography Survey at the Astro Uranium Project, Athabasca Basin, Saskatchewan",
+   "ticker": "CCO.TO",
+   "url": "https://finance.yahoo.com/energy/articles/cosa-identifies-significant-anomalies-ambient-130000964.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "fdeb6b761bf4368a3b30",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T12:04:00-05:00",
+   "text": "Can UUUU's Uranium Ramp-Up Strengthen Its Long-Term Growth Story?",
+   "ticker": "CCO.TO",
+   "url": "https://finance.yahoo.com/energy/articles/uuuus-uranium-ramp-strengthen-long-170400847.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "70b13b96375b70ca2ad5",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T18:22:05-05:00",
+   "text": "Wheaton Precious Metals (TSX:WPM) Stock Could Be Overvalued Following Its 231% Run",
+   "ticker": "WPM.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/wheaton-precious-metals-tsx-wpm-232205044.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "b9c29cd7254e62c73d39",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T00:46:32-05:00",
+   "text": "Rogers fires back over exclusive Monday NHL streaming amid rival providers' complaint",
+   "ticker": "RCI-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/rogers-fires-back-over-exclusive-211347324.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "5789ed8ffe432a303adc",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T08:30:00-05:00",
+   "text": "Kestrel Gold Announces Letter of Intent with Eagle Plains for Option of the MPW Project, British Columbia",
+   "ticker": "K.TO",
+   "url": "https://ca.finance.yahoo.com/news/kestrel-gold-announces-letter-intent-133000978.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "6534333486759a7bcc21",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:46:00-05:00",
+   "text": "NEM vs. KGC: Which Gold Mining Stock Should You Bet on Now?",
+   "ticker": "K.TO",
+   "url": "https://finance.yahoo.com/markets/commodities/articles/nem-vs-kgc-gold-mining-114600587.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "a03829ecc8229c669514",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T07:00:00-05:00",
+   "text": "DOLLARAMA ANNOUNCES RETIREMENT OF CHIEF OPERATING OFFICER AND EXECUTIVE APPOINTMENTS\nDollarama Inc. (TSX: DOL) (\"Dollarama\" or the \"Corporation\") today announced that Johanne Choinière, Chief Operating Officer, will retire effective...",
+   "ticker": "DOL.TO",
+   "url": "https://www.newswire.ca/news-releases/dollarama-announces-retirement-of-chief-operating-officer-and-executive-appointments-897159004.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "ced6ff1be373929e41e4",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:30:02-05:00",
+   "text": "Kohl's (KSS) Tops Q3 Earnings and Revenue Estimates",
+   "ticker": "DOL.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/kohls-kss-tops-q3-earnings-123002266.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "ff122c6582ec006e6a6d",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:06:00-05:00",
+   "text": "Maximus Q4 Earnings & Revenues Beat Estimates, Stock Gains 7.9%",
+   "ticker": "WCN.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/maximus-q4-earnings-revenues-beat-120600237.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "80f046f4af2c899d0abf",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:36:19-05:00",
+   "text": "Joly says telecom critical to security and sovereignty after industry CEO meeting",
+   "ticker": "T.TO",
+   "url": "https://ca.finance.yahoo.com/news/joly-says-telecom-critical-security-123619811.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "613d5117e8e2a4ba0b63",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "text": "Quebecor's $31B Telus bid could gut Freedom Mobile's role as a price competitor, experts warn",
+   "ticker": "T.TO",
+   "url": "https://ca.finance.yahoo.com/news/quebecors-31b-telus-bid-could-113000672.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "f5044ec4a006f7a839e2",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T11:01:00-05:00",
+   "text": "Oversold Indices and Spiking Volatility Leave Markets Searching for Footing",
+   "ticker": "ATD.TO",
+   "url": "https://ca.finance.yahoo.com/news/oversold-indices-spiking-volatility-leave-160100918.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "1413bf86ec2fc96f8ead",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-22T10:00:02-05:00",
+   "text": "Five things to watch for in the Canadian business world in the coming week",
+   "ticker": "ATD.TO",
+   "url": "https://ca.finance.yahoo.com/news/five-things-watch-canadian-business-150002744.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "7ca13685ec71b373d92e",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:38:00-05:00",
+   "text": "4 Dividend-Paying Auto Stocks to Consider as Fed Rate Hike Looms",
+   "ticker": "MG.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/4-dividend-paying-auto-stocks-123800820.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "29ad8a72030e71569530",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-22T12:08:18-05:00",
+   "text": "Aritzia And 2 Other Top Canadian Quality Stocks",
+   "ticker": "ATZ.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/aritzia-2-other-top-canadian-170818185.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "2159eae22af629f4a327",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:36:19-05:00",
+   "text": "Joly says telecom critical to security and sovereignty after industry CEO meeting",
+   "ticker": "QBR-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/joly-says-telecom-critical-security-123619811.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "9f6f43466c4a24e0178c",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "text": "Quebecor's $31B Telus bid could gut Freedom Mobile's role as a price competitor, experts warn",
+   "ticker": "QBR-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/quebecors-31b-telus-bid-could-113000672.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "3cc02cdf1bd7c8a9f737",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-22T15:19:37-05:00",
+   "text": "Bombardier workers reject contract offer, vote for strike mandate",
+   "ticker": "BBD-B.TO",
+   "url": "https://ca.finance.yahoo.com/news/bombardier-workers-reject-contract-offer-201937201.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "eadd16178831eddbc563",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-22T23:05:00-05:00",
+   "text": "McDonald's, Burger King and Chick-fil-A food weighed in lighter than 2018 benchmarks — twice. Are you getting less?",
+   "ticker": "QSR.TO",
+   "url": "https://finance.yahoo.com/economy/articles/mcdonalds-burger-king-chick-fil-040500041.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "3cc15fd6e6ebea23f894",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "text": "CGI and HUS's AI solution certified as EU MDR medical device for brain hemorrhage detection\nCGI (TSX: GIB.A) (NYSE: GIB), one of the largest independent IT and business consulting services firms in the world, has announced that an artificial ...",
+   "ticker": "GIB-A.TO",
+   "url": "https://www.newswire.ca/news-releases/cgi-and-hus-s-ai-solution-certified-as-eu-mdr-medical-device-for-brain-hemorrhage-detection-806051991.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "excerpt_provider": "FMP matched archived issuer URL",
+   "id": "598a7985941c60a1effa",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "retrieved_at": "2026-11-24T08:56:21.986406-05:00",
+   "text": "CGI and HUS's AI solution certified as EU MDR medical device for brain hemorrhage detection\nStock Market Symbols GIB.A (TSX) GIB (NYSE) cgi.com/newsroom MDR certification enables broader clinical use of AI-driven diagnostic support across European healthcare HELSINKI, Nov. 24, 2026 /PRNewswire/ -- CGI (TSX: GIB.A) (NYSE: GIB), one of the largest independent IT and business consulting services firms in the world, has announced that an artificial intelligence (AI) solution, CGI AI Head Analysis, developed in partnership with Helsinki University Hospital (HUS) and Planmeca, has received official certification as a medical device under the European Union Medical Device Regulation (MDR class IIb). The AI solution supports physicians in detecting brain hemorrhages from computed tomography (CT) scans.",
+   "ticker": "GIB-A.TO",
+   "url": "https://www.prnewswire.com/news-releases/cgi-and-huss-ai-solution-certified-as-eu-mdr-medical-device-for-brain-hemorrhage-detection-302948683.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "24e10a54a10a4f54a8b0",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T07:00:00-05:00",
+   "text": "George Weston Limited Reports Adjusted Diluted Net Earnings Per Common Share Growth of 8.3% in the Third Quarter",
+   "ticker": "L.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/george-weston-limited-reports-adjusted-120000292.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "3faece2d2d5a9f8a4f40",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T10:19:44-05:00",
+   "text": "Can Hut 8 (HUT) Turn Its Lease Backlog Into Revenue?",
+   "ticker": "HUT.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/hut-8-hut-turn-lease-151944887.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "d4237d9bad3bbca6fbd2",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-21T18:09:16-05:00",
+   "text": "Hut 8 Stock After Beacon Point Launch And $1.07b Credit Facility",
+   "ticker": "HUT.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/hut-8-stock-beacon-point-230916460.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "b6c9ce4be0f042c09632",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T07:00:00-05:00",
+   "text": "Stantec selected to help modernize San Diego's critical water infrastructure for generations to come\nEDMONTON, Alberta and SAN DIEGO, Nov. 23, 2026 (GLOBE NEWSWIRE) -- TSX, NYSE:STN Stantec, a global leader in sustainable design and engineering, has been selected by the City of San Diego for a 10-year, US$75 million capacity engineering and construction services contract that will help strengthen and modernize 11 dams serving more than 1.3 million residents across the region. Under the contract, Stantec will provide engineering, environmental, design, and construction support services for long-term improvement projects across multiple state-regulated dams.",
+   "ticker": "STN.TO",
+   "url": "https://www.globenewswire.com/news-release/2026/11/23/3408187/0/en/stantec-selected-to-help-modernize-san-diego-s-critical-water-infrastructure-for-generations-to-come.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "ba4ea9a6b2cdf3256d6d",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T07:00:00-05:00",
+   "text": "METRO INC. RENEWS ITS SHARE BUYBACK PROGRAM\nMETRO INC. (TSX: MRU) announces that it is renewing its normal course issuer bid program and that such renewal has been approved by the Toronto Stock ...",
+   "ticker": "MRU.TO",
+   "url": "https://www.newswire.ca/news-releases/metro-inc-renews-its-share-buyback-program-884002888.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "e50feb4bc529b4d1e88a",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T06:55:00-05:00",
+   "text": "Alamos Gold Announces Investment in Trident Resources\nAll amounts are in United States dollars, unless otherwise stated. TORONTO, Nov. 24, 2026 (GLOBE NEWSWIRE) -- Alamos Gold Inc. (TSX:AGI; NYSE:AGI) (“Alamos” or the “Company”) today announced that it has entered into an agreement with Trident Resources Corp. (TSX-V: ROCK) (\"Trident\"), pursuant to which the Company agreed to purchase, on a private placement basis, 7,420,000 common shares (“Common Shares”) of Trident at a price of C$3.49 per Common Share for total consideration of approximately C$25,896,000 (the \"Private Placement\").",
+   "ticker": "AGI.TO",
+   "url": "https://www.globenewswire.com/news-release/2026/11/24/3409095/0/en/alamos-gold-announces-investment-in-trident-resources.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "3581b5c0834c9d349821",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-21T09:08:32-05:00",
+   "text": "LunR Royalties And 2 Canadian Growth Stocks To Watch",
+   "ticker": "MDA.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/lunr-royalties-2-canadian-growth-140832670.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "a8414eaeb96060b11830",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T08:00:00-05:00",
+   "text": "Element wins two 2026 AutoTech Breakthrough Awards for delivering AI powered fleet solutions\nElement Fleet Management Corp. (TSX: EFN) (\"Element\" or the \"Company\"), a global leader in intelligent fleet and mobility solutions, has won two 2026 ...",
+   "ticker": "EFN.TO",
+   "url": "https://www.newswire.ca/news-releases/element-wins-two-2026-autotech-breakthrough-awards-for-delivering-ai-powered-fleet-solutions-855804625.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "2d9a173624f6eef9b73e",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T01:00:00-05:00",
+   "text": "Eldorado Gold Announces Four Tailings Filter Presses Operational at Skouries; Updated Technical Report to be Filed Q1 2027\nFour operational filter presses achieve a key filtration requirement toward commercial production Four operational filter presses achieve a key filtration requirement toward commercial production",
+   "ticker": "ELD.TO",
+   "url": "https://www.globenewswire.com/news-release/2026/11/23/3408010/0/en/eldorado-gold-announces-four-tailings-filter-presses-operational-at-skouries-updated-technical-report-to-be-filed-q1-2027.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "0dc1f0475382368bd34d",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T18:30:00-05:00",
+   "text": "Strathcona Resources and Greenfire Resources Announce Filing of Joint Management Information Circular and Receipt of Interim Order\nStrathcona Resources Ltd. (\"Strathcona\") (TSX: SCR) and Greenfire Resources Ltd. (\"Greenfire\") (TSX: GFR) (NYSE: GFR) are pleased to jointly announce ...",
+   "ticker": "SCR.TO",
+   "url": "https://www.newswire.ca/news-releases/strathcona-resources-and-greenfire-resources-announce-filing-of-joint-management-information-circular-and-receipt-of-interim-order-802725320.html",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "9630458f6f8ad2b907cf",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "text": "NexGen Grows High-Grade Subdomain Vertically and Along Strike and Further Confirms Strong Continuity of Intense High-Grade Mineralization at Patterson Corridor East (PCE)\nVertical extent of high-grade subdomain increased a further 95 m to 739 m, a growth of 15%, by RK-26-293c1 with cumulative 2.5 m of >10,000 cps. Strike length of high-grade subdomain increased by 28 m to 238 m, expanding by 13% with new intersections to both the southwest and northeast.",
+   "ticker": "NXE.TO",
+   "url": "https://www.newsfilecorp.com/release/325505/NexGen-Grows-HighGrade-Subdomain-Vertically-and-Along-Strike-and-Further-Confirms-Strong-Continuity-of-Intense-HighGrade-Mineralization-at-Patterson-Corridor-East-PCE",
+   "verification": "feed-classified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "13f19b84e57e3bf9174d",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-24T06:30:00-05:00",
+   "text": "Algonquin Power & Utilities Corp. Announces Successful Completion of Consent Solicitations for Three Series of Subordinated Notes",
+   "ticker": "AQN.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/algonquin-power-utilities-corp-announces-113000322.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "UNCLASSIFIED",
+   "id": "7db195cd6c33ae18bb7f",
+   "issuer_verified": false,
+   "kind": "headline",
+   "published_at": "2026-11-23T21:11:31-05:00",
+   "text": "5N Plus (TSX:VNP) Stock Looks Fully Valued Given Its Earnings Support",
+   "ticker": "VNP.TO",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/5n-plus-tsx-vnp-stock-021131941.html?.tsrc=rss",
+   "verification": "unverified"
+  },
+  {
+   "classification": "ISSUER_RELEASE",
+   "id": "525049b903b4575e0421",
+   "issuer_verified": true,
+   "kind": "issuer_release",
+   "published_at": "2026-11-23T08:00:00-05:00",
+   "text": "DEFINITY CHIEF EXECUTIVE OFFICER ROWAN SAUNDERS TO PARTICIPATE IN FIRESIDE CHAT AT THE DESJARDINS TORONTO CONFERENCE\nRowan Saunders, President and Chief Executive Officer of Definity Financial Corporation (TSX: DFY), will participate in a fireside chat as part of...",
+   "ticker": "DFY.TO",
+   "url": "https://www.newswire.ca/news-releases/definity-chief-executive-officer-rowan-saunders-to-participate-in-fireside-chat-at-the-desjardins-toronto-conference-802704760.html",
+   "verification": "feed-classified"
+  },
+  {
+   "id": "0e99ab385a8f5a565e2a",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-24T08:44:45-05:00",
+   "text": "wti: 80.76",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/CL%3DF?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "9fa6da7113fd91a44023",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-24T08:54:49-05:00",
+   "text": "cadusd: 0.6981",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/CADUSD%3DX?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "501682a4dee2cc6bf3d1",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-23T16:20:00-05:00",
+   "text": "tsx: 34082.12",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPTSE?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  },
+  {
+   "id": "179db3c9f838d3a15a76",
+   "issuer_verified": false,
+   "kind": "macro",
+   "published_at": "2026-11-24T08:39:46-05:00",
+   "text": "vix: 29.35",
+   "ticker": "*",
+   "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d",
+   "verification": "staged-provider-observation"
+  }
+ ],
+ "gaps": [
+  "Longer issuer text not obtained for 11 source checks; archived excerpts retained."
+ ],
+ "id": "151f66c700c04d8ebfd9744a",
+ "opening_eligible": true,
+ "original_council": null,
+ "policy": "dda-decision-v2",
+ "record_note": "Research choices, not orders or calibrated predictions. Separate contexts do not establish independent predictive skill.",
+ "routes": [
+  {
+   "actual_model": "deepseek-v4-pro",
+   "assessed": 150,
+   "budget_seconds": 240,
+   "completed_at": "2026-11-24T08:58:27.652495-05:00",
+   "elapsed_seconds": 124.754,
+   "model": "deepseek-v4-pro",
+   "output_budget": 20000,
+   "pass": "Full-universe research",
+   "reasoning": "high",
+   "started_at": "2026-11-24T08:56:22.898542-05:00",
+   "status": "complete",
+   "usage": {
+    "completion_tokens": 10014,
+    "completion_tokens_details": {
+     "accepted_prediction_tokens": null,
+     "audio_tokens": null,
+     "reasoning_tokens": 5492,
+     "rejected_prediction_tokens": null
+    },
+    "prompt_cache_hit_tokens": 384,
+    "prompt_cache_miss_tokens": 34242,
+    "prompt_tokens": 34626,
+    "prompt_tokens_details": {
+     "audio_tokens": null,
+     "cache_write_tokens": null,
+     "cached_tokens": 384
+    },
+    "total_tokens": 44640
+   }
+  }
+ ],
+ "runtime_budget": {
+  "challenge_reserved_seconds": 180,
+  "finalize_reserved_seconds": 10,
+  "research_limit_seconds": 240,
+  "total_seconds": 480,
+  "verification_limit_seconds": 18,
+  "version": 1
+ },
+ "schema_version": 2,
+ "session": "2026-11-24",
+ "source_revision": "d565b0aa222d6664dfb5dfb25821f0759e1e8138",
+ "source_text": {
+  "budget_seconds": 15,
+  "excerpts_expanded": 1,
+  "issuers_requested": 12,
+  "note": "Bounded release excerpts; unavailable or unmatched text retains the archived summary. No full-document diligence claim.",
+  "receipts": [
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "SU.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "CM.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "DOL.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 1,
+    "status": "EXPANDED",
+    "ticker": "GIB-A.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "STN.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "MRU.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "AGI.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "EFN.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "ELD.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "SCR.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "NXE.TO"
+   },
+   {
+    "excerpt_limit": 4000,
+    "matched": 0,
+    "status": "UNMATCHED",
+    "ticker": "DFY.TO"
+   }
+  ]
+ },
+ "status": "MORNING RESEARCH",
+ "verification_context": []
+}
