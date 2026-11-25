@@ -66,7 +66,8 @@ def test_the_email_html_uses_only_what_the_send_path_keeps():
     body = '# RB Daily Report — 2026-10-13\nPublished 09:46 ET.\n\n| A | B |\n|---|---|\n| 1 | 2 |\n'
     html = E.html_from_text(body)
     assert '<style' not in html and 'class="' not in html
-    assert '<td valign="top" style="border-bottom:1px solid #dde4ea">1</td>' in html
+    # day-155b: the rule and the alignment sit once on the row, inherited by its cells
+    assert '<tr valign="top" style="border-bottom:1px solid #dde4ea"><td>1</td><td>2</td></tr>' in html
     assert 'cellpadding="9"' in html
 
 

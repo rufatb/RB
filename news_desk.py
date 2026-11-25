@@ -514,28 +514,142 @@ def section(state_dir, now, path=LEDGER):
             'preopen': preopen_line(path),
             'calls': (fresh or {}).get('calls') or [], 'headline': (fresh or {}).get('headline') or {},
             'events': (fresh or {}).get('events'), 'excluded': (fresh or {}).get('excluded') or {},
-            'prompt_version': PROMPT_VERSION}
+            'prompt_version': PROMPT_VERSION,
+            # day-155b (owner, 2026-11-24): the email's table is numbered, carries one side
+            # per row and sets routine releases apart; the record of each kind of row is
+            # frozen here. A section from before carries neither and renders as it did.
+            'layout': LAYOUT, 'rank_record': rank_record(path, before=now.date().isoformat())}
+
+
+# ── day-155b: the email's order and the record of each kind of row ──────────
+
+LAYOUT = 'day155b'
+TOP = 2
+
+
+def _is_material(v):
+    return v is True or str(v).strip().lower() == 'true'
+
+
+def order_key(c):
+    """The email's own order: material first, then the model's own confidence
+    (highest first), then ticker. `newsdesk_confidence.email_key` is the same
+    order, and the day-155b test was run on it."""
+    return (not _is_material(c.get('material')), -float(c['confidence']), c['ticker'])
+
+
+def _num(v):
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return None
+    return x if math.isfinite(x) else None
+
+
+def rank_record(path=LEDGER, before=None):
+    """The FULL arm's record, 09:45 -> close against XIU, split the way the email
+    orders it, on sessions before `before`:
+      top      the top two each morning, on sessions with a scored other call
+               (day-155b's H1 population);
+      rest     the other calls of those sessions;
+      routine  every scored call the model marked routine (H2's group).
+    Display only: None when there is nothing to show or anything fails."""
+    try:
+        by = {}
+        for r in read(path):
+            if r.get('arm') != 'full' or (before and r.get('session', '') >= before):
+                continue
+            by.setdefault(r['session'], {}).setdefault(r['ticker'], r)
+        top, rest, routine, ds = [], [], [], []
+        for s in sorted(by):
+            ordered = sorted(by[s].values(), key=order_key)
+            t = [y for y in (_num(r.get('w945')) for r in ordered[:TOP]) if y is not None]
+            o = [y for y in (_num(r.get('w945')) for r in ordered[TOP:]) if y is not None]
+            routine += [y for y in (_num(r.get('w945')) for r in ordered
+                                    if not _is_material(r.get('material'))) if y is not None]
+            if t and o:
+                top += t
+                rest += o
+                ds.append(sum(t) / len(t) - sum(o) / len(o))
+        if not top or not rest:
+            return None
+        stat = lambda v: {'calls': len(v), 'right': sum(x > 0 for x in v),
+                          'mean': round(sum(v) / len(v), 3) if v else None}
+        t_ = None
+        if len(ds) >= 3:
+            m = sum(ds) / len(ds)
+            sd = math.sqrt(sum((d - m) ** 2 for d in ds) / (len(ds) - 1))
+            t_ = round(m / (sd / math.sqrt(len(ds))), 2) if sd else None
+        return {'sessions': len(ds), 'top': stat(top), 'rest': stat(rest),
+                'routine': stat(routine), 't': t_}
+    except Exception:
+        return None
+
+
+def rank_line(rec):
+    """The one line under the email's table, from the frozen record, or None."""
+    if not isinstance(rec, dict):
+        return None
+    try:
+        part = lambda k: '%d of %d (%+.2f%%)' % (rec[k]['right'], rec[k]['calls'], rec[k]['mean'])
+        line = ('Record so far, 09:45 to the close against the market, right and the mean a '
+                'call: the top two rows each morning %s; the rest %s' % (part('top'), part('rest')))
+        if rec.get('routine', {}).get('calls'):
+            line += '; routine releases %s' % part('routine')
+        return line + ('. Not proven: short of the bar, and on the 419-release replay the higher '
+                       'scores did no better (day-155b).')
+    except Exception:
+        return None
+
+
+def _clear_lines(sec, out):
+    """Day-155b's email table: material calls in the email's order, numbered,
+    one side each; routine releases on one line with no side; the record."""
+    calls = sorted(sec.get('calls') or [], key=order_key)
+    material = [c for c in calls if _is_material(c.get('material'))]
+    routine = [c for c in calls if not _is_material(c.get('material'))]
+    if material:
+        out += ['', '| # | Call | Own conf. | Release | Why |', '|---|---|---:|---|---|']
+        for i, c in enumerate(material, 1):
+            out.append(f"| {i} | {c['side']} {c['ticker']} | {float(c['confidence']):.2f} | "
+                       f"{str(c.get('title'))[:80].replace('|', '/')} | "
+                       f"{str(c.get('reason'))[:160].replace('|', '/')} |")
+    else:
+        out.append('No release the model marked material today.')
+    if routine:
+        out.append('Routine releases, no view (the model expects no move, so the side it was '
+                   'made to pick is not shown): ' + '; '.join(
+                       f"{c['ticker']} — {str(c.get('title'))[:70]}" for c in routine) + '.')
+    line = rank_line(sec.get('rank_record'))
+    if line:
+        out.append(line)
+    return out
 
 
 def lines(sec, concise=False):
     """`concise` is the email: no backtest, record or caveat lines."""
     if not sec:
         return []
+    clear = concise and sec.get('layout') == LAYOUT
     out = ['', '## Part 6 — The news desk (a separate test: a model reads every overnight release)',
            'DeepSeek reads the full text of each liquid TSX name\'s overnight release and must '
-           'take a side, 09:45 to the close. Not sized, not in the Top 2.']
+           'take a side, 09:45 to the close. Not sized, not in the Top 2.'
+           + (' Listed by its own score, highest first.' if clear else '')]
     if not concise:
         out += [sec.get('replay') or '', sec.get('record') or '']
         if sec.get('preopen'):
             out.append(sec['preopen'])
+        if sec.get('layout') == LAYOUT and rank_line(sec.get('rank_record')):
+            out.append(rank_line(sec.get('rank_record')))
     if sec.get('status') != 'READY':
         out.append(f"Unavailable today — {sec.get('reason')}.")
         return out
-    calls = sorted(sec.get('calls') or [], key=lambda c: (not c.get('material'), -c['confidence'],
-                                                           c['ticker']))
+    calls = sorted(sec.get('calls') or [], key=order_key)
     if not calls:
         out.append('No liquid TSX name had an overnight release today.')
         return out
+    if clear:
+        return _clear_lines(sec, out)
     hl = sec.get('headline') or {}
     out += ['', '| Call | Own conf. | Material | From the title alone | Release | Why |',
             '|---|---:|---|---|---|---|']

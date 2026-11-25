@@ -303,6 +303,53 @@ def with_hedge(section, record=None):
         return section
 
 
+# Day-155b (owner, 2026-11-24): on 11-24 the Top 2 was LONG DOL.TO and Part 6,
+# the news desk, read Dollarama's overnight release as SHORT 0.55 in the same
+# email, with nothing saying the two disagreed. When a news-desk call the model
+# marked material takes the other side of a Top 2 pick, the conflict is frozen
+# with the section and printed under the picks. DISPLAY ONLY: it moves no pick,
+# and neither read is shown to be more accurate.
+def with_news_conflicts(section, news):
+    """The section with `news_conflicts` frozen in, or the section as it was.
+    Computed once where both sections exist (`brief`); never raises."""
+    try:
+        if not section or not isinstance(news, dict) or news.get('status') != 'READY':
+            return section
+        calls = {}
+        for c in news.get('calls') or []:
+            material = c.get('material') is True or str(c.get('material')).strip().lower() == 'true'
+            if material and c.get('side') in ('LONG', 'SHORT'):
+                calls.setdefault(c.get('ticker'), c)
+        out = []
+        for p in section.get('picks') or []:
+            c = calls.get(p.get('ticker'))
+            if c and p.get('side') in ('LONG', 'SHORT') and c['side'] != p['side']:
+                conf = c.get('confidence')
+                out.append({'ticker': p['ticker'], 'pick_side': p['side'], 'news_side': c['side'],
+                            'confidence': float(conf) if isinstance(conf, (int, float)) else None})
+        return {**section, 'news_conflicts': out} if out else section
+    except Exception:
+        return section
+
+
+def news_conflict_line(section):
+    """The caution under the picks, from the frozen `news_conflicts` only: a
+    publication from before day-155b has none and renders as it did."""
+    cs = (section or {}).get('news_conflicts')
+    if not isinstance(cs, list) or not cs:
+        return None
+    try:
+        parts = ['%s %s (its own %s) against the Top 2\'s %s' % (
+                     c['news_side'], c['ticker'],
+                     '%.2f' % c['confidence'] if isinstance(c.get('confidence'), (int, float)) else '—',
+                     c['pick_side']) for c in cs]
+        return ('%sThe news desk (Part 6) reads the overnight release the other way: %s. Two reads '
+                'of one name disagree; neither is shown to be more accurate.'
+                % (DIRECTION_MARK, ' · '.join(parts)))
+    except Exception:
+        return None
+
+
 def _hedge_how(h):
     act = 'short' if h['side'] == 'LONG' else 'buy'
     market = h.get('market') or 'XIU.TO'
@@ -410,6 +457,9 @@ def table(section, concise=False):
     movers = mover_line(section)                 # day-135c: picks on the last session's big movers
     if movers:
         out.append(movers)
+    conflict = news_conflict_line(section)       # day-155b: the news desk reads a pick the other way
+    if conflict:
+        out.append(conflict)
     if section.get('reason'):
         out.append(section['reason'])
     if single and section.get('single'):
@@ -462,6 +512,9 @@ def _claude_table(section, concise):
     movers = mover_line(section)                 # day-135c: a caution, display only
     if movers:
         out.append(movers)
+    conflict = news_conflict_line(section)       # day-155b: the news desk reads a pick the other way
+    if conflict:
+        out.append(conflict)
     out += council.council_lines(section, concise=concise)
     own = council.claude_own_line(section)
     if own:
@@ -531,6 +584,9 @@ def _council_table(section, concise):
     movers = mover_line(section)                 # day-135c: picks on the last session's big movers
     if movers:
         out.append(movers)
+    conflict = news_conflict_line(section)       # day-155b: the news desk reads a pick the other way
+    if conflict:
+        out.append(conflict)
     out += council.council_lines(section, concise=concise)
     proposed = council.proposed_line(picks)      # day-129: selected, nominated or forced
     if proposed:

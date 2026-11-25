@@ -292,4 +292,5 @@ def test_the_warning_mark_is_the_one_the_email_styles():
     import top_picks
     assert top_picks.DIRECTION_MARK == E.WARN_MARK
     html = E.html_from_text('# T\nstamp\n## S\n⚠ Both picks are SHORT, so they share one exposure.\nplain line')
-    assert 'border-left:3px solid #8a5f19' in html and '<p style="font:14px/1.6' in html
+    # day-155b: a plain paragraph takes its font from the section's cell
+    assert 'border-left:3px solid #8a5f19' in html and '<p style="margin:9px 0">plain line</p>' in html

@@ -54,6 +54,98 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day155b — the owner after 11-24: the news desk's score tested (rejections #71, #72); a clearer email that goes out sooner (2026-11-24 night)
+
+The owner, after 11-24 (LONG DOL.TO lost 0.63%; the news desk's GIB-A.TO and
+SCR.TO lost): why did today go worse, which calls are "tested to be the most
+correct … maybe the top two news desk picks", the news desk's second side
+column is confusing "in a high stress environment", and can the 09:51 email
+come "a couple of minutes" earlier, from 11-25.
+
+* **The test.** `PREREGISTER_day155b_newsdesk_confidence.md` (533672f), run once
+  by `newsdesk_confidence.py` (a7b3d5b, committed before it ran). Read
+  `AUDIT_day155b_newsdesk_confidence.md`; summary
+  `data/newsdesk_confidence_day155b.json`. The FULL arm, 10-02 → 11-24: 208
+  scored calls over 35 sessions.
+  * **H1 (#71), the email's top two rows** (material first, then confidence)
+    against the rest of the morning: +0.56% a session, t = 1.93, placebo
+    p = 0.033, both halves positive. NULL, powered (a planted 1.0% shows at
+    t = 3.43). The top two made 35 of 59 right, +0.60% a call; the rest 68 of
+    144, −0.01%.
+  * **H2 (#72), material against routine:** +0.75%, t = 2.88 (the bar is 3),
+    placebo p = 0.005, both halves positive. NULL. Material made +0.45% a call,
+    routine −0.29%.
+  * **The replay says no:** on the 419 releases of July → October 1,
+    confidence ≥ 0.6 made +0.06% and material calls +0.04%.
+  * **Amendment 1 (forward):** H1 and H2 again on sessions from 11-25 only,
+    the same bar, at the 60th new session.
+  * The news desk's daily result does not move with XIU after 09:45
+    (correlation −0.03), although 64% of its calls are long.
+* **The email's Part 6** (`news_desk.LAYOUT`, frozen per section; a section from
+  before renders as it did; display only):
+  * no "From the title alone" side column and no Material column. The full
+    report and the page keep both;
+  * material calls numbered in the email's own order (`news_desk.order_key`,
+    the order the test used);
+  * routine releases on one line, ticker and title, no side ("the model
+    expects no move");
+  * one record line, frozen at publication (`rank_record`, `rank_line`): the
+    top two rows, the rest, and routine, with "Not proven".
+* **A Top 2 pick the news desk reads the other way is flagged**
+  (`top_picks.with_news_conflicts`, frozen in `brief` beside the hedge;
+  `news_conflict_line`). This happened on 11-24: LONG DOL.TO against the news
+  desk's SHORT 0.55, which was right. Only a call the model marked material
+  counts. It is a ⚠ caution under the picks, and it moves nothing.
+* **The email is lighter to send.** Each table row's rule and alignment, and
+  the header's style, now sit once on the `<tr>`, and paragraphs take the
+  section's font (`email_render._table`, `BODY_FONT`).
+  * 11-24's report goes from 40.4 KB to 24.7 KB of HTML, and the whole send
+    from about 52 KB to 36 KB. The 09:00, 09:31 and other emails shrink the
+    same way.
+  * Chromium renders it pixel for pixel as before, at 700 px and at 390 px.
+  * Gmail's read-back filters inline CSS one property at a time (the 11-24
+    noon email kept border, font and colour, and dropped backgrounds). A
+    draft with row styles was stored unchanged, then deleted.
+  * **Not yet seen in Gmail itself.** If 11-25's tables show no row lines or
+    a plain header, the row styles were dropped: revert `_table`.
+* **The morning send, practice from 11-25.** After `morning_wait` prints DONE,
+  do all of this in ONE turn: run `delivery_plan.py`; print `subject.txt`,
+  `report.txt` and `report.html`; run the Gmail rescue and report searches in
+  parallel. The send is the next turn.
+  * The 09:46 floor stays: the 09:45 bar and the 09:46 quotes. The job ends
+    about 09:46:45.
+  * Typical sends were 09:49. 11-24's 09:51 was the extra two minutes of a
+    context compaction mid-send. Expect about 09:48.
+* **Why 11-24 went as it did** (descriptive, told to the owner):
+  * **LONG DOL.TO −0.63%.** It fell after 09:45 while its sector peers held
+    (median +0.09%). Claude's reasons were the prior session's chart and "the
+    COO release is priced". The news desk read that release as a SHORT and
+    was right. One day.
+  * **SHORT HUT.TO +0.23%.** Its open had already gone 3.4% its way before
+    09:45; it then swung between +5.1% and −1.8%. Its normal day is 14.4%,
+    the kind of name adoption #5 passes over.
+    * That rule is wired into the council's own picks only, never Claude's
+      (`council.claude_top_two` takes no `skip_wild`).
+    * It has been off since day-144.
+    * Applying it to Claude's picks would be a new rule with its own
+      registration.
+  * **The council's own SHORT CLS.TO made +3.49%.** It was Claude's other
+    short, rated 0.52 against HUT's 0.53.
+  * **The news desk was 3 of 6, −0.31% a call against its +0.15% average.**
+    * GIB-A.TO, the top score, rose 1.5% against the market by 09:45 and gave
+      back 0.4%.
+    * SCR.TO gapped up 1.2% and gave back 1.0%.
+    * TOY.TO (routine) lost 1.5%.
+    * The record does not show that calls whose open agreed do worse: the
+      review's split leans the other way (t = 1.71).
+  * **XIU fell after 09:45 on 8 of the last 10 sessions.** The Top 2's longs
+    were right 1 of 6 in them, its shorts 2 of 5. Nothing at 09:45 reads the
+    market's direction (day-147c). The news desk was +0.27% a call over those
+    sessions, against +0.10% before, but 11-20, 11-23 and 11-24 were poor in
+    a row.
+* **Not claimed:** that any pick, top two or otherwise, is more accurate. Say
+  so plainly when asked.
+
 ## Day155 — lab item 17 registered: the faded gap, Claude's short thesis (2026-11-24)
 
 * **Why.** Both of Claude's 11-24 shorts rested on one setup: HUT.TO's
@@ -4297,11 +4389,13 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **69 rejections through
-day-154 (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+It is the running record of every change tested — **71 rejections through
+day-155b (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
 pre-open desk on history, day-151; #67 a name's intraday habit, day-152; #68
 the noon exit on the live picks, day-153; #69 the quality floor on Claude's
-past nominations, day-154); 5 adoptions** (skipping the morning's widest-swinging names
+past nominations, day-154; #71 and #72 the news desk's top two and its
+material calls, day-155b; #70 is held by lab item 17, the faded gap); 5
+adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been

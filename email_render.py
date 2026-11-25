@@ -332,6 +332,9 @@ INK, MUTED, RULE = '#17212b', '#5c6b7a', '#dde4ea'
 CARD, WASH, ACCENT = '#ffffff', '#f4f7f9', '#1f5c66'
 CAUTION = '#8a5f19'
 WARN_MARK = '⚠ '        # top_picks.DIRECTION_MARK and the shared-exposure lines
+# Day-155b: a section's paragraphs inherit this from their cell rather than
+# each carrying it (the same font, written once per section).
+BODY_FONT = f'font:14px/1.6 Arial,sans-serif;color:{INK}'
 
 
 def caution_html(text, size='14px'):
@@ -486,23 +489,31 @@ def _cells(line):
     return [c.strip() for c in line.strip('|').split('|')]
 
 
+# Day-155b (owner, 2026-11-24: "any chance to get it a little bit earlier"):
+# the morning session writes the whole email out in the Gmail call, so every
+# byte of markup is time between 09:46 and the inbox. The header style and each
+# row's rule and alignment now sit once on the row and are inherited by its
+# cells, rather than repeated on every cell (227 cells on 11-24). Chromium
+# renders it pixel for pixel as before; Gmail filters inline CSS one property
+# at a time (the 11-24 read-back kept border, font and colour, dropped only
+# backgrounds), and a row's style survives its store (a draft read back, 11-24).
 def _table(rows, first):
     """`first` is the header row. The Status column becomes a badge; everything
     else is escaped text."""
     out = [f'<table role="table" width="100%" cellpadding="9" cellspacing="0" '
            f'style="width:100%;border-collapse:collapse;font:13px/1.45 Arial,sans-serif;'
            f'color:{INK};margin:14px 0">'
-           '<tr>' + ''.join(
-               f'<th align="left" style="border-bottom:2px solid {RULE};color:{MUTED};'
-               f'font:600 11px/1.4 Arial,sans-serif;letter-spacing:.07em;text-transform:uppercase">'
-               f'{full.escape(c)}</th>' for c in first) + '</tr>']
+           f'<tr style="border-bottom:2px solid {RULE};color:{MUTED};font:600 11px/1.4 Arial,'
+           f'sans-serif;letter-spacing:.07em;text-transform:uppercase">'
+           + ''.join(f'<th align="left">{full.escape(c)}</th>' for c in first) + '</tr>']
     for row in rows:
         cells = []
         for n, cell in enumerate(row):
             body = (_badge(cell) if n == 0 and cell.strip().upper() in BADGES
                     else full.escape(cell))
-            cells.append(f'<td valign="top" style="border-bottom:1px solid {RULE}">{body}</td>')
-        out.append('<tr>' + ''.join(cells) + '</tr>')
+            cells.append(f'<td>{body}</td>')
+        out.append(f'<tr valign="top" style="border-bottom:1px solid {RULE}">' + ''.join(cells)
+                   + '</tr>')
     return ''.join(out) + '</table>'
 
 
@@ -533,7 +544,7 @@ def _body_blocks(body):
             title = line[3:]
             # The terms section is the one block that is deliberately quiet.
             small = title.startswith('How to read')
-            out.append(f'</td></tr><tr><td style="padding:24px 26px 6px">'
+            out.append(f'</td></tr><tr><td style="padding:24px 26px 6px;{BODY_FONT}">'
                        f'<div style="font:600 12px/1.4 Arial,sans-serif;color:{ACCENT};'
                        f'letter-spacing:.11em;text-transform:uppercase">{full.escape(title)}</div>'
                        f'<div style="height:2px;background:{ACCENT};width:34px;margin:9px 0 4px"></div>')
@@ -546,10 +557,11 @@ def _body_blocks(body):
             out.append(f'<div style="font:13px/1.55 Arial,sans-serif;color:{INK};'
                        f'margin:3px 0 3px 14px;padding-left:10px;'
                        f'border-left:2px solid {RULE}">{full.escape(line.strip("- ").strip())}</div>')
-        elif line:
-            size, colour = ('12px', MUTED) if small else ('14px', INK)
-            out.append(f'<p style="font:{size}/1.6 Arial,sans-serif;color:{colour};'
+        elif line and small:
+            out.append(f'<p style="font:12px/1.6 Arial,sans-serif;color:{MUTED};'
                        f'margin:9px 0">{full.escape(line)}</p>')
+        elif line:                              # day-155b: the font is the section's own
+            out.append(f'<p style="margin:9px 0">{full.escape(line)}</p>')
     flush()
     return ''.join(out)
 
@@ -605,7 +617,7 @@ def html_from_text(body, hero='', label='Morning research note · not an order')
         f'<div style="font:12px/1.5 Arial,sans-serif;color:{MUTED};margin-top:8px">'
         f'{full.escape(stamp)}</div></td></tr>'
         + (hero or '') +
-        f'<tr><td style="padding:0 26px 26px">{_body_blocks(body)}</td></tr>'
+        f'<tr><td style="padding:0 26px 26px;{BODY_FONT}">{_body_blocks(body)}</td></tr>'
         '</table></td></tr></table></body></html>'
     # Day-130: one line per row and paragraph, so the sender can read the file in
     # pages and paste it whole; whitespace between tags changes nothing on screen.

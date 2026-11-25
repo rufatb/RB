@@ -677,6 +677,9 @@ def _compute(cfg_path=None, shadow=True, no_net=False, *, now=None,
         # Day-148c (owner, 2026-11-09): when the Top 2 stands on one side, the
         # fund that hedges it is frozen with the section. Display only.
         top_two = top_picks.with_hedge(top_two)
+        # Day-155b (owner, 2026-11-24): a Top 2 pick the news desk's material call
+        # reads the other way is frozen with the section. Display only.
+        top_two = top_picks.with_news_conflicts(top_two, news_section)
     except Exception as exc:
         error('top_two', RuntimeError(type(exc).__name__))
     # PART 3 (the owner's VWAP/rvol strategy picks) and the per-pick open check

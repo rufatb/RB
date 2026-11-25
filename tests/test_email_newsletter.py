@@ -72,7 +72,8 @@ def test_an_abstained_leg_still_shows_no_share_count(digest):
     assert legs, 'the fixture selected no legs at all'
     body = email_render.html(digest)
     for leg in legs:
-        row = re.search(r'<tr>(?:(?!</tr>).)*' + re.escape(leg['ticker']) + r'.*?</tr>',
+        # day-155b: a row carries its own rule and alignment, so it opens `<tr …>`
+        row = re.search(r'<tr[^>]*>(?:(?!</tr>).)*' + re.escape(leg['ticker']) + r'.*?</tr>',
                         body, re.S)
         assert row, leg['ticker']
         assert str(leg['baseline_shares']) not in row.group(0), (

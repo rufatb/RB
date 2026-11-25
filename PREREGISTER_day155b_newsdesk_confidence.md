@@ -139,3 +139,21 @@ that will have a highest score".
 ## Cost
 
 * None: the committed ledger, no API call, no model.
+
+## Amendment 1 (2026-11-24, after the verdict, before any session it covers): the forward look
+
+* **The verdicts were NULL** (`AUDIT_day155b_newsdesk_confidence.md`). H1's top
+  two minus the rest was +0.56% a session (t = 1.93). H2's material minus
+  routine was +0.75% (t = 2.88). Both were powered for 1.0%.
+* **A fresh sample decides.** H1 and H2 are judged again, unchanged, on
+  sessions from 2026-11-25 only:
+  * the same population rule, the same order, the same machinery, the same
+    bar, the same controls and seed 156;
+  * the look comes at the 60th new session with a scored FULL-arm call, and
+    there is one look;
+  * no session up to 2026-11-24 enters it.
+* **Why 60.** At the live record's spread, a true 0.75% material edge reaches
+  t = 3 with about 80% power near 60 sessions. A true 0.56% top-two edge needs
+  about 130 sessions, so H1 may read UNDERPOWERED at the look.
+* **What it changes.** A pass goes to the owner as a proposal: show only
+  material calls, or mark the top two. Nothing live changes from it.

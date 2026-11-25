@@ -6297,3 +6297,46 @@ committed record and the pinned population only.
 * **So:** nothing live changes; the floor is the owner's decision with its own
   forward bar. The owner is told that on history its legs lean the wrong way.
 * **Counts:** 69 rejections through day-154; 5 adoptions.
+
+## Day-155b: REJECTIONS #71 and #72 — the news desk's top two by its own score, and its material calls: both null, both leaning the owner's way
+
+Registered 2026-11-24 evening (`PREREGISTER_day155b_newsdesk_confidence.md`,
+533672f) at the owner's request after 11-24, and run once the same night by
+`newsdesk_confidence.py` (a7b3d5b, committed before it ran). Read
+`AUDIT_day155b_newsdesk_confidence.md`; summary
+`data/newsdesk_confidence_day155b.json`. The committed ledger only.
+* **The question.** The email lists the news desk's calls material first, then
+  by the model's own confidence. Do its first two rows beat the rest of the
+  same morning (H1)? Do its material calls beat its routine ones (H2)?
+* **The population:** the FULL arm, 2026-10-02 → 11-24: 221 calls over 35
+  sessions, 208 scored, 09:45 → close against XIU (`w945`).
+* **H1 (#71), NULL.**
+  * Top two minus the rest +0.56% a session over 32 sessions, t = 1.93,
+    placebo p = 0.033, both halves positive.
+  * The top two made 35 of 59 right, +0.60% a call; the rest 68 of 144,
+    −0.01%.
+  * A planted 1.0% shows at t = 3.43. The smallest detectable difference is
+    1.12%.
+* **H2 (#72), NULL.**
+  * Material minus routine +0.75%, t = 2.88 (the bar is 3), placebo
+    p = 0.005, both halves positive.
+  * Material made +0.45% a call (124 calls), routine −0.29% (84). A planted
+    1.0% shows at t = 3.86.
+* **Beside it:**
+  * the confidence buckets fall in order from ≥ 0.65 (+0.70%) to below 0.60
+    (−0.30%); Spearman 0.17;
+  * on the 419-release replay (July → October 1) confidence ≥ 0.6 made +0.06%
+    and material calls +0.04%: no edge;
+  * where the full and title-only reads disagree, the full read was right
+    44% of the time, against 54% where they agree;
+  * the news desk's daily result does not move with XIU after 09:45
+    (correlation −0.03), although 64% of its calls are long.
+* **So:** nothing is selected by score. The email already lists the highest
+  scores first, and the owner is told the record leans their way without
+  showing it.
+  * A forward look on sessions from 11-25 only, the same bar, at the 60th new
+    session, is amendment 1.
+  * The day-155b display changes (CLAUDE.md) are clarity, not a claim of
+    accuracy.
+* **Counts:** 71 rejections through day-155b (#70 is held by lab item 17, the
+  faded gap, which runs 11-25); 5 adoptions.
