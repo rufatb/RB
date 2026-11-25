@@ -1,0 +1,35 @@
+{
+ "exported_at": "2026-11-25T09:31:03.461633-05:00",
+ "open_check": {
+  "prepared_at": "2026-11-25T09:31:02.497558-05:00",
+  "rows": [
+   {
+    "at": "09:30",
+    "atr_pct": 1.5116,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": 0.25854064741586114,
+    "price": 84.685,
+    "reach": null,
+    "side": "LONG",
+    "ticker": "FTS.TO",
+    "verdict": "NOT CHECKED"
+   },
+   {
+    "at": "09:31",
+    "atr_pct": 14.104,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": 0.48332816684034896,
+    "price": 62.51,
+    "reach": null,
+    "side": "SHORT",
+    "ticker": "HUT.TO",
+    "verdict": "NOT CHECKED"
+   }
+  ],
+  "session": "2026-11-25"
+ },
+ "schema_version": 1,
+ "session": "2026-11-25"
+}
