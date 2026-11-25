@@ -1,0 +1,33 @@
+{
+ "exported_at": "2026-11-25T08:57:26.367270-05:00",
+ "opening": {
+  "council_status": "READY",
+  "decided_at": "2026-11-25T08:57:26.328150-05:00",
+  "section": {
+   "picks": [
+    {
+     "agreement": "Claude 0.52; council 0 of 4 endorse, 1 object",
+     "confidence": 0.52,
+     "council_vote": "0 of 4 endorse, 1 object",
+     "invalid_at": null,
+     "reason": "CA utility near highs (range52 0.92, rsi 61, sma50 +6%) and low-beta with VIX up 18.6% pre-market; defensive flows can build through the session, not only at the open.",
+     "side": "LONG",
+     "ticker": "FTS.TO"
+    },
+    {
+     "agreement": "Claude 0.52; council 0 of 4 endorse",
+     "confidence": 0.52,
+     "council_vote": "0 of 4 endorse",
+     "invalid_at": null,
+     "reason": "CA high-beta name (atr 14%) 40% below sma200, rel_sector -7.2 and r0 -3.2; VIX +18.6% pre-market argues continued risk-off selling beyond the open.",
+     "side": "SHORT",
+     "ticker": "HUT.TO"
+    }
+   ],
+   "reason": null,
+   "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+  }
+ },
+ "schema_version": 1,
+ "session": "2026-11-25"
+}
