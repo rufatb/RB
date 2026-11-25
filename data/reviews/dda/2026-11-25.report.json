@@ -1,0 +1,119 @@
+{
+ "exported_at": "2026-11-25T09:46:20.808721-05:00",
+ "report": {
+  "generated_at": "2026-11-25T09:46:17.070198-05:00",
+  "intraday": {
+   "news_desk": {
+    "calls": [
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.6,
+      "first_at": "2026-11-24T17:00:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Quarterly results announcement is material; without details, historical pattern suggests any positive surprise from Couche-Tard's operations could drive continuation.",
+      "session": "2026-11-25",
+      "side": "LONG",
+      "ticker": "ATD.TO",
+      "title": "ALIMENTATION COUCHE-TARD ANNOUNCES ITS RESULTS FOR ITS SECOND QUARTER OF FISCAL YEAR 2027",
+      "url": "https://www.newswire.ca/news-releases/alimentation-couche-tard-announces-its-results-for-its-second-quarter-of-fiscal-year-2027-878013514.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.55,
+      "first_at": "2026-11-25T07:41:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Expansion into Abu Dhabi is a strategic move but may not immediately boost earnings and could raise concerns about operational complexity; share price may retrace initial optimism.",
+      "session": "2026-11-25",
+      "side": "SHORT",
+      "ticker": "CM.TO",
+      "title": "CIBC plans Middle East expansion with new capital markets presence in Abu Dhabi",
+      "url": "https://www.newswire.ca/news-releases/cibc-plans-middle-east-expansion-with-new-capital-markets-presence-in-abu-dhabi-865486136.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.53,
+      "first_at": "2026-11-25T09:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Charitable donation is a routine CSR activity with no direct impact on financials, but positive tone may provide minor support.",
+      "session": "2026-11-25",
+      "side": "LONG",
+      "ticker": "DOO.TO",
+      "title": "BRP Celebrates its Fifth Annual Yellow Day with More Than $325,000 Donated to Ride Out Intimidation",
+      "url": "https://www.newswire.ca/news-releases/brp-celebrates-its-fifth-annual-yellow-day-with-more-than-325-000-donated-to-ride-out-intimidation-849958347.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.58,
+      "first_at": "2026-11-25T06:30:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Global expansion of a cloud platform for utilities indicates growth potential in a niche market; the news could drive continued buying.",
+      "session": "2026-11-25",
+      "side": "LONG",
+      "ticker": "GIB-A.TO",
+      "title": "CGI expands its u@Cloud platform globally to help utilities modernize customer and commercial operations",
+      "url": "https://www.newswire.ca/news-releases/cgi-expands-its-u-cloud-platform-globally-to-help-utilities-modernize-customer-and-commercial-operations-820903429.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": null,
+      "confidence": 0.62,
+      "first_at": "2026-11-24T16:30:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1",
+      "reason": "Closing of investment-grade notes offering increases leverage and debt service; despite being rated, the incremental debt may pressure the stock.",
+      "session": "2026-11-25",
+      "side": "SHORT",
+      "ticker": "QSR.TO",
+      "title": "Restaurant Brands International Inc. Closes Inaugural Investment Grade-Rated Senior Secured Notes Offering",
+      "url": "https://www.newswire.ca/news-releases/restaurant-brands-international-inc-closes-inaugural-investment-grade-rated-senior-secured-notes-offering-887942931.html"
+     }
+    ],
+    "prompt_version": "day122-v1",
+    "status": "READY"
+   },
+   "top_two": {
+    "picks": [
+     {
+      "agreement": "Claude 0.52; council 0 of 4 endorse, 1 object",
+      "confidence": 0.52,
+      "invalid_at": null,
+      "reason": "CA utility near highs (range52 0.92, rsi 61, sma50 +6%) and low-beta with VIX up 18.6% pre-market; defensive flows can build through the session, not only at the open.",
+      "side": "LONG",
+      "ticker": "FTS.TO"
+     },
+     {
+      "agreement": "Claude 0.52; council 0 of 4 endorse",
+      "confidence": 0.52,
+      "invalid_at": null,
+      "reason": "CA high-beta name (atr 14%) 40% below sma200, rel_sector -7.2 and r0 -3.2; VIX +18.6% pre-market argues continued risk-off selling beyond the open.",
+      "side": "SHORT",
+      "ticker": "HUT.TO"
+     }
+    ],
+    "reason": "",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-25"
+ },
+ "schema_version": 1,
+ "session": "2026-11-25"
+}
