@@ -714,3 +714,13 @@ date,ticker,side,p_sided,confidence,p945,role,leg,weight,shares,spread_bps,r1,hi
 2026-11-24,CP.TO,SHORT,0.560,mid,129.5500,board,,,,,2.269,0
 2026-11-24,NTR.TO,SHORT,0.552,sparse,93.8500,board,,,,3.2,0.788,0
 2026-11-24,CM.TO,SHORT,0.551,sparse,150.8300,board,,,,11.9,0.066,0
+2026-11-25,SLF.TO,LONG,0.555,sparse,99.0800,pair,primary,0.4982,251,16.1,,
+2026-11-25,ENB.TO,SHORT,0.650,dense,65.9100,pair,primary,0.2908,221,3.0,,
+2026-11-25,SHOP.TO,SHORT,0.650,sparse,176.3500,board,,,,,,
+2026-11-25,ABX.TO,SHORT,0.650,sparse,45.6900,board,,,,,,
+2026-11-25,AEM.TO,SHORT,0.650,sparse,211.0800,board,,,,,,
+2026-11-25,CNR.TO,SHORT,0.602,mid,177.9000,pair,extra,0.2062,58,7.3,,
+2026-11-25,SU.TO,SHORT,0.600,mid,91.0600,board,,,,15.4,,
+2026-11-25,CVE.TO,SHORT,0.582,mid,38.2100,board,,,,13.1,,
+2026-11-25,CNQ.TO,SHORT,0.578,mid,64.1500,board,,,,7.8,,
+2026-11-25,NTR.TO,SHORT,0.565,mid,93.6900,board,,,,10.7,,
