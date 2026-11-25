@@ -54,6 +54,56 @@ A container reset on 10-25 brought a new image.
     record (`data/model_picks.csv`, `data/reviews/`, `ledger.csv`) is
     unaffected.
 
+## Day155c — lab item 17: the faded gap, UNDERPOWERED, rejection #70; 11-25's morning (2026-11-25)
+
+* **The result.** `faded_gap.py` (64bbf9d, committed before it ran); read
+  `AUDIT_day155_faded_gap.md`, summary `data/faded_gap_day155.json`. The cache
+  was downloaded again first (amendment 1), with no failed or capped calls. The
+  run took 38 s; no model, no cost.
+  * Following a faded gap (SHORT after a faded up-gap, LONG after a faded
+    down-gap), 09:45 → close against XIU: −0.06% an event over 1,209 events,
+    t = −0.52.
+    * The blocks disagree; the placebo p is 0.91.
+    * The ten-year panel reads +0.03%, the S&P 500 −0.01%.
+  * A planted 0.30% shows only at t = 2.61 (smallest detectable 0.32%), so
+    UNDERPOWERED as registered.
+  * Beside it:
+    * both legs are slightly negative from 09:45, and gaps of 2 ATR or more
+      −0.28%;
+    * on daily bars the short leg leans the fade's way (ten years +0.17%,
+      t = 1.80);
+    * Claude's 3 live nominations on the setup were all right (SHOP.TO 11-04,
+      CLS.TO and HUT.TO 11-24): an anecdote.
+* **So:** no tie-break and no pass-over; nothing live changes. The setup
+  stays in the brief as context.
+* **Next lab step:** no free row is left again; the next slot proposes and
+  registers a new free item.
+* **The machine was reset again overnight** (up at 08:16 ET; `.rb-state`
+  wiped).
+  * The 08:12 pre-open desk read FAILED for want of keys; the morning's 08:52
+    second read recorded 3 calls.
+  * The 08:50 morning wrote the keys, and the job ran whole: exit 0, published
+    09:46:21.
+* **11-25's morning was on time, and the report went 3 minutes earlier**
+  (the one-turn pre-send practice of day-155b):
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:58 | `1a213001ef5b38cb` | |
+  | Open check | 09:31 | `1a2131e8884cb571` | KEEP both |
+  | Report | 09:48 | `1a2132e31ff79b9f` | 25.0 KB of HTML |
+
+  * The Top 2 was LONG FTS.TO (Claude 0.52, 0 of 4 endorse, Gemini objecting)
+    and SHORT HUT.TO (Claude 0.52, 0 of 4; all four abstained).
+  * Both stood on the floor's confidence leg alone. The council's own choice
+    was SHORT CLS.TO and LONG ATD.TO, 4 of 4 each.
+* **Two reads of one release disagreed.**
+  * The 09:00 email's release reads (the pre-open desk: title and summary, to
+    the 09:30 open) said LONG CM.TO and LONG QSR.TO.
+  * The news desk (full text, 09:45 → close) said SHORT on both.
+  * It is the same model with two questions and two windows. Neither is shown
+    to be more accurate; say so when the owner asks.
+
 ## Day155b — the owner after 11-24: the news desk's score tested (rejections #71, #72); a clearer email that goes out sooner (2026-11-24 night)
 
 The owner, after 11-24 (LONG DOL.TO lost 0.63%; the news desk's GIB-A.TO and
@@ -106,8 +156,10 @@ come "a couple of minutes" earlier, from 11-25.
   * Gmail's read-back filters inline CSS one property at a time (the 11-24
     noon email kept border, font and colour, and dropped backgrounds). A
     draft with row styles was stored unchanged, then deleted.
-  * **Not yet seen in Gmail itself.** If 11-25's tables show no row lines or
-    a plain header, the row styles were dropped: revert `_table`.
+  * **Seen in Gmail on 11-25.** The sent 09:31 email's read-back
+    (`get_message` FULL_CONTENT) kept every row's rule and the header's style,
+    and dropped only the backgrounds, as always. If the owner reports tables
+    with no row lines or a plain header, revert `_table`.
 * **The morning send, practice from 11-25.** After `morning_wait` prints DONE,
   do all of this in ONE turn: run `delivery_plan.py`; print `subject.txt`,
   `report.txt` and `report.html`; run the Gmail rescue and report searches in
@@ -115,7 +167,7 @@ come "a couple of minutes" earlier, from 11-25.
   * The 09:46 floor stays: the 09:45 bar and the 09:46 quotes. The job ends
     about 09:46:45.
   * Typical sends were 09:49. 11-24's 09:51 was the extra two minutes of a
-    context compaction mid-send. Expect about 09:48.
+    context compaction mid-send. Expect about 09:48. **11-25: sent 09:48:44.**
 * **Why 11-24 went as it did** (descriptive, told to the owner):
   * **LONG DOL.TO −0.63%.** It fell after 09:45 while its sector peers held
     (median +0.09%). Claude's reasons were the prior session's chart and "the
@@ -4389,13 +4441,12 @@ proxy**, never evidence of exact 09:46/15:59 execution. Preserve both records.
 
 ## Before touching anything, read STRATEGY.md
 
-It is the running record of every change tested — **71 rejections through
-day-155b (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
+It is the running record of every change tested — **72 rejections through
+day-155c (#64 the council veto, day-148; #65 the commodity nowcast; #66 the
 pre-open desk on history, day-151; #67 a name's intraday habit, day-152; #68
 the noon exit on the live picks, day-153; #69 the quality floor on Claude's
-past nominations, day-154; #71 and #72 the news desk's top two and its
-material calls, day-155b; #70 is held by lab item 17, the faded gap); 5
-adoptions** (skipping the morning's widest-swinging names
+past nominations, day-154; #70 the faded gap, day-155c; #71 and #72 the news
+desk's top two and its material calls, day-155b); 5 adoptions** (skipping the morning's widest-swinging names
 is the fifth adoption). On day-144 the owner switched adoptions #4 and #5 off, with the
 09:46 void, and made Claude's picks lead the Top 2: a decision, not a test. On
 day-150 the owner added a quality floor to Claude's Top 2, also a decision. Almost every "obvious improvement" in this space has already been

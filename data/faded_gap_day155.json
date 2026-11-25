@@ -1,0 +1,425 @@
+{
+ "registered": "PREREGISTER_day155_faded_gap.md",
+ "run_on": "2026-11-25",
+ "window": [
+  "2024-01-02",
+  "2026-10-29"
+ ],
+ "names": 150,
+ "seed": 155,
+ "download": {
+  "tsx_files": 151,
+  "tsx_failed_calls": 0,
+  "tsx_capped_calls": 0,
+  "us_files": 717,
+  "us_failed_calls": 0,
+  "us_without_bars": 13,
+  "membership_glitches": {
+   "added but not a member after": 35,
+   "removed but already a member before": 24
+  }
+ },
+ "counts": {
+  "market_sessions_in_window": 709,
+  "primary_events": {
+   "now": 1209,
+   "registered": 1209
+  },
+  "primary_short": {
+   "now": 510,
+   "registered": 512
+  },
+  "primary_long": {
+   "now": 699,
+   "registered": 697
+  },
+  "primary_sessions": {
+   "now": 359,
+   "registered": 357
+  },
+  "primary_names": {
+   "now": 150,
+   "registered": 150
+  },
+  "primary_gap_2atr_or_more": {
+   "now": 160,
+   "registered": 159
+  },
+  "tsx_daily_events": {
+   "now": 4211,
+   "registered": 4218
+  },
+  "tsx_daily_sessions": {
+   "now": 1597,
+   "registered": 1599
+  },
+  "tsx_daily_short": {
+   "now": 1970,
+   "registered": 1972
+  },
+  "sp500_events": {
+   "now": 14302,
+   "registered": 14303
+  },
+  "sp500_sessions": {
+   "now": 2361,
+   "registered": 2360
+  },
+  "sp500_short": {
+   "now": 6800,
+   "registered": 6805
+  },
+  "sp500_names": {
+   "now": 662,
+   "registered": 661
+  }
+ },
+ "placebo_events_without_a_session": 0,
+ "primary": {
+  "n": 1209,
+  "sessions": 359,
+  "mean_pct": -0.0596,
+  "se": 0.1148,
+  "t": -0.52,
+  "hit": 0.488
+ },
+ "block_means_pct": [
+  0.0445,
+  -0.1025,
+  0.1598,
+  -0.3394
+ ],
+ "cost_per_pick_pct": 0.13,
+ "placebo": {
+  "draws": 2000,
+  "seed": 155,
+  "away_sessions": 5,
+  "p_one_sided_follows": 0.9105,
+  "p_one_sided_reverses": 0.0895,
+  "mean_of_draws_pct": 0.0048,
+  "sd_of_draws_pct": 0.0522
+ },
+ "control": {
+  "planted_pct": 0.3,
+  "t_planted": 2.61,
+  "detected": false,
+  "mde80_pct": 0.3215
+ },
+ "bar": {
+  "follows": {
+   "mean_positive_t_at_least_3": false,
+   "all_four_blocks_positive": false,
+   "placebo_p_under_0.01": false,
+   "mean_above_the_0.13_cost": false,
+   "both_secondary_means_positive": false
+  },
+  "reverses": {
+   "mean_negative_t_at_most_minus_3": false,
+   "all_four_blocks_negative": false,
+   "placebo_p_under_0.01": false,
+   "both_secondary_means_negative": false
+  }
+ },
+ "verdict": "UNDERPOWERED",
+ "rejection_70": true,
+ "secondary": {
+  "tsx_daily_open_to_close": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "counted": 4211,
+   "scored": 4211,
+   "n": 4211,
+   "sessions": 1597,
+   "mean_pct": 0.0306,
+   "se": 0.0808,
+   "t": 0.38,
+   "hit": 0.509,
+   "legs": {
+    "SHORT after a faded up-gap": {
+     "n": 1970,
+     "sessions": 1060,
+     "mean_pct": 0.1722,
+     "se": 0.0958,
+     "t": 1.8,
+     "hit": 0.528
+    },
+    "LONG after a faded down-gap": {
+     "n": 2241,
+     "sessions": 922,
+     "mean_pct": -0.0938,
+     "se": 0.1177,
+     "t": -0.8,
+     "hit": 0.493
+    }
+   }
+  },
+  "point_in_time_sp500_daily": {
+   "window": [
+    "2016-01-04",
+    "2026-10-29"
+   ],
+   "counted": 14302,
+   "scored": 14302,
+   "n": 14302,
+   "sessions": 2361,
+   "mean_pct": -0.0072,
+   "se": 0.0322,
+   "t": -0.22,
+   "hit": 0.499,
+   "legs": {
+    "SHORT after a faded up-gap": {
+     "n": 6800,
+     "sessions": 1861,
+     "mean_pct": 0.0543,
+     "se": 0.051,
+     "t": 1.06,
+     "hit": 0.51
+    },
+    "LONG after a faded down-gap": {
+     "n": 7502,
+     "sessions": 1791,
+     "mean_pct": -0.063,
+     "se": 0.0399,
+     "t": -1.58,
+     "hit": 0.49
+    }
+   }
+  }
+ },
+ "descriptive": {
+  "legs": {
+   "SHORT after a faded up-gap": {
+    "n": 510,
+    "sessions": 223,
+    "mean_pct": -0.0361,
+    "se": 0.1227,
+    "t": -0.29,
+    "hit": 0.484
+   },
+   "LONG after a faded down-gap": {
+    "n": 699,
+    "sessions": 218,
+    "mean_pct": -0.0768,
+    "se": 0.1763,
+    "t": -0.44,
+    "hit": 0.491
+   }
+  },
+  "gap_2atr_or_more": {
+   "n": 160,
+   "sessions": 101,
+   "mean_pct": -0.2772,
+   "se": 0.2384,
+   "t": -1.16,
+   "hit": 0.456
+  },
+  "full_reversal": {
+   "n": 177,
+   "sessions": 111,
+   "mean_pct": -0.1749,
+   "se": 0.2116,
+   "t": -0.83,
+   "hit": 0.486
+  },
+  "not_a_full_reversal": {
+   "n": 1032,
+   "sessions": 320,
+   "mean_pct": -0.0399,
+   "se": 0.123,
+   "t": -0.32,
+   "hit": 0.488
+  },
+  "held_gap_followed": {
+   "n": 959,
+   "sessions": 338,
+   "mean_pct": -0.0518,
+   "se": 0.1389,
+   "t": -0.37,
+   "hit": 0.507,
+   "legs": {
+    "LONG after a held up-gap": {
+     "n": 458,
+     "sessions": 218,
+     "mean_pct": 0.0442,
+     "se": 0.1903,
+     "t": 0.23,
+     "hit": 0.52
+    },
+    "SHORT after a held down-gap": {
+     "n": 501,
+     "sessions": 183,
+     "mean_pct": -0.1395,
+     "se": 0.1453,
+     "t": -0.96,
+     "hit": 0.495
+    }
+   }
+  },
+  "open_to_0945_before_the_entry": {
+   "n": 1209,
+   "sessions": 359,
+   "mean_pct": -0.0613,
+   "se": 0.0586,
+   "t": -1.05,
+   "hit": 0.474
+  },
+  "0945_to_noon": {
+   "n": 1209,
+   "sessions": 359,
+   "mean_pct": -0.0716,
+   "se": 0.0925,
+   "t": -0.77,
+   "hit": 0.471
+  },
+  "by_year": {
+   "2024": {
+    "n": 330,
+    "sessions": 128,
+    "mean_pct": 0.0629,
+    "se": 0.2149,
+    "t": 0.29,
+    "hit": 0.494
+   },
+   "2025": {
+    "n": 516,
+    "sessions": 137,
+    "mean_pct": -0.0459,
+    "se": 0.178,
+    "t": -0.26,
+    "hit": 0.506
+   },
+   "2026": {
+    "n": 363,
+    "sessions": 94,
+    "mean_pct": -0.1905,
+    "se": 0.1996,
+    "t": -0.95,
+    "hit": 0.457
+   }
+  },
+  "secondary_tsx_by_year": {
+   "2016": {
+    "n": 424,
+    "sessions": 145,
+    "mean_pct": 0.2423,
+    "se": 0.2904,
+    "t": 0.83,
+    "hit": 0.521
+   },
+   "2017": {
+    "n": 303,
+    "sessions": 168,
+    "mean_pct": 0.2219,
+    "se": 0.2126,
+    "t": 1.04,
+    "hit": 0.551
+   },
+   "2018": {
+    "n": 370,
+    "sessions": 178,
+    "mean_pct": 0.3929,
+    "se": 0.1237,
+    "t": 3.18,
+    "hit": 0.562
+   },
+   "2019": {
+    "n": 378,
+    "sessions": 180,
+    "mean_pct": 0.163,
+    "se": 0.1495,
+    "t": 1.09,
+    "hit": 0.505
+   },
+   "2020": {
+    "n": 618,
+    "sessions": 152,
+    "mean_pct": -0.3852,
+    "se": 0.3367,
+    "t": -1.14,
+    "hit": 0.469
+   },
+   "2021": {
+    "n": 321,
+    "sessions": 148,
+    "mean_pct": 0.5038,
+    "se": 0.1869,
+    "t": 2.69,
+    "hit": 0.579
+   },
+   "2022": {
+    "n": 307,
+    "sessions": 114,
+    "mean_pct": -0.3576,
+    "se": 0.2142,
+    "t": -1.67,
+    "hit": 0.472
+   },
+   "2023": {
+    "n": 264,
+    "sessions": 144,
+    "mean_pct": 0.3912,
+    "se": 0.1465,
+    "t": 2.67,
+    "hit": 0.595
+   },
+   "2024": {
+    "n": 342,
+    "sessions": 135,
+    "mean_pct": 0.1033,
+    "se": 0.2412,
+    "t": 0.43,
+    "hit": 0.491
+   },
+   "2025": {
+    "n": 521,
+    "sessions": 139,
+    "mean_pct": -0.1896,
+    "se": 0.2256,
+    "t": -0.84,
+    "hit": 0.489
+   },
+   "2026": {
+    "n": 363,
+    "sessions": 94,
+    "mean_pct": -0.28,
+    "se": 0.2638,
+    "t": -1.06,
+    "hit": 0.433
+   }
+  }
+ },
+ "live_record": {
+  "window": [
+   "2026-10-14",
+   "2026-11-25"
+  ],
+  "nominations_scored": 112,
+  "names": 49,
+  "names_without_bars": [],
+  "prior_session_unread": 0,
+  "follows_a_faded_gap": {
+   "n": 3,
+   "right": 3,
+   "mean_r_pct": 2.38
+  },
+  "the_other_nominations": {
+   "n": 109,
+   "right": 64,
+   "mean_r_pct": 0.181
+  },
+  "against_a_faded_gap": {
+   "n": 0,
+   "right": 0,
+   "mean_r_pct": null
+  },
+  "follows_detail": [
+   "2026-11-04 LONG SHOP.TO +3.42%",
+   "2026-11-24 SHORT CLS.TO +3.49%",
+   "2026-11-24 SHORT HUT.TO +0.23%"
+  ],
+  "fetch_failures": {},
+  "note": "far too few to judge; a count, never a verdict"
+ }
+}

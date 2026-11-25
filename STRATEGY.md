@@ -6340,3 +6340,36 @@ Registered 2026-11-24 evening (`PREREGISTER_day155b_newsdesk_confidence.md`,
     accuracy.
 * **Counts:** 71 rejections through day-155b (#70 is held by lab item 17, the
   faded gap, which runs 11-25); 5 adoptions.
+
+## Day-155c: REJECTION #70 — the faded gap, Claude's short thesis: underpowered, and it leans slightly against the fade
+
+Council lab item 17, registered 11-24 (`PREREGISTER_day155_faded_gap.md`, with
+amendment 1), run once on 11-25 by `faded_gap.py` (64bbf9d, committed before
+it ran). Read `AUDIT_day155_faded_gap.md`; summary `data/faded_gap_day155.json`.
+Day-143's cache, downloaded again first (amendment 1); no model.
+* **The question.** Both of Claude's 11-24 shorts rested on a gap of a normal
+  day or more that closed back against itself. Does following the fade (SHORT
+  after a faded up-gap, LONG after a faded down-gap) earn anything the next
+  session, 09:45 → close against XIU?
+* **The population:** the 150 names, 2024-01-02 → 2026-10-29, 1,209 events over
+  359 sessions (1,209 over 357 at registration; FMP has since revised a few
+  bars). The setup is the registration's counting code, unchanged.
+* **UNDERPOWERED.**
+  * −0.060% an event, t = −0.52, 48.8% right. The four blocks disagree
+    (+0.04%, −0.10%, +0.16%, −0.34%), and the placebo p is 0.91 (0.09 the other
+    way).
+  * The secondary panels disagree in sign: ten years on the 150 names +0.031%,
+    the point-in-time S&P 500 −0.007%.
+  * A planted 0.30% shows only at t = 2.61; the smallest detectable effect is
+    0.32% an event.
+* **Beside it:**
+  * both legs are slightly negative from 09:45 (SHORT −0.04%, LONG −0.08%);
+    gaps of 2 ATR or more −0.28% (t = −1.16); a full reversal −0.17%;
+  * the held gap, followed, −0.05%;
+  * on daily open → close the short leg leans the fade's way (ten years
+    +0.17%, t = 1.80; the S&P 500 +0.05%), and the long leg against it;
+  * Claude's live nominations that followed a faded gap: 3, all right (+2.38%;
+    SHOP.TO 11-04, CLS.TO and HUT.TO 11-24). An anecdote.
+* **So:** no tie-break by the setup and no pass-over of a Claude pick that
+  follows one. Nothing live changes, and no prompt is re-worded.
+* **Counts:** 72 rejections through day-155c; 5 adoptions.
