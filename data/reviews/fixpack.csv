@@ -175,3 +175,8 @@ session,period,kind,ticker,side,etf,invalid_at,entry,atr_pct,reach_atr,gate,reas
 2026-11-25,test,live,HUT.TO,SHORT,XFN.TO,,62.25,14.104,,dropped,no wrong-if,-21,0,2,2026-11-25T16:23:55-05:00
 2026-11-25,test,round1,ATD.TO,LONG,XCD.TO,83.29,,,,,,111,1,2,2026-11-25T16:23:55-05:00
 2026-11-25,test,round1,CLS.TO,SHORT,XIT.TO,,,,,,,63,0,1,2026-11-25T16:23:55-05:00
+2026-11-26,test,final,DOL.TO,LONG,XST.TO,,,,,,,14,0,2,2026-11-26T16:22:42-05:00
+2026-11-26,test,final,TOU.TO,LONG,XEG.TO,61.33,,,,,,-22,0,1,2026-11-26T16:22:42-05:00
+2026-11-26,test,live,CNQ.TO,LONG,XEG.TO,63.35,66.16,2.7693,1.534,dropped,wrong-if 1.5 normal days away,-21,0,1,2026-11-26T16:22:42-05:00
+2026-11-26,test,round1,CLS.TO,SHORT,XIT.TO,,,,,,,62,0,1,2026-11-26T16:22:42-05:00
+2026-11-26,test,round1,CM.TO,SHORT,XFN.TO,,,,,,,7,0,2,2026-11-26T16:22:42-05:00
