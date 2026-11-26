@@ -87,7 +87,7 @@ def test_collect_archives_once_counts_failures_and_stops_at_since(tmp_path):
              'https://www.newswire.ca/news-releases/acme-q3-1.html': release(),
              'https://www.newswire.ca/news-releases/undated-3.html': ValueError('HTTP_503'),
              'https://www.newswire.ca/news-releases/gov-2.html': ValueError('HTTP_503')}
-    out = N.collect(dt.date(2026, 9, 25), today=dt.date(2026, 9, 28), root=tmp_path,
+    out = N.collect_list(dt.date(2026, 9, 25), today=dt.date(2026, 9, 28), root=tmp_path,
                     fetch=fake_fetch(pages), pause=0)
     assert out['archived'] == 2 and out['from_list'] == 1 and out['page_failures'] == {'HTTP_503': 1}
     assert out['failed'] == 1 and out['failures'] == {'HTTP_503+NO_LIST_TIME': 1}
@@ -98,7 +98,7 @@ def test_collect_archives_once_counts_failures_and_stops_at_since(tmp_path):
     assert gov['published_at'] == '2026-09-25T16:10:00-04:00' and gov['tickers'] == []
     # Stopping: a card older than `since` ends the walk; an archived URL is not
     # refetched, and the card that made no row is the only one asked again.
-    out = N.collect(dt.date(2026, 9, 26), today=dt.date(2026, 9, 28), root=tmp_path,
+    out = N.collect_list(dt.date(2026, 9, 26), today=dt.date(2026, 9, 28), root=tmp_path,
                     fetch=fake_fetch(pages), pause=0)
     assert out['reached_since'] is True and out['new_releases'] == 1 and out['archived'] == 0
     assert out['failures'] == {'HTTP_503+NO_LIST_TIME': 1}
@@ -178,7 +178,7 @@ def test_refused_pages_are_archived_from_their_cards_and_the_run_stops_asking(tm
         asked.append(url)
         raise ValueError('HTTP_403')
 
-    out = N.collect(dt.date(2026, 11, 4), today=dt.date(2026, 11, 5), root=tmp_path,
+    out = N.collect_list(dt.date(2026, 11, 4), today=dt.date(2026, 11, 5), root=tmp_path,
                     fetch=fetch, pause=0, workers=1)
     assert out['archived'] == 8 and out['from_list'] == 8 and out['failed'] == 0
     assert len(asked) == N.BREAK_AFTER                      # then it stops asking
@@ -211,7 +211,7 @@ def test_a_list_page_that_keeps_failing_ends_the_walk_but_keeps_what_came_before
     pages = {N.LIST_URL.format(page=1): LIST.split('<div class="row newsCards" lang="en"><a class="newsreleaseconsolidatelink" href="/news-releases/gov-2.html">')[0],
              N.LIST_URL.format(page=2): ValueError('HTTP_502'),
              'https://www.newswire.ca/news-releases/acme-q3-1.html': release()}
-    out = N.collect(dt.date(2026, 9, 20), today=dt.date(2026, 9, 28), root=tmp_path,
+    out = N.collect_list(dt.date(2026, 9, 20), today=dt.date(2026, 9, 28), root=tmp_path,
                     fetch=fake_fetch(pages), pause=0)
     assert out['list_error'] == 'page 2: ValueError' and out['reached_since'] is False
     assert out['archived'] == 1 and len(N.read(tmp_path)) == 1

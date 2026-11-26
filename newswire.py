@@ -28,14 +28,24 @@ Canadian wire's list, and its symbols are in the description.) A run whose
 list is refused reads them (`collect_rss`) and archives each new item as
 `source: 'newswire.ca rss'`: the item's minute, title, and the symbols of its
 description's opening, the dateline dropped, as a list card's were. Twenty
-items are about 90 minutes of a busy morning, so `--watch` reads the main feed
-every WATCH_EVERY seconds and the categories every WATCH_CATEGORIES_EVERY. On
-35 past nights (3,860 releases in the news desk's windows) a 10-minute watcher
-would have missed 1; the four scheduled reads alone (16:20, 08:12, 08:52,
-09:31) 57%. Every read that shows a stretch of the wire whole is logged
-(`log_read`), so the news desk can say which part of its window was not read
-(`coverage`). Nothing is bypassed: the RSS feeds are the site's own machine
-channel.
+items are about 90 minutes of a busy morning: on 35 past nights the four
+scheduled reads alone (16:20, 08:12, 08:52, 09:31) would have missed 57% of
+the news desk's releases. `--watch` reads the main feed every WATCH_EVERY
+seconds, but it cannot run overnight: this session's machine is suspended
+while the session is idle (the 11-26 watcher's 10:43 pass never came, and the
+machine restarted at 11:00), so it is never started automatically.
+
+The news sitemap (day-156b). robots.txt names https://www.newswire.ca/
+sitemap-news.xml for crawlers, and it answers this collector: every release
+of about the last 72 hours, with its minute, title and the issuer's tagged
+tickers. One read covers a whole night. `collect` reads the RSS feeds first
+(their openings give the symbols, as the list cards did), then the sitemap
+(its tags give the symbols of a release the feeds no longer hold), and asks
+for the list only when the sitemap does not reach back to `since`, so a
+normal run makes no request newswire.ca refuses. Every read that shows a
+stretch of the wire whole is logged (`log_read`), so the news desk can say
+which part of its window was not read (`coverage`). Nothing is bypassed: the
+feeds and the sitemap are the site's own machine channels.
 
 The archive is `data/newswire/YYYY-MM-DD.jsonl` (ET date of dissemination), one
 release per line, committed: a missed day can be back-filled from the list,
@@ -386,8 +396,8 @@ def _code(exc):
     return str(exc) if re.fullmatch(r'[A-Z0-9_]{1,40}', str(exc)) else type(exc).__name__
 
 
-def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
-            workers=WORKERS, pause=0.5, break_after=BREAK_AFTER, now=None, state_dir=None):
+def collect_list(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
+                 workers=WORKERS, pause=0.5, break_after=BREAK_AFTER, now=None, state_dir=None):
     """Walk the list back to `since` (a date), fetch every release page not yet
     archived, append. Each list page is archived before the next is read, so a
     failure keeps what came before it. A list page is tried three times, and one
@@ -398,11 +408,11 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
     code); after `break_after` HTTP 403 refusals the run stops asking for pages
     and takes the rest from their cards. A card that cannot make a row either
     is not archived, is COUNTED in `failures`, and the next run retries it.
-    Nothing is swallowed (house rule 1).
+    Nothing is swallowed (house rule 1). A walk that archived every card it
+    read logs the stretch it showed whole (`log_read`).
 
-    Day-156: when the list's FIRST page cannot be read, the RSS feeds are read
-    instead (`collect_rss`, its counts under `rss`). A walk that archived every
-    card it read logs the stretch it showed whole (`log_read`)."""
+    Day-156b: `collect` asks for the list only when the sitemap does not reach
+    back to `since`; newswire.ca refuses it to this collector."""
     import threading
     import requests
     session = requests.Session()
@@ -476,11 +486,64 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
            'failed': sum(failures.values()), 'failures': failures}
     if pages and not failures and oldest is not None:
         out['read_logged'] = log_read('list', oldest, now, state_dir=state_dir)
-    if not pages and list_error:       # the list itself refused: its RSS feeds (day-156)
-        rss = collect_rss(root=root, fetch=fetch, now=now, state_dir=state_dir)
-        out['rss'] = rss
-        out['archived'] += rss['archived']
-        out['with_tsx_symbol'] += rss['with_tsx_symbol']
+    return out
+
+
+SOURCES = ('rss', 'sitemap', 'list')
+
+
+def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
+            workers=WORKERS, pause=0.5, break_after=BREAK_AFTER, now=None, state_dir=None,
+            sources=SOURCES):
+    """Day-156b: the wire's machine channels first, the list only for a hole.
+
+    1. The RSS feeds (`collect_rss`): each item's description is the release's
+       opening, so its symbols are found as a list card's were.
+    2. The news sitemap (`collect_sitemap`): every release of about the last
+       72 hours, with its minute, title and the issuer's tagged tickers. A
+       release already archived from a feed keeps that row (the URL dedupes).
+    3. The list walk (`collect_list`), only when the sitemap could not be read
+       whole back to `since`. newswire.ca refuses it to this collector, and the
+       walk asks for release pages, which it refuses too, so a normal run makes
+       no request that is refused.
+
+    `reached_since` is True when the sitemap or the list showed the wire whole
+    back to `since`. Counts from each source sit under `rss`, `sitemap` and the
+    list's own keys; `archived` and `with_tsx_symbol` are their sums."""
+    now = now or dt.datetime.now(ET)
+    today = today or now.date()
+    out = {'since': since.isoformat(), 'list_pages': 0, 'reached_since': False,
+           'list_error': None, 'new_releases': 0, 'archived': 0, 'with_tsx_symbol': 0,
+           'from_list': 0, 'page_failures': {}, 'failed': 0, 'failures': {},
+           'list_asked': False}
+    for name, run in (('rss', collect_rss), ('sitemap', collect_sitemap)):
+        if name in sources:
+            got = run(root=root, fetch=fetch, now=now, state_dir=state_dir, pause=pause)
+            out[name] = got
+            out['archived'] += got['archived']
+            out['with_tsx_symbol'] += got['with_tsx_symbol']
+            out['failed'] += got['failed']
+            for k, v in got['failures'].items():
+                out['failures'][k] = out['failures'].get(k, 0) + v
+    sm = out.get('sitemap')
+    start = dt.datetime.combine(since, dt.time(0, 0), tzinfo=ET)
+    out['reached_since'] = bool(sm and sm['whole'] and sm['oldest']
+                                and dt.datetime.fromisoformat(sm['oldest']) <= start)
+    if 'list' in sources and not out['reached_since']:
+        out['list_asked'] = True
+        walk = collect_list(since, today=today, root=root, fetch=fetch, max_pages=max_pages,
+                            workers=workers, pause=pause, break_after=break_after, now=now,
+                            state_dir=state_dir)
+        for k in ('list_pages', 'list_error', 'new_releases', 'from_list', 'page_failures'):
+            out[k] = walk[k]
+        out['reached_since'] = walk['reached_since']
+        out['archived'] += walk['archived']
+        out['with_tsx_symbol'] += walk['with_tsx_symbol']
+        out['failed'] += walk['failed']
+        for k, v in walk['failures'].items():
+            out['failures'][k] = out['failures'].get(k, 0) + v
+        if 'read_logged' in walk:
+            out['read_logged'] = walk['read_logged']
     return out
 
 
@@ -539,10 +602,10 @@ def rss_row(url, at, title, summary):
         raise ValueError('NO_RELEASE_TITLE')
     return {'url': url, 'title': title[:400], 'published_at': at.isoformat(),
             'tickers': symbols(summary), 'source': RSS_SOURCE,
-            'summary': summary[:400], 'page_error': RSS_PAGE_ERROR}
+            'summary': summary[:400], 'page_error': RSS_PAGE_ERROR, 'tickers_from': 'opening'}
 
 
-def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=None):
+def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=None, pause=0.0):
     """Read the RSS feeds and archive every release not yet archived. A feed
     that fails is named in `feed_errors`, an item that cannot make a row is
     counted in `failures`; nothing is swallowed. The main feed lists the wire's
@@ -554,9 +617,11 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
     now = now or dt.datetime.now(ET)
     known = {r['url'] for r in read(root)}
     rows, failures, feed_errors = [], {}, {}
-    answered = items = main_failed = 0
+    answered = items = main_failed = skipped = 0
     main_from = None
-    for feed in feeds:
+    for i, feed in enumerate(feeds):
+        if pause and i:
+            time.sleep(POLITE_PAUSE)
         try:
             listing = parse_rss(raw(BASE + feed))
             if not listing:
@@ -571,6 +636,9 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
             if len(times) == len(listing):
                 main_from = min(times) + dt.timedelta(minutes=1)
         for url, at, title, summary in listing:
+            if not _RELEASE_URL.fullmatch(url or ''):     # not a release: counted, not a hole
+                skipped += 1
+                continue
             if url in known:
                 continue
             try:
@@ -586,9 +654,146 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
            'rss_items': items, 'archived': written,
            'with_tsx_symbol': sum(1 for r in rows if r['tickers']),
            'oldest_new': min((r['published_at'] for r in rows), default=None),
-           'failed': sum(failures.values()), 'failures': failures}
+           'failed': sum(failures.values()), 'failures': failures, 'skipped': skipped}
     if main_from is not None and not main_failed:
         out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
+    return out
+
+
+# ── the news sitemap (day-156b) ──────────────────────────────────────────────
+#
+# robots.txt (2026-11-26) disallows nothing but one template file and names
+# https://www.newswire.ca/sitemap-news.xml for crawlers: an index of pages of
+# 100 releases each, about the last 72 hours of the wire (409 on 11-26), each
+# with its URL, minute (`news:publication_date`, with offset), title and the
+# issuer's tagged tickers (`news:stock_tickers`, "Toronto:EMP.A,NASDAQ:X").
+# It answers this collector. Checked on 11-26 against the archive's stretch
+# collected from the list (11-23 11:00 → 11-25 09:26): all 276 archived
+# releases are in it at the same minute, plus one correction notice the list
+# never showed. Where the opening named a TSX symbol (34 releases), the first
+# tagged TSX symbol was the same one on all 34. The tags also name a symbol on
+# 38 of the 277 whose opening named none: the regulator's halt and resumption
+# notices (given no symbol here, as their openings carry none), fund families'
+# distribution notices, and some corporate notices of large issuers.
+
+SITEMAP_URL = BASE + '/sitemap-news.xml'
+SITEMAP_SOURCE = 'newswire.ca sitemap'
+SITEMAP_PAGE_ERROR = 'NOT_FETCHED_READ_FROM_SITEMAP'
+SITEMAP_MAX_PAGES = 12
+POLITE_PAUSE = 0.25
+_SM_PAGE = re.compile(r'<loc>\s*(https://www\.newswire\.ca/sitemap-news\.xml\?page=\d+)\s*</loc>')
+_SM_URL = re.compile(r'<url>(.*?)</url>', re.S)
+NOT_ISSUER = re.compile(r'^\s*Canadian Investment Regulatory Organization\b', re.I)
+_TAG_VENUES = {'Toronto': False, 'TorontoVE': True}
+
+
+def tagged_symbols(field):
+    """The Toronto and TSX Venture symbols of a `news:stock_tickers` field, in
+    its order, Yahoo form: 'Toronto:EMP.A,TorontoVE:GSD,NASDAQ:X' -> ['EMP-A.TO',
+    'GSD.V']. Other venues are dropped."""
+    out = []
+    for part in (field or '').split(','):
+        venue, _, sym = part.strip().partition(':')
+        sym = sym.strip()
+        if venue in _TAG_VENUES and re.fullmatch(r'[A-Z][A-Z0-9]{0,6}(?:\.[A-Z]{1,2})*', sym):
+            y = yahoo_symbol(sym, _TAG_VENUES[venue])
+            if y not in out:
+                out.append(y)
+    return out
+
+
+def parse_sitemap(page):
+    """[(url, at, title, stock_tickers, keywords)] from one sitemap page.
+    `at` is the publication minute in ET, None when unreadable or without an
+    offset."""
+    out = []
+    for entry in _SM_URL.findall(page):
+        def tag(name):
+            return _rss_tag(entry, name).strip()
+        try:
+            at = dt.datetime.fromisoformat(tag('news:publication_date'))
+            at = at.astimezone(ET) if at.tzinfo else None
+        except ValueError:
+            at = None
+        out.append((htmllib.unescape(tag('loc')), at, _text(tag('news:title')),
+                    tag('news:stock_tickers'), _text(tag('news:keywords'))))
+    return out
+
+
+def sitemap_row(url, at, title, stock_tickers, keywords=''):
+    """One archive row from a sitemap entry, or ValueError naming what it
+    lacked. Its symbols are the issuer's tags; a regulator's notice gets none."""
+    if not _RELEASE_URL.fullmatch(url or ''):
+        raise ValueError('NOT_A_RELEASE_URL')
+    if at is None:
+        raise ValueError('NO_SITEMAP_TIME')
+    if not title:
+        raise ValueError('NO_RELEASE_TITLE')
+    return {'url': url, 'title': title[:400], 'published_at': at.isoformat(),
+            'tickers': [] if NOT_ISSUER.match(title) else tagged_symbols(stock_tickers),
+            'source': SITEMAP_SOURCE, 'stock_tickers': (stock_tickers or '')[:400],
+            'keywords': (keywords or '')[:200], 'page_error': SITEMAP_PAGE_ERROR,
+            'tickers_from': 'tag'}
+
+
+def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.0):
+    """Read the news sitemap's index and pages, and archive every release not
+    yet archived. A page that fails is named in `page_errors`; an entry that
+    cannot make a row is counted in `failures`. Read whole (every page answered
+    and every entry made a row), it logs the stretch from just after its oldest
+    minute to now, and `whole` is True."""
+    import requests
+    session = requests.Session()
+    raw = fetch or (lambda u: _get(u, session))
+    now = now or dt.datetime.now(ET)
+    out = {'pages': 0, 'answered': 0, 'page_errors': {}, 'entries': 0, 'archived': 0,
+           'with_tsx_symbol': 0, 'oldest': None, 'failed': 0, 'failures': {}, 'whole': False}
+    try:
+        pages = _SM_PAGE.findall(raw(SITEMAP_URL))[:SITEMAP_MAX_PAGES]
+        if not pages:
+            raise ValueError('NO_SITEMAP_PAGES')
+    except Exception as exc:                  # named, never silent (house rule 1)
+        out['page_errors'][SITEMAP_URL] = _code(exc)
+        return out
+    out['pages'] = len(pages)
+    known = {r['url'] for r in read(root)}
+    rows, times = [], []
+    for page in pages:
+        if pause:
+            time.sleep(POLITE_PAUSE)
+        try:
+            entries = parse_sitemap(raw(page))
+            if not entries:
+                raise ValueError('EMPTY_SITEMAP_PAGE')
+        except Exception as exc:
+            out['page_errors'][page] = _code(exc)
+            continue
+        out['answered'] += 1
+        out['entries'] += len(entries)
+        for url, at, title, tickers, keywords in entries:
+            if not _RELEASE_URL.fullmatch(url or ''):     # not a release: counted, not a hole
+                out['skipped'] = out.get('skipped', 0) + 1
+                continue
+            if at is not None:
+                times.append(at)
+            if url in known:
+                continue
+            try:
+                row = sitemap_row(url, at, title, tickers, keywords)
+            except ValueError as exc:
+                out['failures'][_code(exc)] = out['failures'].get(_code(exc), 0) + 1
+                continue
+            known.add(url)
+            rows.append(row)
+    out['archived'] = append(rows, root)
+    out['with_tsx_symbol'] = sum(1 for r in rows if r['tickers'])
+    out['failed'] = sum(out['failures'].values())
+    if times:
+        out['oldest'] = min(times).isoformat()
+    out['whole'] = bool(times) and not out['page_errors'] and not out['failed']
+    if out['whole']:
+        out['read_logged'] = log_read('sitemap', min(times) + dt.timedelta(minutes=1), now,
+                                      state_dir=state_dir)
     return out
 
 
@@ -785,7 +990,9 @@ def main(argv=None):
                    help='oldest ET date to reach (default: the last archived day, else 3 days back)')
     p.add_argument('--max-pages', type=int, default=MAX_PAGES)
     p.add_argument('--watch', action='store_true',
-                   help='read the RSS feeds until the deadline start_watch set (day-156)')
+                   help='read the RSS feeds until the deadline start_watch set (day-156). Never '
+                        'started automatically since day-156b: an idle session\'s machine is '
+                        'suspended, and the sitemap covers the night')
     p.add_argument('--start-watch', action='store_true',
                    help='start the watcher, or move a running one\'s deadline later')
     p.add_argument('--state-dir', help='default: $RB_STATE_DIR, else .rb-state')
@@ -802,21 +1009,19 @@ def main(argv=None):
     today = dt.datetime.now(ET).date()
     since = a.since or last_archived() or (today - dt.timedelta(days=3))
     out = collect(since, today=today, max_pages=a.max_pages, state_dir=a.state_dir)
-    rss = out.get('rss')
-    if rss is not None:                 # the list refused: read from RSS, and keep reading
-        out['watch'] = start_watch(state_dir=a.state_dir)
     print(json.dumps(out))
-    if rss is not None:
-        print(f"NEWSWIRE: the list was refused ({out['list_error']}); read newswire.ca's RSS "
-              f"feeds instead: {rss['rss_answered']} of {rss['rss_feeds']} answered, "
-              f"{rss['archived']} new release(s), feed errors {rss['feed_errors'] or 'none'}; "
-              f"the watcher: {out['watch']} (day-156)", file=sys.stderr)
-        if not rss['rss_answered']:
-            print('NEWSWIRE: no RSS feed answered either — the wire was not read', file=sys.stderr)
-            return 4
-        return 6
+    sm, rss = out.get('sitemap') or {}, out.get('rss') or {}
     if not out['reached_since']:
-        print(f'NEWSWIRE: list ended before {since} — the archive has a hole', file=sys.stderr)
+        if sm.get('answered') or rss.get('rss_answered') or out['list_pages']:
+            print(f"NEWSWIRE: the wire was read only in part back to {since}: the sitemap "
+                  f"{sm.get('answered', 0)} of {sm.get('pages', 0)} page(s) "
+                  f"({sm.get('page_errors') or 'no page error'}), the RSS feeds "
+                  f"{rss.get('rss_answered', 0)} of {rss.get('rss_feeds', 0)}, the list "
+                  f"{out['list_error'] or 'not needed'} — a release may be missing",
+                  file=sys.stderr)
+            return 6
+        print('NEWSWIRE: nothing answered (the sitemap, the RSS feeds and the list) — '
+              'the wire was not read', file=sys.stderr)
         return 4
     if out['failed']:
         return 3

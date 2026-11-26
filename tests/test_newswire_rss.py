@@ -65,7 +65,7 @@ def test_an_rss_item_reads_as_a_list_card_did():
     assert row['tickers'] == ['ACM.TO'] and row['source'] == N.RSS_SOURCE
     assert row['published_at'] == '2026-11-26T07:30:00-05:00'
     card = N.list_row(url, 'Nov 26, 2026, 07:30 ET', title, summary, dt.date(2026, 11, 26), 'X')
-    assert set(row) == set(card)                         # the same fields as a card's row
+    assert set(card) <= set(row) and row['tickers_from'] == 'opening'   # a card's fields, and where its symbols came from
     assert {k: row[k] for k in ('url', 'title', 'published_at', 'tickers', 'summary')} == \
            {k: card[k] for k in ('url', 'title', 'published_at', 'tickers', 'summary')}
     assert N.parse_rss(ENERGY)[0][3].startswith('OilCo Ltd. (TSX: OIL.B)')
@@ -84,7 +84,7 @@ def test_an_item_that_cannot_make_a_row_is_named():
     assert N.parse_rss(bad)[0][1] is None
 
 
-def test_a_refused_list_is_read_from_the_feeds_once_each(tmp_path):
+def test_the_feeds_are_read_first_and_a_refused_list_costs_only_its_request(tmp_path):
     state = tmp_path / 'state'
     now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
     asked = []
@@ -108,7 +108,7 @@ def test_a_refused_list_is_read_from_the_feeds_once_each(tmp_path):
     assert again['rss']['archived'] == 0 and len(N.read(tmp_path / 'wire')) == 3
 
 
-def test_a_working_list_is_never_replaced_by_the_feeds(tmp_path):
+def test_a_working_list_fills_a_hole_the_sitemap_cannot_reach(tmp_path):
     cards = ('<div class="row newsCards" lang="en"><a class="newsreleaseconsolidatelink" '
              'href="/news-releases/acme-results-111.html"><h3 class="no-top-margin">'
              '<small>Nov 24, 2026, 07:30 ET</small> ACME Mining reports</h3>'
@@ -119,12 +119,13 @@ def test_a_working_list_is_never_replaced_by_the_feeds(tmp_path):
         asked.append(url)
         if url == N.LIST_URL.format(page=1):
             return cards
-        raise ValueError('HTTP_403')          # release pages refused, as since 11-04
+        raise ValueError('HTTP_403')          # feeds, sitemap and release pages refused
 
     now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
     out = N.collect(dt.date(2026, 11, 25), root=tmp_path / 'wire', fetch=fetch, pause=0,
                     now=now, state_dir=tmp_path / 'state')
-    assert 'rss' not in out and not any('/rss/' in u for u in asked)
+    assert out['list_asked'] is True and out['reached_since'] is True
+    assert out['sitemap']['page_errors'] == {N.SITEMAP_URL: 'HTTP_403'}
     # The walk showed the wire whole from its oldest card to now.
     log = [json.loads(l) for l in (tmp_path / 'state' / N.READS).read_text().splitlines()]
     assert log == [{'kind': 'list', 'from': '2026-11-24T07:30:00-05:00', 'to': now.isoformat()}]
@@ -240,20 +241,27 @@ def test_the_watcher_reads_the_main_feed_often_and_the_rest_hourly_then_stops(tm
                    sleep=lambda s: None, me=7) == 'REPLACED'
 
 
-def test_main_says_the_list_was_refused_and_starts_the_watcher(monkeypatch, capsys):
-    base = {'reached_since': False, 'failed': 0, 'from_list': 0, 'page_failures': {},
-            'list_error': 'page 1: ValueError'}
+def test_main_exits_whole_in_part_or_unread_and_starts_no_watcher(monkeypatch, capsys):
+    base = {'reached_since': True, 'failed': 0, 'from_list': 0, 'page_failures': {},
+            'list_error': None, 'list_pages': 0,
+            'rss': {'rss_answered': 13, 'rss_feeds': 13, 'archived': 9, 'feed_errors': {}},
+            'sitemap': {'answered': 5, 'pages': 5, 'page_errors': {}}}
     started = []
     monkeypatch.setattr(N, 'start_watch', lambda **k: started.append(k) or 'started')
-    monkeypatch.setattr(N, 'collect', lambda *a, **k: {**base, 'rss': {
-        'rss_answered': 13, 'rss_feeds': 13, 'archived': 9, 'feed_errors': {}}})
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: dict(base))
+    assert N.main(['--collect', '--since', '2026-11-25']) == 0
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: {
+        **base, 'reached_since': False, 'list_error': 'page 1: ValueError',
+        'sitemap': {'answered': 2, 'pages': 5, 'page_errors': {'p3': 'HTTP_403'}}})
     assert N.main(['--collect', '--since', '2026-11-25']) == 6
-    err = capsys.readouterr().err
-    assert 'the list was refused' in err and 'the watcher: started' in err and started
-    monkeypatch.setattr(N, 'collect', lambda *a, **k: {**base, 'rss': {
-        'rss_answered': 0, 'rss_feeds': 13, 'archived': 0, 'feed_errors': {'x': 'HTTP_403'}}})
+    assert 'read only in part' in capsys.readouterr().err
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: {
+        **base, 'reached_since': False, 'list_error': 'page 1: ValueError',
+        'rss': {'rss_answered': 0, 'rss_feeds': 13}, 'sitemap': {'answered': 0, 'pages': 0,
+                                                                 'page_errors': {'x': 'HTTP_403'}}})
     assert N.main(['--collect', '--since', '2026-11-25']) == 4
     assert 'the wire was not read' in capsys.readouterr().err
+    assert started == []                    # day-156b: never started automatically
 
 
 def test_the_news_desk_reads_an_rss_release_as_it_read_a_list_card(tmp_path):
@@ -268,3 +276,114 @@ def test_the_news_desk_reads_an_rss_release_as_it_read_a_list_card(tmp_path):
     evs, excluded = news_desk.events(dt.date(2026, 11, 26), chart=chart, archive=tmp_path / 'wire')
     assert [e['ticker'] for e in evs] == ['ACM.TO', 'OIL-B.TO'] and excluded == {}
     assert evs[0]['releases'][0]['title'] == 'ACME Mining reports Q3 & record output'
+
+
+def sm_entry(slug, when, title, tickers='', keywords='Mining'):
+    return (f'<url><loc>https://www.newswire.ca/news-releases/{slug}.html</loc><news:news>'
+            '<news:publication><news:name>Canada NewsWire</news:name><news:language>en</news:language>'
+            '</news:publication><news:genres>PressRelease</news:genres>'
+            f'<news:publication_date>{when}</news:publication_date><news:title>{title}</news:title>'
+            f'<news:keywords>{keywords}</news:keywords>'
+            + (f'<news:stock_tickers>{tickers}</news:stock_tickers>' if tickers else '')
+            + '</news:news></url>')
+
+
+def sm_page(*entries):
+    return ('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns:news="http://www.google.com/schemas/'
+            'sitemap-news/0.9">' + ''.join(entries) + '</urlset>')
+
+
+SM_INDEX = ('<?xml version="1.0" encoding="UTF-8"?><sitemapindex>'
+            '<sitemap><loc>https://www.newswire.ca/sitemap-news.xml?page=1</loc></sitemap>'
+            '<sitemap><loc>https://www.newswire.ca/sitemap-news.xml?page=2</loc></sitemap></sitemapindex>')
+SM1 = sm_page(sm_entry('acme-results-111', '2026-11-26T07:30:00-05:00', 'ACME Mining reports Q3 &amp; record output',
+                       'Toronto:ACM,NYSE:ACM'),
+              sm_entry('oilco-deal-444', '2026-11-25T18:10:00-05:00', 'OilCo agrees to buy GasCo',
+                       'Toronto:OIL.B,TorontoVE:GAS'))
+SM2 = sm_page(sm_entry('ciro-halt-555', '2026-11-25T17:00:00-05:00',
+                       'Canadian Investment Regulatory Organization Trading Halt - FOO', 'Toronto:FOO'),
+              sm_entry('gov-funding-222', '2026-11-24T12:00:00-05:00', 'Government announces funding'))
+SITEMAP = {'/sitemap-news.xml': SM_INDEX, '/sitemap-news.xml?page=1': SM1, '/sitemap-news.xml?page=2': SM2}
+
+
+def test_tagged_symbols_keep_the_toronto_and_venture_tags_in_order():
+    assert N.tagged_symbols('Toronto:EMP.A,TorontoVE:GSD,NASDAQ:X,Toronto:LB.PR.H') == \
+        ['EMP-A.TO', 'GSD.V', 'LB-PR-H.TO']
+    assert N.tagged_symbols('NYSE:BEN,NEO:ZZZ') == [] == N.tagged_symbols('')
+    assert N.tagged_symbols('Toronto:DOO,NASDAQ:DOO,Toronto:DOO') == ['DOO.TO']
+
+
+def test_a_sitemap_entry_reads_as_an_archive_row():
+    (a, b) = N.parse_sitemap(SM1)
+    url, at, title, tickers, keywords = a
+    assert url == 'https://www.newswire.ca/news-releases/acme-results-111.html'
+    assert at == dt.datetime(2026, 11, 26, 7, 30, tzinfo=ET) and title == 'ACME Mining reports Q3 & record output'
+    row = N.sitemap_row(url, at, title, tickers, keywords)
+    assert row['tickers'] == ['ACM.TO'] and row['tickers_from'] == 'tag' and row['source'] == N.SITEMAP_SOURCE
+    assert N.sitemap_row(*b)['tickers'] == ['OIL-B.TO', 'GAS.V']
+    halt = N.parse_sitemap(SM2)[0]
+    assert N.sitemap_row(*halt)['tickers'] == []            # the regulator's notice, not the issuer's
+    with pytest.raises(ValueError, match='NO_SITEMAP_TIME'):
+        N.sitemap_row(url, None, title, tickers)
+    with pytest.raises(ValueError, match='NOT_A_RELEASE_URL'):
+        N.sitemap_row('https://www.newswire.ca/sitemap-news.xml', at, title, tickers)
+    card_keys = set(N.list_row(url, 'Nov 26, 2026, 07:30 ET', title, 'x', dt.date(2026, 11, 26), 'X'))
+    assert card_keys - {'summary'} <= set(row)        # a sitemap entry carries no opening
+
+
+def test_the_sitemap_is_read_whole_and_logs_its_stretch(tmp_path):
+    now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
+    out = N.collect_sitemap(root=tmp_path / 'wire', fetch=refusing_list(SITEMAP), now=now,
+                            state_dir=tmp_path)
+    assert out['pages'] == 2 and out['answered'] == 2 and out['entries'] == 4 and out['whole']
+    assert out['archived'] == 4 and out['with_tsx_symbol'] == 2
+    assert out['oldest'] == '2026-11-24T12:00:00-05:00'
+    (entry,) = [json.loads(l) for l in (tmp_path / N.READS).read_text().splitlines()]
+    assert entry == {'kind': 'sitemap', 'from': '2026-11-24T12:01:00-05:00', 'to': now.isoformat()}
+    # A page that fails: named, not whole, no stretch logged.
+    part = {k: v for k, v in SITEMAP.items() if not k.endswith('page=2')}
+    out = N.collect_sitemap(root=tmp_path / 'w2', fetch=refusing_list(part), now=now,
+                            state_dir=tmp_path / 's2')
+    assert out['page_errors'] == {'https://www.newswire.ca/sitemap-news.xml?page=2': 'HTTP_404'}
+    assert out['whole'] is False and not (tmp_path / 's2' / N.READS).exists()
+
+
+def test_a_feeds_opening_wins_over_the_sitemaps_tag_for_one_release(tmp_path):
+    feeds = {N.RSS_MAIN: MAIN, **SITEMAP}
+    tagged = dict(SITEMAP, **{'/sitemap-news.xml?page=1': sm_page(
+        sm_entry('acme-results-111', '2026-11-26T07:30:00-05:00', 'ACME', 'Toronto:ZZZ,Toronto:ACM'))})
+    feeds.update(tagged)
+    now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
+    N.collect(dt.date(2026, 11, 25), root=tmp_path / 'wire', fetch=refusing_list(feeds), pause=0,
+              now=now, state_dir=tmp_path)
+    (row,) = [r for r in N.read(tmp_path / 'wire') if r['url'].endswith('acme-results-111.html')]
+    assert row['source'] == N.RSS_SOURCE and row['tickers'] == ['ACM.TO'] and row['tickers_from'] == 'opening'
+
+
+def test_the_list_is_never_asked_when_the_sitemap_reaches_back(tmp_path):
+    asked = []
+    now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
+    out = N.collect(dt.date(2026, 11, 25), root=tmp_path / 'wire', pause=0, now=now, state_dir=tmp_path,
+                    fetch=refusing_list({N.RSS_MAIN: MAIN, **SITEMAP}, asked))
+    assert out['reached_since'] is True and out['list_asked'] is False and out['list_error'] is None
+    assert not any('/news-releases/' in u for u in asked)    # no list page, no release page
+    assert out['archived'] == 4                               # 2 from the feed, 2 more from the sitemap
+    # A sitemap that does not reach back to `since` sends the collector to the list.
+    out = N.collect(dt.date(2026, 11, 24), root=tmp_path / 'w2', pause=0, now=now, state_dir=tmp_path,
+                    fetch=refusing_list({N.RSS_MAIN: MAIN, **SITEMAP}, asked))
+    assert out['list_asked'] is True and out['reached_since'] is False
+    assert out['list_error'] == 'page 1: ValueError'
+
+
+def test_the_news_desk_reads_a_sitemap_release_by_its_tag(tmp_path):
+    """The seam: sitemap -> archive file -> news_desk.events."""
+    import pandas as pd
+    now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
+    N.collect(dt.date(2026, 11, 25), root=tmp_path / 'wire', pause=0, now=now, state_dir=tmp_path,
+              fetch=refusing_list(SITEMAP))
+    idx = pd.bdate_range('2026-10-01', '2026-11-26', tz='America/Toronto')
+    frame = pd.DataFrame({'Close': 50.0, 'Volume': 1e6}, index=idx)
+    chart = lambda t: ({'instrumentType': 'EQUITY', 'currency': 'CAD'}, frame)
+    evs, excluded = news_desk.events(dt.date(2026, 11, 26), chart=chart, archive=tmp_path / 'wire')
+    assert [e['ticker'] for e in evs] == ['ACM.TO', 'OIL-B.TO']     # the halt is no event
+    assert evs[1]['releases'][0]['tickers_from'] == 'tag'

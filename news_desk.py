@@ -66,7 +66,7 @@ ARMS = ('full', 'headline')
 FIELDS = ('session', 'ticker', 'arm', 'side', 'confidence', 'material', 'reason', 'releases',
           'first_at', 'title', 'url', 'model', 'prompt_version',
           'w945', 'w945_raw', 'w_day', 'w_day_raw', 'gap', 'gap_raw', 'w5d', 'w5d_raw',
-          'scored_at', 'scored_5d_at', 'asked_at')
+          'scored_at', 'scored_5d_at', 'asked_at', 'tickers_from')
 # Day-139: the FULL arm asked before the open (PREREGISTER_day139_newsdesk_open.md).
 PREOPEN_ARM = 'preopen'
 PREOPEN_VERSION = PROMPT_VERSION + '+day139-preopen'
@@ -140,6 +140,14 @@ def candidates(session, archive=None, until=None):
 
 
 GAP_MINUTES = 10      # day-156: an unread stretch this long is said in the email
+
+
+def symbol_source(event):
+    """Day-156b (amendment 2 of PREREGISTER_day155b_newsdesk_confidence.md):
+    'tag' when every release of the event named its symbol only in the wire
+    sitemap's tags, else 'opening' (a release page, a list card or an RSS
+    item: the release's own opening). Recorded with each call."""
+    return 'tag' if all(r.get('tickers_from') == 'tag' for r in event['releases']) else 'opening'
 
 
 def wire_health(session, *, archive=None, state_dir=None):
@@ -352,7 +360,8 @@ def stage(state_dir, now=None, *, chart=daily_chart, archive=None, client=None,
                          **c, 'releases': len(e['releases']),
                          'first_at': e['releases'][0]['published_at'],
                          'title': e['releases'][-1]['title'][:200], 'url': e['releases'][-1]['url'],
-                         'model': arms[arm]['model'] or MODEL, 'prompt_version': PROMPT_VERSION})
+                         'model': arms[arm]['model'] or MODEL, 'prompt_version': PROMPT_VERSION,
+                         'tickers_from': symbol_source(e)})
     ledger = read(path)
     seen = {(r['session'], r['ticker'], r['arm']) for r in ledger}
     added = [r for r in rows if (r['session'], r['ticker'], r['arm']) not in seen]
@@ -425,7 +434,8 @@ def stage_preopen(state_dir, now=None, *, chart=daily_chart, archive=None, clien
                          'first_at': e['releases'][0]['published_at'],
                          'title': e['releases'][-1]['title'][:200], 'url': e['releases'][-1]['url'],
                          'model': model or MODEL, 'prompt_version': PREOPEN_VERSION,
-                         'asked_at': answered.astimezone(ET).isoformat(timespec='seconds')})
+                         'asked_at': answered.astimezone(ET).isoformat(timespec='seconds'),
+                         'tickers_from': symbol_source(e)})
     ledger = read(path)
     seen = {(r['session'], r['ticker'], r['arm']) for r in ledger}
     added = [r for r in rows if (r['session'], r['ticker'], r['arm']) not in seen]

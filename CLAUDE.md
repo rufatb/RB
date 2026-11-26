@@ -1,5 +1,58 @@
 # Working notes for this repo
 
+## Day156b — the wire is read from its news sitemap; no request newswire.ca refuses; the watcher does not run idle (owner, 2026-11-26)
+
+The owner: "fix up the feeds so we don't get rejected anymore and make sure we
+have daily news desk picks in our email at 9:48am".
+* **The watcher cannot run overnight.** This session's machine is suspended
+  while the session is idle.
+  * The 11-26 watcher's 10:43 pass never came; the turn had ended at 10:35,
+    and the machine restarted at 11:00 with the disk intact.
+  * `--collect` no longer starts it. `--watch` remains for a manual read
+    while a session is active.
+* **The news sitemap is the source.** newswire.ca's robots.txt disallows
+  nothing but one template file, and it names `sitemap-news.xml` for
+  crawlers. The sitemap answers: every release of about the last 72 hours
+  (410 on 11-26), with its minute, title and the issuer's tagged tickers.
+  * Checked against the archive's stretch from the list (11-23 11:00 → 11-25
+    09:26): all 276 releases at the same minute, plus one correction notice.
+  * Where the opening named a TSX symbol, the first tag was the same symbol
+    (34 of 34). The tags also name one on 38 releases whose opening named
+    none: the regulator's halts (given none here), fund distributions and
+    some corporate notices.
+* **The order** (`newswire.collect`):
+  * the RSS feeds first: their openings give the symbols (`tickers_from`
+    'opening');
+  * then the sitemap: a release only it holds takes the issuer's tags
+    ('tag');
+  * then the list, only when the sitemap does not reach back to the last
+    archived day.
+
+  A normal run is 19 requests in about 11 s, and none is refused: no list
+  page and no release page is asked. `collect_list` is the old walk.
+* **The exits.**
+  * **0:** the wire was read whole back to the last archived day.
+  * **6:** it was read only in part (the sitemap not read whole); the morning
+    logs a stage fault, and Part 6 names the unread stretch.
+  * **4:** nothing answered. 3 and 5 keep their meanings.
+* **Amendment 2 of `PREREGISTER_day155b_newsdesk_confidence.md`** (2a3c908,
+  with a note in `PREREGISTER_day122_releases.md`), before 11-27, the first
+  session it covers.
+  * The population's symbol: from the opening when a feed held the release,
+    else from the issuer's tags.
+  * Each call records `tickers_from` (a new last column of
+    `data/news_calls.csv`; blank before 11-27 means 'opening').
+  * The verdicts read every call, and print the 'opening' calls beside the
+    whole. The bars are unchanged.
+* **11-26, the complete window.** The sitemap filled the archive's hole (the
+  last release from the list was 11-25 09:26). The window then held one more
+  liquid name than the 09:57 rerun found: SHORT CU.TO 0.60, material
+  (Canadian Utilities' response to Puerto Rico's Supreme Court on LUMA, 11-25
+  19:39). It was asked at 11:16, emailed (Gmail `1a218a5363e60f77`) and added
+  to the DDA file (befb664), labelled. Not in the ledger.
+* **No accuracy claim.** This restores the desk's input; it does not make a
+  call right.
+
 ## Day156 — the wire's list refused, the 11-26 news desk blind; the RSS feeds and a watcher (owner, 2026-11-26)
 
 * **What happened.**
@@ -29,8 +82,9 @@
     * archived as `source: 'newswire.ca rss'` with a list card's fields;
     * the same releases: all 73 RSS items older than the archive's newest row
       were already archived from the list.
-  * **The watcher.** `newswire.py --watch` is started detached by `--collect`
-    on a refusal, one at a time.
+  * **The watcher** (superseded by day-156b: never started now, as an idle
+    session's machine is suspended). `newswire.py --watch` was started
+    detached by `--collect` on a refusal, one at a time.
     * It reads the main feed every 10 minutes and the categories hourly,
       until 18:05 on the next session; each start moves the deadline later.
     * On 35 past nights it would have missed 1 of 3,860 window releases. The
@@ -40,9 +94,9 @@
   * **Coverage.** Every read that shows the wire whole is logged
     (`.rb-state/newswire_reads.jsonl`), and `newswire.coverage` names a
     window's unread stretches.
-  * **The exits.** `--collect` exits **6** when the list was refused and the
-    feeds were read. That is not a fault; the live evening prompt names only
-    0, 3 and 4.
+  * **The exits** (superseded by day-156b, where 6 means read only in part).
+    `--collect` exited **6** when the list was refused and the feeds were
+    read. The live evening prompt names only 0, 3 and 4.
   * **BLIND, not quiet.** The news desk records `wire`: the window's releases
     by source, and their coverage. A window with no release at all is BLIND:
     * Part 6 says "⚠ The news desk could not read the wire today …";

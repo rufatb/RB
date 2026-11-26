@@ -123,3 +123,18 @@ def test_a_section_from_before_renders_as_it_did(tmp_path):
 def test_a_failed_coverage_check_says_so(tmp_path):
     sec = {'status': 'READY', 'calls': [], 'layout': N.LAYOUT, 'wire': {'error': 'OSError'}}
     assert N.wire_lines(sec) == ['⚠ Whether the wire was read whole could not be checked today (OSError).']
+
+
+def test_each_call_records_where_its_symbol_came_from(tmp_path):
+    """Day-156b, amendment 2: 'opening' (a feed or list card) or 'tag' (sitemap only)."""
+    root = wire(tmp_path, [
+        {**row('2026-11-26T08:10:00-05:00', ['AAA.TO'], 'AAA agrees to a deal'), 'tickers_from': 'opening'},
+        {**row('2026-11-25T18:00:00-05:00', ['BBB.TO'], 'BBB reports', source='newswire.ca sitemap'),
+         'tickers_from': 'tag'},
+        row('2026-11-25T19:00:00-05:00', ['CCC.TO'], 'CCC from the list era', source='newswire.ca list')])
+    stage(tmp_path, root)
+    got = {(r['ticker'], r['arm']): r['tickers_from'] for r in N.read(tmp_path / 'news_calls.csv')}
+    assert got == {('AAA.TO', 'full'): 'opening', ('AAA.TO', 'headline'): 'opening',
+                   ('BBB.TO', 'full'): 'tag', ('BBB.TO', 'headline'): 'tag',
+                   ('CCC.TO', 'full'): 'opening', ('CCC.TO', 'headline'): 'opening'}
+    assert N.FIELDS[-1] == 'tickers_from'              # a new last column; older rows read blank

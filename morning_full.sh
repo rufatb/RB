@@ -224,9 +224,11 @@ else
     fi
 
     # THE WIRE (day-118): the issuers' own press releases since the last
-    # archived day, from newswire.ca's list. prepare_deepseek then puts each
-    # pool name's releases FIRST in its staged headlines, so all three desks see
-    # them. ~10-20s. A failure costs the releases, never the headlines or a desk.
+    # archived day: newswire.ca's RSS feeds, then its news sitemap, the list
+    # only for a hole older than the sitemap (day-156b). prepare_deepseek then
+    # puts each pool name's releases FIRST in its staged headlines, so all three
+    # desks see them. ~10s. A failure costs the releases, never the headlines or
+    # a desk.
     if budget="$(slice 60 $((240 + CLAUDE_WINDOW)))"; then
         timeout "$budget" python newswire.py --collect >>"$RB_STATE_DIR/newswire.log" 2>&1
         case $? in
@@ -234,8 +236,9 @@ else
             3) log "  wire releases: collected, some release pages failed (retried next run)" ;;
             5) log "  wire releases: collected from the wire's list — release pages refused;"
                log "    titles, times and the opening sentence's symbols, no body (day-147b)" ;;
-            6) log "  wire releases: the list was refused — collected from newswire.ca's RSS feeds,"
-               log "    and the watcher keeps reading them (day-156; newswire_watch.log)" ;;
+            6) log "  wire releases: read only in part (the sitemap was not read whole);"
+               log "    Part 6 names the unread stretch (day-156b; newswire.log)"
+               stage_faults+=("wire read only in part: the sitemap was not read whole") ;;
             *) log "  wire releases: NOT collected or incomplete — the desks see yesterday's archive"
                stage_faults+=("wire releases not collected") ;;
         esac
