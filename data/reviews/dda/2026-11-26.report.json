@@ -4,8 +4,57 @@
   "generated_at": "2026-11-26T09:46:16.641763-05:00",
   "intraday": {
    "news_desk": {
-    "calls": [],
-    "prompt_version": "day122-v1",
+    "calls": [
+     {
+      "arm": "full",
+      "asked_at": "2026-11-26T09:57:39-05:00",
+      "confidence": 0.55,
+      "first_at": "2026-11-26T09:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1+rerun-rss",
+      "reason": "The release is only a repeat notice of an upcoming earnings conference call, which is routine and contains no new financial information; the share price is unlikely to move, and any minor drift may tend lower as no positive catalyst is prov",
+      "session": "2026-11-26",
+      "side": "SHORT",
+      "ticker": "DOO.TO",
+      "title": "/R E P E A T -- BRP Will Present its Third Quarter Fiscal Year 2027 Results/",
+      "url": "https://www.newswire.ca/news-releases/-r-e-p-e-a-t-brp-will-present-its-third-quarter-fiscal-year-2027-results--882706749.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": "2026-11-26T09:57:39-05:00",
+      "confidence": 0.55,
+      "first_at": "2026-11-26T09:00:00-05:00",
+      "invalid_at": null,
+      "material": false,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1+rerun-rss",
+      "reason": "The release is merely a media advisory for an upcoming quarterly results call, which is routine and lacks new information; absent a positive catalyst, the stock may drift slightly lower.",
+      "session": "2026-11-26",
+      "side": "SHORT",
+      "ticker": "EMP-A.TO",
+      "title": "MEDIA ADVISORY - Empire Company Limited Advisory of Q2 Fiscal 2027 Results Conference Call",
+      "url": "https://www.newswire.ca/news-releases/media-advisory-empire-company-limited-advisory-of-q2-fiscal-2027-results-conference-call-835417348.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": "2026-11-26T09:57:39-05:00",
+      "confidence": 0.65,
+      "first_at": "2026-11-25T17:01:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1+rerun-rss",
+      "reason": "The announcement of an expanded and extended revolving credit facility with improved covenants enhances Methanex's financial strength and flexibility, which is positive for shareholders and likely to provide a modest uplift.",
+      "session": "2026-11-26",
+      "side": "LONG",
+      "ticker": "MX.TO",
+      "title": "Methanex Enhances Financial Strength And Flexibility",
+      "url": "https://www.globenewswire.com/news-release/2026/11/25/3410609/0/en/methanex-enhances-financial-strength-and-flexibility.html"
+     }
+    ],
+    "prompt_version": "day122-v1; rerun at 09:57 ET from newswire.ca RSS, Business Wire, FMP press; the 09:46 report had none (the wire was unreadable)",
     "status": "READY"
    },
    "top_two": {
