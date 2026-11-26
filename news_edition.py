@@ -26,6 +26,8 @@ SEAL_BY = dt.time(9, 43)
 MAX_MORNING_SECONDS = 260
 MIN_BODY = 300
 PRESS_LIMIT = 15
+MORNING_TITLE = 'Part 6 — The News Desk'
+ADDENDUM_TITLE = 'Late News Desk update'
 PUBLISHERS = {'newswire.ca', 'www.newswire.ca', 'globenewswire.com', 'www.globenewswire.com',
               'businesswire.com', 'www.businesswire.com', 'newsfilecorp.com', 'www.newsfilecorp.com'}
 
@@ -399,7 +401,7 @@ def stage(root, *, now=None, clock=local_now, chart=desk.daily_chart, fetch_body
 
 
 def edition_lines(record):
-    label = 'Late News Desk update' if record['edition'] == 'addendum' else 'Part 6 — The News Desk'
+    label = ADDENDUM_TITLE if record['edition'] == 'addendum' else MORNING_TITLE
     out = ['', '## ' + label]
     wire_cov = record['coverage']
     coverage = ('Complete' if wire_cov['read'] and not wire_cov['gaps'] and not wire_cov.get('unreadable_lines')
@@ -431,11 +433,19 @@ def edition_lines(record):
 
 
 def verify_render(record, rendered):
-    """The same receipt and the same featured names must survive each renderer."""
+    """Check the ordered calls inside Part 6 in both plain text and HTML."""
     import html
-    content = html.unescape(rendered)
+    import re
+    content = html.unescape(re.sub(r'<[^>]+>', ' ', rendered))
+    content = ' '.join(content.split())
+    title = ADDENDUM_TITLE if record.get('edition') == 'addendum' else MORNING_TITLE
     receipt = f"News Desk receipt {record['edition_id'][:12]}"
-    if receipt not in content or any(row['ticker'] not in content for row in record['featured']):
+    _, heading, rest = content.partition(title)
+    section, marker, _ = rest.partition(receipt)
+    calls = re.findall(r'\b(LONG|SHORT) ([A-Z0-9.-]+)(?:\*\*)?\s*·\s*'
+                       r'[A-Za-z]{3} \d{2}:\d{2} ET release\s*·\s*reviewed \d{2}:\d{2} ET\b', section)
+    expected = [(row['side'], row['ticker']) for row in record['featured']]
+    if not heading or not marker or content.count(receipt) != 1 or calls != expected:
         raise ValueError('NEWS_DESK_RENDER_MISMATCH')
 
 

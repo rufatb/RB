@@ -42,7 +42,7 @@ THE HTML CHECK — after EVERY email you send (day-130). On 2026-10-07 the repor
   - htmlBody is REQUIRED in every send: the html file's WHOLE contents. Read it IN FULL (about 100 lines; page with offset/limit if needed). Never shorten it, never leave it out.
   - Right after the send: Gmail `get_message` with messageFormat MINIMAL on the id it returned (it gives the snippet and sizeEstimate), then
       python send_check.py --html <the html file> --text <the text file> --size-estimate <its sizeEstimate> --snippet '<the first 40 characters of its snippet>'
-  - OK: carry on. HTML_MISSING: send ONE more message with replyThreadId = that send's threadId, the same subject + " — HTML version", body "The formatted copy: the first one arrived without its HTML.", htmlBody the whole html file. Check it with `python send_check.py --html <the html file> --size-estimate <its sizeEstimate> --snippet '<the first 40 characters of its snippet>' --html-only`, and give both ids in STEP 10.
+  - OK: carry on. On HTML_MISSING for the primary Daily Report, keep the original message ID and surface the failed check in STEP 10. A primary send claim stays in effect. For the separate flash or open-check email, use its existing in-thread HTML repair.
   - The ⛔ NOT PUBLISHED notice has no html file and is exempt.
 
 STEP 1 — sync and tools
@@ -123,7 +123,7 @@ For a REPORT email, then record it: `python gmail_delivery.py --record --message
 For a News Desk edition, save the actual received HTML MIME part and run
 `python news_edition.py verify-delivery --received-html <path> --message-id <id>`.
 Check the edition receipt and featured names before calling delivery verified.
-THE 09:58 RULE: if it is 09:58 ET or later and nothing has been sent, send NOW whatever is ready; if nothing is, send ONE email with subject "RB Daily Report — <today> — ⛔ NOT PUBLISHED" stating what you observed (the job's exit code or last log line, and what delivery_plan said), then carry on and send the picks as a second email when they are ready. The owner must never have an empty inbox at 10:00.
+THE 09:58 RULE: honour an existing primary claim or message. If delivery is still unclaimed, send the prepared primary or fallback once. If nothing is ready, send one status notice with subject "RB Daily Report — <today> — ⛔ NOT PUBLISHED" and the job's exit code or last log line. Publish any recovery on the website. A verified News Desk addendum follows the separately claimed in-thread path in NEWS_DESK_OPERATIONS.md.
 
 STEP 8 — publish the page (REPORT mode only; skip otherwise)
   - Artifact tool, action "read", url https://claude.ai/artifact/28ZfvwVZG1A2yagxJ4Hyt9

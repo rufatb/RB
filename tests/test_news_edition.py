@@ -79,6 +79,8 @@ def test_replay_combines_methanex_and_canadian_utilities_without_rewriting_resea
     edition.verify_render(result, html_from_text(text))
     with pytest.raises(ValueError, match='RENDER_MISMATCH'):
         edition.verify_render(result, text.replace('MX.TO', ''))
+    with pytest.raises(ValueError, match='RENDER_MISMATCH'):
+        edition.verify_render(result, 'Elsewhere in the report: LONG MX.TO\n' + text.replace('LONG MX.TO', 'SHORT MX.TO'))
 
 
 def test_price_outage_never_becomes_a_quiet_morning(tmp_path):
