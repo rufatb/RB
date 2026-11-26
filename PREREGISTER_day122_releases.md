@@ -144,3 +144,17 @@ Day-118 says the open prices a release. I expect the FULL arm to fail W945
 and to do well on C_gap — understanding a release and profiting after the open
 are different things. It is run because only a model reading the text answers
 the owner's question, and the answer goes on the record either way.
+
+## Amendment (2026-11-26, before any session it covers): the wire's sources
+
+From the 2026-11-27 session the archive is read from newswire.ca's RSS feeds
+and its news sitemap, because the site refuses its list pages (from 11-25) and
+release pages (from 11-04) to the collector.
+* A release's symbol comes from its opening when a feed held it, else from
+  the issuer's tagged tickers in the sitemap.
+* On 34 of 34 releases whose opening named a symbol, the first tag was the
+  same symbol.
+* Each call records which (`tickers_from`), and Test 2's decision prints the
+  'opening' calls beside the whole.
+
+The full statement is amendment 2 of `PREREGISTER_day155b_newsdesk_confidence.md`.

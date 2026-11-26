@@ -157,3 +157,46 @@ that will have a highest score".
   about 130 sessions, so H1 may read UNDERPOWERED at the look.
 * **What it changes.** A pass goes to the owner as a proposal: show only
   material calls, or mark the top two. Nothing live changes from it.
+
+## Amendment 2 (2026-11-26, before any session it covers): the wire read from its sitemap and feeds
+
+* **Why.** From about 09:31 ET on 2026-11-25, newswire.ca refuses the
+  collector's list pages (HTTP 403), as it has refused the release pages since
+  11-04. The 11-26 news desk read an empty window. The site's machine channels
+  answer:
+  * its RSS feeds, each the latest 20 releases with their openings;
+  * the news sitemap named in its robots.txt: every release of about the last
+    72 hours, with its minute, title and the issuer's tagged tickers.
+* **From the 2026-11-27 session** (`newswire.collect`, day-156b):
+  * the feeds are read first, and a release they hold takes its symbols from
+    its opening, as a list card's did (`tickers_from` = 'opening');
+  * the sitemap is read next. A release only it holds takes the issuer's
+    tagged Toronto and Venture tickers, in their order ('tag'). A notice of
+    the Canadian Investment Regulatory Organization (a halt or a resumption)
+    takes none, as its opening names none;
+  * the list is read only when the sitemap does not reach back to the last
+    archived day.
+* **Measured before this amendment** (11-26, on the archive's stretch from the
+  list, 11-23 11:00 → 11-25 09:26, 277 releases; no return was looked at):
+  * the sitemap held all 276 archived releases at the same minute, plus one
+    correction notice;
+  * where the opening named a TSX symbol (34 releases), the first tagged TSX
+    symbol was the same on all 34;
+  * the tags name a symbol on 38 releases whose opening named none:
+    * the regulator's halts and resumptions (given none here);
+    * fund families' distribution notices (their first tag is usually a
+      fund, which the desk's equity filter drops);
+    * some corporate notices of large issuers (RBC's poll, Scotiabank's
+      Madrid branch, TD Asset Management's ETF launch).
+* **So the population's rule becomes:** the release's first symbol from its
+  opening when read, else the first of the issuer's tags. It differs from the
+  registered rule only on a release whose opening names no symbol and whose
+  issuer tagged one.
+* **The verdicts read every call, unchanged.** That covers amendment 1's H1
+  and H2 at the 60th new session, and day-122's Test 2 decision.
+  * Each call records `tickers_from`: 'opening' or 'tag'. A row before 11-27
+    is blank, which means 'opening'.
+  * Each verdict prints the same statistic on the 'opening' calls alone beside
+    it, as a description.
+* **Nothing is known of a 'tag' call's return:** none was recorded before
+  11-27.
