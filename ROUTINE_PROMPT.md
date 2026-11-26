@@ -102,6 +102,8 @@ STEP 5 — DECIDE WHAT TO SEND, by command
   REPORT      today's report published; `subject_path`, `text_path`, `html_path` are the email → STEP 7
   PICKS_ONLY  no report, but the desks' picks were sealed before the open → the same three paths → STEP 7
   LATE        nothing was sealed → STEP 6
+RECONCILE means a primary report already has a durable claim. Search Sent for the exact session and edition receipt.
+If found, verify its full HTML and record the provider ID. An ambiguous result requires owner review before retry.
 If it says the delivery was ALREADY_ATTEMPTED and Gmail already has today's report, send nothing and continue to STEP 10.
 
 STEP 6 — LATE PICKS (only when STEP 5 said LATE)
@@ -118,6 +120,9 @@ Gmail `search_threads` with `subject:"RB Daily Report — <today>"`. If an email
   no attachments.
 Then THE HTML CHECK on that send.
 For a REPORT email, then record it: `python gmail_delivery.py --record --message-id <id>` (or `--failed` if the send failed).
+For a News Desk edition, save the actual received HTML MIME part and run
+`python news_edition.py verify-delivery --received-html <path> --message-id <id>`.
+Check the edition receipt and featured names before calling delivery verified.
 THE 09:58 RULE: if it is 09:58 ET or later and nothing has been sent, send NOW whatever is ready; if nothing is, send ONE email with subject "RB Daily Report — <today> — ⛔ NOT PUBLISHED" stating what you observed (the job's exit code or last log line, and what delivery_plan said), then carry on and send the picks as a second email when they are ready. The owner must never have an empty inbox at 10:00.
 
 STEP 8 — publish the page (REPORT mode only; skip otherwise)

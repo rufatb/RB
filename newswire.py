@@ -618,7 +618,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
     known = {r['url'] for r in read(root)}
     rows, failures, feed_errors = [], {}, {}
     answered = items = main_failed = skipped = 0
-    main_from = None
+    main_from = main_newest = None
     for i, feed in enumerate(feeds):
         if pause and i:
             time.sleep(POLITE_PAUSE)
@@ -635,6 +635,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
             times = [at for _, at, _, _ in listing if at is not None]
             if len(times) == len(listing):
                 main_from = min(times) + dt.timedelta(minutes=1)
+                main_newest = max(times)
         for url, at, title, summary in listing:
             if not _RELEASE_URL.fullmatch(url or ''):     # not a release: counted, not a hole
                 skipped += 1
@@ -656,7 +657,9 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
            'oldest_new': min((r['published_at'] for r in rows), default=None),
            'failed': sum(failures.values()), 'failures': failures, 'skipped': skipped}
     if main_from is not None and not main_failed:
-        out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
+        out['newest'] = main_newest.isoformat()
+        if dt.timedelta(0) <= now - main_newest <= MAX_PUBLICATION_LAG:
+            out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
     return out
 
 
@@ -680,6 +683,7 @@ SITEMAP_URL = BASE + '/sitemap-news.xml'
 SITEMAP_SOURCE = 'newswire.ca sitemap'
 SITEMAP_PAGE_ERROR = 'NOT_FETCHED_READ_FROM_SITEMAP'
 SITEMAP_MAX_PAGES = 12
+MAX_PUBLICATION_LAG = dt.timedelta(minutes=45)
 POLITE_PAUSE = 0.25
 _SM_PAGE = re.compile(r'<loc>\s*(https://www\.newswire\.ca/sitemap-news\.xml\?page=\d+)\s*</loc>')
 _SM_URL = re.compile(r'<url>(.*?)</url>', re.S)
@@ -749,13 +753,15 @@ def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.
     out = {'pages': 0, 'answered': 0, 'page_errors': {}, 'entries': 0, 'archived': 0,
            'with_tsx_symbol': 0, 'oldest': None, 'failed': 0, 'failures': {}, 'whole': False}
     try:
-        pages = _SM_PAGE.findall(raw(SITEMAP_URL))[:SITEMAP_MAX_PAGES]
+        advertised = list(dict.fromkeys(_SM_PAGE.findall(raw(SITEMAP_URL))))
+        pages = advertised[:SITEMAP_MAX_PAGES]
         if not pages:
             raise ValueError('NO_SITEMAP_PAGES')
     except Exception as exc:                  # named, never silent (house rule 1)
         out['page_errors'][SITEMAP_URL] = _code(exc)
         return out
     out['pages'] = len(pages)
+    out['pages_advertised'] = len(advertised)
     known = {r['url'] for r in read(root)}
     rows, times = [], []
     for page in pages:
@@ -774,8 +780,12 @@ def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.
             if not _RELEASE_URL.fullmatch(url or ''):     # not a release: counted, not a hole
                 out['skipped'] = out.get('skipped', 0) + 1
                 continue
-            if at is not None:
+            if at is not None and at <= now:
                 times.append(at)
+            else:
+                key = 'NO_SITEMAP_TIME' if at is None else 'FUTURE_SITEMAP_TIME'
+                out['failures'][key] = out['failures'].get(key, 0) + 1
+                continue
             if url in known:
                 continue
             try:
@@ -790,7 +800,10 @@ def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.
     out['failed'] = sum(out['failures'].values())
     if times:
         out['oldest'] = min(times).isoformat()
-    out['whole'] = bool(times) and not out['page_errors'] and not out['failed']
+        out['newest'] = max(times).isoformat()
+    out['whole'] = bool(times and len(pages) == len(advertised)
+                        and not out['page_errors'] and not out['failed']
+                        and now - max(times) <= MAX_PUBLICATION_LAG)
     if out['whole']:
         out['read_logged'] = log_read('sitemap', min(times) + dt.timedelta(minutes=1), now,
                                       state_dir=state_dir)
@@ -821,7 +834,7 @@ def log_read(kind, covers_from, at, *, state_dir=None):
         return False
 
 
-def coverage(start, end, *, state_dir=None):
+def coverage(start, end, *, state_dir=None, minimum_gap=dt.timedelta(minutes=1), kinds=None):
     """Which part of [start, end) no logged read showed whole. `read` is False
     when no read touched the window at all; `gaps` are the stretches of a
     minute or more that none covered, and `uncovered_minutes` their total."""
@@ -833,7 +846,13 @@ def coverage(start, end, *, state_dir=None):
     for line in lines:
         try:
             r = json.loads(line)
+            if not isinstance(r, dict):
+                raise ValueError('invalid coverage receipt')
+            if kinds is not None and r.get('kind') not in kinds:
+                continue
             a, b = dt.datetime.fromisoformat(r['from']), dt.datetime.fromisoformat(r['to'])
+            if a.tzinfo is None or b.tzinfo is None or b <= a:
+                raise ValueError('invalid coverage interval')
         except (ValueError, KeyError, TypeError):
             bad += 1
             continue
@@ -846,7 +865,7 @@ def coverage(start, end, *, state_dir=None):
         cur = max(cur, b)
     if cur < end:
         gaps.append((cur, end))
-    gaps = [(a, b) for a, b in gaps if b - a >= dt.timedelta(minutes=1)]
+    gaps = [(a, b) for a, b in gaps if b - a >= minimum_gap]
     return {'read': bool(spans),
             'gaps': [[a.isoformat(), b.isoformat()] for a, b in gaps],
             'uncovered_minutes': int(sum((b - a).total_seconds() for a, b in gaps) // 60),

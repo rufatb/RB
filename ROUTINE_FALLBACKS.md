@@ -30,6 +30,10 @@ Never create, modify, enable, disable or delete any Routine. Never call a pick a
 
 ## Bridge prompt
 
+When the delivery plan returns `RECONCILE`, the primary report has a durable
+send claim. Verify the existing message in Sent and its News Desk receipt
+before recording the provider ID. Escalate ambiguous delivery to the operator.
+
 RB MORNING BRIDGE (09:50 ET). The inbox must have today's email before 10:00. Work without asking.
 RESCUE STAND-DOWN: Before starting, and before every email or record push, search Gmail for `subject:"RB Morning Rescue — <today>"`, where today is the America/New_York date; if a returned subject begins exactly `RB Morning Rescue — <today> —`, stop this Routine without starting, sending or pushing. A subject beginning `RB Morning Rescue TEST` is only a test and never a takeover.
 A. Today = the current America/New_York date. `cd /home/user/RB`. Not a trading day (same check as the watchdog) → stop silently.

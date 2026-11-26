@@ -95,6 +95,11 @@ PUBLISH_AT=0944       # morning.sh's own guard allows a wait from here
 # count and report, not swallow — and never that a shadow input may veto the
 # morning). Each is bounded so a hung provider cannot eat the window.
 stage_faults=()
+if [ "$(minutes_now)" -lt 0910 ]; then
+    timeout 35 python news_edition.py preflight --state-dir "$RB_STATE_DIR" \
+        >>"$RB_STATE_DIR/news_desk.log" 2>&1 ||
+        stage_faults+=("news desk provider preflight needs attention")
+fi
 
 # THE CREDENTIAL DOES NOT SURVIVE A CONTAINER. `.rb-state/` is gitignored
 # (.gitignore:32), so a fresh clone has no key and no model file, and both
@@ -491,6 +496,7 @@ else
 fi
 
 # ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
+export RB_NEWS_EDITION_REQUIRED=1
 # A model reads every liquid TSX name's overnight release. The window runs to
 # 09:30, so this waits for it to close, then has until 09:43 — it can never
 # delay publication. A failure costs Part 6 only.
@@ -500,21 +506,34 @@ while [ "$(minutes_now)" -lt 0931 ]; do
 done
 news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
 if [ "$news_left" -gt 30 ]; then
-    timeout "$(( news_left < 300 ? news_left : 300 ))" python news_desk.py --stage \
+    timeout 75 python news_edition.py final-capture --state-dir "$RB_STATE_DIR" \
+        >>"$RB_STATE_DIR/newswire.log" 2>&1 || log "  news desk: final wire read needs coverage review"
+    news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
+    if [ "$news_left" -le 15 ]; then
+        news_left=15
+    fi
+    timeout "$(( news_left < 280 ? news_left : 280 ))" python news_edition.py stage \
         --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1
     case $? in
-        0) log "  news desk: staged and recorded" ;;
-        # DAY-156: 11-26 staged an empty window as a quiet morning. Exit 7 is an
-        # archive with NO release in the window: the wire was not read.
-        7) log "  news desk: BLIND — no release from the overnight window reached the archive;"
-           log "    the wire was not read (newswire.log, newswire_watch.log). Part 6 says so."
-           stage_faults+=("news desk blind: the wire was not read overnight") ;;
+        0) log "  news desk: verified edition sealed" ;;
+        6) log "  news desk: coverage or evidence incomplete (news_desk.log)"
+           stage_faults+=("news desk edition has incomplete checks") ;;
         *) log "  news desk: NOT staged — Part 6 reads unavailable (news_desk.log)"
            stage_faults+=("news desk not staged") ;;
     esac
 else
     log "  news desk: SKIPPED — too close to publication"
     stage_faults+=("news desk skipped: too close to publication")
+fi
+python news_edition.py seal-unavailable --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1 ||
+    log "  news desk: unreadable edition state"
+
+# Preserve the registered CNW-only study separately from the displayed edition.
+news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
+if [ "$news_left" -gt 45 ] && [ "${RB_NEWS_RESEARCH_ARM_ENABLED:-1}" = 1 ]; then
+    timeout "$(( news_left < 180 ? news_left : 180 ))" python news_desk.py --stage \
+        --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk_research.log" 2>&1 ||
+        log "  news desk research arm incomplete (news_desk_research.log)"
 fi
 
 # ── 2. HOLD until the publication window opens ─────────────────────────────

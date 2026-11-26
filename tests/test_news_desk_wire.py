@@ -89,7 +89,8 @@ def test_a_quiet_window_that_was_read_is_still_quiet(tmp_path):
     assert 'No liquid TSX name had an overnight release today.' in text and '⚠' not in text
 
 
-def test_a_window_read_only_in_part_says_which_part(tmp_path):
+def test_a_window_read_only_in_part_says_which_part(tmp_path, monkeypatch):
+    monkeypatch.setattr(N, 'body', lambda *a, **k: 'Issuer release body.')
     root = wire(tmp_path, [row('2026-11-26T08:10:00-05:00', ['AAA.TO'], 'AAA agrees to a deal')])
     newswire.log_read('rss', dt.datetime(2026, 11, 26, 8, 2, tzinfo=ET),
                       dt.datetime(2026, 11, 26, 9, 31, tzinfo=ET), state_dir=tmp_path)
@@ -104,7 +105,8 @@ def test_a_window_read_only_in_part_says_which_part(tmp_path):
     assert 'LONG AAA.TO' in text
 
 
-def test_a_window_with_no_read_logged_says_its_coverage_is_unknown(tmp_path):
+def test_a_window_with_no_read_logged_says_its_coverage_is_unknown(tmp_path, monkeypatch):
+    monkeypatch.setattr(N, 'body', lambda *a, **k: 'Issuer release body.')
     root = wire(tmp_path, [row('2026-11-26T08:10:00-05:00', ['AAA.TO'])])
     stage(tmp_path, root)
     sec = N.section(tmp_path, NOW, path=tmp_path / 'news_calls.csv')

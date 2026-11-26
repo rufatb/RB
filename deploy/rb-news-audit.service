@@ -1,0 +1,12 @@
+[Unit]
+Description=RB News Desk primary edition and delivery receipt check
+
+[Service]
+Type=oneshot
+User=rb-report
+Group=rb-report
+UMask=0077
+WorkingDirectory=/opt/RB
+EnvironmentFile=/etc/rb-report.env
+ExecStart=/opt/RB/.venv/bin/python /opt/RB/news_edition.py audit
+TimeoutStartSec=20

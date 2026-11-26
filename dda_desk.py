@@ -357,7 +357,8 @@ def publish(path, *, runner=subprocess.run, budget=8):
 def _publish(path, *, runner, budget):
     """Only a new dated record, never code, a force-push or a shared-index sweep."""
     relative = Path(path).resolve().relative_to(ROOT.resolve()).as_posix()
-    if not re.fullmatch(r'data/reviews/dda/\d{4}-\d{2}-\d{2}\.(decision|opening|open-check|report)\.json', relative) or not Path(path).is_file():
+    record_pattern = r'data/reviews/dda/\d{4}-\d{2}-\d{2}\.(decision|opening|open-check|report|news-addendum)\.json'
+    if not re.fullmatch(record_pattern, relative) or not Path(path).is_file():
         raise ValueError('DDA_PUBLICATION_PATH_REJECTED')
     until = time.monotonic() + budget
     def git(*args):
@@ -368,7 +369,7 @@ def _publish(path, *, runner, budget):
     try:
         # Never push unreviewed code or unrelated local commits.
         ahead = git('diff', '--name-only', 'origin/main...HEAD')
-        if ahead.returncode or any(not re.fullmatch(r'data/reviews/dda/\d{4}-\d{2}-\d{2}\.(decision|opening|open-check|report)\.json', p)
+        if ahead.returncode or any(not re.fullmatch(record_pattern, p)
                                    for p in ahead.stdout.splitlines() if p.strip()):
             return {'status': 'NOT_PUBLISHED', 'reason': 'NON_DDA_COMMITS_AHEAD'}
         # --only commits exactly this new presentation record while preserving
@@ -386,8 +387,30 @@ def _publish(path, *, runner, budget):
         return {'status': 'NOT_PUBLISHED', 'reason': 'GIT_BUDGET_EXHAUSTED'}
 
 
+
+def public_news(news, session):
+    operational = bool(news.get('edition_version'))
+    rows = news.get('featured') if operational else news.get('calls')
+    fields = ('session', 'ticker', 'side', 'arm', 'material', 'confidence', 'invalid_at', 'reason',
+              'title', 'url', 'first_at', 'asked_at', 'answered_at', 'model', 'prompt_version',
+              'evidence_quote', 'invalidation')
+    projection = {
+        'status': news.get('status') if isinstance(rows, list) else 'UNAVAILABLE',
+        'prompt_version': words(news.get('prompt_version'), 160),
+        'calls': [{k: row.get(k) for k in fields} for row in rows[:2 if operational else 1000]
+                  if isinstance(row, dict) and row.get('session') == session and row.get('arm') == 'full']
+        if isinstance(rows, list) else [],
+    }
+    if operational:
+        projection.update({field: news.get(field) for field in (
+            'edition_id', 'edition_version', 'edition', 'parent_edition_id', 'sealed_at',
+            'window_start', 'window_end', 'candidates', 'answered', 'reason',
+        )})
+    return projection
+
+
 def bridge(root, stage_name, now=None):
-    """Automatically capture the existing runtime stages for the platform."""
+    """Capture existing runtime stages for the platform."""
     now = stamp(now or dt.datetime.now(ET))
     if stage_name == 'opening' and now.time().replace(tzinfo=None) >= dt.time(9, 30):
         raise ValueError('DDA_OPENING_EXPORT_TOO_LATE')
@@ -410,6 +433,15 @@ def bridge(root, stage_name, now=None):
         fields = ('ticker', 'side', 'verdict', 'price', 'at', 'atr_pct', 'reach', 'open_days', 'decision', 'decision_why')
         data['open_check'] = {'session': plan['session'], 'prepared_at': at.isoformat(),
                               'rows': [{k: row.get(k) for k in fields} for row in plan.get('rows', [])[:20]]}
+    elif stage_name == 'news-addendum':
+        from news_edition import edition_path
+        original = read(edition_path(root, data['session'])) or {}
+        late = read(edition_path(root, data['session'], late=True)) or {}
+        sealed = stamp(late.get('sealed_at'))
+        if (not sealed or sealed > now or late.get('session') != data['session']
+                or late.get('status') != 'LATE' or late.get('parent_edition_id') != original.get('edition_id')):
+            raise ValueError('DDA_NEWS_ADDENDUM_NOT_AVAILABLE')
+        data['news_addendum'] = public_news(late, data['session'])
     elif stage_name == 'report':
         report = read(Path(root)/'latest'/'report.json') or {}
         if report.get('session') != data['session'] or now.time().replace(tzinfo=None) < dt.time(9, 46):
@@ -423,15 +455,9 @@ def bridge(root, stage_name, now=None):
         # public inputs now, rather than waiting for the later CSV record push.
         news = (report.get('intraday') or {}).get('news_desk')
         if isinstance(news, dict):
-            news_rows = news.get('calls')
-            fields = ('session', 'ticker', 'side', 'arm', 'material', 'confidence', 'invalid_at',
-                      'reason', 'title', 'url', 'first_at', 'asked_at', 'model', 'prompt_version')
-            data['report']['intraday']['news_desk'] = {
-                'status': news.get('status') if isinstance(news_rows, list) else 'UNAVAILABLE',
-                'prompt_version': words(news.get('prompt_version'), 160),
-                'calls': [{k: row.get(k) for k in fields} for row in (news_rows if isinstance(news_rows, list) else [])[:1000]
-                          if isinstance(row, dict) and row.get('session') == data['session'] and row.get('arm') == 'full']}
-    expected = {'opening': 'opening', 'open-check': 'open_check', 'report': 'report'}[stage_name]
+            data['report']['intraday']['news_desk'] = public_news(news, data['session'])
+    expected = {'opening': 'opening', 'open-check': 'open_check', 'report': 'report',
+                'news-addendum': 'news_addendum'}[stage_name]
     if not data.get(expected):
         raise ValueError('DDA_STAGE_NOT_AVAILABLE')
     path = ROOT/'data'/'reviews'/'dda'/(data['session']+'.'+stage_name+'.json')
@@ -443,7 +469,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--state-dir', type=Path, default=Path(os.getenv('RB_STATE_DIR', '.rb-state')))
     parser.add_argument('--stage', action='store_true')
-    parser.add_argument('--export', choices=('opening', 'open-check', 'report'))
+    parser.add_argument('--export', choices=('opening', 'open-check', 'report', 'news-addendum'))
     parser.add_argument('--publish', action='store_true')
     parser.add_argument('--budget', type=int, default=DEFAULT_BUDGET)
     parser.add_argument('--provider-worker', type=int, choices=(0, 1), help=argparse.SUPPRESS)

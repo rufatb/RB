@@ -39,8 +39,14 @@ def message(report, sender, recipient):
     msg['Subject']=subject(report)
     msg['Message-ID']=f"<rb-daily-{report['session']}@rb-report.local>"
     msg['Date']=format_datetime(dt.datetime.fromisoformat(report['generated_at']))
-    msg.set_content(email_render.text(report))
-    msg.add_alternative(email_render.html(report),subtype='html')
+    text, html = email_render.text(report), email_render.html(report)
+    news = ((report.get('intraday') or {}).get('news_desk') or {})
+    if news.get('edition_version'):
+        from news_edition import verify_render
+        verify_render(news, text)
+        verify_render(news, html)
+    msg.set_content(text)
+    msg.add_alternative(html,subtype='html')
     msg.add_attachment(brief.render_html(report),subtype='html',
                        filename=f"RB-Full-Report-{report['session']}.html")
     return msg

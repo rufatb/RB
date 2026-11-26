@@ -128,6 +128,9 @@ def subject(report):
     elif not prefix:   # Part 2 retired by the owner on 2026-10-19
         import biotech
         pieces.append('Intraday' if biotech.retired(report.get('biotech')) else 'Intraday + Biotech')
+    news = ((report.get('intraday') or {}).get('news_desk') or {})
+    if news.get('edition_version') and news.get('status') in {'PARTIAL', 'UNAVAILABLE'}:
+        pieces.append(f"NEWS DESK {news['status']}")
     return ' — '.join(pieces)
 
 
@@ -143,6 +146,11 @@ def artifacts(report, directory, now=None):
     payload = dict(subject=title, text=email_render.text(out), html=email_render.html(out),
                    attachments=[dict(filename=f"RB-Full-Report-{out['session']}.html",mime_type='text/html',content=full_html)],
                    session=out['session'], checked_at=out['delivery']['checked_at'])
+    news = ((out.get('intraday') or {}).get('news_desk') or {})
+    if news.get('edition_version'):
+        from news_edition import verify_render
+        verify_render(news, payload['text'])
+        verify_render(news, payload['html'])
     (directory/'report.json').write_text(json.dumps(out, indent=2, allow_nan=False))
     (directory/'report.txt').write_text(payload['text'])
     (directory/'report.html').write_text(payload['html'])

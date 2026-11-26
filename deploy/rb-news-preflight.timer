@@ -1,0 +1,9 @@
+[Unit]
+Description=RB News Desk provider readiness before morning research
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 08:40:00 America/New_York
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

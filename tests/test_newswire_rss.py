@@ -234,7 +234,7 @@ def test_the_watcher_reads_the_main_feed_often_and_the_rest_hourly_then_stops(tm
     energy_reads = sum(1 for u in asked if 'energy-latest-news' in u)
     assert main_reads == 11 and energy_reads == 2       # 16:20 to 18:05, every 10 min; hourly
     assert len(N.read(tmp_path / 'wire')) == 3
-    assert len((state / N.READS).read_text().splitlines()) == 11
+    assert not (state / N.READS).exists()  # The static 07:30 feed cannot certify the evening.
     # Another process named in the control file: this one stops at once.
     (state / N.WATCH_FILE).write_text(json.dumps({'pid': 8, 'until': '2026-11-27T18:05:00-05:00'}))
     assert N.watch(state_dir=state, root=tmp_path / 'wire', fetch=fetch, clock=lambda: clock[0],

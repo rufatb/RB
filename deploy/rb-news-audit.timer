@@ -1,0 +1,9 @@
+[Unit]
+Description=RB News Desk publication and delivery deadline check
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 09:48:00 America/New_York
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

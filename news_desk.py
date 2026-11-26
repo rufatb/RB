@@ -247,7 +247,7 @@ def items(evs, arm, texts):
 
 # ── the model ───────────────────────────────────────────────────────────────
 
-def ask(batch, *, client=None, model=None, timeout=REQUEST_TIMEOUT):
+def ask(batch, *, client=None, model=None, timeout=REQUEST_TIMEOUT, system_prompt=SYSTEM_PROMPT):
     model = model or MODEL
     if client is None:
         key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
@@ -258,7 +258,7 @@ def ask(batch, *, client=None, model=None, timeout=REQUEST_TIMEOUT):
                         timeout=timeout)
     response = client.chat.completions.create(
         model=model,
-        messages=[{'role': 'system', 'content': SYSTEM_PROMPT},
+        messages=[{'role': 'system', 'content': system_prompt},
                   {'role': 'user', 'content': json.dumps({'items': batch}, ensure_ascii=False)}],
         response_format={'type': 'json_object'}, max_tokens=8000, timeout=timeout,
         extra_body={'thinking': {'type': 'disabled'}})
@@ -560,6 +560,18 @@ def replay_line():
 
 
 def section(state_dir, now, path=LEDGER):
+    from dda_desk import read
+    from news_edition import edition_path, stamp, unavailable
+    try:
+        edition = read(edition_path(state_dir, now.date()))
+    except (OSError, ValueError):
+        edition = None
+    if edition:
+        sealed = stamp(edition.get('sealed_at'))
+        if edition.get('session') == now.date().isoformat() and sealed and sealed <= now:
+            return edition
+    if os.environ.get('RB_NEWS_EDITION_REQUIRED') == '1':
+        return unavailable(now, 'The morning worker did not seal a News Desk edition by the report deadline')
     try:
         staged = json.loads(Path(state_dir, STAGED).read_text())
     except (OSError, ValueError):
@@ -575,6 +587,13 @@ def section(state_dir, now, path=LEDGER):
         status = 'BLIND'
         reason = ('no release from the overnight window reached the archive: the wire could not '
                   'be read, so there were releases the desk never saw')
+    elif fresh and (fresh.get('bodies_failed') or fresh.get('problems', {}).get('full')
+                    or any(key.startswith('bars failed:') for key in fresh.get('excluded', {}))):
+        status = 'PARTIAL' if fresh.get('calls') else 'UNAVAILABLE'
+        reason = 'Some price, release-text, or model checks did not complete'
+    elif fresh and not fresh.get('calls') and fresh.get('wire') and wire_lines(fresh):
+        status = 'UNAVAILABLE'
+        reason = 'Overnight source coverage could not be verified'
     return {'status': status,
             'reason': reason, 'replay': replay_line(), 'record': record_line(path),
             'wire': (fresh or {}).get('wire'),
@@ -697,6 +716,9 @@ def lines(sec, concise=False):
     """`concise` is the email: no backtest, record or caveat lines."""
     if not sec:
         return []
+    if sec.get('edition_version'):
+        from news_edition import edition_lines
+        return edition_lines(sec)
     clear = concise and sec.get('layout') == LAYOUT
     out = ['', '## Part 6 — The news desk (a separate test: a model reads every overnight release)',
            'DeepSeek reads the full text of each liquid TSX name\'s overnight release and must '
@@ -712,9 +734,11 @@ def lines(sec, concise=False):
         out.append(f"⚠ The news desk could not read the wire today: {sec.get('reason')}. "
                    "This is not a quiet morning.")
         return out
-    if sec.get('status') != 'READY':
+    if sec.get('status') not in {'READY', 'PARTIAL'}:
         out.append(f"Unavailable today — {sec.get('reason')}.")
         return out
+    if sec.get('status') == 'PARTIAL':
+        out.append(f"⚠ Partial coverage — {sec.get('reason')}.")
     out += wire_lines(sec)
     calls = sorted(sec.get('calls') or [], key=order_key)
     if not calls:

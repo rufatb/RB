@@ -37,6 +37,7 @@ import json
 import os
 from html import escape
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from zoneinfo import ZoneInfo
 
 import prepare_delivery
@@ -113,9 +114,20 @@ def prepare(state_dir, session, output_dir, *, now=None):
     # Renders through `view()`, which REFUSES before 09:46 ET on the session's
     # own date and labels a late dispatch informational. The connector path
     # must not be the one that quietly skips that guard.
-    payload = prepare_delivery.artifacts(report, output_dir, now)
-    if not store.claim_delivery(session, message_key(session)):
-        return {'status': 'ALREADY_ATTEMPTED', 'delivery': store.delivery(session)}
+    target = Path(output_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix='.dispatch-', dir=target.parent) as scratch:
+        temporary = Path(scratch)
+        payload = prepare_delivery.artifacts(report, temporary, now)
+        if not store.claim_delivery(session, message_key(session)):
+            return {'status': 'ALREADY_ATTEMPTED', 'delivery': store.delivery(session)}
+        try:
+            target.mkdir(parents=True, exist_ok=True)
+            for path in temporary.iterdir():
+                path.replace(target / path.name)
+        except OSError:
+            store.finish_delivery(session, 'failed_before_send', 'dispatch files could not be published')
+            raise
     # THE PAYLOAD HAS TO OUTLIVE THIS CONTAINER. The morning runs in a fresh
     # scheduled session that CANNOT reach the Gmail connector — a Routine
     # created through the MCP tool stores no connectors, and the server says so

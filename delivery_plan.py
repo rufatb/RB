@@ -46,6 +46,9 @@ def plan(state_dir, *, now=None, reason=None, record=True):
         if out['status'] == 'CLAIMED':
             return {'mode': 'REPORT', **{k: out[k] for k in ('subject_path', 'text_path', 'html_path')},
                     'claimed': True}
+        if (Store(root).get(session).get('intraday', {}).get('news_desk') or {}).get('edition_version'):
+            return {'mode': 'RECONCILE', 'delivery': out.get('delivery'),
+                    'note': 'Check Sent mail for the existing primary report before any operator-authorized retry.'}
         # Already claimed by an earlier attempt: the files are on disk. The
         # agent's inbox check decides whether that attempt actually arrived.
         paths = {k: str(root/'dispatch'/f) for k, f in (('subject_path', 'subject.txt'),

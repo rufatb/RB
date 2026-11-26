@@ -291,7 +291,7 @@ def text(d):
     # The factor layer's sentiment table left the email on 2026-10-03 (owner: no
     # needless text); it is shadow research and stays in the full report.
     lines += _biotech_lines(d)
-    if intra.get('gap_signal') or intra.get('pead') or intra.get('debate'):   # absent before 2026-09-29
+    if any(intra.get(key) for key in ('gap_signal', 'pead', 'debate', 'news_desk')):
         import debate
         import gap_signal
         import news_desk
