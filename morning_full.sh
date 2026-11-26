@@ -234,6 +234,8 @@ else
             3) log "  wire releases: collected, some release pages failed (retried next run)" ;;
             5) log "  wire releases: collected from the wire's list — release pages refused;"
                log "    titles, times and the opening sentence's symbols, no body (day-147b)" ;;
+            6) log "  wire releases: the list was refused — collected from newswire.ca's RSS feeds,"
+               log "    and the watcher keeps reading them (day-156; newswire_watch.log)" ;;
             *) log "  wire releases: NOT collected or incomplete — the desks see yesterday's archive"
                stage_faults+=("wire releases not collected") ;;
         esac

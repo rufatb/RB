@@ -12,11 +12,30 @@ lead paragraph: "Apotex Health Corp. (TSX: APTX) ...".
     python newswire.py --collect                 # since the last archived release
     python newswire.py --collect --since 2026-07-03
 
-The newswire.ca RSS feed is NOT used: it is PR Newswire's global channel, 20
-items (about two minutes of a busy morning), and carried no TSX symbol in the
-releases sampled on 2026-09-28. The paginated list at LIST_URL is the Canadian
-wire, 100 per page, and reaches back months, which is what makes a replay
-possible at all.
+The paginated list at LIST_URL is the Canadian wire, 100 per page, and reaches
+back months, which is what makes a replay possible at all. It is read first,
+every run.
+
+The RSS feeds, when the list is refused (day-156). From about 09:31 ET on
+2026-11-25 newswire.ca refuses its list pages to this collector too (HTTP 403;
+the release pages since 11-04), and the 11-26 news desk read nothing. Its RSS
+feeds still answer: the main feed (RSS_MAIN) and twelve category feeds, each
+holding only its latest 20 releases. They are the list's releases: on 11-26
+every RSS item older than the archive's newest row (73 of 73, across 13 feeds)
+was already archived from the list, under the same URL. (On 2026-09-28 the
+main feed was read as "PR Newswire's global channel, no TSX symbol"; it is the
+Canadian wire's list, and its symbols are in the description.) A run whose
+list is refused reads them (`collect_rss`) and archives each new item as
+`source: 'newswire.ca rss'`: the item's minute, title, and the symbols of its
+description's opening, the dateline dropped, as a list card's were. Twenty
+items are about 90 minutes of a busy morning, so `--watch` reads the main feed
+every WATCH_EVERY seconds and the categories every WATCH_CATEGORIES_EVERY. On
+35 past nights (3,860 releases in the news desk's windows) a 10-minute watcher
+would have missed 1; the four scheduled reads alone (16:20, 08:12, 08:52,
+09:31) 57%. Every read that shows a stretch of the wire whole is logged
+(`log_read`), so the news desk can say which part of its window was not read
+(`coverage`). Nothing is bypassed: the RSS feeds are the site's own machine
+channel.
 
 The archive is `data/newswire/YYYY-MM-DD.jsonl` (ET date of dissemination), one
 release per line, committed: a missed day can be back-filled from the list,
@@ -56,9 +75,12 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import email.utils
 import html as htmllib
 import json
+import os
 import re
+import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -365,7 +387,7 @@ def _code(exc):
 
 
 def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
-            workers=WORKERS, pause=0.5, break_after=BREAK_AFTER):
+            workers=WORKERS, pause=0.5, break_after=BREAK_AFTER, now=None, state_dir=None):
     """Walk the list back to `since` (a date), fetch every release page not yet
     archived, append. Each list page is archived before the next is read, so a
     failure keeps what came before it. A list page is tried three times, and one
@@ -376,16 +398,22 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
     code); after `break_after` HTTP 403 refusals the run stops asking for pages
     and takes the rest from their cards. A card that cannot make a row either
     is not archived, is COUNTED in `failures`, and the next run retries it.
-    Nothing is swallowed (house rule 1)."""
+    Nothing is swallowed (house rule 1).
+
+    Day-156: when the list's FIRST page cannot be read, the RSS feeds are read
+    instead (`collect_rss`, its counts under `rss`). A walk that archived every
+    card it read logs the stretch it showed whole (`log_read`)."""
     import threading
     import requests
     session = requests.Session()
     raw = fetch or (lambda u: _get(u, session))
     list_fetch = _retrying(raw, pause=2.0 if pause else 0)
-    today = today or dt.datetime.now(ET).date()
+    now = now or dt.datetime.now(ET)
+    today = today or now.date()
     known = {r['url'] for r in read(root)}
     pages = seen = written = with_symbol = from_list = 0
     reached, list_error, failures, page_failures = False, None, {}, {}
+    oldest = None                      # the oldest card the walk read (its coverage)
     refused, lock = [0], threading.Lock()
 
     def one(card):
@@ -417,6 +445,9 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
                 break
             cards = []
             for url, listed, title, summary in listing:
+                at = listed_at(listed, today)
+                if at is not None and (oldest is None or at < oldest):
+                    oldest = at
                 if listed_date(listed, today) < since:
                     reached = True
                     break
@@ -438,11 +469,307 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
             if reached:
                 break
             time.sleep(pause)
-    return {'since': since.isoformat(), 'list_pages': pages, 'reached_since': reached,
-            'list_error': list_error, 'new_releases': seen, 'archived': written,
-            'with_tsx_symbol': with_symbol, 'from_list': from_list,
-            'page_failures': page_failures,
-            'failed': sum(failures.values()), 'failures': failures}
+    out = {'since': since.isoformat(), 'list_pages': pages, 'reached_since': reached,
+           'list_error': list_error, 'new_releases': seen, 'archived': written,
+           'with_tsx_symbol': with_symbol, 'from_list': from_list,
+           'page_failures': page_failures,
+           'failed': sum(failures.values()), 'failures': failures}
+    if pages and not failures and oldest is not None:
+        out['read_logged'] = log_read('list', oldest, now, state_dir=state_dir)
+    if not pages and list_error:       # the list itself refused: its RSS feeds (day-156)
+        rss = collect_rss(root=root, fetch=fetch, now=now, state_dir=state_dir)
+        out['rss'] = rss
+        out['archived'] += rss['archived']
+        out['with_tsx_symbol'] += rss['with_tsx_symbol']
+    return out
+
+
+# ── the RSS feeds, when the list is refused (day-156; see the docstring) ─────
+
+RSS_MAIN = '/rss/news-releases-list.rss'
+RSS_CATEGORIES = tuple(f'/rss/{c}-latest-news/{c}-latest-news-list.rss' for c in (
+    'financial-services', 'energy', 'heavy-industry-manufacturing', 'health',
+    'consumer-products-retail', 'consumer-technology', 'telecommunications',
+    'automotive-transportation', 'entertainment-media', 'environment',
+    'policy-public-interest', 'travel'))       # the twelve that answered on 2026-11-26
+RSS_FEEDS = (RSS_MAIN,) + RSS_CATEGORIES
+RSS_SOURCE = 'newswire.ca rss'
+RSS_PAGE_ERROR = 'NOT_FETCHED_READ_FROM_RSS'
+_RELEASE_URL = re.compile(r'https://www\.newswire\.ca/news-releases/[^\s"<>?#]+-\d+\.html')
+_ITEM = re.compile(r'<item\b[^>]*>(.*?)</item>', re.S)
+_CDATA = re.compile(r'\s*<!\[CDATA\[(.*?)\]\]>\s*', re.S)
+_DATELINE = re.compile(r'^[^/]{0,160}/\s*(?:CNW|PRNewswire)\s*/\s*(?:--|[-–—])\s*')
+
+
+def _rss_tag(item, name):
+    """An element's content: a CDATA section as written, anything else
+    unescaped once (an RSS title carries "&amp;" for "&")."""
+    m = re.search(r'<%s(?:\s[^>]*)?>(.*?)</%s>' % (name, name), item, re.S)
+    if not m:
+        return ''
+    c = _CDATA.fullmatch(m.group(1))
+    return c.group(1) if c else htmllib.unescape(m.group(1))
+
+
+def parse_rss(page):
+    """[(url, at, title, summary)] from one RSS feed, in its order (newest
+    first). `at` is the item's pubDate in ET, None when it cannot be read or
+    carries no offset. `summary` is the description as text with its dateline
+    ("TORONTO, Nov. 25, 2026 /CNW/ -- ") dropped: the release's opening."""
+    out = []
+    for item in _ITEM.findall(page):
+        try:
+            at = email.utils.parsedate_to_datetime(_rss_tag(item, 'pubDate').strip())
+            at = at.astimezone(ET) if at.tzinfo else None
+        except (TypeError, ValueError, IndexError):
+            at = None
+        summary = _DATELINE.sub('', _text(_rss_tag(item, 'description')), count=1)
+        out.append((_rss_tag(item, 'link').strip(), at, _text(_rss_tag(item, 'title')), summary))
+    return out
+
+
+def rss_row(url, at, title, summary):
+    """One archive row from an RSS item, or ValueError naming what it lacked.
+    The symbols are the opening's, as a list card's were (`list_row`)."""
+    if not _RELEASE_URL.fullmatch(url or ''):
+        raise ValueError('NOT_A_RELEASE_URL')
+    if at is None:
+        raise ValueError('NO_RSS_TIME')
+    if not title:
+        raise ValueError('NO_RELEASE_TITLE')
+    return {'url': url, 'title': title[:400], 'published_at': at.isoformat(),
+            'tickers': symbols(summary), 'source': RSS_SOURCE,
+            'summary': summary[:400], 'page_error': RSS_PAGE_ERROR}
+
+
+def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=None):
+    """Read the RSS feeds and archive every release not yet archived. A feed
+    that fails is named in `feed_errors`, an item that cannot make a row is
+    counted in `failures`; nothing is swallowed. The main feed lists the wire's
+    latest releases whole, so a read of it logs the stretch from just after
+    its oldest item's minute (a burst can be cut inside that minute) to now."""
+    import requests
+    session = requests.Session()
+    raw = fetch or (lambda u: _get(u, session))
+    now = now or dt.datetime.now(ET)
+    known = {r['url'] for r in read(root)}
+    rows, failures, feed_errors = [], {}, {}
+    answered = items = 0
+    main_from = None
+    for feed in feeds:
+        try:
+            listing = parse_rss(raw(BASE + feed))
+            if not listing:
+                raise ValueError('EMPTY_FEED')
+        except Exception as exc:             # named, never silent (house rule 1)
+            feed_errors[feed] = _code(exc)
+            continue
+        answered += 1
+        items += len(listing)
+        if feed == RSS_MAIN:
+            times = [at for _, at, _, _ in listing if at is not None]
+            if len(times) == len(listing):
+                main_from = min(times) + dt.timedelta(minutes=1)
+        for url, at, title, summary in listing:
+            if url in known:
+                continue
+            try:
+                row = rss_row(url, at, title, summary)
+            except ValueError as exc:
+                failures[_code(exc)] = failures.get(_code(exc), 0) + 1
+                continue
+            known.add(url)
+            rows.append(row)
+    written = append(rows, root)
+    out = {'rss_feeds': len(feeds), 'rss_answered': answered, 'feed_errors': feed_errors,
+           'rss_items': items, 'archived': written,
+           'with_tsx_symbol': sum(1 for r in rows if r['tickers']),
+           'oldest_new': min((r['published_at'] for r in rows), default=None),
+           'failed': sum(failures.values()), 'failures': failures}
+    if main_from is not None and not failures:
+        out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
+    return out
+
+
+# ── what was read whole, for the news desk's coverage (day-156) ──────────────
+
+READS = 'newswire_reads.jsonl'
+
+
+def _state_dir(state_dir=None):
+    return Path(state_dir or os.environ.get('RB_STATE_DIR') or ROOT/'.rb-state')
+
+
+def log_read(kind, covers_from, at, *, state_dir=None):
+    """Record that a read at `at` showed the wire whole from `covers_from`.
+    The log lives in the state directory: a reset wipes it, and the news desk
+    then says its coverage is unknown. False when it could not be written."""
+    try:
+        path = _state_dir(state_dir)/READS
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open('a') as fh:
+            fh.write(json.dumps({'kind': kind, 'from': covers_from.isoformat(),
+                                 'to': at.isoformat()}) + '\n')
+        return True
+    except OSError:
+        return False
+
+
+def coverage(start, end, *, state_dir=None):
+    """Which part of [start, end) no logged read showed whole. `read` is False
+    when no read touched the window at all; `gaps` are the stretches of a
+    minute or more that none covered, and `uncovered_minutes` their total."""
+    spans, bad = [], 0
+    try:
+        lines = (_state_dir(state_dir)/READS).read_text().splitlines()
+    except OSError:
+        lines = []
+    for line in lines:
+        try:
+            r = json.loads(line)
+            a, b = dt.datetime.fromisoformat(r['from']), dt.datetime.fromisoformat(r['to'])
+        except (ValueError, KeyError, TypeError):
+            bad += 1
+            continue
+        if b > start and a < end:
+            spans.append((max(a, start), min(b, end)))
+    gaps, cur = [], start
+    for a, b in sorted(spans):
+        if a > cur:
+            gaps.append((cur, a))
+        cur = max(cur, b)
+    if cur < end:
+        gaps.append((cur, end))
+    gaps = [(a, b) for a, b in gaps if b - a >= dt.timedelta(minutes=1)]
+    return {'read': bool(spans),
+            'gaps': [[a.isoformat(), b.isoformat()] for a, b in gaps],
+            'uncovered_minutes': int(sum((b - a).total_seconds() for a, b in gaps) // 60),
+            'unreadable_lines': bad}
+
+
+# ── the watcher (day-156) ────────────────────────────────────────────────────
+
+WATCH_EVERY = 600                # seconds between reads of the main feed
+WATCH_CATEGORIES_EVERY = 3600    # and of the twelve category feeds
+WATCH_UNTIL = dt.time(18, 5)     # past the evening releases of the next session
+WATCH_FILE = 'newswire_watch.json'
+WATCH_LOG = 'newswire_watch.log'
+
+
+def watch_until(now):
+    """The deadline a start sets: WATCH_UNTIL on the first weekday whose 09:35
+    is still ahead, so a Friday evening's watcher reads through the weekend."""
+    d = now.astimezone(ET).date()
+    while d.weekday() >= 5 or dt.datetime.combine(d, dt.time(9, 35), tzinfo=ET) <= now:
+        d += dt.timedelta(days=1)
+    return dt.datetime.combine(d, WATCH_UNTIL, tzinfo=ET)
+
+
+def _alive(pid):
+    """True when `pid` is a running watcher (a reused pid is not)."""
+    try:
+        cmd = Path(f'/proc/{int(pid)}/cmdline').read_bytes().split(b'\0')
+    except (OSError, ValueError, TypeError):
+        return False
+    return b'--watch' in cmd and any(c.endswith(b'newswire.py') for c in cmd)
+
+
+def _write_json(path, data):
+    tmp = path.with_name(path.name + '.tmp')
+    tmp.write_text(json.dumps(data))
+    tmp.replace(path)
+
+
+def start_watch(now=None, *, state_dir=None, popen=subprocess.Popen, alive=_alive):
+    """Start the watcher, detached, or move a running one's deadline later.
+    'started', 'extended', or a code naming why not. It never raises: the
+    collection it rides on must finish whatever happens here."""
+    now = now or dt.datetime.now(ET)
+    state = _state_dir(state_dir)
+    lock = state/'newswire_watch.lock'
+    try:
+        state.mkdir(parents=True, exist_ok=True)
+        try:
+            lock.mkdir()
+        except FileExistsError:            # a start died holding it: take it after a minute
+            if time.time() - lock.stat().st_mtime < 60:
+                return 'BUSY'
+            lock.rmdir()
+            lock.mkdir()
+    except OSError as exc:
+        return 'NOT_STARTED_' + type(exc).__name__
+    try:
+        path = state/WATCH_FILE
+        try:
+            cur = json.loads(path.read_text())
+        except (OSError, ValueError):
+            cur = {}
+        until = watch_until(now)
+        try:
+            until = max(until, dt.datetime.fromisoformat(cur.get('until') or ''))
+        except (TypeError, ValueError):
+            pass
+        if alive(cur.get('pid')):
+            _write_json(path, {**cur, 'until': until.isoformat()})
+            return 'extended'
+        with (state/WATCH_LOG).open('ab') as log:
+            proc = popen([sys.executable, str(Path(__file__).resolve()), '--watch',
+                          '--state-dir', str(state)],
+                         cwd=ROOT, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                         start_new_session=True, close_fds=True)
+        _write_json(path, {'pid': proc.pid, 'until': until.isoformat(),
+                           'started_at': now.isoformat()})
+        return 'started'
+    except OSError as exc:
+        return 'NOT_STARTED_' + type(exc).__name__
+    finally:
+        try:
+            lock.rmdir()
+        except OSError:
+            pass
+
+
+def watch(*, state_dir=None, root=None, fetch=None, clock=None, sleep=time.sleep,
+          every=WATCH_EVERY, categories_every=WATCH_CATEGORIES_EVERY, me=None):
+    """Read the RSS feeds until the control file's deadline: the main feed
+    every `every` seconds, all of them every `categories_every`. One JSON line
+    a pass. 'DONE' at the deadline; 'REPLACED' when the control file names
+    another process or is gone, so two watchers never run on."""
+    clock = clock or (lambda: dt.datetime.now(ET))
+    me = os.getpid() if me is None else me
+    path = _state_dir(state_dir)/WATCH_FILE
+
+    def control():
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError):
+            return {}
+    for _ in range(20):                    # start_watch writes the pid just after the spawn
+        if control().get('pid') == me:
+            break
+        sleep(0.5)
+    last_all = None
+    while True:
+        cur = control()
+        if cur.get('pid') != me:
+            return 'REPLACED'
+        now = clock()
+        try:
+            until = dt.datetime.fromisoformat(cur['until'])
+        except (KeyError, TypeError, ValueError):
+            return 'NO_DEADLINE'
+        if now >= until:
+            return 'DONE'
+        due = last_all is None or (now - last_all).total_seconds() >= categories_every
+        feeds = RSS_FEEDS if due else (RSS_MAIN,)
+        try:
+            out = collect_rss(root=root, fetch=fetch, feeds=feeds, now=now, state_dir=state_dir)
+            if due:
+                last_all = now
+        except Exception as exc:            # this pass is lost, logged; the next tries again
+            out = {'error': _code(exc)}
+        print(json.dumps({'at': now.isoformat(), 'feeds': len(feeds), **out}), flush=True)
+        sleep(every)
 
 
 def last_archived(root=None):
@@ -456,14 +783,37 @@ def main(argv=None):
     p.add_argument('--since', type=dt.date.fromisoformat,
                    help='oldest ET date to reach (default: the last archived day, else 3 days back)')
     p.add_argument('--max-pages', type=int, default=MAX_PAGES)
+    p.add_argument('--watch', action='store_true',
+                   help='read the RSS feeds until the deadline start_watch set (day-156)')
+    p.add_argument('--start-watch', action='store_true',
+                   help='start the watcher, or move a running one\'s deadline later')
+    p.add_argument('--state-dir', help='default: $RB_STATE_DIR, else .rb-state')
     a = p.parse_args(argv)
+    if a.watch:
+        print(json.dumps({'watch': watch(state_dir=a.state_dir)}))
+        return 0
+    if a.start_watch:
+        print(start_watch(state_dir=a.state_dir))
+        return 0
     if not a.collect:
         p.print_help()
         return 2
     today = dt.datetime.now(ET).date()
     since = a.since or last_archived() or (today - dt.timedelta(days=3))
-    out = collect(since, today=today, max_pages=a.max_pages)
+    out = collect(since, today=today, max_pages=a.max_pages, state_dir=a.state_dir)
+    rss = out.get('rss')
+    if rss is not None:                 # the list refused: read from RSS, and keep reading
+        out['watch'] = start_watch(state_dir=a.state_dir)
     print(json.dumps(out))
+    if rss is not None:
+        print(f"NEWSWIRE: the list was refused ({out['list_error']}); read newswire.ca's RSS "
+              f"feeds instead: {rss['rss_answered']} of {rss['rss_feeds']} answered, "
+              f"{rss['archived']} new release(s), feed errors {rss['feed_errors'] or 'none'}; "
+              f"the watcher: {out['watch']} (day-156)", file=sys.stderr)
+        if not rss['rss_answered']:
+            print('NEWSWIRE: no RSS feed answered either — the wire was not read', file=sys.stderr)
+            return 4
+        return 6
     if not out['reached_since']:
         print(f'NEWSWIRE: list ended before {since} — the archive has a hole', file=sys.stderr)
         return 4
