@@ -52,9 +52,25 @@
       "ticker": "MX.TO",
       "title": "Methanex Enhances Financial Strength And Flexibility",
       "url": "https://www.globenewswire.com/news-release/2026/11/25/3410609/0/en/methanex-enhances-financial-strength-and-flexibility.html"
+     },
+     {
+      "arm": "full",
+      "asked_at": "2026-11-26T11:16:17-05:00",
+      "confidence": 0.6,
+      "first_at": "2026-11-25T19:39:00-05:00",
+      "invalid_at": null,
+      "material": true,
+      "model": "deepseek-v4-pro",
+      "prompt_version": "day122-v1+rerun-sitemap",
+      "reason": "The Supreme Court nullifying a key decision regarding LUMA Energy creates regulatory uncertainty and potential negative financial impact for Canadian Utilities.",
+      "session": "2026-11-26",
+      "side": "SHORT",
+      "ticker": "CU.TO",
+      "title": "Canadian Utilities Responds to Puerto Rico Supreme Court Decision Regarding LUMA",
+      "url": "https://www.newswire.ca/news-releases/canadian-utilities-responds-to-puerto-rico-supreme-court-decision-regarding-luma-866994237.html"
      }
     ],
-    "prompt_version": "day122-v1; rerun at 09:57 ET from newswire.ca RSS, Business Wire, FMP press; the 09:46 report had none (the wire was unreadable)",
+    "prompt_version": "day122-v1; rerun 09:57 ET (RSS, Business Wire, FMP press) and 11:16 ET (the sitemap); the 09:46 report had none (wire unreadable)",
     "status": "READY"
    },
    "top_two": {
