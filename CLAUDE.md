@@ -1,5 +1,88 @@
 # Working notes for this repo
 
+## Day156c — Part 6 is a sealed News Desk edition; the three morning Routines synced; two delivery fixes (owner, 2026-11-26 evening)
+
+* **What landed on main** (409a665 → ee28635, the owner's account, 17:12–17:30 ET;
+  read `NEWS_DESK_OPERATIONS.md`). It is not this session's design.
+  * Part 6 in the email and on the website is one sealed edition
+    (`news_edition.py`, `news-desk-edition-v1`).
+    * Up to two material calls, each quoting the issuer's text, with what would
+      weaken it and the time it was reviewed.
+    * READY, PARTIAL or UNAVAILABLE; the subject adds "NEWS DESK PARTIAL" or
+      "NEWS DESK UNAVAILABLE".
+  * `morning_full.sh`:
+    * `preflight` before 09:10;
+    * at 09:31, `final-capture` (≤ 75 s: the RSS, the sitemap and FMP's press
+      feed for the same-ISIN names), then `stage` (≤ 280 s) and
+      `seal-unavailable`;
+    * then the registered research arm, `news_desk.py --stage` (≤ 180 s), into
+      `data/news_calls.csv` as before.
+  * The edition asks its own prompt (day-122's, plus an evidence quote and an
+    invalidation). The research arm keeps day-122's byte for byte, and the
+    registered tests read its ledger. The email no longer shows the research
+    arm.
+  * `delivery_plan` returns RECONCILE when a report carrying an edition was
+    already claimed. The prompts say: check Sent, and never retry an ambiguous
+    send without the owner.
+* **The Routines.** The owner: "Sync the existing 08:50 morning Routine and the
+  09:38 watchdog and 09:50 bridge prompts from ROUTINE_PROMPT.md and
+  ROUTINE_FALLBACKS.md."
+  * All three were updated at 22:50–22:51 UTC to the repo text, with the keys
+    carried over. The schedules, the session and the morning's model are
+    unchanged.
+  * That also retired the morning's old HTML_MISSING resend and the watchdog's
+    and bridge's `data/biotech_calls.csv`.
+  * The 08:56 rescue (`ROUTINE_RESCUE.md`) was not asked for and is unchanged.
+  * The key files' fingerprints of 11-26 are in
+    `.rb-state/key_fingerprints_2026-11-26.txt` (gitignored, never in the repo).
+    If 11-27's STEP 2 writes different ones, a key was mistyped in the sync.
+* **No systemd here.** PID 1 is `process_api`, and `deploy/install.sh --check
+  --news-desk` refuses, so the three `rb-news-*` timers are not installed.
+  * Every morning process runs in this one session's container on
+    `/home/user/RB/.rb-state`: the 08:50 job, the 09:38 and 09:50 fallbacks and
+    the verifier.
+  * The 08:56 rescue runs on its own machine and shares none of it.
+  * The overnight capture is not needed for coverage: the 09:31 sitemap read
+    covers about 72 hours. The 09:48 audit is run by hand.
+* **Preflight at 17:44 ET on 11-26:** Yahoo, FMP and DeepSeek READY; the
+  delivery transport `VERIFY_GMAIL_CONNECTOR`; the wire's coverage whole.
+* **Reading what the owner received.**
+  * Gmail `get_message` RAW of a full report is too large to return inline, so
+    the tool saves it to a file.
+  * `python received_html.py <that file> <out.html>` writes its text/html part
+    exactly as received.
+  * FULL_CONTENT filters inline CSS. Never retype HTML.
+  * On 11-26 the received report's visible text matched the dispatched one,
+    less its `<title>`. Gmail had rewritten 34 links, tickers included
+    (`CNQ.TO` became a google.com/url link).
+* **Two fixes (this session).**
+  * `verify_render` read no call in a correctly delivered email. Gmail's ticker
+    link left "CU.TO **" once the tags were stripped; the space is allowed now.
+  * The email printed the edition's `**bold**` and `[title](url)` raw.
+    `email_render._inline` renders both and escapes everything else; no other
+    email line uses either mark.
+  * `tests/test_news_edition_gmail.py` covers both; each test fails with its
+    fix reverted.
+* **From this host the edition will be PARTIAL or UNAVAILABLE on most
+  mornings.** newswire.ca still refuses release pages here (HTTP 403, a bot
+  challenge; one ordinary request at about 17:44 ET on 11-26).
+  * A candidate whose release is on newswire.ca, with no FMP row at the same
+    URL, is set aside as 'issuer body unavailable'.
+  * Over the 15 sessions to 11-26, 206 of 231 candidate issuers (89%) carried a
+    newswire.ca release.
+  * The RSS openings are too short to stand in: a median of 250 characters and
+    at most 290, against the edition's 300.
+  * The owner decides. Nothing was changed.
+* **After a morning send, for an edition** (the owner's step 4):
+  * read the report with `get_message` RAW, run `received_html.py`, then
+    `news_edition.py verify-delivery --received-html <out> --message-id <id>`,
+    then `news_edition.py audit`;
+  * report the edition id, its coverage status, the featured tickers, the
+    export's match (`report_matches_export`) and the number of primary emails
+    in Sent;
+  * a claim with nothing in Sent is an ambiguous delivery: Sent is checked
+    first.
+
 ## Day156b — the wire is read from its news sitemap; no request newswire.ca refuses; the watcher does not run idle (owner, 2026-11-26)
 
 The owner: "fix up the feeds so we don't get rejected anymore and make sure we

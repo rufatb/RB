@@ -1,4 +1,6 @@
 """Concise email views of the frozen computation; full evidence is attached."""
+import re
+
 import daily_render as full
 import biotech
 
@@ -562,9 +564,27 @@ def _body_blocks(body):
             out.append(f'<p style="font:12px/1.6 Arial,sans-serif;color:{MUTED};'
                        f'margin:9px 0">{full.escape(line)}</p>')
         elif line:                              # day-155b: the font is the section's own
-            out.append(f'<p style="margin:9px 0">{full.escape(line)}</p>')
+            out.append(f'<p style="margin:9px 0">{_inline(line)}</p>')
     flush()
     return ''.join(out)
+
+
+_LINK = re.compile(r'\[([^\]]+)\]\((https://[^\s)]+)\)')
+
+
+def _inline(line):
+    """The report dialect's two inline marks, as the full report renders them
+    (`daily_render.markdown_html`): **bold** and [title](https://…). Day-156c:
+    Part 6's edition writes both, and the email printed them as raw markdown.
+    Everything is escaped first; only those two marks become tags."""
+    parts, last = [], 0
+    for m in _LINK.finditer(line):
+        parts.append(full.escape(line[last:m.start()]))
+        parts.append(f'<a href="{full.escape(m.group(2), quote=True)}" style="color:{ACCENT}">'
+                     f'{full.escape(m.group(1))}</a>')
+        last = m.end()
+    parts.append(full.escape(line[last:]))
+    return re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', ''.join(parts))
 
 
 def pick_table(snap):

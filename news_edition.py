@@ -442,7 +442,10 @@ def verify_render(record, rendered):
     receipt = f"News Desk receipt {record['edition_id'][:12]}"
     _, heading, rest = content.partition(title)
     section, marker, _ = rest.partition(receipt)
-    calls = re.findall(r'\b(LONG|SHORT) ([A-Z0-9.-]+)(?:\*\*)?\s*·\s*'
+    # Gmail's send path turns a ticker into a link (`<a href="…google.com/url?q=http://CU.TO…">CU.TO</a>`;
+    # the 11-26 report and noon email came back so), so stripping the tags leaves "CU.TO **": the
+    # space before a closing ** is the received HTML, not a different call.
+    calls = re.findall(r'\b(LONG|SHORT) ([A-Z0-9.-]+)\s*(?:\*\*)?\s*·\s*'
                        r'[A-Za-z]{3} \d{2}:\d{2} ET release\s*·\s*reviewed \d{2}:\d{2} ET\b', section)
     expected = [(row['side'], row['ticker']) for row in record['featured']]
     if not heading or not marker or content.count(receipt) != 1 or calls != expected:
