@@ -1,5 +1,67 @@
 # Working notes for this repo
 
+## Day156 — the wire's list refused, the 11-26 news desk blind; the RSS feeds and a watcher (owner, 2026-11-26)
+
+* **What happened.**
+  * newswire.ca has refused the collector's list pages since about 09:31 ET on
+    11-25 (HTTP 403; the release pages since 11-04). The archive's newest row
+    was 11-25 09:26.
+  * The 11-26 news desk found no event. Part 6 said "No liquid TSX name had
+    an overnight release today", and the DDA export said `READY` with no calls.
+* **The owner:** "Where … are the news desk picks today", then "Send it again
+  so that my system downstream picks it up. Also make sure this never happens
+  again."
+* **The rerun (09:57 ET, not in the ledger).** The same DeepSeek question
+  (`day122-v1`) on newswire.ca's RSS feed, Business Wire's Canada feed and
+  FMP's press feed. It gave:
+  * LONG MX.TO 0.65, material: Methanex's credit facility, 11-25 17:01, a
+    GlobeNewswire release found through FMP;
+  * DOO.TO and EMP-A.TO, routine.
+
+  It was emailed at 10:07 (Gmail `1a21865503abc019`). At the owner's request
+  it was also added to `data/reviews/dda/2026-11-26.report.json` (4d9c964),
+  labelled in `prompt_version` and `asked_at`. Nothing published was
+  replaced; that file is otherwise first-write-wins.
+* **The fix.**
+  * **The feeds.** `newswire.collect` reads the RSS feeds when the list's
+    first page fails (`collect_rss`, 8792764):
+    * the main feed and 12 category feeds, 20 items each;
+    * archived as `source: 'newswire.ca rss'` with a list card's fields;
+    * the same releases: all 73 RSS items older than the archive's newest row
+      were already archived from the list.
+  * **The watcher.** `newswire.py --watch` is started detached by `--collect`
+    on a refusal, one at a time.
+    * It reads the main feed every 10 minutes and the categories hourly,
+      until 18:05 on the next session; each start moves the deadline later.
+    * On 35 past nights it would have missed 1 of 3,860 window releases. The
+      four scheduled reads alone (16:20, 08:12, 08:52, 09:31) miss 57%.
+    * Its passes are in `.rb-state/newswire_watch.log`. A reset kills it; the
+      next `--collect` (08:12, 08:52, 16:20) starts it again.
+  * **Coverage.** Every read that shows the wire whole is logged
+    (`.rb-state/newswire_reads.jsonl`), and `newswire.coverage` names a
+    window's unread stretches.
+  * **The exits.** `--collect` exits **6** when the list was refused and the
+    feeds were read. That is not a fault; the live evening prompt names only
+    0, 3 and 4.
+  * **BLIND, not quiet.** The news desk records `wire`: the window's releases
+    by source, and their coverage. A window with no release at all is BLIND:
+    * Part 6 says "⚠ The news desk could not read the wire today …";
+    * `--stage` exits 7, and the morning logs a stage fault;
+    * the DDA export carries `BLIND`.
+
+    An unread stretch of 10 minutes or more prints a ⚠ line naming it.
+* **Live from 10:24 ET on 11-26.** 106 releases were backfilled from the
+  feeds (17 with a TSX symbol), and the watcher runs to 11-27 18:05.
+* **The population is unchanged:** newswire.ca's releases, by first lead
+  symbol. Business Wire, GlobeNewswire and FMP's press feed are not read.
+* **What can still fail.** newswire.ca could refuse the RSS feeds too; Part 6
+  then says BLIND, loudly. FMP is no fallback for the whole list: it serves no
+  Toronto press releases (4 news rows across five names over months).
+* **No accuracy claim.** The news desk's record is unproven: material calls
+  +0.45% a call against −0.29% for routine ones (t = 2.88).
+* **The 11-26 council lab slot went to this repair.** The next slot proposes
+  and registers a new free item.
+
 ## DDA runtime repair — 2026-11-12
 
 The 11-12 DDA screen assessed all 150 names but took 181.906 seconds against

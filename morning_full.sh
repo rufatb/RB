@@ -497,13 +497,18 @@ while [ "$(minutes_now)" -lt 0931 ]; do
 done
 news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
 if [ "$news_left" -gt 30 ]; then
-    if timeout "$(( news_left < 300 ? news_left : 300 ))" python news_desk.py --stage \
-            --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1; then
-        log "  news desk: staged and recorded"
-    else
-        log "  news desk: NOT staged — Part 6 reads unavailable (news_desk.log)"
-        stage_faults+=("news desk not staged")
-    fi
+    timeout "$(( news_left < 300 ? news_left : 300 ))" python news_desk.py --stage \
+        --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1
+    case $? in
+        0) log "  news desk: staged and recorded" ;;
+        # DAY-156: 11-26 staged an empty window as a quiet morning. Exit 7 is an
+        # archive with NO release in the window: the wire was not read.
+        7) log "  news desk: BLIND — no release from the overnight window reached the archive;"
+           log "    the wire was not read (newswire.log, newswire_watch.log). Part 6 says so."
+           stage_faults+=("news desk blind: the wire was not read overnight") ;;
+        *) log "  news desk: NOT staged — Part 6 reads unavailable (news_desk.log)"
+           stage_faults+=("news desk not staged") ;;
+    esac
 else
     log "  news desk: SKIPPED — too close to publication"
     stage_faults+=("news desk skipped: too close to publication")

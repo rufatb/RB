@@ -145,6 +145,21 @@ def test_the_main_feed_logs_the_stretch_it_shows_whole(tmp_path):
     assert not (tmp_path / N.READS).exists()
 
 
+def test_only_the_main_feeds_own_bad_item_voids_its_read(tmp_path):
+    now = dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET)
+    bad = feed(item('x-1', 'Wed, 25 Nov 2026 22:30:00 +0000', '', 'untitled'))       # no title
+    energy = '/rss/energy-latest-news/energy-latest-news-list.rss'
+    out = N.collect_rss(root=tmp_path / 'w1', fetch=refusing_list({N.RSS_MAIN: MAIN, energy: bad}),
+                        feeds=(N.RSS_MAIN, energy), now=now, state_dir=tmp_path / 's1')
+    assert out['failures'] == {'NO_RELEASE_TITLE': 1} and out['read_logged'] is True
+    main_bad = feed(item('x-2', 'Wed, 25 Nov 2026 22:30:00 +0000', '', 'untitled'),
+                    item('acme-results-111', 'Thu, 26 Nov 2026 12:30:00 +0000', 'ACME', 'x'))
+    out = N.collect_rss(root=tmp_path / 'w2', fetch=refusing_list({N.RSS_MAIN: main_bad}),
+                        feeds=(N.RSS_MAIN,), now=now, state_dir=tmp_path / 's2')
+    assert out['failed'] == 1 and 'read_logged' not in out
+    assert not (tmp_path / 's2' / N.READS).exists()
+
+
 def test_coverage_names_the_stretches_no_read_showed():
     start = dt.datetime(2026, 11, 25, 16, 0, tzinfo=ET)
     end = dt.datetime(2026, 11, 26, 9, 30, tzinfo=ET)

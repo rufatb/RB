@@ -139,6 +139,46 @@ def candidates(session, archive=None, until=None):
     return {t: sorted(v, key=lambda r: r['published_at']) for t, v in out.items()}
 
 
+GAP_MINUTES = 10      # day-156: an unread stretch this long is said in the email
+
+
+def wire_health(session, *, archive=None, state_dir=None):
+    """Day-156: what the archive holds for the session's window, by source, and
+    which part of the window no logged read showed whole (`newswire.coverage`).
+    The 11-26 desk read an empty archive and printed "No liquid TSX name had an
+    overnight release today" over a wire that had not been read since 09:26 the
+    day before; this is how it knows the difference."""
+    import newswire
+    start, end = newswire.window(session)
+    rows = [r for r in newswire.read(archive, since=start.astimezone(ET).date())
+            if start <= dt.datetime.fromisoformat(r['published_at']) < end]
+    return {'releases_in_window': len(rows),
+            'with_tsx_symbol': sum(1 for r in rows if r.get('tickers')),
+            'sources': dict(collections.Counter(r.get('source') or 'newswire.ca' for r in rows)),
+            'coverage': newswire.coverage(start, end, state_dir=state_dir)}
+
+
+def wire_lines(sec):
+    """The caution Part 6 carries when its window was not read whole, or [].
+    Shown in the email too: it says what the table cannot."""
+    wire = (sec or {}).get('wire') or {}
+    cov = wire.get('coverage') or {}
+    if not wire or sec.get('status') == 'BLIND':
+        return []
+    if wire.get('error'):
+        return [f"⚠ Whether the wire was read whole could not be checked today ({wire['error']})."]
+    if not cov.get('read'):
+        return ['⚠ Which part of the night the wire was read is not known (no read was logged '
+                'for this window, as after a machine reset): a release may be missing here.']
+    if cov.get('uncovered_minutes', 0) < GAP_MINUTES:
+        return []
+    stretches = ', '.join(
+        f"{dt.datetime.fromisoformat(a).astimezone(ET):%a %H:%M} to "
+        f"{dt.datetime.fromisoformat(b).astimezone(ET):%a %H:%M}" for a, b in cov.get('gaps', [])[:4])
+    return [f"⚠ The wire was not read from {stretches} ({cov['uncovered_minutes']} minutes of the "
+            f"16:00–09:30 window): a release out then is missing here."]
+
+
 def events(session, *, chart=daily_chart, archive=None, pending_ok=False, until=None):
     """(events, excluded) for `session`. `pending_ok` lets the morning stage
     before the session has a daily bar of its own."""
@@ -318,14 +358,26 @@ def stage(state_dir, now=None, *, chart=daily_chart, archive=None, client=None,
     added = [r for r in rows if (r['session'], r['ticker'], r['arm']) not in seen]
     if added:
         _write(ledger + added, path)
+    try:
+        wire = wire_health(session, archive=archive, state_dir=state_dir)
+    except Exception as exc:       # named in the staged file, never silent
+        wire = {'error': type(exc).__name__}
     out = {'session': session.isoformat(), 'staged_at': now.isoformat(),
            'prompt_version': PROMPT_VERSION, 'events': len(evs), 'excluded': excluded,
            'bodies_failed': dict(body_failed),
            'problems': {a: arms[a]['problems'] for a in ARMS},
            'calls': [r for r in rows if r['arm'] == 'full'],
-           'headline': {r['ticker']: r['side'] for r in rows if r['arm'] == 'headline'}}
+           'headline': {r['ticker']: r['side'] for r in rows if r['arm'] == 'headline'},
+           'wire': wire}
     Path(state_dir, STAGED).write_text(json.dumps(out, indent=1, ensure_ascii=False))
     return out
+
+
+def blind(staged):
+    """Day-156: the window's archive holds no release at all, so the wire was
+    not read: a weekday night always carries some."""
+    wire = (staged or {}).get('wire') or {}
+    return 'releases_in_window' in wire and not wire['releases_in_window']
 
 
 def stage_preopen(state_dir, now=None, *, chart=daily_chart, archive=None, client=None,
@@ -504,13 +556,18 @@ def section(state_dir, now, path=LEDGER):
         staged = None
     fresh = staged if staged and staged.get('session') == now.date().isoformat() else None
     reason = None
+    status = 'READY' if fresh and (fresh.get('calls') or not fresh.get('events')) else 'UNAVAILABLE'
     if not fresh:
         reason = "this morning's releases were not read (the step did not run or failed)"
     elif not fresh.get('calls') and fresh.get('events'):
         reason = 'the model answered none of the %d events' % fresh['events']
-    return {'status': 'READY' if fresh and (fresh.get('calls') or not fresh.get('events'))
-            else 'UNAVAILABLE',
+    elif not fresh.get('calls') and blind(fresh):
+        status = 'BLIND'
+        reason = ('no release from the overnight window reached the archive: the wire could not '
+                  'be read, so there were releases the desk never saw')
+    return {'status': status,
             'reason': reason, 'replay': replay_line(), 'record': record_line(path),
+            'wire': (fresh or {}).get('wire'),
             'preopen': preopen_line(path),
             'calls': (fresh or {}).get('calls') or [], 'headline': (fresh or {}).get('headline') or {},
             'events': (fresh or {}).get('events'), 'excluded': (fresh or {}).get('excluded') or {},
@@ -641,9 +698,14 @@ def lines(sec, concise=False):
             out.append(sec['preopen'])
         if sec.get('layout') == LAYOUT and rank_line(sec.get('rank_record')):
             out.append(rank_line(sec.get('rank_record')))
+    if sec.get('status') == 'BLIND':
+        out.append(f"⚠ The news desk could not read the wire today: {sec.get('reason')}. "
+                   "This is not a quiet morning.")
+        return out
     if sec.get('status') != 'READY':
         out.append(f"Unavailable today — {sec.get('reason')}.")
         return out
+    out += wire_lines(sec)
     calls = sorted(sec.get('calls') or [], key=order_key)
     if not calls:
         out.append('No liquid TSX name had an overnight release today.')
@@ -819,7 +881,11 @@ def main(argv=None):
         out = stage(a.state_dir)
         print(json.dumps({'events': out['events'], 'calls': len(out['calls']),
                           'excluded': out['excluded'], 'problems': out['problems'],
-                          'bodies_failed': out['bodies_failed']}))
+                          'bodies_failed': out['bodies_failed'], 'wire': out.get('wire')}))
+        if not out['calls'] and blind(out):
+            print('NEWS DESK: BLIND — no release from the overnight window reached the archive',
+                  file=sys.stderr)
+            return 7
         return 0 if out['calls'] or not out['events'] else 1
     if a.score:
         print(json.dumps({'scored': score()}))

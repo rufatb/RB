@@ -554,7 +554,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
     now = now or dt.datetime.now(ET)
     known = {r['url'] for r in read(root)}
     rows, failures, feed_errors = [], {}, {}
-    answered = items = 0
+    answered = items = main_failed = 0
     main_from = None
     for feed in feeds:
         try:
@@ -577,6 +577,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
                 row = rss_row(url, at, title, summary)
             except ValueError as exc:
                 failures[_code(exc)] = failures.get(_code(exc), 0) + 1
+                main_failed += feed == RSS_MAIN     # only the main feed's own items void its read
                 continue
             known.add(url)
             rows.append(row)
@@ -586,7 +587,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
            'with_tsx_symbol': sum(1 for r in rows if r['tickers']),
            'oldest_new': min((r['published_at'] for r in rows), default=None),
            'failed': sum(failures.values()), 'failures': failures}
-    if main_from is not None and not failures:
+    if main_from is not None and not main_failed:
         out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
     return out
 

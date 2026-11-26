@@ -78,3 +78,12 @@ def test_malformed_optional_news_does_not_prevent_top_two_publication(tmp_path, 
     data = json.loads(desk.bridge(tmp_path / 'state', 'report', NOW).read_text(encoding='utf-8'))
     assert 'top_two' in data['report']['intraday']
     assert data['report']['intraday']['news_desk']['status'] == 'UNAVAILABLE'
+
+
+def test_a_blind_news_desk_reaches_the_platform_as_blind(tmp_path, monkeypatch):
+    """Day-156: 11-26's export said READY over a wire nobody had read."""
+    monkeypatch.setattr(desk, 'ROOT', tmp_path)
+    report(tmp_path, status='BLIND', calls=[], wire={'releases_in_window': 0})
+    data = json.loads(desk.bridge(tmp_path / 'state', 'report', NOW).read_text(encoding='utf-8'))
+    assert data['report']['intraday']['news_desk']['status'] == 'BLIND'
+    assert data['report']['intraday']['news_desk']['calls'] == []
