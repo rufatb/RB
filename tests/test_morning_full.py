@@ -253,13 +253,15 @@ def test_claude_answers_before_deepseek_or_jev_is_asked():
 
 
 def test_the_news_desk_waits_for_its_window_and_cannot_delay_publication():
-    """Day-122 Part 6: the overnight window closes at 09:30, so the step waits
-    for it, and its timeout ends by 09:43 — before the 09:44 handover."""
+    """Both source capture and verified calls are bounded by the 09:43 seal."""
     body = code()
-    at = body.index('news_desk.py --stage')
-    assert body.index('-lt 0931 ]') < at < body.index('-lt "$PUBLISH_AT" ]')
-    assert "today 09:43:00" in body and 'news_left < 300 ? news_left : 300' in body
-    assert body.index('news_desk.py --stage') < body.index('./morning.sh')
+    capture = body.index('news_edition.py final-capture')
+    stage = body.index('news_edition.py stage')
+    seal = body.index('news_edition.py seal-unavailable')
+    assert body.index('-lt 0931 ]') < capture < stage < seal < body.index('-lt "$PUBLISH_AT" ]')
+    assert "today 09:43:00" in body and 'news_left < 75 ? news_left : 75' in body
+    assert 'news_left < 280 ? news_left : 280' in body
+    assert seal < body.index('news_desk.py --stage') < body.index('./morning.sh')
 
 
 def test_the_council_sits_after_every_desk_and_ends_before_part_6():
@@ -267,7 +269,7 @@ def test_the_council_sits_after_every_desk_and_ends_before_part_6():
     its window — it ends by 09:34 and never blocks publication."""
     body = code()
     at = body.index('council.py --stage')
-    assert body.index('gemini_opportunities.py') < at < body.index('news_desk.py --stage')
+    assert body.index('gemini_opportunities.py') < at < body.index('news_edition.py final-capture')
     assert "today 09:34:00" in body and 'council_left < 900 ? council_left : 900' in body
 
 
@@ -298,9 +300,10 @@ def test_the_memory_council_follows_the_live_one_and_ends_by_0930():
     failure is not a staging fault."""
     body = code()
     at = body.index('council_memory.py --stage')
-    assert body.index('council.py --stage') < at < body.index('news_desk.py --stage')
+    start_news = body.index('-lt 0931 ]')
+    assert body.index('council.py --stage') < at < start_news
     assert "today 09:30:00" in body and 'memory_left < 300 ? memory_left : 300' in body
-    block = body[at:body.index('news_desk.py --stage')]
+    block = body[at:start_news]
     assert 'stage_faults' not in block
 
 

@@ -43,7 +43,7 @@ D. Write the credentials (a container restart wipes them): `mkdir -p .rb-state/s
    REPORT or PICKS_ONLY → step E with the three paths it printed.
    LATE → if `.rb-state/late-<today>/late/subject.txt` exists, use those files; else if `.rb-state/late-<today>/claude_brief.txt` exists, answer, check and seal it as the Claude desk; else run `python late_picks.py --state-dir .rb-state/late-<today> --stage` first, then answer, check and seal.
 E. Gmail search again and follow the main routine’s STEP 7 with the exact subject, text and HTML. For REPORT, record the message ID and verify the actual received News Desk HTML. A failed HTML check is a delivery alert for the existing message.
-   THE 09:58 RULE: honour the primary claim, then use the main routine’s single-send fallback rule. Publish recovered picks on the website.
+   THE 09:58 RULE: honour the primary claim, then use the main routine’s single-send fallback rule. The status-only subject is “RB Daily Report — <today> — ⛔ NOT PUBLISHED”. Publish recovered picks on the website.
 F. REPORT mode: do the 08:50 prompt's STEP 8 (publish the page) and STEP 9 (record and push). Other modes: `git add data/model_picks.csv`, commit, push.
 G. Tell the owner in a few lines: mode, Gmail id, the Top 2 (side, ticker, how many models back each), each desk's picks — Claude, DeepSeek, Gemini, Jev (forced only) —, anything that broke.
 Never create, modify, enable, disable or delete any Routine. Never call a pick a prediction, never average the models.

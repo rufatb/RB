@@ -142,7 +142,7 @@ def test_the_send_is_decided_by_one_command_and_every_mode_is_handled():
     import inspect
     import delivery_plan
     modes = set(re.findall(r"'mode': '([A-Z_]+)'", inspect.getsource(delivery_plan)))
-    assert modes == {'REPORT', 'PICKS_ONLY', 'LATE'}
+    assert modes == {'REPORT', 'PICKS_ONLY', 'LATE', 'RECONCILE'}
     for body in (text(), open(FALLBACKS, encoding='utf-8').read()):
         assert 'python delivery_plan.py' in body
         for mode in modes:

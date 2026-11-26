@@ -497,21 +497,20 @@ fi
 
 # ── 1c. PART 6, THE NEWS DESK (day-122) ───────────────────────────────────
 export RB_NEWS_EDITION_REQUIRED=1
-# A model reads every liquid TSX name's overnight release. The window runs to
-# 09:30, so this waits for it to close, then has until 09:43 — it can never
-# delay publication. A failure costs Part 6 only.
+# Reconcile the configured sources after the 09:30 cutoff. Both the final
+# capture and the edition must finish by 09:43, before the report handover.
 while [ "$(minutes_now)" -lt 0931 ]; do
     log "holding for the overnight news window to close (now $(minutes_now))"
     sleep 60
 done
 news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
 if [ "$news_left" -gt 30 ]; then
-    timeout 75 python news_edition.py final-capture --state-dir "$RB_STATE_DIR" \
-        >>"$RB_STATE_DIR/newswire.log" 2>&1 || log "  news desk: final wire read needs coverage review"
-    news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
-    if [ "$news_left" -le 15 ]; then
-        news_left=15
-    fi
+    timeout "$(( news_left < 75 ? news_left : 75 ))" python news_edition.py final-capture \
+        --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/newswire.log" 2>&1 ||
+        log "  news desk: final source reads need coverage review"
+fi
+news_left=$(( $(TZ=America/New_York date -d 'today 09:43:00' +%s) - $(date +%s) ))
+if [ "$news_left" -gt 15 ]; then
     timeout "$(( news_left < 280 ? news_left : 280 ))" python news_edition.py stage \
         --state-dir "$RB_STATE_DIR" >>"$RB_STATE_DIR/news_desk.log" 2>&1
     case $? in
