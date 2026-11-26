@@ -1,0 +1,30 @@
+{
+ "exported_at": "2026-11-26T09:46:21.170857-05:00",
+ "report": {
+  "generated_at": "2026-11-26T09:46:16.641763-05:00",
+  "intraday": {
+   "news_desk": {
+    "calls": [],
+    "prompt_version": "day122-v1",
+    "status": "READY"
+   },
+   "top_two": {
+    "picks": [
+     {
+      "agreement": "Claude 0.40; council 2 of 4 endorse",
+      "confidence": 0.4,
+      "invalid_at": 63.35,
+      "reason": "CA market: WTI +1.12% pre-market at 08:43 ET; CNQ closed 64.76, above vwap 64.69, with r0 +0.90; an open may not fully reprice crude on a thin session.",
+      "side": "LONG",
+      "ticker": "CNQ.TO"
+     }
+    ],
+    "reason": "No short today: Claude's SHORT TVE.TO (its own 0.35; council 0 of 4 endorse) was below the quality floor (day-150: Claude 0.50 or higher, or two council members endorsing).",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-26"
+ },
+ "schema_version": 1,
+ "session": "2026-11-26"
+}
