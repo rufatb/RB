@@ -3,6 +3,7 @@
 #
 #   sudo deploy/install.sh --check     inspect only, changes nothing
 #   sudo deploy/install.sh             install, enable, then verify
+#   sudo deploy/install.sh --news-desk include News Desk timers on the morning worker
 #
 # WHY THIS EXISTS. The 2026-09-09 and 09-10 sessions went unrecorded because of
 # two defects that lived in the unit files, not in the Python:
@@ -34,7 +35,8 @@ FAIL=0
 for arg in "$@"; do
     case "$arg" in
         --check) CHECK_ONLY=1 ;;
-        -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+        --news-desk) TIMERS+=(rb-news-capture rb-news-preflight rb-news-audit) ;;
+        -h|--help) sed -n '2,21p' "$0"; exit 0 ;;
         *) echo "unknown argument: $arg" >&2; exit 2 ;;
     esac
 done

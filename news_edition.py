@@ -25,6 +25,7 @@ PRODUCTION_PROMPT = desk.SYSTEM_PROMPT + (
 SEAL_BY = dt.time(9, 43)
 MAX_MORNING_SECONDS = 260
 MIN_BODY = 300
+PRESS_LIMIT = 15
 PUBLISHERS = {'newswire.ca', 'www.newswire.ca', 'globenewswire.com', 'www.globenewswire.com',
               'businesswire.com', 'www.businesswire.com', 'newsfilecorp.com', 'www.newsfilecorp.com'}
 
@@ -52,14 +53,96 @@ def capture(root, now=None, *, final=False):
     root.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(root / 'news_capture.sqlite3', timeout=10) as lease:
         lease.execute('BEGIN EXCLUSIVE')
-        if final or now.minute < 10:
+        if final:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                fmp = pool.submit(capture_press, root, now)
+                result = wire.collect(start.date(), root=root / 'news_wire', now=now, state_dir=root,
+                                      sources=('rss', 'sitemap'), pause=0)
+            result['press'] = fmp.result()
+        elif now.minute < 10:
             result = wire.collect(start.date(), root=root / 'news_wire', now=now, state_dir=root,
                                   sources=('rss', 'sitemap'), pause=0)
         else:
             rss = wire.collect_rss(root=root / 'news_wire', now=now, state_dir=root, feeds=(wire.RSS_MAIN,))
             result = {'rss': rss, 'archived': rss['archived']}
     return {'checked_at': now.isoformat(), 'sitemap': result.get('sitemap', {}),
-            'rss': result.get('rss', {}), 'archived': result['archived']}
+            'rss': result.get('rss', {}), 'press': result.get('press', {}), 'archived': result['archived']}
+
+
+def press_time(value):
+    when = stamp(value)
+    if when:
+        return when
+    try:
+        return dt.datetime.strptime(str(value), '%Y-%m-%d %H:%M:%S').replace(tzinfo=ET)
+    except ValueError:
+        return None
+
+
+def capture_press(root, now, *, twins=None, get=None):
+    """Reconcile the FMP press feed through the same cutoff as the CNW capture."""
+    import fmp_client
+    from morning_service import atomic
+    from us_preopen import load_twins, releases as issuer_releases
+
+    start, end = wire.window(now.date())
+    twins = load_twins() if twins is None else twins
+    root = Path(root)
+    outcomes = {}
+    samples = set()
+    failures = Counter()
+    archived = 0
+    try:
+        key = fmp_client.load_key(root)
+        if not twins:
+            failures['missing issuer map'] += 1
+        elif not key and get is None:
+            failures['unavailable credential'] += 1
+        elif now < end:
+            failures['read before cutoff'] += 1
+        else:
+            def read(path, *, symbols, limit):
+                try:
+                    rows = (get or fmp_client.get)(path, key=key, timeout=4, retries=0,
+                                                   symbols=symbols, limit=min(limit, PRESS_LIMIT))
+                    if not isinstance(rows, list):
+                        raise ValueError('unexpected response')
+                    times = [press_time(row.get('publishedDate')) if isinstance(row, dict) else None for row in rows]
+                    if any(t is None for t in times):
+                        outcomes[symbols] = 'unreadable timestamps'
+                    elif len(rows) >= PRESS_LIMIT and min(times) >= start:
+                        outcomes[symbols] = 'response capped within window'
+                    else:
+                        outcomes[symbols] = 'checked'
+                    if any(isinstance(row, dict) and row.get('url') and row.get('text') for row in rows):
+                        samples.add(symbols)
+                    return [{**row, 'publishedDate': when.strftime('%Y-%m-%d %H:%M:%S')}
+                            for row, when in zip(rows, times) if when]
+                except (OSError, ValueError) as exc:
+                    outcomes[symbols] = type(exc).__name__
+                    return []
+
+            # Use the same-ISIN issuer mapping and title checks as the existing feed.
+            # A missing wire archive here keeps the press receipt source-specific.
+            directory = root / 'news_edition_press'
+            found, _ = issuer_releases(read, twins, start - dt.timedelta(microseconds=1),
+                                       end - dt.timedelta(microseconds=1), directory / 'no-wire')
+            archived = press.append(press.rows_from(found), directory)
+    except (OSError, ValueError) as exc:
+        failures[type(exc).__name__] += 1
+    failures.update(status for status in outcomes.values() if status != 'checked')
+    expected = {t['us'] for t in twins.values()}
+    checked = sum(status == 'checked' for status in outcomes.values())
+    if checked and not samples:
+        failures['no recent press samples returned by provider'] += 1
+    receipt = {'requested_at': now.isoformat(), 'window_start': start.isoformat(),
+               'window_end': end.isoformat(), 'checked': checked, 'expected': len(expected),
+               'archived': archived, 'failures': dict(failures),
+               'complete': bool(expected) and checked == len(expected) and not failures}
+    path = root / 'news_editions' / f'{now.date()}.press.json'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic(path, receipt)
+    return receipt
 
 
 def unavailable(now, reason):
@@ -76,7 +159,8 @@ def releases(root, start, end, *, archive=None, press_archive=None):
     """One issuer event per canonical release across the wire and press archives."""
     from urllib.parse import urlsplit
     wire_rows = wire.read(archive, since=start.date()) + wire.read(Path(root) / 'news_wire', since=start.date())
-    press_rows = press.read(press_archive, since=start.date())
+    press_rows = (press.read(press_archive, since=start.date())
+                  + press.read(Path(root) / 'news_edition_press', since=start.date()))
     groups, urls, titles = {}, set(), set()
     for row in wire_rows + press_rows:
         at = stamp(row.get('published_at'))
@@ -125,12 +209,7 @@ def issuer_text(release, ticker, root, *, timeout, get=None):
             matched = canonical_url(row.get('url')) == source_url
         except (ValueError, TypeError):
             matched = False
-        published = stamp(row.get('publishedDate'))
-        if not published:
-            try:
-                published = dt.datetime.strptime(str(row.get('publishedDate')), '%Y-%m-%d %H:%M:%S').replace(tzinfo=ET)
-            except ValueError:
-                continue
+        published = press_time(row.get('publishedDate'))
         text = ' '.join(str(row.get('text') or '').split())
         if matched and published and abs(published - at) <= dt.timedelta(minutes=5) and len(text) >= MIN_BODY:
             return safe_detail(text, desk.BODY_CHARS), 'Matched FMP issuer text'
@@ -232,6 +311,12 @@ def stage(root, *, now=None, clock=local_now, chart=desk.daily_chart, fetch_body
         return min(deadline - monotonic(), (seal - clock()).total_seconds())
 
     cov = wire.coverage(start, end, state_dir=root, minimum_gap=dt.timedelta(0), kinds={'rss', 'sitemap'})
+    press_receipt = read(Path(root) / 'news_editions' / f'{date}.press.json') or {}
+    press_checked = stamp(press_receipt.get('requested_at'))
+    press_complete = bool(press_receipt.get('complete') and press_checked and end <= press_checked <= now
+                          and press_receipt.get('window_start') == start.isoformat()
+                          and press_receipt.get('window_end') == end.isoformat())
+    cov['press'] = {**press_receipt, 'complete': press_complete}
     groups = releases(root, start, end, archive=archive, press_archive=press_archive)
     if late:
         already_read = {row['ticker']: row.get('release_urls') for row in original.get('calls', [])}
@@ -294,6 +379,8 @@ def stage(root, *, now=None, clock=local_now, chart=desk.daily_chart, fetch_body
         gaps.append('incomplete DeepSeek responses')
     if not complete_wire:
         gaps.append('overnight wire coverage incomplete')
+    if not press_complete:
+        gaps.append('FMP final press coverage incomplete')
     if late:
         prior = {(row['ticker'], row['side'], row['url']) for row in original.get('calls', [])}
         qualified = [row for row in qualified if (row['ticker'], row['side'], row['url']) not in prior]
@@ -314,9 +401,14 @@ def stage(root, *, now=None, clock=local_now, chart=desk.daily_chart, fetch_body
 def edition_lines(record):
     label = 'Late News Desk update' if record['edition'] == 'addendum' else 'Part 6 — The News Desk'
     out = ['', '## ' + label]
-    coverage = 'Complete' if not record['coverage']['gaps'] and record['coverage']['read'] else 'Incomplete'
+    wire_cov = record['coverage']
+    coverage = ('Complete' if wire_cov['read'] and not wire_cov['gaps'] and not wire_cov.get('unreadable_lines')
+                else 'Incomplete')
     out.append(f"**{record['status']}** · CNW coverage {coverage.lower()} through the 09:30 ET cutoff · "
                f"{record['answered']} verified reads across {record['candidates']} candidate issuers.")
+    press_cov = record['coverage'].get('press') or {}
+    if press_cov.get('expected'):
+        out.append(f"FMP final coverage · {press_cov['checked']} of {press_cov['expected']} tracked cross-listed names.")
     if record.get('reason'):
         out.append(f"Coverage notes — {record['reason']}.")
     if record['edition'] == 'addendum':
@@ -437,7 +529,10 @@ def main(argv=None):
         if args.action in {'capture', 'final-capture'}:
             record = capture(args.state_dir, final=args.action == 'final-capture')
             print(json.dumps(record))
-            return 0 if record['sitemap'].get('whole') or (args.action == 'capture' and record['rss'].get('read_logged')) else 6
+            ready = (record['sitemap'].get('whole') and record['press'].get('complete')
+                     if args.action == 'final-capture'
+                     else record['sitemap'].get('whole') or record['rss'].get('read_logged'))
+            return 0 if ready else 6
         if args.action == 'preflight':
             from morning_service import atomic
             record = preflight(root)

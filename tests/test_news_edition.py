@@ -54,9 +54,19 @@ def complete_wire(tmp_path):
     newswire.log_read('sitemap', start, end + dt.timedelta(minutes=1), state_dir=tmp_path)
 
 
+def complete_press(tmp_path):
+    result = edition.capture_press(
+        tmp_path, NOW, twins={'MX.TO': {'us': 'MEOH', 'name': 'Methanex Corporation'}},
+        get=lambda *a, **k: [{'publishedDate': '2026-11-25 15:00:00',
+                             'url': 'https://www.globenewswire.com/news-releases/old.html', 'text': BODY}],
+    )
+    assert result['complete']
+
+
 def test_replay_combines_methanex_and_canadian_utilities_without_rewriting_research(tmp_path):
     paths = archives(tmp_path)
     complete_wire(tmp_path)
+    complete_press(tmp_path)
     result = stage(tmp_path, paths)
     assert result['status'] == 'READY'
     assert {r['ticker'] for r in result['featured']} == {'MX.TO', 'CU.TO'}
@@ -98,6 +108,7 @@ def test_failed_body_and_incomplete_wire_are_visible_with_one_verified_call(tmp_
 def test_invalid_response_retries_only_the_failed_candidate(tmp_path):
     paths = archives(tmp_path)
     complete_wire(tmp_path)
+    complete_press(tmp_path)
     seen = []
     def partial(batch, **kwargs):
         seen.append([item['ticker'] for item in batch])
@@ -109,6 +120,36 @@ def test_invalid_response_retries_only_the_failed_candidate(tmp_path):
     result = stage(tmp_path, paths, ask=partial)
     assert result['status'] == 'READY'
     assert seen == [['CU.TO', 'MX.TO'], ['CU.TO']]
+
+
+def test_final_press_capture_retains_good_issuer_evidence_and_exposes_coverage_gap(tmp_path):
+    complete_wire(tmp_path)
+    cnw, press = tmp_path / 'cnw', tmp_path / 'press'
+    twins = {'MX.TO': {'us': 'MEOH', 'name': 'Methanex Corp'},
+             'GFL.TO': {'us': 'GFL', 'name': 'GFL Environmental'}}
+
+    def get(*args, symbols, **kwargs):
+        if symbols == 'GFL':
+            raise TimeoutError()
+        return [{'publishedDate': '2026-11-25T17:01:00-05:00', 'text': BODY,
+                 'title': 'Methanex completes Trinidad transaction',
+                 'url': 'https://www.globenewswire.com/news-releases/methanex.html'}]
+
+    receipt = edition.capture_press(tmp_path, NOW, twins=twins, get=get)
+    assert receipt['checked'] == 1
+    assert receipt['failures'] == {'TimeoutError': 1}
+    assert receipt['archived'] == 1
+    result = stage(tmp_path, (cnw, press))
+    assert result['status'] == 'PARTIAL'
+    assert result['reason'] == 'FMP final press coverage incomplete'
+    assert [pick['ticker'] for pick in result['featured']] == ['MX.TO']
+
+
+def test_missing_final_press_check_blocks_quiet_morning(tmp_path):
+    complete_wire(tmp_path)
+    result = stage(tmp_path, (tmp_path / 'cnw', tmp_path / 'press'))
+    assert result['status'] == 'UNAVAILABLE'
+    assert result['reason'] == 'FMP final press coverage incomplete'
 
 
 def test_late_addendum_is_single_edition_bound_to_the_original(tmp_path):
