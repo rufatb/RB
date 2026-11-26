@@ -1,0 +1,27 @@
+{
+ "exported_at": "2026-11-26T09:31:02.259651-05:00",
+ "open_check": {
+  "prepared_at": "2026-11-26T09:31:01.636701-05:00",
+  "rows": [
+   {
+    "at": "09:30",
+    "atr_pct": 2.7693,
+    "decision": "KEEP",
+    "decision_why": "nothing at the open contradicts it",
+    "open_days": 0.2733086514425762,
+    "price": 65.29,
+    "reach": {
+     "days": 1.0729637649019848,
+     "out_of_reach": true,
+     "pct": 2.9713585541430665
+    },
+    "side": "LONG",
+    "ticker": "CNQ.TO",
+    "verdict": "STILL VALID"
+   }
+  ],
+  "session": "2026-11-26"
+ },
+ "schema_version": 1,
+ "session": "2026-11-26"
+}
