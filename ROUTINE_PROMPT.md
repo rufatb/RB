@@ -42,7 +42,7 @@ THE HTML CHECK — after EVERY email you send (day-130). On 2026-10-07 the repor
   - htmlBody is REQUIRED in every send: the html file's WHOLE contents. Read it IN FULL (about 100 lines; page with offset/limit if needed). Never shorten it, never leave it out.
   - Right after the send: Gmail `get_message` with messageFormat MINIMAL on the id it returned (it gives the snippet and sizeEstimate), then
       python send_check.py --html <the html file> --text <the text file> --size-estimate <its sizeEstimate> --snippet '<the first 40 characters of its snippet>'
-  - OK: carry on. On HTML_MISSING for the primary Daily Report, keep the original message ID and surface the failed check in STEP 10. A primary send claim stays in effect. For the separate flash or open-check email, use its existing in-thread HTML repair.
+  - OK: carry on. On HTML_MISSING for the primary Daily Report, keep the original message ID and surface the failed check in STEP 10. A primary send claim stays in effect. For a separate flash or open-check email, send the complete HTML once in its existing thread with the same subject plus " — HTML version" and check that copy with `--html-only`.
   - The ⛔ NOT PUBLISHED notice has no html file and is exempt.
 
 STEP 1 — sync and tools
