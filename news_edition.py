@@ -406,7 +406,7 @@ def edition_lines(record):
     wire_cov = record['coverage']
     coverage = ('Complete' if wire_cov['read'] and not wire_cov['gaps'] and not wire_cov.get('unreadable_lines')
                 else 'Incomplete')
-    out.append(f"**{record['status']}** · CNW coverage {coverage.lower()} through the 09:30 ET cutoff · "
+    out.append(f"**{record['status']}** · CNW release listings {coverage.lower()} through 09:30 ET · "
                f"{record['answered']} verified reads across {record['candidates']} candidate issuers.")
     press_cov = record['coverage'].get('press') or {}
     if press_cov.get('expected'):

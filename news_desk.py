@@ -624,9 +624,8 @@ def research_lines(research):
     calls = sorted(research.get('calls') or [], key=order_key)
     if not calls:
         return []
-    out = ['', "The desk's own calls — read from each release's title and the feed's summary, not "
-               "verified against the issuer's full text (newswire.ca refuses it). Asked before 09:45 "
-               "with day-122's question; entry 09:45 ET, exit at the close; not sized, not in the Top 2."]
+    out = ['', "Research calls · release titles and available excerpts. Full-text verification is "
+               "incomplete. These ideas sit outside the Top 2 and the study measures 09:45 ET to the close."]
     # a closed takeover is no trade, so it never leads the list
     material = sorted((c for c in calls if _is_material(c.get('material'))),
                       key=lambda c: (deal_closed(c.get('title')), order_key(c)))

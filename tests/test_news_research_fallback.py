@@ -84,6 +84,17 @@ def test_the_calls_print_after_the_receipt_and_the_delivery_check_still_passes(t
     assert any('CAE.TO' in line and line.startswith('Routine releases') for line in lines)
 
 
+def test_the_export_keeps_research_beside_the_frozen_edition(tmp_path):
+    from dda_desk import public_news
+
+    sec = news_desk.section(state(tmp_path, edition()), NOW, path=tmp_path / 'ledger.csv')
+    projection = public_news(sec, '2026-11-27')
+    assert projection['status'] == 'UNAVAILABLE' and projection['calls'] == []
+    assert projection['edition_id'] == sec['edition_id']
+    assert [row['ticker'] for row in projection['research_calls']] == ['JWEL.TO', 'OGC.TO', 'CAE.TO']
+    assert 'evidence_quote' not in projection['research_calls'][0]
+
+
 def test_a_publication_from_before_renders_as_it_did():
     record = edition()
     assert news_desk.lines(record, concise=True) == news_edition.edition_lines(record)

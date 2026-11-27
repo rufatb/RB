@@ -406,6 +406,15 @@ def public_news(news, session):
             'edition_id', 'edition_version', 'edition', 'parent_edition_id', 'sealed_at',
             'window_start', 'window_end', 'candidates', 'answered', 'reason',
         )})
+        research = (news.get('research') or {}).get('calls')
+        if isinstance(research, list):
+            research_fields = ('session', 'ticker', 'side', 'arm', 'material', 'confidence',
+                               'reason', 'title', 'url', 'first_at', 'asked_at')
+            projection['research_calls'] = [
+                {field: row.get(field) for field in research_fields}
+                for row in research[:100]
+                if isinstance(row, dict) and row.get('session') == session and row.get('arm') == 'full'
+            ]
     return projection
 
 
