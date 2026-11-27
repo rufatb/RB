@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from html import escape
 
 import daily_render as R
@@ -705,9 +706,26 @@ def _extra_sections(intra):
         if line.startswith('## '):
             out += ('</section>' if out else '') + f'<section><h2 class="head">{escape(line[3:])}</h2>'
         elif line:
-            out += f'<p>{escape(line)}</p>'
+            out += f'<p>{_inline(line)}</p>'
     flush()
     return out + '</section>'
+
+
+_LINK = re.compile(r'\[([^\]]+)\]\((https://[^\s)]+)\)')
+
+
+def _inline(line):
+    """Day-156e: the report dialect's two inline marks on the page, as the email renders them
+    (`email_render._inline`); the 11-27 page printed Part 6's "**UNAVAILABLE**" raw.
+    Everything is escaped first; only **bold** and [title](https://…) become tags."""
+    parts, last = [], 0
+    for m in _LINK.finditer(line):
+        parts.append(escape(line[last:m.start()]))
+        parts.append(f'<a href="{escape(m.group(2), quote=True)}" style="color:var(--accent)">'
+                     f'{escape(m.group(1))}</a>')
+        last = m.end()
+    parts.append(escape(line[last:]))
+    return re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', ''.join(parts))
 
 
 DESKS_INTRO = ('<p>Three desks follow — Claude, DeepSeek and Jev — each its own model, each '

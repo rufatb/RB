@@ -1,5 +1,72 @@
 # Working notes for this repo
 
+## Day156e — Part 6 carries the desk's own calls again; the first live end-to-end morning (owner, 2026-11-27)
+
+* **The owner, after the 09:48 email: "What the fuck again! Fix now give me the
+  news desk picks"**, quoting Part 6: UNAVAILABLE, 0 verified reads across 9
+  candidate issuers.
+* **Why Part 6 was empty.**
+  * The edition (day-156c) prints only calls verified against the issuer's full
+    text. newswire.ca refuses that text here: 6 of the 9 candidates were set aside.
+  * The registered research arm had made its 5 calls by 09:32 (day-122's question
+    on the title and the feed's summary), into the ledger. Since 11-26 the email
+    never showed it.
+* **The picks were emailed at 09:56 ET** (Gmail `1a21d820a2809603`, "RB News Desk
+  — 2026-11-27 — …"):
+  * LONG OGC.TO 0.60, material;
+  * LONG JWEL.TO 0.60, material, but no trade: the release says Kirin's takeover
+    of Jamieson closed (09:27). It sat at 45.72 and is being delisted;
+  * routine: CAE.TO, CM.TO, IFC.TO.
+* **The fix** (display only; `news_desk.with_research`, `research_lines`,
+  `RESEARCH = 'day156e'`). `news_edition.py` is unchanged.
+  * An edition that is not READY carries `research`: the research arm's own section
+    (`research_section`, Part 6 before day-156c), less any name the edition
+    verified. An edition that did not seal (`RB_NEWS_EDITION_REQUIRED`) carries it
+    too; a READY one carries none.
+  * It prints after the edition's receipt line, outside what `verify_render` reads
+    (title → receipt). On 11-27's real state the email text and HTML both verify.
+  * Material calls in day-155b's order, numbered; routine releases on one line; the
+    record line.
+  * A release saying the issuer's own takeover has closed (`deal_closed`: closing or
+    completion … acquisition, arrangement or merger "by") is listed last, with
+    "⚠ … is no trade".
+  * A failure to read the desk is named ("could not be read today (X)") and never
+    costs the edition. A publication from before renders as it did.
+  * The edition, its labels, its subject and its verification are unchanged. The
+    DDA export carries `research` inside the report's section.
+* **The page** printed Part 6's "**UNAVAILABLE**" raw. `report_page._inline`
+  renders bold and links as `email_render._inline` does.
+* `tests/test_news_research_fallback.py`: 8 tests; 7 fail with the fix reverted.
+  The eighth checks that a publication from before is unchanged.
+* **The 11-27 morning, the first live end-to-end run of day-156d's send rules:**
+
+  | Email | Sent (ET) | Gmail id | Note |
+  |---|---|---|---|
+  | Decision | 08:58 | `1a21d4d1b818a3b3` | SHORT FM.TO, no long |
+  | Open check | 09:31 | `1a21d6b43f38022b` | KEEP |
+  | Report | 09:48 | `1a21d7a7ee6ebf71` | NEWS DESK UNAVAILABLE |
+  | News desk | 09:56 | `1a21d820a2809603` | the desk's own calls |
+
+  * **The owner's step-4 checks.**
+    * Edition `2fb25a1b1cc75d0d…`, sealed 09:31:49, UNAVAILABLE, nothing featured.
+    * CNW read with no gap; FMP checked 81 of 81 expected.
+    * `report_matches_export` true; the received HTML VERIFIED.
+    * The audit exited 6 for the status alone; one primary email in Sent.
+  * **The send.** `delivery_plan` REPORT, then `gmail_delivery.py --calling`
+    CALLING at 09:46:42, one send, RECORDED_SENT.
+  * The synced prompt wrote the same four keys as 11-26's files.
+  * Gmail returned the RAW report inline (36 KB), not saved to a file. It was
+    saved from this session's transcript for `received_html.py`.
+  * The machine restarted at 08:13 ET with the disk intact.
+  * **The Top 2.** SHORT FM.TO (Claude 0.52, 4 of 4 endorse; no "wrong if"). No
+    long: ATD.TO and SU.TO followed runs. FM.TO opened 3.9% against the short.
+* **Still open.**
+  * The quiet-wire false partial read: on 9 of the last 10 Sundays there was no
+    release in the 45 minutes before 16:20. The collector then asks the refused list
+    pages and exits 6.
+  * Part 4's LONG TC.TO has read "still holding" since 11-09. It has no entry, and
+    `pead.score` swallows the reason.
+
 ## Day156d — a claimed report is retried only on evidence that Gmail was never called; the rescue synced; a CNW probe for the Azure worker (owner, 2026-11-26 night)
 
 * **The owner, after day-156c:**

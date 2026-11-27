@@ -569,9 +569,99 @@ def section(state_dir, now, path=LEDGER):
     if edition:
         sealed = stamp(edition.get('sealed_at'))
         if edition.get('session') == now.date().isoformat() and sealed and sealed <= now:
-            return edition
+            return with_research(edition, state_dir, now, path)
     if os.environ.get('RB_NEWS_EDITION_REQUIRED') == '1':
-        return unavailable(now, 'The morning worker did not seal a News Desk edition by the report deadline')
+        return with_research(unavailable(now, 'The morning worker did not seal a News Desk edition '
+                                              'by the report deadline'), state_dir, now, path)
+    return research_section(state_dir, now, path)
+
+
+# ── day-156e: the desk's own calls beside an edition that verified fewer ────
+#
+# The owner, 2026-11-27, after a second morning with Part 6 empty: "Fix now give me
+# the news desk picks". The edition (day-156c) prints only calls verified against the
+# issuer's full text, and newswire.ca refuses that text to this collector on most
+# mornings, so it reads PARTIAL or UNAVAILABLE while the registered research arm has
+# made its calls (day-122's question, on the title and the feed's summary) by 09:32.
+# Those calls are frozen beside the edition and print after its receipt line, outside
+# what `news_edition.verify_render` checks. The edition, its labels, its subject and
+# its verification are unchanged; a READY edition carries none.
+
+RESEARCH = 'day156e'
+_DEAL_CLOSED = re.compile(r'\b(?:closing|completion|closes|closed|completes|completed)\b.{0,40}?'
+                          r'\b(?:acquisition|arrangement|merger|take-?over)\s+by\b', re.I)
+
+
+def deal_closed(title):
+    """True when a release says the issuer's own takeover has closed ("Jamieson Wellness
+    Inc. Announces Closing of Acquisition by Kirin Holdings", 11-27): its shares sit at
+    the deal price until they are delisted, so a side on it is no trade. "Closing of the
+    acquisition OF another company" is the buyer's release and does not match."""
+    return bool(_DEAL_CLOSED.search(str(title or '')))
+
+
+def with_research(edition, state_dir, now, path=LEDGER):
+    if edition.get('status') == 'READY':
+        return edition
+    try:
+        research = research_section(state_dir, now, path)
+    except Exception as exc:                      # never costs the edition; named, not silent
+        return dict(edition, research={'version': RESEARCH, 'error': type(exc).__name__, 'calls': []})
+    verified = {row.get('ticker') for row in edition.get('featured') or []}
+    calls = [c for c in research.get('calls') or [] if c.get('ticker') not in verified]
+    if not calls:
+        return edition
+    return dict(edition, research=dict(research, calls=calls, version=RESEARCH))
+
+
+def research_lines(research):
+    """The desk's own calls under an edition (day-156e), in day-155b's email order:
+    material calls numbered, routine releases on one line, the record line."""
+    if not research:
+        return []
+    if research.get('error'):
+        return ['', f"The desk's own calls could not be read today ({research['error']})."]
+    calls = sorted(research.get('calls') or [], key=order_key)
+    if not calls:
+        return []
+    out = ['', "The desk's own calls — read from each release's title and the feed's summary, not "
+               "verified against the issuer's full text (newswire.ca refuses it). Asked before 09:45 "
+               "with day-122's question; entry 09:45 ET, exit at the close; not sized, not in the Top 2."]
+    # a closed takeover is no trade, so it never leads the list
+    material = sorted((c for c in calls if _is_material(c.get('material'))),
+                      key=lambda c: (deal_closed(c.get('title')), order_key(c)))
+    routine = [c for c in calls if not _is_material(c.get('material'))]
+    if material:
+        out += ['', '| # | Call | Own conf. | Release | Why |', '|---|---|---:|---|---|']
+        for i, c in enumerate(material, 1):
+            when = _when(c.get('first_at'))
+            out.append(f"| {i} | {c['side']} {c['ticker']} | {float(c['confidence']):.2f} | "
+                       f"{(when + ' ') if when else ''}{str(c.get('title'))[:80].replace('|', '/')} | "
+                       f"{str(c.get('reason'))[:160].replace('|', '/')} |")
+        for c in material:
+            if deal_closed(c.get('title')):
+                out.append(f"⚠ {c['side']} {c['ticker']} is no trade: its release says its takeover "
+                           "has closed, so the shares sit at the deal price until they are delisted.")
+    else:
+        out.append('No release the model marked material today.')
+    if routine:
+        out.append('Routine releases, no view (the model expects no move): ' + '; '.join(
+            f"{c['ticker']} — {str(c.get('title'))[:70]}" for c in routine) + '.')
+    line = rank_line(research.get('rank_record'))
+    if line:
+        out.append(line)
+    return out
+
+
+def _when(first_at):
+    try:
+        return dt.datetime.fromisoformat(str(first_at)).astimezone(ET).strftime('%a %H:%M')
+    except (TypeError, ValueError):
+        return ''
+
+
+def research_section(state_dir, now, path=LEDGER):
+    """The registered research arm's own section (Part 6 before day-156c)."""
     try:
         staged = json.loads(Path(state_dir, STAGED).read_text())
     except (OSError, ValueError):
@@ -718,7 +808,7 @@ def lines(sec, concise=False):
         return []
     if sec.get('edition_version'):
         from news_edition import edition_lines
-        return edition_lines(sec)
+        return edition_lines(sec) + research_lines(sec.get('research'))
     clear = concise and sec.get('layout') == LAYOUT
     out = ['', '## Part 6 — The news desk (a separate test: a model reads every overnight release)',
            'DeepSeek reads the full text of each liquid TSX name\'s overnight release and must '
