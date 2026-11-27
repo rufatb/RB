@@ -33,16 +33,30 @@
   * A failure to read the desk is named ("could not be read today (X)") and never
     costs the edition. A publication from before renders as it did.
   * The edition, its labels, its subject and its verification are unchanged.
-  * **The DDA export does not carry them.** `dda_desk.public_news` projects only
-    the edition's verified calls (`featured`) into the export's `news_desk.calls`,
-    and `news_edition.audit` compares that list with them.
-  * **On 11-27, by hand, at the owner's request** ("add them to the DDA export so my
-    platform picks them up", e11a418):
-    * the research arm's five calls went into `news_desk.calls`, labelled
-      `day122-v1+title-summary`, with JWEL.TO's "No trade" in `invalidation`;
-    * the export's status reads PARTIAL; the edition id and receipt are kept;
-    * so that day's audit reads `report_matches_export` false, by design.
+  * **The DDA export carries them as `research_calls`** (the owner's commit
+    9eab7f4, 10:12 ET on 11-27). `dda_desk.public_news` puts the research arm's
+    calls beside the edition. The export's `calls` stays the edition's verified
+    calls, its status stays the edition's, and `news_edition.audit` still
+    compares `calls` with them.
+  * The same commit reworded the research block's opening line ("Research calls ·
+    release titles and available excerpts …") and the edition's coverage line
+    ("CNW release listings … through 09:30 ET"). It added a test of the export.
+  * **11-27's export.** My hand edit at the owner's request (e11a418: the five
+    calls in `calls`, status PARTIAL) was replaced by that commit. It restored the
+    edition receipt (UNAVAILABLE, `calls` empty) and put the five calls in
+    `research_calls`. Do not re-apply e11a418's shape.
 * The full suite passed after the fix: 3,501 tests.
+* **Lab item 18 registered** (`PREREGISTER_day156_hedge_live.md`): the
+  sector-fund hedge on the live record.
+  * It tests the hedge line's live sentence ("made 0.23% a pick more … swung 21%
+    less", 181 picks).
+  * The population: the line's own (`execution_lab._model_picks`, 09-17 → 11-26,
+    44 sessions).
+  * The statistic: d = (r_vs_etf − r) − 0.13% × beta, clustered. The bar is
+    day-153's, at seed 156.
+  * Not blind: the line's gross running record has been printed since 11-10.
+  * Anything but CONFIRMED is rejection #73. `hedge_live.py` is committed in its
+    own commit before it runs, next weekday.
 * **The page** printed Part 6's "**UNAVAILABLE**" raw. `report_page._inline`
   renders bold and links as `email_render._inline` does.
 * `tests/test_news_research_fallback.py`: 8 tests; 7 fail with the fix reverted.
