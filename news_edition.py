@@ -170,7 +170,7 @@ def releases(root, start, end, *, archive=None, press_archive=None):
         title = row.get('title') or ''
         if not at or not start <= at < end or not ticker or not ticker.endswith('.TO') or not title:
             continue
-        if wire.NOT_ISSUER.match(title):
+        if wire.NOT_ISSUER.match(title) or desk.deal_closed(title):
             continue
         try:
             url = canonical_url(row.get('url'))
@@ -343,16 +343,21 @@ def stage(root, *, now=None, clock=local_now, chart=desk.daily_chart, fetch_body
             return None, {}, 'liquidity unavailable'
         if why and why != 'no bar for the session':
             return None, {}, why
-        texts, sources = {}, []
+        texts, sources, available = {}, [], []
+        gap = None
         for row in rows:
             if remaining() < 8:
-                return None, {}, 'body deadline'
+                gap = 'body deadline'
+                break
             try:
                 texts[row['url']], source = fetch_body(row, ticker, root, timeout=min(5, remaining() / 3))
                 sources.append(source)
+                available.append(row)
             except Exception:
-                return None, {}, 'issuer body unavailable'
-        return {'id': f'{date}:{ticker}', 'ticker': ticker, 'releases': rows, 'text_sources': sources}, texts, None
+                gap = 'issuer body unavailable'
+        if not available:
+            return None, {}, gap
+        return {'id': f'{date}:{ticker}', 'ticker': ticker, 'releases': available, 'text_sources': sources}, texts, gap
 
     with ThreadPoolExecutor(max_workers=5) as pool:
         prepared = list(pool.map(prepare, sorted(groups.items())))

@@ -107,6 +107,27 @@ def test_failed_body_and_incomplete_wire_are_visible_with_one_verified_call(tmp_
     assert [r['ticker'] for r in result['featured']] == ['MX.TO']
 
 
+def test_a_missing_release_does_not_wipe_out_verified_evidence_for_that_issuer(tmp_path):
+    cnw, press = archives(tmp_path)
+    refused = row('CU.TO', 'www.newswire.ca', '20:40')
+    refused.update(url='https://www.newswire.ca/news-releases/other-876543210.html',
+                   title='Canadian Utilities reports updated regulatory terms')
+    with (cnw / '2026-11-25.jsonl').open('a', encoding='utf-8') as output:
+        output.write(json.dumps(refused) + '\n')
+    complete_wire(tmp_path)
+    complete_press(tmp_path)
+
+    def body(release, *args, **kwargs):
+        if release['url'] == refused['url']:
+            raise ValueError('HTTP_403')
+        return BODY, 'Matched issuer release'
+
+    result = stage(tmp_path, (cnw, press), fetch_body=body)
+    assert result['status'] == 'PARTIAL'
+    cu = next(call for call in result['featured'] if call['ticker'] == 'CU.TO')
+    assert cu['url'] != refused['url'] and len(cu['release_urls']) == 1
+
+
 def test_invalid_response_retries_only_the_failed_candidate(tmp_path):
     paths = archives(tmp_path)
     complete_wire(tmp_path)
