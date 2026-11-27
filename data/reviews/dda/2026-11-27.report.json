@@ -1,0 +1,40 @@
+{
+ "exported_at": "2026-11-27T09:46:16.745411-05:00",
+ "report": {
+  "generated_at": "2026-11-27T09:46:12.570098-05:00",
+  "intraday": {
+   "news_desk": {
+    "answered": 0,
+    "calls": [],
+    "candidates": 9,
+    "edition": "morning",
+    "edition_id": "2fb25a1b1cc75d0d07ff8e1fecbdde03e0deb2c927270023029c8ec0070ca07e",
+    "edition_version": "news-desk-edition-v1",
+    "parent_edition_id": null,
+    "prompt_version": "news-desk-edition-v1",
+    "reason": "issuer body unavailable",
+    "sealed_at": "2026-11-27T09:31:49.837239-05:00",
+    "status": "UNAVAILABLE",
+    "window_end": "2026-11-27T09:30:00-05:00",
+    "window_start": "2026-11-26T16:00:00-05:00"
+   },
+   "top_two": {
+    "picks": [
+     {
+      "agreement": "Claude 0.52; council 4 of 4 endorse",
+      "confidence": 0.52,
+      "invalid_at": null,
+      "reason": "CA: rel_sector -2.12 while materials rose 1.92, prior r0 -2.11, 31.8% below sma200, macd_hist -0.49; it lagged a strong sector day, so that weakness is not just open-priced news.",
+      "side": "SHORT",
+      "ticker": "FM.TO"
+     }
+    ],
+    "reason": "Claude's long nominations followed three-day runs, passed over by the three-day-run rule (day-146), so the long slot is left empty.",
+    "rule_version": "day144-claude-leads+day146-runs+day150-floor"
+   }
+  },
+  "session": "2026-11-27"
+ },
+ "schema_version": 1,
+ "session": "2026-11-27"
+}
