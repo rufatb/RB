@@ -32,8 +32,17 @@
     "⚠ … is no trade".
   * A failure to read the desk is named ("could not be read today (X)") and never
     costs the edition. A publication from before renders as it did.
-  * The edition, its labels, its subject and its verification are unchanged. The
-    DDA export carries `research` inside the report's section.
+  * The edition, its labels, its subject and its verification are unchanged.
+  * **The DDA export does not carry them.** `dda_desk.public_news` projects only
+    the edition's verified calls (`featured`) into the export's `news_desk.calls`,
+    and `news_edition.audit` compares that list with them.
+  * **On 11-27, by hand, at the owner's request** ("add them to the DDA export so my
+    platform picks them up", e11a418):
+    * the research arm's five calls went into `news_desk.calls`, labelled
+      `day122-v1+title-summary`, with JWEL.TO's "No trade" in `invalidation`;
+    * the export's status reads PARTIAL; the edition id and receipt are kept;
+    * so that day's audit reads `report_matches_export` false, by design.
+* The full suite passed after the fix: 3,501 tests.
 * **The page** printed Part 6's "**UNAVAILABLE**" raw. `report_page._inline`
   renders bold and links as `email_render._inline` does.
 * `tests/test_news_research_fallback.py`: 8 tests; 7 fail with the fix reverted.
