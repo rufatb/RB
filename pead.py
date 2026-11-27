@@ -41,7 +41,7 @@ THRESHOLD = 1.0
 LOOKBACK_DAYS = 7
 FIELDS = ('entry_session', 'ticker', 'side', 'react_pct', 'g', 'reaction_session',
           'release_at', 'release_url', 'title', 'entry', 'exit_session', 'exit', 'r_pct',
-          'scored_at')
+          'scored_at', 'unscoreable')     # day-156g: why a position can never be scored, else blank
 
 RESULTS = re.compile(
     r'\b(reports?|reported|announces?|delivers?|posts?|releases?)\b.{0,80}'
@@ -140,13 +140,15 @@ def section(state_dir, now, path=LEDGER):
     except (OSError, ValueError):
         staged = None
     fresh = staged if staged and staged.get('session') == now.date().isoformat() else None
-    held = [r for r in read(path) if not r.get('scored_at')
-            and r['entry_session'] < now.date().isoformat()]
+    open_rows = [r for r in read(path) if not r.get('scored_at')
+                 and r['entry_session'] < now.date().isoformat()]
+    keys = ('entry_session', 'ticker', 'side', 'react_pct', 'title')
     return {'status': 'READY' if fresh else 'UNAVAILABLE', 'record': record_line(path),
             'reason': None if fresh else 'today\'s earnings events were not staged this morning',
             'new': (fresh or {}).get('new') or [], 'events_checked': (fresh or {}).get('events_checked'),
-            'held': [{k: r.get(k) for k in ('entry_session', 'ticker', 'side', 'react_pct', 'title')}
-                     for r in held]}
+            'held': [{k: r.get(k) for k in keys} for r in open_rows if not r.get('unscoreable')],
+            'unscoreable': [dict({k: r.get(k) for k in keys}, reason=r['unscoreable'])
+                            for r in open_rows if r.get('unscoreable')]}
 
 
 # ── record and score ────────────────────────────────────────────────────────
@@ -166,15 +168,30 @@ def _write(rows, path):
     Path(path).write_text(out.getvalue())
 
 
+class Unscoreable(ValueError):
+    """The entry session's bars are there and hold no entry bar: under the
+    registered rule the position has no entry price, and never will."""
+
+
+ENTRY_BAR = dt.time(9, 40)
+
+
 def score_one(row, bars5, daily):
     """Entry: the 09:40 bar close on the entry session. Exit: the daily close of
-    the HOLD-th session counting the entry session as the first."""
+    the HOLD-th session counting the entry session as the first.
+
+    None while that cannot be measured yet. `Unscoreable` when the entry
+    session has a later bar but no 09:40 one: a thin name that did not trade
+    in it (TC.TO on 11-09 first traded at 10:10)."""
     day = dt.date.fromisoformat(row['entry_session'])
     f = bars5[[i.date() == day for i in bars5.index]]
     times = [i.time() for i in f.index]
-    if dt.time(9, 40) not in times:
+    if ENTRY_BAR not in times:
+        later = [t for t in times if t > ENTRY_BAR]
+        if later:
+            raise Unscoreable(f'NO_0940_BAR (first bar {min(times):%H:%M})')
         return None
-    entry = float(f['Close'].iloc[times.index(dt.time(9, 40))])
+    entry = float(f['Close'].iloc[times.index(ENTRY_BAR)])
     days = [i.date() for i in daily.index if i.date() >= day]
     if len(days) < HOLD:
         return None
@@ -185,24 +202,41 @@ def score_one(row, bars5, daily):
             'r_pct': round(sign * (exit_ / entry - 1) * 100, 4)}
 
 
-def score(path=LEDGER, *, now=None, bars_for=None, daily=_daily):
+def _session_over(day, now):
+    return day < now.date().isoformat() or (day == now.date().isoformat()
+                                            and now.time() >= dt.time(16, 5))
+
+
+def score(path=LEDGER, *, now=None, bars_for=None, daily=_daily, report=None):
+    """Fill every position whose five sessions are done; returns how many.
+    `report`, when given, gets the counts: scored, newly unscoreable and the
+    failures by type (counted and named, never swallowed: house rule 1). A
+    failed position is asked again next run; an unscoreable one is marked
+    once its entry session is over and never asked again."""
     import model_picks
     now = now or dt.datetime.now(ET)
     bars_for = bars_for or model_picks._yahoo_bars
-    rows, n = read(path), 0
+    rows, n, marked, failed = read(path), 0, 0, {}
     for r in rows:
-        if r.get('scored_at'):
+        if r.get('scored_at') or r.get('unscoreable'):
             continue
         try:
             res = score_one(r, bars_for(r['ticker']), daily(r['ticker']))
-        except Exception:
-            res = None
-        if res and (res['exit_session'] < now.date().isoformat()
-                    or (res['exit_session'] == now.date().isoformat() and now.time() >= dt.time(16, 5))):
+        except Unscoreable as exc:
+            if _session_over(r['entry_session'], now):
+                r['unscoreable'] = str(exc)
+                marked += 1
+            continue
+        except Exception as exc:          # counted and named (house rule 1)
+            failed[type(exc).__name__] = failed.get(type(exc).__name__, 0) + 1
+            continue
+        if res and _session_over(res['exit_session'], now):
             r.update(res, scored_at=now.isoformat())
             n += 1
-    if n:
+    if n or marked:
         _write(rows, path)
+    if report is not None:
+        report.update(scored=n, unscoreable=marked, failed=failed)
     return n
 
 
@@ -213,7 +247,9 @@ def record_line(path=LEDGER):
     if not done:
         return base + ' Live record: none completed yet (recording began 2026-09-29).'
     v = [float(r['r_pct']) for r in done]
-    return base + f' Live: {sum(x > 0 for x in v)}/{len(v)} right, {sum(v)/len(v):+.2f}% per 5-day hold.'
+    stuck = sum(1 for r in read(path) if r.get('unscoreable'))
+    return (base + f' Live: {sum(x > 0 for x in v)}/{len(v)} right, {sum(v)/len(v):+.2f}% per 5-day hold.'
+            + (f' {stuck} more could not be scored (no trade in the entry bar).' if stuck else ''))
 
 
 def lines(sec, concise=False):
@@ -238,7 +274,19 @@ def lines(sec, concise=False):
     if sec.get('held'):
         out.append('Still holding: ' + ', '.join(f"{h['side']} {h['ticker']} (since {h['entry_session']})"
                                                  for h in sec['held']) + '.')
+    if sec.get('unscoreable') and not concise:    # day-156g: the record, not the email; a
+        out.append('Not scoreable: ' + ', '.join(   # section from before has no such key
+            f"{h['side']} {h['ticker']} (entry session {h['entry_session']}"
+            + (f"; {_why(h.get('reason'))}" if _why(h.get('reason')) else '') + ')'
+            for h in sec['unscoreable'])
+            + '. The registered entry is the close of the 09:40–09:45 bar, and that bar had no '
+              'trade, so the position has no entry price and stays out of the record.')
     return out
+
+
+def _why(reason):
+    m = re.match(r'NO_0940_BAR \(first bar (\d\d:\d\d)\)', str(reason or ''))
+    return f'its first trade that day came at {m.group(1)}' if m else ''
 
 
 def main(argv=None):
@@ -253,7 +301,9 @@ def main(argv=None):
                           'failed': out['failed']}))
         return 0
     if a.score:
-        print(json.dumps({'scored': score()}))
+        report = {}
+        score(report=report)
+        print(json.dumps(report))
         return 0
     p.print_help()
     return 2

@@ -1,5 +1,34 @@
 # Working notes for this repo
 
+## Day156g — Part 4 names a position it can never score (2026-11-27 evening)
+
+* **The defect** (open in day-156e). Part 4 printed "Still holding: LONG TC.TO
+  (since 2026-11-09)" for 14 sessions.
+  * TC.TO's entry session had five-minute bars, the first at 10:10. No trade came
+    in the 09:40 bar, the registered entry (`PREREGISTER_day119_extra.md`), so
+    `score_one` returned None every evening.
+  * `pead.score` also swallowed every other exception (`except Exception`).
+* **The fix** (`pead.py`; the entry rule is unchanged).
+  * `score_one` raises `Unscoreable` when the entry session has a later bar but
+    no 09:40 one. While that bar is not due yet, it still returns None.
+  * Once the session is over, `score` marks such a position in a new last
+    column, `unscoreable` (blank otherwise), and never asks it again.
+  * Any other failure is counted by type and asked again next run. `--score`
+    prints `{"scored", "unscoreable", "failed"}`.
+  * Part 4 no longer lists it as held. The full report and the page print
+    "Not scoreable: LONG TC.TO (entry session 2026-11-09; its first trade that
+    day came at 10:10) …". The email leaves it out: it shows what is held, and
+    an unscoreable position stays open forever. A section from before renders
+    as it did.
+  * The record line adds "1 more could not be scored (no trade in the entry bar)".
+* **Not changed:** the entry rule. Entering a thin name at its first bar after
+  09:40 would be a new rule, and that is the owner's decision.
+* `tests/test_pead_unscoreable.py`: 7 tests; 6 fail with the fix reverted. The
+  seventh checks that a section from before is unchanged. The full suite
+  passed: 3,524 tests.
+* **The ledger.** The scorer, run once after this commit, marked TC.TO alone:
+  `NO_0940_BAR (first bar 10:10)`. It was pushed as a record commit.
+
 ## Day156f — a quiet wire is not a partial read (2026-11-27, 15:30 ET)
 
 * **The defect** (open in day-156e). The sitemap was taken as current only when
@@ -124,8 +153,7 @@
     long: ATD.TO and SU.TO followed runs. FM.TO opened 3.9% against the short.
 * **Still open.**
   * The quiet-wire false partial read: fixed in day-156f.
-  * Part 4's LONG TC.TO has read "still holding" since 11-09. It has no entry, and
-    `pead.score` swallows the reason.
+  * Part 4's LONG TC.TO "still holding": fixed in day-156g.
 
 ## Day156d — a claimed report is retried only on evidence that Gmail was never called; the rescue synced; a CNW probe for the Azure worker (owner, 2026-11-26 night)
 
