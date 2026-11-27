@@ -37,6 +37,11 @@
 * **The rescue** (`ROUTINE_RESCUE.md`, step E) has the same send rules and
   HTML verification. It cannot see this session's claims, so its Gmail search
   before every send stays.
+* **Live at 21:42–21:43 ET on 11-26:** the 08:50 morning, the 09:50 bridge and
+  the 08:56 rescue were synced to this text, after 8472589 reached main.
+  * The keys were carried over. The schedules, the session, the pinned models
+    and the rescue's Gmail connector are unchanged.
+  * The 09:38 watchdog's text did not change.
 * **The Azure worker is not reachable from this session:** no access to the
   `banriq-ai` repositories and no attached computer.
   * `cnw_body_probe.py` is the test to run there. It asks CU.TO's 11-25
