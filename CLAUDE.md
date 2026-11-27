@@ -1,5 +1,54 @@
 # Working notes for this repo
 
+## Day156d — a claimed report is retried only on evidence that Gmail was never called; the rescue synced; a CNW probe for the Azure worker (owner, 2026-11-26 night)
+
+* **The owner, after day-156c:**
+  1. "Keep the issuer-text requirement. Test a small sample of recent CNW
+     releases from the Azure worker, including CU.TO … If Azure also gets
+     challenged, use an authorized full-text feed. Keep the PARTIAL and
+     UNAVAILABLE labels until that source is verified."
+  2. "Sync the 08:56 rescue prompt. Give it the same Gmail reconciliation and
+     HTML verification rules."
+  3. "Keep RECONCILE for ambiguous sends. An empty Sent search alone is
+     insufficient to retry. Allow a retry once the original sender has
+     stopped and there's positive evidence Gmail was never called. Otherwise
+     flag the delivery for review."
+* **The evidence: `gmail_delivery.py --calling`.**
+  * A claim is made when the payload is prepared, so its state is `sending`
+    long before any Gmail call.
+  * The sender now writes `.rb-state/gmail_calls/<session>.json` (created
+    once, O_EXCL, fsynced) immediately before the call, and sends only on
+    CALLING. GMAIL_ALREADY_CALLED (exit 4) and NOT_CLAIMED (exit 3) send
+    nothing. The marker is also the lock: a second sender cannot pass it.
+  * `gmail_delivery.gmail_called`: the marker, a recorded send or a recorded
+    failed call (`unknown`) all count as called. Only their absence is
+    evidence.
+  * `delivery_plan`'s RECONCILE prints `gmail_called`. It offers the dispatch
+    files only when that is false and the files exist; otherwise its note says
+    to flag the delivery for review.
+  * The prompts (STEP 5 and STEP 7, the bridge, the rescue): search Sent
+    first. Retry only when `gmail_called` is false and the claim's sender has
+    stopped; the 09:50 bridge runs only after the 08:50 turn has ended.
+  * `tests/test_gmail_call_evidence.py`.
+* **The received-HTML step is spelled out** in STEP 7, the bridge and the
+  rescue: `get_message` RAW, then `received_html.py`, then `news_edition.py
+  verify-delivery`. A failed verification is reported with the original id,
+  never resent.
+* **The rescue** (`ROUTINE_RESCUE.md`, step E) has the same send rules and
+  HTML verification. It cannot see this session's claims, so its Gmail search
+  before every send stays.
+* **The Azure worker is not reachable from this session:** no access to the
+  `banriq-ai` repositories and no attached computer.
+  * `cnw_body_probe.py` is the test to run there. It asks CU.TO's 11-25
+    release first, then the newest CNW releases with a TSX symbol.
+  * One GET each, with the collector's User-Agent, no retries and no
+    redirects followed, and it stops after two refusals.
+  * It reports the status, whether the release body was found, its length
+    against the edition's 300 characters, and its first words.
+  * It was not run against newswire.ca from here, since this host is
+    refused; it has offline tests only (`tests/test_cnw_body_probe.py`).
+* **Unchanged:** the issuer-text requirement, PARTIAL and UNAVAILABLE.
+
 ## Day156c — Part 6 is a sealed News Desk edition; the three morning Routines synced; two delivery fixes (owner, 2026-11-26 evening)
 
 * **What landed on main** (409a665 → ee28635, the owner's account, 17:12–17:30 ET;

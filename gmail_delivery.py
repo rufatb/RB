@@ -174,6 +174,62 @@ def prepare(state_dir, session, output_dir, *, now=None):
             'gaps': gaps, 'checked_at': payload['checked_at']}
 
 
+# ── the Gmail call itself (day-156d) ──────────────────────────────────────
+#
+# The owner, 2026-11-26: keep RECONCILE for ambiguous sends; "an empty Sent
+# search alone is insufficient to retry. Allow a retry once the original sender
+# has stopped and there's positive evidence Gmail was never called."
+#
+# A claim says the payload was prepared, not that Gmail was asked: the state is
+# 'sending' from the moment `prepare` claims, hours or seconds before any call.
+# The marker below is written, once and durably, IMMEDIATELY before the sender
+# calls Gmail, and the sender calls Gmail only after it is written. So its
+# absence is the positive evidence, and its O_EXCL creation is also the lock: a
+# second sender cannot pass it.
+CALLS_DIR = 'gmail_calls'
+
+
+def call_marker(state_dir, session):
+    return Path(state_dir) / CALLS_DIR / f'{session}.json'
+
+
+def calling(state_dir, session, *, now=None):
+    """Mark the Gmail call for this session's claimed report, once. CALLING:
+    send now. GMAIL_ALREADY_CALLED: a call was started before; send nothing.
+    NOT_CLAIMED: there is no open claim to send under; send nothing."""
+    row = Store(state_dir).delivery(session)
+    if not row or row.get('state') != 'sending':
+        return {'status': 'NOT_CLAIMED', 'delivery': row}
+    path = call_marker(state_dir, session)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    mark = {'session': session, 'started_at': (now or dt.datetime.now(ET)).isoformat(),
+            'pid': os.getpid()}
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        try:
+            earlier = json.loads(path.read_text())
+        except (OSError, ValueError):
+            earlier = {'unreadable': True}
+        return {'status': 'GMAIL_ALREADY_CALLED', 'marker': earlier}
+    with os.fdopen(fd, 'w') as f:
+        json.dump(mark, f)
+        f.flush()
+        os.fsync(f.fileno())
+    return {'status': 'CALLING', **mark}
+
+
+def gmail_called(state_dir, session, delivery=None):
+    """True when there is ANY sign Gmail was asked for this session's report:
+    the marker, a recorded send, or a recorded failed call ('unknown'). Only
+    False is evidence; anything uncertain counts as called."""
+    if call_marker(state_dir, session).exists():
+        return True
+    row = delivery if delivery is not None else Store(state_dir).delivery(session)
+    state = (row or {}).get('state')
+    return state not in {None, 'sending', 'failed_before_send'}
+
+
 def record(state_dir, session, *, message_id=None, failed=False):
     store = Store(state_dir)
     if failed:
@@ -190,11 +246,17 @@ def main(argv=None):
     p.add_argument('--output-dir')
     p.add_argument('--prepare', action='store_true')
     p.add_argument('--record', action='store_true')
+    p.add_argument('--calling', action='store_true',
+                   help='mark, once, that the Gmail call for the claimed report starts now')
     p.add_argument('--message-id')
     p.add_argument('--failed', action='store_true')
     a = p.parse_args(argv)
-    if a.prepare == a.record:
-        p.error('choose exactly one of --prepare or --record')
+    if sum((a.prepare, a.record, a.calling)) != 1:
+        p.error('choose exactly one of --prepare, --record or --calling')
+    if a.calling:
+        out = calling(a.state_dir, a.session)
+        print(json.dumps(out, indent=2))
+        return {'CALLING': 0, 'GMAIL_ALREADY_CALLED': 4}.get(out['status'], 3)
     if a.prepare:
         out = prepare(a.state_dir, a.session,
                       a.output_dir or str(Path(a.state_dir)/'dispatch'))

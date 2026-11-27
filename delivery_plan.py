@@ -47,8 +47,26 @@ def plan(state_dir, *, now=None, reason=None, record=True):
             return {'mode': 'REPORT', **{k: out[k] for k in ('subject_path', 'text_path', 'html_path')},
                     'claimed': True}
         if (Store(root).get(session).get('intraday', {}).get('news_desk') or {}).get('edition_version'):
-            return {'mode': 'RECONCILE', 'delivery': out.get('delivery'),
-                    'note': 'Check Sent mail for the existing primary report before any operator-authorized retry.'}
+            # Day-156d (owner): an empty Sent search alone never licenses a retry.
+            # Only positive evidence that Gmail was never called does, and only
+            # once the sender that made the claim has stopped (the caller's half).
+            called = gmail_delivery.gmail_called(root, session, out.get('delivery'))
+            plan_ = {'mode': 'RECONCILE', 'delivery': out.get('delivery'), 'gmail_called': called}
+            paths = {k: str(root/'dispatch'/f) for k, f in (('subject_path', 'subject.txt'),
+                     ('text_path', 'report.txt'), ('html_path', 'report.html'))}
+            ready = (all(Path(p).exists() for p in paths.values())
+                     and session in Path(paths['subject_path']).read_text())
+            if called:
+                plan_['note'] = ('Gmail was called for this report (or may have been). Search Sent; '
+                                 'if it is not there, send nothing and flag the delivery for review.')
+            elif ready:
+                plan_.update(paths, note=('No Gmail call was ever started for this report. Search Sent '
+                                          'first; retry once with these files only if the sender that '
+                                          'made the claim has stopped.'))
+            else:
+                plan_['note'] = ('No Gmail call was started, but the dispatch files are missing: '
+                                 'send nothing and flag the delivery for review.')
+            return plan_
         # Already claimed by an earlier attempt: the files are on disk. The
         # agent's inbox check decides whether that attempt actually arrived.
         paths = {k: str(root/'dispatch'/f) for k, f in (('subject_path', 'subject.txt'),

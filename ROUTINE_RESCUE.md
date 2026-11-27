@@ -79,6 +79,11 @@ test. Never call the backup end-to-end verified until its run and Gmail IDs
 are checked. The backup protects against the primary session stalling; it
 still shares Claude account usage limits.
 
+**Synced 2026-11-26 (owner).** Step E gained the owner's session's rules for the
+report's send: the Gmail-call marker (`gmail_delivery.py --calling`), a
+RECONCILE retry only on positive evidence that Gmail was never called, and
+the received-HTML verification of a News Desk edition.
+
 Keep this file in sync with the live Routine. The `<...>` placeholders are the
 only difference: the live prompt carries the real keys.
 
@@ -112,6 +117,8 @@ D. CREDENTIALS (this machine has none).
 E. THE MORNING. Read `ROUTINE_PROMPT.md` (in the checkout) from "THE HTML CHECK" to the end and follow it exactly — STEP 3 to STEP 10 — with these changes:
   - STEP 1 and STEP 2 are done (A and D above), and its rescue check does not apply to you: you are the rescue.
   - BEFORE EVERY SEND (the decision in STEP 4, the open check in STEP 4, the email in STEP 7): Gmail-search today's subject of that email (`RB Morning Decision — <today>`, `RB Open Check — <today>`, `RB Daily Report — <today>`). If one exists that you did not send, the owner's session is delivering after all: send nothing more, `pkill -f morning_full.sh`, push nothing, and end with one line saying so.
+  - THE REPORT'S SEND follows the owner's session's rules exactly. Run `python gmail_delivery.py --calling` IMMEDIATELY before the report's `send_message`, and send only when it prints CALLING. On RECONCILE (STEP 5), retry only when `gmail_called` is false and your own earlier attempt has stopped; an empty Sent search alone is never enough; otherwise send nothing more and flag the delivery for review in STEP 10. You cannot see the owner's session's claims from this machine, so Gmail is your only evidence of what it sent: the search before every send stays.
+  - THE HTML: after the report's send, THE HTML CHECK, then STEP 7's received-HTML verification (Gmail `get_message` RAW, `python received_html.py`, `python news_edition.py verify-delivery`). A failed check is reported with the original message id in STEP 10, never resent.
   - STEP 8: publish to the artifact as written, and add `"record/ledger.csv" -> ledger.csv` and `"record/universe_prints.csv" -> universe_prints.csv` to its files. The owner's evening job imports `record/` from there.
   - STEP 9: try the push once with the retries it describes. If it is refused (not a network error), say so in the summary: the artifact copy is the record.
   - STEP 10: start the summary with "RESCUE RUN" and the announcement's Gmail id.

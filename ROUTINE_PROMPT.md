@@ -102,8 +102,10 @@ STEP 5 — DECIDE WHAT TO SEND, by command
   REPORT      today's report published; `subject_path`, `text_path`, `html_path` are the email → STEP 7
   PICKS_ONLY  no report, but the desks' picks were sealed before the open → the same three paths → STEP 7
   LATE        nothing was sealed → STEP 6
-RECONCILE means a primary report already has a durable claim. Search Sent for the exact session and edition receipt.
-If found, verify its full HTML and record the provider ID. An ambiguous result requires owner review before retry.
+  RECONCILE   a report carrying a News Desk edition was already claimed; it also prints `gmail_called`.
+    Search Sent first: `in:sent subject:"RB Daily Report — <today>"`. If the report is there, record its id with `python gmail_delivery.py --record --message-id <id>`, verify its received HTML as STEP 7 does, and go to STEP 8.
+    If it is not there, retry ONLY when both hold: `gmail_called` is false (no Gmail call was ever started for it), and the sender that made the claim has stopped (for the 09:50 bridge, the 08:50 turn; within one turn, your own earlier attempt). Then STEP 7 with the three paths it printed.
+    Anything else: send nothing and flag the delivery for the owner's review in STEP 10. An empty Sent search alone never licenses a retry.
 If it says the delivery was ALREADY_ATTEMPTED and Gmail already has today's report, send nothing and continue to STEP 10.
 
 STEP 6 — LATE PICKS (only when STEP 5 said LATE)
@@ -114,15 +116,18 @@ It takes 3–10 minutes. Read `.rb-state/late-<date>/claude_brief.txt` IN FULL, 
 The email is `.rb-state/late-<date>/late/{subject.txt,report.txt,report.html}` → STEP 7. If late_picks fails outright, STEP 7 sends the NOT PUBLISHED notice instead.
 
 STEP 7 — EMAIL IT. This is the delivery the owner reads.
-Gmail `search_threads` with `subject:"RB Daily Report — <today>"`. If an email for today already exists, send nothing and say so. Otherwise `send_message` ONCE:
+Gmail `search_threads` with `subject:"RB Daily Report — <today>"`. If an email for today already exists, send nothing and say so.
+For a REPORT email (and a RECONCILE retry), run `python gmail_delivery.py --calling` IMMEDIATELY before the send. Send only when it prints CALLING. GMAIL_ALREADY_CALLED or NOT_CLAIMED: send nothing, and reconcile as STEP 5 says.
+Then `send_message` ONCE:
   to: ["rufat.baghirov97@gmail.com"]
   subject / body / htmlBody: the exact contents of the subject, text and html files STEP 5 or STEP 6 named. htmlBody is REQUIRED and whole. Never reword the subject — it carries the board state.
   no attachments.
 Then THE HTML CHECK on that send.
 For a REPORT email, then record it: `python gmail_delivery.py --record --message-id <id>` (or `--failed` if the send failed).
-For a News Desk edition, save the actual received HTML MIME part and run
-`python news_edition.py verify-delivery --received-html <path> --message-id <id>`.
-Check the edition receipt and featured names before calling delivery verified.
+For a News Desk edition, verify what arrived. Gmail `get_message` with messageFormat RAW on that id (the result is too large to return inline, so the tool saves it to a file), then:
+  python received_html.py <that file> .rb-state/news_editions/<today>.received.html
+  python news_edition.py verify-delivery --received-html .rb-state/news_editions/<today>.received.html --message-id <id>
+Check the edition receipt and featured names before calling delivery verified. A failed verification is reported with the original message id in STEP 10, never resent.
 THE 09:58 RULE: honour an existing primary claim or message. If delivery is still unclaimed, send the prepared primary or fallback once. If nothing is ready, send one status notice with subject "RB Daily Report — <today> — ⛔ NOT PUBLISHED" and the job's exit code or last log line. Publish any recovery on the website. A verified News Desk addendum follows the separately claimed in-thread path in NEWS_DESK_OPERATIONS.md.
 
 STEP 8 — publish the page (REPORT mode only; skip otherwise)
