@@ -92,8 +92,10 @@
   * The statistic: d = (r_vs_etf − r) − 0.13% × beta, clustered. The bar is
     day-153's, at seed 156.
   * Not blind: the line's gross running record has been printed since 11-10.
-  * Anything but CONFIRMED is rejection #73. `hedge_live.py` is committed in its
-    own commit before it runs, next weekday.
+  * Anything but CONFIRMED is rejection #73. `hedge_live.py` was committed in its
+    own commit at 15:33 ET on 11-27, before any return, and runs once with
+    `--run` next weekday (11-30). Its population was counted on the pinned file
+    with no return read: 181 positions over 44 sessions, as registered.
 * **The page** printed Part 6's "**UNAVAILABLE**" raw. `report_page._inline`
   renders bold and links as `email_render._inline` does.
 * `tests/test_news_research_fallback.py`: 8 tests; 7 fail with the fix reverted.
