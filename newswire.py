@@ -508,8 +508,10 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
        no request that is refused.
 
     `reached_since` is True when the sitemap or the list showed the wire whole
-    back to `since`. Counts from each source sit under `rss`, `sitemap` and the
-    list's own keys; `archived` and `with_tsx_symbol` are their sums."""
+    back to `since`. On a quiet wire the main feed read here vouches for the
+    sitemap (`collect_sitemap`'s `feed`, day-156f). Counts from each source sit
+    under `rss`, `sitemap` and the list's own keys; `archived` and
+    `with_tsx_symbol` are their sums."""
     now = now or dt.datetime.now(ET)
     today = today or now.date()
     out = {'since': since.isoformat(), 'list_pages': 0, 'reached_since': False,
@@ -518,7 +520,8 @@ def collect(since, *, today=None, root=None, fetch=None, max_pages=MAX_PAGES,
            'list_asked': False}
     for name, run in (('rss', collect_rss), ('sitemap', collect_sitemap)):
         if name in sources:
-            got = run(root=root, fetch=fetch, now=now, state_dir=state_dir, pause=pause)
+            extra = {'feed': out.get('rss')} if name == 'sitemap' else {}
+            got = run(root=root, fetch=fetch, now=now, state_dir=state_dir, pause=pause, **extra)
             out[name] = got
             out['archived'] += got['archived']
             out['with_tsx_symbol'] += got['with_tsx_symbol']
@@ -658,6 +661,7 @@ def collect_rss(*, root=None, fetch=None, feeds=RSS_FEEDS, now=None, state_dir=N
            'failed': sum(failures.values()), 'failures': failures, 'skipped': skipped}
     if main_from is not None and not main_failed:
         out['newest'] = main_newest.isoformat()
+        out['from'] = main_from.isoformat()      # the main feed's stretch, for `collect_sitemap`
         if dt.timedelta(0) <= now - main_newest <= MAX_PUBLICATION_LAG:
             out['read_logged'] = log_read('rss', main_from, now, state_dir=state_dir)
     return out
@@ -740,12 +744,17 @@ def sitemap_row(url, at, title, stock_tickers, keywords=''):
             'tickers_from': 'tag'}
 
 
-def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.0):
+def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.0, feed=None):
     """Read the news sitemap's index and pages, and archive every release not
     yet archived. A page that fails is named in `page_errors`; an entry that
-    cannot make a row is counted in `failures`. Read whole (every page answered
-    and every entry made a row), it logs the stretch from just after its oldest
-    minute to now, and `whole` is True."""
+    cannot make a row is counted in `failures`.
+
+    `complete` is True when every page answered and every entry made a row.
+    `whole` is True when it is also current (`current_by`, see `_current`):
+    by the clock, it logs the stretch from just after its oldest minute to now;
+    vouched for by the main feed `feed` (`collect_rss`'s result in the same
+    run), only to the end of its newest release's minute. Nothing logs a
+    stretch no channel showed."""
     import requests
     session = requests.Session()
     raw = fetch or (lambda u: _get(u, session))
@@ -801,13 +810,50 @@ def collect_sitemap(*, root=None, fetch=None, now=None, state_dir=None, pause=0.
     if times:
         out['oldest'] = min(times).isoformat()
         out['newest'] = max(times).isoformat()
-    out['whole'] = bool(times and len(pages) == len(advertised)
-                        and not out['page_errors'] and not out['failed']
-                        and now - max(times) <= MAX_PUBLICATION_LAG)
+    out['complete'] = bool(times and len(pages) == len(advertised)
+                           and not out['page_errors'] and not out['failed'])
+    if out['complete']:
+        out['current_by'] = _current(max(times), now, feed)
+    out['whole'] = bool(out.get('current_by'))
     if out['whole']:
-        out['read_logged'] = log_read('sitemap', min(times) + dt.timedelta(minutes=1), now,
-                                      state_dir=state_dir)
+        start = min(times) + dt.timedelta(minutes=1)
+        end = now if out['current_by'] == 'clock' else max(times) + dt.timedelta(minutes=1)
+        if end > start:                      # an empty stretch is never logged (coverage counts it bad)
+            out['read_logged'] = log_read('sitemap', start, end, state_dir=state_dir,
+                                          by=None if out['current_by'] == 'clock' else out['current_by'])
     return out
+
+
+def _current(newest, now, feed=None):
+    """Why a complete sitemap read, whose newest release is `newest`, can be
+    taken as current, or None (day-156f).
+
+    * 'clock': that release is within MAX_PUBLICATION_LAG of the read, as on
+      any working morning.
+    * On a quiet wire (9 of the 10 Sundays to 11-22 had no release in the 45
+      minutes before 16:20) the clock proves nothing either way, and the run
+      used to ask for the refused list. The main feed, read whole in the same
+      run (`collect_rss`'s `newest` and `from`), is asked instead:
+      * 'feed_agrees': its newest release is the same minute. Two channels
+        show the same last release;
+      * 'feed_current': the feed is current by the clock and its oldest
+        release is no later than the sitemap's newest minute, so the two show
+        the wire to now. The feed logs its own stretch.
+    * A feed that shows another last release, or no feed, proves nothing."""
+    if now - newest <= MAX_PUBLICATION_LAG:
+        return 'clock'
+    try:
+        feed_newest = dt.datetime.fromisoformat(feed['newest'])
+        feed_from = dt.datetime.fromisoformat(feed['from'])
+    except (TypeError, KeyError, ValueError):
+        return None
+    minute = lambda t: t.replace(second=0, microsecond=0)
+    if minute(feed_newest) == minute(newest):
+        return 'feed_agrees'
+    if (dt.timedelta(0) <= now - feed_newest <= MAX_PUBLICATION_LAG
+            and feed_from <= newest + dt.timedelta(minutes=1)):
+        return 'feed_current'
+    return None
 
 
 # ── what was read whole, for the news desk's coverage (day-156) ──────────────
@@ -819,7 +865,7 @@ def _state_dir(state_dir=None):
     return Path(state_dir or os.environ.get('RB_STATE_DIR') or ROOT/'.rb-state')
 
 
-def log_read(kind, covers_from, at, *, state_dir=None):
+def log_read(kind, covers_from, at, *, state_dir=None, by=None):
     """Record that a read at `at` showed the wire whole from `covers_from`.
     The log lives in the state directory: a reset wipes it, and the news desk
     then says its coverage is unknown. False when it could not be written."""
@@ -827,8 +873,10 @@ def log_read(kind, covers_from, at, *, state_dir=None):
         path = _state_dir(state_dir)/READS
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open('a') as fh:
-            fh.write(json.dumps({'kind': kind, 'from': covers_from.isoformat(),
-                                 'to': at.isoformat()}) + '\n')
+            entry = {'kind': kind, 'from': covers_from.isoformat(), 'to': at.isoformat()}
+            if by:
+                entry['by'] = by                 # day-156f: not the clock
+            fh.write(json.dumps(entry) + '\n')
         return True
     except OSError:
         return False
@@ -1032,9 +1080,12 @@ def main(argv=None):
     sm, rss = out.get('sitemap') or {}, out.get('rss') or {}
     if not out['reached_since']:
         if sm.get('answered') or rss.get('rss_answered') or out['list_pages']:
+            why = sm.get('page_errors') or (
+                f"no page error; its newest release, {sm.get('newest')}, was not shown current "
+                f"by the clock or the main feed" if sm.get('complete') else 'no page error')
             print(f"NEWSWIRE: the wire was read only in part back to {since}: the sitemap "
                   f"{sm.get('answered', 0)} of {sm.get('pages', 0)} page(s) "
-                  f"({sm.get('page_errors') or 'no page error'}), the RSS feeds "
+                  f"({why}), the RSS feeds "
                   f"{rss.get('rss_answered', 0)} of {rss.get('rss_feeds', 0)}, the list "
                   f"{out['list_error'] or 'not needed'} — a release may be missing",
                   file=sys.stderr)

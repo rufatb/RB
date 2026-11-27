@@ -1,5 +1,42 @@
 # Working notes for this repo
 
+## Day156f — a quiet wire is not a partial read (2026-11-27, 15:30 ET)
+
+* **The defect** (open in day-156e). The sitemap was taken as current only when
+  its newest release was within 45 minutes of the read (`MAX_PUBLICATION_LAG`).
+  * On 9 of the 10 Sundays to 11-22, no release came in the 45 minutes before 16:20.
+  * The read, though whole, then fell back to the list, which newswire.ca refuses,
+    and exited 6.
+* **The fix** (`newswire._current`; the day-156b order is unchanged).
+  * `complete`: every page answered and every entry made a row.
+  * `whole`: complete and current. `current_by` names how:
+    * `clock`: as before;
+    * `feed_agrees`: the main RSS feed, read whole in the same run, ends on the
+      same minute;
+    * `feed_current`: the feed is current by the clock and reaches back to the
+      sitemap's newest minute.
+  * A feed that ends on another minute, or no feed, proves nothing, and the run
+    falls back to the list as before.
+* **Nothing claims a stretch no channel showed.**
+  * A feed-vouched read logs only to the end of its newest release's minute,
+    with `by` in `newswire_reads.jsonl`. The rest is left for the next read:
+    Monday's sitemap reaches back about 72 hours.
+  * An empty stretch is never logged. `coverage` counts one as unreadable, and
+    the edition's `complete_wire` then fails on every later morning.
+* **The edition's labels are unchanged.**
+  * On a quiet 09:31, `final-capture` no longer fails for the sitemap. The log
+    still shows the stretch after the last release as unread, so the edition
+    reads PARTIAL as before.
+  * A working morning is shown current by the clock, as before.
+* **The exit-6 message** now says when the sitemap was complete but its newest
+  release was not shown current.
+* **Checked live at 15:25 ET on 11-27** (scratch archive and state):
+  * 18 requests, `clock`, no list asked;
+  * the same responses replayed two hours past the newest release: `feed_agrees`;
+  * the main feed's 20 releases were all in the sitemap's first page.
+* `tests/test_newswire_rss.py`: 6 new tests, all failing with the fix reverted. The full
+  suite passed: 3,509 tests.
+
 ## Day156e — Part 6 carries the desk's own calls again; the first live end-to-end morning (owner, 2026-11-27)
 
 * **The owner, after the 09:48 email: "What the fuck again! Fix now give me the
@@ -84,9 +121,7 @@
   * **The Top 2.** SHORT FM.TO (Claude 0.52, 4 of 4 endorse; no "wrong if"). No
     long: ATD.TO and SU.TO followed runs. FM.TO opened 3.9% against the short.
 * **Still open.**
-  * The quiet-wire false partial read: on 9 of the last 10 Sundays there was no
-    release in the 45 minutes before 16:20. The collector then asks the refused list
-    pages and exits 6.
+  * The quiet-wire false partial read: fixed in day-156f.
   * Part 4's LONG TC.TO has read "still holding" since 11-09. It has no entry, and
     `pead.score` swallows the reason.
 

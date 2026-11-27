@@ -387,3 +387,107 @@ def test_the_news_desk_reads_a_sitemap_release_by_its_tag(tmp_path):
     evs, excluded = news_desk.events(dt.date(2026, 11, 26), chart=chart, archive=tmp_path / 'wire')
     assert [e['ticker'] for e in evs] == ['ACM.TO', 'OIL-B.TO']     # the halt is no event
     assert evs[1]['releases'][0]['tickers_from'] == 'tag'
+
+
+# ── day-156f: a quiet wire is not a partial read ─────────────────────────────
+#
+# On 9 of the 10 Sundays to 11-22 no release came in the 45 minutes before the
+# 16:20 read. The sitemap, read whole, then failed the clock's test, and the run
+# asked for the list newswire.ca refuses and exited 6. The main feed, read in
+# the same run, now vouches for it; nothing logs a stretch no channel showed.
+
+SUNDAY = dt.datetime(2026, 11, 29, 16, 20, tzinfo=ET)
+QUIET_INDEX = ('<?xml version="1.0" encoding="UTF-8"?><sitemapindex>'
+               '<sitemap><loc>https://www.newswire.ca/sitemap-news.xml?page=1</loc></sitemap></sitemapindex>')
+QUIET_PAGE = sm_page(
+    sm_entry('acme-update-901', '2026-11-29T14:00:00-05:00', 'ACME Mining update', 'Toronto:ACM'),
+    sm_entry('oilco-notice-902', '2026-11-28T11:00:00-05:00', 'OilCo notice', 'Toronto:OIL.B'),
+    sm_entry('gov-note-903', '2026-11-27T16:30:00-05:00', 'Government note'),
+    sm_entry('fund-dist-904', '2026-11-26T18:00:00-05:00', 'Fund distributions'))
+QUIET_SITEMAP = {'/sitemap-news.xml': QUIET_INDEX, '/sitemap-news.xml?page=1': QUIET_PAGE}
+QUIET_FEED = feed(
+    item('acme-update-901', 'Sun, 29 Nov 2026 19:00:00 +0000', 'ACME Mining update', 'ACME (TSX: ACM) said'),
+    item('oilco-notice-902', 'Sat, 28 Nov 2026 16:00:00 +0000', 'OilCo notice', 'OilCo (TSX: OIL.B) said'),
+    item('gov-note-903', 'Fri, 27 Nov 2026 21:30:00 +0000', 'Government note', 'The Government said'))
+
+
+def reads(state):
+    path = state / N.READS
+    return [json.loads(l) for l in path.read_text().splitlines()] if path.exists() else []
+
+
+def test_a_quiet_wire_read_whole_asks_for_no_list_and_claims_no_stretch_it_did_not_see(tmp_path):
+    asked = []
+    out = N.collect(dt.date(2026, 11, 27), root=tmp_path / 'wire', pause=0, now=SUNDAY,
+                    state_dir=tmp_path, fetch=refusing_list({N.RSS_MAIN: QUIET_FEED, **QUIET_SITEMAP}, asked))
+    sm = out['sitemap']
+    assert sm['complete'] and sm['whole'] and sm['current_by'] == 'feed_agrees'
+    assert out['reached_since'] is True and out['list_asked'] is False
+    assert not any('/news-releases/' in u for u in asked)        # no list page, no release page
+    # The sitemap's stretch ends with its last release's minute; the feed, old
+    # by the clock, logs nothing; 14:01 → 16:20 is left for a later read.
+    assert reads(tmp_path) == [{'kind': 'sitemap', 'from': '2026-11-26T18:01:00-05:00',
+                                'to': '2026-11-29T14:01:00-05:00', 'by': 'feed_agrees'}]
+    cov = N.coverage(dt.datetime(2026, 11, 27, 16, 0, tzinfo=ET), SUNDAY, state_dir=tmp_path)
+    assert cov['gaps'] == [['2026-11-29T14:01:00-05:00', SUNDAY.isoformat()]]
+    assert cov['unreadable_lines'] == 0
+
+
+def test_a_quiet_wire_without_the_feed_is_still_read_only_in_part(tmp_path):
+    out = N.collect(dt.date(2026, 11, 27), root=tmp_path / 'wire', pause=0, now=SUNDAY,
+                    state_dir=tmp_path, fetch=refusing_list(QUIET_SITEMAP))      # every feed 404
+    assert out['sitemap']['complete'] and out['sitemap']['current_by'] is None
+    assert out['sitemap']['whole'] is False and out['reached_since'] is False and out['list_asked']
+    assert reads(tmp_path) == []
+
+
+def test_a_feed_with_another_last_release_vouches_only_when_it_is_current_and_overlaps(tmp_path):
+    later = feed(item('late-905', 'Sun, 29 Nov 2026 21:10:00 +0000', 'Late release', 'Late (TSX: LTE) said'),
+                 item('acme-update-901', 'Sun, 29 Nov 2026 19:00:00 +0000', 'ACME Mining update', 'x'))
+    out = N.collect(dt.date(2026, 11, 27), root=tmp_path / 'wire', pause=0, now=SUNDAY,
+                    state_dir=tmp_path, fetch=refusing_list({N.RSS_MAIN: later, **QUIET_SITEMAP}))
+    assert out['sitemap']['current_by'] == 'feed_current' and out['reached_since'] is True
+    # The two stretches together show the wire whole from the sitemap's oldest minute to now.
+    cov = N.coverage(dt.datetime(2026, 11, 27, 16, 0, tzinfo=ET), SUNDAY, state_dir=tmp_path)
+    assert cov['read'] and cov['gaps'] == []
+    # A feed with another last release that the clock cannot vouch for proves nothing.
+    stale = feed(item('late-905', 'Sun, 29 Nov 2026 20:00:00 +0000', 'Late release', 'x'),
+                 item('acme-update-901', 'Sun, 29 Nov 2026 19:00:00 +0000', 'ACME Mining update', 'x'))
+    out = N.collect(dt.date(2026, 11, 27), root=tmp_path / 'w2', pause=0, now=SUNDAY,
+                    state_dir=tmp_path / 's2', fetch=refusing_list({N.RSS_MAIN: stale, **QUIET_SITEMAP}))
+    assert out['sitemap']['current_by'] is None and out['list_asked'] is True
+    # Nor does one that is current but starts after the sitemap's last release.
+    gap = feed(item('late-905', 'Sun, 29 Nov 2026 21:10:00 +0000', 'Late release', 'x'),
+               item('late-906', 'Sun, 29 Nov 2026 20:30:00 +0000', 'Later release', 'x'))
+    out = N.collect(dt.date(2026, 11, 27), root=tmp_path / 'w3', pause=0, now=SUNDAY,
+                    state_dir=tmp_path / 's3', fetch=refusing_list({N.RSS_MAIN: gap, **QUIET_SITEMAP}))
+    assert out['sitemap']['current_by'] is None and out['reached_since'] is False
+
+
+def test_a_one_release_sitemap_vouched_for_logs_no_empty_stretch(tmp_path):
+    one = {'/sitemap-news.xml': QUIET_INDEX, '/sitemap-news.xml?page=1': sm_page(
+        sm_entry('acme-update-901', '2026-11-29T14:00:00-05:00', 'ACME Mining update', 'Toronto:ACM'))}
+    out = N.collect_sitemap(root=tmp_path / 'wire', fetch=refusing_list(one), now=SUNDAY, state_dir=tmp_path,
+                            feed={'newest': '2026-11-29T14:00:00-05:00', 'from': '2026-11-27T16:31:00-05:00'})
+    assert out['whole'] and out['current_by'] == 'feed_agrees' and 'read_logged' not in out
+    assert reads(tmp_path) == []          # an empty interval would poison every later coverage read
+
+
+def test_a_working_morning_is_still_shown_current_by_the_clock(tmp_path):
+    out = N.collect_sitemap(root=tmp_path / 'wire', fetch=refusing_list(SITEMAP),
+                            now=dt.datetime(2026, 11, 26, 8, 12, tzinfo=ET), state_dir=tmp_path,
+                            feed={'newest': '2026-11-20T08:00:00-05:00', 'from': '2026-11-20T07:00:00-05:00'})
+    assert out['current_by'] == 'clock'
+    assert reads(tmp_path) == [{'kind': 'sitemap', 'from': '2026-11-24T12:01:00-05:00',
+                                'to': '2026-11-26T08:12:00-05:00'}]
+
+
+def test_main_names_a_complete_sitemap_that_was_not_shown_current(monkeypatch, capsys):
+    out = {'reached_since': False, 'failed': 0, 'from_list': 0, 'page_failures': {}, 'list_pages': 0,
+           'list_error': 'page 1: ValueError',
+           'sitemap': {'answered': 1, 'pages': 1, 'page_errors': {}, 'complete': True,
+                       'newest': '2026-11-29T14:00:00-05:00', 'whole': False},
+           'rss': {'rss_answered': 0, 'rss_feeds': 13}}
+    monkeypatch.setattr(N, 'collect', lambda *a, **k: out)
+    assert N.main(['--collect', '--since', '2026-11-27']) == 6
+    assert 'its newest release, 2026-11-29T14:00:00-05:00, was not shown current' in capsys.readouterr().err
